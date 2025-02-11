@@ -114,6 +114,8 @@ Créer une application web moderne avec Next.js permettant de lire des fichiers 
   - [x] Couverture et informations
   - [x] Liste des tomes
   - [x] Progression de lecture
+  - [x] Pagination des tomes
+  - [x] Filtre "À lire" (non lus et en cours)
   - [x] Bouton de lecture contextuel
 - [x] Page de détails du tome
   - [x] Couverture et informations
