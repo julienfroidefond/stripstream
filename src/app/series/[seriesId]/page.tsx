@@ -4,25 +4,44 @@ import { useRouter } from "next/navigation";
 import { KomgaSeries, KomgaBook } from "@/types/komga";
 import { useEffect, useState } from "react";
 import { BookGrid } from "@/components/series/BookGrid";
-import { ImageOff } from "lucide-react";
+import { ImageOff, Loader2 } from "lucide-react";
 import Image from "next/image";
+import { Pagination } from "@/components/ui/Pagination";
+import { useSearchParams, usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 interface SeriesData {
   series: KomgaSeries;
-  books: KomgaBook[];
+  books: {
+    content: KomgaBook[];
+    totalElements: number;
+    totalPages: number;
+    number: number;
+    size: number;
+  };
 }
+
+const PAGE_SIZE = 24; // 6 colonnes x 4 lignes pour un affichage optimal
 
 export default function SeriesPage({ params }: { params: { seriesId: string } }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const currentPage = searchParams.get("page") ? parseInt(searchParams.get("page")!) : 1;
+
   const [data, setData] = useState<SeriesData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isChangingPage, setIsChangingPage] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     const fetchSeriesData = async () => {
       try {
-        const response = await fetch(`/api/komga/series/${params.seriesId}`);
+        setIsChangingPage(true);
+        const response = await fetch(
+          `/api/komga/series/${params.seriesId}?page=${currentPage - 1}&size=${PAGE_SIZE}`
+        );
         if (!response.ok) {
           const data = await response.json();
           throw new Error(data.error || "Erreur lors de la récupération de la série");
@@ -34,14 +53,20 @@ export default function SeriesPage({ params }: { params: { seriesId: string } })
         setError(error instanceof Error ? error.message : "Une erreur est survenue");
       } finally {
         setIsLoading(false);
+        setIsChangingPage(false);
       }
     };
 
     fetchSeriesData();
-  }, [params.seriesId]);
+  }, [params.seriesId, currentPage]);
 
   const handleBookClick = (book: KomgaBook) => {
     router.push(`/books/${book.id}`);
+  };
+
+  const handlePageChange = (page: number) => {
+    setIsChangingPage(true);
+    router.push(`/series/${params.seriesId}?page=${page}`);
   };
 
   const getBookThumbnailUrl = (bookId: string) => {
@@ -88,6 +113,8 @@ export default function SeriesPage({ params }: { params: { seriesId: string } })
   }
 
   const { series, books } = data;
+  const startIndex = (currentPage - 1) * PAGE_SIZE + 1;
+  const endIndex = Math.min(currentPage * PAGE_SIZE, books.totalElements);
 
   return (
     <div className="container py-8 space-y-8">
@@ -178,14 +205,60 @@ export default function SeriesPage({ params }: { params: { seriesId: string } })
 
       {/* Grille des tomes */}
       <div className="space-y-4">
-        <h2 className="text-2xl font-semibold">
-          Tomes <span className="text-muted-foreground">({books.length})</span>
-        </h2>
-        <BookGrid
-          books={books}
-          onBookClick={handleBookClick}
-          getBookThumbnailUrl={getBookThumbnailUrl}
-        />
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-semibold">
+            Tomes <span className="text-muted-foreground">({books.totalElements})</span>
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {books.totalElements > 0 ? (
+              <>
+                Affichage des tomes <span className="font-medium">{startIndex}</span> à{" "}
+                <span className="font-medium">{endIndex}</span> sur{" "}
+                <span className="font-medium">{books.totalElements}</span>
+              </>
+            ) : (
+              "Aucun tome disponible"
+            )}
+          </p>
+        </div>
+
+        <div className="relative">
+          {/* Indicateur de chargement */}
+          {isChangingPage && (
+            <div className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-sm z-10">
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-background border shadow-sm">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="text-sm">Chargement...</span>
+              </div>
+            </div>
+          )}
+
+          {/* Grille avec animation de transition */}
+          <div
+            className={cn(
+              "transition-opacity duration-200",
+              isChangingPage ? "opacity-25" : "opacity-100"
+            )}
+          >
+            <BookGrid
+              books={books.content}
+              onBookClick={handleBookClick}
+              getBookThumbnailUrl={getBookThumbnailUrl}
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
+          <p className="text-sm text-muted-foreground order-2 sm:order-1">
+            Page {currentPage} sur {books.totalPages}
+          </p>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={books.totalPages}
+            onPageChange={handlePageChange}
+            className="order-1 sm:order-2"
+          />
+        </div>
       </div>
     </div>
   );

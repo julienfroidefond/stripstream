@@ -1,8 +1,14 @@
 import { cookies } from "next/headers";
-import { SeriesGrid } from "@/components/library/SeriesGrid";
-import { KomgaSeries } from "@/types/komga";
+import { PaginatedSeriesGrid } from "@/components/library/PaginatedSeriesGrid";
 
-async function getLibrarySeries(libraryId: string) {
+interface PageProps {
+  params: { libraryId: string };
+  searchParams: { page?: string };
+}
+
+const PAGE_SIZE = 20;
+
+async function getLibrarySeries(libraryId: string, page: number = 1) {
   const configCookie = cookies().get("komgaCredentials");
 
   if (!configCookie) {
@@ -16,14 +22,10 @@ async function getLibrarySeries(libraryId: string) {
       throw new Error("Configuration Komga invalide ou incomplète");
     }
 
-    console.log("Config:", {
-      serverUrl: config.serverUrl,
-      hasCredentials: !!config.credentials,
-      username: config.credentials.username,
-    });
+    // Paramètres de pagination
+    const pageIndex = page - 1; // L'API Komga utilise un index base 0
 
-    const url = `${config.serverUrl}/api/v1/series?library_id=${libraryId}&page=0&size=100`;
-    console.log("URL de l'API:", url);
+    const url = `${config.serverUrl}/api/v1/series?library_id=${libraryId}&page=${pageIndex}&size=${PAGE_SIZE}`;
 
     const credentials = `${config.credentials.username}:${config.credentials.password}`;
     const auth = Buffer.from(credentials).toString("base64");
@@ -33,46 +35,44 @@ async function getLibrarySeries(libraryId: string) {
         Authorization: `Basic ${auth}`,
         Accept: "application/json",
       },
-      cache: "no-store", // Désactiver le cache pour le debug
+      next: { revalidate: 300 }, // Cache de 5 minutes
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Réponse de l'API non valide:", {
-        status: response.status,
-        statusText: response.statusText,
-        headers: Object.fromEntries(response.headers.entries()),
-        body: errorText,
-      });
       throw new Error(`Erreur HTTP: ${response.status} ${response.statusText}`);
     }
 
     const data = await response.json();
-    console.log("Données reçues:", {
-      totalElements: data.totalElements,
-      totalPages: data.totalPages,
-      numberOfElements: data.numberOfElements,
-    });
-
     return { data, serverUrl: config.serverUrl };
   } catch (error) {
-    console.error("Erreur détaillée:", {
-      message: error instanceof Error ? error.message : "Erreur inconnue",
-      stack: error instanceof Error ? error.stack : undefined,
-      error,
-    });
     throw error instanceof Error ? error : new Error("Erreur lors de la récupération des séries");
   }
 }
 
-export default async function LibraryPage({ params }: { params: { libraryId: string } }) {
+export default async function LibraryPage({ params, searchParams }: PageProps) {
+  const currentPage = searchParams.page ? parseInt(searchParams.page) : 1;
+
   try {
-    const { data: series, serverUrl } = await getLibrarySeries(params.libraryId);
+    const { data: series, serverUrl } = await getLibrarySeries(params.libraryId, currentPage);
 
     return (
       <div className="container py-8 space-y-8">
-        <h1 className="text-3xl font-bold">Séries</h1>
-        <SeriesGrid series={series.content || []} serverUrl={serverUrl} />
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold">Séries</h1>
+          {series.totalElements > 0 && (
+            <p className="text-sm text-muted-foreground">
+              {series.totalElements} série{series.totalElements > 1 ? "s" : ""}
+            </p>
+          )}
+        </div>
+        <PaginatedSeriesGrid
+          series={series.content || []}
+          serverUrl={serverUrl}
+          currentPage={currentPage}
+          totalPages={series.totalPages}
+          totalElements={series.totalElements}
+          pageSize={PAGE_SIZE}
+        />
       </div>
     );
   } catch (error) {

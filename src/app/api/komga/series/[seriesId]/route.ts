@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 export async function GET(request: Request, { params }: { params: { seriesId: string } }) {
   try {
     // Récupérer les credentials Komga depuis le cookie
-    const configCookie = cookies().get("komga_credentials");
+    const configCookie = cookies().get("komgaCredentials");
     if (!configCookie) {
       return NextResponse.json({ error: "Configuration Komga manquante" }, { status: 401 });
     }
@@ -24,6 +24,11 @@ export async function GET(request: Request, { params }: { params: { seriesId: st
       `${config.credentials.username}:${config.credentials.password}`
     ).toString("base64");
 
+    // Récupérer les paramètres de pagination depuis l'URL
+    const { searchParams } = new URL(request.url);
+    const page = searchParams.get("page") || "0";
+    const size = searchParams.get("size") || "24";
+
     // Appel à l'API Komga pour récupérer les détails de la série
     const [seriesResponse, booksResponse] = await Promise.all([
       // Détails de la série
@@ -32,9 +37,9 @@ export async function GET(request: Request, { params }: { params: { seriesId: st
           Authorization: `Basic ${auth}`,
         },
       }),
-      // Liste des tomes (on récupère tous les tomes avec size=1000)
+      // Liste des tomes avec pagination
       fetch(
-        `${config.serverUrl}/api/v1/series/${params.seriesId}/books?page=0&size=1000&unpaged=true&sort=metadata.numberSort,asc`,
+        `${config.serverUrl}/api/v1/series/${params.seriesId}/books?page=${page}&size=${size}&sort=metadata.numberSort,asc`,
         {
           headers: {
             Authorization: `Basic ${auth}`,
@@ -55,10 +60,7 @@ export async function GET(request: Request, { params }: { params: { seriesId: st
       );
     }
 
-    const [series, booksData] = await Promise.all([seriesResponse.json(), booksResponse.json()]);
-
-    // On extrait la liste des tomes de la réponse paginée
-    const books = booksData.content;
+    const [series, books] = await Promise.all([seriesResponse.json(), booksResponse.json()]);
 
     return NextResponse.json({ series, books });
   } catch (error) {

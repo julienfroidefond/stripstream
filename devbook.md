@@ -13,7 +13,7 @@ Créer une application web moderne avec Next.js permettant de lire des fichiers 
   - [x] Affichage des séries par bibliothèque
   - [x] Couvertures et informations des séries
   - [ ] Filtres et recherche
-  - [ ] Pagination
+  - [x] Pagination
 - [x] Lecteur de fichiers (CBZ, CBR)
   - [x] Navigation entre les pages
   - [x] Mode plein écran
@@ -113,7 +113,7 @@ Créer une application web moderne avec Next.js permettant de lire des fichiers 
 - [x] Page de détails de la série
   - [x] Couverture et informations
   - [x] Liste des tomes
-  - [ ] Progression de lecture
+  - [x] Progression de lecture
   - [x] Bouton de lecture contextuel
 - [x] Page de détails du tome
   - [x] Couverture et informations
