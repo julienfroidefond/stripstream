@@ -99,7 +99,7 @@ Créer une application web moderne avec Next.js permettant de lire des fichiers 
   - [x] Responsive design
 - [x] Page d'accueil
   - [x] Présentation des fonctionnalités principales
-  - [ ] Liste des collections récentes
+  - [x] Liste des collections récentes
   - [ ] Barre de recherche
   - [ ] Filtres avancés
   - [ ] Tri personnalisable

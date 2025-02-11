@@ -7,7 +7,7 @@ import { useState } from "react";
 
 interface BookGridProps {
   books: KomgaBook[];
-  onBookClick?: (book: KomgaBook) => void;
+  onBookClick: (book: KomgaBook) => void;
   getBookThumbnailUrl: (bookId: string) => string;
 }
 
@@ -21,14 +21,26 @@ export function BookGrid({ books, onBookClick, getBookThumbnailUrl }: BookGridPr
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
       {books.map((book) => (
-        <BookCard
+        <button
           key={book.id}
-          book={book}
-          onClick={() => onBookClick?.(book)}
-          getBookThumbnailUrl={getBookThumbnailUrl}
-        />
+          onClick={() => onBookClick(book)}
+          className="group relative aspect-[2/3] overflow-hidden rounded-lg bg-muted hover:opacity-80 transition-opacity"
+        >
+          <Image
+            src={getBookThumbnailUrl(book.id)}
+            alt={book.metadata.title}
+            fill
+            className="object-cover"
+            sizes="(min-width: 1024px) 16.66vw, (min-width: 768px) 25vw, (min-width: 640px) 33.33vw, 50vw"
+          />
+          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-4">
+            <p className="text-sm font-medium text-white text-left line-clamp-2">
+              {book.metadata.title}
+            </p>
+          </div>
+        </button>
       ))}
     </div>
   );

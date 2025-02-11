@@ -15,7 +15,6 @@ interface PaginatedBookGridProps {
   totalPages: number;
   totalElements: number;
   pageSize: number;
-  onBookClick?: (book: KomgaBook) => void;
 }
 
 export function PaginatedBookGrid({
@@ -25,7 +24,6 @@ export function PaginatedBookGrid({
   totalPages,
   totalElements,
   pageSize,
-  onBookClick,
 }: PaginatedBookGridProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -64,6 +62,14 @@ export function PaginatedBookGrid({
 
     setShowOnlyUnread(!showOnlyUnread);
     router.push(`${pathname}?${params.toString()}`);
+  };
+
+  const handleBookClick = (book: KomgaBook) => {
+    console.log("PaginatedBookGrid - handleBookClick:", {
+      bookId: book.id,
+      bookTitle: book.metadata.title,
+    });
+    router.push(`/books/${book.id}`);
   };
 
   // Calcul des indices de début et de fin pour l'affichage
@@ -117,7 +123,7 @@ export function PaginatedBookGrid({
         >
           <BookGrid
             books={books}
-            onBookClick={onBookClick}
+            onBookClick={handleBookClick}
             getBookThumbnailUrl={getBookThumbnailUrl}
           />
         </div>

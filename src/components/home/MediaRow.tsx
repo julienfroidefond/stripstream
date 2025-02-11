@@ -89,9 +89,18 @@ function MediaCard({ item, onClick }: MediaCardProps) {
     ? item.metadata.title
     : item.metadata.title || `Tome ${item.metadata.number}`;
 
+  const handleClick = () => {
+    console.log("MediaCard - handleClick:", {
+      itemType: isSeries ? "series" : "book",
+      itemId: item.id,
+      itemTitle: title,
+    });
+    onClick?.();
+  };
+
   return (
     <button
-      onClick={onClick}
+      onClick={handleClick}
       className="flex-shrink-0 w-[200px] group relative flex flex-col rounded-lg border bg-card text-card-foreground shadow-sm hover:bg-accent hover:text-accent-foreground transition-colors overflow-hidden"
     >
       {/* Image de couverture */}

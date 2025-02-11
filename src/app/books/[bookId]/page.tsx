@@ -30,6 +30,7 @@ export default function BookPage({ params }: { params: { bookId: string } }) {
         }
         const data = await response.json();
         setData(data);
+        setIsReading(true);
       } catch (error) {
         console.error("Erreur:", error);
         setError(error instanceof Error ? error.message : "Une erreur est survenue");
@@ -41,12 +42,9 @@ export default function BookPage({ params }: { params: { bookId: string } }) {
     fetchBookData();
   }, [params.bookId]);
 
-  const handleStartReading = () => {
-    setIsReading(true);
-  };
-
   const handleCloseReader = () => {
     setIsReading(false);
+    router.back();
   };
 
   if (isLoading) {
@@ -76,85 +74,76 @@ export default function BookPage({ params }: { params: { bookId: string } }) {
 
   const { book, pages } = data;
 
+  if (isReading) {
+    return <BookReader book={book} pages={pages} onClose={handleCloseReader} />;
+  }
+
   return (
-    <>
-      <div className="container py-8 space-y-8">
-        {/* En-tête du tome */}
-        <div className="flex flex-col md:flex-row gap-8">
-          {/* Couverture */}
-          <div className="w-48 shrink-0">
-            <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-muted">
-              {!imageError ? (
-                <Image
-                  src={`/api/komga/images/books/${book.id}/thumbnail`}
-                  alt={`Couverture de ${book.metadata.title}`}
-                  fill
-                  className="object-cover"
-                  onError={() => setImageError(true)}
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <ImageOff className="w-12 h-12" />
-                </div>
-              )}
-            </div>
+    <div className="container py-8 space-y-8">
+      {/* En-tête du tome */}
+      <div className="flex flex-col md:flex-row gap-8">
+        {/* Couverture */}
+        <div className="w-48 shrink-0">
+          <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-muted">
+            {!imageError ? (
+              <Image
+                src={`/api/komga/images/books/${book.id}/thumbnail`}
+                alt={`Couverture de ${book.metadata.title}`}
+                fill
+                className="object-cover"
+                onError={() => setImageError(true)}
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <ImageOff className="w-12 h-12" />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Informations */}
+        <div className="flex-1 space-y-4">
+          <div>
+            <h1 className="text-3xl font-bold">
+              {book.metadata.title || `Tome ${book.metadata.number}`}
+            </h1>
+            <p className="text-muted-foreground">
+              {book.seriesTitle} - Tome {book.metadata.number}
+            </p>
           </div>
 
-          {/* Informations */}
-          <div className="flex-1 space-y-4">
-            <div>
-              <h1 className="text-3xl font-bold">
-                {book.metadata.title || `Tome ${book.metadata.number}`}
-              </h1>
-              <p className="text-muted-foreground">
-                {book.seriesTitle} - Tome {book.metadata.number}
-              </p>
-            </div>
+          {book.metadata.summary && (
+            <p className="text-muted-foreground">{book.metadata.summary}</p>
+          )}
 
-            {book.metadata.summary && (
-              <p className="text-muted-foreground">{book.metadata.summary}</p>
+          <div className="space-y-1 text-sm text-muted-foreground">
+            {book.metadata.releaseDate && (
+              <div>
+                <span className="font-medium">Date de sortie :</span>{" "}
+                {new Date(book.metadata.releaseDate).toLocaleDateString()}
+              </div>
             )}
-
-            <div className="space-y-1 text-sm text-muted-foreground">
-              {book.metadata.releaseDate && (
-                <div>
-                  <span className="font-medium">Date de sortie :</span>{" "}
-                  {new Date(book.metadata.releaseDate).toLocaleDateString()}
-                </div>
-              )}
-              {book.metadata.authors?.length > 0 && (
-                <div>
-                  <span className="font-medium">Auteurs :</span>{" "}
-                  {book.metadata.authors
-                    .map((author) => `${author.name} (${author.role})`)
-                    .join(", ")}
-                </div>
-              )}
-              {book.size && (
-                <div>
-                  <span className="font-medium">Taille :</span> {book.size}
-                </div>
-              )}
-              {book.media.pagesCount > 0 && (
-                <div>
-                  <span className="font-medium">Pages :</span> {book.media.pagesCount}
-                </div>
-              )}
-            </div>
-
-            {/* Bouton de lecture */}
-            <button
-              onClick={handleStartReading}
-              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground ring-offset-background transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            >
-              Commencer la lecture
-            </button>
+            {book.metadata.authors?.length > 0 && (
+              <div>
+                <span className="font-medium">Auteurs :</span>{" "}
+                {book.metadata.authors
+                  .map((author) => `${author.name} (${author.role})`)
+                  .join(", ")}
+              </div>
+            )}
+            {book.size && (
+              <div>
+                <span className="font-medium">Taille :</span> {book.size}
+              </div>
+            )}
+            {book.media.pagesCount > 0 && (
+              <div>
+                <span className="font-medium">Pages :</span> {book.media.pagesCount}
+              </div>
+            )}
           </div>
         </div>
       </div>
-
-      {/* Lecteur */}
-      {isReading && <BookReader book={book} pages={pages} onClose={handleCloseReader} />}
-    </>
+    </div>
   );
 }
