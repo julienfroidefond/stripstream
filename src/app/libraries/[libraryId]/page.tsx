@@ -3,12 +3,12 @@ import { PaginatedSeriesGrid } from "@/components/library/PaginatedSeriesGrid";
 
 interface PageProps {
   params: { libraryId: string };
-  searchParams: { page?: string };
+  searchParams: { page?: string; unread?: string };
 }
 
 const PAGE_SIZE = 20;
 
-async function getLibrarySeries(libraryId: string, page: number = 1) {
+async function getLibrarySeries(libraryId: string, page: number = 1, unreadOnly: boolean = false) {
   const configCookie = cookies().get("komgaCredentials");
 
   if (!configCookie) {
@@ -25,7 +25,13 @@ async function getLibrarySeries(libraryId: string, page: number = 1) {
     // Paramètres de pagination
     const pageIndex = page - 1; // L'API Komga utilise un index base 0
 
-    const url = `${config.serverUrl}/api/v1/series?library_id=${libraryId}&page=${pageIndex}&size=${PAGE_SIZE}`;
+    // Construire l'URL avec les paramètres
+    let url = `${config.serverUrl}/api/v1/series?library_id=${libraryId}&page=${pageIndex}&size=${PAGE_SIZE}`;
+
+    // Ajouter le filtre pour les séries non lues et en cours si nécessaire
+    if (unreadOnly) {
+      url += "&read_status=UNREAD&read_status=IN_PROGRESS";
+    }
 
     const credentials = `${config.credentials.username}:${config.credentials.password}`;
     const auth = Buffer.from(credentials).toString("base64");
@@ -51,9 +57,14 @@ async function getLibrarySeries(libraryId: string, page: number = 1) {
 
 export default async function LibraryPage({ params, searchParams }: PageProps) {
   const currentPage = searchParams.page ? parseInt(searchParams.page) : 1;
+  const unreadOnly = searchParams.unread === "true";
 
   try {
-    const { data: series, serverUrl } = await getLibrarySeries(params.libraryId, currentPage);
+    const { data: series, serverUrl } = await getLibrarySeries(
+      params.libraryId,
+      currentPage,
+      unreadOnly
+    );
 
     return (
       <div className="container py-8 space-y-8">

@@ -4,7 +4,7 @@ import { SeriesGrid } from "./SeriesGrid";
 import { Pagination } from "@/components/ui/Pagination";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Filter } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface PaginatedSeriesGridProps {
@@ -28,6 +28,7 @@ export function PaginatedSeriesGrid({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isChangingPage, setIsChangingPage] = useState(false);
+  const [showOnlyUnread, setShowOnlyUnread] = useState(searchParams.get("unread") === "true");
 
   // Réinitialiser l'état de chargement quand les séries changent
   useEffect(() => {
@@ -39,8 +40,26 @@ export function PaginatedSeriesGrid({
     // Créer un nouvel objet URLSearchParams pour manipuler les paramètres
     const params = new URLSearchParams(searchParams);
     params.set("page", page.toString());
+    if (showOnlyUnread) {
+      params.set("unread", "true");
+    }
 
     // Rediriger vers la nouvelle URL avec les paramètres mis à jour
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
+  const handleUnreadFilter = () => {
+    setIsChangingPage(true);
+    const params = new URLSearchParams(searchParams);
+    params.set("page", "1"); // Retourner à la première page lors du changement de filtre
+
+    if (!showOnlyUnread) {
+      params.set("unread", "true");
+    } else {
+      params.delete("unread");
+    }
+
+    setShowOnlyUnread(!showOnlyUnread);
     router.push(`${pathname}?${params.toString()}`);
   };
 
@@ -62,6 +81,13 @@ export function PaginatedSeriesGrid({
             "Aucune série trouvée"
           )}
         </p>
+        <button
+          onClick={handleUnreadFilter}
+          className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg hover:bg-accent hover:text-accent-foreground"
+        >
+          <Filter className="h-4 w-4" />
+          {showOnlyUnread ? "Afficher tout" : "À lire"}
+        </button>
       </div>
 
       <div className="relative">

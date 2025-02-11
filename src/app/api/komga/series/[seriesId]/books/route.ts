@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { serverCacheService } from "@/lib/services/server-cache.service";
 
-export async function GET(request: Request, { params }: { params: { libraryId: string } }) {
+export async function GET(request: Request, { params }: { params: { seriesId: string } }) {
   try {
     // Récupérer les credentials Komga depuis le cookie
     const configCookie = cookies().get("komgaCredentials");
@@ -24,18 +24,18 @@ export async function GET(request: Request, { params }: { params: { libraryId: s
     // Récupérer les paramètres de pagination et de filtre depuis l'URL
     const { searchParams } = new URL(request.url);
     const page = searchParams.get("page") || "0";
-    const size = searchParams.get("size") || "20";
+    const size = searchParams.get("size") || "24";
     const unreadOnly = searchParams.get("unread") === "true";
 
-    // Clé de cache unique pour cette page de séries
-    const cacheKey = `library-${params.libraryId}-series-${page}-${size}-${unreadOnly}`;
+    // Clé de cache unique pour cette page de tomes
+    const cacheKey = `series-${params.seriesId}-books-${page}-${size}-${unreadOnly}`;
 
-    // Fonction pour récupérer les séries
-    const fetchSeries = async () => {
+    // Fonction pour récupérer les tomes
+    const fetchBooks = async () => {
       // Construire l'URL avec les paramètres
-      let url = `${config.serverUrl}/api/v1/series?library_id=${params.libraryId}&page=${page}&size=${size}`;
+      let url = `${config.serverUrl}/api/v1/series/${params.seriesId}/books?page=${page}&size=${size}&sort=metadata.numberSort,asc`;
 
-      // Ajouter le filtre pour les séries non lues et en cours si nécessaire
+      // Ajouter le filtre pour les tomes non lus et en cours si nécessaire
       if (unreadOnly) {
         url += "&read_status=UNREAD&read_status=IN_PROGRESS";
       }
@@ -52,7 +52,7 @@ export async function GET(request: Request, { params }: { params: { libraryId: s
         const errorData = await response.json().catch(() => null);
         throw new Error(
           JSON.stringify({
-            error: "Erreur lors de la récupération des séries",
+            error: "Erreur lors de la récupération des tomes",
             details: errorData,
           })
         );
@@ -62,11 +62,11 @@ export async function GET(request: Request, { params }: { params: { libraryId: s
     };
 
     // Récupérer les données du cache ou faire l'appel API
-    const data = await serverCacheService.getOrSet(cacheKey, fetchSeries, 5 * 60); // Cache de 5 minutes
+    const data = await serverCacheService.getOrSet(cacheKey, fetchBooks, 5 * 60); // Cache de 5 minutes
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Erreur lors de la récupération des séries:", error);
+    console.error("Erreur lors de la récupération des tomes:", error);
     return NextResponse.json(
       {
         error: "Erreur serveur",
