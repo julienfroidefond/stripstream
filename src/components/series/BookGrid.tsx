@@ -43,6 +43,39 @@ interface BookCardProps {
 function BookCard({ book, onClick, getBookThumbnailUrl }: BookCardProps) {
   const [imageError, setImageError] = useState(false);
 
+  const getReadingStatusInfo = () => {
+    if (!book.readProgress) {
+      return {
+        label: "Non lu",
+        className: "bg-yellow-500/10 text-yellow-500",
+      };
+    }
+
+    if (book.readProgress.completed) {
+      const readDate = book.readProgress.readDate
+        ? new Date(book.readProgress.readDate).toLocaleDateString()
+        : null;
+      return {
+        label: readDate ? `Lu le ${readDate}` : "Lu",
+        className: "bg-green-500/10 text-green-500",
+      };
+    }
+
+    if (book.readProgress.page > 0) {
+      return {
+        label: `Page ${book.readProgress.page}/${book.media.pagesCount}`,
+        className: "bg-blue-500/10 text-blue-500",
+      };
+    }
+
+    return {
+      label: "Non lu",
+      className: "bg-yellow-500/10 text-yellow-500",
+    };
+  };
+
+  const statusInfo = getReadingStatusInfo();
+
   return (
     <button
       onClick={onClick}
@@ -61,7 +94,7 @@ function BookCard({ book, onClick, getBookThumbnailUrl }: BookCardProps) {
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <ImageOff className="w-12 h-12" />
+            <ImageOff className="w-12 w-12" />
           </div>
         )}
       </div>
@@ -75,6 +108,11 @@ function BookCard({ book, onClick, getBookThumbnailUrl }: BookCardProps) {
           {book.metadata.releaseDate && (
             <div>{new Date(book.metadata.releaseDate).toLocaleDateString()}</div>
           )}
+          <div className="flex items-center">
+            <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${statusInfo.className}`}>
+              {statusInfo.label}
+            </span>
+          </div>
           {book.size && <div className="text-[10px]">{book.size}</div>}
         </div>
       </div>

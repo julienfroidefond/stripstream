@@ -59,11 +59,13 @@ export interface Author {
 }
 
 export interface ReadProgress {
-  booksCount: number;
-  booksReadCount: number;
-  booksUnreadCount: number;
-  booksInProgressCount: number;
+  page: number;
   completed: boolean;
+  readDate: string | null;
+  created: string;
+  lastModified: string;
+  deviceId?: string;
+  deviceName?: string;
 }
 
 export interface KomgaBook {
@@ -80,6 +82,7 @@ export interface KomgaBook {
   size: string;
   media: BookMedia;
   metadata: BookMetadata;
+  readProgress: ReadProgress | null;
 }
 
 export interface BookMedia {
