@@ -99,21 +99,26 @@ function MediaCard({ item, onClick }: MediaCardProps) {
   };
 
   return (
-    <button
+    <div
       onClick={handleClick}
-      className="flex-shrink-0 w-[200px] relative flex flex-col rounded-lg border bg-card text-card-foreground shadow-sm hover:bg-accent hover:text-accent-foreground transition-colors overflow-hidden"
+      className="flex-shrink-0 w-[200px] relative flex flex-col rounded-lg border bg-card text-card-foreground shadow-sm hover:bg-accent hover:text-accent-foreground transition-colors overflow-hidden cursor-pointer"
     >
       {/* Image de couverture */}
       <div className="relative aspect-[2/3] bg-muted">
         {!imageError ? (
-          <Image
-            src={`/api/komga/images/${isSeries ? "series" : "books"}/${item.id}/thumbnail`}
-            alt={`Couverture de ${title}`}
-            fill
-            className="object-cover"
-            sizes="200px"
-            onError={() => setImageError(true)}
-          />
+          <div className="absolute inset-0">
+            <Image
+              src={`/api/komga/images/${isSeries ? "series" : "books"}/${item.id}/thumbnail`}
+              alt={`Couverture de ${title}`}
+              width={200}
+              height={300}
+              className="w-full h-full object-cover"
+              sizes="200px"
+              priority={true}
+              loading="eager"
+              onError={() => setImageError(true)}
+            />
+          </div>
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <ImageOff className="w-12 h-12" />
@@ -130,6 +135,6 @@ function MediaCard({ item, onClick }: MediaCardProps) {
           )}
         </div>
       </div>
-    </button>
+    </div>
   );
 }

@@ -51,14 +51,19 @@ function CoverImage({ series }: CoverImageProps) {
   return (
     <div className="relative aspect-[2/3] bg-muted rounded-lg overflow-hidden">
       {!imageError ? (
-        <Image
-          src={`/api/komga/images/series/${series.id}/thumbnail`}
-          alt={`Couverture de ${series.metadata.title}`}
-          fill
-          className="object-cover"
-          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16.666vw"
-          onError={() => setImageError(true)}
-        />
+        <div className="absolute inset-0">
+          <Image
+            src={`/api/komga/images/series/${series.id}/thumbnail`}
+            alt={`Couverture de ${series.metadata.title}`}
+            width={200}
+            height={300}
+            className="w-full h-full object-cover"
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16.666vw"
+            priority={true}
+            loading="eager"
+            onError={() => setImageError(true)}
+          />
+        </div>
       ) : (
         <div className="w-full h-full flex items-center justify-center">
           <ImageOff className="w-8 h-8" />
