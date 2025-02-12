@@ -46,9 +46,9 @@ Application web moderne pour la lecture de BD/mangas/comics via un serveur Komga
 - [ ] Synchronisation de l'état de lecture avec Komga
 - [ ] Revue du système de cache
   - [ ] Optimisation du cache côté serveur
-  - [ ] Gestion intelligente du TTL par type de données
+  - [x] Gestion intelligente du TTL par type de données
   - [ ] Invalidation du cache sur les mutations
-  - [ ] Stratégie de revalidation à la demande
+  - [x] Stratégie de revalidation à la demande
 
 ### Gestion des utilisateurs
 
@@ -125,14 +125,22 @@ Application web moderne pour la lecture de BD/mangas/comics via un serveur Komga
   - [x] Redirection après connexion
 - [x] Page de paramètres
   - [x] Formulaire de configuration Komga
-  - [x] Validation de l'URL du serveur
-  - [x] Test de connexion en direct
-    - [x] Vérification des credentials via l'API Komga
+    - [x] Validation de l'URL du serveur
+    - [x] Test de connexion en direct
     - [x] Gestion des erreurs détaillée
     - [x] Messages d'erreur contextuels
   - [x] Sauvegarde des préférences
     - [x] Stockage sécurisé des credentials Komga
     - [x] Persistance des paramètres
+  - [x] Configuration du cache
+    - [x] Gestion des TTL par type de données
+    - [x] Interface de configuration intuitive
+    - [x] Nettoyage du cache à la demande
+  - [x] UI/UX optimisée
+    - [x] Layout compact et centré
+    - [x] Hiérarchie visuelle claire
+    - [x] Composants redimensionnés
+    - [x] Espacement optimisé
 
 ## 📱 Interface utilisateur
 
