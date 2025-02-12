@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 // Routes qui ne nécessitent pas d'authentification
-const publicRoutes = ["/login", "/register"];
+const publicRoutes = ["/login", "/register", "/images"];
 
 // Routes d'API qui ne nécessitent pas d'authentification
 const publicApiRoutes = ["/api/auth/login", "/api/auth/register", "/api/komga/test"];
@@ -10,8 +10,12 @@ const publicApiRoutes = ["/api/auth/login", "/api/auth/register", "/api/komga/te
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Vérifier si c'est une route publique
-  if (publicRoutes.includes(pathname) || publicApiRoutes.includes(pathname)) {
+  // Vérifier si c'est une route publique ou commence par /images/
+  if (
+    publicRoutes.includes(pathname) ||
+    publicApiRoutes.includes(pathname) ||
+    pathname.startsWith("/images/")
+  ) {
     return NextResponse.next();
   }
 
@@ -63,8 +67,9 @@ export const config = {
      * 1. /api/auth/* (authentication routes)
      * 2. /_next/* (Next.js internals)
      * 3. /fonts/* (inside public directory)
-     * 4. /favicon.ico, /sitemap.xml (public files)
+     * 4. /images/* (inside public directory)
+     * 5. /favicon.ico, /sitemap.xml (public files)
      */
-    "/((?!api/auth|_next/static|_next/image|fonts|favicon.ico|sitemap.xml).*)",
+    "/((?!api/auth|_next/static|_next/image|fonts|images|favicon.ico|sitemap.xml).*)",
   ],
 };
