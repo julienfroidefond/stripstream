@@ -1,4 +1,4 @@
-import { BookOpen, Home, Library, Settings, LogOut } from "lucide-react";
+import { BookOpen, Home, Library, Settings, LogOut, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -16,6 +16,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
   const router = useRouter();
   const [libraries, setLibraries] = useState<KomgaLibrary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // Initialiser l'authentification au montage du composant
@@ -35,38 +36,44 @@ export function Sidebar({ isOpen }: SidebarProps) {
   }, []);
 
   // Effet séparé pour charger les bibliothèques
+  const fetchLibraries = async () => {
+    if (!isAuthenticated) {
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      console.log("Sidebar - Fetching libraries...");
+      const response = await fetch("/api/komga/libraries");
+      if (!response.ok) {
+        throw new Error(`Erreur ${response.status} lors de la récupération des bibliothèques`);
+      }
+      const data = await response.json();
+      console.log("Sidebar - Libraries fetched:", data.length);
+      setLibraries(data);
+    } catch (error) {
+      console.error("Sidebar - Error fetching libraries:", error);
+      if (
+        error instanceof Error &&
+        (error.message.includes("401") || error.message.includes("403"))
+      ) {
+        console.log("Sidebar - Auth error, logging out");
+        handleLogout();
+      }
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchLibraries = async () => {
-      if (!isAuthenticated) {
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        console.log("Sidebar - Fetching libraries...");
-        const response = await fetch("/api/komga/libraries");
-        if (!response.ok) {
-          throw new Error(`Erreur ${response.status} lors de la récupération des bibliothèques`);
-        }
-        const data = await response.json();
-        console.log("Sidebar - Libraries fetched:", data.length);
-        setLibraries(data);
-      } catch (error) {
-        console.error("Sidebar - Error fetching libraries:", error);
-        if (
-          error instanceof Error &&
-          (error.message.includes("401") || error.message.includes("403"))
-        ) {
-          console.log("Sidebar - Auth error, logging out");
-          handleLogout();
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchLibraries();
   }, [isAuthenticated, pathname]);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchLibraries();
+  };
 
   const handleLogout = () => {
     console.log("Sidebar - Logging out");
@@ -119,7 +126,17 @@ export function Sidebar({ isOpen }: SidebarProps) {
           <>
             <div className="px-3 py-2">
               <div className="space-y-1">
-                <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">Bibliothèques</h2>
+                <div className="mb-2 px-4 flex items-center justify-between">
+                  <h2 className="text-lg font-semibold tracking-tight">Bibliothèques</h2>
+                  <button
+                    onClick={handleRefresh}
+                    disabled={isRefreshing}
+                    className="p-1 hover:bg-accent hover:text-accent-foreground rounded-md transition-colors"
+                    aria-label="Rafraîchir les bibliothèques"
+                  >
+                    <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
+                  </button>
+                </div>
                 {isLoading ? (
                   <div className="px-3 py-2 text-sm text-muted-foreground">Chargement...</div>
                 ) : libraries.length === 0 ? (
