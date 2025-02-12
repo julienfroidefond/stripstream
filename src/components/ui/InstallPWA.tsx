@@ -1,38 +1,74 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Download } from "lucide-react";
+import { Download, X } from "lucide-react";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
+const DISMISS_KEY = "pwa-install-dismissed";
+const DISMISS_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 jours en millisecondes
+
 export function InstallPWA() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstallable, setIsInstallable] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
+  const [isDismissed, setIsDismissed] = useState(true);
+  const [isStandalone, setIsStandalone] = useState(true); // Par défaut true pour éviter le flash
 
   useEffect(() => {
+    // Vérifier si on est en mode standalone (PWA)
+    const checkStandalone = () => {
+      return (
+        window.matchMedia("(display-mode: standalone)").matches ||
+        (window.navigator as any).standalone ||
+        document.referrer.includes("android-app://")
+      );
+    };
+
+    // Vérifier si l'invite a été fermée récemment
+    const checkDismissed = () => {
+      const dismissedAt = localStorage.getItem(DISMISS_KEY);
+      if (dismissedAt) {
+        const dismissedTime = parseInt(dismissedAt, 10);
+        const now = Date.now();
+        if (now - dismissedTime < DISMISS_DURATION) {
+          return true;
+        }
+      }
+      return false;
+    };
+
     // Détecter si c'est un appareil iOS
-    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent);
     setIsIOS(isIOSDevice);
+
+    // Initialiser les états
+    setIsStandalone(checkStandalone());
+    setIsDismissed(checkDismissed());
 
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
-      setIsInstallable(true);
+      if (!checkDismissed() && !checkStandalone()) {
+        setIsInstallable(true);
+      }
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
 
-    // Vérifier si l'app est déjà installée
-    if (window.matchMedia("(display-mode: standalone)").matches) {
-      setIsInstallable(false);
-    }
+    // Écouter les changements de mode d'affichage
+    const displayModeQuery = window.matchMedia("(display-mode: standalone)");
+    const handleDisplayModeChange = (e: MediaQueryListEvent) => {
+      setIsStandalone(e.matches);
+    };
+    displayModeQuery.addEventListener("change", handleDisplayModeChange);
 
     return () => {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+      displayModeQuery.removeEventListener("change", handleDisplayModeChange);
     };
   }, []);
 
@@ -53,7 +89,16 @@ export function InstallPWA() {
     setDeferredPrompt(null);
   };
 
-  if (!isInstallable && !isIOS) return null;
+  const handleDismiss = () => {
+    localStorage.setItem(DISMISS_KEY, Date.now().toString());
+    setIsDismissed(true);
+  };
+
+  // Ne pas afficher si :
+  // - L'app n'est pas installable ET ce n'est pas iOS
+  // - OU si l'invite a été fermée
+  // - OU si on est en mode standalone (PWA)
+  if ((!isInstallable && !isIOS) || isDismissed || isStandalone) return null;
 
   return (
     <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 z-50">
@@ -81,6 +126,13 @@ export function InstallPWA() {
               </button>
             )}
           </div>
+          <button
+            onClick={handleDismiss}
+            className="p-1 hover:bg-accent hover:text-accent-foreground rounded-md transition-colors"
+            aria-label="Fermer"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
       </div>
     </div>
