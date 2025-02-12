@@ -113,6 +113,7 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
         const blob = await response.blob();
         const url = URL.createObjectURL(blob);
 
+        console.log("PRELOAD", pageNumber);
         pageCache.current[pageNumber] = {
           blob,
           url,
@@ -127,12 +128,21 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
 
   // Fonction pour précharger les prochaines pages
   const preloadNextPages = useCallback(
-    async (currentPageNumber: number, count: number = 2) => {
-      const pagesToPreload = Array.from(
-        { length: count },
-        (_, i) => currentPageNumber + i + 1
-      ).filter((page) => page <= pages.length);
+    async (currentPageNumber: number) => {
+      // Préchargement des pages suivantes
+      const nextPages = Array.from({ length: 4 }, (_, i) => currentPageNumber + i + 1).filter(
+        (page) => page <= pages.length
+      );
 
+      // Préchargement des pages précédentes
+      const previousPages = Array.from({ length: 2 }, (_, i) => currentPageNumber - i - 1).filter(
+        (page) => page >= 1
+      );
+
+      // Combiner les pages à précharger
+      const pagesToPreload = [...nextPages, ...previousPages];
+
+      // Précharger toutes les pages en parallèle
       await Promise.all(pagesToPreload.map(preloadPage));
     },
     [pages.length, preloadPage]
@@ -140,7 +150,8 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
 
   // Nettoyer le cache des pages trop anciennes
   const cleanCache = useCallback(
-    (currentPageNumber: number, maxDistance: number = 5) => {
+    (currentPageNumber: number) => {
+      const maxDistance = 8; // On garde plus de pages en cache
       const minPage = Math.max(1, currentPageNumber - maxDistance);
       const maxPage = Math.min(pages.length, currentPageNumber + maxDistance);
 
@@ -158,6 +169,11 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
   // Fonction pour obtenir l'URL d'une page
   const getPageUrl = useCallback(
     (pageNumber: number) => {
+      // Si la page est dans le cache, utiliser l'URL du cache
+      if (pageCache.current[pageNumber]) {
+        return pageCache.current[pageNumber].url;
+      }
+      // Sinon, retourner l'URL de l'API
       return `/api/komga/images/books/${book.id}/pages/${pageNumber}`;
     },
     [book.id]
@@ -171,11 +187,70 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
     [book.id]
   );
 
-  // Effet pour précharger les pages au changement de page
+  // Effet pour précharger la page courante et les pages adjacentes
   useEffect(() => {
-    preloadNextPages(currentPage);
+    const preloadCurrentPages = async () => {
+      // Précharger la page courante si elle n'est pas dans le cache
+      if (!pageCache.current[currentPage]) {
+        await preloadPage(currentPage);
+      }
+
+      // En mode double page, précharger aussi la page suivante si nécessaire
+      if (
+        isDoublePage &&
+        shouldShowDoublePage(currentPage) &&
+        !pageCache.current[currentPage + 1]
+      ) {
+        await preloadPage(currentPage + 1);
+      }
+
+      // Lancer le préchargement des pages suivantes et précédentes
+      const preloadPagesForCurrentMode = async () => {
+        if (isDoublePage) {
+          // En mode double page, on précharge plus de pages
+          const pagesToPreload = [];
+          // Pages suivantes
+          for (let i = 1; i <= 3; i++) {
+            const nextPage = currentPage + i * 2;
+            if (nextPage <= pages.length) {
+              pagesToPreload.push(nextPage);
+              if (nextPage + 1 <= pages.length) {
+                pagesToPreload.push(nextPage + 1);
+              }
+            }
+          }
+          // Pages précédentes
+          for (let i = 1; i <= 2; i++) {
+            const prevPage = currentPage - i * 2;
+            if (prevPage >= 1) {
+              pagesToPreload.push(prevPage);
+              if (prevPage + 1 <= pages.length) {
+                pagesToPreload.push(prevPage + 1);
+              }
+            }
+          }
+          await Promise.all(pagesToPreload.map(preloadPage));
+        } else {
+          // En mode simple page, on utilise la fonction standard
+          await preloadNextPages(currentPage);
+        }
+      };
+
+      // Lancer le préchargement en arrière-plan
+      preloadPagesForCurrentMode();
+    };
+
+    preloadCurrentPages();
     cleanCache(currentPage);
-  }, [currentPage, preloadNextPages, cleanCache]);
+  }, [
+    currentPage,
+    isDoublePage,
+    shouldShowDoublePage,
+    preloadPage,
+    preloadNextPages,
+    cleanCache,
+    pages.length,
+  ]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
