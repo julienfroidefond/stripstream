@@ -6,11 +6,11 @@ type CacheEntry = {
 
 class ServerCacheService {
   private static instance: ServerCacheService;
-  private cache: Map<string, CacheEntry>;
+  private cache: Map<string, { data: unknown; expiry: number }> = new Map();
   private defaultTTL = 5 * 60; // 5 minutes en secondes
 
   private constructor() {
-    this.cache = new Map();
+    // Private constructor to prevent external instantiation
   }
 
   public static getInstance(): ServerCacheService {
@@ -26,8 +26,7 @@ class ServerCacheService {
   set(key: string, data: any, ttl: number = this.defaultTTL): void {
     this.cache.set(key, {
       data,
-      timestamp: Date.now(),
-      ttl,
+      expiry: Date.now() + ttl * 1000,
     });
   }
 
@@ -35,16 +34,16 @@ class ServerCacheService {
    * Récupère des données du cache si elles sont valides
    */
   get(key: string): any | null {
-    const entry = this.cache.get(key);
-    if (!entry) return null;
+    const cached = this.cache.get(key);
+    if (!cached) return null;
 
     const now = Date.now();
-    if (now - entry.timestamp > entry.ttl * 1000) {
-      this.cache.delete(key);
-      return null;
+    if (cached.expiry > now) {
+      return cached.data;
     }
 
-    return entry.data;
+    this.cache.delete(key);
+    return null;
   }
 
   /**
@@ -64,19 +63,28 @@ class ServerCacheService {
   /**
    * Récupère des données du cache ou exécute la fonction si nécessaire
    */
-  async getOrSet<T>(
-    key: string,
-    fetcher: () => Promise<T>,
-    ttl: number = this.defaultTTL
-  ): Promise<T> {
-    const cachedData = this.get(key);
-    if (cachedData) {
-      return cachedData;
+  async getOrSet<T>(key: string, fetcher: () => Promise<T>, ttl: number): Promise<T> {
+    const now = Date.now();
+    const cached = this.cache.get(key);
+
+    if (cached && cached.expiry > now) {
+      return cached.data as T;
     }
 
-    const data = await fetcher();
-    this.set(key, data, ttl);
-    return data;
+    try {
+      const data = await fetcher();
+      this.cache.set(key, {
+        data,
+        expiry: now + ttl * 1000,
+      });
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  invalidate(key: string): void {
+    this.cache.delete(key);
   }
 }
 

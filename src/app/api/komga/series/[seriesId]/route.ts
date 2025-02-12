@@ -1,75 +1,23 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import { SeriesService } from "@/lib/services/series.service";
 
 export async function GET(request: Request, { params }: { params: { seriesId: string } }) {
   try {
-    // Récupérer les credentials Komga depuis le cookie
-    const configCookie = cookies().get("komgaCredentials");
-    if (!configCookie) {
-      return NextResponse.json({ error: "Configuration Komga manquante" }, { status: 401 });
-    }
-
-    let config;
-    try {
-      config = JSON.parse(atob(configCookie.value));
-    } catch (error) {
-      return NextResponse.json({ error: "Configuration Komga invalide" }, { status: 401 });
-    }
-
-    if (!config.credentials?.username || !config.credentials?.password) {
-      return NextResponse.json({ error: "Credentials Komga manquants" }, { status: 401 });
-    }
-
-    const auth = Buffer.from(
-      `${config.credentials.username}:${config.credentials.password}`
-    ).toString("base64");
-
-    // Récupérer les paramètres de pagination depuis l'URL
     const { searchParams } = new URL(request.url);
-    const page = searchParams.get("page") || "0";
-    const size = searchParams.get("size") || "24";
+    const page = parseInt(searchParams.get("page") || "0");
+    const size = parseInt(searchParams.get("size") || "24");
+    const unreadOnly = searchParams.get("unread") === "true";
 
-    // Appel à l'API Komga pour récupérer les détails de la série
-    const [seriesResponse, booksResponse] = await Promise.all([
-      // Détails de la série
-      fetch(`${config.serverUrl}/api/v1/series/${params.seriesId}`, {
-        headers: {
-          Authorization: `Basic ${auth}`,
-        },
-      }),
-      // Liste des tomes avec pagination
-      fetch(
-        `${config.serverUrl}/api/v1/series/${params.seriesId}/books?page=${page}&size=${size}&sort=metadata.numberSort,asc`,
-        {
-          headers: {
-            Authorization: `Basic ${auth}`,
-          },
-        }
-      ),
+    const [series, books] = await Promise.all([
+      SeriesService.getSeries(params.seriesId),
+      SeriesService.getSeriesBooks(params.seriesId, page, size, unreadOnly),
     ]);
-
-    if (!seriesResponse.ok || !booksResponse.ok) {
-      const errorResponse = !seriesResponse.ok ? seriesResponse : booksResponse;
-      const errorData = await errorResponse.json().catch(() => null);
-      return NextResponse.json(
-        {
-          error: "Erreur lors de la récupération des données de la série",
-          details: errorData,
-        },
-        { status: errorResponse.status }
-      );
-    }
-
-    const [series, books] = await Promise.all([seriesResponse.json(), booksResponse.json()]);
 
     return NextResponse.json({ series, books });
   } catch (error) {
-    console.error("Erreur lors de la récupération de la série:", error);
+    console.error("API Series - Erreur:", error);
     return NextResponse.json(
-      {
-        error: "Erreur serveur",
-        details: error instanceof Error ? error.message : "Erreur inconnue",
-      },
+      { error: "Erreur lors de la récupération de la série" },
       { status: 500 }
     );
   }

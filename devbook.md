@@ -37,9 +37,11 @@ Créer une application web moderne avec Next.js permettant de lire des fichiers 
 
 ### Améliorations techniques
 
-- [ ] Refactorisation des services API
-  - [ ] Mutualisation du code de gestion des cookies
-  - [ ] Création d'un middleware commun
+- [x] Refactorisation des services API
+  - [x] Création d'un service de base avec gestion des cookies
+  - [x] Création d'un middleware commun
+  - [x] Mutualisation du code de gestion du cache
+  - [x] Création des services spécialisés (Library, Series, Book, Home)
 - [ ] Mise à jour des API deprecated
 - [ ] Synchronisation de l'état de lecture avec Komga
 - [ ] Revue du système de cache
