@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { authService } from "@/lib/services/auth.service";
 import { useEffect, useState } from "react";
 import { KomgaLibrary } from "@/types/komga";
+import { storageService } from "@/lib/services/storage.service";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -17,39 +18,60 @@ export function Sidebar({ isOpen }: SidebarProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  // Initialiser l'authentification au montage du composant
   useEffect(() => {
-    // Vérifier si l'utilisateur est authentifié
-    const checkAuth = () => {
-      const isAuth = authService.isAuthenticated();
-      setIsAuthenticated(isAuth);
-      return isAuth;
+    const initAuth = () => {
+      const credentials = storageService.getCredentials();
+      const user = storageService.getUser();
+      console.log("Sidebar - Init Auth:", { hasCredentials: !!credentials, hasUser: !!user });
+      if (credentials && user) {
+        setIsAuthenticated(true);
+        return true;
+      }
+      return false;
     };
 
+    initAuth();
+  }, []);
+
+  // Effet séparé pour charger les bibliothèques
+  useEffect(() => {
     const fetchLibraries = async () => {
-      if (!checkAuth()) {
+      if (!isAuthenticated) {
         setIsLoading(false);
         return;
       }
 
       try {
+        console.log("Sidebar - Fetching libraries...");
         const response = await fetch("/api/komga/libraries");
         if (!response.ok) {
-          throw new Error("Erreur lors de la récupération des bibliothèques");
+          throw new Error(`Erreur ${response.status} lors de la récupération des bibliothèques`);
         }
         const data = await response.json();
+        console.log("Sidebar - Libraries fetched:", data.length);
         setLibraries(data);
       } catch (error) {
-        console.error("Erreur:", error);
+        console.error("Sidebar - Error fetching libraries:", error);
+        if (
+          error instanceof Error &&
+          (error.message.includes("401") || error.message.includes("403"))
+        ) {
+          console.log("Sidebar - Auth error, logging out");
+          handleLogout();
+        }
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchLibraries();
-  }, [pathname]); // Recharger quand le pathname change pour gérer la déconnexion
+  }, [isAuthenticated, pathname]);
 
   const handleLogout = () => {
+    console.log("Sidebar - Logging out");
     authService.logout();
+    storageService.clearAll(); // Nettoyer tout le stockage
     setIsAuthenticated(false);
     setLibraries([]);
     router.push("/login");

@@ -142,6 +142,23 @@ class StorageService {
     document.cookie = `${CREDENTIALS_KEY}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
     document.cookie = `${USER_KEY}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
   }
+
+  getUser() {
+    try {
+      const userStr = localStorage.getItem("komgaUser");
+      if (!userStr) return null;
+      return JSON.parse(atob(userStr));
+    } catch (error) {
+      console.error("Erreur lors de la récupération de l'utilisateur:", error);
+      return null;
+    }
+  }
+
+  clearAll() {
+    localStorage.removeItem("komgaUser");
+    localStorage.removeItem("komgaCredentials");
+    localStorage.removeItem("ttlConfig");
+  }
 }
 
 export const storageService = StorageService.getInstance();
