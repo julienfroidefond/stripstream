@@ -5,7 +5,7 @@ import "@/styles/globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Paniels - Komga Reader",
+  title: "StripStream - Komga Reader",
   description: "A modern web reader for Komga",
 };
 

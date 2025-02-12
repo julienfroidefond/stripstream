@@ -31,7 +31,7 @@ export function HeroSection({ series }: HeroSectionProps) {
       {/* Contenu */}
       <div className="relative h-full container flex flex-col items-center justify-center text-center space-y-4">
         <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight">
-          Bienvenue sur Paniels
+          Bienvenue sur StripStream
         </h1>
         <p className="text-xl text-muted-foreground max-w-[600px]">
           Votre bibliothèque numérique pour lire vos BD, mangas et comics préférés.

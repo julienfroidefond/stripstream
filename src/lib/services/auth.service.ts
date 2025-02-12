@@ -11,11 +11,11 @@ interface AuthUser {
 
 // Utilisateur de développement
 const DEV_USER = {
-  email: "demo@paniels.local",
+  email: "demo@stripstream.local",
   password: "demo123",
   userData: {
     id: "1",
-    email: "demo@paniels.local",
+    email: "demo@stripstream.local",
     roles: ["ROLE_USER"],
     authenticated: true,
   } as AuthUser,

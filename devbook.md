@@ -1,4 +1,4 @@
-# 📚 Paniels - Devbook
+# 📚 StripStream - Devbook
 
 ## 🎯 Objectifs
 
