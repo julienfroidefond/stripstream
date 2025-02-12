@@ -444,13 +444,13 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
 
         {/* Barre de navigation des pages */}
         <div
-          className={`absolute bottom-0 left-0 right-0 bg-background/50 backdrop-blur-sm border-t border-border/40 transition-all duration-300 ease-in-out ${
+          className={`absolute bottom-0 left-0 right-0 bg-background/50 backdrop-blur-sm border-t border-border/40 transition-all duration-300 ease-in-out z-30 ${
             showNavigation ? "h-32 opacity-100" : "h-0 opacity-0"
           }`}
         >
           {showNavigation && (
             <>
-              <div className="absolute inset-y-0 left-4 flex items-center">
+              <div className="absolute inset-y-0 left-4 flex items-center z-40">
                 <button
                   onClick={() => {
                     const container = document.getElementById("thumbnails-container");
@@ -467,7 +467,7 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
 
               <div
                 id="thumbnails-container"
-                className="h-full mx-16 overflow-x-auto flex items-center gap-2 px-4 hide-scrollbar scroll-smooth"
+                className="h-full mx-16 overflow-x-auto flex items-center gap-2 px-4 scroll-smooth"
               >
                 {pages.map((_, index) => {
                   const pageNumber = index + 1;
