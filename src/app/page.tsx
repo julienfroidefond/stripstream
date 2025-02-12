@@ -4,6 +4,7 @@ import { HomeContent } from "@/components/home/HomeContent";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { KomgaBook, KomgaSeries } from "@/types/komga";
+import { useToast } from "@/components/ui/use-toast";
 
 interface HomeData {
   ongoing: KomgaSeries[];
@@ -13,6 +14,7 @@ interface HomeData {
 
 export default function HomePage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [data, setData] = useState<HomeData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +29,6 @@ export default function HomePage() {
         }
 
         const jsonData = await response.json();
-        // Transformer les données pour correspondre à l'interface HomeData
         setData({
           ongoing: jsonData.ongoing || [],
           recentlyRead: jsonData.recentlyRead || [],
@@ -35,14 +36,25 @@ export default function HomePage() {
         });
       } catch (error) {
         console.error("Erreur lors de la récupération des données:", error);
-        setError(error instanceof Error ? error.message : "Une erreur est survenue");
+        const errorMessage = error instanceof Error ? error.message : "Une erreur est survenue";
+        setError(errorMessage);
+
+        // Si l'erreur indique une configuration manquante, rediriger vers les préférences
+        if (errorMessage.includes("Configuration Komga manquante")) {
+          toast({
+            title: "Configuration requise",
+            description: "Veuillez configurer votre serveur Komga pour continuer",
+            variant: "destructive",
+          });
+          router.push("/settings");
+        }
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchHomeData();
-  }, []);
+  }, [router, toast]);
 
   if (isLoading) {
     return (
@@ -66,7 +78,7 @@ export default function HomePage() {
 
   if (error) {
     return (
-      <main className="container mx-auto px-4 py-8 space-y-12">
+      <main className="container mx-auto px-4 py-8">
         <div className="rounded-md bg-destructive/15 p-4">
           <p className="text-sm text-destructive">{error}</p>
         </div>
@@ -74,8 +86,5 @@ export default function HomePage() {
     );
   }
 
-  if (!data) return null;
-  console.log("PAGE", data);
-
-  return <HomeContent data={data} />;
+  return data ? <HomeContent data={data} /> : null;
 }
