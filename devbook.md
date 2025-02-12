@@ -26,6 +26,44 @@ Créer une application web moderne avec Next.js permettant de lire des fichiers 
   - [x] Zoom et pan
   - [x] Préchargement des pages
 
+## 🚀 Fonctionnalités à venir
+
+### Gestion des séries
+
+- [ ] Système de favoris
+  - [ ] Ajout/suppression des favoris sur les séries
+  - [ ] Menu dédié dans la sidebar
+  - [ ] Synchronisation avec Komga
+
+### Améliorations techniques
+
+- [ ] Refactorisation des services API
+  - [ ] Mutualisation du code de gestion des cookies
+  - [ ] Création d'un middleware commun
+- [ ] Mise à jour des API deprecated
+- [ ] Synchronisation de l'état de lecture avec Komga
+- [ ] Revue du système de cache
+  - [ ] Optimisation du cache côté serveur
+  - [ ] Gestion intelligente du TTL par type de données
+  - [ ] Invalidation du cache sur les mutations
+  - [ ] Stratégie de revalidation à la demande
+
+### Gestion des utilisateurs
+
+- [ ] Système d'inscription
+- [ ] Profil utilisateur enrichi
+  - [ ] Nom/Prénom
+  - [ ] Email
+  - [ ] Préférences personnalisées
+- [ ] Gestion des rôles et permissions
+
+### Fonctionnalités avancées
+
+- [ ] Téléchargement local des livres
+  - [ ] Bouton de téléchargement
+  - [ ] Gestion de la progression
+  - [ ] Stockage local sécurisé
+
 ## 🛠 Configuration initiale
 
 - [x] Mise en place du projet Next.js
