@@ -2,6 +2,16 @@ import { AuthConfig } from "@/types/auth";
 
 const CREDENTIALS_KEY = "komgaCredentials";
 const USER_KEY = "komgaUser";
+const TTL_CONFIG_KEY = "ttlConfig";
+
+interface TTLConfig {
+  defaultTTL: number;
+  homeTTL: number;
+  librariesTTL: number;
+  seriesTTL: number;
+  booksTTL: number;
+  imagesTTL: number;
+}
 
 class StorageService {
   private static instance: StorageService;
@@ -95,6 +105,27 @@ class StorageService {
 
     try {
       return JSON.parse(atob(storage));
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Stocke la configuration des TTL
+   */
+  setTTLConfig(config: TTLConfig): void {
+    localStorage.setItem(TTL_CONFIG_KEY, JSON.stringify(config));
+  }
+
+  /**
+   * Récupère la configuration des TTL
+   */
+  getTTLConfig(): TTLConfig | null {
+    const stored = localStorage.getItem(TTL_CONFIG_KEY);
+    if (!stored) return null;
+
+    try {
+      return JSON.parse(stored);
     } catch {
       return null;
     }

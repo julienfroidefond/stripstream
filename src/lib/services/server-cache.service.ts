@@ -15,14 +15,13 @@ class ServerCacheService {
   private static readonly noCache = 0;
 
   // Configuration des temps de cache en secondes
-  private static readonly TTL = {
-    DEFAULT: ServerCacheService.fiveMinutes, // 5 minutes
-    HOME: ServerCacheService.oneMinute, // 1 minute
-    LIBRARIES: ServerCacheService.tenMinutes, // 10 minutes
-    SERIES: ServerCacheService.fiveMinutes, // 5 minutes
-    BOOKS: ServerCacheService.fiveMinutes, // 5 minutes
-    IMAGES: ServerCacheService.twentyFourHours, // 24 heures
-    READ_PROGRESS: ServerCacheService.oneMinute, // 1 minute
+  private static readonly DEFAULT_TTL = {
+    DEFAULT: ServerCacheService.fiveMinutes,
+    HOME: ServerCacheService.fiveMinutes,
+    LIBRARIES: ServerCacheService.twentyFourHours,
+    SERIES: ServerCacheService.fiveMinutes,
+    BOOKS: ServerCacheService.fiveMinutes,
+    IMAGES: ServerCacheService.twentyFourHours,
   };
 
   private constructor() {
@@ -39,17 +38,33 @@ class ServerCacheService {
   /**
    * Retourne le TTL pour un type de données spécifique
    */
-  public getTTL(type: keyof typeof ServerCacheService.TTL): number {
-    return ServerCacheService.TTL[type];
+  public getTTL(type: keyof typeof ServerCacheService.DEFAULT_TTL): number {
+    // Essayer de récupérer la configuration utilisateur
+    try {
+      const ttlConfig = localStorage.getItem("ttlConfig");
+      if (ttlConfig) {
+        const config = JSON.parse(ttlConfig);
+        const key = `${type.toLowerCase()}TTL` as keyof typeof config;
+        if (config[key]) {
+          // Convertir les minutes en secondes
+          return config[key] * 60;
+        }
+      }
+    } catch (error) {
+      console.error("Erreur lors de la lecture de la configuration TTL:", error);
+    }
+
+    // Utiliser la valeur par défaut si pas de configuration utilisateur
+    return ServerCacheService.DEFAULT_TTL[type];
   }
 
   /**
    * Met en cache des données avec une durée de vie
    */
-  set(key: string, data: any, type: keyof typeof ServerCacheService.TTL = "DEFAULT"): void {
+  set(key: string, data: any, type: keyof typeof ServerCacheService.DEFAULT_TTL = "DEFAULT"): void {
     this.cache.set(key, {
       data,
-      expiry: Date.now() + ServerCacheService.TTL[type] * 1000,
+      expiry: Date.now() + this.getTTL(type) * 1000,
     });
   }
 
@@ -89,7 +104,7 @@ class ServerCacheService {
   async getOrSet<T>(
     key: string,
     fetcher: () => Promise<T>,
-    type: keyof typeof ServerCacheService.TTL = "DEFAULT"
+    type: keyof typeof ServerCacheService.DEFAULT_TTL = "DEFAULT"
   ): Promise<T> {
     const now = Date.now();
     const cached = this.cache.get(key);
@@ -103,7 +118,7 @@ class ServerCacheService {
       const data = await fetcher();
       this.cache.set(key, {
         data,
-        expiry: now + ServerCacheService.TTL[type] * 1000,
+        expiry: now + this.getTTL(type) * 1000,
       });
       return data;
     } catch (error) {

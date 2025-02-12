@@ -3,14 +3,7 @@ import { AuthConfig } from "@/types/auth";
 import { serverCacheService } from "./server-cache.service";
 
 // Types de cache disponibles
-export type CacheType =
-  | "DEFAULT"
-  | "HOME"
-  | "LIBRARIES"
-  | "SERIES"
-  | "BOOKS"
-  | "IMAGES"
-  | "READ_PROGRESS";
+export type CacheType = "DEFAULT" | "HOME" | "LIBRARIES" | "SERIES" | "BOOKS" | "IMAGES";
 
 export abstract class BaseApiService {
   protected static async getKomgaConfig(): Promise<AuthConfig> {

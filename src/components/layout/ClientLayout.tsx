@@ -4,6 +4,7 @@ import { ThemeProvider } from "next-themes";
 import { useState, useEffect } from "react";
 import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
+import { Toaster } from "@/components/ui/toaster";
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -39,6 +40,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         <Header onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
         <Sidebar isOpen={isSidebarOpen} />
         <main className="container pt-4 md:pt-8">{children}</main>
+        <Toaster />
       </div>
     </ThemeProvider>
   );
