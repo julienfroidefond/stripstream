@@ -57,7 +57,7 @@ function LoginForm() {
               et fluide.
             </p>
             <footer className="text-sm text-muted-foreground">
-              Identifiants de démo : demo@slipstream.local / demo123
+              Identifiants de démo : demo@stripstream.local / demo123
             </footer>
           </blockquote>
         </div>
@@ -84,7 +84,7 @@ function LoginForm() {
                 type="email"
                 autoComplete="email"
                 required
-                defaultValue="demo@slipstream.local"
+                defaultValue="demo@stripstream.local"
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               />
             </div>
