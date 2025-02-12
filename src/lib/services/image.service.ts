@@ -47,6 +47,10 @@ export class ImageService extends BaseApiService {
   }
 
   static getBookPageUrl(bookId: string, pageNumber: number): string {
-    return `/api/komga/books/${bookId}/pages/${pageNumber}`;
+    return `/api/komga/images/books/${bookId}/pages/${pageNumber}`;
+  }
+
+  static getBookPageThumbnailUrl(bookId: string, pageNumber: number): string {
+    return `/api/komga/images/books/${bookId}/pages/${pageNumber}/thumbnail`;
   }
 }

@@ -4,6 +4,7 @@ import { KomgaBook } from "@/types/komga";
 import { ImageOff } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
+import { formatDate } from "@/lib/utils";
 
 interface BookGridProps {
   books: KomgaBook[];
@@ -21,9 +22,7 @@ const getReadingStatusInfo = (book: KomgaBook) => {
   }
 
   if (book.readProgress.completed) {
-    const readDate = book.readProgress.readDate
-      ? new Date(book.readProgress.readDate).toLocaleDateString()
-      : null;
+    const readDate = book.readProgress.readDate ? formatDate(book.readProgress.readDate) : null;
     return {
       label: readDate ? `Lu le ${readDate}` : "Lu",
       className: "bg-green-500/10 text-green-500",
@@ -104,9 +103,7 @@ function BookCard({ book, onClick, getBookThumbnailUrl }: BookCardProps) {
     }
 
     if (book.readProgress.completed) {
-      const readDate = book.readProgress.readDate
-        ? new Date(book.readProgress.readDate).toLocaleDateString()
-        : null;
+      const readDate = book.readProgress.readDate ? formatDate(book.readProgress.readDate) : null;
       return {
         label: readDate ? `Lu le ${readDate}` : "Lu",
         className: "bg-green-500/10 text-green-500",

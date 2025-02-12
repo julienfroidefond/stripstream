@@ -8,7 +8,13 @@ export async function GET(
   { params }: { params: { bookId: string; pageNumber: string } }
 ) {
   try {
-    const response = await BookService.getPage(params.bookId, parseInt(params.pageNumber));
+    // Convertir le numéro de page en nombre
+    const pageNumber = parseInt(params.pageNumber);
+    if (isNaN(pageNumber) || pageNumber < 1) {
+      return NextResponse.json({ error: "Numéro de page invalide" }, { status: 400 });
+    }
+
+    const response = await BookService.getPage(params.bookId, pageNumber);
     const buffer = await response.arrayBuffer();
     const headers = new Headers();
     headers.set("Content-Type", response.headers.get("Content-Type") || "image/jpeg");

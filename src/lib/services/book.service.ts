@@ -1,5 +1,6 @@
 import { BaseApiService } from "./base-api.service";
 import { KomgaBook } from "@/types/komga";
+import { ImageService } from "./image.service";
 
 export class BookService extends BaseApiService {
   static async getBook(bookId: string): Promise<{ book: KomgaBook; pages: number[] }> {
@@ -63,11 +64,49 @@ export class BookService extends BaseApiService {
     }
   }
 
+  static async getPage(bookId: string, pageNumber: number): Promise<Response> {
+    try {
+      // Ajuster le numéro de page pour l'API Komga (zero-based)
+      const adjustedPageNumber = pageNumber - 1;
+      const response = await ImageService.getImage(
+        `books/${bookId}/pages/${adjustedPageNumber}?zero_based=true`
+      );
+      return new Response(response.buffer, {
+        headers: {
+          "Content-Type": response.contentType || "image/jpeg",
+        },
+      });
+    } catch (error) {
+      throw this.handleError(error, "Impossible de récupérer la page");
+    }
+  }
+
+  static async getPageThumbnail(bookId: string, pageNumber: number): Promise<Response> {
+    try {
+      // Ajuster le numéro de page pour l'API Komga (zero-based)
+      const adjustedPageNumber = pageNumber - 1;
+      const response = await ImageService.getImage(
+        `books/${bookId}/pages/${adjustedPageNumber}/thumbnail?zero_based=true`
+      );
+      return new Response(response.buffer, {
+        headers: {
+          "Content-Type": response.contentType || "image/jpeg",
+        },
+      });
+    } catch (error) {
+      throw this.handleError(error, "Impossible de récupérer la miniature");
+    }
+  }
+
   static getPageUrl(bookId: string, pageNumber: number): string {
-    return `/api/komga/books/${bookId}/pages/${pageNumber}`;
+    return `/api/komga/images/books/${bookId}/pages/${pageNumber}`;
+  }
+
+  static getPageThumbnailUrl(bookId: string, pageNumber: number): string {
+    return `/api/komga/images/books/${bookId}/pages/${pageNumber}/thumbnail`;
   }
 
   static getThumbnailUrl(bookId: string): string {
-    return `/api/komga/images/books/${bookId}/thumbnail`;
+    return ImageService.getBookThumbnailUrl(bookId);
   }
 }
