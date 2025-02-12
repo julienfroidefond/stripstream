@@ -19,6 +19,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
           onClick={onToggleSidebar}
           className="mr-2 px-2 hover:bg-accent hover:text-accent-foreground rounded-md"
           aria-label="Toggle sidebar"
+          id="sidebar-toggle"
         >
           <Menu className="h-5 w-5" />
         </button>
