@@ -15,9 +15,22 @@ export function Sidebar({ isOpen }: SidebarProps) {
   const router = useRouter();
   const [libraries, setLibraries] = useState<KomgaLibrary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
+    // Vérifier si l'utilisateur est authentifié
+    const checkAuth = () => {
+      const isAuth = authService.isAuthenticated();
+      setIsAuthenticated(isAuth);
+      return isAuth;
+    };
+
     const fetchLibraries = async () => {
+      if (!checkAuth()) {
+        setIsLoading(false);
+        return;
+      }
+
       try {
         const response = await fetch("/api/komga/libraries");
         if (!response.ok) {
@@ -33,10 +46,12 @@ export function Sidebar({ isOpen }: SidebarProps) {
     };
 
     fetchLibraries();
-  }, []);
+  }, [pathname]); // Recharger quand le pathname change pour gérer la déconnexion
 
   const handleLogout = () => {
     authService.logout();
+    setIsAuthenticated(false);
+    setLibraries([]);
     router.push("/login");
   };
 
@@ -78,58 +93,63 @@ export function Sidebar({ isOpen }: SidebarProps) {
           </div>
         </div>
 
-        <div className="px-3 py-2">
-          <div className="space-y-1">
-            <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">Bibliothèques</h2>
-            {isLoading ? (
-              <div className="px-3 py-2 text-sm text-muted-foreground">Chargement...</div>
-            ) : libraries.length === 0 ? (
-              <div className="px-3 py-2 text-sm text-muted-foreground">Aucune bibliothèque</div>
-            ) : (
-              libraries.map((library) => (
+        {isAuthenticated && (
+          <>
+            <div className="px-3 py-2">
+              <div className="space-y-1">
+                <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">Bibliothèques</h2>
+                {isLoading ? (
+                  <div className="px-3 py-2 text-sm text-muted-foreground">Chargement...</div>
+                ) : libraries.length === 0 ? (
+                  <div className="px-3 py-2 text-sm text-muted-foreground">Aucune bibliothèque</div>
+                ) : (
+                  libraries.map((library) => (
+                    <Link
+                      key={library.id}
+                      href={`/libraries/${library.id}`}
+                      className={cn(
+                        "flex items-center rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+                        pathname === `/libraries/${library.id}` ? "bg-accent" : "transparent"
+                      )}
+                    >
+                      <Library className="mr-2 h-4 w-4" />
+                      {library.name}
+                    </Link>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <div className="px-3 py-2">
+              <div className="space-y-1">
+                <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">Configuration</h2>
                 <Link
-                  key={library.id}
-                  href={`/libraries/${library.id}`}
+                  href="/settings"
                   className={cn(
                     "flex items-center rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
-                    pathname === `/libraries/${library.id}` ? "bg-accent" : "transparent"
+                    pathname === "/settings" ? "bg-accent" : "transparent"
                   )}
                 >
-                  <Library className="mr-2 h-4 w-4" />
-                  {library.name}
+                  <Settings className="mr-2 h-4 w-4" />
+                  Préférences
                 </Link>
-              ))
-            )}
-          </div>
-        </div>
-
-        <div className="px-3 py-2">
-          <div className="space-y-1">
-            <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">Configuration</h2>
-            <Link
-              href="/settings"
-              className={cn(
-                "flex items-center rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
-                pathname === "/settings" ? "bg-accent" : "transparent"
-              )}
-            >
-              <Settings className="mr-2 h-4 w-4" />
-              Préférences
-            </Link>
-          </div>
-        </div>
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
-      {/* Bouton de déconnexion */}
-      <div className="p-3 border-t border-border/40">
-        <button
-          onClick={handleLogout}
-          className="flex w-full items-center rounded-lg px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 hover:text-destructive"
-        >
-          <LogOut className="mr-2 h-4 w-4" />
-          Se déconnecter
-        </button>
-      </div>
+      {isAuthenticated && (
+        <div className="p-3 border-t border-border/40">
+          <button
+            onClick={handleLogout}
+            className="flex w-full items-center rounded-lg px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 hover:text-destructive"
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            Se déconnecter
+          </button>
+        </div>
+      )}
     </aside>
   );
 }
