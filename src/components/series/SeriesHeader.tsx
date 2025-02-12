@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { ImageOff } from "lucide-react";
 import { KomgaSeries } from "@/types/komga";
+import { useState, useEffect } from "react";
 
 interface SeriesHeaderProps {
   series: KomgaSeries;
@@ -10,6 +11,22 @@ interface SeriesHeaderProps {
 }
 
 export function SeriesHeader({ series, serverUrl }: SeriesHeaderProps) {
+  const [languageDisplay, setLanguageDisplay] = useState<string>(series.metadata.language);
+
+  useEffect(() => {
+    try {
+      if (series.metadata.language) {
+        const displayNames = new Intl.DisplayNames([navigator.language || "fr-FR"], {
+          type: "language",
+        });
+        setLanguageDisplay(displayNames.of(series.metadata.language) || series.metadata.language);
+      }
+    } catch (error) {
+      console.error("Erreur lors de la traduction de la langue:", error);
+      setLanguageDisplay(series.metadata.language);
+    }
+  }, [series.metadata.language]);
+
   return (
     <div className="flex flex-col md:flex-row gap-8">
       {/* Couverture */}
@@ -73,10 +90,7 @@ export function SeriesHeader({ series, serverUrl }: SeriesHeaderProps) {
           )}
           {series.metadata.language && (
             <div>
-              <span className="font-medium">Langue :</span>{" "}
-              {new Intl.DisplayNames([navigator.language], { type: "language" }).of(
-                series.metadata.language
-              )}
+              <span className="font-medium">Langue :</span> {languageDisplay}
             </div>
           )}
           {series.metadata.ageRating && (
