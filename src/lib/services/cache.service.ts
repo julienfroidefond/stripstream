@@ -1,7 +1,32 @@
 class CacheService {
   private static instance: CacheService;
   private cacheName = "komga-cache-v1";
-  private defaultTTL = 5 * 60; // 5 minutes en secondes
+
+  private static readonly fiveMinutes = 5 * 60;
+  private static readonly tenMinutes = 10 * 60;
+  private static readonly twentyFourHours = 24 * 60 * 60;
+  private static readonly oneMinute = 1 * 60;
+  private static readonly noCache = 0;
+
+  // Configuration des temps de cache en secondes
+  private static readonly TTL = {
+    DEFAULT: CacheService.fiveMinutes, // 5 minutes
+    HOME: CacheService.fiveMinutes, // 5 minutes
+    LIBRARIES: CacheService.tenMinutes, // 10 minutes
+    SERIES: CacheService.fiveMinutes, // 5 minutes
+    BOOKS: CacheService.fiveMinutes, // 5 minutes
+    IMAGES: CacheService.twentyFourHours, // 24 heures
+    READ_PROGRESS: CacheService.oneMinute, // 1 minute
+  };
+  // private static readonly TTL = {
+  //   DEFAULT: CacheService.noCache, // 5 minutes
+  //   HOME: CacheService.noCache, // 5 minutes
+  //   LIBRARIES: CacheService.noCache, // 10 minutes
+  //   SERIES: CacheService.noCache, // 5 minutes
+  //   BOOKS: CacheService.noCache, // 5 minutes
+  //   IMAGES: CacheService.noCache, // 24 heures
+  //   READ_PROGRESS: CacheService.noCache, // 1 minute
+  // };
 
   private constructor() {}
 
@@ -13,9 +38,20 @@ class CacheService {
   }
 
   /**
+   * Retourne le TTL pour un type de données spécifique
+   */
+  public getTTL(type: keyof typeof CacheService.TTL): number {
+    return CacheService.TTL[type];
+  }
+
+  /**
    * Met en cache une réponse avec une durée de vie
    */
-  async set(key: string, response: Response, ttl: number = this.defaultTTL): Promise<void> {
+  async set(
+    key: string,
+    response: Response,
+    ttl: number = CacheService.TTL.DEFAULT
+  ): Promise<void> {
     if (typeof window === "undefined") return;
 
     try {
@@ -98,7 +134,7 @@ class CacheService {
   async getOrFetch(
     key: string,
     fetcher: () => Promise<Response>,
-    ttl: number = this.defaultTTL
+    type: keyof typeof CacheService.TTL = "DEFAULT"
   ): Promise<Response> {
     const cachedResponse = await this.get(key);
     if (cachedResponse) {
@@ -107,7 +143,7 @@ class CacheService {
 
     const response = await fetcher();
     const clonedResponse = response.clone();
-    await this.set(key, clonedResponse, ttl);
+    await this.set(key, clonedResponse, CacheService.TTL[type]);
     return response;
   }
 }

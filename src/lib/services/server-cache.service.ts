@@ -7,7 +7,17 @@ type CacheEntry = {
 class ServerCacheService {
   private static instance: ServerCacheService;
   private cache: Map<string, { data: unknown; expiry: number }> = new Map();
-  private defaultTTL = 5 * 60; // 5 minutes en secondes
+
+  // Configuration des temps de cache en secondes (identique à CacheService)
+  private static readonly TTL = {
+    DEFAULT: 5 * 60, // 5 minutes
+    HOME: 5 * 60, // 5 minutes
+    LIBRARIES: 10 * 60, // 10 minutes
+    SERIES: 5 * 60, // 5 minutes
+    BOOKS: 5 * 60, // 5 minutes
+    IMAGES: 24 * 60 * 60, // 24 heures
+    READ_PROGRESS: 1 * 60, // 1 minute
+  };
 
   private constructor() {
     // Private constructor to prevent external instantiation
@@ -21,12 +31,19 @@ class ServerCacheService {
   }
 
   /**
+   * Retourne le TTL pour un type de données spécifique
+   */
+  public getTTL(type: keyof typeof ServerCacheService.TTL): number {
+    return ServerCacheService.TTL[type];
+  }
+
+  /**
    * Met en cache des données avec une durée de vie
    */
-  set(key: string, data: any, ttl: number = this.defaultTTL): void {
+  set(key: string, data: any, type: keyof typeof ServerCacheService.TTL = "DEFAULT"): void {
     this.cache.set(key, {
       data,
-      expiry: Date.now() + ttl * 1000,
+      expiry: Date.now() + ServerCacheService.TTL[type] * 1000,
     });
   }
 
@@ -63,7 +80,11 @@ class ServerCacheService {
   /**
    * Récupère des données du cache ou exécute la fonction si nécessaire
    */
-  async getOrSet<T>(key: string, fetcher: () => Promise<T>, ttl: number): Promise<T> {
+  async getOrSet<T>(
+    key: string,
+    fetcher: () => Promise<T>,
+    type: keyof typeof ServerCacheService.TTL = "DEFAULT"
+  ): Promise<T> {
     const now = Date.now();
     const cached = this.cache.get(key);
 
@@ -75,7 +96,7 @@ class ServerCacheService {
       const data = await fetcher();
       this.cache.set(key, {
         data,
-        expiry: now + ttl * 1000,
+        expiry: now + ServerCacheService.TTL[type] * 1000,
       });
       return data;
     } catch (error) {
