@@ -33,6 +33,25 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
   const [isDoublePage, setIsDoublePage] = useState(false);
   const pageCache = useRef<PageCache>({});
 
+  // Fonction pour synchroniser la progression
+  const syncReadProgress = useCallback(
+    async (page: number) => {
+      try {
+        const completed = page === pages.length;
+        await fetch(`/api/komga/books/${book.id}/read-progress`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ page, completed }),
+        });
+      } catch (error) {
+        console.error("Erreur lors de la synchronisation de la progression:", error);
+      }
+    },
+    [book.id, pages.length]
+  );
+
   // Fonction pour déterminer si on doit afficher une ou deux pages
   const shouldShowDoublePage = useCallback(
     (pageNumber: number) => {
@@ -44,6 +63,28 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
     },
     [isDoublePage, pages.length]
   );
+
+  const handlePreviousPage = useCallback(() => {
+    if (currentPage > 1) {
+      // En mode double page, reculer de 2 pages sauf si on est sur la page 2
+      const newPage = isDoublePage && currentPage > 2 ? currentPage - 2 : currentPage - 1;
+      setCurrentPage(newPage);
+      setIsLoading(true);
+      setImageError(false);
+      syncReadProgress(newPage);
+    }
+  }, [currentPage, isDoublePage, syncReadProgress]);
+
+  const handleNextPage = useCallback(() => {
+    if (currentPage < pages.length) {
+      // En mode double page, avancer de 2 pages sauf si c'est la dernière paire
+      const newPage = isDoublePage ? Math.min(currentPage + 2, pages.length) : currentPage + 1;
+      setCurrentPage(newPage);
+      setIsLoading(true);
+      setImageError(false);
+      syncReadProgress(newPage);
+    }
+  }, [currentPage, pages.length, isDoublePage, syncReadProgress]);
 
   // Fonction pour précharger une page
   const preloadPage = useCallback(
@@ -112,26 +153,6 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
     preloadNextPages(currentPage);
     cleanCache(currentPage);
   }, [currentPage, preloadNextPages, cleanCache]);
-
-  const handlePreviousPage = useCallback(() => {
-    if (currentPage > 1) {
-      // En mode double page, reculer de 2 pages sauf si on est sur la page 2
-      const newPage = isDoublePage && currentPage > 2 ? currentPage - 2 : currentPage - 1;
-      setCurrentPage(newPage);
-      setIsLoading(true);
-      setImageError(false);
-    }
-  }, [currentPage, isDoublePage]);
-
-  const handleNextPage = useCallback(() => {
-    if (currentPage < pages.length) {
-      // En mode double page, avancer de 2 pages sauf si c'est la dernière paire
-      const newPage = isDoublePage ? Math.min(currentPage + 2, pages.length) : currentPage + 1;
-      setCurrentPage(newPage);
-      setIsLoading(true);
-      setImageError(false);
-    }
-  }, [currentPage, pages.length, isDoublePage]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {

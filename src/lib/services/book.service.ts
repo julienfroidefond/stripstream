@@ -38,6 +38,31 @@ export class BookService extends BaseApiService {
     }
   }
 
+  static async updateReadProgress(
+    bookId: string,
+    page: number,
+    completed: boolean = false
+  ): Promise<void> {
+    try {
+      const config = await this.getKomgaConfig();
+      const url = this.buildUrl(config, `books/${bookId}/read-progress`);
+      const headers = this.getAuthHeaders(config);
+      headers.set("Content-Type", "application/json");
+
+      const response = await fetch(url, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({ page, completed }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Erreur lors de la mise à jour de la progression");
+      }
+    } catch (error) {
+      return this.handleError(error, "Impossible de mettre à jour la progression");
+    }
+  }
+
   static getPageUrl(bookId: string, pageNumber: number): string {
     return `/api/komga/books/${bookId}/pages/${pageNumber}`;
   }
