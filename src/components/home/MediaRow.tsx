@@ -119,16 +119,16 @@ function MediaCard({ item, onClick }: MediaCardProps) {
             <ImageOff className="w-12 h-12" />
           </div>
         )}
-      </div>
 
-      {/* Contenu */}
-      <div className="flex flex-col p-2">
-        <h3 className="font-medium line-clamp-2 text-sm">{title}</h3>
-        {isSeries && (
-          <p className="text-xs text-muted-foreground mt-1">
-            {item.booksCount} tome{item.booksCount > 1 ? "s" : ""}
-          </p>
-        )}
+        {/* Overlay avec les informations au survol */}
+        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3">
+          <h3 className="font-medium text-sm text-white line-clamp-2">{title}</h3>
+          {isSeries && (
+            <p className="text-xs text-white/80 mt-1">
+              {item.booksCount} tome{item.booksCount > 1 ? "s" : ""}
+            </p>
+          )}
+        </div>
       </div>
     </button>
   );

@@ -12,7 +12,7 @@ interface SeriesGridProps {
 }
 
 // Fonction utilitaire pour obtenir les informations de lecture d'une série
-const getReadingStatusInfo = (series: KomgaSeries): { label: string; className: string } => {
+const getReadingStatusInfo = (series: KomgaSeries) => {
   const { booksCount, booksReadCount, booksUnreadCount } = series;
   const booksInProgressCount = booksCount - (booksReadCount + booksUnreadCount);
 
@@ -25,7 +25,7 @@ const getReadingStatusInfo = (series: KomgaSeries): { label: string; className: 
 
   if (booksInProgressCount > 0 || (booksReadCount > 0 && booksReadCount < booksCount)) {
     return {
-      label: "En cours",
+      label: `${booksReadCount}/${booksCount}`,
       className: "bg-blue-500/10 text-blue-500",
     };
   }
@@ -74,41 +74,35 @@ function SeriesCard({ series, onClick, serverUrl }: SeriesCardProps) {
   return (
     <button
       onClick={onClick}
-      className="group relative flex flex-col rounded-lg border bg-card text-card-foreground shadow-sm hover:bg-accent hover:text-accent-foreground transition-colors overflow-hidden"
+      className="group relative aspect-[2/3] overflow-hidden rounded-lg bg-muted"
     >
-      {/* Image de couverture */}
-      <div className="relative aspect-[2/3] bg-muted">
-        {!imageError ? (
-          <Image
-            src={`/api/komga/images/series/${series.id}/thumbnail`}
-            alt={`Couverture de ${series.metadata.title}`}
-            fill
-            className="object-cover"
-            sizes="(max-width: 640px) 33vw, (max-width: 1024px) 20vw, 20vw"
-            onError={() => setImageError(true)}
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <ImageOff className="w-12 h-12" />
-          </div>
-        )}
-      </div>
+      {!imageError ? (
+        <Image
+          src={`/api/komga/images/series/${series.id}/thumbnail`}
+          alt={`Couverture de ${series.metadata.title}`}
+          fill
+          className={`object-cover ${
+            series.booksCount === series.booksReadCount ? "opacity-50" : ""
+          }`}
+          sizes="(max-width: 640px) 33vw, (max-width: 1024px) 20vw, 20vw"
+          onError={() => setImageError(true)}
+        />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center">
+          <ImageOff className="w-12 h-12" />
+        </div>
+      )}
 
-      {/* Contenu */}
-      <div className="flex flex-col p-2">
-        <h3 className="font-medium line-clamp-2 text-sm">{series.metadata.title}</h3>
-        <div className="mt-1 text-xs text-muted-foreground space-y-1">
-          <div className="flex items-center gap-1">
-            <Book className="h-3 w-3" />
-            <span>
-              {series.booksCount} tome{series.booksCount > 1 ? "s" : ""}
-            </span>
-          </div>
-          <div className="flex items-center">
-            <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${statusInfo.className}`}>
-              {statusInfo.label}
-            </span>
-          </div>
+      {/* Overlay avec les informations au survol */}
+      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-4 space-y-2 translate-y-full group-hover:translate-y-0 transition-transform duration-200">
+        <h3 className="font-medium text-sm text-white line-clamp-2">{series.metadata.title}</h3>
+        <div className="flex items-center gap-2">
+          <span className={`px-2 py-0.5 rounded-full text-xs ${statusInfo.className}`}>
+            {statusInfo.label}
+          </span>
+          <span className="text-xs text-white/80">
+            {series.booksCount} tome{series.booksCount > 1 ? "s" : ""}
+          </span>
         </div>
       </div>
     </button>
