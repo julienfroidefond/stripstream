@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fond -->
+  <rect width="32" height="32" rx="8" fill="#4F46E5"/>
+  
+  <!-- Lettre S stylisée -->
+  <path d="M20.5 11C20.5 9.61929 19.3807 8.5 18 8.5H14C12.6193 8.5 11.5 9.61929 11.5 11V11.5C11.5 12.8807 12.6193 14 14 14H18C19.3807 14 20.5 15.1193 20.5 16.5V17C20.5 18.3807 19.3807 19.5 18 19.5H14C12.6193 19.5 11.5 18.3807 11.5 17" 
+        stroke="white" 
+        stroke-width="3" 
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+  
+  <!-- Points décoratifs -->
+  <circle cx="11.5" cy="22" r="1.5" fill="white"/>
+  <circle cx="20.5" cy="6" r="1.5" fill="white"/>
+</svg> 

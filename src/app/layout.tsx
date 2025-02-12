@@ -7,6 +7,21 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "StripStream - Komga Reader",
   description: "A modern web reader for Komga",
+  icons: {
+    icon: [
+      {
+        url: "/favicon.svg",
+        type: "image/svg+xml",
+      },
+    ],
+    apple: [
+      {
+        url: "/favicon.svg",
+        type: "image/svg+xml",
+      },
+    ],
+  },
+  manifest: "/manifest.json",
 };
 
 // Composant client séparé pour le layout
