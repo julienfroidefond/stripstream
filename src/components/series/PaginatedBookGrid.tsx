@@ -82,8 +82,8 @@ export function PaginatedBookGrid({
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <p className="text-sm text-muted-foreground flex-1 min-w-[200px]">
           {totalElements > 0 ? (
             <>
               Affichage des tomes <span className="font-medium">{startIndex}</span> à{" "}
@@ -96,7 +96,7 @@ export function PaginatedBookGrid({
         </p>
         <button
           onClick={handleUnreadFilter}
-          className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg hover:bg-accent hover:text-accent-foreground"
+          className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg hover:bg-accent hover:text-accent-foreground whitespace-nowrap ml-auto"
         >
           <Filter className="h-4 w-4" />
           {showOnlyUnread ? "Afficher tout" : "À lire"}
