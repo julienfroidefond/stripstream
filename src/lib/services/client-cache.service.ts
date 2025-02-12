@@ -1,52 +1,54 @@
-type CacheEntry = {
-  data: any;
-  timestamp: number;
-  ttl: number;
-};
+import { TTLConfig } from "@/types/cache";
 
-class ServerCacheService {
-  private static instance: ServerCacheService;
+class ClientCacheService {
+  private static instance: ClientCacheService;
   private cache: Map<string, { data: unknown; expiry: number }> = new Map();
 
-  private static readonly fiveMinutes = 5 * 60;
-  private static readonly tenMinutes = 10 * 60;
-  private static readonly twentyFourHours = 24 * 60 * 60;
-  private static readonly oneMinute = 1 * 60;
-  private static readonly noCache = 0;
-
-  // Configuration des temps de cache en secondes
   private static readonly DEFAULT_TTL = {
-    DEFAULT: ServerCacheService.fiveMinutes,
-    HOME: ServerCacheService.fiveMinutes,
-    LIBRARIES: ServerCacheService.twentyFourHours,
-    SERIES: ServerCacheService.fiveMinutes,
-    BOOKS: ServerCacheService.fiveMinutes,
-    IMAGES: ServerCacheService.twentyFourHours,
+    DEFAULT: 5 * 60,
+    HOME: 5 * 60,
+    LIBRARIES: 24 * 60 * 60,
+    SERIES: 5 * 60,
+    BOOKS: 5 * 60,
+    IMAGES: 24 * 60 * 60,
   };
 
   private constructor() {
     // Private constructor to prevent external instantiation
   }
 
-  public static getInstance(): ServerCacheService {
-    if (!ServerCacheService.instance) {
-      ServerCacheService.instance = new ServerCacheService();
+  public static getInstance(): ClientCacheService {
+    if (!ClientCacheService.instance) {
+      ClientCacheService.instance = new ClientCacheService();
     }
-    return ServerCacheService.instance;
+    return ClientCacheService.instance;
   }
 
   /**
    * Retourne le TTL pour un type de données spécifique
    */
-  public getTTL(type: keyof typeof ServerCacheService.DEFAULT_TTL): number {
-    // Utiliser directement la valeur par défaut
-    return ServerCacheService.DEFAULT_TTL[type];
+  public getTTL(type: keyof typeof ClientCacheService.DEFAULT_TTL): number {
+    try {
+      const ttlConfig = localStorage.getItem("ttlConfig");
+      if (ttlConfig) {
+        const config = JSON.parse(ttlConfig) as TTLConfig;
+        const key = `${type.toLowerCase()}TTL` as keyof TTLConfig;
+        if (config[key]) {
+          // Convertir les minutes en secondes
+          return config[key] * 60;
+        }
+      }
+    } catch (error) {
+      console.error("Erreur lors de la lecture de la configuration TTL:", error);
+    }
+
+    return ClientCacheService.DEFAULT_TTL[type];
   }
 
   /**
    * Met en cache des données avec une durée de vie
    */
-  set(key: string, data: any, type: keyof typeof ServerCacheService.DEFAULT_TTL = "DEFAULT"): void {
+  set(key: string, data: any, type: keyof typeof ClientCacheService.DEFAULT_TTL = "DEFAULT"): void {
     this.cache.set(key, {
       data,
       expiry: Date.now() + this.getTTL(type) * 1000,
@@ -89,7 +91,7 @@ class ServerCacheService {
   async getOrSet<T>(
     key: string,
     fetcher: () => Promise<T>,
-    type: keyof typeof ServerCacheService.DEFAULT_TTL = "DEFAULT"
+    type: keyof typeof ClientCacheService.DEFAULT_TTL = "DEFAULT"
   ): Promise<T> {
     const now = Date.now();
     const cached = this.cache.get(key);
@@ -116,4 +118,4 @@ class ServerCacheService {
   }
 }
 
-export const serverCacheService = ServerCacheService.getInstance();
+export const clientCacheService = ClientCacheService.getInstance();
