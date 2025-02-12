@@ -7,6 +7,8 @@ Créer une application web moderne avec Next.js permettant de lire des fichiers 
 ## 📋 Fonctionnalités principales
 
 - [x] Interface de connexion
+  - [x] Formulaire de connexion
+  - [x] Déconnexion
 - [x] Page de paramétrage pour la configuration Komga
 - [x] Visualisation et navigation dans la bibliothèque
   - [x] Liste des bibliothèques
@@ -14,11 +16,14 @@ Créer une application web moderne avec Next.js permettant de lire des fichiers 
   - [x] Couvertures et informations des séries
   - [ ] Filtres et recherche
   - [x] Pagination
+  - [x] Statut de lecture avec transparence pour les éléments lus
+  - [x] Informations au survol
 - [x] Lecteur de fichiers (CBZ, CBR)
   - [x] Navigation entre les pages
   - [x] Mode plein écran
   - [x] Raccourcis clavier
   - [x] Mode double page
+  - [x] Zoom et pan
   - [x] Préchargement des pages
 
 ## 🛠 Configuration initiale
