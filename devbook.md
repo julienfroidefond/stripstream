@@ -1,8 +1,8 @@
-# Plan de développement - Paniels (Komga Reader)
+# 📚 Paniels - Devbook
 
-## 🎯 Objectif
+## 🎯 Objectifs
 
-Créer une application web moderne avec Next.js permettant de lire des fichiers CBZ, CBR, EPUB et PDF via un serveur Komga.
+Application web moderne pour la lecture de BD/mangas/comics via un serveur Komga.
 
 ## 📋 Fonctionnalités principales
 
@@ -169,20 +169,39 @@ Créer une application web moderne avec Next.js permettant de lire des fichiers 
 - [x] Service d'API
   - [x] Client HTTP avec fetch natif
   - [x] Gestion des tokens Basic Auth
-  - [x] Cache des réponses
-    - [x] Cache en mémoire côté serveur
-    - [x] TTL configurable (5 minutes par défaut)
-    - [x] Cache par route et paramètres
-  - [x] Endpoints
-    - [x] Authentication
-    - [x] Bibliothèques
-    - [x] Séries
-    - [x] Livres
-    - [x] Pages
-- [x] Gestion des erreurs
-  - [x] Retry automatique
-  - [x] Feedback utilisateur
-  - [x] Messages d'erreur détaillés
+  - [x] Cache des requêtes
+  - [x] Gestion des erreurs
+  - [x] Typage des réponses
+- [x] Endpoints
+  - [x] Authentification
+  - [x] Collections
+  - [x] Séries
+  - [x] Tomes
+  - [x] Progression de lecture
+  - [x] Images et miniatures
+
+## 🚀 Prochaines étapes
+
+- [ ] Amélioration de l'UX
+  - [ ] Animations de transition
+  - [ ] Retour haptique
+  - [ ] Messages de confirmation
+  - [ ] Tooltips d'aide
+- [ ] Fonctionnalités avancées
+  - [ ] Recherche globale
+  - [ ] Filtres avancés
+  - [ ] Tri personnalisé
+  - [ ] Vue liste/grille configurable
+- [ ] Performance
+  - [ ] Optimisation des images
+  - [ ] Lazy loading amélioré
+  - [ ] Prefetching intelligent
+  - [ ] Cache optimisé
+- [ ] Accessibilité
+  - [ ] Navigation au clavier
+  - [ ] Support lecteur d'écran
+  - [ ] Contraste et lisibilité
+  - [ ] ARIA labels
 
 ## 🎨 UI/UX
 

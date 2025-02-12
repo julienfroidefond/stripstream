@@ -7,15 +7,14 @@ import { useRouter } from "next/navigation";
 
 interface HomeContentProps {
   data: {
-    onGoingSeries: KomgaSeries[];
+    ongoing: KomgaSeries[];
     recentlyRead: KomgaBook[];
-    popularSeries: KomgaSeries[];
+    onDeck: KomgaBook[];
   };
 }
 
 export function HomeContent({ data }: HomeContentProps) {
   const router = useRouter();
-
   const handleItemClick = (item: KomgaSeries | KomgaBook) => {
     // Si c'est une série (a la propriété booksCount), on va vers la page de la série
     if ("booksCount" in item) {
@@ -28,40 +27,34 @@ export function HomeContent({ data }: HomeContentProps) {
 
   // Vérification des données pour le debug
   console.log("HomeContent - Données reçues:", {
-    onGoingCount: data.onGoingSeries?.length || 0,
+    ongoingCount: data.ongoing?.length || 0,
     recentlyReadCount: data.recentlyRead?.length || 0,
-    popularCount: data.popularSeries?.length || 0,
+    onDeckCount: data.onDeck?.length || 0,
   });
 
   return (
     <main className="container mx-auto px-4 py-8 space-y-12">
-      {/* Hero Section - Afficher uniquement si nous avons des séries populaires */}
-      {data.popularSeries && data.popularSeries.length > 0 && (
-        <HeroSection series={data.popularSeries} />
-      )}
+      {/* Hero Section - Afficher uniquement si nous avons des séries en cours */}
+      {data.ongoing && data.ongoing.length > 0 && <HeroSection series={data.ongoing} />}
 
       {/* Sections de contenu */}
       <div className="space-y-12">
-        {data.onGoingSeries && data.onGoingSeries.length > 0 && (
+        {data.ongoing && data.ongoing.length > 0 && (
           <MediaRow
             title="Continuer la lecture"
-            items={data.onGoingSeries}
+            items={data.ongoing}
             onItemClick={handleItemClick}
           />
+        )}
+
+        {data.onDeck && data.onDeck.length > 0 && (
+          <MediaRow title="À suivre" items={data.onDeck} onItemClick={handleItemClick} />
         )}
 
         {data.recentlyRead && data.recentlyRead.length > 0 && (
           <MediaRow
             title="Dernières lectures"
             items={data.recentlyRead}
-            onItemClick={handleItemClick}
-          />
-        )}
-
-        {data.popularSeries && data.popularSeries.length > 0 && (
-          <MediaRow
-            title="Séries populaires"
-            items={data.popularSeries}
             onItemClick={handleItemClick}
           />
         )}

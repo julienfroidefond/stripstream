@@ -6,9 +6,9 @@ import { useRouter } from "next/navigation";
 import { KomgaBook, KomgaSeries } from "@/types/komga";
 
 interface HomeData {
-  onGoingSeries: KomgaSeries[];
+  ongoing: KomgaSeries[];
   recentlyRead: KomgaBook[];
-  popularSeries: KomgaSeries[];
+  onDeck: KomgaBook[];
 }
 
 export default function HomePage() {
@@ -29,9 +29,9 @@ export default function HomePage() {
         const jsonData = await response.json();
         // Transformer les données pour correspondre à l'interface HomeData
         setData({
-          onGoingSeries: jsonData.ongoing || [],
+          ongoing: jsonData.ongoing || [],
           recentlyRead: jsonData.recentlyRead || [],
-          popularSeries: jsonData.popular || [],
+          onDeck: jsonData.onDeck || [],
         });
       } catch (error) {
         console.error("Erreur lors de la récupération des données:", error);
@@ -75,6 +75,7 @@ export default function HomePage() {
   }
 
   if (!data) return null;
+  console.log("PAGE", data);
 
   return <HomeContent data={data} />;
 }

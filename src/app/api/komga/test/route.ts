@@ -11,8 +11,11 @@ export async function POST(request: Request) {
       credentials: { username, password },
     };
 
-    const result = await TestService.testConnection(config);
-    return NextResponse.json(result);
+    const { libraries } = await TestService.testConnection(config);
+    return NextResponse.json({
+      message: "Connexion réussie",
+      librariesCount: libraries.length,
+    });
   } catch (error) {
     console.error("Erreur lors du test de connexion:", error);
     return NextResponse.json(

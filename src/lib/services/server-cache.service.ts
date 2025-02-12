@@ -8,15 +8,21 @@ class ServerCacheService {
   private static instance: ServerCacheService;
   private cache: Map<string, { data: unknown; expiry: number }> = new Map();
 
-  // Configuration des temps de cache en secondes (identique à CacheService)
+  private static readonly fiveMinutes = 5 * 60;
+  private static readonly tenMinutes = 10 * 60;
+  private static readonly twentyFourHours = 24 * 60 * 60;
+  private static readonly oneMinute = 1 * 60;
+  private static readonly noCache = 0;
+
+  // Configuration des temps de cache en secondes
   private static readonly TTL = {
-    DEFAULT: 5 * 60, // 5 minutes
-    HOME: 5 * 60, // 5 minutes
-    LIBRARIES: 10 * 60, // 10 minutes
-    SERIES: 5 * 60, // 5 minutes
-    BOOKS: 5 * 60, // 5 minutes
-    IMAGES: 24 * 60 * 60, // 24 heures
-    READ_PROGRESS: 1 * 60, // 1 minute
+    DEFAULT: ServerCacheService.fiveMinutes, // 5 minutes
+    HOME: ServerCacheService.oneMinute, // 1 minute
+    LIBRARIES: ServerCacheService.tenMinutes, // 10 minutes
+    SERIES: ServerCacheService.fiveMinutes, // 5 minutes
+    BOOKS: ServerCacheService.fiveMinutes, // 5 minutes
+    IMAGES: ServerCacheService.twentyFourHours, // 24 heures
+    READ_PROGRESS: ServerCacheService.oneMinute, // 1 minute
   };
 
   private constructor() {
@@ -89,6 +95,7 @@ class ServerCacheService {
     const cached = this.cache.get(key);
 
     if (cached && cached.expiry > now) {
+      console.log("Cache hit for key:", key);
       return cached.data as T;
     }
 

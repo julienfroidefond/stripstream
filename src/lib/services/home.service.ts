@@ -5,7 +5,7 @@ import { LibraryResponse } from "@/types/library";
 interface HomeData {
   ongoing: KomgaSeries[];
   recentlyRead: KomgaBook[];
-  popular: KomgaSeries[];
+  onDeck: KomgaBook[];
 }
 
 export class HomeService extends BaseApiService {
@@ -34,27 +34,25 @@ export class HomeService extends BaseApiService {
             media_status: "READY",
           });
 
-          const popularUrl = this.buildUrl(config, "series", {
+          const onDeckUrl = this.buildUrl(config, "books/ondeck", {
             page: "0",
             size: "20",
-            sort: "metadata.titleSort,asc",
-            media_status: "READY",
           });
 
           // Appels API parallèles avec fetchFromApi
-          const [ongoing, recentlyRead, popular] = await Promise.all([
+          const [ongoing, recentlyRead, onDeck] = await Promise.all([
             this.fetchFromApi<LibraryResponse<KomgaSeries>>(ongoingUrl, headers),
             this.fetchFromApi<LibraryResponse<KomgaBook>>(recentlyReadUrl, headers),
-            this.fetchFromApi<LibraryResponse<KomgaSeries>>(popularUrl, headers),
+            this.fetchFromApi<LibraryResponse<KomgaBook>>(onDeckUrl, headers),
           ]);
 
           return {
             ongoing: ongoing.content || [],
             recentlyRead: recentlyRead.content || [],
-            popular: popular.content || [],
+            onDeck: onDeck.content || [],
           };
         },
-        "HOME" // Type de cache
+        "HOME"
       );
     } catch (error) {
       return this.handleError(error, "Impossible de récupérer les données de la page d'accueil");
