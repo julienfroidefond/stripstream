@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { BookReader } from "@/components/reader/BookReader";
 import { ImageOff } from "lucide-react";
 import Image from "next/image";
+import { useToast } from "@/components/ui/use-toast";
 
 interface BookData {
   book: KomgaBook;
@@ -14,6 +15,7 @@ interface BookData {
 
 export default function BookPage({ params }: { params: { bookId: string } }) {
   const router = useRouter();
+  const { toast } = useToast();
   const [data, setData] = useState<BookData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,6 +31,15 @@ export default function BookPage({ params }: { params: { bookId: string } }) {
           throw new Error(data.error || "Erreur lors de la récupération du tome");
         }
         const data = await response.json();
+
+        // Si le livre a une progression de lecture, on l'affiche dans un toast
+        if (data.book.readProgress?.page > 0) {
+          toast({
+            title: "Reprise de la lecture",
+            description: `Reprise à la page ${data.book.readProgress.page}`,
+          });
+        }
+
         setData(data);
         setIsReading(true);
       } catch (error) {
@@ -40,7 +51,7 @@ export default function BookPage({ params }: { params: { bookId: string } }) {
     };
 
     fetchBookData();
-  }, [params.bookId]);
+  }, [params.bookId, toast]);
 
   const handleCloseReader = () => {
     setIsReading(false);

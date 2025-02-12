@@ -27,11 +27,18 @@ interface BookReaderProps {
 }
 
 export function BookReader({ book, pages, onClose }: BookReaderProps) {
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(book.readProgress?.page || 1);
   const [isLoading, setIsLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
   const [isDoublePage, setIsDoublePage] = useState(false);
   const pageCache = useRef<PageCache>({});
+
+  // Effet pour synchroniser la progression initiale
+  useEffect(() => {
+    if (book.readProgress?.page) {
+      syncReadProgress(book.readProgress.page);
+    }
+  }, []);
 
   // Fonction pour synchroniser la progression
   const syncReadProgress = useCallback(
