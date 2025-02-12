@@ -21,11 +21,6 @@ export function Sidebar({ isOpen }: SidebarProps) {
       href: "/libraries",
       icon: Library,
     },
-    {
-      name: "Collections",
-      href: "/collections",
-      icon: BookOpen,
-    },
   ];
 
   return (
