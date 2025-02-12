@@ -18,7 +18,7 @@ Créer une application web moderne avec Next.js permettant de lire des fichiers 
   - [x] Navigation entre les pages
   - [x] Mode plein écran
   - [x] Raccourcis clavier
-  - [ ] Mode double page
+  - [x] Mode double page
   - [ ] Zoom et pan
   - [ ] Préchargement des pages
 
