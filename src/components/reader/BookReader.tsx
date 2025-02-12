@@ -10,7 +10,15 @@ import {
   SplitSquareVertical,
 } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
+
+interface PageCache {
+  [pageNumber: number]: {
+    blob: Blob;
+    url: string;
+    timestamp: number;
+  };
+}
 
 interface BookReaderProps {
   book: KomgaBook;
@@ -23,6 +31,7 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
   const [isDoublePage, setIsDoublePage] = useState(false);
+  const pageCache = useRef<PageCache>({});
 
   // Fonction pour déterminer si on doit afficher une ou deux pages
   const shouldShowDoublePage = useCallback(
@@ -35,6 +44,74 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
     },
     [isDoublePage, pages.length]
   );
+
+  // Fonction pour précharger une page
+  const preloadPage = useCallback(
+    async (pageNumber: number) => {
+      if (pageNumber > pages.length || pageNumber < 1 || pageCache.current[pageNumber]) return;
+
+      try {
+        const response = await fetch(`/api/komga/books/${book.id}/pages/${pageNumber}`);
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+
+        pageCache.current[pageNumber] = {
+          blob,
+          url,
+          timestamp: Date.now(),
+        };
+      } catch (error) {
+        console.error(`Erreur lors du préchargement de la page ${pageNumber}:`, error);
+      }
+    },
+    [book.id, pages.length]
+  );
+
+  // Fonction pour précharger les prochaines pages
+  const preloadNextPages = useCallback(
+    async (currentPageNumber: number, count: number = 2) => {
+      const pagesToPreload = Array.from(
+        { length: count },
+        (_, i) => currentPageNumber + i + 1
+      ).filter((page) => page <= pages.length);
+
+      await Promise.all(pagesToPreload.map(preloadPage));
+    },
+    [pages.length, preloadPage]
+  );
+
+  // Nettoyer le cache des pages trop anciennes
+  const cleanCache = useCallback(
+    (currentPageNumber: number, maxDistance: number = 5) => {
+      const minPage = Math.max(1, currentPageNumber - maxDistance);
+      const maxPage = Math.min(pages.length, currentPageNumber + maxDistance);
+
+      Object.entries(pageCache.current).forEach(([pageNum, cache]) => {
+        const page = parseInt(pageNum);
+        if (page < minPage || page > maxPage) {
+          URL.revokeObjectURL(cache.url);
+          delete pageCache.current[page];
+        }
+      });
+    },
+    [pages.length]
+  );
+
+  // Fonction pour obtenir l'URL d'une page (depuis le cache ou générée)
+  const getPageUrl = useCallback(
+    (pageNumber: number) => {
+      const cached = pageCache.current[pageNumber];
+      if (cached) return cached.url;
+      return `/api/komga/books/${book.id}/pages/${pageNumber}`;
+    },
+    [book.id]
+  );
+
+  // Effet pour précharger les pages au changement de page
+  useEffect(() => {
+    preloadNextPages(currentPage);
+    cleanCache(currentPage);
+  }, [currentPage, preloadNextPages, cleanCache]);
 
   const handlePreviousPage = useCallback(() => {
     if (currentPage > 1) {
@@ -111,7 +188,7 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
             )}
             {!imageError ? (
               <Image
-                src={`/api/komga/books/${book.id}/pages/${currentPage}`}
+                src={getPageUrl(currentPage)}
                 alt={`Page ${currentPage}`}
                 className="h-full w-auto object-contain"
                 width={800}
@@ -134,7 +211,7 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
           {shouldShowDoublePage(currentPage) && (
             <div className="relative h-full w-auto">
               <Image
-                src={`/api/komga/books/${book.id}/pages/${currentPage + 1}`}
+                src={getPageUrl(currentPage + 1)}
                 alt={`Page ${currentPage + 1}`}
                 className="h-full w-auto object-contain"
                 width={800}
