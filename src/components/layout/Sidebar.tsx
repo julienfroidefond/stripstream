@@ -3,6 +3,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { authService } from "@/lib/services/auth.service";
+import { useEffect, useState } from "react";
+import { KomgaLibrary } from "@/types/komga";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -11,6 +13,27 @@ interface SidebarProps {
 export function Sidebar({ isOpen }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const [libraries, setLibraries] = useState<KomgaLibrary[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchLibraries = async () => {
+      try {
+        const response = await fetch("/api/komga/libraries");
+        if (!response.ok) {
+          throw new Error("Erreur lors de la récupération des bibliothèques");
+        }
+        const data = await response.json();
+        setLibraries(data);
+      } catch (error) {
+        console.error("Erreur:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchLibraries();
+  }, []);
 
   const handleLogout = () => {
     authService.logout();
@@ -23,11 +46,6 @@ export function Sidebar({ isOpen }: SidebarProps) {
       href: "/",
       icon: Home,
     },
-    {
-      name: "Bibliothèques",
-      href: "/libraries",
-      icon: Library,
-    },
   ];
 
   return (
@@ -37,7 +55,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
         isOpen ? "translate-x-0" : "-translate-x-full"
       )}
     >
-      <div className="flex-1 space-y-4 py-4">
+      <div className="flex-1 space-y-4 py-4 overflow-y-auto">
         <div className="px-3 py-2">
           <div className="space-y-1">
             <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">Navigation</h2>
@@ -54,6 +72,31 @@ export function Sidebar({ isOpen }: SidebarProps) {
                 {item.name}
               </Link>
             ))}
+          </div>
+        </div>
+
+        <div className="px-3 py-2">
+          <div className="space-y-1">
+            <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">Bibliothèques</h2>
+            {isLoading ? (
+              <div className="px-3 py-2 text-sm text-muted-foreground">Chargement...</div>
+            ) : libraries.length === 0 ? (
+              <div className="px-3 py-2 text-sm text-muted-foreground">Aucune bibliothèque</div>
+            ) : (
+              libraries.map((library) => (
+                <Link
+                  key={library.id}
+                  href={`/libraries/${library.id}`}
+                  className={cn(
+                    "flex items-center rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+                    pathname === `/libraries/${library.id}` ? "bg-accent" : "transparent"
+                  )}
+                >
+                  <Library className="mr-2 h-4 w-4" />
+                  {library.name}
+                </Link>
+              ))
+            )}
           </div>
         </div>
 
