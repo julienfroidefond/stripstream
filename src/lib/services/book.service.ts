@@ -84,7 +84,7 @@ export class BookService extends BaseApiService {
   static async getPageThumbnail(bookId: string, pageNumber: number): Promise<Response> {
     try {
       // Ajuster le numéro de page pour l'API Komga (zero-based)
-      const adjustedPageNumber = pageNumber - 1;
+      const adjustedPageNumber = pageNumber;
       const response = await ImageService.getImage(
         `books/${bookId}/pages/${adjustedPageNumber}/thumbnail?zero_based=true`
       );
