@@ -34,21 +34,14 @@ function LoginForm() {
 
   return (
     <div className="container relative min-h-[calc(100vh-theme(spacing.14))] flex-col items-center justify-center grid lg:max-w-none lg:grid-cols-2 lg:px-0">
-      <div className="relative hidden h-full flex-col bg-slate-800/80 p-10 text-white lg:flex dark:border-r">
+      <div className="relative hidden h-full flex-col bg-slate-800/80 p-10 text-white lg:flex dark:border-r overflow-hidden">
         <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40 transition-opacity duration-200 ease-in-out"
           style={{
             backgroundImage: "url('/images/login-bg.jpg')",
-            opacity: "0.4",
           }}
         />
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage:
-              "linear-gradient(to bottom, rgba(30, 41, 59, 0.2), rgba(30, 41, 59, 0.7))",
-          }}
-        />
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-800/20 to-slate-800/70" />
         <div className="relative z-20 flex items-center text-lg font-medium">
           <svg
             xmlns="http://www.w3.org/2000/svg"
