@@ -37,12 +37,12 @@ export function MediaRow({ title, items, onItemClick }: MediaRowProps) {
   return (
     <div className="space-y-4">
       <h2 className="text-2xl font-bold tracking-tight">{title}</h2>
-      <div className="relative group">
+      <div className="relative">
         {/* Bouton de défilement gauche */}
         {showLeftArrow && (
           <button
             onClick={() => scroll("left")}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-background/90 shadow-md border opacity-0 group-hover:opacity-100 transition-opacity"
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-background/90 shadow-md border transition-opacity"
             aria-label="Défiler vers la gauche"
           >
             <ChevronLeft className="h-6 w-6" />
@@ -64,7 +64,7 @@ export function MediaRow({ title, items, onItemClick }: MediaRowProps) {
         {showRightArrow && (
           <button
             onClick={() => scroll("right")}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-background/90 shadow-md border opacity-0 group-hover:opacity-100 transition-opacity"
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-background/90 shadow-md border transition-opacity"
             aria-label="Défiler vers la droite"
           >
             <ChevronRight className="h-6 w-6" />
@@ -101,7 +101,7 @@ function MediaCard({ item, onClick }: MediaCardProps) {
   return (
     <button
       onClick={handleClick}
-      className="flex-shrink-0 w-[200px] group relative flex flex-col rounded-lg border bg-card text-card-foreground shadow-sm hover:bg-accent hover:text-accent-foreground transition-colors overflow-hidden"
+      className="flex-shrink-0 w-[200px] relative flex flex-col rounded-lg border bg-card text-card-foreground shadow-sm hover:bg-accent hover:text-accent-foreground transition-colors overflow-hidden"
     >
       {/* Image de couverture */}
       <div className="relative aspect-[2/3] bg-muted">
@@ -121,7 +121,7 @@ function MediaCard({ item, onClick }: MediaCardProps) {
         )}
 
         {/* Overlay avec les informations au survol */}
-        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3">
+        <div className="absolute inset-0 bg-black/60 opacity-0 hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3">
           <h3 className="font-medium text-sm text-white line-clamp-2">{title}</h3>
           {isSeries && (
             <p className="text-xs text-white/80 mt-1">
