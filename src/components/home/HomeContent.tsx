@@ -53,7 +53,7 @@ export function HomeContent({ data }: HomeContentProps) {
 
         {data.recentlyRead && data.recentlyRead.length > 0 && (
           <MediaRow
-            title="Dernières lectures"
+            title="Ajouts récents"
             items={data.recentlyRead}
             onItemClick={handleItemClick}
           />

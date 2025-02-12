@@ -26,12 +26,9 @@ export class HomeService extends BaseApiService {
             media_status: "READY",
           });
 
-          const recentlyReadUrl = this.buildUrl(config, "books", {
-            read_status: "READ",
-            sort: "readDate,desc",
+          const recentlyReadUrl = this.buildUrl(config, "books/latest", {
             page: "0",
             size: "20",
-            media_status: "READY",
           });
 
           const onDeckUrl = this.buildUrl(config, "books/ondeck", {
