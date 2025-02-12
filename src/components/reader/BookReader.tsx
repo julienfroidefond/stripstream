@@ -287,7 +287,7 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
         {/* Contenu principal */}
         <div className="relative h-full w-full flex items-center justify-center">
           {/* Boutons en haut */}
-          <div className="absolute top-4 left-4 flex items-center gap-2">
+          <div className="absolute top-4 left-4 flex items-center gap-2 z-30">
             <button
               onClick={() => setIsDoublePage(!isDoublePage)}
               className="p-2 rounded-full bg-background/50 hover:bg-background/80 transition-colors"
@@ -318,7 +318,7 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
           {currentPage > 1 && (
             <button
               onClick={handlePreviousPage}
-              className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/50 hover:bg-background/80 transition-colors"
+              className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/50 hover:bg-background/80 transition-colors z-20"
               aria-label="Page précédente"
             >
               <ChevronLeft className="h-8 w-8" />
@@ -326,7 +326,7 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
           )}
 
           {/* Pages */}
-          <div className="relative h-full max-h-full w-auto max-w-full p-4 flex gap-2">
+          <div className="relative h-full max-h-full w-auto max-w-full p-4 flex gap-2 z-10">
             {/* Page courante */}
             <div className="relative h-full w-auto">
               {isLoading && (
@@ -375,7 +375,7 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
           {currentPage < pages.length && (
             <button
               onClick={handleNextPage}
-              className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/50 hover:bg-background/80 transition-colors"
+              className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/50 hover:bg-background/80 transition-colors z-20"
               aria-label="Page suivante"
             >
               <ChevronRight className="h-8 w-8" />
@@ -386,7 +386,7 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
           {onClose && (
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 p-2 rounded-full bg-background/50 hover:bg-background/80 transition-colors"
+              className="absolute top-4 right-4 p-2 rounded-full bg-background/50 hover:bg-background/80 transition-colors z-30"
               aria-label="Fermer"
             >
               <svg
