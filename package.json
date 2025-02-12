@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "icons": "node scripts/generate-icons.js"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.0.5",
@@ -22,7 +23,8 @@
     "react-dom": "^18.2.0",
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
-    "zod": "^3.22.4"
+    "zod": "^3.22.4",
+    "sharp": "^0.33.2"
   },
   "devDependencies": {
     "@types/node": "^20.11.16",
