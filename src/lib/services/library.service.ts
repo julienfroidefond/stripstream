@@ -11,14 +11,8 @@ export class LibraryService extends BaseApiService {
 
       return this.fetchWithCache<Library[]>(
         "libraries",
-        async () => {
-          const response = await fetch(url, { headers });
-          if (!response.ok) {
-            throw new Error("Erreur lors de la récupération des bibliothèques");
-          }
-          return response.json();
-        },
-        5 * 60 // Cache de 5 minutes
+        async () => this.fetchFromApi<Library[]>(url, headers),
+        "LIBRARIES"
       );
     } catch (error) {
       return this.handleError(error, "Impossible de récupérer les bibliothèques");
@@ -42,14 +36,8 @@ export class LibraryService extends BaseApiService {
 
       return this.fetchWithCache<LibraryResponse<Series>>(
         `library-${libraryId}-series-${page}-${size}-${unreadOnly}`,
-        async () => {
-          const response = await fetch(url, { headers });
-          if (!response.ok) {
-            throw new Error("Erreur lors de la récupération des séries");
-          }
-          return response.json();
-        },
-        5 * 60 // Cache de 5 minutes
+        async () => this.fetchFromApi<LibraryResponse<Series>>(url, headers),
+        "SERIES"
       );
     } catch (error) {
       return this.handleError(error, "Impossible de récupérer les séries");

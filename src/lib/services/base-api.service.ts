@@ -2,6 +2,16 @@ import { cookies } from "next/headers";
 import { AuthConfig } from "@/types/auth";
 import { serverCacheService } from "./server-cache.service";
 
+// Types de cache disponibles
+export type CacheType =
+  | "DEFAULT"
+  | "HOME"
+  | "LIBRARIES"
+  | "SERIES"
+  | "BOOKS"
+  | "IMAGES"
+  | "READ_PROGRESS";
+
 export abstract class BaseApiService {
   protected static async getKomgaConfig(): Promise<AuthConfig> {
     const configCookie = cookies().get("komgaCredentials");
@@ -34,9 +44,9 @@ export abstract class BaseApiService {
   protected static async fetchWithCache<T>(
     key: string,
     fetcher: () => Promise<T>,
-    ttl: number = 5 * 60 // 5 minutes par défaut
+    type: CacheType = "DEFAULT"
   ): Promise<T> {
-    return serverCacheService.getOrSet(key, fetcher, ttl);
+    return serverCacheService.getOrSet(key, fetcher, type);
   }
 
   protected static handleError(error: unknown, defaultMessage: string): never {
@@ -64,6 +74,22 @@ export abstract class BaseApiService {
       });
     }
 
+    // Log de l'URL finale
+    console.log(`🔄 [Komga API] ${url.toString()}`);
+
     return url.toString();
+  }
+
+  protected static async fetchFromApi<T>(url: string, headers: Headers): Promise<T> {
+    const response = await fetch(url, { headers });
+
+    // Log du résultat de la requête
+    console.log(`📡 [Komga API] ${response.status} ${response.statusText} - ${url}`);
+
+    if (!response.ok) {
+      throw new Error(`Erreur HTTP: ${response.status} ${response.statusText}`);
+    }
+
+    return response.json();
   }
 }

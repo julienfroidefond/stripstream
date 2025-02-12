@@ -31,7 +31,7 @@ export class BookService extends BaseApiService {
             pages: pages.map((page: any) => page.number),
           };
         },
-        5 * 60 // Cache de 5 minutes
+        "BOOKS"
       );
     } catch (error) {
       return this.handleError(error, "Impossible de récupérer le tome");

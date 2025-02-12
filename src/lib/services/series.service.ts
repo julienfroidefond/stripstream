@@ -12,13 +12,7 @@ export class SeriesService extends BaseApiService {
 
       return this.fetchWithCache<Series>(
         `series-${seriesId}`,
-        async () => {
-          const response = await fetch(url, { headers });
-          if (!response.ok) {
-            throw new Error("Erreur lors de la récupération de la série");
-          }
-          return response.json();
-        },
+        async () => this.fetchFromApi<Series>(url, headers),
         5 * 60 // Cache de 5 minutes
       );
     } catch (error) {
@@ -37,20 +31,14 @@ export class SeriesService extends BaseApiService {
       const url = this.buildUrl(config, `series/${seriesId}/books`, {
         page: page.toString(),
         size: size.toString(),
-        sort: "metadata.numberSort,asc",
+        sort: "metadata.number,asc",
         ...(unreadOnly && { read_status: "UNREAD,IN_PROGRESS" }),
       });
       const headers = this.getAuthHeaders(config);
 
       return this.fetchWithCache<LibraryResponse<KomgaBook>>(
         `series-${seriesId}-books-${page}-${size}-${unreadOnly}`,
-        async () => {
-          const response = await fetch(url, { headers });
-          if (!response.ok) {
-            throw new Error("Erreur lors de la récupération des tomes");
-          }
-          return response.json();
-        },
+        async () => this.fetchFromApi<LibraryResponse<KomgaBook>>(url, headers),
         5 * 60 // Cache de 5 minutes
       );
     } catch (error) {
