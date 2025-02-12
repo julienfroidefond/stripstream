@@ -4,7 +4,7 @@ import { ImageService } from "@/lib/services/image.service";
 export async function GET(request: NextRequest, { params }: { params: { seriesId: string } }) {
   try {
     const { buffer, contentType } = await ImageService.getImage(
-      `/api/v1/series/${params.seriesId}/thumbnail`
+      `series/${params.seriesId}/thumbnail`
     );
 
     return new NextResponse(buffer, {
