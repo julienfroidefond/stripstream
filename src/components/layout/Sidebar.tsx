@@ -51,7 +51,9 @@ export function Sidebar({ isOpen }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "fixed left-0 top-14 z-30 h-[calc(100vh-3.5rem)] w-64 border-r border-border/40 bg-background transition-transform duration-300 ease-in-out flex flex-col",
+        "fixed left-0 top-14 z-30 h-[calc(100vh-3.5rem)] w-64 border-r border-border/40",
+        "bg-background/80 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60",
+        "transition-transform duration-300 ease-in-out flex flex-col",
         isOpen ? "translate-x-0" : "-translate-x-full"
       )}
     >
