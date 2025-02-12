@@ -48,7 +48,7 @@ export function SeriesGrid({ series, serverUrl }: SeriesGridProps) {
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-5">
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
       {series.map((series) => (
         <SeriesCard
           key={series.id}
