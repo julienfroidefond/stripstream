@@ -10,9 +10,42 @@ interface SeriesHeaderProps {
   serverUrl: string;
 }
 
+// Fonction utilitaire pour obtenir les informations de lecture d'une série
+const getReadingStatusInfo = (series: KomgaSeries) => {
+  const { booksCount, booksReadCount, booksUnreadCount } = series;
+  const booksInProgressCount = booksCount - (booksReadCount + booksUnreadCount);
+
+  if (booksReadCount === booksCount) {
+    return {
+      label: "Lu",
+      className: "bg-green-500/10 text-green-500",
+    };
+  }
+
+  if (booksInProgressCount > 0 || (booksReadCount > 0 && booksReadCount < booksCount)) {
+    return {
+      label: `${booksReadCount}/${booksCount}`,
+      className: "bg-blue-500/10 text-blue-500",
+    };
+  }
+
+  return {
+    label: "Non lu",
+    className: "bg-yellow-500/10 text-yellow-500",
+  };
+};
+
 export function SeriesHeader({ series, serverUrl }: SeriesHeaderProps) {
   const [languageDisplay, setLanguageDisplay] = useState<string>(series.metadata.language);
   const [imageError, setImageError] = useState(false);
+  const [readingStatus, setReadingStatus] = useState<{
+    label: string;
+    className: string;
+  } | null>(null);
+
+  useEffect(() => {
+    setReadingStatus(getReadingStatusInfo(series));
+  }, [series]);
 
   useEffect(() => {
     try {
@@ -57,27 +90,15 @@ export function SeriesHeader({ series, serverUrl }: SeriesHeaderProps) {
       <div className="flex-1 space-y-4">
         <div>
           <h1 className="text-3xl font-bold">{series.metadata.title}</h1>
-          {series.metadata.status && (
-            <span
-              className={`mt-2 inline-block px-2 py-1 rounded-full text-xs ${
-                series.metadata.status === "ENDED"
-                  ? "bg-green-500/10 text-green-500"
-                  : series.metadata.status === "ONGOING"
-                  ? "bg-blue-500/10 text-blue-500"
-                  : series.metadata.status === "ABANDONED"
-                  ? "bg-destructive/10 text-destructive"
-                  : "bg-yellow-500/10 text-yellow-500"
-              }`}
-            >
-              {series.metadata.status === "ENDED"
-                ? "Terminé"
-                : series.metadata.status === "ONGOING"
-                ? "En cours"
-                : series.metadata.status === "ABANDONED"
-                ? "Abandonné"
-                : "En pause"}
-            </span>
-          )}
+          <div className="mt-2 flex flex-wrap gap-2">
+            {readingStatus && (
+              <span
+                className={`inline-block px-2 py-1 rounded-full text-xs ${readingStatus.className}`}
+              >
+                {readingStatus.label}
+              </span>
+            )}
+          </div>
         </div>
 
         {series.metadata.summary && (
