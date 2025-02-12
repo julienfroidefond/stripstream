@@ -9,7 +9,7 @@ export class ImageService extends BaseApiService {
   static async getImage(path: string): Promise<ImageResponse> {
     try {
       const config = await this.getKomgaConfig();
-      const url = this.buildUrl(config, path);
+      const url = `${config.serverUrl}${path}`;
       const headers = this.getAuthHeaders(config);
 
       // Ajout des headers pour accepter les images

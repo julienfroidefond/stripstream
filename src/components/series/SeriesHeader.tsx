@@ -12,6 +12,7 @@ interface SeriesHeaderProps {
 
 export function SeriesHeader({ series, serverUrl }: SeriesHeaderProps) {
   const [languageDisplay, setLanguageDisplay] = useState<string>(series.metadata.language);
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     try {
@@ -27,17 +28,28 @@ export function SeriesHeader({ series, serverUrl }: SeriesHeaderProps) {
     }
   }, [series.metadata.language]);
 
+  const getSeriesThumbnailUrl = (seriesId: string) => {
+    return `/api/komga/images/series/${seriesId}/thumbnail`;
+  };
+
   return (
     <div className="flex flex-col md:flex-row gap-8">
       {/* Couverture */}
       <div className="w-48 shrink-0">
         <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-muted">
-          <Image
-            src={`/api/komga/images/series/${series.id}/thumbnail`}
-            alt={`Couverture de ${series.metadata.title}`}
-            fill
-            className="object-cover"
-          />
+          {!imageError ? (
+            <Image
+              src={getSeriesThumbnailUrl(series.id)}
+              alt={`Couverture de ${series.metadata.title}`}
+              fill
+              className="object-cover"
+              onError={() => setImageError(true)}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <ImageOff className="w-12 h-12" />
+            </div>
+          )}
         </div>
       </div>
 

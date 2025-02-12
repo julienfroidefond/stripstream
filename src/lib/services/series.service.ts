@@ -13,7 +13,7 @@ export class SeriesService extends BaseApiService {
       return this.fetchWithCache<Series>(
         `series-${seriesId}`,
         async () => this.fetchFromApi<Series>(url, headers),
-        5 * 60 // Cache de 5 minutes
+        "SERIES"
       );
     } catch (error) {
       return this.handleError(error, "Impossible de récupérer la série");
@@ -39,7 +39,7 @@ export class SeriesService extends BaseApiService {
       return this.fetchWithCache<LibraryResponse<KomgaBook>>(
         `series-${seriesId}-books-${page}-${size}-${unreadOnly}`,
         async () => this.fetchFromApi<LibraryResponse<KomgaBook>>(url, headers),
-        5 * 60 // Cache de 5 minutes
+        "BOOKS"
       );
     } catch (error) {
       return this.handleError(error, "Impossible de récupérer les tomes");
