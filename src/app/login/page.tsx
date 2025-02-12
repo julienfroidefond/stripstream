@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { authService } from "@/lib/services/auth.service";
 import { AuthError } from "@/types/auth";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
@@ -48,7 +48,7 @@ export default function LoginPage() {
           >
             <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
           </svg>
-          Paniels
+          Stripstream
         </div>
         <div className="relative z-20 mt-auto">
           <blockquote className="space-y-2">
@@ -136,5 +136,15 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={<div className="flex items-center justify-center min-h-screen">Chargement...</div>}
+    >
+      <LoginForm />
+    </Suspense>
   );
 }

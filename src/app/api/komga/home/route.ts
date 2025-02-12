@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { HomeService } from "@/lib/services/home.service";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const data = await HomeService.getHomeData();

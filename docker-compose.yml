@@ -14,5 +14,5 @@ services:
       - /app/.next
     environment:
       - NODE_ENV=development
-      - NEXT_PUBLIC_API_URL=https://mysite.com
+      - NEXT_PUBLIC_API_URL=https://cloud.julienfroidefond.com
     command: npm run dev

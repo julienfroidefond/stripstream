@@ -215,7 +215,7 @@ export default function SettingsPage() {
               <div className="space-y-3">
                 <div className="space-y-2">
                   <label htmlFor="serverUrl" className="text-sm font-medium">
-                    URL du serveur
+                    L&apos;URL du serveur
                   </label>
                   <input
                     type="url"
@@ -229,7 +229,7 @@ export default function SettingsPage() {
                 </div>
                 <div className="space-y-2">
                   <label htmlFor="username" className="text-sm font-medium">
-                    Nom d'utilisateur
+                    L&apos;adresse email de connexion
                   </label>
                   <input
                     type="text"
