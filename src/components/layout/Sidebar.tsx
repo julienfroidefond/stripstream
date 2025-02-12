@@ -122,60 +122,58 @@ export function Sidebar({ isOpen }: SidebarProps) {
           </div>
         </div>
 
-        {isAuthenticated && (
-          <>
-            <div className="px-3 py-2">
-              <div className="space-y-1">
-                <div className="mb-2 px-4 flex items-center justify-between">
-                  <h2 className="text-lg font-semibold tracking-tight">Bibliothèques</h2>
-                  <button
-                    onClick={handleRefresh}
-                    disabled={isRefreshing}
-                    className="p-1 hover:bg-accent hover:text-accent-foreground rounded-md transition-colors"
-                    aria-label="Rafraîchir les bibliothèques"
-                  >
-                    <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
-                  </button>
-                </div>
-                {isLoading ? (
-                  <div className="px-3 py-2 text-sm text-muted-foreground">Chargement...</div>
-                ) : libraries.length === 0 ? (
-                  <div className="px-3 py-2 text-sm text-muted-foreground">Aucune bibliothèque</div>
-                ) : (
-                  libraries.map((library) => (
-                    <Link
-                      key={library.id}
-                      href={`/libraries/${library.id}`}
-                      className={cn(
-                        "flex items-center rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
-                        pathname === `/libraries/${library.id}` ? "bg-accent" : "transparent"
-                      )}
-                    >
-                      <Library className="mr-2 h-4 w-4" />
-                      {library.name}
-                    </Link>
-                  ))
-                )}
-              </div>
-            </div>
-
-            <div className="px-3 py-2">
-              <div className="space-y-1">
-                <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">Configuration</h2>
-                <Link
-                  href="/settings"
-                  className={cn(
-                    "flex items-center rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
-                    pathname === "/settings" ? "bg-accent" : "transparent"
-                  )}
+        <>
+          <div className="px-3 py-2">
+            <div className="space-y-1">
+              <div className="mb-2 px-4 flex items-center justify-between">
+                <h2 className="text-lg font-semibold tracking-tight">Bibliothèques</h2>
+                <button
+                  onClick={handleRefresh}
+                  disabled={isRefreshing}
+                  className="p-1 hover:bg-accent hover:text-accent-foreground rounded-md transition-colors"
+                  aria-label="Rafraîchir les bibliothèques"
                 >
-                  <Settings className="mr-2 h-4 w-4" />
-                  Préférences
-                </Link>
+                  <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
+                </button>
               </div>
+              {isLoading ? (
+                <div className="px-3 py-2 text-sm text-muted-foreground">Chargement...</div>
+              ) : libraries.length === 0 ? (
+                <div className="px-3 py-2 text-sm text-muted-foreground">Aucune bibliothèque</div>
+              ) : (
+                libraries.map((library) => (
+                  <Link
+                    key={library.id}
+                    href={`/libraries/${library.id}`}
+                    className={cn(
+                      "flex items-center rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+                      pathname === `/libraries/${library.id}` ? "bg-accent" : "transparent"
+                    )}
+                  >
+                    <Library className="mr-2 h-4 w-4" />
+                    {library.name}
+                  </Link>
+                ))
+              )}
             </div>
-          </>
-        )}
+          </div>
+
+          <div className="px-3 py-2">
+            <div className="space-y-1">
+              <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">Configuration</h2>
+              <Link
+                href="/settings"
+                className={cn(
+                  "flex items-center rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+                  pathname === "/settings" ? "bg-accent" : "transparent"
+                )}
+              >
+                <Settings className="mr-2 h-4 w-4" />
+                Préférences
+              </Link>
+            </div>
+          </div>
+        </>
       </div>
 
       {isAuthenticated && (
