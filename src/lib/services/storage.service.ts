@@ -5,6 +5,7 @@ const {
   CREDENTIALS: KOMGACREDENTIALS_KEY,
   USER: USER_KEY,
   TTL_CONFIG: TTL_CONFIG_KEY,
+  FAVORITES: FAVORITES_KEY,
 } = STORAGE_KEYS;
 
 interface TTLConfig {
@@ -16,7 +17,7 @@ interface TTLConfig {
   imagesTTL: number;
 }
 
-class StorageService {
+export class StorageService {
   private static instance: StorageService;
 
   private constructor() {}
@@ -169,6 +170,51 @@ class StorageService {
       user: USER_KEY,
       ttlConfig: TTL_CONFIG_KEY,
     };
+  }
+
+  getFavorites(): string[] {
+    try {
+      const favorites = localStorage.getItem(FAVORITES_KEY);
+      return favorites ? JSON.parse(favorites) : [];
+    } catch (error) {
+      console.error("Erreur lors de la récupération des favoris:", error);
+      return [];
+    }
+  }
+
+  addFavorite(seriesId: string): void {
+    try {
+      const favorites = this.getFavorites();
+      if (!favorites.includes(seriesId)) {
+        favorites.push(seriesId);
+        localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
+      }
+    } catch (error) {
+      console.error("Erreur lors de l'ajout aux favoris:", error);
+    }
+  }
+
+  removeFavorite(seriesId: string): void {
+    try {
+      const favorites = this.getFavorites();
+      const index = favorites.indexOf(seriesId);
+      if (index > -1) {
+        favorites.splice(index, 1);
+        localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
+      }
+    } catch (error) {
+      console.error("Erreur lors de la suppression des favoris:", error);
+    }
+  }
+
+  isFavorite(seriesId: string): boolean {
+    try {
+      const favorites = this.getFavorites();
+      return favorites.includes(seriesId);
+    } catch (error) {
+      console.error("Erreur lors de la vérification des favoris:", error);
+      return false;
+    }
   }
 }
 

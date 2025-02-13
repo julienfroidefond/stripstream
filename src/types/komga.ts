@@ -30,8 +30,12 @@ export interface KomgaSeries {
   booksCount: number;
   booksReadCount: number;
   booksUnreadCount: number;
+  booksInProgressCount: number;
   metadata: SeriesMetadata;
   booksMetadata: BooksMetadata;
+  deleted: boolean;
+  oneshot: boolean;
+  favorite: boolean;
 }
 
 export interface SeriesMetadata {
