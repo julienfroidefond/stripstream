@@ -33,7 +33,7 @@ function LoginForm() {
   };
 
   return (
-    <div className="container relative min-h-[calc(100vh-theme(spacing.14))] flex-col items-center justify-center grid lg:max-w-none lg:grid-cols-2 lg:px-0">
+    <div className="container relative min-h-[calc(100vh)] flex-col items-center justify-center grid lg:max-w-none lg:grid-cols-2 lg:px-0">
       <div className="relative hidden h-full flex-col bg-slate-800/80 p-10 text-white lg:flex dark:border-r overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40 transition-opacity duration-200 ease-in-out"
@@ -63,14 +63,44 @@ function LoginForm() {
               Profitez de vos BD, mangas et comics préférés avec une expérience de lecture moderne
               et fluide.
             </p>
-            <footer className="text-sm text-muted-foreground">
-              Identifiants de démo : demo@stripstream.local / demo123
-            </footer>
           </blockquote>
         </div>
       </div>
       <div className="lg:p-8">
-        <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
+        <div className="mx-auto flex w-full flex-col justify-center space-y-8 sm:w-[350px]">
+          <div className="flex flex-col items-center space-y-4">
+            <div className="relative">
+              <div className="absolute -inset-1 bg-gradient-to-r from-primary to-indigo-600 rounded-full blur opacity-70"></div>
+              <div className="relative bg-background rounded-full p-4">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-12 w-12 text-primary"
+                >
+                  <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
+                </svg>
+              </div>
+            </div>
+            <div className="space-y-2 text-center">
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-indigo-600 bg-clip-text text-transparent">
+                Stripstream
+              </h1>
+              <p className="text-sm text-muted-foreground">Votre bibliothèque numérique de BD</p>
+            </div>
+          </div>
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground"></span>
+            </div>
+          </div>
           <div className="flex flex-col space-y-2 text-center">
             <h1 className="text-2xl font-semibold tracking-tight">Connexion</h1>
             <p className="text-sm text-muted-foreground">
