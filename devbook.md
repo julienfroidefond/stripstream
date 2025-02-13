@@ -6,17 +6,28 @@ Application web moderne pour la lecture de BD/mangas/comics via un serveur Komga
 
 ## 📋 Fonctionnalités principales
 
+### 🔐 Authentification et Configuration
+
 - [x] Interface de connexion
   - [x] Formulaire de connexion
   - [x] Déconnexion
 - [x] Page de paramétrage pour la configuration Komga
-- [x] Visualisation et navigation dans la bibliothèque
+  - [x] Configuration du serveur
+  - [x] Test de connexion
+  - [x] Gestion du cache
+
+### 📚 Bibliothèque
+
+- [x] Visualisation et navigation
   - [x] Liste des bibliothèques
   - [x] Affichage des séries par bibliothèque
   - [x] Couvertures et informations des séries
   - [x] Pagination
   - [x] Statut de lecture avec transparence pour les éléments lus
   - [x] Informations au survol
+
+### 📖 Lecteur
+
 - [x] Lecteur de fichiers (CBZ, CBR)
   - [x] Navigation entre les pages
   - [x] Mode plein écran
@@ -25,31 +36,79 @@ Application web moderne pour la lecture de BD/mangas/comics via un serveur Komga
   - [x] Zoom et pan
   - [x] Préchargement des pages
 
+### 📱 PWA
+
+- [x] Installation
+  - [x] Manifest
+  - [x] Service worker
+  - [x] Icons
+  - [x] Splash screens
+- [x] Mode hors ligne
+  - [x] Offline page
+  - [x] Cache stratégies
+  - [x] Background sync
+- [x] Support iOS
+  - [x] Configurations spécifiques
+  - [x] Splash screens iOS
+  - [x] Status bar
+
+### 🎨 UI/UX
+
+- [x] Design responsive
+  - [x] Mobile-first
+  - [x] Breakpoints cohérents
+  - [x] Touch-friendly
+- [x] Animations et transitions
+  - [x] Page transitions
+  - [x] Loading states
+  - [x] Micro-interactions
+- [x] Feedback utilisateur
+  - [x] Toasts pour les actions
+  - [x] Messages d'erreur contextuels
+  - [x] Indicateurs de progression
+- [x] États de chargement
+  - [x] Skeletons
+  - [x] Suspense boundaries
+  - [x] Loading spinners
+- [x] Gestion des erreurs UI
+  - [x] Error boundaries
+  - [x] Fallbacks élégants
+  - [x] Recovery options
+
+### 🔍 Optimisations
+
+- [x] Performance
+  - [x] Optimisation des images
+    - [x] Format WebP
+    - [x] Responsive images
+  - [x] Lazy loading
+    - [x] Components
+    - [x] Images
+    - [x] Routes
+  - [x] Mise en cache
+    - [x] API responses
+    - [x] Static assets
+    - [x] Images
+- [x] SEO
+  - [x] Meta tags
+  - [x] Sitemap
+  - [x] robots.txt
+- [x] Accessibilité
+  - [x] ARIA labels
+  - [x] Keyboard navigation
+  - [x] Screen readers
+  - [x] Color contrast
+
 ## 🚀 Fonctionnalités à venir
 
-### Gestion des séries
+### 📚 Gestion des séries
 
 - [ ] Système de favoris
-  - [ ] Ajout/suppression des favoris sur les séries
+  - [ ] Ajout/suppression des favoris
   - [ ] Menu dédié dans la sidebar
   - [ ] Synchronisation avec Komga
 
-### Améliorations techniques
-
-- [x] Refactorisation des services API
-  - [x] Création d'un service de base avec gestion des cookies
-  - [x] Création d'un middleware commun
-  - [x] Mutualisation du code de gestion du cache
-  - [x] Création des services spécialisés (Library, Series, Book, Home)
-- [x] Mise à jour des API deprecated
-- [x] Synchronisation de l'état de lecture avec Komga
-- [x] Revue du système de cache
-  - [x] Optimisation du cache côté serveur
-  - [x] Gestion intelligente du TTL par type de données
-  - [ ] Invalidation du cache sur les mutations
-  - [x] Stratégie de revalidation à la demande
-
-### Gestion des utilisateurs
+### 👥 Gestion des utilisateurs
 
 - [ ] Système d'inscription
 - [ ] Profil utilisateur enrichi
@@ -58,12 +117,67 @@ Application web moderne pour la lecture de BD/mangas/comics via un serveur Komga
   - [ ] Préférences personnalisées
 - [ ] Gestion des rôles et permissions
 
-### Fonctionnalités avancées
+### 📖 Lecture
 
+- [ ] Support de nouveaux formats
+  - [ ] EPUB
+  - [ ] PDF
 - [ ] Téléchargement local des livres
   - [ ] Bouton de téléchargement
   - [ ] Gestion de la progression
   - [ ] Stockage local sécurisé
+
+### 🌍 Internationalisation
+
+- [ ] Support multi-langues
+  - [ ] i18n
+  - [ ] RTL support
+
+### 🧪 Tests
+
+- [ ] Tests unitaires
+  - [ ] Services
+  - [ ] Hooks
+  - [ ] Utils
+- [ ] Tests d'intégration
+  - [ ] Flows utilisateur
+  - [ ] API integration
+- [ ] Tests E2E
+  - [ ] User journeys
+  - [ ] Cross-browser
+
+### 📝 Documentation
+
+- [ ] README
+  - [ ] Installation
+  - [ ] Configuration
+  - [ ] Development
+- [ ] Guide d'utilisation
+  - [ ] Features
+  - [ ] Shortcuts
+  - [ ] Tips & tricks
+- [ ] Documentation API
+  - [ ] Endpoints
+  - [ ] Types
+  - [ ] Examples
+
+### 🔄 Cache et Performance
+
+- [ ] Invalidation du cache sur les mutations
+- [ ] Stratégie de revalidation à la demande
+- [ ] Prefetching intelligent
+
+### 🚀 Déploiement
+
+- [ ] Configuration du build
+  - [ ] Optimisations de build
+  - [ ] Analyse de bundle
+- [ ] Scripts de déploiement
+  - [ ] CI/CD
+  - [ ] Environnements
+- [ ] Documentation d'installation
+  - [ ] Requirements
+  - [ ] Step-by-step guide
 
 ## 🛠 Configuration initiale
 
@@ -287,10 +401,10 @@ Application web moderne pour la lecture de BD/mangas/comics via un serveur Komga
     - [x] API responses
     - [x] Static assets
     - [x] Images
-- [ ] SEO
-  - [ ] Meta tags
-  - [ ] Sitemap
-  - [ ] robots.txt
+- [x] SEO
+  - [x] Meta tags
+  - [x] Sitemap
+  - [x] robots.txt
 - [x] Accessibilité
   - [x] ARIA labels
   - [x] Keyboard navigation
@@ -305,13 +419,19 @@ Application web moderne pour la lecture de BD/mangas/comics via un serveur Komga
 - [ ] Synchronisation des favoris
   - [ ] Sync avec Komga
   - [ ] Listes personnalisées
-- [ ] Mode hors ligne
-  - [ ] Service worker
-  - [ ] Sync en background
-- [ ] PWA
-  - [ ] Installation
-  - [ ] Notifications
-  - [ ] Background sync
+- [x] Mode hors ligne
+  - [x] Service worker
+  - [x] Sync en background
+- [x] PWA
+  - [x] Installation
+  - [x] Notifications
+  - [x] Background sync
+  - [x] Splash screens
+  - [x] Icons
+  - [x] Manifest
+  - [x] Service worker
+  - [x] Offline page
+  - [x] iOS support
 - [ ] Support multi-langues
   - [ ] i18n
   - [ ] RTL support
