@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { authService } from "@/lib/services/auth.service";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { KomgaLibrary } from "@/types/komga";
 import { storageService } from "@/lib/services/storage.service";
 
@@ -35,40 +35,30 @@ export function Sidebar({ isOpen }: SidebarProps) {
     initAuth();
   }, []);
 
-  // Effet séparé pour charger les bibliothèques
-  const fetchLibraries = async () => {
-    if (!isAuthenticated) {
-      setIsLoading(false);
-      return;
-    }
-
+  const fetchLibraries = useCallback(async () => {
+    if (!isAuthenticated) return;
+    setIsLoading(true);
+    console.log("Sidebar - Fetching libraries...");
     try {
-      console.log("Sidebar - Fetching libraries...");
       const response = await fetch("/api/komga/libraries");
       if (!response.ok) {
-        throw new Error(`Erreur ${response.status} lors de la récupération des bibliothèques`);
+        throw new Error("Erreur lors de la récupération des bibliothèques");
       }
       const data = await response.json();
       console.log("Sidebar - Libraries fetched:", data.length);
       setLibraries(data);
     } catch (error) {
-      console.error("Sidebar - Error fetching libraries:", error);
-      if (
-        error instanceof Error &&
-        (error.message.includes("401") || error.message.includes("403"))
-      ) {
-        console.log("Sidebar - Auth error, logging out");
-        handleLogout();
-      }
+      console.error("Erreur:", error);
+      setLibraries([]);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  };
+  }, [isAuthenticated]);
 
   useEffect(() => {
     fetchLibraries();
-  }, [isAuthenticated, pathname]);
+  }, [isAuthenticated, pathname, fetchLibraries]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
