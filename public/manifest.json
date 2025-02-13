@@ -74,6 +74,56 @@
       "label": "Lecteur de BD StripStream"
     }
   ],
+  "splash_screens": [
+    {
+      "src": "/images/splash/splash-2048x2732.png",
+      "sizes": "2048x2732",
+      "type": "image/png",
+      "platform": "iPad Pro 12.9"
+    },
+    {
+      "src": "/images/splash/splash-1668x2388.png",
+      "sizes": "1668x2388",
+      "type": "image/png",
+      "platform": "iPad Pro 11"
+    },
+    {
+      "src": "/images/splash/splash-1536x2048.png",
+      "sizes": "1536x2048",
+      "type": "image/png",
+      "platform": "iPad Mini/Air"
+    },
+    {
+      "src": "/images/splash/splash-1125x2436.png",
+      "sizes": "1125x2436",
+      "type": "image/png",
+      "platform": "iPhone X/XS"
+    },
+    {
+      "src": "/images/splash/splash-1242x2688.png",
+      "sizes": "1242x2688",
+      "type": "image/png",
+      "platform": "iPhone XS Max"
+    },
+    {
+      "src": "/images/splash/splash-828x1792.png",
+      "sizes": "828x1792",
+      "type": "image/png",
+      "platform": "iPhone XR"
+    },
+    {
+      "src": "/images/splash/splash-750x1334.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "platform": "iPhone 8/SE"
+    },
+    {
+      "src": "/images/splash/splash-1242x2208.png",
+      "sizes": "1242x2208",
+      "type": "image/png",
+      "platform": "iPhone 8 Plus"
+    }
+  ],
   "shortcuts": [
     {
       "name": "Accueil",
