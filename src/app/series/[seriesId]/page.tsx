@@ -54,7 +54,7 @@ export default async function SeriesPage({ params, searchParams }: PageProps) {
 
     return (
       <div className="container py-8 space-y-8">
-        <SeriesHeader series={series} serverUrl={config.serverUrl} />
+        <SeriesHeader series={series} />
         <PaginatedBookGrid
           books={books.content || []}
           serverUrl={config.serverUrl}
