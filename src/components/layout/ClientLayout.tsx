@@ -6,9 +6,26 @@ import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { InstallPWA } from "../ui/InstallPWA";
 import { Toaster } from "@/components/ui/toaster";
+import { usePathname, useRouter } from "next/navigation";
+import { authService } from "@/lib/services/auth.service";
+
+// Routes qui ne nécessitent pas d'authentification
+const publicRoutes = ["/login", "/register"];
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // Vérification de l'authentification
+  useEffect(() => {
+    const isPublicRoute = publicRoutes.includes(pathname);
+    const isAuthenticated = authService.isAuthenticated();
+
+    if (!isAuthenticated && !isPublicRoute) {
+      router.push(`/login?from=${encodeURIComponent(pathname)}`);
+    }
+  }, [pathname, router]);
 
   // Gestionnaire pour fermer la barre latérale lors d'un clic en dehors
   useEffect(() => {
@@ -49,12 +66,15 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     }
   }, []);
 
+  // Ne pas afficher le header et la sidebar sur les routes publiques
+  const isPublicRoute = publicRoutes.includes(pathname);
+
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <div className="relative min-h-screen">
-        <Header onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
-        <Sidebar isOpen={isSidebarOpen} />
-        <main className="container pt-4 md:pt-8">{children}</main>
+        {!isPublicRoute && <Header onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />}
+        {!isPublicRoute && <Sidebar isOpen={isSidebarOpen} />}
+        <main className={`${!isPublicRoute ? "container pt-4 md:pt-8" : ""}`}>{children}</main>
         <InstallPWA />
         <Toaster />
       </div>

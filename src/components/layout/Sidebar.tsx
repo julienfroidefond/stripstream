@@ -17,26 +17,10 @@ export function Sidebar({ isOpen }: SidebarProps) {
   const [libraries, setLibraries] = useState<KomgaLibrary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // Initialiser l'authentification au montage du composant
-  useEffect(() => {
-    const initAuth = () => {
-      const credentials = storageService.getCredentials();
-      const user = storageService.getUser();
-      console.log("Sidebar - Init Auth:", { hasCredentials: !!credentials, hasUser: !!user });
-      if (credentials && user) {
-        setIsAuthenticated(true);
-        return true;
-      }
-      return false;
-    };
-
-    initAuth();
-  }, []);
 
   const fetchLibraries = useCallback(async () => {
-    if (!isAuthenticated) return;
     setIsLoading(true);
     console.log("Sidebar - Fetching libraries...");
     try {
@@ -54,11 +38,11 @@ export function Sidebar({ isOpen }: SidebarProps) {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, [isAuthenticated]);
+  }, []);
 
   useEffect(() => {
     fetchLibraries();
-  }, [isAuthenticated, pathname, fetchLibraries]);
+  }, [pathname, fetchLibraries]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -68,8 +52,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
   const handleLogout = () => {
     console.log("Sidebar - Logging out");
     authService.logout();
-    storageService.clearAll(); // Nettoyer tout le stockage
-    setIsAuthenticated(false);
+    storageService.clearAll();
     setLibraries([]);
     router.push("/login");
   };
@@ -112,73 +95,67 @@ export function Sidebar({ isOpen }: SidebarProps) {
           </div>
         </div>
 
-        {isAuthenticated && (
-          <>
-            <div className="px-3 py-2">
-              <div className="space-y-1">
-                <div className="mb-2 px-4 flex items-center justify-between">
-                  <h2 className="text-lg font-semibold tracking-tight">Bibliothèques</h2>
-                  <button
-                    onClick={handleRefresh}
-                    disabled={isRefreshing}
-                    className="p-1 hover:bg-accent hover:text-accent-foreground rounded-md transition-colors"
-                    aria-label="Rafraîchir les bibliothèques"
-                  >
-                    <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
-                  </button>
-                </div>
-                {isLoading ? (
-                  <div className="px-3 py-2 text-sm text-muted-foreground">Chargement...</div>
-                ) : libraries.length === 0 ? (
-                  <div className="px-3 py-2 text-sm text-muted-foreground">Aucune bibliothèque</div>
-                ) : (
-                  libraries.map((library) => (
-                    <Link
-                      key={library.id}
-                      href={`/libraries/${library.id}`}
-                      className={cn(
-                        "flex items-center rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
-                        pathname === `/libraries/${library.id}` ? "bg-accent" : "transparent"
-                      )}
-                    >
-                      <Library className="mr-2 h-4 w-4" />
-                      {library.name}
-                    </Link>
-                  ))
-                )}
-              </div>
+        <div className="px-3 py-2">
+          <div className="space-y-1">
+            <div className="mb-2 px-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold tracking-tight">Bibliothèques</h2>
+              <button
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                className="p-1 hover:bg-accent hover:text-accent-foreground rounded-md transition-colors"
+                aria-label="Rafraîchir les bibliothèques"
+              >
+                <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
+              </button>
             </div>
-
-            <div className="px-3 py-2">
-              <div className="space-y-1">
-                <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">Configuration</h2>
+            {isLoading ? (
+              <div className="px-3 py-2 text-sm text-muted-foreground">Chargement...</div>
+            ) : libraries.length === 0 ? (
+              <div className="px-3 py-2 text-sm text-muted-foreground">Aucune bibliothèque</div>
+            ) : (
+              libraries.map((library) => (
                 <Link
-                  href="/settings"
+                  key={library.id}
+                  href={`/libraries/${library.id}`}
                   className={cn(
                     "flex items-center rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
-                    pathname === "/settings" ? "bg-accent" : "transparent"
+                    pathname === `/libraries/${library.id}` ? "bg-accent" : "transparent"
                   )}
                 >
-                  <Settings className="mr-2 h-4 w-4" />
-                  Préférences
+                  <Library className="mr-2 h-4 w-4" />
+                  {library.name}
                 </Link>
-              </div>
-            </div>
-          </>
-        )}
+              ))
+            )}
+          </div>
+        </div>
+
+        <div className="px-3 py-2">
+          <div className="space-y-1">
+            <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">Configuration</h2>
+            <Link
+              href="/settings"
+              className={cn(
+                "flex items-center rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+                pathname === "/settings" ? "bg-accent" : "transparent"
+              )}
+            >
+              <Settings className="mr-2 h-4 w-4" />
+              Préférences
+            </Link>
+          </div>
+        </div>
       </div>
 
-      {isAuthenticated && (
-        <div className="p-3 border-t border-border/40">
-          <button
-            onClick={handleLogout}
-            className="flex w-full items-center rounded-lg px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 hover:text-destructive"
-          >
-            <LogOut className="mr-2 h-4 w-4" />
-            Se déconnecter
-          </button>
-        </div>
-      )}
+      <div className="p-3 border-t border-border/40">
+        <button
+          onClick={handleLogout}
+          className="flex w-full items-center rounded-lg px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 hover:text-destructive"
+        >
+          <LogOut className="mr-2 h-4 w-4" />
+          Se déconnecter
+        </button>
+      </div>
     </aside>
   );
 }
