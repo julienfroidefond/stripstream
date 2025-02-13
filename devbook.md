@@ -9,8 +9,9 @@ Application web moderne pour la lecture de BD/mangas/comics via un serveur Komga
 ### 📚 Gestion des séries
 
 - [x] Système de favoris
-  - [x] Ajout/suppression des favoris (stockage local)
-  - [ ] Menu dédié dans la sidebar
+  - [x] Service de gestion des favoris
+  - [x] Bouton d'ajout/retrait des favoris
+  - [x] Menu dédié dans la sidebar avec la liste des séries favorites
   - [ ] Carousel dédié dans sur la homepage de toutes les séries favorites
 - [ ] Vue liste/grille configurable
 - [ ] Filtres et tri avancés

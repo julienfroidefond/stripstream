@@ -1,11 +1,12 @@
-import { BookOpen, Home, Library, Settings, LogOut, RefreshCw } from "lucide-react";
+import { BookOpen, Home, Library, Settings, LogOut, RefreshCw, Star } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { authService } from "@/lib/services/auth.service";
 import { useEffect, useState, useCallback } from "react";
-import { KomgaLibrary } from "@/types/komga";
+import { KomgaLibrary, KomgaSeries } from "@/types/komga";
 import { storageService } from "@/lib/services/storage.service";
+import { FavoriteService } from "@/lib/services/favorite.service";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -15,21 +16,19 @@ export function Sidebar({ isOpen }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [libraries, setLibraries] = useState<KomgaLibrary[]>([]);
+  const [favorites, setFavorites] = useState<KomgaSeries[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-
-  // Initialiser l'authentification au montage du composant
+  const [isLoadingFavorites, setIsLoadingFavorites] = useState(true);
 
   const fetchLibraries = useCallback(async () => {
     setIsLoading(true);
-    console.log("Sidebar - Fetching libraries...");
     try {
       const response = await fetch("/api/komga/libraries");
       if (!response.ok) {
         throw new Error("Erreur lors de la récupération des bibliothèques");
       }
       const data = await response.json();
-      console.log("Sidebar - Libraries fetched:", data.length);
       setLibraries(data);
     } catch (error) {
       console.error("Erreur:", error);
@@ -40,20 +39,59 @@ export function Sidebar({ isOpen }: SidebarProps) {
     }
   }, []);
 
+  const fetchFavorites = useCallback(async () => {
+    setIsLoadingFavorites(true);
+    try {
+      const favoriteIds = FavoriteService.getAllFavoriteIds();
+      if (favoriteIds.length === 0) {
+        setFavorites([]);
+        return;
+      }
+
+      const promises = favoriteIds.map(async (id) => {
+        const response = await fetch(`/api/komga/series/${id}`);
+        if (!response.ok) return null;
+        return response.json();
+      });
+
+      const results = await Promise.all(promises);
+      setFavorites(results.filter((series): series is KomgaSeries => series !== null));
+    } catch (error) {
+      console.error("Erreur lors de la récupération des favoris:", error);
+      setFavorites([]);
+    } finally {
+      setIsLoadingFavorites(false);
+    }
+  }, []);
+
+  // Chargement initial des données
   useEffect(() => {
     fetchLibraries();
-  }, [pathname, fetchLibraries]);
+    fetchFavorites();
+  }, []); // Suppression de la dépendance pathname
+
+  // Mettre à jour les favoris quand ils changent dans le localStorage
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "stripstream_favorites") {
+        fetchFavorites();
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, [fetchFavorites]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await fetchLibraries();
+    await Promise.all([fetchLibraries(), fetchFavorites()]);
   };
 
   const handleLogout = () => {
-    console.log("Sidebar - Logging out");
     authService.logout();
     storageService.clearAll();
     setLibraries([]);
+    setFavorites([]);
     router.push("/login");
   };
 
@@ -92,6 +130,34 @@ export function Sidebar({ isOpen }: SidebarProps) {
                 {item.name}
               </Link>
             ))}
+          </div>
+        </div>
+
+        <div className="px-3 py-2">
+          <div className="space-y-1">
+            <div className="mb-2 px-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold tracking-tight">Favoris</h2>
+              <span className="text-xs text-muted-foreground">{favorites.length}</span>
+            </div>
+            {isLoadingFavorites ? (
+              <div className="px-3 py-2 text-sm text-muted-foreground">Chargement...</div>
+            ) : favorites.length === 0 ? (
+              <div className="px-3 py-2 text-sm text-muted-foreground">Aucun favori</div>
+            ) : (
+              favorites.map((series) => (
+                <Link
+                  key={series.id}
+                  href={`/series/${series.id}`}
+                  className={cn(
+                    "flex items-center rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+                    pathname === `/series/${series.id}` ? "bg-accent" : "transparent"
+                  )}
+                >
+                  <Star className="mr-2 h-4 w-4 fill-yellow-400 text-yellow-400" />
+                  <span className="truncate">{series.metadata.title}</span>
+                </Link>
+              ))
+            )}
           </div>
         </div>
 
