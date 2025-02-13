@@ -1,6 +1,13 @@
 import { storageService } from "./storage.service";
 
 export class FavoriteService {
+  private static readonly FAVORITES_CHANGE_EVENT = "favoritesChanged";
+
+  private static dispatchFavoritesChanged() {
+    // Dispatch l'événement pour notifier les changements
+    window.dispatchEvent(new Event(FavoriteService.FAVORITES_CHANGE_EVENT));
+  }
+
   /**
    * Vérifie si une série est dans les favoris
    */
@@ -13,6 +20,7 @@ export class FavoriteService {
    */
   static addToFavorites(seriesId: string): void {
     storageService.addFavorite(seriesId);
+    this.dispatchFavoritesChanged();
   }
 
   /**
@@ -20,6 +28,7 @@ export class FavoriteService {
    */
   static removeFromFavorites(seriesId: string): void {
     storageService.removeFavorite(seriesId);
+    this.dispatchFavoritesChanged();
   }
 
   /**

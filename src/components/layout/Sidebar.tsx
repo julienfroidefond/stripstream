@@ -70,16 +70,25 @@ export function Sidebar({ isOpen }: SidebarProps) {
     fetchFavorites();
   }, []); // Suppression de la dépendance pathname
 
-  // Mettre à jour les favoris quand ils changent dans le localStorage
+  // Mettre à jour les favoris quand ils changent
   useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
+    const handleFavoritesChange = () => {
+      fetchFavorites();
+    };
+
+    // Écouter les changements de favoris dans la même fenêtre
+    window.addEventListener("favoritesChanged", handleFavoritesChange);
+    // Écouter les changements de favoris dans d'autres fenêtres
+    window.addEventListener("storage", (e) => {
       if (e.key === "stripstream_favorites") {
         fetchFavorites();
       }
-    };
+    });
 
-    window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
+    return () => {
+      window.removeEventListener("favoritesChanged", handleFavoritesChange);
+      window.removeEventListener("storage", handleFavoritesChange);
+    };
   }, [fetchFavorites]);
 
   const handleRefresh = async () => {
