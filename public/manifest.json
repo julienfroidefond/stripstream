@@ -3,7 +3,7 @@
   "short_name": "StripStream",
   "description": "Votre bibliothèque numérique pour lire vos BD, mangas et comics préférés",
   "start_url": "/",
-  "display": "standalone",
+  "display": "fullscreen",
   "orientation": "portrait",
   "background_color": "#0F172A",
   "theme_color": "#4F46E5",
