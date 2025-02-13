@@ -1,6 +1,5 @@
 import { AuthError } from "@/types/auth";
 import { storageService } from "./storage.service";
-import { KomgaUser } from "@/types/komga";
 
 interface AuthUser {
   id: string;

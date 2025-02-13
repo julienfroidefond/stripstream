@@ -1,7 +1,7 @@
 import { AuthConfig } from "@/types/auth";
 
-const CREDENTIALS_KEY = "komgaCredentials";
-const USER_KEY = "komgaUser";
+const KOMGACREDENTIALS_KEY = "komgaCredentials";
+const USER_KEY = "stripUser";
 const TTL_CONFIG_KEY = "ttlConfig";
 
 interface TTLConfig {
@@ -28,7 +28,7 @@ class StorageService {
   /**
    * Stocke les credentials de manière sécurisée
    */
-  setCredentials(config: AuthConfig, remember: boolean = false): void {
+  setKomgaConfig(config: AuthConfig, remember: boolean = false): void {
     const storage = remember ? localStorage : sessionStorage;
 
     // Encodage basique des credentials en base64
@@ -41,10 +41,10 @@ class StorageService {
       },
     });
 
-    storage.setItem(CREDENTIALS_KEY, encoded);
+    storage.setItem(KOMGACREDENTIALS_KEY, encoded);
 
     // Définir aussi un cookie pour le middleware
-    const cookieValue = `${CREDENTIALS_KEY}=${encoded}; path=/; samesite=strict`;
+    const cookieValue = `${KOMGACREDENTIALS_KEY}=${encoded}; path=/; samesite=strict`;
     const maxAge = remember ? `; max-age=${30 * 24 * 60 * 60}` : "";
     document.cookie = cookieValue + maxAge;
 
@@ -58,10 +58,10 @@ class StorageService {
     if (typeof window === "undefined") return null;
 
     const storage =
-      localStorage.getItem(CREDENTIALS_KEY) || sessionStorage.getItem(CREDENTIALS_KEY);
+      localStorage.getItem(KOMGACREDENTIALS_KEY) || sessionStorage.getItem(KOMGACREDENTIALS_KEY);
     console.log("StorageService - Lecture des credentials:", {
-      fromLocalStorage: !!localStorage.getItem(CREDENTIALS_KEY),
-      fromSessionStorage: !!sessionStorage.getItem(CREDENTIALS_KEY),
+      fromLocalStorage: !!localStorage.getItem(KOMGACREDENTIALS_KEY),
+      fromSessionStorage: !!sessionStorage.getItem(KOMGACREDENTIALS_KEY),
       value: storage,
     });
 
@@ -135,17 +135,17 @@ class StorageService {
    * Efface toutes les données stockées
    */
   clear(): void {
-    localStorage.removeItem(CREDENTIALS_KEY);
+    localStorage.removeItem(KOMGACREDENTIALS_KEY);
     localStorage.removeItem(USER_KEY);
-    sessionStorage.removeItem(CREDENTIALS_KEY);
+    sessionStorage.removeItem(KOMGACREDENTIALS_KEY);
     sessionStorage.removeItem(USER_KEY);
-    document.cookie = `${CREDENTIALS_KEY}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+    document.cookie = `${KOMGACREDENTIALS_KEY}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
     document.cookie = `${USER_KEY}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
   }
 
   getUser() {
     try {
-      const userStr = localStorage.getItem("komgaUser");
+      const userStr = localStorage.getItem(USER_KEY);
       if (!userStr) return null;
       return JSON.parse(atob(userStr));
     } catch (error) {
@@ -155,9 +155,17 @@ class StorageService {
   }
 
   clearAll() {
-    localStorage.removeItem("komgaUser");
-    localStorage.removeItem("komgaCredentials");
-    localStorage.removeItem("ttlConfig");
+    localStorage.removeItem(USER_KEY);
+    localStorage.removeItem(KOMGACREDENTIALS_KEY);
+    localStorage.removeItem(TTL_CONFIG_KEY);
+  }
+
+  getKeys() {
+    return {
+      credentials: KOMGACREDENTIALS_KEY,
+      user: USER_KEY,
+      ttlConfig: TTL_CONFIG_KEY,
+    };
   }
 }
 

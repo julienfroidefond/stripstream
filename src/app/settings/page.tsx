@@ -136,7 +136,7 @@ export default function SettingsPage() {
       password,
     };
 
-    storageService.setCredentials(
+    storageService.setKomgaConfig(
       {
         serverUrl: newConfig.serverUrl,
         credentials: { username: newConfig.username, password: newConfig.password },

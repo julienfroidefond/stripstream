@@ -38,7 +38,7 @@ export function middleware(request: NextRequest) {
   }
 
   // Pour les routes protégées, vérifier la présence de l'utilisateur
-  const user = request.cookies.get("komgaUser");
+  const user = request.cookies.get("stripUser");
   if (!user) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("from", pathname);
