@@ -11,27 +11,28 @@ export class ImageService extends BaseApiService {
       const config = await this.getKomgaConfig();
       const url = this.buildUrl(config, path);
       const headers = this.getAuthHeaders(config);
-
-      // Ajout des headers pour accepter les images
       headers.set("Accept", "image/jpeg, image/png, image/gif, image/webp, */*");
 
-      const response = await fetch(url, { headers });
+      return this.fetchWithCache<ImageResponse>(
+        `image-${path}`,
+        async () => {
+          const response = await fetch(url, { headers });
 
-      if (!response.ok) {
-        throw new Error(`Erreur HTTP: ${response.status} ${response.statusText}`);
-      }
+          if (!response.ok) {
+            throw new Error(`Erreur HTTP: ${response.status} ${response.statusText}`);
+          }
 
-      // Récupérer le type MIME de l'image
-      const contentType = response.headers.get("content-type");
+          const contentType = response.headers.get("content-type");
+          const arrayBuffer = await response.arrayBuffer();
+          const buffer = Buffer.from(arrayBuffer);
 
-      // Convertir la réponse en buffer
-      const arrayBuffer = await response.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-
-      return {
-        buffer,
-        contentType,
-      };
+          return {
+            buffer,
+            contentType,
+          };
+        },
+        "IMAGES"
+      );
     } catch (error) {
       console.error("Erreur lors de la récupération de l'image:", error);
       return this.handleError(error, "Impossible de récupérer l'image");
