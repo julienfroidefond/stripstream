@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { PaginatedBookGrid } from "@/components/series/PaginatedBookGrid";
 import { SeriesHeader } from "@/components/series/SeriesHeader";
 import { KomgaSeries, KomgaBook } from "@/types/komga";
+import { komgaConfigService } from "@/lib/services/komga-config.service";
 
 interface PageProps {
   params: { seriesId: string };
@@ -14,19 +15,9 @@ export default async function SeriesPage({ params, searchParams }: PageProps) {
   const currentPage = searchParams.page ? parseInt(searchParams.page) : 1;
   const unreadOnly = searchParams.unread === "true";
 
-  const configCookie = cookies().get("komgaCredentials");
-  if (!configCookie) {
-    throw new Error("Configuration Komga manquante");
-  }
-
   try {
-    const config = JSON.parse(atob(configCookie.value));
-    if (!config.serverUrl || !config.credentials?.username || !config.credentials?.password) {
-      throw new Error("Configuration Komga invalide ou incomplète");
-    }
-
-    const credentials = `${config.credentials.username}:${config.credentials.password}`;
-    const auth = Buffer.from(credentials).toString("base64");
+    const cookiesStore = cookies();
+    const config = komgaConfigService.validateAndGetConfig(cookiesStore);
 
     // Paramètres de pagination
     const pageIndex = currentPage - 1; // L'API Komga utilise un index base 0
@@ -34,25 +25,22 @@ export default async function SeriesPage({ params, searchParams }: PageProps) {
     // Appels API parallèles pour les détails de la série et les tomes
     const [seriesResponse, booksResponse] = await Promise.all([
       // Détails de la série
-      fetch(`${config.serverUrl}/api/v1/series/${params.seriesId}`, {
-        headers: {
-          Authorization: `Basic ${auth}`,
-          Accept: "application/json",
-        },
+      fetch(komgaConfigService.buildApiUrl(`series/${params.seriesId}`, cookiesStore), {
+        headers: komgaConfigService.getAuthHeaders(cookiesStore),
         next: { revalidate: 300 },
       }),
       // Liste des tomes avec pagination et filtre
       fetch(
-        `${config.serverUrl}/api/v1/series/${
-          params.seriesId
-        }/books?page=${pageIndex}&size=${PAGE_SIZE}&sort=metadata.numberSort,asc${
-          unreadOnly ? "&read_status=UNREAD&read_status=IN_PROGRESS" : ""
-        }`,
+        komgaConfigService.buildApiUrl(
+          `series/${
+            params.seriesId
+          }/books?page=${pageIndex}&size=${PAGE_SIZE}&sort=metadata.numberSort,asc${
+            unreadOnly ? "&read_status=UNREAD&read_status=IN_PROGRESS" : ""
+          }`,
+          cookiesStore
+        ),
         {
-          headers: {
-            Authorization: `Basic ${auth}`,
-            Accept: "application/json",
-          },
+          headers: komgaConfigService.getAuthHeaders(cookiesStore),
           next: { revalidate: 300 },
         }
       ),

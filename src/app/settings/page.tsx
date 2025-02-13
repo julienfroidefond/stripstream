@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { storageService } from "@/lib/services/storage.service";
 import { AuthError } from "@/types/auth";
 import { useToast } from "@/components/ui/use-toast";
+import { komgaConfigService } from "@/lib/services/komga-config.service";
 
 interface ErrorMessage {
   message: string;
@@ -136,15 +137,21 @@ export default function SettingsPage() {
       password,
     };
 
-    storageService.setKomgaConfig(
-      {
-        serverUrl: newConfig.serverUrl,
-        credentials: { username: newConfig.username, password: newConfig.password },
+    const komgaConfig = {
+      serverUrl: newConfig.serverUrl,
+      credentials: {
+        username: newConfig.username,
+        password: newConfig.password,
       },
-      true
-    );
+    };
 
+    komgaConfigService.setConfig(komgaConfig, true);
     setConfig(newConfig);
+
+    // Émettre un événement pour notifier les autres composants
+    const configChangeEvent = new CustomEvent("komga-config-changed", { detail: komgaConfig });
+    window.dispatchEvent(configChangeEvent);
+
     toast({
       title: "Configuration sauvegardée",
       description: "La configuration a été sauvegardée avec succès",

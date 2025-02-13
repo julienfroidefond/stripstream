@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { komgaConfigService } from "@/lib/services/komga-config.service";
 
 // Routes qui ne nécessitent pas d'authentification
 const publicRoutes = ["/login", "/register", "/images"];
@@ -21,17 +22,14 @@ export function middleware(request: NextRequest) {
 
   // Vérifier si c'est une route d'API
   if (pathname.startsWith("/api/")) {
-    // Vérifier les credentials Komga
-    const configCookie = request.cookies.get("komgaCredentials");
+    // Vérifier la configuration Komga
+    const config = komgaConfigService.getConfig(request.cookies);
 
-    if (!configCookie) {
-      return NextResponse.json({ error: "Configuration Komga manquante" }, { status: 401 });
-    }
-
-    try {
-      JSON.parse(atob(configCookie.value));
-    } catch (error) {
-      return NextResponse.json({ error: "Configuration Komga invalide" }, { status: 401 });
+    if (!komgaConfigService.isConfigValid(config)) {
+      return NextResponse.json(
+        { error: "Configuration Komga manquante ou invalide" },
+        { status: 401 }
+      );
     }
 
     return NextResponse.next();

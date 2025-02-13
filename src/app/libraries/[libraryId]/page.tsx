@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { PaginatedSeriesGrid } from "@/components/library/PaginatedSeriesGrid";
+import { komgaConfigService } from "@/lib/services/komga-config.service";
 
 interface PageProps {
   params: { libraryId: string };
@@ -9,38 +10,24 @@ interface PageProps {
 const PAGE_SIZE = 20;
 
 async function getLibrarySeries(libraryId: string, page: number = 1, unreadOnly: boolean = false) {
-  const configCookie = cookies().get("komgaCredentials");
-
-  if (!configCookie) {
-    throw new Error("Configuration Komga manquante");
-  }
-
   try {
-    const config = JSON.parse(atob(configCookie.value));
-
-    if (!config.serverUrl || !config.credentials?.username || !config.credentials?.password) {
-      throw new Error("Configuration Komga invalide ou incomplète");
-    }
+    const cookiesStore = cookies();
+    const config = komgaConfigService.validateAndGetConfig(cookiesStore);
 
     // Paramètres de pagination
     const pageIndex = page - 1; // L'API Komga utilise un index base 0
 
     // Construire l'URL avec les paramètres
-    let url = `${config.serverUrl}/api/v1/series?library_id=${libraryId}&page=${pageIndex}&size=${PAGE_SIZE}`;
-
-    // Ajouter le filtre pour les séries non lues et en cours si nécessaire
+    let path = `series?library_id=${libraryId}&page=${pageIndex}&size=${PAGE_SIZE}`;
     if (unreadOnly) {
-      url += "&read_status=UNREAD&read_status=IN_PROGRESS";
+      path += "&read_status=UNREAD&read_status=IN_PROGRESS";
     }
 
-    const credentials = `${config.credentials.username}:${config.credentials.password}`;
-    const auth = Buffer.from(credentials).toString("base64");
+    const url = komgaConfigService.buildApiUrl(path, cookiesStore);
+    const headers = komgaConfigService.getAuthHeaders(cookiesStore);
 
     const response = await fetch(url, {
-      headers: {
-        Authorization: `Basic ${auth}`,
-        Accept: "application/json",
-      },
+      headers,
       next: { revalidate: 300 }, // Cache de 5 minutes
     });
 

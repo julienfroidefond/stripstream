@@ -1,8 +1,11 @@
 import { AuthConfig } from "@/types/auth";
+import { STORAGE_KEYS } from "@/lib/constants";
 
-const KOMGACREDENTIALS_KEY = "komgaCredentials";
-const USER_KEY = "stripUser";
-const TTL_CONFIG_KEY = "ttlConfig";
+const {
+  CREDENTIALS: KOMGACREDENTIALS_KEY,
+  USER: USER_KEY,
+  TTL_CONFIG: TTL_CONFIG_KEY,
+} = STORAGE_KEYS;
 
 interface TTLConfig {
   defaultTTL: number;
