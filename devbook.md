@@ -4,6 +4,105 @@
 
 Application web moderne pour la lecture de BD/mangas/comics via un serveur Komga.
 
+## 🚀 Fonctionnalités à venir
+
+### 📚 Gestion des séries
+
+- [ ] Système de favoris
+  - [ ] Ajout/suppression des favoris
+  - [ ] Menu dédié dans la sidebar
+  - [ ] Carousel dédié dans sur la homepage de toutes les séries favorites
+  - [ ] Synchronisation avec Komga
+- [ ] Vue liste/grille configurable
+- [ ] Filtres et tri avancés
+- [ ] Recherche globale
+- [ ] Bouton pour marquer comme lu
+
+### 📖 Lecteur
+
+- [ ] Revue API thumbnail => thumbnails
+- [ ] Thumbnails : prefetch en 2 secondes
+- [ ] Thumbnails : UI : barre de scroll plus grande
+- [ ] Thumbnails : UI : scroll horizontal
+- [ ] Page fantome avant le lecteur
+- [ ] switch to page
+
+### 📖 Lecture
+
+- [ ] Téléchargement local des livres
+  - [ ] Bouton de téléchargement
+  - [ ] Gestion de la progression
+  - [ ] Stockage local sécurisé
+  - [ ] Bouton pour supprimer le téléchargement
+  - [ ] Bouton pour supprimer tous les livres téléchargés dans les préférences
+- [ ] Support de nouveaux formats
+  - [ ] EPUB
+  - [ ] PDF
+
+### 🔄 Cache et Performance
+
+- [ ] Revoir si tous les services utilisent bien le cache
+- [ ] Invalidation du cache sur les mutations
+- [ ] Stratégie de revalidation à la demande
+- [ ] Prefetching intelligent
+- [ ] Lazy loading amélioré
+- [ ] Préférences : pouvoir vider chaque cache indépendemment
+
+### 👥 Gestion des utilisateurs
+
+- [ ] Système d'inscription
+- [ ] Profil utilisateur enrichi
+  - [ ] Nom/Prénom
+  - [ ] Email
+  - [ ] Préférences personnalisées
+- [ ] Gestion des rôles et permissions
+
+### 🌍 Internationalisation
+
+- [ ] Support multi-langues
+  - [ ] i18n
+  - [ ] RTL support
+
+### 🧪 Tests
+
+- [ ] Tests unitaires
+  - [ ] Services
+  - [ ] Hooks
+  - [ ] Utils
+- [ ] Tests d'intégration
+  - [ ] Flows utilisateur
+  - [ ] API integration
+- [ ] Tests E2E
+  - [ ] User journeys
+  - [ ] Cross-browser
+
+### 📝 Documentation
+
+- [ ] README
+  - [ ] Installation
+  - [ ] Configuration
+  - [ ] Development
+- [ ] Guide d'utilisation
+  - [ ] Features
+  - [ ] Shortcuts
+  - [ ] Tips & tricks
+- [ ] Documentation API
+  - [ ] Endpoints
+  - [ ] Types
+  - [ ] Examples
+
+### 🚀 Déploiement
+
+- [ ] Configuration du build
+  - [ ] Optimisations de build
+  - [ ] Analyse de bundle
+- [ ] Scripts de déploiement
+  - [ ] CI/CD
+  - [ ] Environnements
+- [ ] Documentation d'installation
+  - [ ] Requirements
+  - [ ] Step-by-step guide
+
 ## 📋 Fonctionnalités principales
 
 ### 🔐 Authentification et Configuration
@@ -99,86 +198,6 @@ Application web moderne pour la lecture de BD/mangas/comics via un serveur Komga
   - [x] Screen readers
   - [x] Color contrast
 
-## 🚀 Fonctionnalités à venir
-
-### 📚 Gestion des séries
-
-- [ ] Système de favoris
-  - [ ] Ajout/suppression des favoris
-  - [ ] Menu dédié dans la sidebar
-  - [ ] Synchronisation avec Komga
-
-### 👥 Gestion des utilisateurs
-
-- [ ] Système d'inscription
-- [ ] Profil utilisateur enrichi
-  - [ ] Nom/Prénom
-  - [ ] Email
-  - [ ] Préférences personnalisées
-- [ ] Gestion des rôles et permissions
-
-### 📖 Lecture
-
-- [ ] Support de nouveaux formats
-  - [ ] EPUB
-  - [ ] PDF
-- [ ] Téléchargement local des livres
-  - [ ] Bouton de téléchargement
-  - [ ] Gestion de la progression
-  - [ ] Stockage local sécurisé
-
-### 🌍 Internationalisation
-
-- [ ] Support multi-langues
-  - [ ] i18n
-  - [ ] RTL support
-
-### 🧪 Tests
-
-- [ ] Tests unitaires
-  - [ ] Services
-  - [ ] Hooks
-  - [ ] Utils
-- [ ] Tests d'intégration
-  - [ ] Flows utilisateur
-  - [ ] API integration
-- [ ] Tests E2E
-  - [ ] User journeys
-  - [ ] Cross-browser
-
-### 📝 Documentation
-
-- [ ] README
-  - [ ] Installation
-  - [ ] Configuration
-  - [ ] Development
-- [ ] Guide d'utilisation
-  - [ ] Features
-  - [ ] Shortcuts
-  - [ ] Tips & tricks
-- [ ] Documentation API
-  - [ ] Endpoints
-  - [ ] Types
-  - [ ] Examples
-
-### 🔄 Cache et Performance
-
-- [ ] Invalidation du cache sur les mutations
-- [ ] Stratégie de revalidation à la demande
-- [ ] Prefetching intelligent
-
-### 🚀 Déploiement
-
-- [ ] Configuration du build
-  - [ ] Optimisations de build
-  - [ ] Analyse de bundle
-- [ ] Scripts de déploiement
-  - [ ] CI/CD
-  - [ ] Environnements
-- [ ] Documentation d'installation
-  - [ ] Requirements
-  - [ ] Step-by-step guide
-
 ## 🛠 Configuration initiale
 
 - [x] Mise en place du projet Next.js
@@ -207,7 +226,6 @@ Application web moderne pour la lecture de BD/mangas/comics via un serveur Komga
 ## 📚 Structure de l'application
 
 - [x] Mise en place de l'architecture des dossiers
-
   - [x] Components
   - [x] Layouts
   - [x] Pages (routes)
@@ -215,7 +233,6 @@ Application web moderne pour la lecture de BD/mangas/comics via un serveur Komga
   - [x] Types
   - [x] Hooks personnalisés
   - [x] Utils
-
 - [x] Création des types TypeScript
   - [x] Types pour l'API Komga
     - [x] Types des utilisateurs et rôles
@@ -227,63 +244,6 @@ Application web moderne pour la lecture de BD/mangas/comics via un serveur Komga
     - [x] État d'authentification
     - [x] Gestion des erreurs
   - [x] Types pour les préférences utilisateur
-
-## 🔒 Authentification et Configuration
-
-- [x] Page de connexion
-  - [x] Formulaire de connexion (email/password)
-  - [x] Validation des champs
-  - [x] Gestion des erreurs de connexion
-  - [x] Stockage sécurisé du token
-  - [x] Redirection après connexion
-- [x] Page de paramètres
-  - [x] Formulaire de configuration Komga
-    - [x] Validation de l'URL du serveur
-    - [x] Test de connexion en direct
-    - [x] Gestion des erreurs détaillée
-    - [x] Messages d'erreur contextuels
-  - [x] Sauvegarde des préférences
-    - [x] Stockage sécurisé des credentials Komga
-    - [x] Persistance des paramètres
-  - [x] Configuration du cache
-    - [x] Gestion des TTL par type de données
-    - [x] Interface de configuration intuitive
-    - [x] Nettoyage du cache à la demande
-  - [x] UI/UX optimisée
-    - [x] Layout compact et centré
-    - [x] Hiérarchie visuelle claire
-    - [x] Composants redimensionnés
-    - [x] Espacement optimisé
-
-## 📱 Interface utilisateur
-
-- [x] Layout principal
-  - [x] Header avec navigation
-  - [x] Sidebar rétractable
-  - [x] Thème clair/sombre
-  - [x] Responsive design
-- [x] Page d'accueil
-  - [x] Présentation des fonctionnalités principales
-  - [x] Liste des collections récentes
-- [x] Page de collection
-  - [x] Grille de séries avec lazy loading
-  - [x] Affichage des couvertures
-  - [x] Métadonnées des séries
-  - [x] État des séries (En cours, Terminé, etc.)
-  - [ ] Vue liste/grille
-  - [ ] Filtres et tri
-- [x] Page de détails de la série
-  - [x] Couverture et informations
-  - [x] Liste des tomes
-  - [x] Progression de lecture
-  - [x] Pagination des tomes
-  - [x] Filtre "À lire" (non lus et en cours)
-  - [x] Bouton de lecture contextuel
-- [x] Page de détails du tome
-  - [x] Couverture et informations
-  - [x] Métadonnées (auteurs, date, etc.)
-  - [x] Bouton de lecture
-  - [x] Lecteur plein écran
 
 ## 🔄 Intégration Komga
 
@@ -300,138 +260,3 @@ Application web moderne pour la lecture de BD/mangas/comics via un serveur Komga
   - [x] Tomes
   - [x] Progression de lecture
   - [x] Images et miniatures
-
-## 🚀 Prochaines étapes
-
-- [ ] Amélioration de l'UX
-  - [ ] Animations de transition
-  - [ ] Retour haptique
-  - [ ] Messages de confirmation
-  - [ ] Tooltips d'aide
-- [ ] Fonctionnalités avancées
-  - [ ] Recherche globale
-  - [ ] Filtres avancés
-  - [ ] Tri personnalisé
-  - [ ] Vue liste/grille configurable
-- [ ] Performance
-  - [ ] Optimisation des images
-  - [ ] Lazy loading amélioré
-  - [ ] Prefetching intelligent
-  - [ ] Cache optimisé
-- [ ] Accessibilité
-  - [ ] Navigation au clavier
-  - [ ] Support lecteur d'écran
-  - [ ] Contraste et lisibilité
-  - [ ] ARIA labels
-
-## 🎨 UI/UX
-
-- [x] Design responsive
-  - [x] Mobile-first
-  - [x] Breakpoints cohérents
-  - [x] Touch-friendly
-- [x] Animations et transitions
-  - [x] Page transitions
-  - [x] Loading states
-  - [x] Micro-interactions
-- [x] Messages de feedback
-  - [x] Toasts pour les actions
-  - [x] Messages d'erreur contextuels
-  - [x] Indicateurs de progression
-- [x] États de chargement
-  - [x] Skeletons
-  - [x] Suspense boundaries
-  - [x] Loading spinners
-- [x] Gestion des erreurs UI
-  - [x] Error boundaries
-  - [x] Fallbacks élégants
-  - [x] Recovery options
-
-## 🧪 Tests
-
-- [ ] Tests unitaires
-  - [ ] Services
-  - [ ] Hooks
-  - [ ] Utils
-- [ ] Tests d'intégration
-  - [ ] Flows utilisateur
-  - [ ] API integration
-- [ ] Tests E2E
-  - [ ] User journeys
-  - [ ] Cross-browser
-
-## 📦 Déploiement
-
-- [ ] Configuration du build
-  - [ ] Optimisations de build
-  - [ ] Analyse de bundle
-- [ ] Scripts de déploiement
-  - [ ] CI/CD
-  - [ ] Environnements
-- [ ] Documentation d'installation
-  - [ ] Requirements
-  - [ ] Step-by-step guide
-
-## 📝 Documentation
-
-- [ ] README
-  - [ ] Installation
-  - [ ] Configuration
-  - [ ] Development
-- [ ] Guide d'utilisation
-  - [ ] Features
-  - [ ] Shortcuts
-  - [ ] Tips & tricks
-- [ ] Documentation API
-  - [ ] Endpoints
-  - [ ] Types
-  - [ ] Examples
-
-## 🔍 Optimisations
-
-- [x] Performance
-  - [x] Optimisation des images
-    - [x] Format WebP
-    - [x] Responsive images
-  - [x] Lazy loading
-    - [x] Components
-    - [x] Images
-    - [x] Routes
-  - [x] Mise en cache
-    - [x] API responses
-    - [x] Static assets
-    - [x] Images
-- [x] SEO
-  - [x] Meta tags
-  - [x] Sitemap
-  - [x] robots.txt
-- [x] Accessibilité
-  - [x] ARIA labels
-  - [x] Keyboard navigation
-  - [x] Screen readers
-  - [x] Color contrast
-
-## 🔄 Futures évolutions possibles
-
-- [ ] Support de nouveaux formats
-  - [ ] EPUB
-  - [ ] PDF
-- [ ] Synchronisation des favoris
-  - [ ] Sync avec Komga
-  - [ ] Listes personnalisées
-- [x] Mode hors ligne
-  - [x] Service worker
-  - [x] Sync en background
-- [x] PWA
-  - [x] Installation
-  - [x] Notifications
-  - [x] Background sync
-  - [x] Splash screens
-  - [x] Icons
-  - [x] Manifest
-  - [x] Service worker
-  - [x] Offline page
-  - [x] iOS support
-- [ ] Support multi-langues
-  - [ ] i18n
-  - [ ] RTL support
