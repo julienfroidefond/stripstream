@@ -11,7 +11,49 @@ export const metadata: Metadata = {
   themeColor: "#4F46E5",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
+    startupImage: [
+      {
+        url: "/images/splash/splash-2048x2732.png",
+        media:
+          "(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)",
+      },
+      {
+        url: "/images/splash/splash-1668x2388.png",
+        media:
+          "(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)",
+      },
+      {
+        url: "/images/splash/splash-1536x2048.png",
+        media:
+          "(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)",
+      },
+      {
+        url: "/images/splash/splash-1125x2436.png",
+        media:
+          "(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)",
+      },
+      {
+        url: "/images/splash/splash-1242x2688.png",
+        media:
+          "(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)",
+      },
+      {
+        url: "/images/splash/splash-828x1792.png",
+        media:
+          "(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)",
+      },
+      {
+        url: "/images/splash/splash-750x1334.png",
+        media:
+          "(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)",
+      },
+      {
+        url: "/images/splash/splash-1242x2208.png",
+        media:
+          "(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)",
+      },
+    ],
     title: "StripStream",
   },
   icons: {
@@ -52,6 +94,7 @@ export const metadata: Metadata = {
     initialScale: 1,
     maximumScale: 1,
     userScalable: false,
+    viewportFit: "cover",
   },
   applicationName: "StripStream",
   generator: "Next.js",
@@ -76,49 +119,6 @@ import ClientLayout from "@/components/layout/ClientLayout";
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr" suppressHydrationWarning>
-      <head>
-        {/* Splashscreens pour iOS */}
-        <link
-          rel="apple-touch-startup-image"
-          media="screen and (device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
-          href="/images/splash/splash-2048x2732.png"
-        />
-        <link
-          rel="apple-touch-startup-image"
-          media="screen and (device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
-          href="/images/splash/splash-1668x2388.png"
-        />
-        <link
-          rel="apple-touch-startup-image"
-          media="screen and (device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
-          href="/images/splash/splash-1536x2048.png"
-        />
-        <link
-          rel="apple-touch-startup-image"
-          media="screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
-          href="/images/splash/splash-1125x2436.png"
-        />
-        <link
-          rel="apple-touch-startup-image"
-          media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
-          href="/images/splash/splash-1242x2688.png"
-        />
-        <link
-          rel="apple-touch-startup-image"
-          media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
-          href="/images/splash/splash-828x1792.png"
-        />
-        <link
-          rel="apple-touch-startup-image"
-          media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
-          href="/images/splash/splash-750x1334.png"
-        />
-        <link
-          rel="apple-touch-startup-image"
-          media="screen and (device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
-          href="/images/splash/splash-1242x2208.png"
-        />
-      </head>
       <body className={inter.className}>
         <ClientLayout>{children}</ClientLayout>
       </body>
