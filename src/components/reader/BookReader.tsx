@@ -423,7 +423,6 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
               />
             </button>
           </div>
-
           {/* Bouton précédent */}
           {currentPage > 1 && (
             <button
@@ -434,53 +433,32 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
               <ChevronLeft className="h-8 w-8" />
             </button>
           )}
-
           {/* Pages */}
-          <div className="relative h-full max-h-full w-auto max-w-full p-4 flex gap-2 z-10">
-            {/* Page courante */}
-            <div className="relative h-full w-auto">
-              {isLoading && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Loader2 className="h-8 w-8 animate-spin" />
-                </div>
-              )}
-              {!imageError ? (
-                <Image
+          <div className="relative flex-1 flex items-center justify-center overflow-hidden p-1">
+            <div className="relative w-full h-full flex items-center justify-center">
+              {/* Page courante */}
+              <div className="relative max-h-[calc(100vh-2rem)] flex items-center justify-center">
+                <img
                   src={getPageUrl(currentPage)}
                   alt={`Page ${currentPage}`}
-                  className="h-full w-auto object-contain"
-                  width={800}
-                  height={1200}
-                  priority
-                  onLoad={() => setIsLoading(false)}
-                  onError={() => {
-                    setIsLoading(false);
-                    setImageError(true);
-                  }}
+                  className="max-h-[calc(100vh-2rem)] w-auto object-contain"
+                  onLoad={() => handleThumbnailLoad(currentPage)}
                 />
-              ) : (
-                <div className="h-full w-96 flex items-center justify-center bg-muted rounded-lg">
-                  <ImageOff className="h-12 w-12" />
+              </div>
+
+              {/* Deuxième page en mode double page */}
+              {isDoublePage && shouldShowDoublePage(currentPage) && (
+                <div className="relative max-h-[calc(100vh-2rem)] flex items-center justify-center">
+                  <img
+                    src={getPageUrl(currentPage + 1)}
+                    alt={`Page ${currentPage + 1}`}
+                    className="max-h-[calc(100vh-2rem)] w-auto object-contain"
+                    onLoad={() => handleThumbnailLoad(currentPage + 1)}
+                  />
                 </div>
               )}
             </div>
-
-            {/* Deuxième page en mode double page */}
-            {shouldShowDoublePage(currentPage) && (
-              <div className="relative h-full w-auto">
-                <Image
-                  src={getPageUrl(currentPage + 1)}
-                  alt={`Page ${currentPage + 1}`}
-                  className="h-full w-auto object-contain"
-                  width={800}
-                  height={1200}
-                  priority
-                  onError={() => setImageError(true)}
-                />
-              </div>
-            )}
           </div>
-
           {/* Bouton suivant */}
           {currentPage < pages.length && (
             <button
@@ -491,7 +469,6 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
               <ChevronRight className="h-8 w-8" />
             </button>
           )}
-
           {/* Bouton fermer */}
           {onClose && (
             <button
