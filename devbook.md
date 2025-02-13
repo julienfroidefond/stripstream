@@ -14,7 +14,6 @@ Application web moderne pour la lecture de BD/mangas/comics via un serveur Komga
   - [x] Liste des bibliothèques
   - [x] Affichage des séries par bibliothèque
   - [x] Couvertures et informations des séries
-  - [ ] Filtres et recherche
   - [x] Pagination
   - [x] Statut de lecture avec transparence pour les éléments lus
   - [x] Informations au survol
@@ -42,10 +41,10 @@ Application web moderne pour la lecture de BD/mangas/comics via un serveur Komga
   - [x] Création d'un middleware commun
   - [x] Mutualisation du code de gestion du cache
   - [x] Création des services spécialisés (Library, Series, Book, Home)
-- [ ] Mise à jour des API deprecated
-- [ ] Synchronisation de l'état de lecture avec Komga
-- [ ] Revue du système de cache
-  - [ ] Optimisation du cache côté serveur
+- [x] Mise à jour des API deprecated
+- [x] Synchronisation de l'état de lecture avec Komga
+- [x] Revue du système de cache
+  - [x] Optimisation du cache côté serveur
   - [x] Gestion intelligente du TTL par type de données
   - [ ] Invalidation du cache sur les mutations
   - [x] Stratégie de revalidation à la demande
