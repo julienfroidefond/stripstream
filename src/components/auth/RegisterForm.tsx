@@ -36,6 +36,7 @@ export function RegisterForm({ from }: RegisterFormProps) {
     try {
       await authService.register(email, password);
       router.push(from || "/");
+      router.refresh();
     } catch (error) {
       setError(error as AuthError);
     } finally {

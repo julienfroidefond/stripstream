@@ -27,6 +27,7 @@ export function LoginForm({ from }: LoginFormProps) {
     try {
       await authService.login(email, password, remember);
       router.push(from || "/");
+      router.refresh();
     } catch (error) {
       setError(error as AuthError);
     } finally {
