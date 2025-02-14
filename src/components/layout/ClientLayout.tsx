@@ -27,6 +27,14 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     }
   }, [pathname, router]);
 
+  const handleCloseSidebar = () => {
+    setIsSidebarOpen(false);
+  };
+
+  const handleToggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
   // Gestionnaire pour fermer la barre latérale lors d'un clic en dehors
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -39,7 +47,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         toggleButton &&
         !toggleButton.contains(event.target as Node)
       ) {
-        setIsSidebarOpen(false);
+        handleCloseSidebar();
       }
     };
 
@@ -72,8 +80,8 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <div className="relative min-h-screen">
-        {!isPublicRoute && <Header onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />}
-        {!isPublicRoute && <Sidebar isOpen={isSidebarOpen} />}
+        {!isPublicRoute && <Header onToggleSidebar={handleToggleSidebar} />}
+        {!isPublicRoute && <Sidebar isOpen={isSidebarOpen} onClose={handleCloseSidebar} />}
         <main className={`${!isPublicRoute ? "container pt-4 md:pt-8" : ""}`}>{children}</main>
         <InstallPWA />
         <Toaster />

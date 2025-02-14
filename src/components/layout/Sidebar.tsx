@@ -10,9 +10,10 @@ import { FavoriteService } from "@/lib/services/favorite.service";
 
 interface SidebarProps {
   isOpen: boolean;
+  onClose: () => void;
 }
 
-export function Sidebar({ isOpen }: SidebarProps) {
+export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [libraries, setLibraries] = useState<KomgaLibrary[]>([]);
@@ -101,7 +102,12 @@ export function Sidebar({ isOpen }: SidebarProps) {
     storageService.clearAll();
     setLibraries([]);
     setFavorites([]);
+    onClose();
     router.push("/login");
+  };
+
+  const handleLinkClick = () => {
+    onClose();
   };
 
   const navigation = [
@@ -130,6 +136,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={handleLinkClick}
                 className={cn(
                   "flex items-center rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
                   pathname === item.href ? "bg-accent" : "transparent"
@@ -157,6 +164,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
                 <Link
                   key={series.id}
                   href={`/series/${series.id}`}
+                  onClick={handleLinkClick}
                   className={cn(
                     "flex items-center rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
                     pathname === `/series/${series.id}` ? "bg-accent" : "transparent"
@@ -192,6 +200,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
                 <Link
                   key={library.id}
                   href={`/libraries/${library.id}`}
+                  onClick={handleLinkClick}
                   className={cn(
                     "flex items-center rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
                     pathname === `/libraries/${library.id}` ? "bg-accent" : "transparent"
@@ -210,6 +219,7 @@ export function Sidebar({ isOpen }: SidebarProps) {
             <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">Configuration</h2>
             <Link
               href="/settings"
+              onClick={handleLinkClick}
               className={cn(
                 "flex items-center rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
                 pathname === "/settings" ? "bg-accent" : "transparent"
