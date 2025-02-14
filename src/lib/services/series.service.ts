@@ -1,18 +1,17 @@
 import { BaseApiService } from "./base-api.service";
-import { Series } from "@/types/series";
 import { LibraryResponse } from "@/types/library";
-import { KomgaBook } from "@/types/komga";
+import { KomgaBook, KomgaSeries } from "@/types/komga";
 
 export class SeriesService extends BaseApiService {
-  static async getSeries(seriesId: string): Promise<Series> {
+  static async getSeries(seriesId: string): Promise<KomgaSeries> {
     try {
       const config = await this.getKomgaConfig();
       const url = this.buildUrl(config, `series/${seriesId}`);
       const headers = this.getAuthHeaders(config);
 
-      return this.fetchWithCache<Series>(
+      return this.fetchWithCache<KomgaSeries>(
         `series-${seriesId}`,
-        async () => this.fetchFromApi<Series>(url, headers),
+        async () => this.fetchFromApi<KomgaSeries>(url, headers),
         "SERIES"
       );
     } catch (error) {

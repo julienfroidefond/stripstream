@@ -146,6 +146,12 @@ export default function SettingsPage() {
     };
 
     komgaConfigService.setConfig(komgaConfig, true);
+
+    fetch("/api/komga/config", {
+      method: "POST",
+      body: JSON.stringify(komgaConfig),
+    });
+
     setConfig(newConfig);
 
     // Émettre un événement pour notifier les autres composants

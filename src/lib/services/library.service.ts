@@ -27,10 +27,11 @@ export class LibraryService extends BaseApiService {
   ): Promise<LibraryResponse<Series>> {
     try {
       const config = await this.getKomgaConfig();
-      const url = this.buildUrl(config, `libraries/${libraryId}/series`, {
+      const url = this.buildUrl(config, "series", {
+        library_id: libraryId,
         page: page.toString(),
         size: size.toString(),
-        ...(unreadOnly && { read_status: "UNREAD" }),
+        ...(unreadOnly && { read_status: "UNREAD,IN_PROGRESS" }),
       });
       const headers = this.getAuthHeaders(config);
 

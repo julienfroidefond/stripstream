@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { PaginatedSeriesGrid } from "@/components/library/PaginatedSeriesGrid";
 import { komgaConfigService } from "@/lib/services/komga-config.service";
+import { LibraryService } from "@/lib/services/library.service";
 
 interface PageProps {
   params: { libraryId: string };
@@ -13,30 +14,16 @@ async function getLibrarySeries(libraryId: string, page: number = 1, unreadOnly:
   try {
     const cookiesStore = cookies();
     const config = komgaConfigService.validateAndGetConfig(cookiesStore);
+    const pageIndex = page - 1;
 
-    // Paramètres de pagination
-    const pageIndex = page - 1; // L'API Komga utilise un index base 0
+    const series = await LibraryService.getLibrarySeries(
+      libraryId,
+      pageIndex,
+      PAGE_SIZE,
+      unreadOnly
+    );
 
-    // Construire l'URL avec les paramètres
-    let path = `series?library_id=${libraryId}&page=${pageIndex}&size=${PAGE_SIZE}`;
-    if (unreadOnly) {
-      path += "&read_status=UNREAD&read_status=IN_PROGRESS";
-    }
-
-    const url = komgaConfigService.buildApiUrl(path, cookiesStore);
-    const headers = komgaConfigService.getAuthHeaders(cookiesStore);
-
-    const response = await fetch(url, {
-      headers,
-      next: { revalidate: 300 }, // Cache de 5 minutes
-    });
-
-    if (!response.ok) {
-      throw new Error(`Erreur HTTP: ${response.status} ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    return { data, serverUrl: config.serverUrl };
+    return { data: series, serverUrl: config.serverUrl };
   } catch (error) {
     throw error instanceof Error ? error : new Error("Erreur lors de la récupération des séries");
   }

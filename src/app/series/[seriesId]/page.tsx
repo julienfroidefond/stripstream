@@ -1,8 +1,9 @@
 import { cookies } from "next/headers";
 import { PaginatedBookGrid } from "@/components/series/PaginatedBookGrid";
 import { SeriesHeader } from "@/components/series/SeriesHeader";
-import { KomgaSeries, KomgaBook } from "@/types/komga";
 import { komgaConfigService } from "@/lib/services/komga-config.service";
+import { SeriesService } from "@/lib/services/series.service";
+import { KomgaSeries } from "@/types/komga";
 
 interface PageProps {
   params: { seriesId: string };
@@ -18,39 +19,13 @@ export default async function SeriesPage({ params, searchParams }: PageProps) {
   try {
     const cookiesStore = cookies();
     const config = komgaConfigService.validateAndGetConfig(cookiesStore);
-
-    // Paramètres de pagination
-    const pageIndex = currentPage - 1; // L'API Komga utilise un index base 0
+    const pageIndex = currentPage - 1;
 
     // Appels API parallèles pour les détails de la série et les tomes
-    const [seriesResponse, booksResponse] = await Promise.all([
-      // Détails de la série
-      fetch(komgaConfigService.buildApiUrl(`series/${params.seriesId}`, cookiesStore), {
-        headers: komgaConfigService.getAuthHeaders(cookiesStore),
-        next: { revalidate: 300 },
-      }),
-      // Liste des tomes avec pagination et filtre
-      fetch(
-        komgaConfigService.buildApiUrl(
-          `series/${
-            params.seriesId
-          }/books?page=${pageIndex}&size=${PAGE_SIZE}&sort=metadata.numberSort,asc${
-            unreadOnly ? "&read_status=UNREAD&read_status=IN_PROGRESS" : ""
-          }`,
-          cookiesStore
-        ),
-        {
-          headers: komgaConfigService.getAuthHeaders(cookiesStore),
-          next: { revalidate: 300 },
-        }
-      ),
+    const [series, books] = await Promise.all([
+      SeriesService.getSeries(params.seriesId),
+      SeriesService.getSeriesBooks(params.seriesId, pageIndex, PAGE_SIZE, unreadOnly),
     ]);
-
-    if (!seriesResponse.ok || !booksResponse.ok) {
-      throw new Error("Erreur lors de la récupération des données");
-    }
-
-    const [series, books] = await Promise.all([seriesResponse.json(), booksResponse.json()]);
 
     return (
       <div className="container py-8 space-y-8">
