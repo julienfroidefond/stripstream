@@ -1,9 +1,6 @@
-import { cookies } from "next/headers";
 import { PaginatedBookGrid } from "@/components/series/PaginatedBookGrid";
 import { SeriesHeader } from "@/components/series/SeriesHeader";
-import { komgaConfigService } from "@/lib/services/komga-config.service";
 import { SeriesService } from "@/lib/services/series.service";
-import { KomgaSeries } from "@/types/komga";
 
 interface PageProps {
   params: { seriesId: string };

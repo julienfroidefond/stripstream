@@ -26,11 +26,11 @@ export function HomeContent({ data }: HomeContentProps) {
   };
 
   // Vérification des données pour le debug
-  console.log("HomeContent - Données reçues:", {
-    ongoingCount: data.ongoing?.length || 0,
-    recentlyReadCount: data.recentlyRead?.length || 0,
-    onDeckCount: data.onDeck?.length || 0,
-  });
+  // console.log("HomeContent - Données reçues:", {
+  //   ongoingCount: data.ongoing?.length || 0,
+  //   recentlyReadCount: data.recentlyRead?.length || 0,
+  //   onDeckCount: data.onDeck?.length || 0,
+  // });
 
   return (
     <main className="container mx-auto px-4 py-8 space-y-12">

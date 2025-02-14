@@ -1,7 +1,5 @@
 import { HomeContent } from "@/components/home/HomeContent";
 import { HomeService } from "@/lib/services/home.service";
-import { cookies } from "next/headers";
-import { komgaConfigService } from "@/lib/services/komga-config.service";
 import { redirect } from "next/navigation";
 
 export default async function HomePage() {

@@ -17,16 +17,6 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   const router = useRouter();
   const pathname = usePathname();
 
-  // Vérification de l'authentification
-  useEffect(() => {
-    const isPublicRoute = publicRoutes.includes(pathname);
-    const isAuthenticated = authService.isAuthenticated();
-
-    if (!isAuthenticated && !isPublicRoute) {
-      router.push(`/login?from=${encodeURIComponent(pathname)}`);
-    }
-  }, [pathname, router]);
-
   const handleCloseSidebar = () => {
     setIsSidebarOpen(false);
   };

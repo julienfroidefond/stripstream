@@ -1,11 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { ImageOff, Book, BookOpen, BookMarked } from "lucide-react";
+import { ImageOff, Book, BookOpen, BookMarked, Star, StarOff } from "lucide-react";
 import { KomgaSeries } from "@/types/komga";
 import { useState, useEffect } from "react";
-import { FavoriteService } from "@/lib/services/favorite.service";
-import { Star, StarOff } from "lucide-react";
 import { Button } from "../ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
@@ -56,13 +54,27 @@ export const SeriesHeader = ({ series, onSeriesUpdate }: SeriesHeaderProps) => {
   const [readingStatus, setReadingStatus] = useState<ReadingStatusInfo>(
     getReadingStatusInfo(series)
   );
-  const [isFavorite, setIsFavorite] = useState(FavoriteService.isFavorite(series.id));
+  const [isFavorite, setIsFavorite] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
 
+  // Vérifier si la série est dans les favoris au chargement
   useEffect(() => {
+    const checkFavorite = async () => {
+      try {
+        const response = await fetch("/api/komga/favorites");
+        if (response.ok) {
+          const favoriteIds = await response.json();
+          setIsFavorite(favoriteIds.includes(series.id));
+        }
+      } catch (error) {
+        console.error("Erreur lors de la vérification des favoris:", error);
+      }
+    };
+
+    checkFavorite();
     setMounted(true);
-  }, []);
+  }, [series.id]);
 
   useEffect(() => {
     setReadingStatus(getReadingStatusInfo(series));
@@ -82,18 +94,29 @@ export const SeriesHeader = ({ series, onSeriesUpdate }: SeriesHeaderProps) => {
     }
   }, [series.metadata.language]);
 
-  const handleToggleFavorite = () => {
+  const handleToggleFavorite = async () => {
     try {
       setIsLoading(true);
-      if (isFavorite) {
-        FavoriteService.removeFromFavorites(series.id);
-      } else {
-        FavoriteService.addToFavorites(series.id);
+      const response = await fetch("/api/komga/favorites", {
+        method: isFavorite ? "DELETE" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ seriesId: series.id }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Erreur lors de la modification des favoris");
       }
+
       setIsFavorite(!isFavorite);
       if (onSeriesUpdate) {
         onSeriesUpdate({ ...series, favorite: !isFavorite });
       }
+
+      // Dispatch l'événement pour notifier les autres composants
+      window.dispatchEvent(new Event("favoritesChanged"));
+
       toast({
         title: isFavorite ? "Retiré des favoris" : "Ajouté aux favoris",
         variant: "default",

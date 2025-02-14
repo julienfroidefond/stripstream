@@ -1,15 +1,26 @@
 import { cookies } from "next/headers";
 import { AuthConfig } from "@/types/auth";
 import { serverCacheService } from "./server-cache.service";
-import { komgaConfigService } from "./komga-config.service";
+import { ConfigDBService } from "./config-db.service";
 
 // Types de cache disponibles
 export type CacheType = "DEFAULT" | "HOME" | "LIBRARIES" | "SERIES" | "BOOKS" | "IMAGES";
 
 export abstract class BaseApiService {
   protected static async getKomgaConfig(): Promise<AuthConfig> {
-    const cookiesStore = cookies();
-    return komgaConfigService.validateAndGetConfig(cookiesStore);
+    try {
+      const config = await ConfigDBService.getConfig();
+      return {
+        serverUrl: config.url,
+        credentials: {
+          username: config.username,
+          password: config.password,
+        },
+      };
+    } catch (error) {
+      console.error("Erreur lors de la récupération de la configuration:", error);
+      throw new Error("Configuration Komga non trouvée");
+    }
   }
 
   protected static getAuthHeaders(config: AuthConfig): Headers {
