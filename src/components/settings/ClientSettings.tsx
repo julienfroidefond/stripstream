@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { storageService } from "@/lib/services/storage.service";
 import { AuthError } from "@/types/auth";
 import { useToast } from "@/components/ui/use-toast";
-import { komgaConfigService } from "@/lib/services/komga-config.service";
 
 interface ErrorMessage {
   message: string;
@@ -146,8 +145,6 @@ export function ClientSettings({ initialConfig }: ClientSettingsProps) {
         password: newConfig.password,
       },
     };
-
-    komgaConfigService.setConfig(komgaConfig, true);
 
     fetch("/api/komga/config", {
       method: "POST",
