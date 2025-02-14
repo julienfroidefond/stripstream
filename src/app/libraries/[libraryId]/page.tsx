@@ -12,8 +12,6 @@ const PAGE_SIZE = 20;
 
 async function getLibrarySeries(libraryId: string, page: number = 1, unreadOnly: boolean = false) {
   try {
-    const cookiesStore = cookies();
-    const config = komgaConfigService.validateAndGetConfig(cookiesStore);
     const pageIndex = page - 1;
 
     const series = await LibraryService.getLibrarySeries(
@@ -23,7 +21,7 @@ async function getLibrarySeries(libraryId: string, page: number = 1, unreadOnly:
       unreadOnly
     );
 
-    return { data: series, serverUrl: config.serverUrl };
+    return { data: series };
   } catch (error) {
     throw error instanceof Error ? error : new Error("Erreur lors de la récupération des séries");
   }
@@ -34,11 +32,7 @@ export default async function LibraryPage({ params, searchParams }: PageProps) {
   const unreadOnly = searchParams.unread === "true";
 
   try {
-    const { data: series, serverUrl } = await getLibrarySeries(
-      params.libraryId,
-      currentPage,
-      unreadOnly
-    );
+    const { data: series } = await getLibrarySeries(params.libraryId, currentPage, unreadOnly);
 
     return (
       <div className="container py-8 space-y-8">
@@ -52,7 +46,6 @@ export default async function LibraryPage({ params, searchParams }: PageProps) {
         </div>
         <PaginatedSeriesGrid
           series={series.content || []}
-          serverUrl={serverUrl}
           currentPage={currentPage}
           totalPages={series.totalPages}
           totalElements={series.totalElements}

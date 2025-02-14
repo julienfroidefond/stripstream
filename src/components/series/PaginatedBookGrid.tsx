@@ -10,7 +10,6 @@ import { KomgaBook } from "@/types/komga";
 
 interface PaginatedBookGridProps {
   books: KomgaBook[];
-  serverUrl: string;
   currentPage: number;
   totalPages: number;
   totalElements: number;
@@ -19,7 +18,6 @@ interface PaginatedBookGridProps {
 
 export function PaginatedBookGrid({
   books,
-  serverUrl,
   currentPage,
   totalPages,
   totalElements,

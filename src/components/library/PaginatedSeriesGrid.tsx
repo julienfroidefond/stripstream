@@ -9,7 +9,6 @@ import { cn } from "@/lib/utils";
 
 interface PaginatedSeriesGridProps {
   series: any[];
-  serverUrl: string;
   currentPage: number;
   totalPages: number;
   totalElements: number;
@@ -18,7 +17,6 @@ interface PaginatedSeriesGridProps {
 
 export function PaginatedSeriesGrid({
   series,
-  serverUrl,
   currentPage,
   totalPages,
   totalElements,
@@ -108,7 +106,7 @@ export function PaginatedSeriesGrid({
             isChangingPage ? "opacity-25" : "opacity-100"
           )}
         >
-          <SeriesGrid series={series} serverUrl={serverUrl} />
+          <SeriesGrid series={series} />
         </div>
       </div>
 

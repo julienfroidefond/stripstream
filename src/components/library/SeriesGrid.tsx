@@ -8,7 +8,6 @@ import { useRouter } from "next/navigation";
 
 interface SeriesGridProps {
   series: KomgaSeries[];
-  serverUrl: string;
 }
 
 // Fonction utilitaire pour obtenir les informations de lecture d'une série
@@ -36,7 +35,7 @@ const getReadingStatusInfo = (series: KomgaSeries) => {
   };
 };
 
-export function SeriesGrid({ series, serverUrl }: SeriesGridProps) {
+export function SeriesGrid({ series }: SeriesGridProps) {
   const router = useRouter();
 
   if (!series.length) {
@@ -54,7 +53,6 @@ export function SeriesGrid({ series, serverUrl }: SeriesGridProps) {
           key={series.id}
           series={series}
           onClick={() => router.push(`/series/${series.id}`)}
-          serverUrl={serverUrl}
         />
       ))}
     </div>
@@ -64,10 +62,9 @@ export function SeriesGrid({ series, serverUrl }: SeriesGridProps) {
 interface SeriesCardProps {
   series: KomgaSeries;
   onClick?: () => void;
-  serverUrl: string;
 }
 
-function SeriesCard({ series, onClick, serverUrl }: SeriesCardProps) {
+function SeriesCard({ series, onClick }: SeriesCardProps) {
   const [imageError, setImageError] = useState(false);
   const statusInfo = getReadingStatusInfo(series);
 

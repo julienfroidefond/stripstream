@@ -6,9 +6,6 @@ import { redirect } from "next/navigation";
 
 export default async function HomePage() {
   try {
-    const cookiesStore = cookies();
-    komgaConfigService.validateAndGetConfig(cookiesStore);
-
     const data = await HomeService.getHomeData();
 
     return <HomeContent data={data} />;

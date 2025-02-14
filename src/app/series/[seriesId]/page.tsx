@@ -17,8 +17,6 @@ export default async function SeriesPage({ params, searchParams }: PageProps) {
   const unreadOnly = searchParams.unread === "true";
 
   try {
-    const cookiesStore = cookies();
-    const config = komgaConfigService.validateAndGetConfig(cookiesStore);
     const pageIndex = currentPage - 1;
 
     // Appels API parallèles pour les détails de la série et les tomes
@@ -32,7 +30,6 @@ export default async function SeriesPage({ params, searchParams }: PageProps) {
         <SeriesHeader series={series} />
         <PaginatedBookGrid
           books={books.content || []}
-          serverUrl={config.serverUrl}
           currentPage={currentPage}
           totalPages={books.totalPages}
           totalElements={books.totalElements}
