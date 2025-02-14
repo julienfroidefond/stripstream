@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { komgaConfigService } from "@/lib/services/komga-config.service";
 
 // Routes qui ne nécessitent pas d'authentification
 const publicRoutes = ["/login", "/register", "/images"];
@@ -20,24 +19,12 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Vérifier si c'est une route d'API
-  if (pathname.startsWith("/api/")) {
-    // Vérifier la configuration Komga
-    const config = komgaConfigService.getConfig(request.cookies);
-
-    if (!komgaConfigService.isConfigValid(config)) {
-      return NextResponse.json(
-        { error: "Configuration Komga manquante ou invalide" },
-        { status: 401 }
-      );
-    }
-
-    return NextResponse.next();
-  }
-
-  // Pour les routes protégées, vérifier la présence de l'utilisateur
+  // Pour toutes les routes protégées, vérifier la présence de l'utilisateur
   const user = request.cookies.get("stripUser");
   if (!user) {
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    }
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("from", pathname);
     return NextResponse.redirect(loginUrl);
@@ -46,9 +33,15 @@ export function middleware(request: NextRequest) {
   try {
     const userData = JSON.parse(atob(user.value));
     if (!userData.authenticated) {
+      if (pathname.startsWith("/api/")) {
+        return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+      }
       throw new Error("User not authenticated");
     }
   } catch (error) {
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    }
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("from", pathname);
     return NextResponse.redirect(loginUrl);
