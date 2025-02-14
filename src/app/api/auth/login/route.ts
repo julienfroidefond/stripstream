@@ -1,48 +1,29 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import connectDB from "@/lib/mongodb";
-import { UserModel } from "@/lib/models/user.model";
+import { AuthServerService } from "@/lib/services/auth-server.service";
 
 export async function POST(request: Request) {
   try {
-    const { email, password, remember } = await request.json();
-    await connectDB();
+    const { email, password } = await request.json();
 
-    const user = await UserModel.findOne({ email: email.toLowerCase() });
+    try {
+      const userData = await AuthServerService.loginUser(email, password);
+      AuthServerService.setUserCookie(userData);
 
-    if (!user || user.password !== password) {
-      return NextResponse.json(
-        {
-          error: {
-            code: "INVALID_CREDENTIALS",
-            message: "Email ou mot de passe incorrect",
+      return NextResponse.json({ message: "Connexion réussie", user: userData });
+    } catch (error) {
+      if (error instanceof Error && error.message === "INVALID_CREDENTIALS") {
+        return NextResponse.json(
+          {
+            error: {
+              code: "INVALID_CREDENTIALS",
+              message: "Email ou mot de passe incorrect",
+            },
           },
-        },
-        { status: 401 }
-      );
+          { status: 401 }
+        );
+      }
+      throw error;
     }
-
-    const userData = {
-      id: user._id.toString(),
-      email: user.email,
-      roles: user.roles,
-      authenticated: true,
-    };
-
-    // Encoder les données utilisateur en base64
-    const encodedUserData = Buffer.from(JSON.stringify(userData)).toString("base64");
-
-    // Définir le cookie avec les données utilisateur
-    cookies().set("stripUser", encodedUserData, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      // 30 jours si "remember me" est coché, sinon 24 heures
-      maxAge: remember ? 30 * 24 * 60 * 60 : 24 * 60 * 60,
-    });
-
-    return NextResponse.json({ message: "Connexion réussie", user: userData });
   } catch (error) {
     console.error("Erreur lors de la connexion:", error);
     return NextResponse.json(
