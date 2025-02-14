@@ -1,3 +1,5 @@
+"use client";
+
 import { BookOpen, Home, Library, Settings, LogOut, RefreshCw, Star } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -6,7 +8,6 @@ import { authService } from "@/lib/services/auth.service";
 import { useEffect, useState, useCallback } from "react";
 import { KomgaLibrary, KomgaSeries } from "@/types/komga";
 import { storageService } from "@/lib/services/storage.service";
-import { FavoriteService } from "@/lib/services/favorite.service";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -43,13 +44,20 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const fetchFavorites = useCallback(async () => {
     setIsLoadingFavorites(true);
     try {
-      const favoriteIds = FavoriteService.getAllFavoriteIds();
+      // Récupérer les IDs des favoris depuis l'API
+      const favoritesResponse = await fetch("/api/komga/favorites");
+      if (!favoritesResponse.ok) {
+        throw new Error("Erreur lors de la récupération des favoris");
+      }
+      const favoriteIds = await favoritesResponse.json();
+
       if (favoriteIds.length === 0) {
         setFavorites([]);
         return;
       }
 
-      const promises = favoriteIds.map(async (id) => {
+      // Récupérer les détails des séries pour chaque ID
+      const promises = favoriteIds.map(async (id: string) => {
         const response = await fetch(`/api/komga/series/${id}`);
         if (!response.ok) return null;
         return response.json();
@@ -69,7 +77,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   useEffect(() => {
     fetchLibraries();
     fetchFavorites();
-  }, []); // Suppression de la dépendance pathname
+  }, [fetchLibraries, fetchFavorites]);
 
   // Mettre à jour les favoris quand ils changent
   useEffect(() => {
@@ -77,18 +85,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       fetchFavorites();
     };
 
-    // Écouter les changements de favoris dans la même fenêtre
     window.addEventListener("favoritesChanged", handleFavoritesChange);
-    // Écouter les changements de favoris dans d'autres fenêtres
-    window.addEventListener("storage", (e) => {
-      if (e.key === "stripstream_favorites") {
-        fetchFavorites();
-      }
-    });
 
     return () => {
       window.removeEventListener("favoritesChanged", handleFavoritesChange);
-      window.removeEventListener("storage", handleFavoritesChange);
     };
   }, [fetchFavorites]);
 

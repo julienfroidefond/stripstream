@@ -11,10 +11,10 @@ interface HeroSectionProps {
 }
 
 export function HeroSection({ series }: HeroSectionProps) {
-  console.log("HeroSection - Séries reçues:", {
-    count: series?.length || 0,
-    firstSeries: series?.[0],
-  });
+  // console.log("HeroSection - Séries reçues:", {
+  //   count: series?.length || 0,
+  //   firstSeries: series?.[0],
+  // });
 
   return (
     <div className="relative h-[500px] -mx-4 sm:-mx-8 lg:-mx-14 overflow-hidden">
