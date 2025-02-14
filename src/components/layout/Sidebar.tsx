@@ -7,7 +7,6 @@ import { cn } from "@/lib/utils";
 import { authService } from "@/lib/services/auth.service";
 import { useEffect, useState, useCallback } from "react";
 import { KomgaLibrary, KomgaSeries } from "@/types/komga";
-import { storageService } from "@/lib/services/storage.service";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -99,7 +98,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   const handleLogout = () => {
     authService.logout();
-    storageService.clearAll();
     setLibraries([]);
     setFavorites([]);
     onClose();

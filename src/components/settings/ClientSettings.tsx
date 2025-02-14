@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Loader2, Network, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { storageService } from "@/lib/services/storage.service";
 import { AuthError } from "@/types/auth";
 import { useToast } from "@/components/ui/use-toast";
 

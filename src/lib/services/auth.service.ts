@@ -1,7 +1,6 @@
 "use client";
 
 import { AuthError } from "@/types/auth";
-import { storageService } from "./storage.service";
 
 interface AuthUser {
   id: string;
@@ -38,11 +37,6 @@ class AuthService {
         const data = await response.json();
         throw data.error;
       }
-
-      const data = await response.json();
-      if (data.user) {
-        storageService.setUserData(data.user, remember);
-      }
     } catch (error) {
       if ((error as AuthError).code) {
         throw error;
@@ -71,11 +65,6 @@ class AuthService {
         const data = await response.json();
         throw data.error;
       }
-
-      const data = await response.json();
-      if (data.user) {
-        storageService.setUserData(data.user, false);
-      }
     } catch (error) {
       if ((error as AuthError).code) {
         throw error;
@@ -91,28 +80,9 @@ class AuthService {
    * Déconnecte l'utilisateur
    */
   async logout(): Promise<void> {
-    try {
-      await fetch("/api/auth/logout", {
-        method: "POST",
-      });
-    } finally {
-      storageService.clear();
-    }
-  }
-
-  /**
-   * Vérifie si l'utilisateur est connecté
-   */
-  isAuthenticated(): boolean {
-    const user = storageService.getUserData<AuthUser>();
-    return !!user?.authenticated;
-  }
-
-  /**
-   * Récupère l'utilisateur connecté
-   */
-  getCurrentUser(): AuthUser | null {
-    return storageService.getUserData<AuthUser>();
+    await fetch("/api/auth/logout", {
+      method: "POST",
+    });
   }
 }
 
