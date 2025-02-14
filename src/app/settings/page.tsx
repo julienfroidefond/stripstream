@@ -3,10 +3,11 @@ import { ClientSettings } from "@/components/settings/ClientSettings";
 
 export default async function SettingsPage() {
   let config = null;
+  let ttlConfig = null;
 
   try {
+    // Récupérer la configuration Komga
     const mongoConfig = await ConfigDBService.getConfig();
-    // Convertir le document Mongoose en objet simple
     if (mongoConfig) {
       config = {
         url: mongoConfig.url,
@@ -15,10 +16,13 @@ export default async function SettingsPage() {
         userId: mongoConfig.userId,
       };
     }
+
+    // Récupérer la configuration TTL
+    ttlConfig = await ConfigDBService.getTTLConfig();
   } catch (error) {
     console.error("Erreur lors de la récupération de la configuration:", error);
     // On ne fait rien si la config n'existe pas, on laissera le composant client gérer l'état initial
   }
 
-  return <ClientSettings initialConfig={config} />;
+  return <ClientSettings initialConfig={config} initialTTLConfig={ttlConfig} />;
 }

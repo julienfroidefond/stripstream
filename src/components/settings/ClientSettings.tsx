@@ -18,12 +18,21 @@ interface KomgaConfig {
   userId: string;
 }
 
-interface ClientSettingsProps {
-  initialConfig: KomgaConfig | null;
+interface TTLConfigData {
+  defaultTTL: number;
+  homeTTL: number;
+  librariesTTL: number;
+  seriesTTL: number;
+  booksTTL: number;
+  imagesTTL: number;
 }
 
-export function ClientSettings({ initialConfig }: ClientSettingsProps) {
-  console.log("initialConfig", initialConfig);
+interface ClientSettingsProps {
+  initialConfig: KomgaConfig | null;
+  initialTTLConfig: TTLConfigData | null;
+}
+
+export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettingsProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -36,22 +45,16 @@ export function ClientSettings({ initialConfig }: ClientSettingsProps) {
     username: initialConfig?.username || "",
     password: initialConfig?.password || "",
   });
-  const [ttlConfig, setTTLConfig] = useState({
-    defaultTTL: 5,
-    homeTTL: 5,
-    librariesTTL: 1440,
-    seriesTTL: 5,
-    booksTTL: 5,
-    imagesTTL: 1440,
-  });
-
-  useEffect(() => {
-    // Charger la configuration des TTL
-    const savedTTLConfig = storageService.getTTLConfig();
-    if (savedTTLConfig) {
-      setTTLConfig(savedTTLConfig);
+  const [ttlConfig, setTTLConfig] = useState<TTLConfigData>(
+    initialTTLConfig || {
+      defaultTTL: 5,
+      homeTTL: 5,
+      librariesTTL: 1440,
+      seriesTTL: 5,
+      booksTTL: 5,
+      imagesTTL: 1440,
     }
-  }, []);
+  );
 
   const handleClearCache = async () => {
     setIsCacheClearing(true);
@@ -206,15 +209,37 @@ export function ClientSettings({ initialConfig }: ClientSettingsProps) {
     }));
   };
 
-  const handleSaveTTL = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSaveTTL = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSuccess(null);
 
-    storageService.setTTLConfig(ttlConfig);
-    toast({
-      title: "Configuration TTL sauvegardée",
-      description: "La configuration des TTL a été sauvegardée avec succès",
-    });
+    try {
+      const response = await fetch("/api/komga/ttl-config", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(ttlConfig),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Erreur lors de la sauvegarde de la configuration TTL");
+      }
+
+      toast({
+        title: "Configuration TTL sauvegardée",
+        description: "La configuration des TTL a été sauvegardée avec succès",
+      });
+    } catch (error) {
+      console.error("Erreur lors de la sauvegarde:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description:
+          error instanceof Error ? error.message : "Une erreur est survenue lors de la sauvegarde",
+      });
+    }
   };
 
   return (
