@@ -27,6 +27,7 @@ export function ClientSettings({ initialConfig }: ClientSettingsProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [isCacheClearing, setIsCacheClearing] = useState(false);
   const [error, setError] = useState<AuthError | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -123,9 +124,11 @@ export function ClientSettings({ initialConfig }: ClientSettingsProps) {
     }
   };
 
-  const handleSave = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSave = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSuccess(null);
+    setError(null);
+    setIsSaving(true);
 
     const formData = new FormData(event.currentTarget);
     const serverUrl = formData.get("serverUrl") as string;
@@ -138,36 +141,53 @@ export function ClientSettings({ initialConfig }: ClientSettingsProps) {
       password,
     };
 
-    const komgaConfig = {
-      serverUrl: newConfig.serverUrl,
-      credentials: {
-        username: newConfig.username,
-        password: newConfig.password,
-      },
-    };
+    try {
+      const response = await fetch("/api/komga/config", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          url: newConfig.serverUrl,
+          username: newConfig.username,
+          password: newConfig.password,
+        }),
+      });
 
-    fetch("/api/komga/config", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        url: newConfig.serverUrl,
-        username: newConfig.username,
-        password: newConfig.password,
-      }),
-    });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Erreur lors de la sauvegarde de la configuration");
+      }
 
-    setConfig(newConfig);
+      const komgaConfig = {
+        serverUrl: newConfig.serverUrl,
+        credentials: {
+          username: newConfig.username,
+          password: newConfig.password,
+        },
+      };
 
-    // Émettre un événement pour notifier les autres composants
-    const configChangeEvent = new CustomEvent("komga-config-changed", { detail: komgaConfig });
-    window.dispatchEvent(configChangeEvent);
+      setConfig(newConfig);
 
-    toast({
-      title: "Configuration sauvegardée",
-      description: "La configuration a été sauvegardée avec succès",
-    });
+      // Émettre un événement pour notifier les autres composants
+      const configChangeEvent = new CustomEvent("komga-config-changed", { detail: komgaConfig });
+      window.dispatchEvent(configChangeEvent);
+
+      toast({
+        title: "Configuration sauvegardée",
+        description: "La configuration a été sauvegardée avec succès",
+      });
+    } catch (error) {
+      console.error("Erreur lors de la sauvegarde:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description:
+          error instanceof Error ? error.message : "Une erreur est survenue lors de la sauvegarde",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -278,9 +298,17 @@ export function ClientSettings({ initialConfig }: ClientSettingsProps) {
               <div className="flex gap-3">
                 <button
                   type="submit"
+                  disabled={isSaving}
                   className="flex-1 inline-flex items-center justify-center rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground ring-offset-background transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
                 >
-                  Sauvegarder
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sauvegarde...
+                    </>
+                  ) : (
+                    "Sauvegarder"
+                  )}
                 </button>
                 <button
                   type="button"
