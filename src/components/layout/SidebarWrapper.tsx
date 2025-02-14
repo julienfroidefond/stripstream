@@ -1,6 +1,5 @@
 import { FavoriteService } from "@/lib/services/favorite.service";
 import { LibraryService } from "@/lib/services/library.service";
-import { ClientSidebar } from "./ClientSidebar";
 
 export async function SidebarWrapper() {
   // Récupérer les favoris depuis le serveur

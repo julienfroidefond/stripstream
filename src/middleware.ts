@@ -14,14 +14,15 @@ export function middleware(request: NextRequest) {
   if (
     publicRoutes.includes(pathname) ||
     publicApiRoutes.includes(pathname) ||
-    pathname.startsWith("/images/")
+    pathname.startsWith("/images/") ||
+    pathname.startsWith("/_next/")
   ) {
     return NextResponse.next();
   }
 
   // Pour toutes les routes protégées, vérifier la présence de l'utilisateur
   const user = request.cookies.get("stripUser");
-  if (!user) {
+  if (!user || !user.value) {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
@@ -32,13 +33,11 @@ export function middleware(request: NextRequest) {
 
   try {
     const userData = JSON.parse(atob(user.value));
-    if (!userData.authenticated) {
-      if (pathname.startsWith("/api/")) {
-        return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-      }
-      throw new Error("User not authenticated");
+    if (!userData || !userData.authenticated || !userData.id || !userData.email) {
+      throw new Error("Invalid user data");
     }
   } catch (error) {
+    console.error("Erreur de validation du cookie:", error);
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
@@ -59,7 +58,7 @@ export const config = {
      * 2. /_next/* (Next.js internals)
      * 3. /fonts/* (inside public directory)
      * 4. /images/* (inside public directory)
-     * 5. /favicon.ico, /sitemap.xml (public files)
+     * 5. /favicon.ico, sitemap.xml (public files)
      */
     "/((?!api/auth|_next/static|_next/image|fonts|images|favicon.ico|sitemap.xml).*)",
   ],

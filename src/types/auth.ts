@@ -19,11 +19,4 @@ export interface AuthError {
   message: string;
 }
 
-export type AuthErrorCode =
-  | "INVALID_CREDENTIALS"
-  | "INVALID_SERVER_URL"
-  | "SERVER_UNREACHABLE"
-  | "NETWORK_ERROR"
-  | "UNKNOWN_ERROR"
-  | "CACHE_CLEAR_ERROR"
-  | "TEST_CONNECTION_ERROR";
+export type AuthErrorCode = "INVALID_CREDENTIALS" | "SERVER_ERROR" | "EMAIL_EXISTS";
