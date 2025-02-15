@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { ImageOff } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ImageLoader } from "@/components/ui/image-loader";
 
 interface HeroSectionProps {
   series: KomgaSeries[];
@@ -47,23 +48,28 @@ interface CoverImageProps {
 
 function CoverImage({ series }: CoverImageProps) {
   const [imageError, setImageError] = useState(false);
+  const [imageLoading, setImageLoading] = useState(true);
 
   return (
     <div className="relative aspect-[2/3] bg-muted rounded-lg overflow-hidden">
       {!imageError ? (
-        <div className="absolute inset-0">
+        <>
+          <ImageLoader isLoading={imageLoading} />
           <Image
             src={`/api/komga/images/series/${series.id}/thumbnail`}
             alt={`Couverture de ${series.metadata.title}`}
-            width={200}
-            height={300}
-            className="w-full h-full object-cover"
+            fill
+            className={cn(
+              "object-cover transition-opacity duration-300",
+              imageLoading ? "opacity-0" : "opacity-100"
+            )}
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16.666vw"
             priority={true}
             loading="eager"
             onError={() => setImageError(true)}
+            onLoad={() => setImageLoading(false)}
           />
-        </div>
+        </>
       ) : (
         <div className="w-full h-full flex items-center justify-center">
           <ImageOff className="w-8 h-8" />

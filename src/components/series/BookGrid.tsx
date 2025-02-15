@@ -1,10 +1,12 @@
 "use client";
 
 import { KomgaBook } from "@/types/komga";
-import { ImageOff } from "lucide-react";
+import { ImageOff, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { formatDate } from "@/lib/utils";
+import { ImageLoader } from "@/components/ui/image-loader";
+import { cn } from "@/lib/utils";
 
 interface BookGridProps {
   books: KomgaBook[];
@@ -61,12 +63,10 @@ export function BookGrid({ books, onBookClick, getBookThumbnailUrl }: BookGridPr
             onClick={() => onBookClick(book)}
             className="group relative aspect-[2/3] overflow-hidden rounded-lg bg-muted hover:opacity-100 transition-all"
           >
-            <Image
-              src={getBookThumbnailUrl(book.id)}
-              alt={book.metadata.title}
-              fill
-              className={`object-cover ${book.readProgress?.completed ? "opacity-50" : ""}`}
-              sizes="(min-width: 1024px) 16.66vw, (min-width: 768px) 25vw, (min-width: 640px) 33.33vw, 50vw"
+            <BookImage
+              book={book}
+              getBookThumbnailUrl={getBookThumbnailUrl}
+              isCompleted={book.readProgress?.completed}
             />
             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-4 space-y-2 translate-y-full group-hover:translate-y-0 transition-transform duration-200">
               <p className="text-sm font-medium text-white text-left line-clamp-2">
@@ -81,6 +81,43 @@ export function BookGrid({ books, onBookClick, getBookThumbnailUrl }: BookGridPr
           </button>
         );
       })}
+    </div>
+  );
+}
+
+interface BookImageProps {
+  book: KomgaBook;
+  getBookThumbnailUrl: (bookId: string) => string;
+  isCompleted?: boolean;
+}
+
+function BookImage({ book, getBookThumbnailUrl, isCompleted }: BookImageProps) {
+  const [imageError, setImageError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  if (imageError) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <ImageOff className="w-12 h-12 text-muted-foreground" />
+      </div>
+    );
+  }
+
+  return (
+    <div className={cn("relative h-full w-full", isCompleted && "opacity-50")}>
+      <ImageLoader isLoading={isLoading} />
+      <Image
+        src={getBookThumbnailUrl(book.id)}
+        alt={book.metadata.title}
+        fill
+        className={cn(
+          "object-cover transition-opacity duration-300",
+          isLoading ? "opacity-0" : "opacity-100"
+        )}
+        sizes="(min-width: 1024px) 16.66vw, (min-width: 768px) 25vw, (min-width: 640px) 33.33vw, 50vw"
+        onError={() => setImageError(true)}
+        onLoad={() => setIsLoading(false)}
+      />
     </div>
   );
 }

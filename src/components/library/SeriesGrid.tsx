@@ -1,10 +1,12 @@
 "use client";
 
 import { KomgaSeries } from "@/types/komga";
-import { Book, ImageOff } from "lucide-react";
+import { Book, ImageOff, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ImageLoader } from "@/components/ui/image-loader";
+import { cn } from "@/lib/utils";
 
 interface SeriesGridProps {
   series: KomgaSeries[];
@@ -66,27 +68,37 @@ interface SeriesCardProps {
 
 function SeriesCard({ series, onClick }: SeriesCardProps) {
   const [imageError, setImageError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const statusInfo = getReadingStatusInfo(series);
+  const isCompleted = series.booksCount === series.booksReadCount;
 
   return (
     <button
       onClick={onClick}
-      className="group relative aspect-[2/3] overflow-hidden rounded-lg bg-muted"
+      className={cn(
+        "group relative aspect-[2/3] overflow-hidden rounded-lg bg-muted",
+        isCompleted && "opacity-50"
+      )}
     >
       {!imageError ? (
-        <Image
-          src={`/api/komga/images/series/${series.id}/thumbnail`}
-          alt={`Couverture de ${series.metadata.title}`}
-          fill
-          className={`object-cover ${
-            series.booksCount === series.booksReadCount ? "opacity-50" : ""
-          }`}
-          sizes="(max-width: 640px) 33vw, (max-width: 1024px) 20vw, 20vw"
-          onError={() => setImageError(true)}
-        />
+        <>
+          <ImageLoader isLoading={isLoading} />
+          <Image
+            src={`/api/komga/images/series/${series.id}/thumbnail`}
+            alt={`Couverture de ${series.metadata.title}`}
+            fill
+            className={cn(
+              "object-cover transition-opacity duration-300",
+              isLoading ? "opacity-0" : "opacity-100"
+            )}
+            sizes="(max-width: 640px) 33vw, (max-width: 1024px) 20vw, 20vw"
+            onError={() => setImageError(true)}
+            onLoad={() => setIsLoading(false)}
+          />
+        </>
       ) : (
         <div className="w-full h-full flex items-center justify-center">
-          <ImageOff className="w-12 h-12" />
+          <ImageOff className="w-12 h-12 text-muted-foreground" />
         </div>
       )}
 

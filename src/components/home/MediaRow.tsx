@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, ImageOff } from "lucide-react";
 import Image from "next/image";
 import { useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import { ImageLoader } from "@/components/ui/image-loader";
 
 interface MediaRowProps {
   title: string;
@@ -82,6 +83,7 @@ interface MediaCardProps {
 
 function MediaCard({ item, onClick }: MediaCardProps) {
   const [imageError, setImageError] = useState(false);
+  const [imageLoading, setImageLoading] = useState(true);
 
   // Déterminer si c'est une série ou un livre
   const isSeries = "booksCount" in item;
@@ -106,19 +108,23 @@ function MediaCard({ item, onClick }: MediaCardProps) {
       {/* Image de couverture */}
       <div className="relative aspect-[2/3] bg-muted">
         {!imageError ? (
-          <div className="absolute inset-0">
+          <>
+            <ImageLoader isLoading={imageLoading} />
             <Image
               src={`/api/komga/images/${isSeries ? "series" : "books"}/${item.id}/thumbnail`}
               alt={`Couverture de ${title}`}
-              width={200}
-              height={300}
-              className="w-full h-full object-cover"
+              fill
+              className={cn(
+                "object-cover transition-opacity duration-300",
+                imageLoading ? "opacity-0" : "opacity-100"
+              )}
               sizes="200px"
               priority={true}
               loading="eager"
               onError={() => setImageError(true)}
+              onLoad={() => setImageLoading(false)}
             />
-          </div>
+          </>
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <ImageOff className="w-12 h-12" />

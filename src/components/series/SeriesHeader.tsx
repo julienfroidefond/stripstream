@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { Button } from "../ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
+import { ImageLoader } from "@/components/ui/image-loader";
 
 interface SeriesHeaderProps {
   series: KomgaSeries;
@@ -57,6 +58,7 @@ export const SeriesHeader = ({ series, onSeriesUpdate }: SeriesHeaderProps) => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [imageLoading, setImageLoading] = useState(true);
 
   // Vérifier si la série est dans les favoris au chargement
   useEffect(() => {
@@ -143,9 +145,13 @@ export const SeriesHeader = ({ series, onSeriesUpdate }: SeriesHeaderProps) => {
               src={`/api/komga/images/series/${series.id}/thumbnail`}
               alt=""
               fill
-              className="object-cover opacity-10 blur-2xl scale-110"
+              className={cn(
+                "object-cover blur-2xl scale-110 transition-opacity duration-300",
+                imageLoading ? "opacity-0" : "opacity-10"
+              )}
               priority
               unoptimized
+              onLoad={() => setImageLoading(false)}
             />
           </div>
         )}
@@ -158,13 +164,18 @@ export const SeriesHeader = ({ series, onSeriesUpdate }: SeriesHeaderProps) => {
           <div className="shrink-0">
             {!imageError ? (
               <div className="relative">
+                <ImageLoader isLoading={imageLoading} />
                 <Image
                   src={`/api/komga/images/series/${series.id}/thumbnail`}
                   alt={series.name}
                   width={200}
                   height={300}
-                  className="rounded-lg shadow-xl hover:shadow-2xl transition-shadow duration-200"
+                  className={cn(
+                    "rounded-lg shadow-xl hover:shadow-2xl transition-all duration-300",
+                    imageLoading ? "opacity-0" : "opacity-100"
+                  )}
                   onError={() => setImageError(true)}
+                  onLoad={() => setImageLoading(false)}
                   priority
                   unoptimized
                 />

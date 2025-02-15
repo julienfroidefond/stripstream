@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState, useCallback, useRef } from "react";
+import { cn } from "@/lib/utils";
+import { ImageLoader } from "@/components/ui/image-loader";
 
 interface PageCache {
   [pageNumber: number]: {
@@ -30,6 +32,7 @@ interface BookReaderProps {
 export function BookReader({ book, pages, onClose }: BookReaderProps) {
   const [currentPage, setCurrentPage] = useState(book.readProgress?.page || 1);
   const [isLoading, setIsLoading] = useState(true);
+  const [secondPageLoading, setSecondPageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
   const [isDoublePage, setIsDoublePage] = useState(false);
   const [showNavigation, setShowNavigation] = useState(false);
@@ -102,6 +105,11 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
       syncReadProgress(newPage);
     }
   }, [currentPage, pages.length, isDoublePage, syncReadProgress]);
+
+  // Réinitialiser l'état de chargement lors du changement de mode double page
+  useEffect(() => {
+    setIsLoading(true);
+  }, [isDoublePage]);
 
   // Fonction pour précharger une page
   const preloadPage = useCallback(
@@ -449,11 +457,18 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
               {/* Deuxième page en mode double page */}
               {isDoublePage && shouldShowDoublePage(currentPage) && (
                 <div className="relative max-h-[calc(100vh-2rem)] flex items-center justify-center">
+                  <ImageLoader isLoading={isLoading} />
                   <img
                     src={getPageUrl(currentPage + 1)}
                     alt={`Page ${currentPage + 1}`}
-                    className="max-h-[calc(100vh-2rem)] w-auto object-contain"
-                    onLoad={() => handleThumbnailLoad(currentPage + 1)}
+                    className={cn(
+                      "max-h-[calc(100vh-2rem)] w-auto object-contain transition-opacity duration-300",
+                      isLoading ? "opacity-0" : "opacity-100"
+                    )}
+                    onLoad={() => {
+                      setIsLoading(false);
+                      handleThumbnailLoad(currentPage + 1);
+                    }}
                   />
                 </div>
               )}
@@ -546,22 +561,23 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
                           : "opacity-60 hover:opacity-100 hover:scale-105"
                       }`}
                     >
-                      {!loadedThumbnails[pageNumber] && isVisible && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-muted">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        </div>
-                      )}
                       {isVisible && (
-                        <Image
-                          src={getThumbnailUrl(pageNumber)}
-                          alt={`Miniature page ${pageNumber}`}
-                          className="object-cover"
-                          fill
-                          sizes="100px"
-                          onLoad={() => handleThumbnailLoad(pageNumber)}
-                          loading="lazy"
-                          quality={50}
-                        />
+                        <>
+                          <ImageLoader isLoading={!loadedThumbnails[pageNumber]} />
+                          <Image
+                            src={getThumbnailUrl(pageNumber)}
+                            alt={`Miniature page ${pageNumber}`}
+                            className={cn(
+                              "object-cover transition-opacity duration-300",
+                              !loadedThumbnails[pageNumber] ? "opacity-0" : "opacity-100"
+                            )}
+                            fill
+                            sizes="100px"
+                            onLoad={() => handleThumbnailLoad(pageNumber)}
+                            loading="lazy"
+                            quality={50}
+                          />
+                        </>
                       )}
                       <div className="absolute bottom-0 inset-x-0 h-6 bg-gradient-to-t from-black/60 to-transparent flex items-center justify-center">
                         <span className="text-xs text-white font-medium">{pageNumber}</span>
