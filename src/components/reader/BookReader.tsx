@@ -29,6 +29,30 @@ interface BookReaderProps {
   onClose?: () => void;
 }
 
+// Ajout du hook pour détecter l'orientation
+const useOrientation = () => {
+  const [isLandscape, setIsLandscape] = useState(false);
+
+  useEffect(() => {
+    const checkOrientation = () => {
+      // Vérifier si la fenêtre est plus large que haute
+      setIsLandscape(window.innerWidth > window.innerHeight);
+    };
+
+    // Vérification initiale
+    checkOrientation();
+
+    // Écouter les changements de taille de fenêtre
+    window.addEventListener("resize", checkOrientation);
+
+    return () => {
+      window.removeEventListener("resize", checkOrientation);
+    };
+  }, []);
+
+  return isLandscape;
+};
+
 export function BookReader({ book, pages, onClose }: BookReaderProps) {
   const [currentPage, setCurrentPage] = useState(book.readProgress?.page || 1);
   const [isLoading, setIsLoading] = useState(true);
@@ -36,7 +60,9 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
   const [imageError, setImageError] = useState(false);
   const [isDoublePage, setIsDoublePage] = useState(false);
   const [showNavigation, setShowNavigation] = useState(false);
+  const [showControls, setShowControls] = useState(false);
   const pageCache = useRef<PageCache>({});
+  const isLandscape = useOrientation();
 
   // Ajout d'un état pour le chargement des miniatures
   const [loadedThumbnails, setLoadedThumbnails] = useState<{ [key: number]: boolean }>({});
@@ -384,6 +410,11 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
     }
   };
 
+  // Effet pour gérer le mode double page automatiquement en paysage
+  useEffect(() => {
+    setIsDoublePage(isLandscape);
+  }, [isLandscape]);
+
   return (
     <div className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50">
       <div
@@ -391,13 +422,22 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
+        onClick={() => setShowControls(!showControls)}
       >
         {/* Contenu principal */}
         <div className="relative h-full w-full flex items-center justify-center">
           {/* Boutons en haut */}
-          <div className="absolute top-4 left-4 flex items-center gap-2 z-30">
+          <div
+            className={cn(
+              "absolute top-4 left-4 flex items-center gap-2 z-30 transition-all duration-300",
+              showControls ? "opacity-100" : "opacity-0 pointer-events-none"
+            )}
+          >
             <button
-              onClick={() => setIsDoublePage(!isDoublePage)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsDoublePage(!isDoublePage);
+              }}
               className="p-2 rounded-full bg-background/50 hover:bg-background/80 transition-colors"
               aria-label={
                 isDoublePage ? "Désactiver le mode double page" : "Activer le mode double page"
@@ -410,7 +450,10 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
               )}
             </button>
             <button
-              onClick={() => setShowNavigation(!showNavigation)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowNavigation(!showNavigation);
+              }}
               className="p-2 rounded-full bg-background/50 hover:bg-background/80 transition-colors"
               aria-label={showNavigation ? "Masquer la navigation" : "Afficher la navigation"}
             >
@@ -424,8 +467,14 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
           {/* Bouton précédent */}
           {currentPage > 1 && (
             <button
-              onClick={handlePreviousPage}
-              className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/50 hover:bg-background/80 transition-colors z-20"
+              onClick={(e) => {
+                e.stopPropagation();
+                handlePreviousPage();
+              }}
+              className={cn(
+                "absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/50 hover:bg-background/80 transition-all duration-300 z-20",
+                showControls ? "opacity-100" : "opacity-0 pointer-events-none"
+              )}
               aria-label="Page précédente"
             >
               <ChevronLeft className="h-8 w-8" />
@@ -474,8 +523,14 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
           {/* Bouton suivant */}
           {currentPage < pages.length && (
             <button
-              onClick={handleNextPage}
-              className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/50 hover:bg-background/80 transition-colors z-20"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleNextPage();
+              }}
+              className={cn(
+                "absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/50 hover:bg-background/80 transition-all duration-300 z-20",
+                showControls ? "opacity-100" : "opacity-0 pointer-events-none"
+              )}
               aria-label="Page suivante"
             >
               <ChevronRight className="h-8 w-8" />
@@ -484,8 +539,14 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
           {/* Bouton fermer */}
           {onClose && (
             <button
-              onClick={onClose}
-              className="absolute top-4 right-4 p-2 rounded-full bg-background/50 hover:bg-background/80 transition-colors z-30"
+              onClick={(e) => {
+                e.stopPropagation();
+                onClose();
+              }}
+              className={cn(
+                "absolute top-4 right-4 p-2 rounded-full bg-background/50 hover:bg-background/80 transition-all duration-300 z-30",
+                showControls ? "opacity-100" : "opacity-0 pointer-events-none"
+              )}
               aria-label="Fermer"
             >
               <svg
@@ -508,9 +569,11 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
 
         {/* Barre de navigation des pages */}
         <div
-          className={`absolute bottom-0 left-0 right-0 bg-background/50 backdrop-blur-sm border-t border-border/40 transition-all duration-300 ease-in-out z-30 ${
-            showNavigation ? "h-32 opacity-100" : "h-0 opacity-0"
-          }`}
+          className={cn(
+            "absolute bottom-0 left-0 right-0 bg-background/50 backdrop-blur-sm border-t border-border/40 transition-all duration-300 ease-in-out z-30",
+            showNavigation ? "h-48 opacity-100" : "h-0 opacity-0",
+            showControls ? "" : "pointer-events-none"
+          )}
         >
           {showNavigation && (
             <>
@@ -552,7 +615,7 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
                         setImageError(false);
                         syncReadProgress(pageNumber);
                       }}
-                      className={`relative h-24 w-16 flex-shrink-0 rounded-md overflow-hidden transition-all cursor-pointer ${
+                      className={`relative h-40 w-28 flex-shrink-0 rounded-md overflow-hidden transition-all cursor-pointer ${
                         currentPage === pageNumber
                           ? "ring-2 ring-primary scale-110 z-10"
                           : "opacity-60 hover:opacity-100 hover:scale-105"
@@ -576,8 +639,8 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
                           />
                         </>
                       )}
-                      <div className="absolute bottom-0 inset-x-0 h-6 bg-gradient-to-t from-black/60 to-transparent flex items-center justify-center">
-                        <span className="text-xs text-white font-medium">{pageNumber}</span>
+                      <div className="absolute bottom-0 inset-x-0 h-8 bg-gradient-to-t from-black/60 to-transparent flex items-center justify-center">
+                        <span className="text-sm text-white font-medium">{pageNumber}</span>
                       </div>
                     </button>
                   );
