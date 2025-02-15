@@ -4,25 +4,28 @@ import { HeroSection } from "./HeroSection";
 import { MediaRow } from "./MediaRow";
 import { KomgaBook, KomgaSeries } from "@/types/komga";
 import { useRouter } from "next/navigation";
+import { useNetworkRequest } from "@/lib/hooks/use-network-request";
+
+interface HomeData {
+  ongoing: KomgaSeries[];
+  recentlyRead: KomgaBook[];
+  onDeck: KomgaBook[];
+}
 
 interface HomeContentProps {
-  data: {
-    ongoing: KomgaSeries[];
-    recentlyRead: KomgaBook[];
-    onDeck: KomgaBook[];
-  };
+  data: HomeData;
 }
 
 export function HomeContent({ data }: HomeContentProps) {
   const router = useRouter();
-  const handleItemClick = (item: KomgaSeries | KomgaBook) => {
-    // Si c'est une série (a la propriété booksCount), on va vers la page de la série
-    if ("booksCount" in item) {
-      router.push(`/series/${item.id}`);
-    } else {
-      // Si c'est un livre, on va directement vers la page de lecture
-      router.push(`/books/${item.id}`);
-    }
+  const { executeRequest } = useNetworkRequest();
+
+  const handleItemClick = async (item: KomgaSeries | KomgaBook) => {
+    const path = "booksCount" in item ? `/series/${item.id}` : `/books/${item.id}`;
+
+    await executeRequest(async () => {
+      router.push(path);
+    });
   };
 
   // Vérification des données pour le debug

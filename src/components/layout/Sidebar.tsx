@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { authService } from "@/lib/services/auth.service";
 import { useEffect, useState, useCallback } from "react";
 import { KomgaLibrary, KomgaSeries } from "@/types/komga";
+import { useNetworkRequest } from "@/lib/hooks/use-network-request";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ interface SidebarProps {
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { executeRequest } = useNetworkRequest();
   const [libraries, setLibraries] = useState<KomgaLibrary[]>([]);
   const [favorites, setFavorites] = useState<KomgaSeries[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -104,8 +106,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     router.push("/login");
   };
 
-  const handleLinkClick = () => {
+  const handleLinkClick = async (path: string) => {
     onClose();
+    await executeRequest(async () => {
+      router.push(path);
+    });
   };
 
   const navigation = [
@@ -131,18 +136,17 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           <div className="space-y-1">
             <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">Navigation</h2>
             {navigation.map((item) => (
-              <Link
+              <button
                 key={item.href}
-                href={item.href}
-                onClick={handleLinkClick}
+                onClick={() => handleLinkClick(item.href)}
                 className={cn(
-                  "flex items-center rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+                  "w-full flex items-center rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
                   pathname === item.href ? "bg-accent" : "transparent"
                 )}
               >
                 <item.icon className="mr-2 h-4 w-4" />
                 {item.name}
-              </Link>
+              </button>
             ))}
           </div>
         </div>
@@ -159,18 +163,17 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               <div className="px-3 py-2 text-sm text-muted-foreground">Aucun favori</div>
             ) : (
               favorites.map((series) => (
-                <Link
+                <button
                   key={series.id}
-                  href={`/series/${series.id}`}
-                  onClick={handleLinkClick}
+                  onClick={() => handleLinkClick(`/series/${series.id}`)}
                   className={cn(
-                    "flex items-center rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+                    "w-full flex items-center rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
                     pathname === `/series/${series.id}` ? "bg-accent" : "transparent"
                   )}
                 >
                   <Star className="mr-2 h-4 w-4 fill-yellow-400 text-yellow-400" />
                   <span className="truncate">{series.metadata.title}</span>
-                </Link>
+                </button>
               ))
             )}
           </div>
@@ -195,18 +198,17 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               <div className="px-3 py-2 text-sm text-muted-foreground">Aucune bibliothèque</div>
             ) : (
               libraries.map((library) => (
-                <Link
+                <button
                   key={library.id}
-                  href={`/libraries/${library.id}`}
-                  onClick={handleLinkClick}
+                  onClick={() => handleLinkClick(`/libraries/${library.id}`)}
                   className={cn(
-                    "flex items-center rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+                    "w-full flex items-center rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
                     pathname === `/libraries/${library.id}` ? "bg-accent" : "transparent"
                   )}
                 >
                   <Library className="mr-2 h-4 w-4" />
                   {library.name}
-                </Link>
+                </button>
               ))
             )}
           </div>
@@ -215,17 +217,16 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div className="px-3 py-2">
           <div className="space-y-1">
             <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">Configuration</h2>
-            <Link
-              href="/settings"
-              onClick={handleLinkClick}
+            <button
+              onClick={() => handleLinkClick("/settings")}
               className={cn(
-                "flex items-center rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+                "w-full flex items-center rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
                 pathname === "/settings" ? "bg-accent" : "transparent"
               )}
             >
               <Settings className="mr-2 h-4 w-4" />
               Préférences
-            </Link>
+            </button>
           </div>
         </div>
       </div>
