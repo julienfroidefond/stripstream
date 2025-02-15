@@ -9,6 +9,12 @@ const publicApiRoutes = ["/api/auth/login", "/api/auth/register", "/api/komga/te
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const user = request.cookies.get("stripUser");
+
+  // Si l'utilisateur est connecté et essaie d'accéder à la page de login ou register
+  if (user?.value && (pathname === "/login" || pathname === "/register")) {
+    return NextResponse.redirect(new URL("/", request.url));
+  }
 
   // Vérifier si c'est une route publique ou commence par /images/
   if (
@@ -21,7 +27,6 @@ export function middleware(request: NextRequest) {
   }
 
   // Pour toutes les routes protégées, vérifier la présence de l'utilisateur
-  const user = request.cookies.get("stripUser");
   if (!user || !user.value) {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
