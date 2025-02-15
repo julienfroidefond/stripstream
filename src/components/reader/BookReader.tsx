@@ -86,29 +86,40 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
 
   const handlePreviousPage = useCallback(() => {
     if (currentPage > 1) {
-      // En mode double page, reculer de 2 pages sauf si on est sur la page 2
       const newPage = isDoublePage && currentPage > 2 ? currentPage - 2 : currentPage - 1;
       setCurrentPage(newPage);
       setIsLoading(true);
+      setSecondPageLoading(true);
       setImageError(false);
-      syncReadProgress(newPage);
+
+      // Synchroniser la progression après un court délai
+      const timer = setTimeout(() => {
+        syncReadProgress(newPage);
+      }, 300);
+      return () => clearTimeout(timer);
     }
   }, [currentPage, isDoublePage, syncReadProgress]);
 
   const handleNextPage = useCallback(() => {
     if (currentPage < pages.length) {
-      // En mode double page, avancer de 2 pages sauf si c'est la dernière paire
       const newPage = isDoublePage ? Math.min(currentPage + 2, pages.length) : currentPage + 1;
       setCurrentPage(newPage);
       setIsLoading(true);
+      setSecondPageLoading(true);
       setImageError(false);
-      syncReadProgress(newPage);
+
+      // Synchroniser la progression après un court délai
+      const timer = setTimeout(() => {
+        syncReadProgress(newPage);
+      }, 300);
+      return () => clearTimeout(timer);
     }
   }, [currentPage, pages.length, isDoublePage, syncReadProgress]);
 
   // Réinitialiser l'état de chargement lors du changement de mode double page
   useEffect(() => {
     setIsLoading(true);
+    setSecondPageLoading(true);
   }, [isDoublePage]);
 
   // Fonction pour précharger une page
@@ -181,10 +192,11 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
       if (pageCache.current[pageNumber]) {
         return pageCache.current[pageNumber].url;
       }
-      // Sinon, retourner l'URL de l'API
+      // Sinon, retourner l'URL de l'API et lancer le préchargement en arrière-plan
+      preloadPage(pageNumber).catch(console.error);
       return `/api/komga/images/books/${book.id}/pages/${pageNumber}`;
     },
-    [book.id]
+    [book.id, preloadPage]
   );
 
   // Fonction pour obtenir l'URL d'une miniature
@@ -197,11 +209,15 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
 
   // Effet pour précharger la page courante et les pages adjacentes
   useEffect(() => {
+    let isMounted = true;
+
     const preloadCurrentPages = async () => {
       // Précharger la page courante si elle n'est pas dans le cache
       if (!pageCache.current[currentPage]) {
         await preloadPage(currentPage);
       }
+
+      if (!isMounted) return;
 
       // En mode double page, précharger aussi la page suivante si nécessaire
       if (
@@ -212,44 +228,18 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
         await preloadPage(currentPage + 1);
       }
 
-      // Lancer le préchargement des pages suivantes et précédentes
-      const preloadPagesForCurrentMode = async () => {
-        if (isDoublePage) {
-          // En mode double page, on précharge plus de pages
-          const pagesToPreload = [];
-          // Pages suivantes
-          for (let i = 1; i <= 3; i++) {
-            const nextPage = currentPage + i * 2;
-            if (nextPage <= pages.length) {
-              pagesToPreload.push(nextPage);
-              if (nextPage + 1 <= pages.length) {
-                pagesToPreload.push(nextPage + 1);
-              }
-            }
-          }
-          // Pages précédentes
-          for (let i = 1; i <= 2; i++) {
-            const prevPage = currentPage - i * 2;
-            if (prevPage >= 1) {
-              pagesToPreload.push(prevPage);
-              if (prevPage + 1 <= pages.length) {
-                pagesToPreload.push(prevPage + 1);
-              }
-            }
-          }
-          await Promise.all(pagesToPreload.map(preloadPage));
-        } else {
-          // En mode simple page, on utilise la fonction standard
-          await preloadNextPages(currentPage);
-        }
-      };
+      if (!isMounted) return;
 
-      // Lancer le préchargement en arrière-plan
-      preloadPagesForCurrentMode();
+      // Lancer le préchargement des pages suivantes et précédentes en arrière-plan
+      preloadNextPages(currentPage).catch(console.error);
     };
 
     preloadCurrentPages();
     cleanCache(currentPage);
+
+    return () => {
+      isMounted = false;
+    };
   }, [
     currentPage,
     isDoublePage,
@@ -446,27 +436,34 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
             <div className="relative w-full h-full flex items-center justify-center">
               {/* Page courante */}
               <div className="relative max-h-[calc(100vh-2rem)] flex items-center justify-center">
+                <ImageLoader isLoading={isLoading} />
                 <img
                   src={getPageUrl(currentPage)}
                   alt={`Page ${currentPage}`}
-                  className="max-h-[calc(100vh-2rem)] w-auto object-contain"
-                  onLoad={() => handleThumbnailLoad(currentPage)}
+                  className={cn(
+                    "max-h-[calc(100vh-2rem)] w-auto object-contain transition-opacity duration-300",
+                    isLoading ? "opacity-0" : "opacity-100"
+                  )}
+                  onLoad={() => {
+                    setIsLoading(false);
+                    handleThumbnailLoad(currentPage);
+                  }}
                 />
               </div>
 
               {/* Deuxième page en mode double page */}
               {isDoublePage && shouldShowDoublePage(currentPage) && (
                 <div className="relative max-h-[calc(100vh-2rem)] flex items-center justify-center">
-                  <ImageLoader isLoading={isLoading} />
+                  <ImageLoader isLoading={secondPageLoading} />
                   <img
                     src={getPageUrl(currentPage + 1)}
                     alt={`Page ${currentPage + 1}`}
                     className={cn(
                       "max-h-[calc(100vh-2rem)] w-auto object-contain transition-opacity duration-300",
-                      isLoading ? "opacity-0" : "opacity-100"
+                      secondPageLoading ? "opacity-0" : "opacity-100"
                     )}
                     onLoad={() => {
-                      setIsLoading(false);
+                      setSecondPageLoading(false);
                       handleThumbnailLoad(currentPage + 1);
                     }}
                   />
