@@ -81,10 +81,10 @@ export const Thumbnail = forwardRef<HTMLButtonElement, ThumbnailProps>(
         id={`thumbnail-${pageNumber}`}
         onClick={() => onPageChange(pageNumber)}
         className={cn(
-          "relative h-56 w-40 flex-shrink-0 rounded-md overflow-hidden transition-all cursor-pointer snap-center",
+          "relative flex-shrink-0 rounded-md overflow-hidden transition-all cursor-pointer snap-center",
           currentPage === pageNumber
-            ? "ring-2 ring-primary scale-110 z-10"
-            : "opacity-80 hover:opacity-100 hover:scale-105",
+            ? "h-48 w-36 ring-2 ring-primary z-10"
+            : "h-40 w-28 opacity-80 hover:opacity-100 hover:scale-105",
           hasError && "bg-muted"
         )}
       >

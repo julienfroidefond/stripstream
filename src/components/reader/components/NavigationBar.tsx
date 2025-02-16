@@ -32,7 +32,7 @@ export const NavigationBar = ({
     <div
       className={cn(
         "absolute bottom-0 left-0 right-0 bg-background/50 backdrop-blur-sm border-t border-border/40 transition-all duration-300 ease-in-out z-30",
-        showControls ? "h-64 opacity-100" : "h-0 opacity-0"
+        showControls ? "h-52 opacity-100" : "h-0 opacity-0"
       )}
     >
       {showControls && (
