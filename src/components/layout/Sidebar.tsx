@@ -21,7 +21,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLoadingFavorites, setIsLoadingFavorites] = useState(true);
-  const [hasLoadedData, setHasLoadedData] = useState(false);
 
   const fetchLibraries = useCallback(async () => {
     setIsLoading(true);
@@ -73,21 +72,16 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     }
   }, []);
 
-  // Chargement des données à l'ouverture de la sidebar
+  // Chargement initial des données
   useEffect(() => {
-    if (isOpen && !hasLoadedData) {
-      fetchLibraries();
-      fetchFavorites();
-      setHasLoadedData(true);
-    }
-  }, [isOpen, hasLoadedData, fetchLibraries, fetchFavorites]);
+    fetchLibraries();
+    fetchFavorites();
+  }, [fetchLibraries, fetchFavorites]);
 
   // Mettre à jour les favoris quand ils changent
   useEffect(() => {
     const handleFavoritesChange = () => {
-      if (isOpen) {
-        fetchFavorites();
-      }
+      fetchFavorites();
     };
 
     window.addEventListener("favoritesChanged", handleFavoritesChange);
@@ -95,7 +89,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     return () => {
       window.removeEventListener("favoritesChanged", handleFavoritesChange);
     };
-  }, [fetchFavorites, isOpen]);
+  }, [fetchFavorites]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
