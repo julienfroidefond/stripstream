@@ -65,6 +65,12 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
       } catch (error) {
         console.error("Erreur lors du chargement des URLs:", error);
         setImageError(true);
+      } finally {
+        // On s'assure que le chargement est terminé même en cas d'erreur
+        if (isMounted) {
+          setIsLoading(false);
+          setSecondPageLoading(false);
+        }
       }
     };
 

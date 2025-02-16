@@ -44,3 +44,10 @@ export interface ControlButtonsProps {
   isDoublePage: boolean;
   onToggleDoublePage: () => void;
 }
+
+export interface UsePageNavigationProps {
+  book: KomgaBook;
+  pages: number[];
+  isDoublePage: boolean;
+  onClose?: () => void;
+}

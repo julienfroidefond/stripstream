@@ -5,9 +5,15 @@ interface UsePageNavigationProps {
   book: KomgaBook;
   pages: number[];
   isDoublePage: boolean;
+  onClose: () => void;
 }
 
-export const usePageNavigation = ({ book, pages, isDoublePage }: UsePageNavigationProps) => {
+export const usePageNavigation = ({
+  book,
+  pages,
+  isDoublePage,
+  onClose,
+}: UsePageNavigationProps) => {
   const [currentPage, setCurrentPage] = useState(book.readProgress?.page || 1);
   const [isLoading, setIsLoading] = useState(true);
   const [secondPageLoading, setSecondPageLoading] = useState(true);
@@ -122,6 +128,8 @@ export const usePageNavigation = ({ book, pages, isDoublePage }: UsePageNavigati
         handlePreviousPage();
       } else if (event.key === "ArrowRight") {
         handleNextPage();
+      } else if (event.key === "Escape" && onClose) {
+        onClose();
       }
     };
 
@@ -134,7 +142,7 @@ export const usePageNavigation = ({ book, pages, isDoublePage }: UsePageNavigati
       window.removeEventListener("touchstart", handleTouchStart);
       window.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [handlePreviousPage, handleNextPage, handleTouchStart, handleTouchEnd]);
+  }, [handlePreviousPage, handleNextPage, handleTouchStart, handleTouchEnd, onClose]);
 
   useEffect(() => {
     return () => {
