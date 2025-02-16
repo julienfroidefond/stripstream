@@ -155,10 +155,10 @@ export const SeriesHeader = ({ series, onSeriesUpdate }: SeriesHeaderProps) => {
       )}
 
       {/* Contenu */}
-      <div className="relative h-full container mx-auto px-4 py-8 flex items-end">
-        <div className="flex gap-6">
+      <div className="relative h-full container mx-auto px-4 py-8 flex items-center">
+        <div className="flex gap-6 items-center">
           {/* Image principale */}
-          <div className="relative w-[180px] aspect-[2/3] rounded-lg overflow-hidden shadow-lg bg-muted">
+          <div className="relative w-[180px] aspect-[2/3] rounded-lg overflow-hidden shadow-lg bg-muted flex-shrink-0">
             {!imageError ? (
               <>
                 <ImageLoader isLoading={isLoading} />
