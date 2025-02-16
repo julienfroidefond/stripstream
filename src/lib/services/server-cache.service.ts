@@ -8,17 +8,18 @@ class ServerCacheService {
   private static instance: ServerCacheService;
   private cache: Map<string, { data: unknown; expiry: number }> = new Map();
 
-  private static readonly fiveMinutes = 5 * 60;
-  private static readonly tenMinutes = 10 * 60;
-  private static readonly twentyFourHours = 24 * 60 * 60;
-  private static readonly oneMinute = 1 * 60;
-  private static readonly oneWeek = 7 * 24 * 60 * 60;
+  // Configuration des temps de cache en millisecondes
+  private static readonly fiveMinutes = 5 * 60 * 1000;
+  private static readonly tenMinutes = 10 * 60 * 1000;
+  private static readonly twentyFourHours = 24 * 60 * 60 * 1000;
+  private static readonly oneMinute = 1 * 60 * 1000;
+  private static readonly oneWeek = 7 * 24 * 60 * 60 * 1000;
   private static readonly noCache = 0;
 
-  // Configuration des temps de cache en secondes
+  // Configuration des temps de cache
   private static readonly DEFAULT_TTL = {
     DEFAULT: ServerCacheService.fiveMinutes,
-    HOME: ServerCacheService.fiveMinutes,
+    HOME: ServerCacheService.tenMinutes,
     LIBRARIES: ServerCacheService.twentyFourHours,
     SERIES: ServerCacheService.fiveMinutes,
     BOOKS: ServerCacheService.fiveMinutes,
@@ -50,7 +51,7 @@ class ServerCacheService {
   set(key: string, data: any, type: keyof typeof ServerCacheService.DEFAULT_TTL = "DEFAULT"): void {
     this.cache.set(key, {
       data,
-      expiry: Date.now() + this.getTTL(type) * 1000,
+      expiry: Date.now() + this.getTTL(type),
     });
   }
 
@@ -97,15 +98,16 @@ class ServerCacheService {
     const cached = this.cache.get(key);
 
     if (cached && cached.expiry > now) {
-      console.log("Cache hit for key:", key);
+      console.log("✅ Cache hit for key:", key);
       return cached.data as T;
     }
+    console.log("❌ Cache not hit for key:", key);
 
     try {
       const data = await fetcher();
       this.cache.set(key, {
         data,
-        expiry: now + this.getTTL(type) * 1000,
+        expiry: now + this.getTTL(type),
       });
       return data;
     } catch (error) {
