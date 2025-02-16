@@ -93,6 +93,7 @@ class ServerCacheService {
     type: keyof typeof ServerCacheService.DEFAULT_TTL = "DEFAULT"
   ): Promise<T> {
     const now = Date.now();
+    console.log("👀 Getting or setting cache for key:", key);
     const cached = this.cache.get(key);
 
     if (cached && cached.expiry > now) {

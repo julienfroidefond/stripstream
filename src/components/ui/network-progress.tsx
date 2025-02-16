@@ -31,10 +31,7 @@ export function NetworkProgressProvider({ children }: { children: React.ReactNod
     });
   }, []);
 
-  const totalProgress = Object.values(activeRequests).reduce((acc, curr) => acc + curr, 0);
   const requestCount = Object.keys(activeRequests).length;
-  const averageProgress = requestCount > 0 ? totalProgress / requestCount : 0;
-  const displayProgress = Math.min(Math.round(averageProgress), 100);
 
   return (
     <NetworkProgressContext.Provider value={{ startProgress, updateProgress, completeProgress }}>
@@ -44,23 +41,15 @@ export function NetworkProgressProvider({ children }: { children: React.ReactNod
           {/* Barre de progression en haut */}
           <div className="fixed top-0 left-0 right-0 z-50">
             <div className="h-0.5 w-full bg-muted overflow-hidden">
-              <div
-                className="h-full bg-primary transition-all ease-in-out duration-300"
-                style={{
-                  width: `${averageProgress}%`,
-                  transitionTimingFunction: "cubic-bezier(0.4, 0, 0.2, 1)",
-                }}
-              />
+              <div className="h-full bg-primary animate-pulse" />
             </div>
           </div>
 
-          {/* Indicateur de progression au centre */}
+          {/* Indicateur de chargement au centre */}
           <div className="fixed top-14 left-1/2 transform -translate-x-1/2 z-50">
             <div className="bg-background/80 backdrop-blur-sm rounded-lg px-3 py-1.5 flex items-center gap-2 shadow-sm">
               <Loader2 className="h-3 w-3 animate-spin" />
-              <span className="text-xs font-medium">
-                Chargement {displayProgress < 100 && `${displayProgress}%`}
-              </span>
+              <span className="text-xs font-medium">Chargement</span>
             </div>
           </div>
         </>
