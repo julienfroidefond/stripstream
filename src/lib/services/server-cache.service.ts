@@ -12,6 +12,7 @@ class ServerCacheService {
   private static readonly tenMinutes = 10 * 60;
   private static readonly twentyFourHours = 24 * 60 * 60;
   private static readonly oneMinute = 1 * 60;
+  private static readonly oneWeek = 7 * 24 * 60 * 60;
   private static readonly noCache = 0;
 
   // Configuration des temps de cache en secondes
@@ -21,7 +22,7 @@ class ServerCacheService {
     LIBRARIES: ServerCacheService.twentyFourHours,
     SERIES: ServerCacheService.fiveMinutes,
     BOOKS: ServerCacheService.fiveMinutes,
-    IMAGES: ServerCacheService.twentyFourHours,
+    IMAGES: ServerCacheService.oneWeek,
   };
 
   private constructor() {
