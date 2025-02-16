@@ -351,37 +351,31 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
     setLoadedThumbnails((prev) => ({ ...prev, [pageNumber]: true }));
   };
 
-  // Fonction pour scroller jusqu'à la miniature active
+  // Effet pour scroller jusqu'à la miniature active
   const scrollToActiveThumbnail = useCallback(() => {
-    const container = document.getElementById("thumbnails-container");
-    const activeThumbnail = document.getElementById(`thumbnail-${currentPage}`);
-    if (container && activeThumbnail) {
-      const containerWidth = container.clientWidth;
-      const thumbnailLeft = activeThumbnail.offsetLeft;
-      const thumbnailWidth = activeThumbnail.clientWidth;
-
-      // Centrer la miniature dans le conteneur
-      container.scrollLeft = thumbnailLeft - containerWidth / 2 + thumbnailWidth / 2;
+    const thumbnail = document.getElementById(`thumbnail-${currentPage}`);
+    if (thumbnail) {
+      thumbnail.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "center",
+      });
     }
   }, [currentPage]);
 
-  // Effet pour scroller jusqu'à la miniature active au chargement et au changement de page
+  // Effet pour centrer la miniature active quand les contrôles deviennent visibles
   useEffect(() => {
-    if (showNavigation) {
+    if (showControls) {
       scrollToActiveThumbnail();
     }
-  }, [currentPage, showNavigation, scrollToActiveThumbnail]);
+  }, [showControls, scrollToActiveThumbnail]);
 
-  // Effet pour scroller jusqu'à la miniature active quand la navigation devient visible
+  // Effet pour centrer la miniature active au changement de page
   useEffect(() => {
-    if (showNavigation) {
-      // Petit délai pour laisser le temps à la barre de s'afficher
-      const timer = setTimeout(() => {
-        scrollToActiveThumbnail();
-      }, 100);
-      return () => clearTimeout(timer);
+    if (showControls) {
+      scrollToActiveThumbnail();
     }
-  }, [showNavigation, scrollToActiveThumbnail]);
+  }, [currentPage, showControls, scrollToActiveThumbnail]);
 
   // Fonction pour calculer les miniatures à afficher autour de la page courante
   const updateVisibleThumbnails = useCallback(() => {
@@ -504,20 +498,6 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
                 <SplitSquareVertical className="h-6 w-6" />
               )}
             </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowNavigation(!showNavigation);
-              }}
-              className="p-2 rounded-full bg-background/50 hover:bg-background/80 transition-colors"
-              aria-label={showNavigation ? "Masquer la navigation" : "Afficher la navigation"}
-            >
-              <ChevronUp
-                className={`h-6 w-6 transition-transform duration-200 ${
-                  showNavigation ? "rotate-180" : ""
-                }`}
-              />
-            </button>
           </div>
           {/* Bouton précédent */}
           {currentPage > 1 && (
@@ -630,31 +610,17 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
         <div
           className={cn(
             "absolute bottom-0 left-0 right-0 bg-background/50 backdrop-blur-sm border-t border-border/40 transition-all duration-300 ease-in-out z-30",
-            showNavigation ? "h-48 opacity-100" : "h-0 opacity-0",
-            showControls ? "" : "pointer-events-none"
+            showControls ? "h-64 opacity-100" : "h-0 opacity-0"
           )}
         >
-          {showNavigation && (
+          {showControls && (
             <>
-              <div className="absolute inset-y-0 left-4 flex items-center z-40">
-                <button
-                  onClick={() => {
-                    const container = document.getElementById("thumbnails-container");
-                    if (container) {
-                      container.scrollLeft -= container.clientWidth;
-                    }
-                  }}
-                  className="p-2 rounded-full bg-background/50 hover:bg-background/80 transition-colors"
-                  aria-label="Pages précédentes"
-                >
-                  <ChevronLeft className="h-6 w-6" />
-                </button>
-              </div>
-
               <div
                 id="thumbnails-container"
-                className="h-full mx-16 overflow-x-auto flex items-center gap-2 px-4 scroll-smooth"
+                className="h-full overflow-x-auto flex items-center gap-2 px-4 scroll-smooth snap-x snap-mandatory"
               >
+                {/* Ajouter un élément vide au début pour le centrage */}
+                <div className="w-[calc(50vw-18rem)] flex-shrink-0" />
                 {pages.map((_, index) => {
                   const pageNumber = index + 1;
                   const isVisible = visibleThumbnails.includes(pageNumber);
@@ -674,10 +640,10 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
                         setImageError(false);
                         syncReadProgress(pageNumber);
                       }}
-                      className={`relative h-40 w-28 flex-shrink-0 rounded-md overflow-hidden transition-all cursor-pointer ${
+                      className={`relative h-56 w-40 flex-shrink-0 rounded-md overflow-hidden transition-all cursor-pointer snap-center ${
                         currentPage === pageNumber
                           ? "ring-2 ring-primary scale-110 z-10"
-                          : "opacity-60 hover:opacity-100 hover:scale-105"
+                          : "opacity-80 hover:opacity-100 hover:scale-105"
                       }`}
                     >
                       {isVisible && (
@@ -704,21 +670,8 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
                     </button>
                   );
                 })}
-              </div>
-
-              <div className="absolute inset-y-0 right-4 flex items-center">
-                <button
-                  onClick={() => {
-                    const container = document.getElementById("thumbnails-container");
-                    if (container) {
-                      container.scrollLeft += container.clientWidth;
-                    }
-                  }}
-                  className="p-2 rounded-full bg-background/50 hover:bg-background/80 transition-colors"
-                  aria-label="Pages suivantes"
-                >
-                  <ChevronRight className="h-6 w-6" />
-                </button>
+                {/* Ajouter un élément vide à la fin pour le centrage */}
+                <div className="w-[calc(50vw-18rem)] flex-shrink-0" />
               </div>
 
               {/* Indicateur de page */}
