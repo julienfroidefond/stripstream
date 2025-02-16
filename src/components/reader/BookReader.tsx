@@ -537,16 +537,16 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
           )}
           {/* Pages */}
           <div className="relative flex-1 flex items-center justify-center overflow-hidden p-1">
-            <div className="relative w-full h-full flex items-center justify-center">
+            <div className="relative w-full h-[calc(100vh-2rem)] flex items-center justify-center">
               {/* Page courante */}
-              <div className="relative max-h-[calc(100vh-2rem)] flex items-center justify-center">
+              <div className="relative h-full w-full flex items-center justify-center">
                 <ImageLoader isLoading={isLoading} />
                 {currentPageUrl && (
                   <img
                     src={currentPageUrl}
                     alt={`Page ${currentPage}`}
                     className={cn(
-                      "max-h-[calc(100vh-2rem)] w-auto object-contain transition-opacity duration-300",
+                      "max-h-full w-auto object-contain transition-opacity duration-300",
                       isLoading ? "opacity-0" : "opacity-100"
                     )}
                     onLoad={() => {
@@ -559,14 +559,14 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
 
               {/* Deuxième page en mode double page */}
               {isDoublePage && shouldShowDoublePage(currentPage) && (
-                <div className="relative max-h-[calc(100vh-2rem)] flex items-center justify-center">
+                <div className="relative h-full w-full flex items-center justify-center">
                   <ImageLoader isLoading={secondPageLoading} />
                   {nextPageUrl && (
                     <img
                       src={nextPageUrl}
                       alt={`Page ${currentPage + 1}`}
                       className={cn(
-                        "max-h-[calc(100vh-2rem)] w-auto object-contain transition-opacity duration-300",
+                        "max-h-full w-auto object-contain transition-opacity duration-300",
                         secondPageLoading ? "opacity-0" : "opacity-100"
                       )}
                       onLoad={() => {
