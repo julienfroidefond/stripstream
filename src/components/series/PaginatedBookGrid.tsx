@@ -7,7 +7,6 @@ import { useState, useEffect } from "react";
 import { Loader2, Filter } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { KomgaBook } from "@/types/komga";
-import { useNetworkRequest } from "@/lib/hooks/use-network-request";
 
 interface PaginatedBookGridProps {
   books: KomgaBook[];
@@ -27,7 +26,6 @@ export function PaginatedBookGrid({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { executeRequest } = useNetworkRequest();
   const [isChangingPage, setIsChangingPage] = useState(false);
   const [showOnlyUnread, setShowOnlyUnread] = useState(searchParams.get("unread") === "true");
 
@@ -46,9 +44,7 @@ export function PaginatedBookGrid({
     }
 
     // Rediriger vers la nouvelle URL avec les paramètres mis à jour
-    await executeRequest(async () => {
-      router.push(`${pathname}?${params.toString()}`);
-    });
+    await router.push(`${pathname}?${params.toString()}`);
   };
 
   const handleUnreadFilter = async () => {
@@ -63,15 +59,11 @@ export function PaginatedBookGrid({
     }
 
     setShowOnlyUnread(!showOnlyUnread);
-    await executeRequest(async () => {
-      router.push(`${pathname}?${params.toString()}`);
-    });
+    await router.push(`${pathname}?${params.toString()}`);
   };
 
-  const handleBookClick = async (book: KomgaBook) => {
-    await executeRequest(async () => {
-      router.push(`/books/${book.id}`);
-    });
+  const handleBookClick = (book: KomgaBook) => {
+    router.push(`/books/${book.id}`);
   };
 
   // Calcul des indices de début et de fin pour l'affichage

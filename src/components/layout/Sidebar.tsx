@@ -7,7 +7,6 @@ import { cn } from "@/lib/utils";
 import { authService } from "@/lib/services/auth.service";
 import { useEffect, useState, useCallback } from "react";
 import { KomgaLibrary, KomgaSeries } from "@/types/komga";
-import { useNetworkRequest } from "@/lib/hooks/use-network-request";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -17,7 +16,6 @@ interface SidebarProps {
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { executeRequest } = useNetworkRequest();
   const [libraries, setLibraries] = useState<KomgaLibrary[]>([]);
   const [favorites, setFavorites] = useState<KomgaSeries[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -112,11 +110,9 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     router.push("/login");
   };
 
-  const handleLinkClick = async (path: string) => {
+  const handleLinkClick = (path: string) => {
     onClose();
-    await executeRequest(async () => {
-      router.push(path);
-    });
+    router.push(path);
   };
 
   const navigation = [

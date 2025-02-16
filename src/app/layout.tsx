@@ -3,7 +3,6 @@ import { Inter } from "next/font/google";
 import "@/styles/globals.css";
 import { cn } from "@/lib/utils";
 import ClientLayout from "@/components/layout/ClientLayout";
-import { NetworkProgressProvider } from "@/components/ui/network-progress";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -114,9 +113,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className={cn("min-h-screen bg-background font-sans antialiased", inter.className)}>
-        <NetworkProgressProvider>
-          <ClientLayout>{children}</ClientLayout>
-        </NetworkProgressProvider>
+        <ClientLayout>{children}</ClientLayout>
       </body>
     </html>
   );

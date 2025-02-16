@@ -4,7 +4,6 @@ import { HeroSection } from "./HeroSection";
 import { MediaRow } from "./MediaRow";
 import { KomgaBook, KomgaSeries } from "@/types/komga";
 import { useRouter } from "next/navigation";
-import { useNetworkRequest } from "@/lib/hooks/use-network-request";
 
 interface HomeData {
   ongoing: KomgaSeries[];
@@ -18,14 +17,14 @@ interface HomeContentProps {
 
 export function HomeContent({ data }: HomeContentProps) {
   const router = useRouter();
-  const { executeRequest } = useNetworkRequest();
 
   const handleItemClick = async (item: KomgaSeries | KomgaBook) => {
     const path = "booksCount" in item ? `/series/${item.id}` : `/books/${item.id}`;
+    await router.push(path);
+  };
 
-    await executeRequest(async () => {
-      router.push(path);
-    });
+  const handleSeriesClick = (seriesId: string) => {
+    router.push(`/series/${seriesId}`);
   };
 
   // Vérification des données pour le debug

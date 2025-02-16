@@ -6,7 +6,6 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Loader2, Filter } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useNetworkRequest } from "@/lib/hooks/use-network-request";
 
 interface PaginatedSeriesGridProps {
   series: any[];
@@ -26,7 +25,6 @@ export function PaginatedSeriesGrid({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { executeRequest } = useNetworkRequest();
   const [isChangingPage, setIsChangingPage] = useState(false);
   const [showOnlyUnread, setShowOnlyUnread] = useState(searchParams.get("unread") === "true");
 
@@ -45,9 +43,7 @@ export function PaginatedSeriesGrid({
     }
 
     // Rediriger vers la nouvelle URL avec les paramètres mis à jour
-    await executeRequest(async () => {
-      router.push(`${pathname}?${params.toString()}`);
-    });
+    await router.push(`${pathname}?${params.toString()}`);
   };
 
   const handleUnreadFilter = async () => {
@@ -62,9 +58,11 @@ export function PaginatedSeriesGrid({
     }
 
     setShowOnlyUnread(!showOnlyUnread);
-    await executeRequest(async () => {
-      router.push(`${pathname}?${params.toString()}`);
-    });
+    await router.push(`${pathname}?${params.toString()}`);
+  };
+
+  const handleSeriesClick = (seriesId: string) => {
+    router.push(`/series/${seriesId}`);
   };
 
   // Calcul des indices de début et de fin pour l'affichage
