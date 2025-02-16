@@ -111,7 +111,9 @@ function MediaCard({ item, onClick }: MediaCardProps) {
           <>
             <ImageLoader isLoading={imageLoading} />
             <Image
-              src={`/api/komga/images/${isSeries ? "series" : "books"}/${item.id}/thumbnail`}
+              src={`/api/komga/images/${isSeries ? "series" : "books"}/${item.id}/${
+                isSeries ? "first-page" : "pages/1"
+              }`}
               alt={`Couverture de ${title}`}
               fill
               className={cn(

@@ -44,4 +44,33 @@ export class SeriesService extends BaseApiService {
       return this.handleError(error, "Impossible de récupérer les tomes");
     }
   }
+
+  static async getFirstBook(seriesId: string): Promise<string> {
+    try {
+      const config = await this.getKomgaConfig();
+      const url = this.buildUrl(config, `series/${seriesId}/books`);
+      const headers = this.getAuthHeaders(config);
+
+      return this.fetchWithCache<string>(
+        `series-first-book-${seriesId}`,
+        async () => {
+          const response = await fetch(`${url}?page=0&size=1`, { headers });
+          if (!response.ok) {
+            throw new Error(`Erreur HTTP: ${response.status}`);
+          }
+
+          const data = await response.json();
+          if (!data.content || data.content.length === 0) {
+            throw new Error("Aucun livre trouvé dans la série");
+          }
+
+          return data.content[0].id;
+        },
+        "SERIES"
+      );
+    } catch (error) {
+      console.error("Erreur lors de la récupération du premier livre:", error);
+      return this.handleError(error, "Impossible de récupérer le premier livre");
+    }
+  }
 }
