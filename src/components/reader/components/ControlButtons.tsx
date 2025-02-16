@@ -1,6 +1,14 @@
 import { ControlButtonsProps } from "../types";
+import {
+  ChevronLeft,
+  ChevronRight,
+  X,
+  SplitSquareVertical,
+  LayoutTemplate,
+  Maximize2,
+  Minimize2,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ChevronLeft, ChevronRight, X, SplitSquareVertical, LayoutTemplate } from "lucide-react";
 
 export const ControlButtons = ({
   showControls,
@@ -12,13 +20,15 @@ export const ControlButtons = ({
   totalPages,
   isDoublePage,
   onToggleDoublePage,
+  isFullscreen,
+  onToggleFullscreen,
 }: ControlButtonsProps) => {
   return (
     <>
       {/* Bouton mode double page */}
       <div
         className={cn(
-          "absolute top-4 left-4 z-30 transition-all duration-300",
+          "absolute top-4 left-4 z-30 flex items-center gap-2 transition-all duration-300",
           showControls ? "opacity-100" : "opacity-0 pointer-events-none"
         )}
       >
@@ -37,6 +47,16 @@ export const ControlButtons = ({
           ) : (
             <SplitSquareVertical className="h-6 w-6" />
           )}
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleFullscreen();
+          }}
+          className="p-2 rounded-full bg-background/50 hover:bg-background/80 transition-colors"
+          aria-label={isFullscreen ? "Quitter le plein écran" : "Plein écran"}
+        >
+          {isFullscreen ? <Minimize2 className="h-6 w-6" /> : <Maximize2 className="h-6 w-6" />}
         </button>
       </div>
 

@@ -4,7 +4,7 @@ import { BookReaderProps } from "./types";
 import { useOrientation } from "./hooks/useOrientation";
 import { usePageNavigation } from "./hooks/usePageNavigation";
 import { usePageCache } from "./hooks/usePageCache";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { NavigationBar } from "./components/NavigationBar";
 import { ControlButtons } from "./components/ControlButtons";
 import { ImageLoader } from "@/components/ui/image-loader";
@@ -13,6 +13,8 @@ import { cn } from "@/lib/utils";
 export function BookReader({ book, pages, onClose }: BookReaderProps) {
   const [isDoublePage, setIsDoublePage] = useState(false);
   const [showControls, setShowControls] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const readerRef = useRef<HTMLDivElement>(null);
   const isLandscape = useOrientation();
 
   const {
@@ -138,6 +140,34 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
     setIsDoublePage(isLandscape);
   }, [isLandscape]);
 
+  // Effet pour gérer le fullscreen
+  useEffect(() => {
+    const enterFullscreen = async () => {
+      try {
+        if (readerRef.current && !isFullscreen) {
+          await readerRef.current.requestFullscreen();
+          setIsFullscreen(true);
+        }
+      } catch (error) {
+        console.error("Erreur lors du passage en plein écran:", error);
+      }
+    };
+
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    enterFullscreen();
+
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(console.error);
+      }
+    };
+  }, []);
+
   const handleThumbnailLoad = useCallback(
     (pageNumber: number) => {
       if (pageNumber === currentPage) {
@@ -150,7 +180,10 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
   );
 
   return (
-    <div className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50 overflow-hidden touch-none">
+    <div
+      ref={readerRef}
+      className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50 overflow-hidden touch-none"
+    >
       <div
         className="relative h-full flex flex-col items-center justify-center"
         onClick={() => setShowControls(!showControls)}
@@ -167,6 +200,18 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
             totalPages={pages.length}
             isDoublePage={isDoublePage}
             onToggleDoublePage={() => setIsDoublePage(!isDoublePage)}
+            isFullscreen={isFullscreen}
+            onToggleFullscreen={async () => {
+              try {
+                if (isFullscreen) {
+                  await document.exitFullscreen();
+                } else if (readerRef.current) {
+                  await readerRef.current.requestFullscreen();
+                }
+              } catch (error) {
+                console.error("Erreur lors du changement de mode plein écran:", error);
+              }
+            }}
           />
 
           {/* Pages */}
@@ -175,8 +220,8 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
               {/* Page courante */}
               <div
                 className={cn(
-                  "relative h-full flex items-center justify-end",
-                  isDoublePage ? "w-1/2" : "w-full"
+                  "relative h-full flex items-center",
+                  isDoublePage ? "w-1/2 justify-end" : "w-full justify-center"
                 )}
               >
                 <ImageLoader isLoading={isLoading} />

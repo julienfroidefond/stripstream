@@ -43,6 +43,8 @@ export interface ControlButtonsProps {
   totalPages: number;
   isDoublePage: boolean;
   onToggleDoublePage: () => void;
+  isFullscreen: boolean;
+  onToggleFullscreen: () => void;
 }
 
 export interface UsePageNavigationProps {
