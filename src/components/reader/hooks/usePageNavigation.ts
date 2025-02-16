@@ -5,14 +5,14 @@ interface UsePageNavigationProps {
   book: KomgaBook;
   pages: number[];
   isDoublePage: boolean;
-  onClose: () => void;
+  onClose?: () => void;
 }
 
 export const usePageNavigation = ({
   book,
   pages,
   isDoublePage,
-  onClose,
+  onClose = () => {},
 }: UsePageNavigationProps) => {
   const [currentPage, setCurrentPage] = useState(book.readProgress?.page || 1);
   const [isLoading, setIsLoading] = useState(true);

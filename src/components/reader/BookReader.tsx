@@ -32,6 +32,7 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
     book,
     pages,
     isDoublePage,
+    onClose,
   });
 
   const { preloadPage, getPageUrl, cleanCache } = usePageCache({
@@ -81,7 +82,15 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
     return () => {
       isMounted = false;
     };
-  }, [currentPage, isDoublePage, shouldShowDoublePage, getPageUrl]);
+  }, [
+    currentPage,
+    isDoublePage,
+    shouldShowDoublePage,
+    getPageUrl,
+    setIsLoading,
+    setSecondPageLoading,
+    setImageError,
+  ]);
 
   // Effet pour précharger la page courante et les pages adjacentes
   useEffect(() => {
@@ -137,7 +146,7 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
         setSecondPageLoading(false);
       }
     },
-    [currentPage]
+    [currentPage, setIsLoading, setSecondPageLoading]
   );
 
   return (
