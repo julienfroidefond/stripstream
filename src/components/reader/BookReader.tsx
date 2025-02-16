@@ -171,9 +171,14 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
 
           {/* Pages */}
           <div className="relative flex-1 flex items-center justify-center overflow-hidden p-1">
-            <div className="relative w-full h-[calc(100vh-2rem)] flex items-center justify-center">
+            <div className="relative w-full h-[calc(100vh-2rem)] flex items-center justify-center gap-0">
               {/* Page courante */}
-              <div className="relative h-full w-full flex items-center justify-center">
+              <div
+                className={cn(
+                  "relative h-full flex items-center justify-end",
+                  isDoublePage ? "w-1/2" : "w-full"
+                )}
+              >
                 <ImageLoader isLoading={isLoading} />
                 {currentPageUrl && (
                   <img
@@ -190,7 +195,7 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
 
               {/* Deuxième page en mode double page */}
               {isDoublePage && shouldShowDoublePage(currentPage) && (
-                <div className="relative h-full w-full flex items-center justify-center">
+                <div className="relative h-full w-1/2 flex items-center justify-start">
                   <ImageLoader isLoading={secondPageLoading} />
                   {nextPageUrl && (
                     <img
