@@ -94,6 +94,8 @@ function SeriesCard({ series, onClick }: SeriesCardProps) {
             sizes="(max-width: 640px) 33vw, (max-width: 1024px) 20vw, 20vw"
             onError={() => setImageError(true)}
             onLoad={() => setIsLoading(false)}
+            loading="lazy"
+            quality={50}
           />
         </>
       ) : (

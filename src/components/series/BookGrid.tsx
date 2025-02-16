@@ -117,6 +117,8 @@ function BookImage({ book, getBookThumbnailUrl, isCompleted }: BookImageProps) {
         sizes="(min-width: 1024px) 16.66vw, (min-width: 768px) 25vw, (min-width: 640px) 33.33vw, 50vw"
         onError={() => setImageError(true)}
         onLoad={() => setIsLoading(false)}
+        loading="lazy"
+        quality={50}
       />
     </div>
   );
@@ -177,6 +179,8 @@ function BookCard({ book, onClick, getBookThumbnailUrl }: BookCardProps) {
             className="object-cover"
             sizes="(max-width: 640px) 33vw, (max-width: 1024px) 16.666vw, 16.666vw"
             onError={() => setImageError(true)}
+            loading="lazy"
+            quality={50}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">

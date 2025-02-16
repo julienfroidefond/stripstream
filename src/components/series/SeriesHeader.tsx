@@ -149,8 +149,8 @@ export const SeriesHeader = ({ series, onSeriesUpdate }: SeriesHeaderProps) => {
                 "object-cover blur-2xl scale-110 transition-opacity duration-300",
                 imageLoading ? "opacity-0" : "opacity-10"
               )}
-              priority
-              unoptimized
+              loading="lazy"
+              quality={25}
               onLoad={() => setImageLoading(false)}
             />
           </div>
@@ -176,8 +176,8 @@ export const SeriesHeader = ({ series, onSeriesUpdate }: SeriesHeaderProps) => {
                   )}
                   onError={() => setImageError(true)}
                   onLoad={() => setImageLoading(false)}
-                  priority
-                  unoptimized
+                  loading="lazy"
+                  quality={75}
                 />
               </div>
             ) : (
