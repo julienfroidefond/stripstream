@@ -150,7 +150,7 @@ export const SeriesHeader = ({ series, onSeriesUpdate }: SeriesHeaderProps) => {
                 imageLoading ? "opacity-0" : "opacity-10"
               )}
               loading="lazy"
-              quality={25}
+              quality={100}
               onLoad={() => setImageLoading(false)}
             />
           </div>
@@ -177,7 +177,7 @@ export const SeriesHeader = ({ series, onSeriesUpdate }: SeriesHeaderProps) => {
                   onError={() => setImageError(true)}
                   onLoad={() => setImageLoading(false)}
                   loading="lazy"
-                  quality={75}
+                  quality={100}
                 />
               </div>
             ) : (

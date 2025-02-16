@@ -120,7 +120,7 @@ function MediaCard({ item, onClick }: MediaCardProps) {
               )}
               sizes="200px"
               loading="lazy"
-              quality={50}
+              quality={100}
               onError={() => setImageError(true)}
               onLoad={() => setImageLoading(false)}
             />
