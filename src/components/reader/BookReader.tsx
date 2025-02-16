@@ -160,6 +160,8 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
             onClose={onClose}
             currentPage={currentPage}
             totalPages={pages.length}
+            isDoublePage={isDoublePage}
+            onToggleDoublePage={() => setIsDoublePage(!isDoublePage)}
           />
 
           {/* Pages */}
