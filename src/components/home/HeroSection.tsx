@@ -64,8 +64,8 @@ function CoverImage({ series }: CoverImageProps) {
               imageLoading ? "opacity-0" : "opacity-100"
             )}
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16.666vw"
-            priority={true}
-            loading="eager"
+            loading="lazy"
+            quality={25}
             onError={() => setImageError(true)}
             onLoad={() => setImageLoading(false)}
           />

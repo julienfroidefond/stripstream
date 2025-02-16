@@ -119,8 +119,8 @@ function MediaCard({ item, onClick }: MediaCardProps) {
                 imageLoading ? "opacity-0" : "opacity-100"
               )}
               sizes="200px"
-              priority={true}
-              loading="eager"
+              loading="lazy"
+              quality={50}
               onError={() => setImageError(true)}
               onLoad={() => setImageLoading(false)}
             />
