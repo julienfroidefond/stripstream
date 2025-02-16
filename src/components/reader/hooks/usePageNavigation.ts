@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { KomgaBook } from "@/types/komga";
 
 interface UsePageNavigationProps {
@@ -12,6 +12,13 @@ export const usePageNavigation = ({ book, pages, isDoublePage }: UsePageNavigati
   const [isLoading, setIsLoading] = useState(true);
   const [secondPageLoading, setSecondPageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const touchStartXRef = useRef<number | null>(null);
+  const currentPageRef = useRef(currentPage);
+
+  useEffect(() => {
+    currentPageRef.current = currentPage;
+  }, [currentPage]);
 
   const syncReadProgress = useCallback(
     async (page: number) => {
@@ -31,6 +38,20 @@ export const usePageNavigation = ({ book, pages, isDoublePage }: UsePageNavigati
     [book.id, pages.length]
   );
 
+  const debouncedSyncReadProgress = useCallback(
+    (page: number) => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+
+      timeoutRef.current = setTimeout(() => {
+        syncReadProgress(page);
+        timeoutRef.current = null;
+      }, 2000);
+    },
+    [syncReadProgress]
+  );
+
   const shouldShowDoublePage = useCallback(
     (pageNumber: number) => {
       if (!isDoublePage) return false;
@@ -40,35 +61,55 @@ export const usePageNavigation = ({ book, pages, isDoublePage }: UsePageNavigati
     [isDoublePage, pages.length]
   );
 
-  const handlePreviousPage = useCallback(() => {
-    if (currentPage > 1) {
-      const newPage = isDoublePage && currentPage > 2 ? currentPage - 2 : currentPage - 1;
-      setCurrentPage(newPage);
+  const navigateToPage = useCallback(
+    (page: number) => {
+      setCurrentPage(page);
       setIsLoading(true);
       setSecondPageLoading(true);
       setImageError(false);
+      debouncedSyncReadProgress(page);
+    },
+    [debouncedSyncReadProgress]
+  );
 
-      const timer = setTimeout(() => {
-        syncReadProgress(newPage);
-      }, 300);
-      return () => clearTimeout(timer);
+  const handlePreviousPage = useCallback(() => {
+    if (currentPage > 1) {
+      const newPage = isDoublePage && currentPage > 2 ? currentPage - 2 : currentPage - 1;
+      navigateToPage(newPage);
     }
-  }, [currentPage, isDoublePage, syncReadProgress]);
+  }, [currentPage, isDoublePage, navigateToPage]);
 
   const handleNextPage = useCallback(() => {
     if (currentPage < pages.length) {
       const newPage = isDoublePage ? Math.min(currentPage + 2, pages.length) : currentPage + 1;
-      setCurrentPage(newPage);
-      setIsLoading(true);
-      setSecondPageLoading(true);
-      setImageError(false);
-
-      const timer = setTimeout(() => {
-        syncReadProgress(newPage);
-      }, 300);
-      return () => clearTimeout(timer);
+      navigateToPage(newPage);
     }
-  }, [currentPage, pages.length, isDoublePage, syncReadProgress]);
+  }, [currentPage, pages.length, isDoublePage, navigateToPage]);
+
+  const handleTouchStart = useCallback((event: TouchEvent) => {
+    touchStartXRef.current = event.touches[0].clientX;
+  }, []);
+
+  const handleTouchEnd = useCallback(
+    (event: TouchEvent) => {
+      if (touchStartXRef.current === null) return;
+
+      const touchEndX = event.changedTouches[0].clientX;
+      const deltaX = touchEndX - touchStartXRef.current;
+      const minSwipeDistance = 50;
+
+      if (Math.abs(deltaX) > minSwipeDistance) {
+        if (deltaX > 0) {
+          handlePreviousPage();
+        } else {
+          handleNextPage();
+        }
+      }
+
+      touchStartXRef.current = null;
+    },
+    [handlePreviousPage, handleNextPage]
+  );
 
   useEffect(() => {
     setIsLoading(true);
@@ -85,12 +126,28 @@ export const usePageNavigation = ({ book, pages, isDoublePage }: UsePageNavigati
     };
 
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handlePreviousPage, handleNextPage]);
+    window.addEventListener("touchstart", handleTouchStart);
+    window.addEventListener("touchend", handleTouchEnd);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchend", handleTouchEnd);
+    };
+  }, [handlePreviousPage, handleNextPage, handleTouchStart, handleTouchEnd]);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        syncReadProgress(currentPageRef.current);
+      }
+    };
+  }, [syncReadProgress]);
 
   return {
     currentPage,
-    setCurrentPage,
+    navigateToPage,
     isLoading,
     setIsLoading,
     secondPageLoading,
@@ -100,6 +157,6 @@ export const usePageNavigation = ({ book, pages, isDoublePage }: UsePageNavigati
     handlePreviousPage,
     handleNextPage,
     shouldShowDoublePage,
-    syncReadProgress,
+    syncReadProgress: debouncedSyncReadProgress,
   };
 };

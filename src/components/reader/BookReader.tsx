@@ -17,7 +17,7 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
 
   const {
     currentPage,
-    setCurrentPage,
+    navigateToPage,
     isLoading,
     setIsLoading,
     secondPageLoading,
@@ -134,16 +134,6 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
     [currentPage]
   );
 
-  const handlePageChange = useCallback(
-    (page: number) => {
-      setCurrentPage(page);
-      setIsLoading(true);
-      setImageError(false);
-      syncReadProgress(page);
-    },
-    [setCurrentPage, setIsLoading, setImageError, syncReadProgress]
-  );
-
   return (
     <div className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50">
       <div
@@ -207,7 +197,7 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
         <NavigationBar
           currentPage={currentPage}
           pages={pages}
-          onPageChange={handlePageChange}
+          onPageChange={navigateToPage}
           showControls={showControls}
           book={book}
         />
