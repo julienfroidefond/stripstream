@@ -119,6 +119,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   return (
     <aside
+      suppressHydrationWarning
       className={cn(
         "fixed left-0 top-14 z-30 h-[calc(100vh-3.5rem)] w-64 border-r border-border/40",
         "bg-background/80 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60",
