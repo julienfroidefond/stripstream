@@ -101,8 +101,12 @@ export const usePageNavigation = ({
       if (touchStartXRef.current === null) return;
 
       const touchEndX = event.changedTouches[0].clientX;
+      const touchEndY = event.changedTouches[0].clientY;
       const deltaX = touchEndX - touchStartXRef.current;
+      const deltaY = Math.abs(touchEndY - event.touches[0].clientY);
       const minSwipeDistance = 50;
+
+      if (deltaY > Math.abs(deltaX)) return;
 
       if (Math.abs(deltaX) > minSwipeDistance) {
         if (deltaX > 0) {

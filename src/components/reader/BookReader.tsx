@@ -150,7 +150,7 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
   );
 
   return (
-    <div className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50">
+    <div className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50 overflow-hidden touch-none">
       <div
         className="relative h-full flex flex-col items-center justify-center"
         onClick={() => setShowControls(!showControls)}
