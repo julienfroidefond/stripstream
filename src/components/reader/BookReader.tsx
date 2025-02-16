@@ -142,23 +142,11 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
 
   // Effet pour gérer le fullscreen
   useEffect(() => {
-    const enterFullscreen = async () => {
-      try {
-        if (readerRef.current && !isFullscreen) {
-          await readerRef.current.requestFullscreen();
-          setIsFullscreen(true);
-        }
-      } catch (error) {
-        console.error("Erreur lors du passage en plein écran:", error);
-      }
-    };
-
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
     };
 
     document.addEventListener("fullscreenchange", handleFullscreenChange);
-    enterFullscreen();
 
     return () => {
       document.removeEventListener("fullscreenchange", handleFullscreenChange);

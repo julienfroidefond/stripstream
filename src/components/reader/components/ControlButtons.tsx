@@ -25,10 +25,10 @@ export const ControlButtons = ({
 }: ControlButtonsProps) => {
   return (
     <>
-      {/* Bouton mode double page */}
+      {/* Boutons de contrôle */}
       <div
         className={cn(
-          "absolute top-4 left-4 z-30 flex items-center gap-2 transition-all duration-300",
+          "absolute top-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 transition-all duration-300",
           showControls ? "opacity-100" : "opacity-0 pointer-events-none"
         )}
       >

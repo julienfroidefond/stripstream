@@ -20,6 +20,7 @@ export const usePageNavigation = ({
   const [imageError, setImageError] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const touchStartXRef = useRef<number | null>(null);
+  const touchStartYRef = useRef<number | null>(null);
   const currentPageRef = useRef(currentPage);
 
   useEffect(() => {
@@ -94,16 +95,17 @@ export const usePageNavigation = ({
 
   const handleTouchStart = useCallback((event: TouchEvent) => {
     touchStartXRef.current = event.touches[0].clientX;
+    touchStartYRef.current = event.touches[0].clientY;
   }, []);
 
   const handleTouchEnd = useCallback(
     (event: TouchEvent) => {
-      if (touchStartXRef.current === null) return;
+      if (touchStartXRef.current === null || touchStartYRef.current === null) return;
 
       const touchEndX = event.changedTouches[0].clientX;
       const touchEndY = event.changedTouches[0].clientY;
       const deltaX = touchEndX - touchStartXRef.current;
-      const deltaY = Math.abs(touchEndY - event.touches[0].clientY);
+      const deltaY = Math.abs(touchEndY - touchStartYRef.current);
       const minSwipeDistance = 50;
 
       if (deltaY > Math.abs(deltaX)) return;
@@ -117,6 +119,7 @@ export const usePageNavigation = ({
       }
 
       touchStartXRef.current = null;
+      touchStartYRef.current = null;
     },
     [handlePreviousPage, handleNextPage]
   );
