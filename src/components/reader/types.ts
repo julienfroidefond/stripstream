@@ -38,6 +38,9 @@ export interface ControlButtonsProps {
   onToggleControls: () => void;
   onPreviousPage: () => void;
   onNextPage: () => void;
+  onClose?: () => void;
   currentPage: number;
   totalPages: number;
+  isDoublePage: boolean;
+  onToggleDoublePage: () => void;
 }
