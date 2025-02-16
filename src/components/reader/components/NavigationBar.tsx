@@ -40,6 +40,9 @@ export const NavigationBar = ({
           <div
             id="thumbnails-container"
             className="h-full overflow-x-auto flex items-center gap-2 px-4 scroll-smooth snap-x snap-mandatory"
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}
           >
             <div className="w-[calc(50vw-18rem)] flex-shrink-0" />
             {pages.map((_, index) => {
