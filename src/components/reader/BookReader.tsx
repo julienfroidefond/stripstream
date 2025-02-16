@@ -20,6 +20,7 @@ interface PageCache {
     blob: Blob;
     url: string;
     timestamp: number;
+    loading?: Promise<void>;
   };
 }
 
@@ -151,46 +152,118 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
   // Fonction pour précharger une page
   const preloadPage = useCallback(
     async (pageNumber: number) => {
-      if (pageNumber > pages.length || pageNumber < 1 || pageCache.current[pageNumber]) return;
+      if (pageNumber > pages.length || pageNumber < 1) return;
+
+      // Si la page est déjà en cache, on ne fait rien
+      if (pageCache.current[pageNumber]?.url) return;
+
+      // Si la page est en cours de chargement, on attend
+      if (pageCache.current[pageNumber]?.loading) {
+        await pageCache.current[pageNumber].loading;
+        return;
+      }
+
+      // On crée une promesse pour le chargement
+      let resolveLoading: () => void;
+      const loadingPromise = new Promise<void>((resolve) => {
+        resolveLoading = resolve;
+      });
+
+      // On initialise l'entrée dans le cache avec la promesse de chargement
+      pageCache.current[pageNumber] = {
+        ...pageCache.current[pageNumber],
+        loading: loadingPromise,
+      };
 
       try {
         const response = await fetch(`/api/komga/books/${book.id}/pages/${pageNumber}`);
         const blob = await response.blob();
         const url = URL.createObjectURL(blob);
 
-        console.log("PRELOAD", pageNumber);
         pageCache.current[pageNumber] = {
           blob,
           url,
           timestamp: Date.now(),
         };
+
+        resolveLoading!();
       } catch (error) {
         console.error(`Erreur lors du préchargement de la page ${pageNumber}:`, error);
+        delete pageCache.current[pageNumber];
+        resolveLoading!();
       }
     },
     [book.id, pages.length]
   );
 
-  // Fonction pour précharger les prochaines pages
-  const preloadNextPages = useCallback(
-    async (currentPageNumber: number) => {
-      // Préchargement des pages suivantes
-      const nextPages = Array.from({ length: 4 }, (_, i) => currentPageNumber + i + 1).filter(
-        (page) => page <= pages.length
+  // Fonction pour obtenir l'URL d'une page
+  const getPageUrl = useCallback(
+    async (pageNumber: number) => {
+      // Si la page est dans le cache, utiliser l'URL du cache
+      if (pageCache.current[pageNumber]?.url) {
+        return pageCache.current[pageNumber].url;
+      }
+
+      // Si la page est en cours de chargement, attendre
+      if (pageCache.current[pageNumber]?.loading) {
+        await pageCache.current[pageNumber].loading;
+        return pageCache.current[pageNumber].url;
+      }
+
+      // Sinon, lancer le préchargement et attendre
+      await preloadPage(pageNumber);
+      return (
+        pageCache.current[pageNumber]?.url ||
+        `/api/komga/images/books/${book.id}/pages/${pageNumber}`
       );
-
-      // Préchargement des pages précédentes
-      const previousPages = Array.from({ length: 2 }, (_, i) => currentPageNumber - i - 1).filter(
-        (page) => page >= 1
-      );
-
-      // Combiner les pages à précharger
-      const pagesToPreload = [...nextPages, ...previousPages];
-
-      // Précharger toutes les pages en parallèle
-      await Promise.all(pagesToPreload.map(preloadPage));
     },
-    [pages.length, preloadPage]
+    [book.id, preloadPage]
+  );
+
+  // État pour stocker les URLs des images
+  const [currentPageUrl, setCurrentPageUrl] = useState<string>("");
+  const [nextPageUrl, setNextPageUrl] = useState<string>("");
+
+  // Effet pour charger les URLs des images
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadPageUrls = async () => {
+      try {
+        const url = await getPageUrl(currentPage);
+        if (isMounted) {
+          setCurrentPageUrl(url);
+          setIsLoading(false);
+        }
+
+        if (isDoublePage && shouldShowDoublePage(currentPage)) {
+          const nextUrl = await getPageUrl(currentPage + 1);
+          if (isMounted) {
+            setNextPageUrl(nextUrl);
+            setSecondPageLoading(false);
+          }
+        }
+      } catch (error) {
+        console.error("Erreur lors du chargement des URLs:", error);
+        setImageError(true);
+      }
+    };
+
+    setIsLoading(true);
+    setSecondPageLoading(true);
+    loadPageUrls();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentPage, isDoublePage, shouldShowDoublePage, getPageUrl]);
+
+  // Fonction pour obtenir l'URL d'une miniature
+  const getThumbnailUrl = useCallback(
+    (pageNumber: number) => {
+      return `/api/komga/images/books/${book.id}/pages/${pageNumber}/thumbnail`;
+    },
+    [book.id]
   );
 
   // Nettoyer le cache des pages trop anciennes
@@ -211,53 +284,43 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
     [pages.length]
   );
 
-  // Fonction pour obtenir l'URL d'une page
-  const getPageUrl = useCallback(
-    (pageNumber: number) => {
-      // Si la page est dans le cache, utiliser l'URL du cache
-      if (pageCache.current[pageNumber]) {
-        return pageCache.current[pageNumber].url;
-      }
-      // Sinon, retourner l'URL de l'API et lancer le préchargement en arrière-plan
-      preloadPage(pageNumber).catch(console.error);
-      return `/api/komga/images/books/${book.id}/pages/${pageNumber}`;
-    },
-    [book.id, preloadPage]
-  );
-
-  // Fonction pour obtenir l'URL d'une miniature
-  const getThumbnailUrl = useCallback(
-    (pageNumber: number) => {
-      return `/api/komga/images/books/${book.id}/pages/${pageNumber}/thumbnail`;
-    },
-    [book.id]
-  );
-
   // Effet pour précharger la page courante et les pages adjacentes
   useEffect(() => {
     let isMounted = true;
 
     const preloadCurrentPages = async () => {
-      // Précharger la page courante si elle n'est pas dans le cache
-      if (!pageCache.current[currentPage]) {
-        await preloadPage(currentPage);
-      }
+      if (!isMounted) return;
+
+      // Précharger la page courante
+      await preloadPage(currentPage);
 
       if (!isMounted) return;
 
-      // En mode double page, précharger aussi la page suivante si nécessaire
-      if (
-        isDoublePage &&
-        shouldShowDoublePage(currentPage) &&
-        !pageCache.current[currentPage + 1]
-      ) {
+      // En mode double page, précharger la page suivante si nécessaire
+      if (isDoublePage && shouldShowDoublePage(currentPage)) {
         await preloadPage(currentPage + 1);
       }
 
       if (!isMounted) return;
 
-      // Lancer le préchargement des pages suivantes et précédentes en arrière-plan
-      preloadNextPages(currentPage).catch(console.error);
+      // Précharger les pages suivantes et précédentes
+      const pagesToPreload = [];
+
+      // Pages suivantes (max 4)
+      for (let i = 1; i <= 4 && currentPage + i <= pages.length; i++) {
+        pagesToPreload.push(currentPage + i);
+      }
+
+      // Pages précédentes (max 2)
+      for (let i = 1; i <= 2 && currentPage - i >= 1; i++) {
+        pagesToPreload.push(currentPage - i);
+      }
+
+      // Précharger en séquence pour éviter de surcharger
+      for (const page of pagesToPreload) {
+        if (!isMounted) break;
+        await preloadPage(page);
+      }
     };
 
     preloadCurrentPages();
@@ -266,15 +329,7 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
     return () => {
       isMounted = false;
     };
-  }, [
-    currentPage,
-    isDoublePage,
-    shouldShowDoublePage,
-    preloadPage,
-    preloadNextPages,
-    cleanCache,
-    pages.length,
-  ]);
+  }, [currentPage, isDoublePage, shouldShowDoublePage, preloadPage, cleanCache, pages.length]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -486,36 +541,40 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
               {/* Page courante */}
               <div className="relative max-h-[calc(100vh-2rem)] flex items-center justify-center">
                 <ImageLoader isLoading={isLoading} />
-                <img
-                  src={getPageUrl(currentPage)}
-                  alt={`Page ${currentPage}`}
-                  className={cn(
-                    "max-h-[calc(100vh-2rem)] w-auto object-contain transition-opacity duration-300",
-                    isLoading ? "opacity-0" : "opacity-100"
-                  )}
-                  onLoad={() => {
-                    setIsLoading(false);
-                    handleThumbnailLoad(currentPage);
-                  }}
-                />
+                {currentPageUrl && (
+                  <img
+                    src={currentPageUrl}
+                    alt={`Page ${currentPage}`}
+                    className={cn(
+                      "max-h-[calc(100vh-2rem)] w-auto object-contain transition-opacity duration-300",
+                      isLoading ? "opacity-0" : "opacity-100"
+                    )}
+                    onLoad={() => {
+                      setIsLoading(false);
+                      handleThumbnailLoad(currentPage);
+                    }}
+                  />
+                )}
               </div>
 
               {/* Deuxième page en mode double page */}
               {isDoublePage && shouldShowDoublePage(currentPage) && (
                 <div className="relative max-h-[calc(100vh-2rem)] flex items-center justify-center">
                   <ImageLoader isLoading={secondPageLoading} />
-                  <img
-                    src={getPageUrl(currentPage + 1)}
-                    alt={`Page ${currentPage + 1}`}
-                    className={cn(
-                      "max-h-[calc(100vh-2rem)] w-auto object-contain transition-opacity duration-300",
-                      secondPageLoading ? "opacity-0" : "opacity-100"
-                    )}
-                    onLoad={() => {
-                      setSecondPageLoading(false);
-                      handleThumbnailLoad(currentPage + 1);
-                    }}
-                  />
+                  {nextPageUrl && (
+                    <img
+                      src={nextPageUrl}
+                      alt={`Page ${currentPage + 1}`}
+                      className={cn(
+                        "max-h-[calc(100vh-2rem)] w-auto object-contain transition-opacity duration-300",
+                        secondPageLoading ? "opacity-0" : "opacity-100"
+                      )}
+                      onLoad={() => {
+                        setSecondPageLoading(false);
+                        handleThumbnailLoad(currentPage + 1);
+                      }}
+                    />
+                  )}
                 </div>
               )}
             </div>
