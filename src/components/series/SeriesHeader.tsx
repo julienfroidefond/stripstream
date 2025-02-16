@@ -52,13 +52,10 @@ export const SeriesHeader = ({ series, onSeriesUpdate }: SeriesHeaderProps) => {
   const { toast } = useToast();
   const [languageDisplay, setLanguageDisplay] = useState<string>(series.metadata.language);
   const [imageError, setImageError] = useState(false);
-  const [readingStatus, setReadingStatus] = useState<ReadingStatusInfo>(
-    getReadingStatusInfo(series)
-  );
+  const [isLoading, setIsLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [imageLoading, setImageLoading] = useState(true);
+  const statusInfo = getReadingStatusInfo(series);
 
   // Vérifier si la série est dans les favoris au chargement
   useEffect(() => {
@@ -77,10 +74,6 @@ export const SeriesHeader = ({ series, onSeriesUpdate }: SeriesHeaderProps) => {
     checkFavorite();
     setMounted(true);
   }, [series.id]);
-
-  useEffect(() => {
-    setReadingStatus(getReadingStatusInfo(series));
-  }, [series]);
 
   useEffect(() => {
     try {
@@ -133,138 +126,90 @@ export const SeriesHeader = ({ series, onSeriesUpdate }: SeriesHeaderProps) => {
     }
   };
 
-  const StatusIcon = readingStatus.icon;
-
   return (
-    <div className="relative w-full min-h-[300px]">
-      {/* Fond flou */}
-      <div className="absolute inset-0 overflow-hidden">
-        {!imageError && (
-          <div className="relative w-full h-full">
-            <Image
-              src={`/api/komga/images/series/${series.id}/thumbnail`}
-              alt=""
-              fill
-              className={cn(
-                "object-cover blur-2xl scale-110 transition-opacity duration-300",
-                imageLoading ? "opacity-0" : "opacity-10"
-              )}
-              loading="lazy"
-              quality={100}
-              onLoad={() => setImageLoading(false)}
-            />
-          </div>
-        )}
-      </div>
+    <div className="relative h-[300px] overflow-hidden">
+      {/* Image de fond */}
+      {!imageError ? (
+        <>
+          <ImageLoader isLoading={isLoading} />
+          <Image
+            src={`/api/komga/images/series/${series.id}/first-page`}
+            alt={`Couverture de ${series.metadata.title}`}
+            fill
+            className={cn(
+              "object-cover blur-sm scale-105 brightness-50 transition-opacity duration-300",
+              isLoading ? "opacity-0" : "opacity-100"
+            )}
+            sizes="100vw"
+            onError={() => setImageError(true)}
+            onLoad={() => setIsLoading(false)}
+            quality={60}
+            priority
+            unoptimized
+          />
+        </>
+      ) : (
+        <div className="absolute inset-0 bg-muted flex items-center justify-center">
+          <ImageOff className="w-12 h-12 text-muted-foreground" />
+        </div>
+      )}
 
       {/* Contenu */}
-      <div className="relative container mx-auto px-4 py-8">
-        <div className="flex flex-col md:flex-row gap-8 items-center md:items-start">
-          {/* Image de couverture */}
-          <div className="shrink-0">
+      <div className="relative h-full container mx-auto px-4 py-8 flex items-end">
+        <div className="flex gap-6">
+          {/* Image principale */}
+          <div className="relative w-[180px] aspect-[2/3] rounded-lg overflow-hidden shadow-lg bg-muted">
             {!imageError ? (
-              <div className="relative">
-                <ImageLoader isLoading={imageLoading} />
+              <>
+                <ImageLoader isLoading={isLoading} />
                 <Image
-                  src={`/api/komga/images/series/${series.id}/thumbnail`}
-                  alt={series.name}
-                  width={200}
-                  height={300}
+                  src={`/api/komga/images/series/${series.id}/first-page`}
+                  alt={`Couverture de ${series.metadata.title}`}
+                  fill
                   className={cn(
-                    "rounded-lg shadow-xl hover:shadow-2xl transition-all duration-300",
-                    imageLoading ? "opacity-0" : "opacity-100"
+                    "object-cover transition-opacity duration-300",
+                    isLoading ? "opacity-0" : "opacity-100"
                   )}
+                  sizes="180px"
                   onError={() => setImageError(true)}
-                  onLoad={() => setImageLoading(false)}
-                  loading="lazy"
-                  quality={100}
+                  onLoad={() => setIsLoading(false)}
+                  quality={90}
+                  priority
+                  unoptimized
                 />
-              </div>
+              </>
             ) : (
-              <div className="w-[200px] h-[300px] bg-muted rounded-lg flex items-center justify-center">
-                <ImageOff className="w-12 h-12" />
+              <div className="w-full h-full flex items-center justify-center">
+                <ImageOff className="w-12 h-12 text-muted-foreground" />
               </div>
             )}
           </div>
 
           {/* Informations */}
-          <div className="flex-1 text-center md:text-left space-y-4">
-            <div className="flex flex-col md:flex-row items-center gap-4">
-              <h1 className="text-4xl font-bold">{series.name}</h1>
-              {mounted && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleToggleFavorite}
-                  disabled={isLoading}
-                  className={cn(
-                    "hover:bg-primary/20",
-                    isFavorite && "bg-yellow-500/10 hover:bg-yellow-500/20"
-                  )}
-                  aria-label={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
-                >
-                  {isFavorite ? (
-                    <Star className="w-6 h-6 text-yellow-400 fill-yellow-400" />
-                  ) : (
-                    <StarOff className="w-6 h-6" />
-                  )}
-                </Button>
-              )}
-            </div>
-
-            {/* Métadonnées */}
-            <div className="flex flex-wrap gap-4 items-center justify-center md:justify-start text-sm">
-              {series.metadata.publisher && (
-                <span className="text-muted-foreground">{series.metadata.publisher}</span>
-              )}
-              {languageDisplay && (
-                <span className="text-muted-foreground capitalize">{languageDisplay}</span>
-              )}
-              {series.metadata.status && (
-                <span className="text-muted-foreground capitalize">
-                  {series.metadata.status.toLowerCase()}
-                </span>
-              )}
-            </div>
-
-            {/* Stats */}
-            <div className="flex flex-wrap gap-4 items-center justify-center md:justify-start">
-              <div
-                className={cn(
-                  "px-3 py-1.5 rounded-full flex items-center gap-2",
-                  readingStatus.className
-                )}
-              >
-                <StatusIcon className="w-4 h-4" />
-                <span className="text-sm font-medium">{readingStatus.label}</span>
-              </div>
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <span>{series.booksCount} tomes</span>
-                <span>{series.booksReadCount} lus</span>
-                <span>{series.booksInProgressCount} en cours</span>
-              </div>
-            </div>
-
-            {/* Description */}
+          <div className="flex-1 text-white space-y-2">
+            <h1 className="text-3xl font-bold">{series.metadata.title}</h1>
             {series.metadata.summary && (
-              <p className="text-muted-foreground line-clamp-3 max-w-2xl">
-                {series.metadata.summary}
-              </p>
+              <p className="text-white/80 line-clamp-3">{series.metadata.summary}</p>
             )}
-
-            {/* Tags et genres */}
-            {(series.metadata.tags?.length > 0 || series.metadata.genres?.length > 0) && (
-              <div className="flex flex-wrap gap-2">
-                {[...(series.metadata.genres || []), ...(series.metadata.tags || [])].map((tag) => (
-                  <span
-                    key={tag}
-                    className="px-2 py-1 text-xs rounded-full bg-primary/10 text-primary-foreground"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            )}
+            <div className="flex items-center gap-4 mt-4">
+              <span
+                className={`px-2 py-0.5 rounded-full text-sm flex items-center gap-1 ${statusInfo.className}`}
+              >
+                <statusInfo.icon className="w-4 h-4" />
+                {statusInfo.label}
+              </span>
+              <span className="text-sm text-white/80">
+                {series.booksCount} tome{series.booksCount > 1 ? "s" : ""}
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleToggleFavorite}
+                className="text-white hover:text-white"
+              >
+                {isFavorite ? <Star className="w-5 h-5" /> : <StarOff className="w-5 h-5" />}
+              </Button>
+            </div>
           </div>
         </div>
       </div>

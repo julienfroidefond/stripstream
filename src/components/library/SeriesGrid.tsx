@@ -84,7 +84,7 @@ function SeriesCard({ series, onClick }: SeriesCardProps) {
         <>
           <ImageLoader isLoading={isLoading} />
           <Image
-            src={`/api/komga/images/series/${series.id}/thumbnail`}
+            src={`/api/komga/images/series/${series.id}/first-page`}
             alt={`Couverture de ${series.metadata.title}`}
             fill
             className={cn(
@@ -95,7 +95,10 @@ function SeriesCard({ series, onClick }: SeriesCardProps) {
             onError={() => setImageError(true)}
             onLoad={() => setIsLoading(false)}
             loading="lazy"
-            quality={50}
+            quality={80}
+            unoptimized
+            priority={false}
+            fetchPriority="low"
           />
         </>
       ) : (

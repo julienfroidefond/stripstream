@@ -11,7 +11,6 @@ import { cn } from "@/lib/utils";
 interface BookGridProps {
   books: KomgaBook[];
   onBookClick: (book: KomgaBook) => void;
-  getBookThumbnailUrl: (bookId: string) => string;
 }
 
 // Fonction utilitaire pour obtenir les informations de statut de lecture
@@ -44,7 +43,7 @@ const getReadingStatusInfo = (book: KomgaBook) => {
   };
 };
 
-export function BookGrid({ books, onBookClick, getBookThumbnailUrl }: BookGridProps) {
+export function BookGrid({ books, onBookClick }: BookGridProps) {
   if (!books.length) {
     return (
       <div className="text-center p-8">
@@ -63,11 +62,7 @@ export function BookGrid({ books, onBookClick, getBookThumbnailUrl }: BookGridPr
             onClick={() => onBookClick(book)}
             className="group relative aspect-[2/3] overflow-hidden rounded-lg bg-muted hover:opacity-100 transition-all"
           >
-            <BookImage
-              book={book}
-              getBookThumbnailUrl={getBookThumbnailUrl}
-              isCompleted={book.readProgress?.completed}
-            />
+            <BookImage book={book} isCompleted={book.readProgress?.completed} />
             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-4 space-y-2 translate-y-full group-hover:translate-y-0 transition-transform duration-200">
               <p className="text-sm font-medium text-white text-left line-clamp-2">
                 {book.metadata.title || `Tome ${book.metadata.number}`}
@@ -87,11 +82,10 @@ export function BookGrid({ books, onBookClick, getBookThumbnailUrl }: BookGridPr
 
 interface BookImageProps {
   book: KomgaBook;
-  getBookThumbnailUrl: (bookId: string) => string;
   isCompleted?: boolean;
 }
 
-function BookImage({ book, getBookThumbnailUrl, isCompleted }: BookImageProps) {
+function BookImage({ book, isCompleted }: BookImageProps) {
   const [imageError, setImageError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -104,23 +98,27 @@ function BookImage({ book, getBookThumbnailUrl, isCompleted }: BookImageProps) {
   }
 
   return (
-    <div className={cn("relative h-full w-full", isCompleted && "opacity-50")}>
+    <>
       <ImageLoader isLoading={isLoading} />
       <Image
-        src={getBookThumbnailUrl(book.id)}
-        alt={book.metadata.title}
+        src={`/api/komga/images/books/${book.id}/pages/1`}
+        alt={`Couverture de ${book.metadata.title || `Tome ${book.metadata.number}`}`}
         fill
         className={cn(
           "object-cover transition-opacity duration-300",
-          isLoading ? "opacity-0" : "opacity-100"
+          isLoading ? "opacity-0" : "opacity-100",
+          isCompleted && "opacity-50"
         )}
-        sizes="(min-width: 1024px) 16.66vw, (min-width: 768px) 25vw, (min-width: 640px) 33.33vw, 50vw"
+        sizes="(max-width: 640px) 33vw, (max-width: 1024px) 20vw, 20vw"
         onError={() => setImageError(true)}
         onLoad={() => setIsLoading(false)}
         loading="lazy"
-        quality={100}
+        quality={80}
+        unoptimized
+        priority={false}
+        fetchPriority="low"
       />
-    </div>
+    </>
   );
 }
 
