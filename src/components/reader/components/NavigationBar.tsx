@@ -22,11 +22,21 @@ export const NavigationBar = ({
     currentPage,
   });
 
+  // Scroll à l'ouverture des contrôles et au changement de page
   useEffect(() => {
     if (showControls) {
-      scrollToActiveThumbnail();
+      requestAnimationFrame(() => {
+        const thumbnail = document.getElementById(`thumbnail-${currentPage}`);
+        if (thumbnail) {
+          thumbnail.scrollIntoView({
+            behavior: showControls ? "instant" : "smooth",
+            block: "nearest",
+            inline: "center",
+          });
+        }
+      });
     }
-  }, [showControls, currentPage, scrollToActiveThumbnail]);
+  }, [showControls, currentPage]);
 
   return (
     <div
