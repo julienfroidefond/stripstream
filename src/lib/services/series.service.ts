@@ -77,14 +77,20 @@ export class SeriesService extends BaseApiService {
     }
   }
 
-  static async getFirstPage(seriesId: string): Promise<Response> {
+  static async getCover(seriesId: string): Promise<Response> {
     try {
       // Récupérer les préférences de l'utilisateur
       const preferences = await PreferencesService.getPreferences();
 
-      // Si l'utilisateur préfère les vignettes, utiliser getThumbnail
+      // Si l'utilisateur préfère les vignettes, utiliser la miniature
       if (preferences.showThumbnails) {
-        return this.getThumbnail(seriesId);
+        const response = await ImageService.getImage(`series/${seriesId}/thumbnail`);
+        return new Response(response.buffer, {
+          headers: {
+            "Content-Type": response.contentType || "image/jpeg",
+            "Cache-Control": "public, max-age=31536000, immutable",
+          },
+        });
       }
 
       // Sinon, récupérer la première page
@@ -92,21 +98,11 @@ export class SeriesService extends BaseApiService {
       const response = await BookService.getPage(firstBookId, 1);
       return response;
     } catch (error) {
-      throw this.handleError(error, "Impossible de récupérer la première page");
+      throw this.handleError(error, "Impossible de récupérer la couverture");
     }
   }
 
-  static async getThumbnail(seriesId: string): Promise<Response> {
-    try {
-      const response = await ImageService.getImage(`series/${seriesId}/thumbnail`);
-      return new Response(response.buffer, {
-        headers: {
-          "Content-Type": response.contentType || "image/jpeg",
-          "Cache-Control": "public, max-age=31536000, immutable",
-        },
-      });
-    } catch (error) {
-      throw this.handleError(error, "Impossible de récupérer la miniature de la série");
-    }
+  static getCoverUrl(seriesId: string): string {
+    return `/api/komga/images/series/${seriesId}/thumbnail`;
   }
 }

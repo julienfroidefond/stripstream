@@ -1,12 +1,10 @@
 import { KomgaLibrary } from "@/types/komga";
-import { Book, ImageOff } from "lucide-react";
-import Image from "next/image";
-import { useState } from "react";
+import { Book } from "lucide-react";
+import { Cover } from "@/components/ui/cover";
 
 interface LibraryGridProps {
   libraries: KomgaLibrary[];
   onLibraryClick?: (library: KomgaLibrary) => void;
-  getLibraryThumbnailUrl: (libraryId: string) => string;
 }
 
 // Fonction utilitaire pour formater la date de manière sécurisée
@@ -27,11 +25,7 @@ const formatDate = (dateString: string): string => {
   }
 };
 
-export function LibraryGrid({
-  libraries,
-  onLibraryClick,
-  getLibraryThumbnailUrl,
-}: LibraryGridProps) {
+export function LibraryGrid({ libraries, onLibraryClick }: LibraryGridProps) {
   if (!libraries.length) {
     return (
       <div className="text-center p-8">
@@ -43,12 +37,7 @@ export function LibraryGrid({
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {libraries.map((library) => (
-        <LibraryCard
-          key={library.id}
-          library={library}
-          onClick={() => onLibraryClick?.(library)}
-          getLibraryThumbnailUrl={getLibraryThumbnailUrl}
-        />
+        <LibraryCard key={library.id} library={library} onClick={() => onLibraryClick?.(library)} />
       ))}
     </div>
   );
@@ -57,12 +46,9 @@ export function LibraryGrid({
 interface LibraryCardProps {
   library: KomgaLibrary;
   onClick?: () => void;
-  getLibraryThumbnailUrl: (libraryId: string) => string;
 }
 
-function LibraryCard({ library, onClick, getLibraryThumbnailUrl }: LibraryCardProps) {
-  const [imageError, setImageError] = useState(false);
-
+function LibraryCard({ library, onClick }: LibraryCardProps) {
   return (
     <button
       onClick={onClick}
@@ -70,20 +56,15 @@ function LibraryCard({ library, onClick, getLibraryThumbnailUrl }: LibraryCardPr
     >
       {/* Image de couverture */}
       <div className="absolute inset-0 bg-muted">
-        {!imageError ? (
-          <Image
-            src={getLibraryThumbnailUrl(library.id)}
+        <div className="w-full h-full opacity-20 group-hover:opacity-30 transition-opacity">
+          <Cover
+            type="series"
+            id={library.id}
             alt={`Couverture de ${library.name}`}
-            fill
-            className="object-cover opacity-20 group-hover:opacity-30 transition-opacity"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            onError={() => setImageError(true)}
+            quality={25}
           />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center opacity-20">
-            <ImageOff className="w-12 h-12" />
-          </div>
-        )}
+        </div>
       </div>
 
       {/* Contenu */}

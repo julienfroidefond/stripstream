@@ -5,10 +5,10 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest, { params }: { params: { seriesId: string } }) {
   try {
-    const response = await SeriesService.getFirstPage(params.seriesId);
+    const response = await SeriesService.getCover(params.seriesId);
     return response;
   } catch (error) {
-    console.error("Erreur lors de la récupération de la première page de la série:", error);
-    return new NextResponse("Erreur lors de la récupération de l'image", { status: 500 });
+    console.error("Erreur lors de la récupération de la couverture de la série:", error);
+    return new NextResponse("Erreur lors de la récupération de la couverture", { status: 500 });
   }
 }

@@ -1,11 +1,9 @@
 "use client";
 
 import { KomgaBook, KomgaSeries } from "@/types/komga";
-import { ChevronLeft, ChevronRight, ImageOff } from "lucide-react";
-import Image from "next/image";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRef, useState } from "react";
-import { cn } from "@/lib/utils";
-import { ImageLoader } from "@/components/ui/image-loader";
+import { Cover } from "@/components/ui/cover";
 
 interface MediaRowProps {
   title: string;
@@ -82,9 +80,6 @@ interface MediaCardProps {
 }
 
 function MediaCard({ item, onClick }: MediaCardProps) {
-  const [imageError, setImageError] = useState(false);
-  const [imageLoading, setImageLoading] = useState(true);
-
   // Déterminer si c'est une série ou un livre
   const isSeries = "booksCount" in item;
   const title = isSeries
@@ -107,32 +102,13 @@ function MediaCard({ item, onClick }: MediaCardProps) {
     >
       {/* Image de couverture */}
       <div className="relative aspect-[2/3] bg-muted">
-        {!imageError ? (
-          <>
-            <ImageLoader isLoading={imageLoading} />
-            <Image
-              src={`/api/komga/images/${isSeries ? "series" : "books"}/${item.id}/${
-                isSeries ? "first-page" : "pages/1"
-              }`}
-              alt={`Couverture de ${title}`}
-              fill
-              className={cn(
-                "object-cover transition-opacity duration-300",
-                imageLoading ? "opacity-0" : "opacity-100"
-              )}
-              sizes="200px"
-              loading="lazy"
-              quality={100}
-              onError={() => setImageError(true)}
-              onLoad={() => setImageLoading(false)}
-            />
-          </>
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <ImageOff className="w-12 h-12" />
-          </div>
-        )}
-
+        <Cover
+          type={isSeries ? "series" : "book"}
+          id={item.id}
+          alt={`Couverture de ${title}`}
+          sizes="200px"
+          quality={100}
+        />
         {/* Overlay avec les informations au survol */}
         <div className="absolute inset-0 bg-black/60 opacity-0 hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3">
           <h3 className="font-medium text-sm text-white line-clamp-2">{title}</h3>

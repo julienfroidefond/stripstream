@@ -1,70 +1,30 @@
 "use client";
 
-import Image from "next/image";
-import { ImageOff, Book, BookOpen, BookMarked, Star, StarOff } from "lucide-react";
+import { Book, BookOpen, BookMarked, Star, StarOff } from "lucide-react";
 import { KomgaSeries } from "@/types/komga";
 import { useState, useEffect } from "react";
 import { Button } from "../ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
-import { ImageLoader } from "@/components/ui/image-loader";
+import { Cover } from "@/components/ui/cover";
 
 interface SeriesHeaderProps {
   series: KomgaSeries;
   onSeriesUpdate?: (series: KomgaSeries) => void;
 }
 
-interface ReadingStatusInfo {
-  label: string;
-  className: string;
-  icon: React.ElementType;
-}
-
-// Fonction utilitaire pour obtenir les informations de lecture d'une série
-const getReadingStatusInfo = (series: KomgaSeries): ReadingStatusInfo => {
-  const { booksCount, booksReadCount, booksUnreadCount } = series;
-  const booksInProgressCount = booksCount - (booksReadCount + booksUnreadCount);
-
-  if (booksReadCount === booksCount) {
-    return {
-      label: "Lu",
-      className: "bg-green-500/10 text-green-500",
-      icon: BookOpen,
-    };
-  }
-
-  if (booksInProgressCount > 0 || (booksReadCount > 0 && booksReadCount < booksCount)) {
-    return {
-      label: `${booksReadCount}/${booksCount}`,
-      className: "bg-blue-500/10 text-blue-500",
-      icon: BookMarked,
-    };
-  }
-
-  return {
-    label: "Non lu",
-    className: "bg-yellow-500/10 text-yellow-500",
-    icon: Book,
-  };
-};
-
 export const SeriesHeader = ({ series, onSeriesUpdate }: SeriesHeaderProps) => {
   const { toast } = useToast();
-  const [languageDisplay, setLanguageDisplay] = useState<string>(series.metadata.language);
-  const [imageError, setImageError] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  const statusInfo = getReadingStatusInfo(series);
 
-  // Vérifier si la série est dans les favoris au chargement
   useEffect(() => {
+    // Vérifier si la série est dans les favoris
     const checkFavorite = async () => {
       try {
-        const response = await fetch("/api/komga/favorites");
+        const response = await fetch(`/api/komga/series/${series.id}/favorite`);
         if (response.ok) {
-          const favoriteIds = await response.json();
-          setIsFavorite(favoriteIds.includes(series.id));
+          const data = await response.json();
+          setIsFavorite(data.favorite);
         }
       } catch (error) {
         console.error("Erreur lors de la vérification des favoris:", error);
@@ -72,117 +32,94 @@ export const SeriesHeader = ({ series, onSeriesUpdate }: SeriesHeaderProps) => {
     };
 
     checkFavorite();
-    setMounted(true);
   }, [series.id]);
-
-  useEffect(() => {
-    try {
-      if (series.metadata.language) {
-        const displayNames = new Intl.DisplayNames([navigator.language || "fr-FR"], {
-          type: "language",
-        });
-        setLanguageDisplay(displayNames.of(series.metadata.language) || series.metadata.language);
-      }
-    } catch (error) {
-      console.error("Erreur lors de la traduction de la langue:", error);
-      setLanguageDisplay(series.metadata.language);
-    }
-  }, [series.metadata.language]);
 
   const handleToggleFavorite = async () => {
     try {
-      setIsLoading(true);
-      const response = await fetch("/api/komga/favorites", {
-        method: isFavorite ? "DELETE" : "POST",
+      const response = await fetch(`/api/komga/series/${series.id}/favorite`, {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ seriesId: series.id }),
+        body: JSON.stringify({ favorite: !isFavorite }),
       });
 
-      if (!response.ok) {
+      if (response.ok) {
+        setIsFavorite(!isFavorite);
+        toast({
+          title: !isFavorite ? "Ajouté aux favoris" : "Retiré des favoris",
+          description: series.metadata.title,
+        });
+      } else {
         throw new Error("Erreur lors de la modification des favoris");
       }
-
-      setIsFavorite(!isFavorite);
-      if (onSeriesUpdate) {
-        onSeriesUpdate({ ...series, favorite: !isFavorite });
-      }
-
-      // Dispatch l'événement pour notifier les autres composants
-      window.dispatchEvent(new Event("favoritesChanged"));
-
-      toast({
-        title: isFavorite ? "Retiré des favoris" : "Ajouté aux favoris",
-        variant: "default",
-      });
     } catch (error) {
+      console.error("Erreur lors de la modification des favoris:", error);
       toast({
-        title: "Une erreur est survenue",
+        title: "Erreur",
+        description: "Impossible de modifier les favoris",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
+
+  const getReadingStatusInfo = () => {
+    const { booksCount, booksReadCount, booksUnreadCount } = series;
+    const booksInProgressCount = booksCount - (booksReadCount + booksUnreadCount);
+
+    if (booksReadCount === booksCount) {
+      return {
+        label: "Lu",
+        className: "bg-green-500/10 text-green-500",
+        icon: BookMarked,
+      };
+    }
+
+    if (booksInProgressCount > 0 || (booksReadCount > 0 && booksReadCount < booksCount)) {
+      return {
+        label: `${booksReadCount}/${booksCount}`,
+        className: "bg-blue-500/10 text-blue-500",
+        icon: BookOpen,
+      };
+    }
+
+    return {
+      label: "Non lu",
+      className: "bg-yellow-500/10 text-yellow-500",
+      icon: Book,
+    };
+  };
+
+  const statusInfo = getReadingStatusInfo();
 
   return (
     <div className="relative min-h-[300px] md:h-[300px] w-screen -ml-[calc((100vw-100%)/2)] overflow-hidden">
       {/* Image de fond */}
-      {!imageError ? (
-        <>
-          <ImageLoader isLoading={isLoading} />
-          <Image
-            src={`/api/komga/images/series/${series.id}/first-page`}
-            alt={`Couverture de ${series.metadata.title}`}
-            fill
-            className={cn(
-              "object-cover blur-sm scale-105 brightness-50 transition-opacity duration-300",
-              isLoading ? "opacity-0" : "opacity-100"
-            )}
-            sizes="100vw"
-            onError={() => setImageError(true)}
-            onLoad={() => setIsLoading(false)}
-            quality={60}
-            priority
-            unoptimized
-          />
-        </>
-      ) : (
-        <div className="absolute inset-0 bg-muted flex items-center justify-center">
-          <ImageOff className="w-12 h-12 text-muted-foreground" />
-        </div>
-      )}
+      <div className="absolute inset-0">
+        <Cover
+          type="series"
+          id={series.id}
+          alt={`Couverture de ${series.metadata.title}`}
+          className="blur-sm scale-105 brightness-50"
+          sizes="100vw"
+          quality={60}
+          priority
+        />
+      </div>
 
       {/* Contenu */}
       <div className="relative container mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row gap-6 items-center md:items-start w-full">
           {/* Image principale */}
           <div className="relative w-[180px] aspect-[2/3] rounded-lg overflow-hidden shadow-lg bg-muted flex-shrink-0">
-            {!imageError ? (
-              <>
-                <ImageLoader isLoading={isLoading} />
-                <Image
-                  src={`/api/komga/images/series/${series.id}/first-page`}
-                  alt={`Couverture de ${series.metadata.title}`}
-                  fill
-                  className={cn(
-                    "object-cover transition-opacity duration-300",
-                    isLoading ? "opacity-0" : "opacity-100"
-                  )}
-                  sizes="180px"
-                  onError={() => setImageError(true)}
-                  onLoad={() => setIsLoading(false)}
-                  quality={90}
-                  priority
-                  unoptimized
-                />
-              </>
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <ImageOff className="w-12 h-12 text-muted-foreground" />
-              </div>
-            )}
+            <Cover
+              type="series"
+              id={series.id}
+              alt={`Couverture de ${series.metadata.title}`}
+              sizes="180px"
+              quality={90}
+              priority
+            />
           </div>
 
           {/* Informations */}

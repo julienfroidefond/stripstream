@@ -15,15 +15,7 @@ export async function GET(
     }
 
     const response = await BookService.getPageThumbnail(params.bookId, pageNumber);
-    const buffer = await response.arrayBuffer();
-    const headers = new Headers();
-    headers.set("Content-Type", response.headers.get("Content-Type") || "image/jpeg");
-    headers.set("Cache-Control", "public, max-age=31536000"); // Cache for 1 year
-
-    return new NextResponse(buffer, {
-      status: 200,
-      headers,
-    });
+    return response;
   } catch (error) {
     console.error("API Book Page Thumbnail - Erreur:", error);
     return NextResponse.json(

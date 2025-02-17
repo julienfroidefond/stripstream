@@ -67,14 +67,6 @@ export class BookService extends BaseApiService {
 
   static async getPage(bookId: string, pageNumber: number): Promise<Response> {
     try {
-      // Récupérer les préférences de l'utilisateur
-      const preferences = await PreferencesService.getPreferences();
-
-      // Si l'utilisateur préfère les vignettes, utiliser getPageThumbnail
-      if (preferences.showThumbnails) {
-        return this.getPageThumbnail(bookId, pageNumber);
-      }
-
       // Ajuster le numéro de page pour l'API Komga (zero-based)
       const adjustedPageNumber = pageNumber - 1;
       const response = await ImageService.getImage(
@@ -83,6 +75,7 @@ export class BookService extends BaseApiService {
       return new Response(response.buffer, {
         headers: {
           "Content-Type": response.contentType || "image/jpeg",
+          "Cache-Control": "public, max-age=31536000, immutable",
         },
       });
     } catch (error) {
@@ -90,35 +83,26 @@ export class BookService extends BaseApiService {
     }
   }
 
-  static async getPageThumbnail(bookId: string, pageNumber: number): Promise<Response> {
+  static async getCover(bookId: string): Promise<Response> {
     try {
-      // Ajuster le numéro de page pour l'API Komga (zero-based)
-      const adjustedPageNumber = pageNumber;
-      const response = await ImageService.getImage(
-        `books/${bookId}/pages/${adjustedPageNumber}/thumbnail?zero_based=true`
-      );
-      return new Response(response.buffer, {
-        headers: {
-          "Content-Type": response.contentType || "image/jpeg",
-          "Cache-Control": "public, max-age=31536000, immutable",
-        },
-      });
-    } catch (error) {
-      throw this.handleError(error, "Impossible de récupérer la miniature");
-    }
-  }
+      // Récupérer les préférences de l'utilisateur
+      const preferences = await PreferencesService.getPreferences();
 
-  static async getThumbnail(bookId: string): Promise<Response> {
-    try {
-      const response = await ImageService.getImage(`books/${bookId}/thumbnail`);
-      return new Response(response.buffer, {
-        headers: {
-          "Content-Type": response.contentType || "image/jpeg",
-          "Cache-Control": "public, max-age=31536000, immutable",
-        },
-      });
+      // Si l'utilisateur préfère les vignettes, utiliser la miniature
+      if (preferences.showThumbnails) {
+        const response = await ImageService.getImage(`books/${bookId}/thumbnail`);
+        return new Response(response.buffer, {
+          headers: {
+            "Content-Type": response.contentType || "image/jpeg",
+            "Cache-Control": "public, max-age=31536000, immutable",
+          },
+        });
+      }
+
+      // Sinon, récupérer la première page
+      return this.getPage(bookId, 1);
     } catch (error) {
-      throw this.handleError(error, "Impossible de récupérer la miniature du livre");
+      throw this.handleError(error, "Impossible de récupérer la couverture");
     }
   }
 
@@ -130,7 +114,23 @@ export class BookService extends BaseApiService {
     return `/api/komga/images/books/${bookId}/pages/${pageNumber}/thumbnail`;
   }
 
-  static getThumbnailUrl(bookId: string): string {
-    return ImageService.getBookThumbnailUrl(bookId);
+  static async getPageThumbnail(bookId: string, pageNumber: number): Promise<Response> {
+    try {
+      const response = await ImageService.getImage(
+        `books/${bookId}/pages/${pageNumber}/thumbnail?zero_based=true`
+      );
+      return new Response(response.buffer, {
+        headers: {
+          "Content-Type": response.contentType || "image/jpeg",
+          "Cache-Control": "public, max-age=31536000, immutable",
+        },
+      });
+    } catch (error) {
+      throw this.handleError(error, "Impossible de récupérer la miniature de la page");
+    }
+  }
+
+  static getCoverUrl(bookId: string): string {
+    return `/api/komga/images/books/${bookId}/thumbnail`;
   }
 }
