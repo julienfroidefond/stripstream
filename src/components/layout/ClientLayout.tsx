@@ -8,6 +8,7 @@ import { InstallPWA } from "../ui/InstallPWA";
 import { Toaster } from "@/components/ui/toaster";
 import { usePathname, useRouter } from "next/navigation";
 import { authService } from "@/lib/services/auth.service";
+import { PreferencesProvider } from "@/contexts/PreferencesContext";
 
 // Routes qui ne nécessitent pas d'authentification
 const publicRoutes = ["/login", "/register"];
@@ -69,13 +70,15 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <div className="relative min-h-screen">
-        {!isPublicRoute && <Header onToggleSidebar={handleToggleSidebar} />}
-        {!isPublicRoute && <Sidebar isOpen={isSidebarOpen} onClose={handleCloseSidebar} />}
-        <main className={`${!isPublicRoute ? "container pt-4 md:pt-8" : ""}`}>{children}</main>
-        <InstallPWA />
-        <Toaster />
-      </div>
+      <PreferencesProvider>
+        <div className="relative min-h-screen">
+          {!isPublicRoute && <Header onToggleSidebar={handleToggleSidebar} />}
+          {!isPublicRoute && <Sidebar isOpen={isSidebarOpen} onClose={handleCloseSidebar} />}
+          <main className={`${!isPublicRoute ? "container pt-4 md:pt-8" : ""}`}>{children}</main>
+          <InstallPWA />
+          <Toaster />
+        </div>
+      </PreferencesProvider>
     </ThemeProvider>
   );
 }

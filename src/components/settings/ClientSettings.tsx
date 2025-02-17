@@ -5,6 +5,9 @@ import { Loader2, Network, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { AuthError } from "@/types/auth";
 import { useToast } from "@/components/ui/use-toast";
+import { usePreferences } from "@/contexts/PreferencesContext";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 interface ErrorMessage {
   message: string;
@@ -54,6 +57,7 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
       imagesTTL: 1440,
     }
   );
+  const { preferences, updatePreferences } = usePreferences();
 
   const handleClearCache = async () => {
     setIsCacheClearing(true);
@@ -241,6 +245,22 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
     }
   };
 
+  const handleToggleThumbnails = async (checked: boolean) => {
+    try {
+      await updatePreferences({ showThumbnails: checked });
+      toast({
+        title: "Préférences sauvegardées",
+        description: "Les préférences ont été mises à jour avec succès",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la mise à jour des préférences",
+      });
+    }
+  };
+
   return (
     <div className="container max-w-3xl mx-auto py-8 space-y-6">
       <div className="flex items-center justify-between">
@@ -260,6 +280,36 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
       )}
 
       <div className="grid gap-6">
+        {/* Section Préférences d'affichage */}
+        <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
+          <div className="p-5 space-y-4">
+            <div>
+              <h2 className="text-xl font-semibold flex items-center gap-2">
+                Préférences d'affichage
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Personnalisez l'affichage de votre bibliothèque.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="thumbnails">Afficher les vignettes</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Utiliser les vignettes au lieu des premières pages pour l'affichage des séries
+                  </p>
+                </div>
+                <Switch
+                  id="thumbnails"
+                  checked={preferences.showThumbnails}
+                  onCheckedChange={handleToggleThumbnails}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Section Configuration Komga */}
         <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
           <div className="p-5 space-y-4">

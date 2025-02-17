@@ -3,6 +3,7 @@ import { LibraryResponse } from "@/types/library";
 import { KomgaBook, KomgaSeries } from "@/types/komga";
 import { BookService } from "./book.service";
 import { ImageService } from "./image.service";
+import { PreferencesService } from "./preferences.service";
 
 export class SeriesService extends BaseApiService {
   static async getSeries(seriesId: string): Promise<KomgaSeries> {
@@ -78,22 +79,20 @@ export class SeriesService extends BaseApiService {
 
   static async getFirstPage(seriesId: string): Promise<Response> {
     try {
-      // Récupérer l'ID du premier livre
-      const firstBookId = await this.getFirstBook(seriesId);
-      return await BookService.getPage(firstBookId, 1);
-    } catch (error) {
-      // En cas d'erreur, on essaie de récupérer le thumbnail comme fallback
-      try {
-        const response = await ImageService.getImage(`series/${seriesId}/thumbnail`);
-        return new Response(response.buffer, {
-          headers: {
-            "Content-Type": response.contentType || "image/jpeg",
-            "Cache-Control": "public, max-age=31536000, immutable",
-          },
-        });
-      } catch (fallbackError) {
-        throw this.handleError(fallbackError, "Impossible de récupérer l'image de la série");
+      // Récupérer les préférences de l'utilisateur
+      const preferences = await PreferencesService.getPreferences();
+
+      // Si l'utilisateur préfère les vignettes, utiliser getThumbnail
+      if (preferences.showThumbnails) {
+        return this.getThumbnail(seriesId);
       }
+
+      // Sinon, récupérer la première page
+      const firstBookId = await this.getFirstBook(seriesId);
+      const response = await BookService.getPage(firstBookId, 1);
+      return response;
+    } catch (error) {
+      throw this.handleError(error, "Impossible de récupérer la première page");
     }
   }
 

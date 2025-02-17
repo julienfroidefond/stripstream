@@ -1,6 +1,7 @@
 import { BaseApiService } from "./base-api.service";
 import { KomgaBook } from "@/types/komga";
 import { ImageService } from "./image.service";
+import { PreferencesService } from "./preferences.service";
 
 export class BookService extends BaseApiService {
   static async getBook(bookId: string): Promise<{ book: KomgaBook; pages: number[] }> {
@@ -66,6 +67,14 @@ export class BookService extends BaseApiService {
 
   static async getPage(bookId: string, pageNumber: number): Promise<Response> {
     try {
+      // Récupérer les préférences de l'utilisateur
+      const preferences = await PreferencesService.getPreferences();
+
+      // Si l'utilisateur préfère les vignettes, utiliser getPageThumbnail
+      if (preferences.showThumbnails) {
+        return this.getPageThumbnail(bookId, pageNumber);
+      }
+
       // Ajuster le numéro de page pour l'API Komga (zero-based)
       const adjustedPageNumber = pageNumber - 1;
       const response = await ImageService.getImage(
@@ -91,6 +100,7 @@ export class BookService extends BaseApiService {
       return new Response(response.buffer, {
         headers: {
           "Content-Type": response.contentType || "image/jpeg",
+          "Cache-Control": "public, max-age=31536000, immutable",
         },
       });
     } catch (error) {
