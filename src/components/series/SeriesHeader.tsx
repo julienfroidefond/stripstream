@@ -19,10 +19,10 @@ export const SeriesHeader = ({ series }: SeriesHeaderProps) => {
     // Vérifier si la série est dans les favoris
     const checkFavorite = async () => {
       try {
-        const response = await fetch(`/api/komga/series/${series.id}/favorite`);
+        const response = await fetch("/api/komga/favorites");
         if (response.ok) {
-          const data = await response.json();
-          setIsFavorite(data.favorite);
+          const favoriteIds = await response.json();
+          setIsFavorite(favoriteIds.includes(series.id));
         }
       } catch (error) {
         console.error("Erreur lors de la vérification des favoris:", error);
@@ -34,16 +34,18 @@ export const SeriesHeader = ({ series }: SeriesHeaderProps) => {
 
   const handleToggleFavorite = async () => {
     try {
-      const response = await fetch(`/api/komga/series/${series.id}/favorite`, {
-        method: "POST",
+      const response = await fetch(`/api/komga/favorites`, {
+        method: isFavorite ? "DELETE" : "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ favorite: !isFavorite }),
+        body: JSON.stringify({ seriesId: series.id }),
       });
 
       if (response.ok) {
         setIsFavorite(!isFavorite);
+        // Déclencher l'événement pour mettre à jour la sidebar
+        window.dispatchEvent(new Event("favoritesChanged"));
         toast({
           title: !isFavorite ? "Ajouté aux favoris" : "Retiré des favoris",
           description: series.metadata.title,
@@ -144,7 +146,11 @@ export const SeriesHeader = ({ series }: SeriesHeaderProps) => {
                 onClick={handleToggleFavorite}
                 className="text-white hover:text-white"
               >
-                {isFavorite ? <Star className="w-5 h-5" /> : <StarOff className="w-5 h-5" />}
+                {isFavorite ? (
+                  <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                ) : (
+                  <StarOff className="w-5 h-5" />
+                )}
               </Button>
             </div>
           </div>

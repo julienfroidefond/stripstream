@@ -105,10 +105,14 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     router.push("/login");
   };
 
-  const handleLinkClick = (path: string) => {
-    onClose();
+  const handleLinkClick = useCallback((path: string) => {
+    if (pathname === path) {
+      onClose();
+      return;
+    }
     router.push(path);
-  };
+    onClose();
+  }, [pathname, router, onClose]);
 
   const navigation = [
     {
