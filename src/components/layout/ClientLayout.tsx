@@ -6,8 +6,7 @@ import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { InstallPWA } from "../ui/InstallPWA";
 import { Toaster } from "@/components/ui/toaster";
-import { usePathname, useRouter } from "next/navigation";
-import { authService } from "@/lib/services/auth.service";
+import { usePathname } from "next/navigation";
 import { PreferencesProvider } from "@/contexts/PreferencesContext";
 
 // Routes qui ne nécessitent pas d'authentification
@@ -15,7 +14,6 @@ const publicRoutes = ["/login", "/register"];
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const router = useRouter();
   const pathname = usePathname();
 
   const handleCloseSidebar = () => {
@@ -56,8 +54,8 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker
         .register("/sw.js")
-        .then((registration) => {
-          console.log("Service Worker enregistré avec succès:", registration);
+        .then(() => {
+          // Succès silencieux
         })
         .catch((error) => {
           console.error("Erreur lors de l'enregistrement du Service Worker:", error);

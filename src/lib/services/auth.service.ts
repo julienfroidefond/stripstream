@@ -2,16 +2,13 @@
 
 import { AuthError } from "@/types/auth";
 
-interface AuthUser {
-  id: string;
-  email: string;
-  roles: string[];
-  authenticated: boolean;
-}
 class AuthService {
   private static instance: AuthService;
 
-  private constructor() {}
+  // Constructeur privé pour le pattern Singleton
+  private constructor() {
+    // Pas d'initialisation nécessaire
+  }
 
   public static getInstance(): AuthService {
     if (!AuthService.instance) {

@@ -24,12 +24,9 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
     setIsLoading,
     secondPageLoading,
     setSecondPageLoading,
-    imageError,
-    setImageError,
     handlePreviousPage,
     handleNextPage,
     shouldShowDoublePage,
-    syncReadProgress,
   } = usePageNavigation({
     book,
     pages,
@@ -66,9 +63,12 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
           }
         }
       } catch (error) {
-        console.error("Erreur lors du chargement des URLs:", error);
-        setImageError(true);
-      } finally {
+        if (error instanceof Error) {
+          console.error(
+            `Erreur de chargement des URLs pour la page ${currentPage}:`,
+            error.message
+          );
+        }
         // On s'assure que le chargement est terminé même en cas d'erreur
         if (isMounted) {
           setIsLoading(false);
@@ -91,7 +91,6 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
     getPageUrl,
     setIsLoading,
     setSecondPageLoading,
-    setImageError,
   ]);
 
   // Effet pour précharger la page courante et les pages adjacentes
@@ -205,6 +204,13 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
           {/* Pages */}
           <div className="relative flex-1 flex items-center justify-center overflow-hidden p-1">
             <div className="relative w-full h-[calc(100vh-2rem)] flex items-center justify-center gap-0">
+              {/* 
+                Note: Nous utilisons intentionnellement des balises <img> natives au lieu de next/image pour :
+                1. Avoir un contrôle précis sur le chargement et le préchargement des pages
+                2. Gérer efficacement le mode double page et les transitions
+                3. Les images sont déjà optimisées côté serveur
+                4. La performance est critique pour une lecture fluide
+              */}
               {/* Page courante */}
               <div
                 className={cn(

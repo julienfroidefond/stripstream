@@ -11,13 +11,13 @@ export interface Series {
   booksUnreadCount: number;
   booksInProgressCount: number;
   metadata: {
-    status: string;
+    status: "ENDED" | "ONGOING" | "ABANDONED" | "HIATUS";
     created: string;
     lastModified: string;
     title: string;
     titleSort: string;
     summary: string;
-    readingDirection: string;
+    readingDirection: "LEFT_TO_RIGHT" | "RIGHT_TO_LEFT" | "VERTICAL" | "WEBTOON";
     publisher: string;
     ageRating: number;
     language: string;
@@ -47,4 +47,6 @@ export interface Series {
     }>;
   };
   deleted: boolean;
+  oneshot: boolean;
+  favorite: boolean;
 }

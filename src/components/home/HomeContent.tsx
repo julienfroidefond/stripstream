@@ -23,10 +23,6 @@ export function HomeContent({ data }: HomeContentProps) {
     await router.push(path);
   };
 
-  const handleSeriesClick = (seriesId: string) => {
-    router.push(`/series/${seriesId}`);
-  };
-
   // Vérification des données pour le debug
   // console.log("HomeContent - Données reçues:", {
   //   ongoingCount: data.ongoing?.length || 0,

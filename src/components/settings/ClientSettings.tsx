@@ -9,10 +9,6 @@ import { usePreferences } from "@/contexts/PreferencesContext";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
-interface ErrorMessage {
-  message: string;
-}
-
 interface KomgaConfig {
   url: string;
   username: string;
@@ -256,7 +252,10 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Une erreur est survenue lors de la mise à jour des préférences",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Une erreur est survenue lors de la mise à jour des préférences",
       });
     }
   };

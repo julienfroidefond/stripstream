@@ -1,9 +1,3 @@
-type CacheEntry = {
-  data: any;
-  timestamp: number;
-  ttl: number;
-};
-
 class ServerCacheService {
   private static instance: ServerCacheService;
   private cache: Map<string, { data: unknown; expiry: number }> = new Map();
@@ -94,14 +88,11 @@ class ServerCacheService {
     type: keyof typeof ServerCacheService.DEFAULT_TTL = "DEFAULT"
   ): Promise<T> {
     const now = Date.now();
-    console.log("👀 Getting or setting cache for key:", key);
     const cached = this.cache.get(key);
 
     if (cached && cached.expiry > now) {
-      console.log("✅ Cache hit for key:", key);
       return cached.data as T;
     }
-    console.log("❌ Cache not hit for key:", key);
 
     try {
       const data = await fetcher();

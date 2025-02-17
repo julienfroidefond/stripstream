@@ -31,6 +31,10 @@ export const ControlButtons = ({
           "absolute top-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 transition-all duration-300",
           showControls ? "opacity-100" : "opacity-0 pointer-events-none"
         )}
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggleControls();
+        }}
       >
         <button
           onClick={(e) => {

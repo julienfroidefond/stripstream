@@ -1,4 +1,3 @@
-import { cookies } from "next/headers";
 import { AuthConfig } from "@/types/auth";
 import { serverCacheService } from "./server-cache.service";
 import { ConfigDBService } from "./config-db.service";
@@ -71,17 +70,11 @@ export abstract class BaseApiService {
       });
     }
 
-    // Log de l'URL finale
-    console.log(`🔄 [Komga API] ${url.toString()}`);
-
     return url.toString();
   }
 
   protected static async fetchFromApi<T>(url: string, headers: Headers): Promise<T> {
     const response = await fetch(url, { headers });
-
-    // Log du résultat de la requête
-    console.log(`📡 [Komga API] ${response.status} ${response.statusText} - ${url}`);
 
     if (!response.ok) {
       throw new Error(`Erreur HTTP: ${response.status} ${response.statusText}`);

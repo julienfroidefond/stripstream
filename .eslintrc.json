@@ -1,11 +1,38 @@
 {
   "extends": ["next/core-web-vitals", "prettier"],
   "parser": "@typescript-eslint/parser",
-  "plugins": ["@typescript-eslint"],
+  "plugins": ["@typescript-eslint", "unused-imports"],
   "rules": {
-    "@typescript-eslint/no-unused-vars": "off",
-    "no-console": "off",
+    "@typescript-eslint/no-unused-vars": [
+      "warn",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_"
+      }
+    ],
+    "no-console": [
+      "warn",
+      {
+        "allow": ["warn", "error"]
+      }
+    ],
     "@next/next/no-html-link-for-pages": "off",
-    "react/no-unescaped-entities": "off"
+    "react/no-unescaped-entities": "off",
+    "no-unreachable": "error",
+    "no-unused-expressions": "warn",
+    "no-unused-private-class-members": "warn",
+    "unused-imports/no-unused-imports": "warn",
+    "unused-imports/no-unused-vars": [
+      "warn",
+      {
+        "vars": "all",
+        "varsIgnorePattern": "^_",
+        "args": "after-used",
+        "argsIgnorePattern": "^_"
+      }
+    ],
+    "no-empty-function": "warn",
+    "no-empty": ["warn", { "allowEmptyCatch": true }]
   }
 }

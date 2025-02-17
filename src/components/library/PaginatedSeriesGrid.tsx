@@ -6,9 +6,10 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Loader2, Filter } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { KomgaSeries } from "@/types/komga";
 
 interface PaginatedSeriesGridProps {
-  series: any[];
+  series: KomgaSeries[];
   currentPage: number;
   totalPages: number;
   totalElements: number;
@@ -59,10 +60,6 @@ export function PaginatedSeriesGrid({
 
     setShowOnlyUnread(!showOnlyUnread);
     await router.push(`${pathname}?${params.toString()}`);
-  };
-
-  const handleSeriesClick = (seriesId: string) => {
-    router.push(`/series/${seriesId}`);
   };
 
   // Calcul des indices de début et de fin pour l'affichage

@@ -5,15 +5,13 @@ import { KomgaSeries } from "@/types/komga";
 import { useState, useEffect } from "react";
 import { Button } from "../ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { cn } from "@/lib/utils";
 import { Cover } from "@/components/ui/cover";
 
 interface SeriesHeaderProps {
   series: KomgaSeries;
-  onSeriesUpdate?: (series: KomgaSeries) => void;
 }
 
-export const SeriesHeader = ({ series, onSeriesUpdate }: SeriesHeaderProps) => {
+export const SeriesHeader = ({ series }: SeriesHeaderProps) => {
   const { toast } = useToast();
   const [isFavorite, setIsFavorite] = useState(false);
 

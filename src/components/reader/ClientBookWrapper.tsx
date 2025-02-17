@@ -3,8 +3,6 @@
 import { KomgaBook } from "@/types/komga";
 import { BookReader } from "./BookReader";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { useToast } from "@/components/ui/use-toast";
 
 interface ClientBookWrapperProps {
   book: KomgaBook;

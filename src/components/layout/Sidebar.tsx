@@ -1,7 +1,6 @@
 "use client";
 
-import { BookOpen, Home, Library, Settings, LogOut, RefreshCw, Star } from "lucide-react";
-import Link from "next/link";
+import { Home, Library, Settings, LogOut, RefreshCw, Star } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { authService } from "@/lib/services/auth.service";
@@ -32,7 +31,9 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       const data = await response.json();
       setLibraries(data);
     } catch (error) {
-      console.error("Erreur:", error);
+      if (error instanceof Error) {
+        console.error("Erreur de chargement des bibliothèques:", error.message);
+      }
       setLibraries([]);
     } finally {
       setIsLoading(false);
@@ -43,7 +44,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const fetchFavorites = useCallback(async () => {
     setIsLoadingFavorites(true);
     try {
-      // Récupérer les IDs des favoris depuis l'API
       const favoritesResponse = await fetch("/api/komga/favorites");
       if (!favoritesResponse.ok) {
         throw new Error("Erreur lors de la récupération des favoris");
@@ -55,7 +55,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         return;
       }
 
-      // Récupérer les détails des séries pour chaque ID
       const promises = favoriteIds.map(async (id: string) => {
         const response = await fetch(`/api/komga/series/${id}`);
         if (!response.ok) return null;
@@ -65,7 +64,9 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       const results = await Promise.all(promises);
       setFavorites(results.filter((series): series is KomgaSeries => series !== null));
     } catch (error) {
-      console.error("Erreur lors de la récupération des favoris:", error);
+      if (error instanceof Error) {
+        console.error("Erreur de chargement des favoris:", error.message);
+      }
       setFavorites([]);
     } finally {
       setIsLoadingFavorites(false);

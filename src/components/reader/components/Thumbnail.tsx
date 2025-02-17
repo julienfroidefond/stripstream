@@ -6,15 +6,7 @@ import { forwardRef, useEffect, useState, useCallback, useRef } from "react";
 
 export const Thumbnail = forwardRef<HTMLButtonElement, ThumbnailProps>(
   (
-    {
-      pageNumber,
-      currentPage,
-      onPageChange,
-      getThumbnailUrl,
-      loadedThumbnails,
-      onThumbnailLoad,
-      isVisible,
-    },
+    { pageNumber, currentPage, onPageChange, getThumbnailUrl, loadedThumbnails, onThumbnailLoad },
     ref
   ) => {
     const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -59,9 +51,6 @@ export const Thumbnail = forwardRef<HTMLButtonElement, ThumbnailProps>(
       if (loadAttempts.current < maxAttempts) {
         // Réessayer avec un délai croissant
         const delay = Math.min(1000 * Math.pow(2, loadAttempts.current - 1), 5000);
-        console.log(
-          `Réessai ${loadAttempts.current}/${maxAttempts} dans ${delay}ms pour la page ${pageNumber}`
-        );
         setTimeout(() => {
           setImageUrl((prev) => (prev ? `${prev}?retry=${loadAttempts.current}` : null));
         }, delay);
@@ -94,7 +83,7 @@ export const Thumbnail = forwardRef<HTMLButtonElement, ThumbnailProps>(
             src={imageUrl}
             alt={`Miniature page ${pageNumber}`}
             className={cn(
-              "object-cover transition-opacity duration-300",
+              "object-contain transition-opacity duration-300",
               isLoading ? "opacity-0" : "opacity-100"
             )}
             fill

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { ConfigDBService } from "@/lib/services/config-db.service";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(request: Request) {
   try {
     const data = await request.json();

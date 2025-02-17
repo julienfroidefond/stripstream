@@ -70,10 +70,6 @@ export function PaginatedBookGrid({
   const startIndex = (currentPage - 1) * pageSize + 1;
   const endIndex = Math.min(currentPage * pageSize, totalElements);
 
-  const getBookThumbnailUrl = (bookId: string) => {
-    return `/api/komga/images/books/${bookId}/thumbnail`;
-  };
-
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between flex-wrap gap-4">
@@ -115,11 +111,7 @@ export function PaginatedBookGrid({
             isChangingPage ? "opacity-25" : "opacity-100"
           )}
         >
-          <BookGrid
-            books={books}
-            onBookClick={handleBookClick}
-            getBookThumbnailUrl={getBookThumbnailUrl}
-          />
+          <BookGrid books={books} onBookClick={handleBookClick} />
         </div>
       </div>
 

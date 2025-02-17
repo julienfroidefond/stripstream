@@ -18,9 +18,6 @@ export class ImageService extends BaseApiService {
         async () => {
           const response = await fetch(url, { headers });
 
-          // Log du résultat de la requête
-          console.log(`📡 [Komga API] ${response.status} ${response.statusText} - ${url}`);
-
           if (!response.ok) {
             throw new Error(`Erreur HTTP: ${response.status} ${response.statusText}`);
           }

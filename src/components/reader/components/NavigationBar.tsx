@@ -2,7 +2,7 @@ import { NavigationBarProps } from "../types";
 import { cn } from "@/lib/utils";
 import { Thumbnail } from "./Thumbnail";
 import { useThumbnails } from "../hooks/useThumbnails";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 export const NavigationBar = ({
   currentPage,
@@ -11,16 +11,13 @@ export const NavigationBar = ({
   showControls,
   book,
 }: NavigationBarProps) => {
-  const {
-    loadedThumbnails,
-    handleThumbnailLoad,
-    getThumbnailUrl,
-    visibleThumbnails,
-    scrollToActiveThumbnail,
-  } = useThumbnails({
-    book,
-    currentPage,
-  });
+  const { loadedThumbnails, handleThumbnailLoad, getThumbnailUrl, visibleThumbnails } =
+    useThumbnails({
+      book,
+      currentPage,
+    });
+
+  const thumbnailsContainerRef = useRef<HTMLDivElement>(null);
 
   // Scroll à l'ouverture des contrôles et au changement de page
   useEffect(() => {
@@ -53,6 +50,7 @@ export const NavigationBar = ({
             onTouchStart={(e) => e.stopPropagation()}
             onTouchMove={(e) => e.stopPropagation()}
             onTouchEnd={(e) => e.stopPropagation()}
+            ref={thumbnailsContainerRef}
           >
             <div className="w-[calc(50vw-18rem)] flex-shrink-0" />
             {pages.map((_, index) => {

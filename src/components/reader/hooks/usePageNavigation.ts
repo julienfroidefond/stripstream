@@ -12,12 +12,11 @@ export const usePageNavigation = ({
   book,
   pages,
   isDoublePage,
-  onClose = () => {},
+  onClose,
 }: UsePageNavigationProps) => {
   const [currentPage, setCurrentPage] = useState(book.readProgress?.page || 1);
   const [isLoading, setIsLoading] = useState(true);
   const [secondPageLoading, setSecondPageLoading] = useState(true);
-  const [imageError, setImageError] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const touchStartXRef = useRef<number | null>(null);
   const touchStartYRef = useRef<number | null>(null);
@@ -39,7 +38,12 @@ export const usePageNavigation = ({
           body: JSON.stringify({ page, completed }),
         });
       } catch (error) {
-        console.error("Erreur lors de la synchronisation de la progression:", error);
+        if (error instanceof Error) {
+          console.error(
+            `Erreur de synchronisation de la progression pour le livre ${book.id} à la page ${page}:`,
+            error.message
+          );
+        }
       }
     },
     [book.id, pages.length]
@@ -73,7 +77,6 @@ export const usePageNavigation = ({
       setCurrentPage(page);
       setIsLoading(true);
       setSecondPageLoading(true);
-      setImageError(false);
       debouncedSyncReadProgress(page);
     },
     [debouncedSyncReadProgress]
@@ -167,11 +170,8 @@ export const usePageNavigation = ({
     setIsLoading,
     secondPageLoading,
     setSecondPageLoading,
-    imageError,
-    setImageError,
     handlePreviousPage,
     handleNextPage,
     shouldShowDoublePage,
-    syncReadProgress: debouncedSyncReadProgress,
   };
 };

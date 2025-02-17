@@ -1,5 +1,15 @@
 import { ConfigDBService } from "@/lib/services/config-db.service";
 import { ClientSettings } from "@/components/settings/ClientSettings";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Préférences",
+  description: "Configurez vos préférences StripStream",
+};
+
+export const viewport = {
+  colorScheme: "dark light",
+};
 
 export default async function SettingsPage() {
   let config = null;
