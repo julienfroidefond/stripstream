@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ImageService } from "@/lib/services/image.service";
+import { BookService } from "@/lib/services/book.service";
 
 export const dynamic = "force-dynamic";
 
@@ -8,16 +8,8 @@ export async function GET(
   { params }: { params: { bookId: string; pageNumber: string } }
 ) {
   try {
-    const { buffer, contentType } = await ImageService.getImage(
-      `books/${params.bookId}/pages/${params.pageNumber}`
-    );
-
-    return new NextResponse(buffer, {
-      headers: {
-        "Content-Type": contentType || "image/jpeg",
-        "Cache-Control": "public, max-age=31536000, immutable",
-      },
-    });
+    const response = await BookService.getPage(params.bookId, parseInt(params.pageNumber));
+    return response;
   } catch (error) {
     console.error("Erreur lors de la récupération de la page du livre:", error);
     return new NextResponse("Erreur lors de la récupération de la page", { status: 500 });

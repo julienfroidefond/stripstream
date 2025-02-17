@@ -98,6 +98,20 @@ export class BookService extends BaseApiService {
     }
   }
 
+  static async getThumbnail(bookId: string): Promise<Response> {
+    try {
+      const response = await ImageService.getImage(`books/${bookId}/thumbnail`);
+      return new Response(response.buffer, {
+        headers: {
+          "Content-Type": response.contentType || "image/jpeg",
+          "Cache-Control": "public, max-age=31536000, immutable",
+        },
+      });
+    } catch (error) {
+      throw this.handleError(error, "Impossible de récupérer la miniature du livre");
+    }
+  }
+
   static getPageUrl(bookId: string, pageNumber: number): string {
     return `/api/komga/images/books/${bookId}/pages/${pageNumber}`;
   }

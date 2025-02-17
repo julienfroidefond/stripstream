@@ -1,6 +1,8 @@
 import { BaseApiService } from "./base-api.service";
 import { LibraryResponse } from "@/types/library";
 import { KomgaBook, KomgaSeries } from "@/types/komga";
+import { BookService } from "./book.service";
+import { ImageService } from "./image.service";
 
 export class SeriesService extends BaseApiService {
   static async getSeries(seriesId: string): Promise<KomgaSeries> {
@@ -71,6 +73,41 @@ export class SeriesService extends BaseApiService {
     } catch (error) {
       console.error("Erreur lors de la récupération du premier livre:", error);
       return this.handleError(error, "Impossible de récupérer le premier livre");
+    }
+  }
+
+  static async getFirstPage(seriesId: string): Promise<Response> {
+    try {
+      // Récupérer l'ID du premier livre
+      const firstBookId = await this.getFirstBook(seriesId);
+      return await BookService.getPage(firstBookId, 1);
+    } catch (error) {
+      // En cas d'erreur, on essaie de récupérer le thumbnail comme fallback
+      try {
+        const response = await ImageService.getImage(`series/${seriesId}/thumbnail`);
+        return new Response(response.buffer, {
+          headers: {
+            "Content-Type": response.contentType || "image/jpeg",
+            "Cache-Control": "public, max-age=31536000, immutable",
+          },
+        });
+      } catch (fallbackError) {
+        throw this.handleError(fallbackError, "Impossible de récupérer l'image de la série");
+      }
+    }
+  }
+
+  static async getThumbnail(seriesId: string): Promise<Response> {
+    try {
+      const response = await ImageService.getImage(`series/${seriesId}/thumbnail`);
+      return new Response(response.buffer, {
+        headers: {
+          "Content-Type": response.contentType || "image/jpeg",
+          "Cache-Control": "public, max-age=31536000, immutable",
+        },
+      });
+    } catch (error) {
+      throw this.handleError(error, "Impossible de récupérer la miniature de la série");
     }
   }
 }
