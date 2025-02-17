@@ -127,7 +127,7 @@ export const SeriesHeader = ({ series, onSeriesUpdate }: SeriesHeaderProps) => {
   };
 
   return (
-    <div className="relative h-[300px] overflow-hidden">
+    <div className="relative min-h-[300px] md:h-[300px] w-screen -ml-[calc((100vw-100%)/2)] overflow-hidden">
       {/* Image de fond */}
       {!imageError ? (
         <>
@@ -155,8 +155,8 @@ export const SeriesHeader = ({ series, onSeriesUpdate }: SeriesHeaderProps) => {
       )}
 
       {/* Contenu */}
-      <div className="relative h-full container mx-auto px-4 py-8 flex items-center">
-        <div className="flex gap-6 items-center">
+      <div className="relative container mx-auto px-4 py-8">
+        <div className="flex flex-col md:flex-row gap-6 items-center md:items-start w-full">
           {/* Image principale */}
           <div className="relative w-[180px] aspect-[2/3] rounded-lg overflow-hidden shadow-lg bg-muted flex-shrink-0">
             {!imageError ? (
@@ -186,12 +186,14 @@ export const SeriesHeader = ({ series, onSeriesUpdate }: SeriesHeaderProps) => {
           </div>
 
           {/* Informations */}
-          <div className="flex-1 text-white space-y-2">
-            <h1 className="text-3xl font-bold">{series.metadata.title}</h1>
+          <div className="flex-1 text-white space-y-2 text-center md:text-left">
+            <h1 className="text-2xl md:text-3xl font-bold">{series.metadata.title}</h1>
             {series.metadata.summary && (
-              <p className="text-white/80 line-clamp-3">{series.metadata.summary}</p>
+              <p className="text-white/80 line-clamp-3 text-sm md:text-base">
+                {series.metadata.summary}
+              </p>
             )}
-            <div className="flex items-center gap-4 mt-4">
+            <div className="flex items-center gap-4 mt-4 justify-center md:justify-start flex-wrap">
               <span
                 className={`px-2 py-0.5 rounded-full text-sm flex items-center gap-1 ${statusInfo.className}`}
               >
