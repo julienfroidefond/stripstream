@@ -105,4 +105,14 @@ export class SeriesService extends BaseApiService {
   static getCoverUrl(seriesId: string): string {
     return `/api/komga/images/series/${seriesId}/thumbnail`;
   }
+
+  static async getMultipleSeries(seriesIds: string[]): Promise<KomgaSeries[]> {
+    try {
+      const seriesPromises = seriesIds.map((id) => this.getSeries(id));
+      const series = await Promise.all(seriesPromises);
+      return series.filter(Boolean);
+    } catch (error) {
+      return this.handleError(error, "Impossible de récupérer les séries");
+    }
+  }
 }

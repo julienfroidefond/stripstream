@@ -36,10 +36,6 @@ npm install
 
 3. Créer un fichier `.env.local` à la racine du projet
 
-```bash
-NEXT_PUBLIC_API_URL=https://cloud.julienfroidefond.com
-```
-
 4. Lancer le serveur de développement
 
 ```bash
