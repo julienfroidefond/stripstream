@@ -13,7 +13,7 @@ const PreferencesContext = createContext<PreferencesContextType | undefined>(und
 
 export function PreferencesProvider({ children }: { children: React.ReactNode }) {
   const [preferences, setPreferences] = useState<UserPreferences>({
-    showThumbnails: false,
+    showThumbnails: true,
   });
   const [isLoading, setIsLoading] = useState(true);
 

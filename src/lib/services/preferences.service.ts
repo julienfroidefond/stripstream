@@ -36,7 +36,7 @@ export class PreferencesService {
       // Créer les préférences par défaut si elles n'existent pas
       const defaultPreferences = await PreferencesModel.create({
         userId: user.id,
-        showThumbnails: false,
+        showThumbnails: true,
       });
       return {
         showThumbnails: defaultPreferences.showThumbnails,

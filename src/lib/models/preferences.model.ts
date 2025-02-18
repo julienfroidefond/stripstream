@@ -9,7 +9,7 @@ const preferencesSchema = new mongoose.Schema(
     },
     showThumbnails: {
       type: Boolean,
-      default: false,
+      default: true,
     },
   },
   {
