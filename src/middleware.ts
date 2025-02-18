@@ -16,12 +16,13 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
-  // Vérifier si c'est une route publique ou commence par /images/
+  // Vérifier si c'est une route publique ou commence par certains préfixes
   if (
     publicRoutes.includes(pathname) ||
     publicApiRoutes.includes(pathname) ||
     pathname.startsWith("/images/") ||
-    pathname.startsWith("/_next/")
+    pathname.startsWith("/_next/") ||
+    pathname.startsWith("/fonts/")
   ) {
     return NextResponse.next();
   }
@@ -63,8 +64,8 @@ export const config = {
      * 2. /_next/* (Next.js internals)
      * 3. /fonts/* (inside public directory)
      * 4. /images/* (inside public directory)
-     * 5. /favicon.ico, sitemap.xml (public files)
+     * 5. Static files (manifest.json, favicon.ico, etc.)
      */
-    "/((?!api/auth|_next/static|_next/image|fonts|images|favicon.ico|sitemap.xml).*)",
+    "/((?!api/auth|_next/static|_next/image|fonts|images|manifest.json|favicon.ico|sitemap.xml|sw.js|offline.html).*)",
   ],
 };
