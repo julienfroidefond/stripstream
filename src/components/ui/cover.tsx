@@ -2,7 +2,7 @@
 
 import { ImageOff } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { ImageLoader } from "@/components/ui/image-loader";
 
@@ -29,6 +29,9 @@ export function Cover({
 }: CoverProps) {
   const [imageError, setImageError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isInViewport, setIsInViewport] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const coverRef = useRef<HTMLDivElement>(null);
 
   const getImageUrl = () => {
     if (type === "series") {
@@ -36,6 +39,34 @@ export function Cover({
     }
     return `/api/komga/images/books/${id}/thumbnail`;
   };
+
+  // Observer pour détecter quand la cover est dans le viewport
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          setIsInViewport(entry.isIntersecting);
+          if (entry.isIntersecting && !imageUrl) {
+            setImageUrl(getImageUrl());
+          }
+        });
+      },
+      {
+        rootMargin: "50px", // Préchargement avant que l'élément soit visible
+      }
+    );
+
+    const element = coverRef.current;
+    if (element) {
+      observer.observe(element);
+    }
+
+    return () => {
+      if (element) {
+        observer.unobserve(element);
+      }
+    };
+  }, [id, imageUrl]);
 
   if (imageError) {
     return (
@@ -46,25 +77,27 @@ export function Cover({
   }
 
   return (
-    <div className="relative w-full h-full">
+    <div ref={coverRef} className="relative w-full h-full">
       <ImageLoader isLoading={isLoading} />
-      <Image
-        src={getImageUrl()}
-        alt={alt}
-        fill
-        className={cn(
-          "object-cover transition-opacity duration-300 rounded-lg",
-          isLoading ? "opacity-0" : "opacity-100",
-          isCompleted && "opacity-50",
-          className
-        )}
-        sizes={sizes}
-        onError={() => setImageError(true)}
-        onLoad={() => setIsLoading(false)}
-        loading={priority ? "eager" : "lazy"}
-        quality={quality}
-        priority={priority}
-      />
+      {imageUrl && (
+        <Image
+          src={imageUrl}
+          alt={alt}
+          fill
+          className={cn(
+            "object-cover transition-opacity duration-300 rounded-lg",
+            isLoading ? "opacity-0" : "opacity-100",
+            isCompleted && "opacity-50",
+            className
+          )}
+          sizes={sizes}
+          onError={() => setImageError(true)}
+          onLoad={() => setIsLoading(false)}
+          loading={priority ? "eager" : "lazy"}
+          quality={quality}
+          priority={priority}
+        />
+      )}
     </div>
   );
 }
