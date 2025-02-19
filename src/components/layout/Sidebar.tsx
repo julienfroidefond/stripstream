@@ -97,22 +97,25 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     await Promise.all([fetchLibraries(), fetchFavorites()]);
   };
 
-  const handleLogout = () => {
-    authService.logout();
+  const handleLogout = async () => {
+    await authService.logout();
     setLibraries([]);
     setFavorites([]);
     onClose();
     router.push("/login");
   };
 
-  const handleLinkClick = useCallback((path: string) => {
-    if (pathname === path) {
+  const handleLinkClick = useCallback(
+    (path: string) => {
+      if (pathname === path) {
+        onClose();
+        return;
+      }
+      router.push(path);
       onClose();
-      return;
-    }
-    router.push(path);
-    onClose();
-  }, [pathname, router, onClose]);
+    },
+    [pathname, router, onClose]
+  );
 
   const navigation = [
     {
