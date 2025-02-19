@@ -16,8 +16,7 @@ export const useThumbnails = ({ book, currentPage }: UseThumbnailsProps) => {
 
   const getThumbnailUrl = useCallback(
     (pageNumber: number) => {
-      const zeroBasedPage = pageNumber - 1;
-      return `/api/komga/images/books/${book.id}/pages/${zeroBasedPage}/thumbnail?zero_based=true`;
+      return `/api/komga/images/books/${book.id}/pages/${pageNumber}/thumbnail?zero_based=true`;
     },
     [book.id]
   );
