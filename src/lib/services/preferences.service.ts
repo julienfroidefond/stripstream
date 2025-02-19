@@ -12,11 +12,6 @@ export interface UserPreferences {
   cacheMode: "memory" | "file";
 }
 
-const defaultPreferences: UserPreferences = {
-  showThumbnails: true,
-  cacheMode: "memory",
-};
-
 export class PreferencesService {
   static async getCurrentUser(): Promise<User> {
     const userCookie = cookies().get("stripUser");
@@ -33,9 +28,10 @@ export class PreferencesService {
     }
   }
 
-  static async getPreferences(userId: string): Promise<UserPreferences> {
+  static async getPreferences(): Promise<UserPreferences> {
     try {
-      const preferences = await PreferencesModel.findOne({ userId });
+      const user = await this.getCurrentUser();
+      const preferences = await PreferencesModel.findOne({ userId: user.id });
       if (!preferences) {
         return {
           showThumbnails: true,
@@ -55,13 +51,11 @@ export class PreferencesService {
     }
   }
 
-  static async updatePreferences(
-    userId: string,
-    preferences: Partial<UserPreferences>
-  ): Promise<UserPreferences> {
+  static async updatePreferences(preferences: Partial<UserPreferences>): Promise<UserPreferences> {
     try {
+      const user = await this.getCurrentUser();
       const updatedPreferences = await PreferencesModel.findOneAndUpdate(
-        { userId },
+        { userId: user.id },
         { $set: preferences },
         { new: true, upsert: true }
       );
