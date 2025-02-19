@@ -6,14 +6,24 @@ import { forwardRef, useEffect, useState, useCallback, useRef } from "react";
 
 export const Thumbnail = forwardRef<HTMLButtonElement, ThumbnailProps>(
   (
-    { pageNumber, currentPage, onPageChange, getThumbnailUrl, loadedThumbnails, onThumbnailLoad },
+    {
+      pageNumber,
+      currentPage,
+      onPageChange,
+      getThumbnailUrl,
+      loadedThumbnails,
+      onThumbnailLoad,
+      isVisible,
+    },
     ref
   ) => {
     const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [hasError, setHasError] = useState(false);
+    const [isInViewport, setIsInViewport] = useState(false);
     const loadAttempts = useRef(0);
     const maxAttempts = 3;
+    const thumbnailRef = useRef<HTMLButtonElement>(null);
 
     const resetLoadingState = useCallback(() => {
       setIsLoading(true);
@@ -21,7 +31,37 @@ export const Thumbnail = forwardRef<HTMLButtonElement, ThumbnailProps>(
       loadAttempts.current = 0;
     }, []);
 
+    // Observer pour détecter quand la thumbnail est dans le viewport
     useEffect(() => {
+      //if (!isVisible) return; // Ne pas observer si la barre est cachée
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            setIsInViewport(entry.isIntersecting);
+          });
+        },
+        {
+          rootMargin: "50px",
+        }
+      );
+
+      const element = thumbnailRef.current;
+      if (element) {
+        observer.observe(element);
+      }
+
+      return () => {
+        if (element) {
+          observer.unobserve(element);
+        }
+      };
+    }, [isVisible]);
+
+    // Charger l'image uniquement quand la thumbnail est dans le viewport
+    useEffect(() => {
+      if (!isInViewport) return;
+
       try {
         const url = getThumbnailUrl(pageNumber);
         setImageUrl(url);
@@ -36,7 +76,7 @@ export const Thumbnail = forwardRef<HTMLButtonElement, ThumbnailProps>(
         setHasError(true);
         setIsLoading(false);
       }
-    }, [pageNumber, getThumbnailUrl, loadedThumbnails, resetLoadingState]);
+    }, [pageNumber, getThumbnailUrl, loadedThumbnails, resetLoadingState, isVisible, isInViewport]);
 
     const handleImageLoad = useCallback(() => {
       setIsLoading(false);
@@ -65,7 +105,14 @@ export const Thumbnail = forwardRef<HTMLButtonElement, ThumbnailProps>(
 
     return (
       <button
-        ref={ref}
+        ref={(node) => {
+          thumbnailRef.current = node;
+          if (typeof ref === "function") {
+            ref(node);
+          } else if (ref) {
+            ref.current = node;
+          }
+        }}
         data-page={pageNumber}
         id={`thumbnail-${pageNumber}`}
         onClick={() => onPageChange(pageNumber)}
