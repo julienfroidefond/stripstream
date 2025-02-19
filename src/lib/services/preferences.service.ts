@@ -18,7 +18,7 @@ const defaultPreferences: UserPreferences = {
 };
 
 export class PreferencesService {
-  private static async getCurrentUser(): Promise<User> {
+  static async getCurrentUser(): Promise<User> {
     const userCookie = cookies().get("stripUser");
 
     if (!userCookie) {
