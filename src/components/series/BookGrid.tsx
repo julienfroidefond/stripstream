@@ -3,6 +3,8 @@
 import { KomgaBook } from "@/types/komga";
 import { formatDate } from "@/lib/utils";
 import { Cover } from "@/components/ui/cover";
+import { MarkAsReadButton } from "@/components/ui/mark-as-read-button";
+import { useState } from "react";
 
 interface BookGridProps {
   books: KomgaBook[];
@@ -40,7 +42,9 @@ const getReadingStatusInfo = (book: KomgaBook) => {
 };
 
 export function BookGrid({ books, onBookClick }: BookGridProps) {
-  if (!books.length) {
+  const [localBooks, setLocalBooks] = useState(books);
+
+  if (!localBooks.length) {
     return (
       <div className="text-center p-8">
         <p className="text-muted-foreground">Aucun tome disponible</p>
@@ -48,33 +52,77 @@ export function BookGrid({ books, onBookClick }: BookGridProps) {
     );
   }
 
+  const handleMarkAsRead = (bookId: string) => {
+    setLocalBooks((prevBooks) =>
+      prevBooks.map((book) =>
+        book.id === bookId
+          ? {
+              ...book,
+              readProgress: {
+                ...(book.readProgress || {}),
+                completed: true,
+                readDate: new Date().toISOString(),
+                page: book.media.pagesCount,
+                created: book.readProgress?.created || new Date().toISOString(),
+                lastModified: new Date().toISOString(),
+              },
+            }
+          : book
+      )
+    );
+  };
+
   return (
     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-      {books.map((book) => {
+      {localBooks.map((book) => {
         const statusInfo = getReadingStatusInfo(book);
+        const isRead = book.readProgress?.completed || false;
+
         return (
-          <button
+          <div
             key={book.id}
-            onClick={() => onBookClick(book)}
-            className="group relative aspect-[2/3] overflow-hidden rounded-lg bg-muted hover:opacity-100 transition-all"
+            className="group relative aspect-[2/3] overflow-hidden rounded-lg bg-muted"
           >
-            <Cover
-              type="book"
-              id={book.id}
-              alt={`Couverture de ${book.metadata.title || `Tome ${book.metadata.number}`}`}
-              isCompleted={book.readProgress?.completed}
-            />
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-4 space-y-2 translate-y-full group-hover:translate-y-0 transition-transform duration-200">
-              <p className="text-sm font-medium text-white text-left line-clamp-2">
-                {book.metadata.title || `Tome ${book.metadata.number}`}
-              </p>
-              <div className="flex items-center gap-2">
-                <span className={`px-2 py-0.5 rounded-full text-xs ${statusInfo.className}`}>
-                  {statusInfo.label}
-                </span>
+            <button
+              onClick={() => onBookClick(book)}
+              className="w-full h-full hover:opacity-100 transition-all"
+            >
+              <Cover
+                type="book"
+                id={book.id}
+                alt={`Couverture de ${book.metadata.title || `Tome ${book.metadata.number}`}`}
+                isCompleted={isRead}
+              />
+            </button>
+
+            {/* Overlay avec les contrôles */}
+            <div className="absolute inset-0 pointer-events-none">
+              {/* Bouton Marquer comme lu en haut à droite avec un petit décalage */}
+              {!isRead && (
+                <div className="absolute top-2 right-2 pointer-events-auto">
+                  <MarkAsReadButton
+                    bookId={book.id}
+                    pagesCount={book.media.pagesCount}
+                    isRead={isRead}
+                    onSuccess={() => handleMarkAsRead(book.id)}
+                    className="bg-white/90 hover:bg-white text-black shadow-sm"
+                  />
+                </div>
+              )}
+
+              {/* Informations en bas - visible au survol uniquement */}
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-4 space-y-2 translate-y-full group-hover:translate-y-0 transition-transform duration-200">
+                <p className="text-sm font-medium text-white text-left line-clamp-2">
+                  {book.metadata.title || `Tome ${book.metadata.number}`}
+                </p>
+                <div className="flex items-center gap-2">
+                  <span className={`px-2 py-0.5 rounded-full text-xs ${statusInfo.className}`}>
+                    {statusInfo.label}
+                  </span>
+                </div>
               </div>
             </div>
-          </button>
+          </div>
         );
       })}
     </div>
