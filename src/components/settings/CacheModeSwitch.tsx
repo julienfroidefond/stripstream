@@ -33,6 +33,7 @@ export function CacheModeSwitch() {
         description: `Le cache est maintenant en mode ${checked ? "mémoire" : "fichier"}`,
       });
     } catch (error) {
+      console.error("Erreur lors de la modification du mode de cache:", error);
       toast({
         variant: "destructive",
         title: "Erreur",

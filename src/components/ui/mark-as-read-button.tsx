@@ -42,6 +42,7 @@ export function MarkAsReadButton({
       });
       onSuccess?.();
     } catch (error) {
+      console.error("Erreur lors de la mise à jour du progresseur de lecture:", error);
       toast({
         title: "Erreur",
         description: "Impossible de marquer le tome comme lu",

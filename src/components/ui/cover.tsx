@@ -2,7 +2,7 @@
 
 import { ImageOff } from "lucide-react";
 import Image from "next/image";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { ImageLoader } from "@/components/ui/image-loader";
 
@@ -29,23 +29,21 @@ export function Cover({
 }: CoverProps) {
   const [imageError, setImageError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [isInViewport, setIsInViewport] = useState(false);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const coverRef = useRef<HTMLDivElement>(null);
 
-  const getImageUrl = () => {
+  const getImageUrl = useCallback(() => {
     if (type === "series") {
       return `/api/komga/images/series/${id}/thumbnail`;
     }
     return `/api/komga/images/books/${id}/thumbnail`;
-  };
+  }, [type, id]);
 
   // Observer pour détecter quand la cover est dans le viewport
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          setIsInViewport(entry.isIntersecting);
           if (entry.isIntersecting && !imageUrl) {
             setImageUrl(getImageUrl());
           }
@@ -66,7 +64,7 @@ export function Cover({
         observer.unobserve(element);
       }
     };
-  }, [id, imageUrl]);
+  }, [id, imageUrl, getImageUrl]);
 
   if (imageError) {
     return (

@@ -1,5 +1,4 @@
 import { cookies } from "next/headers";
-import connectDB from "@/lib/mongodb";
 import { PreferencesModel } from "@/lib/models/preferences.model";
 
 interface User {

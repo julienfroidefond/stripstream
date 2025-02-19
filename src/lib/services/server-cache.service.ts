@@ -74,7 +74,8 @@ class ServerCacheService {
             if (isSubDirEmpty) {
               try {
                 fs.rmdirSync(itemPath);
-              } catch (_error) {
+              } catch (error) {
+                console.error(`Could not remove directory ${itemPath}:`, error);
                 isEmpty = false;
               }
             } else {
@@ -89,18 +90,21 @@ class ServerCacheService {
               } else {
                 isEmpty = false;
               }
-            } catch (_error) {
+            } catch (error) {
+              console.error(`Could not parse file ${itemPath}:`, error);
               // Si le fichier est corrompu, on le supprime
               try {
                 fs.unlinkSync(itemPath);
-              } catch (_) {
+              } catch (error) {
+                console.error(`Could not remove file ${itemPath}:`, error);
                 isEmpty = false;
               }
             }
           } else {
             isEmpty = false;
           }
-        } catch (_error) {
+        } catch (error) {
+          console.error(`Could not access ${itemPath}:`, error);
           // En cas d'erreur sur le fichier/dossier, on continue
           isEmpty = false;
           continue;
@@ -146,7 +150,6 @@ class ServerCacheService {
     }
 
     this.config.mode = mode;
-    console.log(`Cache mode switched to: ${mode}`);
   }
 
   public getCacheMode(): CacheMode {
@@ -174,11 +177,13 @@ class ServerCacheService {
                 const key = path.relative(this.cacheDir, itemPath).slice(0, -5); // Remove .json
                 this.memoryCache.set(key, cached);
               }
-            } catch (_error) {
+            } catch (error) {
+              console.error(`Could not parse file ${itemPath}:`, error);
               // Ignore les fichiers corrompus
             }
           }
-        } catch (_error) {
+        } catch (error) {
+          console.error(`Could not access ${itemPath}:`, error);
           // Ignore les erreurs d'accès
         }
       }
@@ -196,8 +201,8 @@ class ServerCacheService {
         fs.mkdirSync(dirPath, { recursive: true });
       }
       fs.writeFileSync(filePath, JSON.stringify(value), "utf-8");
-    } catch (_error) {
-      // Ignore les erreurs d'écriture
+    } catch (error) {
+      console.error(`Could not write cache file ${filePath}:`, error);
     }
   }
 
@@ -303,25 +308,24 @@ class ServerCacheService {
             removeDirectory(itemPath);
             try {
               fs.rmdirSync(itemPath);
-            } catch (_error) {
-              console.error(`Could not remove directory ${itemPath}`);
+            } catch (error) {
+              console.error(`Could not remove directory ${itemPath}:`, error);
             }
           } else {
             try {
               fs.unlinkSync(itemPath);
-            } catch (_error) {
-              console.error(`Could not remove file ${itemPath}`);
+            } catch (error) {
+              console.error(`Could not remove file ${itemPath}:`, error);
             }
           }
-        } catch (_error) {
-          console.error(`Error accessing ${itemPath}`);
+        } catch (error) {
+          console.error(`Error accessing ${itemPath}:`, error);
         }
       }
     };
 
     try {
       removeDirectory(this.cacheDir);
-      console.log("Cache cleared successfully");
     } catch (error) {
       console.error("Error clearing cache:", error);
     }
