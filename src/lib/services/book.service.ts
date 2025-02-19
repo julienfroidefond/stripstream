@@ -94,7 +94,7 @@ export class BookService extends BaseApiService {
         return new Response(response.buffer, {
           headers: {
             "Content-Type": response.contentType || "image/jpeg",
-            // "Cache-Control": "public, max-age=31536000, immutable",
+            "Cache-Control": "public, max-age=31536000, immutable",
           },
         });
       }
