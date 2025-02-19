@@ -4,7 +4,7 @@ import { KomgaBook } from "@/types/komga";
 import { formatDate } from "@/lib/utils";
 import { Cover } from "@/components/ui/cover";
 import { MarkAsReadButton } from "@/components/ui/mark-as-read-button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface BookGridProps {
   books: KomgaBook[];
@@ -43,6 +43,11 @@ const getReadingStatusInfo = (book: KomgaBook) => {
 
 export function BookGrid({ books, onBookClick }: BookGridProps) {
   const [localBooks, setLocalBooks] = useState(books);
+
+  // Synchroniser localBooks avec les props books
+  useEffect(() => {
+    setLocalBooks(books);
+  }, [books]);
 
   if (!localBooks.length) {
     return (
