@@ -11,6 +11,11 @@ const preferencesSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    cacheMode: {
+      type: String,
+      enum: ["memory", "file"],
+      default: "memory",
+    },
   },
   {
     timestamps: true,

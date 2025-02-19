@@ -8,6 +8,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { CacheModeSwitch } from "@/components/settings/CacheModeSwitch";
 
 interface KomgaConfig {
   url: string;
@@ -414,6 +415,16 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
               <p className="text-sm text-muted-foreground mt-1">
                 Gérez les paramètres de mise en cache des données.
               </p>
+            </div>
+
+            <div className="flex items-center justify-between mb-4">
+              <div className="space-y-0.5">
+                <Label htmlFor="cache-mode">Mode de cache</Label>
+                <p className="text-sm text-muted-foreground">
+                  Le cache en mémoire est plus rapide mais ne persiste pas entre les redémarrages
+                </p>
+              </div>
+              <CacheModeSwitch />
             </div>
 
             {/* Formulaire TTL */}

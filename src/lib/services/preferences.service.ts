@@ -9,7 +9,13 @@ interface User {
 
 export interface UserPreferences {
   showThumbnails: boolean;
+  cacheMode: "memory" | "file";
 }
+
+const defaultPreferences: UserPreferences = {
+  showThumbnails: true,
+  cacheMode: "memory",
+};
 
 export class PreferencesService {
   private static async getCurrentUser(): Promise<User> {
@@ -27,39 +33,46 @@ export class PreferencesService {
     }
   }
 
-  static async getPreferences(): Promise<UserPreferences> {
-    await connectDB();
-    const user = await this.getCurrentUser();
-
-    const preferences = await PreferencesModel.findOne({ userId: user.id });
-    if (!preferences) {
-      // Créer les préférences par défaut si elles n'existent pas
-      const defaultPreferences = await PreferencesModel.create({
-        userId: user.id,
-        showThumbnails: true,
-      });
+  static async getPreferences(userId: string): Promise<UserPreferences> {
+    try {
+      const preferences = await PreferencesModel.findOne({ userId });
+      if (!preferences) {
+        return {
+          showThumbnails: true,
+          cacheMode: "memory",
+        };
+      }
       return {
-        showThumbnails: defaultPreferences.showThumbnails,
+        showThumbnails: preferences.showThumbnails,
+        cacheMode: preferences.cacheMode || "memory",
+      };
+    } catch (error) {
+      console.error("Error getting preferences:", error);
+      return {
+        showThumbnails: true,
+        cacheMode: "memory",
       };
     }
-
-    return {
-      showThumbnails: preferences.showThumbnails,
-    };
   }
 
-  static async updatePreferences(preferences: Partial<UserPreferences>): Promise<UserPreferences> {
-    await connectDB();
-    const user = await this.getCurrentUser();
+  static async updatePreferences(
+    userId: string,
+    preferences: Partial<UserPreferences>
+  ): Promise<UserPreferences> {
+    try {
+      const updatedPreferences = await PreferencesModel.findOneAndUpdate(
+        { userId },
+        { $set: preferences },
+        { new: true, upsert: true }
+      );
 
-    const updatedPreferences = await PreferencesModel.findOneAndUpdate(
-      { userId: user.id },
-      { $set: preferences },
-      { new: true, upsert: true }
-    );
-
-    return {
-      showThumbnails: updatedPreferences.showThumbnails,
-    };
+      return {
+        showThumbnails: updatedPreferences.showThumbnails,
+        cacheMode: updatedPreferences.cacheMode || "memory",
+      };
+    } catch (error) {
+      console.error("Error updating preferences:", error);
+      throw error;
+    }
   }
 }

@@ -36,6 +36,8 @@ next-env.d.ts
 .idea
 .vscode
 
+.cache
+
 # Environment variables
 .env
 .env.local

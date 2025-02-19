@@ -1,7 +1,16 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { UserPreferences } from "@/lib/services/preferences.service";
+
+export interface UserPreferences {
+  showThumbnails: boolean;
+  cacheMode: "memory" | "file";
+}
+
+const defaultPreferences: UserPreferences = {
+  showThumbnails: true,
+  cacheMode: "memory",
+};
 
 interface PreferencesContextType {
   preferences: UserPreferences;
@@ -12,9 +21,7 @@ interface PreferencesContextType {
 const PreferencesContext = createContext<PreferencesContextType | undefined>(undefined);
 
 export function PreferencesProvider({ children }: { children: React.ReactNode }) {
-  const [preferences, setPreferences] = useState<UserPreferences>({
-    showThumbnails: true,
-  });
+  const [preferences, setPreferences] = useState<UserPreferences>(defaultPreferences);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -26,6 +33,8 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
         setPreferences(data);
       } catch (error) {
         console.error("Erreur lors de la récupération des préférences:", error);
+        // En cas d'erreur, on garde les préférences par défaut
+        setPreferences(defaultPreferences);
       } finally {
         setIsLoading(false);
       }
