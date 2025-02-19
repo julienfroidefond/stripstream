@@ -24,7 +24,7 @@ export function Cover({
   className,
   priority = false,
   quality = 80,
-  sizes = "(max-width: 640px) 33vw, (max-width: 1024px) 20vw, 20vw",
+  sizes = "100vw",
   isCompleted = false,
 }: CoverProps) {
   const [imageError, setImageError] = useState(false);

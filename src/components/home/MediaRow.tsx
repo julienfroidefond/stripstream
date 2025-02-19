@@ -97,7 +97,6 @@ function MediaCard({ item, onClick }: MediaCardProps) {
           type={isSeries ? "series" : "book"}
           id={item.id}
           alt={`Couverture de ${title}`}
-          sizes="100vh"
           quality={100}
         />
         {/* Overlay avec les informations au survol */}
