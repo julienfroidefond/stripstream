@@ -33,7 +33,7 @@ export class SeriesService extends BaseApiService {
       const url = this.buildUrl(config, `series/${seriesId}/books`, {
         page: page.toString(),
         size: size.toString(),
-        sort: "metadata.number,asc",
+        sort: "metadata.numberSort,asc",
         ...(unreadOnly && { read_status: "UNREAD,IN_PROGRESS" }),
       });
       const headers = this.getAuthHeaders(config);
