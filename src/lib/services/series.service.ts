@@ -57,12 +57,10 @@ export class SeriesService extends BaseApiService {
       return this.fetchWithCache<string>(
         `series-first-book-${seriesId}`,
         async () => {
-          const response = await fetch(`${url}?page=0&size=1`, { headers });
-          if (!response.ok) {
-            throw new Error(`Erreur HTTP: ${response.status}`);
-          }
-
-          const data = await response.json();
+          const data = await this.fetchFromApi<LibraryResponse<KomgaBook>>(
+            `series/${seriesId}/books?page=0&size=1`,
+            headers
+          );
           if (!data.content || data.content.length === 0) {
             throw new Error("Aucun livre trouvé dans la série");
           }

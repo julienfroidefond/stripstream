@@ -7,10 +7,6 @@ export const metadata: Metadata = {
   description: "Configurez vos préférences StripStream",
 };
 
-export const viewport = {
-  colorScheme: "dark light",
-};
-
 export default async function SettingsPage() {
   let config = null;
   let ttlConfig = null;

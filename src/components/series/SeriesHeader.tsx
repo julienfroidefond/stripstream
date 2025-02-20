@@ -102,7 +102,6 @@ export const SeriesHeader = ({ series }: SeriesHeaderProps) => {
           alt={`Couverture de ${series.metadata.title}`}
           className="blur-sm scale-105 brightness-50"
           quality={60}
-          priority
         />
       </div>
 
@@ -116,7 +115,6 @@ export const SeriesHeader = ({ series }: SeriesHeaderProps) => {
               id={series.id}
               alt={`Couverture de ${series.metadata.title}`}
               quality={90}
-              priority
             />
           </div>
 

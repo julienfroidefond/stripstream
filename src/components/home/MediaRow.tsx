@@ -1,20 +1,43 @@
 "use client";
 
-import { KomgaBook, KomgaSeries } from "@/types/komga";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRef, useState } from "react";
 import { Cover } from "@/components/ui/cover";
+import { useRouter } from "next/navigation";
+
+interface BaseItem {
+  id: string;
+  metadata: {
+    title: string;
+  };
+}
+
+interface OptimizedSeries extends BaseItem {
+  booksCount: number;
+}
+
+interface OptimizedBook extends BaseItem {
+  metadata: {
+    title: string;
+    number?: string;
+  };
+}
 
 interface MediaRowProps {
   title: string;
-  items: (KomgaSeries | KomgaBook)[];
-  onItemClick?: (item: KomgaSeries | KomgaBook) => void;
+  items: (OptimizedSeries | OptimizedBook)[];
 }
 
-export function MediaRow({ title, items, onItemClick }: MediaRowProps) {
+export function MediaRow({ title, items }: MediaRowProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
+  const router = useRouter();
+
+  const onItemClick = (item: OptimizedSeries | OptimizedBook) => {
+    const path = "booksCount" in item ? `/series/${item.id}` : `/books/${item.id}`;
+    router.push(path);
+  };
 
   const handleScroll = () => {
     if (!scrollContainerRef.current) return;
@@ -75,12 +98,11 @@ export function MediaRow({ title, items, onItemClick }: MediaRowProps) {
 }
 
 interface MediaCardProps {
-  item: KomgaSeries | KomgaBook;
+  item: OptimizedSeries | OptimizedBook;
   onClick?: () => void;
 }
 
 function MediaCard({ item, onClick }: MediaCardProps) {
-  // Déterminer si c'est une série ou un livre
   const isSeries = "booksCount" in item;
   const title = isSeries
     ? item.metadata.title

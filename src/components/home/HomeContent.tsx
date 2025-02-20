@@ -1,9 +1,6 @@
-"use client";
-
 import { HeroSection } from "./HeroSection";
 import { MediaRow } from "./MediaRow";
 import { KomgaBook, KomgaSeries } from "@/types/komga";
-import { useRouter } from "next/navigation";
 
 interface HomeData {
   ongoing: KomgaSeries[];
@@ -16,13 +13,6 @@ interface HomeContentProps {
 }
 
 export function HomeContent({ data }: HomeContentProps) {
-  const router = useRouter();
-
-  const handleItemClick = async (item: KomgaSeries | KomgaBook) => {
-    const path = "booksCount" in item ? `/series/${item.id}` : `/books/${item.id}`;
-    await router.push(path);
-  };
-
   // Vérification des données pour le debug
   // console.log("HomeContent - Données reçues:", {
   //   ongoingCount: data.ongoing?.length || 0,
@@ -30,31 +20,50 @@ export function HomeContent({ data }: HomeContentProps) {
   //   onDeckCount: data.onDeck?.length || 0,
   // });
 
+  const optimizeSeriesData = (series: KomgaSeries[]) => {
+    return series.map(({ id, metadata, booksCount }) => ({
+      id,
+      metadata: { title: metadata.title },
+      booksCount,
+    }));
+  };
+
+  const optimizeHeroSeriesData = (series: KomgaSeries[]) => {
+    return series.map(({ id, metadata }) => ({
+      id,
+      metadata: { title: metadata.title },
+    }));
+  };
+
+  const optimizeBookData = (books: KomgaBook[]) => {
+    return books.map(({ id, metadata }) => ({
+      id,
+      metadata: {
+        title: metadata.title,
+        number: metadata.number,
+      },
+    }));
+  };
+
   return (
     <main className="container mx-auto px-4 py-8 space-y-12">
       {/* Hero Section - Afficher uniquement si nous avons des séries en cours */}
-      {data.ongoing && data.ongoing.length > 0 && <HeroSection series={data.ongoing} />}
+      {data.ongoing && data.ongoing.length > 0 && (
+        <HeroSection series={optimizeHeroSeriesData(data.ongoing)} />
+      )}
 
       {/* Sections de contenu */}
       <div className="space-y-12">
         {data.ongoing && data.ongoing.length > 0 && (
-          <MediaRow
-            title="Continuer la lecture"
-            items={data.ongoing}
-            onItemClick={handleItemClick}
-          />
+          <MediaRow title="Continuer la lecture" items={optimizeSeriesData(data.ongoing)} />
         )}
 
         {data.onDeck && data.onDeck.length > 0 && (
-          <MediaRow title="À suivre" items={data.onDeck} onItemClick={handleItemClick} />
+          <MediaRow title="À suivre" items={optimizeBookData(data.onDeck)} />
         )}
 
         {data.recentlyRead && data.recentlyRead.length > 0 && (
-          <MediaRow
-            title="Ajouts récents"
-            items={data.recentlyRead}
-            onItemClick={handleItemClick}
-          />
+          <MediaRow title="Ajouts récents" items={optimizeBookData(data.recentlyRead)} />
         )}
       </div>
     </main>

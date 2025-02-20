@@ -73,13 +73,29 @@ export abstract class BaseApiService {
     return url.toString();
   }
 
-  protected static async fetchFromApi<T>(url: string, headers: Headers): Promise<T> {
+  protected static async fetchFromApi<T>(
+    url: string,
+    headers: Headers,
+    isImage: boolean = false
+  ): Promise<T> {
+    // const startTime = Date.now(); // Capture le temps de début
+
     const response = await fetch(url, { headers });
+
+    // const endTime = Date.now(); // Capture le temps de fin
+    // const responseTime = endTime - startTime; // Calcule le temps de réponse
+
+    // // Log le temps de réponse en ms ou en s
+    // if (responseTime >= 1000) {
+    //   console.log(`Temps de réponse pour ${url}: ${(responseTime / 1000).toFixed(2)}s`);
+    // } else {
+    //   console.log(`Temps de réponse pour ${url}: ${responseTime}ms`);
+    // }
 
     if (!response.ok) {
       throw new Error(`Erreur HTTP: ${response.status} ${response.statusText}`);
     }
 
-    return response.json();
+    return isImage ? response : response.json();
   }
 }

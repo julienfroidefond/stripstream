@@ -1,10 +1,14 @@
-"use client";
-
-import { KomgaSeries } from "@/types/komga";
 import { Cover } from "@/components/ui/cover";
 
+interface OptimizedHeroSeries {
+  id: string;
+  metadata: {
+    title: string;
+  };
+}
+
 interface HeroSectionProps {
-  series: KomgaSeries[];
+  series: OptimizedHeroSeries[];
 }
 
 export function HeroSection({ series }: HeroSectionProps) {

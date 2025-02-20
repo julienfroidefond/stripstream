@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   keywords: ["comics", "manga", "bd", "reader", "komga", "stripstream"],
   authors: [{ name: "Julien Froidefond" }],
-  colorScheme: "dark light",
+  // colorScheme: "dark light",
   formatDetection: {
     telephone: false,
   },
