@@ -2,7 +2,7 @@ import { ThumbnailProps } from "../types";
 import { ImageLoader } from "@/components/ui/image-loader";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
-import { forwardRef, useEffect, useState, useCallback, useRef } from "react";
+import { forwardRef, useEffect, useState, useCallback, useRef, useImperativeHandle } from "react";
 
 export const Thumbnail = forwardRef<HTMLButtonElement, ThumbnailProps>(
   (
@@ -23,7 +23,9 @@ export const Thumbnail = forwardRef<HTMLButtonElement, ThumbnailProps>(
     const [isInViewport, setIsInViewport] = useState(false);
     const loadAttempts = useRef(0);
     const maxAttempts = 3;
-    const thumbnailRef = useRef<HTMLButtonElement>(null);
+    const internalRef = useRef<HTMLButtonElement>(null);
+
+    useImperativeHandle(ref, () => internalRef.current as HTMLButtonElement);
 
     const resetLoadingState = useCallback(() => {
       setIsLoading(true);
@@ -46,7 +48,7 @@ export const Thumbnail = forwardRef<HTMLButtonElement, ThumbnailProps>(
         }
       );
 
-      const element = thumbnailRef.current;
+      const element = internalRef.current;
       if (element) {
         observer.observe(element);
       }
@@ -105,14 +107,7 @@ export const Thumbnail = forwardRef<HTMLButtonElement, ThumbnailProps>(
 
     return (
       <button
-        ref={(node) => {
-          // thumbnailRef.current = node;
-          if (typeof ref === "function") {
-            ref(node);
-          } else if (ref) {
-            ref.current = node;
-          }
-        }}
+        ref={internalRef}
         data-page={pageNumber}
         id={`thumbnail-${pageNumber}`}
         onClick={() => onPageChange(pageNumber)}
