@@ -10,6 +10,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Progress } from "@/components/ui/progress";
 import Image from "next/image";
 import Link from "next/link";
+import { BookOfflineButton } from "@/components/ui/book-offline-button";
 
 type BookStatus = "idle" | "downloading" | "available" | "error";
 
@@ -113,9 +114,9 @@ export function DownloadManager() {
   const handleDeleteBook = async (book: KomgaBook) => {
     try {
       const cache = await caches.open("stripstream-books");
-      await cache.delete(`/api/komga/books/${book.id}/pages`);
+      await cache.delete(`/api/komga/images/books/${book.id}/pages`);
       for (let i = 1; i <= book.media.pagesCount; i++) {
-        await cache.delete(`/api/komga/books/${book.id}/pages/${i}`);
+        await cache.delete(`/api/komga/images/books/${book.id}/pages/${i}`);
       }
       localStorage.removeItem(getStorageKey(book.id));
       setDownloadedBooks((prev) => prev.filter((b) => b.book.id !== book.id));
@@ -153,18 +154,38 @@ export function DownloadManager() {
 
   return (
     <Tabs defaultValue="all" className="space-y-4">
-      <TabsList>
-        <TabsTrigger value="all">Tous ({downloadedBooks.length})</TabsTrigger>
-        <TabsTrigger value="downloading">
-          En cours ({downloadedBooks.filter((b) => b.status.status === "downloading").length})
-        </TabsTrigger>
-        <TabsTrigger value="available">
-          Disponibles ({downloadedBooks.filter((b) => b.status.status === "available").length})
-        </TabsTrigger>
-        <TabsTrigger value="error">
-          Erreurs ({downloadedBooks.filter((b) => b.status.status === "error").length})
-        </TabsTrigger>
-      </TabsList>
+      <div className="flex items-center justify-between">
+        <TabsList>
+          <TabsTrigger value="all">Tous ({downloadedBooks.length})</TabsTrigger>
+          <TabsTrigger value="downloading">
+            En cours ({downloadedBooks.filter((b) => b.status.status === "downloading").length})
+          </TabsTrigger>
+          <TabsTrigger value="available">
+            Disponibles ({downloadedBooks.filter((b) => b.status.status === "available").length})
+          </TabsTrigger>
+          <TabsTrigger value="error">
+            Erreurs ({downloadedBooks.filter((b) => b.status.status === "error").length})
+          </TabsTrigger>
+        </TabsList>
+        {downloadedBooks.some((b) => b.status.status === "error") && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const errorBooks = downloadedBooks.filter((b) => b.status.status === "error");
+              errorBooks.forEach((book) => handleRetryDownload(book.book));
+              toast({
+                title: "Relance des téléchargements",
+                description: `${errorBooks.length} téléchargement(s) relancé(s)`,
+              });
+            }}
+            className="gap-2"
+          >
+            <Download className="h-4 w-4" />
+            Tout relancer
+          </Button>
+        )}
+      </div>
 
       <TabsContent value="all" className="space-y-4">
         {downloadedBooks.map(({ book, status }) => (
@@ -332,15 +353,18 @@ function BookDownloadCard({ book, status, onDelete, onRetry }: BookDownloadCardP
               <Download className="h-5 w-5" />
             </Button>
           )}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onDelete}
-            title="Supprimer"
-            className="h-8 w-8 p-0 rounded-br-lg rounded-tl-lg"
-          >
-            <Trash2 className="h-5 w-5" />
-          </Button>
+          <BookOfflineButton book={book} />
+          {status.status !== "downloading" && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onDelete}
+              title="Supprimer"
+              className="h-8 w-8 p-0 rounded-br-lg rounded-tl-lg"
+            >
+              <Trash2 className="h-5 w-5" />
+            </Button>
+          )}
         </div>
       </div>
     </Card>

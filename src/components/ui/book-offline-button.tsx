@@ -56,24 +56,44 @@ export function BookOfflineButton({ book, className }: BookOfflineButtonProps) {
 
       // Ajoute le livre au cache si on commence depuis le début
       if (startFromPage === 1) {
-        const pagesResponse = await fetch(`/api/komga/books/${book.id}/pages`);
-        await cache.put(`/api/komga/books/${book.id}/pages`, pagesResponse.clone());
+        const pagesResponse = await fetch(`/api/komga/images/books/${book.id}/pages/1`);
+        if (!pagesResponse.ok) throw new Error("Erreur lors de la récupération des pages");
+        await cache.put(`/api/komga/images/books/${book.id}/pages`, pagesResponse.clone());
       }
 
-      // Cache chaque page
+      // Cache chaque page avec retry
       let failedPages = 0;
       for (let i = startFromPage; i <= book.media.pagesCount; i++) {
-        try {
-          const pageResponse = await fetch(`/api/komga/books/${book.id}/pages/${i}`);
-          if (!pageResponse.ok) {
-            failedPages++;
-            continue;
+        let retryCount = 0;
+        const maxRetries = 3;
+
+        while (retryCount < maxRetries) {
+          try {
+            const pageResponse = await fetch(`/api/komga/images/books/${book.id}/pages/${i}`);
+            if (!pageResponse.ok) {
+              retryCount++;
+              if (retryCount === maxRetries) {
+                failedPages++;
+                console.error(
+                  `Échec du téléchargement de la page ${i} après ${maxRetries} tentatives`
+                );
+              }
+              await new Promise((resolve) => setTimeout(resolve, 1000)); // Attendre 1s avant de réessayer
+              continue;
+            }
+            await cache.put(`/api/komga/images/books/${book.id}/pages/${i}`, pageResponse.clone());
+            break; // Sortir de la boucle si réussi
+          } catch (error) {
+            retryCount++;
+            if (retryCount === maxRetries) {
+              failedPages++;
+              console.error(`Erreur lors du téléchargement de la page ${i}:`, error);
+            }
+            await new Promise((resolve) => setTimeout(resolve, 1000));
           }
-          await cache.put(`/api/komga/books/${book.id}/pages/${i}`, pageResponse.clone());
-        } catch (error) {
-          console.error(`Erreur lors du téléchargement de la page ${i}:`, error);
-          failedPages++;
         }
+
+        // Mise à jour du statut
         const progress = (i / book.media.pagesCount) * 100;
         setDownloadProgress(progress);
         setBookStatus(book.id, {
@@ -82,13 +102,20 @@ export function BookOfflineButton({ book, className }: BookOfflineButtonProps) {
           timestamp: Date.now(),
           lastDownloadedPage: i,
         });
+
+        // Vérifier si le statut a changé pendant le téléchargement
+        const currentStatus = getBookStatus(book.id);
+        if (currentStatus.status === "idle") {
+          // Le téléchargement a été annulé
+          throw new Error("Téléchargement annulé");
+        }
       }
 
       if (failedPages > 0) {
         // Si des pages ont échoué, on supprime tout le cache pour ce livre
-        await cache.delete(`/api/komga/books/${book.id}/pages`);
+        await cache.delete(`/api/komga/images/books/${book.id}/pages`);
         for (let i = 1; i <= book.media.pagesCount; i++) {
-          await cache.delete(`/api/komga/books/${book.id}/pages/${i}`);
+          await cache.delete(`/api/komga/images/books/${book.id}/pages/${i}`);
         }
         setIsAvailableOffline(false);
         setBookStatus(book.id, { status: "error", progress: 0, timestamp: Date.now() });
@@ -107,12 +134,15 @@ export function BookOfflineButton({ book, className }: BookOfflineButtonProps) {
       }
     } catch (error) {
       console.error("Erreur lors du téléchargement:", error);
-      setBookStatus(book.id, { status: "error", progress: 0, timestamp: Date.now() });
-      toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors du téléchargement",
-        variant: "destructive",
-      });
+      // Ne pas changer le statut si le téléchargement a été volontairement annulé
+      if ((error as Error)?.message !== "Téléchargement annulé") {
+        setBookStatus(book.id, { status: "error", progress: 0, timestamp: Date.now() });
+        toast({
+          title: "Erreur",
+          description: "Une erreur est survenue lors du téléchargement",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
       setDownloadProgress(0);
@@ -152,7 +182,7 @@ export function BookOfflineButton({ book, className }: BookOfflineButtonProps) {
     try {
       const cache = await caches.open("stripstream-books");
       // On vérifie que toutes les pages sont dans le cache
-      const bookPages = await cache.match(`/api/komga/books/${book.id}/pages`);
+      const bookPages = await cache.match(`/api/komga/images/books/${book.id}/pages`);
       if (!bookPages) {
         setIsAvailableOffline(false);
         setBookStatus(book.id, { status: "idle", progress: 0, timestamp: Date.now() });
@@ -162,7 +192,7 @@ export function BookOfflineButton({ book, className }: BookOfflineButtonProps) {
       // Vérifie que toutes les pages sont dans le cache
       let allPagesAvailable = true;
       for (let i = 1; i <= book.media.pagesCount; i++) {
-        const page = await cache.match(`/api/komga/books/${book.id}/pages/${i}`);
+        const page = await cache.match(`/api/komga/images/books/${book.id}/pages/${i}`);
         if (!page) {
           allPagesAvailable = false;
           break;
@@ -200,9 +230,9 @@ export function BookOfflineButton({ book, className }: BookOfflineButtonProps) {
       if (isAvailableOffline) {
         setBookStatus(book.id, { status: "idle", progress: 0, timestamp: Date.now() });
         // Supprime le livre du cache
-        await cache.delete(`/api/komga/books/${book.id}/pages`);
+        await cache.delete(`/api/komga/images/books/${book.id}/pages`);
         for (let i = 1; i <= book.media.pagesCount; i++) {
-          await cache.delete(`/api/komga/books/${book.id}/pages/${i}`);
+          await cache.delete(`/api/komga/images/books/${book.id}/pages/${i}`);
           const progress = (i / book.media.pagesCount) * 100;
           setDownloadProgress(progress);
         }
