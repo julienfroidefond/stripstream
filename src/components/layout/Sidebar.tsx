@@ -106,13 +106,17 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   };
 
   const handleLinkClick = useCallback(
-    (path: string) => {
+    async (path: string) => {
       if (pathname === path) {
         onClose();
         return;
       }
+      window.dispatchEvent(new Event("navigationStart"));
       router.push(path);
       onClose();
+      // On attend que la page soit chargée
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      window.dispatchEvent(new Event("navigationComplete"));
     },
     [pathname, router, onClose]
   );

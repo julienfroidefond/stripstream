@@ -10,6 +10,7 @@ import { usePathname } from "next/navigation";
 import { PreferencesProvider } from "@/contexts/PreferencesContext";
 import { registerServiceWorker } from "@/lib/registerSW";
 import { NetworkStatus } from "../ui/NetworkStatus";
+import { LoadingBar } from "@/components/ui/loading-bar";
 
 // Routes qui ne nécessitent pas d'authentification
 const publicRoutes = ["/login", "/register"];
@@ -63,6 +64,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <PreferencesProvider>
         <div className="relative min-h-screen">
+          <LoadingBar />
           {!isPublicRoute && <Header onToggleSidebar={handleToggleSidebar} />}
           {!isPublicRoute && <Sidebar isOpen={isSidebarOpen} onClose={handleCloseSidebar} />}
           <main className={`${!isPublicRoute ? "container pt-4 md:pt-8" : ""}`}>{children}</main>
