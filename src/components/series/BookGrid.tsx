@@ -4,6 +4,7 @@ import { KomgaBook } from "@/types/komga";
 import { formatDate } from "@/lib/utils";
 import { Cover } from "@/components/ui/cover";
 import { MarkAsReadButton } from "@/components/ui/mark-as-read-button";
+import { BookOfflineButton } from "@/components/ui/book-offline-button";
 import { useState, useEffect } from "react";
 
 interface BookGridProps {
@@ -102,9 +103,9 @@ export function BookGrid({ books, onBookClick }: BookGridProps) {
 
             {/* Overlay avec les contrôles */}
             <div className="absolute inset-0 pointer-events-none">
-              {/* Bouton Marquer comme lu en haut à droite avec un petit décalage */}
-              {!isRead && (
-                <div className="absolute top-2 right-2 pointer-events-auto">
+              {/* Boutons en haut à droite avec un petit décalage */}
+              <div className="absolute top-2 right-2 pointer-events-auto flex gap-1">
+                {!isRead && (
                   <MarkAsReadButton
                     bookId={book.id}
                     pagesCount={book.media.pagesCount}
@@ -112,8 +113,12 @@ export function BookGrid({ books, onBookClick }: BookGridProps) {
                     onSuccess={() => handleMarkAsRead(book.id)}
                     className="bg-white/90 hover:bg-white text-black shadow-sm"
                   />
-                </div>
-              )}
+                )}
+                <BookOfflineButton
+                  book={book}
+                  className="bg-white/90 hover:bg-white text-black shadow-sm"
+                />
+              </div>
 
               {/* Informations en bas - visible au survol uniquement */}
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-4 space-y-2 translate-y-full group-hover:translate-y-0 transition-transform duration-200">

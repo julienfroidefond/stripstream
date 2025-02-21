@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, Library, Settings, LogOut, RefreshCw, Star } from "lucide-react";
+import { Home, Library, Settings, LogOut, RefreshCw, Star, Download } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { authService } from "@/lib/services/auth.service";
@@ -117,11 +117,16 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     [pathname, router, onClose]
   );
 
-  const navigation = [
+  const mainNavItems = [
     {
-      name: "Accueil",
+      title: "Accueil",
       href: "/",
       icon: Home,
+    },
+    {
+      title: "Téléchargements",
+      href: "/downloads",
+      icon: Download,
     },
   ];
 
@@ -140,7 +145,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div className="px-3 py-2">
           <div className="space-y-1">
             <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">Navigation</h2>
-            {navigation.map((item) => (
+            {mainNavItems.map((item) => (
               <button
                 key={item.href}
                 onClick={() => handleLinkClick(item.href)}
@@ -150,7 +155,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 )}
               >
                 <item.icon className="mr-2 h-4 w-4" />
-                {item.name}
+                {item.title}
               </button>
             ))}
           </div>

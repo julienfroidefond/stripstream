@@ -5,7 +5,6 @@ import { PreferencesService } from "./preferences.service";
 
 export class BookService extends BaseApiService {
   static async getBook(bookId: string): Promise<{ book: KomgaBook; pages: number[] }> {
-    console.log("dzadaz");
     try {
       const config = await this.getKomgaConfig();
       const headers = this.getAuthHeaders(config);
