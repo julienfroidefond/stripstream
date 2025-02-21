@@ -106,7 +106,7 @@ export const Thumbnail = forwardRef<HTMLButtonElement, ThumbnailProps>(
     return (
       <button
         ref={(node) => {
-          thumbnailRef.current = node;
+          // thumbnailRef.current = node;
           if (typeof ref === "function") {
             ref(node);
           } else if (ref) {

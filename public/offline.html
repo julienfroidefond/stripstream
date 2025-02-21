@@ -34,6 +34,11 @@
         color: #94a3b8;
         margin-bottom: 2rem;
       }
+      .buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+      }
       button {
         background-color: #4f46e5;
         color: white;
@@ -47,6 +52,12 @@
       button:hover {
         background-color: #4338ca;
       }
+      button.secondary {
+        background-color: #475569;
+      }
+      button.secondary:hover {
+        background-color: #334155;
+      }
     </style>
   </head>
   <body>
@@ -56,7 +67,10 @@
         Il semble que vous n'ayez pas de connexion internet. Certaines fonctionnalités de
         StripStream peuvent ne pas être disponibles en mode hors ligne.
       </p>
-      <button onclick="window.location.reload()">Réessayer</button>
+      <div class="buttons">
+        <button class="secondary" onclick="window.history.back()">Retour</button>
+        <button onclick="window.location.reload()">Réessayer</button>
+      </div>
     </div>
   </body>
 </html>

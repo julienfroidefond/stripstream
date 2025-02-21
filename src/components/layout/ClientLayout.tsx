@@ -8,6 +8,8 @@ import { InstallPWA } from "../ui/InstallPWA";
 import { Toaster } from "@/components/ui/toaster";
 import { usePathname } from "next/navigation";
 import { PreferencesProvider } from "@/contexts/PreferencesContext";
+import { registerServiceWorker } from "@/lib/registerSW";
+import { NetworkStatus } from "../ui/NetworkStatus";
 
 // Routes qui ne nécessitent pas d'authentification
 const publicRoutes = ["/login", "/register"];
@@ -51,16 +53,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
   useEffect(() => {
     // Enregistrer le service worker
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker
-        .register("/sw.js")
-        .then(() => {
-          // Succès silencieux
-        })
-        .catch((error) => {
-          console.error("Erreur lors de l'enregistrement du Service Worker:", error);
-        });
-    }
+    registerServiceWorker();
   }, []);
 
   // Ne pas afficher le header et la sidebar sur les routes publiques
@@ -75,6 +68,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
           <main className={`${!isPublicRoute ? "container pt-4 md:pt-8" : ""}`}>{children}</main>
           <InstallPWA />
           <Toaster />
+          <NetworkStatus />
         </div>
       </PreferencesProvider>
     </ThemeProvider>
