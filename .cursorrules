@@ -44,4 +44,6 @@ Follow these rules when you write code:
 - Use the Komga API to fetch data.
 - Always check the Komga API documentation before implementing any feature. https://cloud.julienfroidefond.com/swagger-ui/index.html#/
 - Always commit your code but not push it to the repository.
+- Always check api.md and always update it when you do something.
+- Always check services.md and always update it when you do something.
 - Always check devbook.md and always update it when you do something.
