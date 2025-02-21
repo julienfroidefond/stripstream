@@ -19,6 +19,15 @@ export class LibraryService extends BaseApiService {
     }
   }
 
+  static async getLibrary(libraryId: string): Promise<Library> {
+    const libraries = await this.getLibraries();
+    const library = libraries.find((library) => library.id === libraryId);
+    if (!library) {
+      throw new Error(`Bibliothèque ${libraryId} non trouvée`);
+    }
+    return library;
+  }
+
   static async getLibrarySeries(
     libraryId: string,
     page: number = 0,

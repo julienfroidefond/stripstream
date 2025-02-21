@@ -18,8 +18,9 @@ async function getLibrarySeries(libraryId: string, page: number = 1, unreadOnly:
       PAGE_SIZE,
       unreadOnly
     );
+    const library = await LibraryService.getLibrary(libraryId);
 
-    return { data: series };
+    return { data: series, library };
   } catch (error) {
     throw error instanceof Error ? error : new Error("Erreur lors de la récupération des séries");
   }
@@ -30,12 +31,16 @@ export default async function LibraryPage({ params, searchParams }: PageProps) {
   const unreadOnly = searchParams.unread === "true";
 
   try {
-    const { data: series } = await getLibrarySeries(params.libraryId, currentPage, unreadOnly);
+    const { data: series, library } = await getLibrarySeries(
+      params.libraryId,
+      currentPage,
+      unreadOnly
+    );
 
     return (
       <div className="container py-8 space-y-8">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Séries</h1>
+          <h1 className="text-3xl font-bold">{library.name}</h1>
           {series.totalElements > 0 && (
             <p className="text-sm text-muted-foreground">
               {series.totalElements} série{series.totalElements > 1 ? "s" : ""}
