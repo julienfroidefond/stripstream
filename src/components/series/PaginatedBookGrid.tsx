@@ -14,6 +14,8 @@ interface PaginatedBookGridProps {
   totalPages: number;
   totalElements: number;
   pageSize: number;
+  defaultShowOnlyUnread: boolean;
+  showOnlyUnread: boolean;
 }
 
 export function PaginatedBookGrid({
@@ -22,26 +24,43 @@ export function PaginatedBookGrid({
   totalPages,
   totalElements,
   pageSize,
+  defaultShowOnlyUnread,
+  showOnlyUnread: initialShowOnlyUnread,
 }: PaginatedBookGridProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isChangingPage, setIsChangingPage] = useState(false);
-  const [showOnlyUnread, setShowOnlyUnread] = useState(searchParams.get("unread") === "true");
+  const [showOnlyUnread, setShowOnlyUnread] = useState(initialShowOnlyUnread);
 
   // Réinitialiser l'état de chargement quand les tomes changent
   useEffect(() => {
     setIsChangingPage(false);
   }, [books]);
 
+  // Mettre à jour l'état local quand la prop change
+  useEffect(() => {
+    setShowOnlyUnread(initialShowOnlyUnread);
+  }, [initialShowOnlyUnread]);
+
+  // Appliquer le filtre par défaut au chargement initial
+  useEffect(() => {
+    if (defaultShowOnlyUnread && !searchParams.has("unread")) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("page", "1");
+      params.set("unread", "true");
+      router.push(`${pathname}?${params.toString()}`);
+    }
+  }, [defaultShowOnlyUnread, pathname, router, searchParams]);
+
   const handlePageChange = async (page: number) => {
     setIsChangingPage(true);
     // Créer un nouvel objet URLSearchParams pour manipuler les paramètres
     const params = new URLSearchParams(searchParams.toString());
     params.set("page", page.toString());
-    if (showOnlyUnread) {
-      params.set("unread", "true");
-    }
+
+    // Conserver l'état du filtre unread
+    params.set("unread", showOnlyUnread.toString());
 
     // Rediriger vers la nouvelle URL avec les paramètres mis à jour
     await router.push(`${pathname}?${params.toString()}`);
@@ -52,13 +71,12 @@ export function PaginatedBookGrid({
     const params = new URLSearchParams(searchParams.toString());
     params.set("page", "1"); // Retourner à la première page lors du changement de filtre
 
-    if (!showOnlyUnread) {
-      params.set("unread", "true");
-    } else {
-      params.delete("unread");
-    }
+    const newUnreadState = !showOnlyUnread;
+    setShowOnlyUnread(newUnreadState);
 
-    setShowOnlyUnread(!showOnlyUnread);
+    // Toujours définir explicitement le paramètre unread
+    params.set("unread", newUnreadState.toString());
+
     await router.push(`${pathname}?${params.toString()}`);
   };
 

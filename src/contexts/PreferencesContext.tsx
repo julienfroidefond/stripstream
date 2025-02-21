@@ -5,11 +5,13 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 export interface UserPreferences {
   showThumbnails: boolean;
   cacheMode: "memory" | "file";
+  showOnlyUnread: boolean;
 }
 
 const defaultPreferences: UserPreferences = {
   showThumbnails: true,
   cacheMode: "memory",
+  showOnlyUnread: false,
 };
 
 interface PreferencesContextType {
@@ -30,7 +32,10 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
         const response = await fetch("/api/preferences");
         if (!response.ok) throw new Error("Erreur lors de la récupération des préférences");
         const data = await response.json();
-        setPreferences(data);
+        setPreferences({
+          ...defaultPreferences,
+          ...data,
+        });
       } catch (error) {
         console.error("Erreur lors de la récupération des préférences:", error);
         // En cas d'erreur, on garde les préférences par défaut
@@ -56,7 +61,15 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
       if (!response.ok) throw new Error("Erreur lors de la mise à jour des préférences");
 
       const updatedPreferences = await response.json();
-      setPreferences(updatedPreferences);
+
+      setPreferences((prev) => {
+        const newState = {
+          ...prev,
+          ...updatedPreferences,
+        };
+        console.log("Nouvel état des préférences:", newState);
+        return newState;
+      });
     } catch (error) {
       console.error("Erreur lors de la mise à jour des préférences:", error);
       throw error;

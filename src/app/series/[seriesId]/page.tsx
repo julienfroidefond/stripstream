@@ -1,6 +1,7 @@
 import { PaginatedBookGrid } from "@/components/series/PaginatedBookGrid";
 import { SeriesHeader } from "@/components/series/SeriesHeader";
 import { SeriesService } from "@/lib/services/series.service";
+import { PreferencesService } from "@/lib/services/preferences.service";
 
 interface PageProps {
   params: { seriesId: string };
@@ -9,18 +10,29 @@ interface PageProps {
 
 const PAGE_SIZE = 24;
 
+async function getSeriesBooks(seriesId: string, page: number = 1, unreadOnly: boolean = false) {
+  try {
+    const pageIndex = page - 1;
+
+    const books = await SeriesService.getSeriesBooks(seriesId, pageIndex, PAGE_SIZE, unreadOnly);
+    const series = await SeriesService.getSeries(seriesId);
+
+    return { data: books, series };
+  } catch (error) {
+    throw error instanceof Error ? error : new Error("Erreur lors de la récupération des tomes");
+  }
+}
+
 export default async function SeriesPage({ params, searchParams }: PageProps) {
   const currentPage = searchParams.page ? parseInt(searchParams.page) : 1;
-  const unreadOnly = searchParams.unread === "true";
+  const preferences = await PreferencesService.getPreferences();
+
+  // Utiliser le paramètre d'URL s'il existe, sinon utiliser la préférence utilisateur
+  const unreadOnly =
+    searchParams.unread !== undefined ? searchParams.unread === "true" : preferences.showOnlyUnread;
 
   try {
-    const pageIndex = currentPage - 1;
-
-    // Appels API parallèles pour les détails de la série et les tomes
-    const [series, books] = await Promise.all([
-      SeriesService.getSeries(params.seriesId),
-      SeriesService.getSeriesBooks(params.seriesId, pageIndex, PAGE_SIZE, unreadOnly),
-    ]);
+    const { data: books, series } = await getSeriesBooks(params.seriesId, currentPage, unreadOnly);
 
     return (
       <div className="container py-8 space-y-8">
@@ -31,6 +43,8 @@ export default async function SeriesPage({ params, searchParams }: PageProps) {
           totalPages={books.totalPages}
           totalElements={books.totalElements}
           pageSize={PAGE_SIZE}
+          defaultShowOnlyUnread={preferences.showOnlyUnread}
+          showOnlyUnread={unreadOnly}
         />
       </div>
     );

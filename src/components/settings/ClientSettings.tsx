@@ -306,6 +306,39 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
                   onCheckedChange={handleToggleThumbnails}
                 />
               </div>
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="unread-filter">Filtre "À lire" par défaut</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Afficher uniquement les séries non lues par défaut
+                  </p>
+                </div>
+                <Switch
+                  id="unread-filter"
+                  checked={preferences.showOnlyUnread}
+                  onCheckedChange={async (checked) => {
+                    try {
+                      await updatePreferences({ showOnlyUnread: checked });
+                      toast({
+                        title: "Préférences sauvegardées",
+                        description: `Le filtre "À lire" par défaut est maintenant ${
+                          checked ? "activé" : "désactivé"
+                        }`,
+                      });
+                    } catch (error) {
+                      console.error("Erreur détaillée:", error);
+                      toast({
+                        variant: "destructive",
+                        title: "Erreur",
+                        description:
+                          error instanceof Error
+                            ? error.message
+                            : "Une erreur est survenue lors de la mise à jour des préférences",
+                      });
+                    }
+                  }}
+                />
+              </div>
             </div>
           </div>
         </div>

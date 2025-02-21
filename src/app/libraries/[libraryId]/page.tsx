@@ -1,5 +1,6 @@
 import { PaginatedSeriesGrid } from "@/components/library/PaginatedSeriesGrid";
 import { LibraryService } from "@/lib/services/library.service";
+import { PreferencesService } from "@/lib/services/preferences.service";
 
 interface PageProps {
   params: { libraryId: string };
@@ -28,7 +29,11 @@ async function getLibrarySeries(libraryId: string, page: number = 1, unreadOnly:
 
 export default async function LibraryPage({ params, searchParams }: PageProps) {
   const currentPage = searchParams.page ? parseInt(searchParams.page) : 1;
-  const unreadOnly = searchParams.unread === "true";
+  const preferences = await PreferencesService.getPreferences();
+
+  // Utiliser le paramètre d'URL s'il existe, sinon utiliser la préférence utilisateur
+  const unreadOnly =
+    searchParams.unread !== undefined ? searchParams.unread === "true" : preferences.showOnlyUnread;
 
   try {
     const { data: series, library } = await getLibrarySeries(
@@ -53,6 +58,8 @@ export default async function LibraryPage({ params, searchParams }: PageProps) {
           totalPages={series.totalPages}
           totalElements={series.totalElements}
           pageSize={PAGE_SIZE}
+          defaultShowOnlyUnread={preferences.showOnlyUnread}
+          showOnlyUnread={unreadOnly}
         />
       </div>
     );
