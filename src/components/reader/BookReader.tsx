@@ -10,6 +10,7 @@ import { NavigationBar } from "./components/NavigationBar";
 import { ControlButtons } from "./components/ControlButtons";
 import { ImageLoader } from "@/components/ui/image-loader";
 import { cn } from "@/lib/utils";
+import { useReadingDirection } from "./hooks/useReadingDirection";
 
 export function BookReader({ book, pages, onClose }: BookReaderProps) {
   const [isDoublePage, setIsDoublePage] = useState(false);
@@ -17,6 +18,7 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const readerRef = useRef<HTMLDivElement>(null);
   const isLandscape = useOrientation();
+  const { direction, toggleDirection, isRTL } = useReadingDirection();
 
   const {
     currentPage,
@@ -33,6 +35,7 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
     pages,
     isDoublePage,
     onClose,
+    direction,
   });
 
   const { preloadPage, getPageUrl, cleanCache } = usePageCache({
@@ -133,7 +136,15 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
     return () => {
       isMounted = false;
     };
-  }, [currentPage, isDoublePage, shouldShowDoublePage, preloadPage, cleanCache, pages.length]);
+  }, [
+    currentPage,
+    isDoublePage,
+    shouldShowDoublePage,
+    preloadPage,
+    cleanCache,
+    pages.length,
+    isRTL,
+  ]);
 
   // Effet pour gérer le mode double page automatiquement en paysage
   useEffect(() => {
@@ -200,6 +211,8 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
                 console.error("Erreur lors du changement de mode plein écran:", error);
               }
             }}
+            direction={direction}
+            onToggleDirection={toggleDirection}
           />
 
           {/* Pages */}
@@ -216,7 +229,8 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
               <div
                 className={cn(
                   "relative h-full flex items-center",
-                  isDoublePage ? "w-1/2 justify-end" : "w-full justify-center"
+                  isDoublePage ? "w-1/2 justify-end" : "w-full justify-center",
+                  direction === "rtl" && isDoublePage && "justify-start"
                 )}
               >
                 <ImageLoader isLoading={isLoading} />
@@ -235,7 +249,12 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
 
               {/* Deuxième page en mode double page */}
               {isDoublePage && shouldShowDoublePage(currentPage) && (
-                <div className="relative h-full w-1/2 flex items-center justify-start">
+                <div
+                  className={cn(
+                    "relative h-full w-1/2 flex items-center",
+                    direction === "rtl" ? "justify-end" : "justify-start"
+                  )}
+                >
                   <ImageLoader isLoading={secondPageLoading} />
                   {nextPageUrl && (
                     <img
@@ -252,15 +271,16 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
               )}
             </div>
           </div>
-        </div>
 
-        <NavigationBar
-          currentPage={currentPage}
-          pages={pages}
-          onPageChange={navigateToPage}
-          showControls={showControls}
-          book={book}
-        />
+          {/* Barre de navigation */}
+          <NavigationBar
+            currentPage={currentPage}
+            pages={pages}
+            onPageChange={navigateToPage}
+            showControls={showControls}
+            book={book}
+          />
+        </div>
       </div>
     </div>
   );

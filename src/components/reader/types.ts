@@ -45,6 +45,8 @@ export interface ControlButtonsProps {
   onToggleDoublePage: () => void;
   isFullscreen: boolean;
   onToggleFullscreen: () => void;
+  direction: "ltr" | "rtl";
+  onToggleDirection: () => void;
 }
 
 export interface UsePageNavigationProps {
@@ -52,4 +54,5 @@ export interface UsePageNavigationProps {
   pages: number[];
   isDoublePage: boolean;
   onClose?: () => void;
+  direction: "ltr" | "rtl";
 }

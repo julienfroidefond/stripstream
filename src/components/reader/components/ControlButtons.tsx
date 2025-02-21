@@ -7,6 +7,7 @@ import {
   LayoutTemplate,
   Maximize2,
   Minimize2,
+  ArrowLeftRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -22,6 +23,8 @@ export const ControlButtons = ({
   onToggleDoublePage,
   isFullscreen,
   onToggleFullscreen,
+  direction,
+  onToggleDirection,
 }: ControlButtonsProps) => {
   return (
     <>
@@ -51,6 +54,20 @@ export const ControlButtons = ({
           ) : (
             <SplitSquareVertical className="h-6 w-6" />
           )}
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleDirection();
+          }}
+          className="p-2 rounded-full bg-background/50 hover:bg-background/80 transition-colors"
+          aria-label={`Changer le sens de lecture (actuellement de ${
+            direction === "ltr" ? "gauche à droite" : "droite à gauche"
+          })`}
+        >
+          <ArrowLeftRight
+            className={cn("h-6 w-6 transition-transform", direction === "rtl" && "rotate-180")}
+          />
         </button>
         <button
           onClick={(e) => {
@@ -89,7 +106,8 @@ export const ControlButtons = ({
             onPreviousPage();
           }}
           className={cn(
-            "absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/50 hover:bg-background/80 transition-all duration-300 z-20",
+            "absolute top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/50 hover:bg-background/80 transition-all duration-300 z-20",
+            direction === "rtl" ? "right-4" : "left-4",
             showControls ? "opacity-100" : "opacity-0 pointer-events-none"
           )}
           aria-label="Page précédente"
@@ -106,7 +124,8 @@ export const ControlButtons = ({
             onNextPage();
           }}
           className={cn(
-            "absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/50 hover:bg-background/80 transition-all duration-300 z-20",
+            "absolute top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/50 hover:bg-background/80 transition-all duration-300 z-20",
+            direction === "rtl" ? "left-4" : "right-4",
             showControls ? "opacity-100" : "opacity-0 pointer-events-none"
           )}
           aria-label="Page suivante"

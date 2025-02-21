@@ -6,6 +6,7 @@ interface UsePageNavigationProps {
   pages: number[];
   isDoublePage: boolean;
   onClose?: () => void;
+  direction: "ltr" | "rtl";
 }
 
 export const usePageNavigation = ({
@@ -13,6 +14,7 @@ export const usePageNavigation = ({
   pages,
   isDoublePage,
   onClose,
+  direction,
 }: UsePageNavigationProps) => {
   const [currentPage, setCurrentPage] = useState(book.readProgress?.page || 1);
   const [isLoading, setIsLoading] = useState(true);
@@ -21,6 +23,7 @@ export const usePageNavigation = ({
   const touchStartXRef = useRef<number | null>(null);
   const touchStartYRef = useRef<number | null>(null);
   const currentPageRef = useRef(currentPage);
+  const isRTL = direction === "rtl";
 
   useEffect(() => {
     currentPageRef.current = currentPage;
@@ -74,32 +77,40 @@ export const usePageNavigation = ({
 
   const navigateToPage = useCallback(
     (page: number) => {
+      // if (page >= 1 && page <= pages.length) {
       setCurrentPage(page);
       setIsLoading(true);
       setSecondPageLoading(true);
       debouncedSyncReadProgress(page);
+      // }
     },
     [debouncedSyncReadProgress]
   );
 
   const handlePreviousPage = useCallback(() => {
-    if (currentPage > 1) {
-      const newPage = isDoublePage && currentPage > 2 ? currentPage - 2 : currentPage - 1;
-      navigateToPage(newPage);
+    if (isDoublePage && shouldShowDoublePage(currentPage - 2)) {
+      navigateToPage(Math.max(1, currentPage - 2));
+    } else {
+      navigateToPage(Math.max(1, currentPage - 1));
     }
-  }, [currentPage, isDoublePage, navigateToPage]);
+  }, [currentPage, isDoublePage, navigateToPage, shouldShowDoublePage]);
 
   const handleNextPage = useCallback(() => {
-    if (currentPage < pages.length) {
-      const newPage = isDoublePage ? Math.min(currentPage + 2, pages.length) : currentPage + 1;
-      navigateToPage(newPage);
+    if (isDoublePage && shouldShowDoublePage(currentPage)) {
+      navigateToPage(Math.min(pages.length, currentPage + 2));
+    } else {
+      navigateToPage(Math.min(pages.length, currentPage + 1));
     }
-  }, [currentPage, pages.length, isDoublePage, navigateToPage]);
+  }, [currentPage, isDoublePage, navigateToPage, pages.length, shouldShowDoublePage]);
 
-  const handleTouchStart = useCallback((event: TouchEvent) => {
-    touchStartXRef.current = event.touches[0].clientX;
-    touchStartYRef.current = event.touches[0].clientY;
-  }, []);
+  const handleTouchStart = useCallback(
+    (event: TouchEvent) => {
+      touchStartXRef.current = event.touches[0].clientX;
+      touchStartYRef.current = event.touches[0].clientY;
+      currentPageRef.current = currentPage;
+    },
+    [currentPage]
+  );
 
   const handleTouchEnd = useCallback(
     (event: TouchEvent) => {
@@ -108,23 +119,35 @@ export const usePageNavigation = ({
       const touchEndX = event.changedTouches[0].clientX;
       const touchEndY = event.changedTouches[0].clientY;
       const deltaX = touchEndX - touchStartXRef.current;
-      const deltaY = Math.abs(touchEndY - touchStartYRef.current);
-      const minSwipeDistance = 50;
+      const deltaY = touchEndY - touchStartYRef.current;
 
-      if (deltaY > Math.abs(deltaX)) return;
+      // Si le déplacement vertical est plus important que le déplacement horizontal,
+      // on ne fait rien (pour éviter de confondre avec un scroll)
+      if (Math.abs(deltaY) > Math.abs(deltaX)) return;
 
-      if (Math.abs(deltaX) > minSwipeDistance) {
+      // On vérifie si le déplacement est suffisant pour changer de page
+      if (Math.abs(deltaX) > 50) {
         if (deltaX > 0) {
-          handlePreviousPage();
+          // Swipe vers la droite
+          if (isRTL) {
+            handleNextPage();
+          } else {
+            handlePreviousPage();
+          }
         } else {
-          handleNextPage();
+          // Swipe vers la gauche
+          if (isRTL) {
+            handlePreviousPage();
+          } else {
+            handleNextPage();
+          }
         }
       }
 
       touchStartXRef.current = null;
       touchStartYRef.current = null;
     },
-    [handlePreviousPage, handleNextPage]
+    [handleNextPage, handlePreviousPage, isRTL]
   );
 
   useEffect(() => {
@@ -133,12 +156,23 @@ export const usePageNavigation = ({
   }, [isDoublePage]);
 
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "ArrowLeft") {
-        handlePreviousPage();
-      } else if (event.key === "ArrowRight") {
-        handleNextPage();
-      } else if (event.key === "Escape" && onClose) {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        if (isRTL) {
+          handleNextPage();
+        } else {
+          handlePreviousPage();
+        }
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        if (isRTL) {
+          handlePreviousPage();
+        } else {
+          handleNextPage();
+        }
+      } else if (e.key === "Escape" && onClose) {
+        e.preventDefault();
         onClose();
       }
     };
@@ -152,7 +186,7 @@ export const usePageNavigation = ({
       window.removeEventListener("touchstart", handleTouchStart);
       window.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [handlePreviousPage, handleNextPage, handleTouchStart, handleTouchEnd, onClose]);
+  }, [handleNextPage, handlePreviousPage, handleTouchStart, handleTouchEnd, onClose, isRTL]);
 
   useEffect(() => {
     return () => {
