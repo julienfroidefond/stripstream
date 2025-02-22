@@ -1,12 +1,26 @@
 import { HomeContent } from "@/components/home/HomeContent";
 import { HomeService } from "@/lib/services/home.service";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
+
+async function refreshHome() {
+  "use server";
+
+  try {
+    await HomeService.clearHomeCache();
+    revalidatePath("/");
+    return { success: true };
+  } catch (error) {
+    console.error("Erreur lors du rafraîchissement:", error);
+    return { success: false, error: "Erreur lors du rafraîchissement de la page d'accueil" };
+  }
+}
 
 export default async function HomePage() {
   try {
     const data = await HomeService.getHomeData();
 
-    return <HomeContent data={data} />;
+    return <HomeContent data={data} refreshHome={refreshHome} />;
   } catch (error) {
     // Si l'erreur indique une configuration manquante, rediriger vers les préférences
     if (error instanceof Error && error.message.includes("Configuration Komga manquante")) {

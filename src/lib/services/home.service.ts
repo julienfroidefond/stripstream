@@ -1,6 +1,7 @@
 import { BaseApiService } from "./base-api.service";
 import { KomgaBook, KomgaSeries } from "@/types/komga";
 import { LibraryResponse } from "@/types/library";
+import { serverCacheService } from "./server-cache.service";
 
 interface HomeData {
   ongoing: KomgaSeries[];
@@ -62,5 +63,11 @@ export class HomeService extends BaseApiService {
     } catch (error) {
       return this.handleError(error, "Impossible de récupérer les données de la page d'accueil");
     }
+  }
+
+  static async clearHomeCache() {
+    serverCacheService.delete("home-ongoing");
+    serverCacheService.delete("home-recently-read");
+    serverCacheService.delete("home-on-deck");
   }
 }

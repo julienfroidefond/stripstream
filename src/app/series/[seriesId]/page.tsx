@@ -3,7 +3,6 @@ import { SeriesHeader } from "@/components/series/SeriesHeader";
 import { SeriesService } from "@/lib/services/series.service";
 import { PreferencesService } from "@/lib/services/preferences.service";
 import { revalidatePath } from "next/cache";
-import { RefreshButton } from "@/components/library/RefreshButton";
 
 interface PageProps {
   params: { seriesId: string };

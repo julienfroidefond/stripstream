@@ -1,6 +1,7 @@
 import { HeroSection } from "./HeroSection";
 import { MediaRow } from "./MediaRow";
 import { KomgaBook, KomgaSeries } from "@/types/komga";
+import { RefreshButton } from "@/components/library/RefreshButton";
 
 interface HomeData {
   ongoing: KomgaSeries[];
@@ -10,9 +11,10 @@ interface HomeData {
 
 interface HomeContentProps {
   data: HomeData;
+  refreshHome: () => Promise<{ success: boolean; error?: string }>;
 }
 
-export function HomeContent({ data }: HomeContentProps) {
+export function HomeContent({ data, refreshHome }: HomeContentProps) {
   // Vérification des données pour le debug
   // console.log("HomeContent - Données reçues:", {
   //   ongoingCount: data.ongoing?.length || 0,
@@ -47,6 +49,10 @@ export function HomeContent({ data }: HomeContentProps) {
 
   return (
     <main className="container mx-auto px-4 py-8 space-y-12">
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold">Accueil</h1>
+        <RefreshButton libraryId="home" refreshLibrary={refreshHome} />
+      </div>
       {/* Hero Section - Afficher uniquement si nous avons des séries en cours */}
       {data.ongoing && data.ongoing.length > 0 && (
         <HeroSection series={optimizeHeroSeriesData(data.ongoing)} />
