@@ -33,7 +33,8 @@ export class LibraryService extends BaseApiService {
     libraryId: string,
     page: number = 0,
     size: number = 20,
-    unreadOnly: boolean = false
+    unreadOnly: boolean = false,
+    search?: string
   ): Promise<LibraryResponse<Series>> {
     try {
       const config = await this.getKomgaConfig();
@@ -42,11 +43,12 @@ export class LibraryService extends BaseApiService {
         page: page.toString(),
         size: size.toString(),
         ...(unreadOnly && { read_status: "UNREAD,IN_PROGRESS" }),
+        ...(search && { search }),
       });
       const headers = this.getAuthHeaders(config);
 
       return this.fetchWithCache<LibraryResponse<Series>>(
-        `library-${libraryId}-series-${page}-${size}-${unreadOnly}`,
+        `library-${libraryId}-series-${page}-${size}-${unreadOnly}-${search}`,
         async () => this.fetchFromApi<LibraryResponse<Series>>(url, headers),
         "SERIES"
       );
@@ -56,6 +58,6 @@ export class LibraryService extends BaseApiService {
   }
 
   static async clearLibrarySeriesCache(libraryId: string) {
-    serverCacheService.delete(`library-${libraryId}-series`);
+    serverCacheService.deleteAll(`library-${libraryId}-series`);
   }
 }

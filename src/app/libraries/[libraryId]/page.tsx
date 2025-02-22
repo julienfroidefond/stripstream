@@ -6,7 +6,7 @@ import { RefreshButton } from "@/components/library/RefreshButton";
 
 interface PageProps {
   params: { libraryId: string };
-  searchParams: { page?: string; unread?: string };
+  searchParams: { page?: string; unread?: string; search?: string };
 }
 
 const PAGE_SIZE = 20;
@@ -25,7 +25,12 @@ async function refreshLibrary(libraryId: string) {
   }
 }
 
-async function getLibrarySeries(libraryId: string, page: number = 1, unreadOnly: boolean = false) {
+async function getLibrarySeries(
+  libraryId: string,
+  page: number = 1,
+  unreadOnly: boolean = false,
+  search?: string
+) {
   try {
     const pageIndex = page - 1;
 
@@ -33,7 +38,8 @@ async function getLibrarySeries(libraryId: string, page: number = 1, unreadOnly:
       libraryId,
       pageIndex,
       PAGE_SIZE,
-      unreadOnly
+      unreadOnly,
+      search
     );
     const library = await LibraryService.getLibrary(libraryId);
 
@@ -55,7 +61,8 @@ export default async function LibraryPage({ params, searchParams }: PageProps) {
     const { data: series, library } = await getLibrarySeries(
       params.libraryId,
       currentPage,
-      unreadOnly
+      unreadOnly,
+      searchParams.search
     );
 
     return (

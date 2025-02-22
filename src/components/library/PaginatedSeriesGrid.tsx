@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { Loader2, Filter } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { KomgaSeries } from "@/types/komga";
+import { SearchInput } from "./SearchInput";
 
 interface PaginatedSeriesGridProps {
   series: KomgaSeries[];
@@ -87,24 +88,29 @@ export function PaginatedSeriesGrid({
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between flex-wrap gap-4">
-        <p className="text-sm text-muted-foreground flex-1 min-w-[200px]">
-          {totalElements > 0 ? (
-            <>
-              Affichage des séries <span className="font-medium">{startIndex}</span> à{" "}
-              <span className="font-medium">{endIndex}</span> sur{" "}
-              <span className="font-medium">{totalElements}</span>
-            </>
-          ) : (
-            "Aucune série trouvée"
-          )}
-        </p>
-        <button
-          onClick={handleUnreadFilter}
-          className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg hover:bg-accent hover:text-accent-foreground whitespace-nowrap ml-auto"
-        >
-          <Filter className="h-4 w-4" />
-          {showOnlyUnread ? "Afficher tout" : "À lire"}
-        </button>
+        <div className="flex-1">
+          <SearchInput />
+        </div>
+        <div className="flex items-center gap-4">
+          <p className="text-sm text-muted-foreground">
+            {totalElements > 0 ? (
+              <>
+                Affichage des séries <span className="font-medium">{startIndex}</span> à{" "}
+                <span className="font-medium">{endIndex}</span> sur{" "}
+                <span className="font-medium">{totalElements}</span>
+              </>
+            ) : (
+              "Aucune série trouvée"
+            )}
+          </p>
+          <button
+            onClick={handleUnreadFilter}
+            className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg hover:bg-accent hover:text-accent-foreground whitespace-nowrap"
+          >
+            <Filter className="h-4 w-4" />
+            {showOnlyUnread ? "Afficher tout" : "À lire"}
+          </button>
+        </div>
       </div>
 
       <div className="relative">
