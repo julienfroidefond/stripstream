@@ -7,7 +7,8 @@ import {
   LayoutTemplate,
   Maximize2,
   Minimize2,
-  ArrowLeftRight,
+  MoveRight,
+  MoveLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -65,9 +66,11 @@ export const ControlButtons = ({
             direction === "ltr" ? "gauche à droite" : "droite à gauche"
           })`}
         >
-          <ArrowLeftRight
-            className={cn("h-6 w-6 transition-transform", direction === "rtl" && "rotate-180")}
-          />
+          {direction === "rtl" ? (
+            <MoveLeft className="h-6 w-6" />
+          ) : (
+            <MoveRight className="h-6 w-6" />
+          )}
         </button>
         <button
           onClick={(e) => {
