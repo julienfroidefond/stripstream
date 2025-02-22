@@ -194,6 +194,7 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
             onToggleControls={() => setShowControls(!showControls)}
             onPreviousPage={handlePreviousPage}
             onNextPage={handleNextPage}
+            onPageChange={navigateToPage}
             onClose={onClose}
             currentPage={currentPage}
             totalPages={pages.length}

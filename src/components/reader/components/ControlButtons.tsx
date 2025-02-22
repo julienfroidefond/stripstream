@@ -11,6 +11,7 @@ import {
   MoveLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PageInput } from "./PageInput";
 
 export const ControlButtons = ({
   showControls,
@@ -26,6 +27,7 @@ export const ControlButtons = ({
   onToggleFullscreen,
   direction,
   onToggleDirection,
+  onPageChange,
 }: ControlButtonsProps) => {
   return (
     <>
@@ -82,6 +84,16 @@ export const ControlButtons = ({
         >
           {isFullscreen ? <Minimize2 className="h-6 w-6" /> : <Maximize2 className="h-6 w-6" />}
         </button>
+        <div className="p-2 rounded-full bg-background/50" onClick={(e) => e.stopPropagation()}>
+          <PageInput
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={(page) => {
+              onToggleControls();
+              onPageChange(page);
+            }}
+          />
+        </div>
       </div>
 
       {/* Bouton fermer */}
