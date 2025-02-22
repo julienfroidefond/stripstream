@@ -284,6 +284,24 @@ class ServerCacheService {
   }
 
   /**
+   * Supprime toutes les entrées du cache qui commencent par un préfixe
+   */
+  deleteAll(prefix: string): void {
+    if (this.config.mode === "memory") {
+      this.memoryCache.forEach((value, key) => {
+        if (key.startsWith(prefix)) {
+          this.memoryCache.delete(key);
+        }
+      });
+    } else {
+      const cacheDir = path.join(this.cacheDir, prefix);
+      if (fs.existsSync(cacheDir)) {
+        fs.rmdirSync(cacheDir, { recursive: true });
+      }
+    }
+  }
+
+  /**
    * Vide le cache
    */
   clear(): void {

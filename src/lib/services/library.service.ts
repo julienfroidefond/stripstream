@@ -1,6 +1,7 @@
 import { BaseApiService } from "./base-api.service";
 import { Library, LibraryResponse } from "@/types/library";
 import { Series } from "@/types/series";
+import { serverCacheService } from "./server-cache.service";
 
 export class LibraryService extends BaseApiService {
   static async getLibraries(): Promise<Library[]> {
@@ -52,5 +53,9 @@ export class LibraryService extends BaseApiService {
     } catch (error) {
       return this.handleError(error, "Impossible de récupérer les séries");
     }
+  }
+
+  static async clearLibrarySeriesCache(libraryId: string) {
+    serverCacheService.delete(`library-${libraryId}-series`);
   }
 }

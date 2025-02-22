@@ -2,6 +2,8 @@ import { PaginatedBookGrid } from "@/components/series/PaginatedBookGrid";
 import { SeriesHeader } from "@/components/series/SeriesHeader";
 import { SeriesService } from "@/lib/services/series.service";
 import { PreferencesService } from "@/lib/services/preferences.service";
+import { revalidatePath } from "next/cache";
+import { RefreshButton } from "@/components/library/RefreshButton";
 
 interface PageProps {
   params: { seriesId: string };
@@ -23,6 +25,20 @@ async function getSeriesBooks(seriesId: string, page: number = 1, unreadOnly: bo
   }
 }
 
+async function refreshSeries(seriesId: string) {
+  "use server";
+
+  try {
+    await SeriesService.clearSeriesBooksCache(seriesId);
+    await SeriesService.clearSeriesCache(seriesId);
+    revalidatePath(`/series/${seriesId}`);
+    return { success: true };
+  } catch (error) {
+    console.error("Erreur lors du rafraîchissement:", error);
+    return { success: false, error: "Erreur lors du rafraîchissement de la série" };
+  }
+}
+
 export default async function SeriesPage({ params, searchParams }: PageProps) {
   const currentPage = searchParams.page ? parseInt(searchParams.page) : 1;
   const preferences = await PreferencesService.getPreferences();
@@ -36,7 +52,7 @@ export default async function SeriesPage({ params, searchParams }: PageProps) {
 
     return (
       <div className="container py-8 space-y-8">
-        <SeriesHeader series={series} />
+        <SeriesHeader series={series} refreshSeries={refreshSeries} />
         <PaginatedBookGrid
           books={books.content || []}
           currentPage={currentPage}

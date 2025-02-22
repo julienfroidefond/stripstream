@@ -6,12 +6,14 @@ import { useState, useEffect } from "react";
 import { Button } from "../ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Cover } from "@/components/ui/cover";
+import { RefreshButton } from "@/components/library/RefreshButton";
 
 interface SeriesHeaderProps {
   series: KomgaSeries;
+  refreshSeries: (seriesId: string) => Promise<{ success: boolean; error?: string }>;
 }
 
-export const SeriesHeader = ({ series }: SeriesHeaderProps) => {
+export const SeriesHeader = ({ series, refreshSeries }: SeriesHeaderProps) => {
   const { toast } = useToast();
   const [isFavorite, setIsFavorite] = useState(false);
 
@@ -148,6 +150,7 @@ export const SeriesHeader = ({ series }: SeriesHeaderProps) => {
                   <StarOff className="w-5 h-5" />
                 )}
               </Button>
+              <RefreshButton libraryId={series.id} refreshLibrary={refreshSeries} />
             </div>
           </div>
         </div>

@@ -4,6 +4,7 @@ import { KomgaBook, KomgaSeries } from "@/types/komga";
 import { BookService } from "./book.service";
 import { ImageService } from "./image.service";
 import { PreferencesService } from "./preferences.service";
+import { serverCacheService } from "./server-cache.service";
 
 export class SeriesService extends BaseApiService {
   static async getSeries(seriesId: string): Promise<KomgaSeries> {
@@ -20,6 +21,10 @@ export class SeriesService extends BaseApiService {
     } catch (error) {
       return this.handleError(error, "Impossible de récupérer la série");
     }
+  }
+
+  static async clearSeriesCache(seriesId: string) {
+    serverCacheService.delete(`series-${seriesId}`);
   }
 
   static async getSeriesBooks(
@@ -46,6 +51,10 @@ export class SeriesService extends BaseApiService {
     } catch (error) {
       return this.handleError(error, "Impossible de récupérer les tomes");
     }
+  }
+
+  static async clearSeriesBooksCache(seriesId: string) {
+    serverCacheService.deleteAll(`series-${seriesId}-books`);
   }
 
   static async getFirstBook(seriesId: string): Promise<string> {
