@@ -13,27 +13,40 @@ Application web moderne pour la lecture de BD/mangas/comics via un serveur Komga
   - [x] Bouton d'ajout/retrait des favoris
   - [x] Menu dédié dans la sidebar avec la liste des séries favorites
   - [ ] Carousel dédié dans sur la homepage de toutes les séries favorites
-- [ ] Vue liste/grille configurable
+- [ ] Vue liste/grille
 - [ ] Filtres et tri avancés
 - [ ] Recherche globale
-- [ ] Bouton pour marquer comme lu
+- [x] Bouton pour marquer comme lu
 
 ### 📖 Lecteur
 
-- [ ] Revue API thumbnail => thumbnails
-- [ ] Thumbnails : prefetch en 2 secondes
-- [ ] Thumbnails : UI : barre de scroll plus grande
-- [ ] Thumbnails : UI : scroll horizontal
-- [ ] Page fantome avant le lecteur
-- [ ] switch to page
+- [x] Navigation entre les pages
+  - [x] Touches clavier (flèches, espace)
+  - [x] Swipe sur mobile
+  - [x] Boutons de navigation
+- [x] Mode double page
+  - [x] Détection automatique en paysage
+  - [x] Toggle manuel
+  - [x] Gestion des spreads
+- [x] Préchargement des pages
+  - [x] Cache des pages adjacentes
+  - [x] Nettoyage automatique du cache
+- [x] Améliorations des thumbnails
+  - [x] Prefetch en 2 secondes
+  - [x] UI : barre de scroll plus grande
+  - [x] UI : scroll horizontal
+  - [x] Revue API thumbnail
+- [x] Navigation avancée
+  - [x] Page fantôme avant le lecteur
+  - [ ] Switch to page direct
 
 ### 📖 Lecture
 
-- [ ] Téléchargement local des livres
-  - [ ] Bouton de téléchargement
-  - [ ] Gestion de la progression
-  - [ ] Stockage local sécurisé
-  - [ ] Bouton pour supprimer le téléchargement
+- [x] Téléchargement local des livres
+  - [x] Bouton de téléchargement
+  - [x] Gestion de la progression
+  - [x] Stockage local sécurisé
+  - [x] Bouton pour supprimer le téléchargement
   - [ ] Bouton pour supprimer tous les livres téléchargés dans les préférences
 - [ ] Support de nouveaux formats
   - [ ] EPUB
@@ -41,16 +54,15 @@ Application web moderne pour la lecture de BD/mangas/comics via un serveur Komga
 
 ### 🔄 Cache et Performance
 
-- [ ] Revoir si tous les services utilisent bien le cache
+- [x] Revoir si tous les services utilisent bien le cache
 - [ ] Invalidation du cache sur les mutations
-- [ ] Stratégie de revalidation à la demande
-- [ ] Prefetching intelligent
-- [ ] Lazy loading amélioré
-- [ ] Préférences : pouvoir vider chaque cache indépendemment
+- [x] Stratégie de revalidation à la demande
+- [x] Prefetching intelligent
+- [x] Lazy loading amélioré
 
 ### 👥 Gestion des utilisateurs
 
-- [ ] Système d'inscription
+- [x] Système d'inscription
 - [ ] Profil utilisateur enrichi
   - [ ] Nom/Prénom
   - [ ] Email
@@ -78,16 +90,16 @@ Application web moderne pour la lecture de BD/mangas/comics via un serveur Komga
 
 ### 📝 Documentation
 
-- [ ] README
-  - [ ] Installation
-  - [ ] Configuration
-  - [ ] Development
+- [x] README
+  - [x] Installation
+  - [x] Configuration
+  - [x] Development
 - [ ] Guide d'utilisation
   - [ ] Features
   - [ ] Shortcuts
   - [ ] Tips & tricks
-- [ ] Documentation API
-  - [ ] Endpoints
+- [x] Documentation API
+  - [x] Endpoints
   - [ ] Types
   - [ ] Examples
 
@@ -264,3 +276,76 @@ Application web moderne pour la lecture de BD/mangas/comics via un serveur Komga
 ### Gestion des séries
 
 - [x] Système de favoris (ajout/retrait d'une série des favoris)
+
+### 🔐 Authentification et Sécurité
+
+- [ ] Renforcement de la sécurité
+  - [ ] Implémentation des JWT
+    - [ ] Tokens d'accès et de rafraîchissement
+    - [ ] Rotation des clés de signature
+  - [ ] Sécurisation des cookies
+    - [ ] Flags HttpOnly, Secure, SameSite
+    - [ ] Chiffrement des données sensibles
+  - [ ] Gestion des sessions
+    - [ ] Table de sessions en base de données
+    - [ ] Détection des connexions simultanées
+    - [ ] Système "Se souvenir de moi"
+  - [ ] Protection contre les attaques
+    - [ ] Rate limiting
+    - [ ] Protection CSRF
+    - [ ] Validation des entrées avec Zod
+  - [ ] Audit et logging
+    - [ ] Journalisation des connexions
+    - [ ] Alertes de sécurité
+
+### 🎨 UI/UX
+
+- [x] Composants de base
+  - [x] Boutons et inputs
+  - [x] Cards et grilles
+  - [x] Modals et popovers
+- [x] Navigation
+  - [x] Sidebar responsive
+  - [x] Breadcrumbs
+  - [x] Menu utilisateur
+- [ ] Thèmes
+  - [x] Mode sombre/clair
+  - [ ] Thèmes personnalisés
+  - [ ] Persistance des préférences
+
+### 🔍 Performance
+
+- [x] Optimisation des images
+  - [x] Format WebP
+  - [x] Tailles responsives
+  - [x] Lazy loading
+- [ ] Cache
+  - [x] Stratégies par type de contenu
+  - [x] Invalidation intelligente
+  - [x] Prefetching sélectif
+- [ ] Métriques
+  - [ ] Core Web Vitals
+  - [ ] Analytics de performance
+  - [ ] Monitoring des erreurs
+
+### 📊 Analytics et Monitoring
+
+- [ ] Tracking utilisateur
+  - [ ] Pages vues
+  - [ ] Temps de lecture
+  - [ ] Interactions clés
+- [ ] Monitoring technique
+  - [ ] Logs d'erreurs
+  - [ ] Métriques de performance
+  - [ ] Alertes
+
+### 🔄 Intégration Continue
+
+- [ ] Tests automatisés
+  - [ ] Tests unitaires
+  - [ ] Tests d'intégration
+  - [ ] Tests E2E
+- [ ] Pipeline CI/CD
+  - [ ] Build et tests
+  - [ ] Déploiement automatique
+  - [ ] Environnements de staging

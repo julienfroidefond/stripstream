@@ -22,6 +22,17 @@ export async function POST(request: Request) {
           { status: 400 }
         );
       }
+      if (error instanceof Error && error.message === "PASSWORD_NOT_STRONG") {
+        return NextResponse.json(
+          {
+            error: {
+              code: "PASSWORD_NOT_STRONG",
+              message: "Le mot de passe est trop faible",
+            },
+          },
+          { status: 400 }
+        );
+      }
       throw error;
     }
   } catch (error) {

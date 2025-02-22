@@ -13,6 +13,11 @@ export class AuthServerService {
   static async createUser(email: string, password: string): Promise<UserData> {
     await connectDB();
 
+    //check if password is strong
+    if (!AuthServerService.isPasswordStrong(password)) {
+      throw new Error("PASSWORD_NOT_STRONG");
+    }
+
     // Check if user already exists
     const existingUser = await UserModel.findOne({ email: email.toLowerCase() });
     if (existingUser) {
@@ -35,6 +40,22 @@ export class AuthServerService {
     };
 
     return userData;
+  }
+  static isPasswordStrong(password: string): boolean {
+    //check if password is strong
+    if (password.length < 8) {
+      return false;
+    }
+    if (!/[A-Z]/.test(password)) {
+      return false;
+    }
+    if (!/[0-9]/.test(password)) {
+      return false;
+    }
+    if (!/[!@#$%^&*]/.test(password)) {
+      return false;
+    }
+    return true;
   }
 
   static setUserCookie(userData: UserData): void {
