@@ -225,11 +225,15 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
                 3. Les images sont déjà optimisées côté serveur
                 4. La performance est critique pour une lecture fluide
               */}
-              {/* Page courante */}
               <div
                 className={cn(
                   "relative h-full flex items-center",
-                  isDoublePage ? "w-1/2 justify-end" : "w-full justify-center"
+                  isDoublePage && {
+                    "w-1/2": true,
+                    "order-2 justify-start": isRTL,
+                    "order-1 justify-end": !isRTL,
+                  },
+                  !isDoublePage && "w-full justify-center"
                 )}
               >
                 <ImageLoader isLoading={isLoading} />
@@ -248,7 +252,12 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
 
               {/* Deuxième page en mode double page */}
               {isDoublePage && shouldShowDoublePage(currentPage) && (
-                <div className={cn("relative h-full w-1/2 flex items-center", "justify-start")}>
+                <div
+                  className={cn(
+                    "relative h-full w-1/2 flex items-center",
+                    isRTL ? "order-1 justify-end" : "order-2 justify-start"
+                  )}
+                >
                   <ImageLoader isLoading={secondPageLoading} />
                   {nextPageUrl && (
                     <img
