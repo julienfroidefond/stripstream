@@ -4,6 +4,7 @@ import { KomgaBook } from "@/types/komga";
 import { formatDate } from "@/lib/utils";
 import { Cover } from "@/components/ui/cover";
 import { MarkAsReadButton } from "@/components/ui/mark-as-read-button";
+import { MarkAsUnreadButton } from "@/components/ui/mark-as-unread-button";
 import { BookOfflineButton } from "@/components/ui/book-offline-button";
 import { useState, useEffect } from "react";
 
@@ -78,6 +79,19 @@ export function BookGrid({ books, onBookClick }: BookGridProps) {
     );
   };
 
+  const handleMarkAsUnread = (bookId: string) => {
+    setLocalBooks((prevBooks) =>
+      prevBooks.map((book) =>
+        book.id === bookId
+          ? {
+              ...book,
+              readProgress: null,
+            }
+          : book
+      )
+    );
+  };
+
   return (
     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
       {localBooks.map((book) => {
@@ -111,6 +125,14 @@ export function BookGrid({ books, onBookClick }: BookGridProps) {
                     pagesCount={book.media.pagesCount}
                     isRead={isRead}
                     onSuccess={() => handleMarkAsRead(book.id)}
+                    className="bg-white/90 hover:bg-white text-black shadow-sm"
+                  />
+                )}
+                {isRead && (
+                  <MarkAsUnreadButton
+                    bookId={book.id}
+                    isRead={isRead}
+                    onSuccess={() => handleMarkAsUnread(book.id)}
                     className="bg-white/90 hover:bg-white text-black shadow-sm"
                   />
                 )}
