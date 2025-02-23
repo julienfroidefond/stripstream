@@ -9,6 +9,11 @@ interface KomgaRequestInit extends RequestInit {
   isImage?: boolean;
 }
 
+interface KomgaUrlBuilder {
+  path: string;
+  params?: Record<string, string>;
+}
+
 export abstract class BaseApiService {
   protected static async getKomgaConfig(): Promise<AuthConfig> {
     try {
@@ -78,10 +83,24 @@ export abstract class BaseApiService {
   }
 
   protected static async fetchFromApi<T>(
-    url: string,
-    headers: Headers,
+    urlBuilder: KomgaUrlBuilder,
+    headersOptions = {},
     options: KomgaRequestInit = {}
   ): Promise<T> {
+    const config = await this.getKomgaConfig();
+    const { path, params } = urlBuilder;
+    const url = this.buildUrl(config, path, params);
+
+    const headers = this.getAuthHeaders(config);
+    if (headersOptions) {
+      for (const [key, value] of Object.entries(headersOptions)) {
+        headers.set(key as string, value as string);
+      }
+    }
+    // console.log("Fetching from", url);
+    // console.log("Headers", headers);
+    // console.log("headersOptions", headersOptions);
+    // console.log("options", options);
     const response = await fetch(url, { headers, ...options });
 
     if (!response.ok) {

@@ -6,13 +6,9 @@ import { serverCacheService } from "./server-cache.service";
 export class LibraryService extends BaseApiService {
   static async getLibraries(): Promise<Library[]> {
     try {
-      const config = await this.getKomgaConfig();
-      const url = this.buildUrl(config, "libraries");
-      const headers = this.getAuthHeaders(config);
-
       return this.fetchWithCache<Library[]>(
         "libraries",
-        async () => this.fetchFromApi<Library[]>(url, headers),
+        async () => this.fetchFromApi<Library[]>({ path: "libraries" }),
         "LIBRARIES"
       );
     } catch (error) {
@@ -31,12 +27,7 @@ export class LibraryService extends BaseApiService {
 
   static async getAllLibrarySeries(libraryId: string): Promise<Series[]> {
     try {
-      const config = await this.getKomgaConfig();
-      const url = this.buildUrl(config, "series/list", {
-        size: "1000", // On récupère un maximum de séries
-      });
-      const headers = this.getAuthHeaders(config);
-      headers.set("Content-Type", "application/json");
+      const headers = { "Content-Type": "application/json" };
 
       const searchBody = {
         condition: {
@@ -51,10 +42,19 @@ export class LibraryService extends BaseApiService {
       const response = await this.fetchWithCache<LibraryResponse<Series>>(
         cacheKey,
         async () =>
-          this.fetchFromApi<LibraryResponse<Series>>(url, headers, {
-            method: "POST",
-            body: JSON.stringify(searchBody),
-          }),
+          this.fetchFromApi<LibraryResponse<Series>>(
+            {
+              path: "series/list",
+              params: {
+                size: "1000", // On récupère un maximum de livres
+              },
+            },
+            headers,
+            {
+              method: "POST",
+              body: JSON.stringify(searchBody),
+            }
+          ),
         "SERIES"
       );
 
@@ -74,7 +74,6 @@ export class LibraryService extends BaseApiService {
     try {
       // Récupérer toutes les séries depuis le cache
       const allSeries = await this.getAllLibrarySeries(libraryId);
-
       // Filtrer les séries
       let filteredSeries = allSeries;
 

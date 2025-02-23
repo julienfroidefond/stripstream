@@ -6,23 +6,16 @@ import { PreferencesService } from "./preferences.service";
 export class BookService extends BaseApiService {
   static async getBook(bookId: string): Promise<{ book: KomgaBook; pages: number[] }> {
     try {
-      const config = await this.getKomgaConfig();
-      const headers = this.getAuthHeaders(config);
-
       return this.fetchWithCache<{ book: KomgaBook; pages: number[] }>(
         `book-${bookId}`,
         async () => {
           // Récupération des détails du tome
-          const book = await this.fetchFromApi<KomgaBook>(
-            this.buildUrl(config, `books/${bookId}`),
-            headers
-          );
+          const book = await this.fetchFromApi<KomgaBook>({ path: `books/${bookId}` });
 
           // Récupération des pages du tome
-          const pages = await this.fetchFromApi<{ number: number }[]>(
-            this.buildUrl(config, `books/${bookId}/pages`),
-            headers
-          );
+          const pages = await this.fetchFromApi<{ number: number }[]>({
+            path: `books/${bookId}/pages`,
+          });
 
           return {
             book,

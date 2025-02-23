@@ -8,15 +8,12 @@ interface ImageResponse {
 export class ImageService extends BaseApiService {
   static async getImage(path: string): Promise<ImageResponse> {
     try {
-      const config = await this.getKomgaConfig();
-      const url = this.buildUrl(config, path);
-      const headers = this.getAuthHeaders(config);
-      headers.set("Accept", "image/jpeg, image/png, image/gif, image/webp, */*");
+      const headers = { Accept: "image/jpeg, image/png, image/gif, image/webp, */*" };
 
       return this.fetchWithCache<ImageResponse>(
         `image-${path}`,
         async () => {
-          const response = await this.fetchFromApi<Response>(url, headers, { isImage: true });
+          const response = await this.fetchFromApi<Response>({ path }, headers, { isImage: true });
           const contentType = response.headers.get("content-type");
           const arrayBuffer = await response.arrayBuffer();
           const buffer = Buffer.from(arrayBuffer);

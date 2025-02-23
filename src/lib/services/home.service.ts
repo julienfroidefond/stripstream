@@ -12,45 +12,47 @@ interface HomeData {
 export class HomeService extends BaseApiService {
   static async getHomeData(): Promise<HomeData> {
     try {
-      const config = await this.getKomgaConfig();
-      const headers = this.getAuthHeaders(config);
-
-      // Construction des URLs avec des paramètres optimisés
-      const ongoingUrl = this.buildUrl(config, "series", {
-        read_status: "IN_PROGRESS",
-        sort: "readDate,desc",
-        page: "0",
-        size: "10",
-        media_status: "READY",
-      });
-
-      const recentlyReadUrl = this.buildUrl(config, "books/latest", {
-        page: "0",
-        size: "10",
-        media_status: "READY",
-      });
-
-      const onDeckUrl = this.buildUrl(config, "books/ondeck", {
-        page: "0",
-        size: "10",
-        media_status: "READY",
-      });
-
       // Appels API parallèles avec cache individuel
       const [ongoing, recentlyRead, onDeck] = await Promise.all([
         this.fetchWithCache<LibraryResponse<KomgaSeries>>(
           "home-ongoing",
-          async () => this.fetchFromApi<LibraryResponse<KomgaSeries>>(ongoingUrl, headers),
+          async () =>
+            this.fetchFromApi<LibraryResponse<KomgaSeries>>({
+              path: "series",
+              params: {
+                read_status: "IN_PROGRESS",
+                sort: "readDate,desc",
+                page: "0",
+                size: "10",
+                media_status: "READY",
+              },
+            }),
           "HOME"
         ),
         this.fetchWithCache<LibraryResponse<KomgaBook>>(
           "home-recently-read",
-          async () => this.fetchFromApi<LibraryResponse<KomgaBook>>(recentlyReadUrl, headers),
+          async () =>
+            this.fetchFromApi<LibraryResponse<KomgaBook>>({
+              path: "books/latest",
+              params: {
+                page: "0",
+                size: "10",
+                media_status: "READY",
+              },
+            }),
           "HOME"
         ),
         this.fetchWithCache<LibraryResponse<KomgaBook>>(
           "home-on-deck",
-          async () => this.fetchFromApi<LibraryResponse<KomgaBook>>(onDeckUrl, headers),
+          async () =>
+            this.fetchFromApi<LibraryResponse<KomgaBook>>({
+              path: "books/ondeck",
+              params: {
+                page: "0",
+                size: "10",
+                media_status: "READY",
+              },
+            }),
           "HOME"
         ),
       ]);

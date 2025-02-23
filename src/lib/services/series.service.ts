@@ -9,13 +9,9 @@ import { serverCacheService } from "./server-cache.service";
 export class SeriesService extends BaseApiService {
   static async getSeries(seriesId: string): Promise<KomgaSeries> {
     try {
-      const config = await this.getKomgaConfig();
-      const url = this.buildUrl(config, `series/${seriesId}`);
-      const headers = this.getAuthHeaders(config);
-
       return this.fetchWithCache<KomgaSeries>(
         `series-${seriesId}`,
-        async () => this.fetchFromApi<KomgaSeries>(url, headers),
+        async () => this.fetchFromApi<KomgaSeries>({ path: `series/${seriesId}` }),
         "SERIES"
       );
     } catch (error) {
@@ -29,12 +25,7 @@ export class SeriesService extends BaseApiService {
 
   static async getAllSeriesBooks(seriesId: string): Promise<KomgaBook[]> {
     try {
-      const config = await this.getKomgaConfig();
-      const url = this.buildUrl(config, "books/list", {
-        size: "1000", // On récupère un maximum de livres
-      });
-      const headers = this.getAuthHeaders(config);
-      headers.set("Content-Type", "application/json");
+      const headers = { "Content-Type": "application/json" };
 
       const searchBody = {
         condition: {
@@ -49,10 +40,19 @@ export class SeriesService extends BaseApiService {
       const response = await this.fetchWithCache<LibraryResponse<KomgaBook>>(
         cacheKey,
         async () =>
-          this.fetchFromApi<LibraryResponse<KomgaBook>>(url, headers, {
-            method: "POST",
-            body: JSON.stringify(searchBody),
-          }),
+          this.fetchFromApi<LibraryResponse<KomgaBook>>(
+            {
+              path: "books/list",
+              params: {
+                size: "1000", // On récupère un maximum de livres
+              },
+            },
+            headers,
+            {
+              method: "POST",
+              body: JSON.stringify(searchBody),
+            }
+          ),
         "BOOKS"
       );
 
@@ -131,17 +131,13 @@ export class SeriesService extends BaseApiService {
 
   static async getFirstBook(seriesId: string): Promise<string> {
     try {
-      const config = await this.getKomgaConfig();
-      const url = this.buildUrl(config, `series/${seriesId}/books`);
-      const headers = this.getAuthHeaders(config);
-
       return this.fetchWithCache<string>(
         `series-first-book-${seriesId}`,
         async () => {
-          const data = await this.fetchFromApi<LibraryResponse<KomgaBook>>(
-            `series/${seriesId}/books?page=0&size=1`,
-            headers
-          );
+          const data = await this.fetchFromApi<LibraryResponse<KomgaBook>>({
+            path: `series/${seriesId}/books`,
+            params: { page: "0", size: "1" },
+          });
           if (!data.content || data.content.length === 0) {
             throw new Error("Aucun livre trouvé dans la série");
           }
