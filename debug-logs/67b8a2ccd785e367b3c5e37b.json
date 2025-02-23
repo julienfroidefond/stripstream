@@ -1,0 +1,31 @@
+[
+  {
+    "url": "books/ondeck",
+    "startTime": 2885483.439666003,
+    "endTime": 2886906.0345830023,
+    "fromCache": false,
+    "duration": 1422.59491699934,
+    "timestamp": "2025-02-23T14:10:34.889Z"
+  },
+  {
+    "url": "home-on-deck",
+    "startTime": 2885483.3969579935,
+    "endTime": 2886915.6758749783,
+    "fromCache": true,
+    "cacheType": "HOME",
+    "duration": 1432.2789169847965,
+    "timestamp": "2025-02-23T14:10:34.901Z"
+  },
+  {
+    "url": "Page Render: HomePage",
+    "startTime": 2885485.3594990075,
+    "endTime": 2886935.9214159846,
+    "duration": 1450.5619169771671,
+    "timestamp": "2025-02-23T14:10:34.912Z",
+    "fromCache": false,
+    "pageRender": {
+      "page": "HomePage",
+      "duration": 1450.5619169771671
+    }
+  }
+]

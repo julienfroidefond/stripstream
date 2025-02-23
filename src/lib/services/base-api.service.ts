@@ -1,6 +1,7 @@
 import { AuthConfig } from "@/types/auth";
 import { serverCacheService } from "./server-cache.service";
 import { ConfigDBService } from "./config-db.service";
+import { DebugService } from "./debug.service";
 
 // Types de cache disponibles
 export type CacheType = "DEFAULT" | "HOME" | "LIBRARIES" | "SERIES" | "BOOKS" | "IMAGES";
@@ -51,7 +52,36 @@ export abstract class BaseApiService {
     fetcher: () => Promise<T>,
     type: CacheType = "DEFAULT"
   ): Promise<T> {
-    return serverCacheService.getOrSet(key, fetcher, type);
+    const startTime = performance.now();
+
+    try {
+      const result = await serverCacheService.getOrSet(key, fetcher, type);
+      const endTime = performance.now();
+
+      // Log la requête avec l'indication du cache
+      await DebugService.logRequest({
+        url: key,
+        startTime,
+        endTime,
+        fromCache: true,
+        cacheType: type,
+      });
+
+      return result;
+    } catch (error) {
+      const endTime = performance.now();
+
+      // Log aussi les erreurs
+      await DebugService.logRequest({
+        url: key,
+        startTime,
+        endTime,
+        fromCache: true,
+        cacheType: type,
+      });
+
+      throw error;
+    }
   }
 
   protected static handleError(error: unknown, defaultMessage: string): never {
@@ -87,6 +117,7 @@ export abstract class BaseApiService {
     headersOptions = {},
     options: KomgaRequestInit = {}
   ): Promise<T> {
+    const startTime = performance.now();
     const config = await this.getKomgaConfig();
     const { path, params } = urlBuilder;
     const url = this.buildUrl(config, path, params);
@@ -97,16 +128,36 @@ export abstract class BaseApiService {
         headers.set(key as string, value as string);
       }
     }
-    // console.log("🛜 Fetching from", url);
-    // console.log("Headers", headers);
-    // console.log("headersOptions", headersOptions);
-    // console.log("options", options);
-    const response = await fetch(url, { headers, ...options });
 
-    if (!response.ok) {
-      throw new Error(`Erreur HTTP: ${response.status} ${response.statusText}`);
+    try {
+      const response = await fetch(url, { headers, ...options });
+      const endTime = performance.now();
+
+      // Log la requête
+      await DebugService.logRequest({
+        url: path,
+        startTime,
+        endTime,
+        fromCache: false,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erreur HTTP: ${response.status} ${response.statusText}`);
+      }
+
+      return options.isImage ? response : response.json();
+    } catch (error) {
+      const endTime = performance.now();
+
+      // Log aussi les erreurs
+      await DebugService.logRequest({
+        url: path,
+        startTime,
+        endTime,
+        fromCache: false,
+      });
+
+      throw error;
     }
-
-    return options.isImage ? response : response.json();
   }
 }

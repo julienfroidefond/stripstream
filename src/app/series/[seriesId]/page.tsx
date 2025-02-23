@@ -3,6 +3,7 @@ import { SeriesHeader } from "@/components/series/SeriesHeader";
 import { SeriesService } from "@/lib/services/series.service";
 import { PreferencesService } from "@/lib/services/preferences.service";
 import { revalidatePath } from "next/cache";
+import { withPageTiming } from "@/lib/hoc/withPageTiming";
 
 interface PageProps {
   params: { seriesId: string };
@@ -38,7 +39,7 @@ async function refreshSeries(seriesId: string) {
   }
 }
 
-export default async function SeriesPage({ params, searchParams }: PageProps) {
+async function SeriesPage({ params, searchParams }: PageProps) {
   const currentPage = searchParams.page ? parseInt(searchParams.page) : 1;
   const preferences = await PreferencesService.getPreferences();
 
@@ -76,3 +77,5 @@ export default async function SeriesPage({ params, searchParams }: PageProps) {
     );
   }
 }
+
+export default withPageTiming("SeriesPage", SeriesPage);
