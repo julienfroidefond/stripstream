@@ -1,5 +1,5 @@
 import { AuthConfig } from "@/types/auth";
-import { serverCacheService } from "./server-cache.service";
+import { getServerCacheService } from "./server-cache.service";
 import { ConfigDBService } from "./config-db.service";
 import { DebugService } from "./debug.service";
 
@@ -52,10 +52,11 @@ export abstract class BaseApiService {
     fetcher: () => Promise<T>,
     type: CacheType = "DEFAULT"
   ): Promise<T> {
+    const cacheService = await getServerCacheService();
     const startTime = performance.now();
 
     try {
-      const result = await serverCacheService.getOrSet(key, fetcher, type);
+      const result = await cacheService.getOrSet(key, fetcher, type);
       const endTime = performance.now();
 
       // Log la requête avec l'indication du cache

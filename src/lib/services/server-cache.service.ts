@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { PreferencesService } from "./preferences.service";
 
 type CacheMode = "file" | "memory";
 
@@ -37,6 +38,17 @@ class ServerCacheService {
     this.cacheDir = path.join(process.cwd(), ".cache");
     this.ensureCacheDirectory();
     this.cleanExpiredCache();
+    this.initializeCacheMode();
+  }
+
+  private async initializeCacheMode(): Promise<void> {
+    try {
+      const preferences = await PreferencesService.getPreferences();
+      this.setCacheMode(preferences.cacheMode);
+    } catch (error) {
+      console.error("Error initializing cache mode from preferences:", error);
+      // Keep default memory mode if preferences can't be loaded
+    }
   }
 
   private ensureCacheDirectory(): void {
@@ -117,9 +129,10 @@ class ServerCacheService {
     cleanDirectory(this.cacheDir);
   }
 
-  public static getInstance(): ServerCacheService {
+  public static async getInstance(): Promise<ServerCacheService> {
     if (!ServerCacheService.instance) {
       ServerCacheService.instance = new ServerCacheService();
+      await ServerCacheService.instance.initializeCacheMode();
     }
     return ServerCacheService.instance;
   }
@@ -376,4 +389,15 @@ class ServerCacheService {
   }
 }
 
-export const serverCacheService = ServerCacheService.getInstance();
+// Créer une instance initialisée du service
+let initializedInstance: Promise<ServerCacheService>;
+
+export const getServerCacheService = async (): Promise<ServerCacheService> => {
+  if (!initializedInstance) {
+    initializedInstance = ServerCacheService.getInstance();
+  }
+  return initializedInstance;
+};
+
+// Exporter aussi la classe pour les tests
+export { ServerCacheService };

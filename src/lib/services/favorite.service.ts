@@ -1,4 +1,3 @@
-import { cookies } from "next/headers";
 import connectDB from "@/lib/mongodb";
 import { FavoriteModel } from "@/lib/models/favorite.model";
 import { DebugService } from "./debug.service";

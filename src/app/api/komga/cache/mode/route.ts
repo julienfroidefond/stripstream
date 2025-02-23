@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
-import { serverCacheService } from "@/lib/services/server-cache.service";
+import { getServerCacheService } from "@/lib/services/server-cache.service";
 
 export async function GET() {
-  return NextResponse.json({ mode: serverCacheService.getCacheMode() });
+  const cacheService = await getServerCacheService();
+  return NextResponse.json({ mode: cacheService.getCacheMode() });
 }
 
 export async function POST(request: Request) {
@@ -15,8 +16,9 @@ export async function POST(request: Request) {
       );
     }
 
-    serverCacheService.setCacheMode(mode);
-    return NextResponse.json({ mode: serverCacheService.getCacheMode() });
+    const cacheService = await getServerCacheService();
+    cacheService.setCacheMode(mode);
+    return NextResponse.json({ mode: cacheService.getCacheMode() });
   } catch (error) {
     console.error("Erreur lors de la mise à jour du mode de cache:", error);
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });

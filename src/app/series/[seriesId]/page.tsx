@@ -29,8 +29,8 @@ async function refreshSeries(seriesId: string) {
   "use server";
 
   try {
-    await SeriesService.clearSeriesBooksCache(seriesId);
-    await SeriesService.clearSeriesCache(seriesId);
+    await SeriesService.invalidateSeriesBooksCache(seriesId);
+    await SeriesService.invalidateSeriesCache(seriesId);
     revalidatePath(`/series/${seriesId}`);
     return { success: true };
   } catch (error) {

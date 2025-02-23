@@ -1,4 +1,3 @@
-import { cookies } from "next/headers";
 import { PreferencesModel } from "@/lib/models/preferences.model";
 import { AuthServerService } from "./auth-server.service";
 

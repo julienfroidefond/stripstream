@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { KomgaBook } from "@/types/komga";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
@@ -31,12 +31,11 @@ export function DownloadManager() {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  const getStorageKey = (bookId: string) => `book-status-${bookId}`;
+  const getStorageKey = useCallback((bookId: string) => `book-status-${bookId}`, []);
 
-  const loadDownloadedBooks = async () => {
+  const loadDownloadedBooks = useCallback(async () => {
     setIsLoading(true);
     try {
-      // Récupère tous les livres du localStorage
       const books: DownloadedBook[] = [];
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
@@ -70,9 +69,9 @@ export function DownloadManager() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
 
-  const updateBookStatuses = () => {
+  const updateBookStatuses = useCallback(() => {
     setDownloadedBooks((prevBooks) => {
       return prevBooks.map((downloadedBook) => {
         const status = JSON.parse(
@@ -87,29 +86,25 @@ export function DownloadManager() {
         };
       });
     });
-  };
+  }, [getStorageKey]);
 
   useEffect(() => {
     loadDownloadedBooks();
 
-    // Écoute les changements de statut des livres
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key?.startsWith("book-status-")) {
         updateBookStatuses();
       }
     };
 
-    // Écoute les changements dans d'autres onglets
     window.addEventListener("storage", handleStorageChange);
-
-    // Écoute les changements dans l'onglet courant
     const interval = setInterval(updateBookStatuses, 1000);
 
     return () => {
       window.removeEventListener("storage", handleStorageChange);
       clearInterval(interval);
     };
-  }, []);
+  }, [loadDownloadedBooks, updateBookStatuses]);
 
   const handleDeleteBook = async (book: KomgaBook) => {
     try {

@@ -1,4 +1,3 @@
-import { cookies } from "next/headers";
 import connectDB from "@/lib/mongodb";
 import { KomgaConfig } from "@/lib/models/config.model";
 import { TTLConfig } from "@/lib/models/ttl-config.model";
@@ -34,31 +33,30 @@ export class ConfigDBService {
     return user;
   }
 
+  static async saveConfig(data: KomgaConfigData) {
+    const user = this.getCurrentUser();
+    await connectDB();
+
+    const config = await KomgaConfig.findOneAndUpdate(
+      { userId: user.id },
+      {
+        userId: user.id,
+        url: data.url,
+        username: data.username,
+        password: data.password,
+      },
+      { upsert: true, new: true }
+    );
+
+    return config;
+  }
+
   static async getConfig() {
     const user = this.getCurrentUser();
     await connectDB();
 
     return DebugService.measureMongoOperation("getConfig", async () => {
       const config = await KomgaConfig.findOne({ userId: user.id });
-      return config;
-    });
-  }
-
-  static async saveConfig(data: KomgaConfigData) {
-    const user = this.getCurrentUser();
-    await connectDB();
-
-    return DebugService.measureMongoOperation("saveConfig", async () => {
-      const config = await KomgaConfig.findOneAndUpdate(
-        { userId: user.id },
-        {
-          userId: user.id,
-          url: data.url,
-          username: data.username,
-          password: data.password,
-        },
-        { upsert: true, new: true }
-      );
       return config;
     });
   }

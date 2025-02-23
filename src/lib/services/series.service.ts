@@ -4,7 +4,7 @@ import { KomgaBook, KomgaSeries } from "@/types/komga";
 import { BookService } from "./book.service";
 import { ImageService } from "./image.service";
 import { PreferencesService } from "./preferences.service";
-import { serverCacheService } from "./server-cache.service";
+import { getServerCacheService } from "./server-cache.service";
 
 export class SeriesService extends BaseApiService {
   static async getSeries(seriesId: string): Promise<KomgaSeries> {
@@ -19,8 +19,9 @@ export class SeriesService extends BaseApiService {
     }
   }
 
-  static async clearSeriesCache(seriesId: string) {
-    serverCacheService.delete(`series-${seriesId}`);
+  static async invalidateSeriesCache(seriesId: string): Promise<void> {
+    const cacheService = await getServerCacheService();
+    cacheService.delete(`series-${seriesId}`);
   }
 
   static async getAllSeriesBooks(seriesId: string): Promise<KomgaBook[]> {
@@ -125,8 +126,9 @@ export class SeriesService extends BaseApiService {
     }
   }
 
-  static async clearSeriesBooksCache(seriesId: string) {
-    serverCacheService.delete(`series-${seriesId}-all-books`);
+  static async invalidateSeriesBooksCache(seriesId: string): Promise<void> {
+    const cacheService = await getServerCacheService();
+    cacheService.delete(`series-${seriesId}-all-books`);
   }
 
   static async getFirstBook(seriesId: string): Promise<string> {
