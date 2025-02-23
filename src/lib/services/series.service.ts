@@ -27,6 +27,41 @@ export class SeriesService extends BaseApiService {
     serverCacheService.delete(`series-${seriesId}`);
   }
 
+  static async getAllSeriesBooks(seriesId: string): Promise<KomgaBook[]> {
+    try {
+      const config = await this.getKomgaConfig();
+      const url = this.buildUrl(config, "books/list", {
+        size: "1000", // On récupère un maximum de livres
+      });
+      const headers = this.getAuthHeaders(config);
+      headers.set("Content-Type", "application/json");
+
+      const searchBody = {
+        condition: {
+          seriesId: {
+            operator: "is",
+            value: seriesId,
+          },
+        },
+      };
+
+      const cacheKey = `series-${seriesId}-all-books`;
+      const response = await this.fetchWithCache<LibraryResponse<KomgaBook>>(
+        cacheKey,
+        async () =>
+          this.fetchFromApi<LibraryResponse<KomgaBook>>(url, headers, {
+            method: "POST",
+            body: JSON.stringify(searchBody),
+          }),
+        "BOOKS"
+      );
+
+      return response.content;
+    } catch (error) {
+      return this.handleError(error, "Impossible de récupérer tous les tomes");
+    }
+  }
+
   static async getSeriesBooks(
     seriesId: string,
     page: number = 0,
@@ -34,20 +69,57 @@ export class SeriesService extends BaseApiService {
     unreadOnly: boolean = false
   ): Promise<LibraryResponse<KomgaBook>> {
     try {
-      const config = await this.getKomgaConfig();
-      const url = this.buildUrl(config, `series/${seriesId}/books`, {
-        page: page.toString(),
-        size: size.toString(),
-        sort: "metadata.numberSort,asc",
-        ...(unreadOnly && { read_status: "UNREAD,IN_PROGRESS" }),
-      });
-      const headers = this.getAuthHeaders(config);
+      // Récupérer tous les livres depuis le cache
+      const allBooks = await this.getAllSeriesBooks(seriesId);
 
-      return this.fetchWithCache<LibraryResponse<KomgaBook>>(
-        `series-${seriesId}-books-${page}-${size}-${unreadOnly}`,
-        async () => this.fetchFromApi<LibraryResponse<KomgaBook>>(url, headers),
-        "BOOKS"
-      );
+      // Filtrer les livres
+      let filteredBooks = allBooks;
+
+      if (unreadOnly) {
+        filteredBooks = filteredBooks.filter(
+          (book) => !book.readProgress || !book.readProgress.completed
+        );
+      }
+
+      // Trier les livres par numéro
+      filteredBooks.sort((a, b) => a.number - b.number);
+
+      // Calculer la pagination
+      const totalElements = filteredBooks.length;
+      const totalPages = Math.ceil(totalElements / size);
+      const startIndex = page * size;
+      const endIndex = Math.min(startIndex + size, totalElements);
+      const paginatedBooks = filteredBooks.slice(startIndex, endIndex);
+
+      // Construire la réponse
+      return {
+        content: paginatedBooks,
+        empty: paginatedBooks.length === 0,
+        first: page === 0,
+        last: page >= totalPages - 1,
+        number: page,
+        numberOfElements: paginatedBooks.length,
+        pageable: {
+          offset: startIndex,
+          pageNumber: page,
+          pageSize: size,
+          paged: true,
+          sort: {
+            empty: false,
+            sorted: true,
+            unsorted: false,
+          },
+          unpaged: false,
+        },
+        size,
+        sort: {
+          empty: false,
+          sorted: true,
+          unsorted: false,
+        },
+        totalElements,
+        totalPages,
+      };
     } catch (error) {
       return this.handleError(error, "Impossible de récupérer les tomes");
     }
