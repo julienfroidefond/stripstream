@@ -135,6 +135,6 @@ export class LibraryService extends BaseApiService {
   }
 
   static async clearLibrarySeriesCache(libraryId: string) {
-    serverCacheService.deleteAll(`library-${libraryId}-series`);
+    serverCacheService.delete(`library-${libraryId}-all-series`);
   }
 }

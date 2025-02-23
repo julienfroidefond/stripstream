@@ -97,7 +97,7 @@ export abstract class BaseApiService {
         headers.set(key as string, value as string);
       }
     }
-    // console.log("Fetching from", url);
+    // console.log("🛜 Fetching from", url);
     // console.log("Headers", headers);
     // console.log("headersOptions", headersOptions);
     // console.log("options", options);

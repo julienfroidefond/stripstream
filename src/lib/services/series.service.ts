@@ -126,7 +126,7 @@ export class SeriesService extends BaseApiService {
   }
 
   static async clearSeriesBooksCache(seriesId: string) {
-    serverCacheService.deleteAll(`series-${seriesId}-books`);
+    serverCacheService.delete(`series-${seriesId}-all-books`);
   }
 
   static async getFirstBook(seriesId: string): Promise<string> {
