@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import connectDB from "@/lib/mongodb";
 import { UserModel } from "@/lib/models/user.model";
+import bcrypt from "bcrypt";
 
 interface UserData {
   id: string;
@@ -10,6 +11,8 @@ interface UserData {
 }
 
 export class AuthServerService {
+  private static readonly SALT_ROUNDS = 10;
+
   static async createUser(email: string, password: string): Promise<UserData> {
     await connectDB();
 
@@ -24,10 +27,13 @@ export class AuthServerService {
       throw new Error("EMAIL_EXISTS");
     }
 
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, this.SALT_ROUNDS);
+
     // Create new user
     const user = await UserModel.create({
       email: email.toLowerCase(),
-      password,
+      password: hashedPassword,
       roles: ["ROLE_USER"],
       authenticated: true,
     });
@@ -41,6 +47,7 @@ export class AuthServerService {
 
     return userData;
   }
+
   static isPasswordStrong(password: string): boolean {
     //check if password is strong
     if (password.length < 8) {
@@ -52,9 +59,9 @@ export class AuthServerService {
     if (!/[0-9]/.test(password)) {
       return false;
     }
-    if (!/[!@#$%^&*]/.test(password)) {
-      return false;
-    }
+    // if (!/[!@#$%^&*]/.test(password)) {
+    //   return false;
+    // }
     return true;
   }
 
@@ -95,7 +102,8 @@ export class AuthServerService {
       throw new Error("INVALID_CREDENTIALS");
     }
 
-    if (user.password !== password) {
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
       throw new Error("INVALID_CREDENTIALS");
     }
 
