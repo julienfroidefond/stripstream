@@ -26,9 +26,10 @@ interface OptimizedBook extends BaseItem {
 interface MediaRowProps {
   title: string;
   items: (OptimizedSeries | OptimizedBook)[];
+  icon?: React.ReactNode;
 }
 
-export function MediaRow({ title, items }: MediaRowProps) {
+export function MediaRow({ title, items, icon }: MediaRowProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
@@ -58,7 +59,10 @@ export function MediaRow({ title, items }: MediaRowProps) {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-2xl font-bold tracking-tight">{title}</h2>
+      <div className="flex items-center gap-2">
+        {icon}
+        <h2 className="text-2xl font-bold tracking-tight">{title}</h2>
+      </div>
       <div className="relative">
         {/* Bouton de défilement gauche */}
         {showLeftArrow && (

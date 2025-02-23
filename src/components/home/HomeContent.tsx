@@ -2,6 +2,7 @@ import { HeroSection } from "./HeroSection";
 import { MediaRow } from "./MediaRow";
 import { KomgaBook, KomgaSeries } from "@/types/komga";
 import { RefreshButton } from "@/components/library/RefreshButton";
+import { BookOpenCheck, History, Sparkles, Clock } from "lucide-react";
 
 interface HomeData {
   ongoing: KomgaSeries[];
@@ -62,19 +63,35 @@ export function HomeContent({ data, refreshHome }: HomeContentProps) {
       {/* Sections de contenu */}
       <div className="space-y-12">
         {data.ongoing && data.ongoing.length > 0 && (
-          <MediaRow title="Continuer la lecture" items={optimizeSeriesData(data.ongoing)} />
+          <MediaRow
+            title="Continuer la lecture"
+            items={optimizeSeriesData(data.ongoing)}
+            icon={<BookOpenCheck className="w-6 h-6" />}
+          />
         )}
 
         {data.onDeck && data.onDeck.length > 0 && (
-          <MediaRow title="À suivre" items={optimizeBookData(data.onDeck)} />
+          <MediaRow
+            title="À suivre"
+            items={optimizeBookData(data.onDeck)}
+            icon={<Clock className="w-6 h-6" />}
+          />
         )}
 
         {data.latestSeries && data.latestSeries.length > 0 && (
-          <MediaRow title="Dernières séries" items={optimizeSeriesData(data.latestSeries)} />
+          <MediaRow
+            title="Dernières séries"
+            items={optimizeSeriesData(data.latestSeries)}
+            icon={<Sparkles className="w-6 h-6" />}
+          />
         )}
 
         {data.recentlyRead && data.recentlyRead.length > 0 && (
-          <MediaRow title="Ajouts récents" items={optimizeBookData(data.recentlyRead)} />
+          <MediaRow
+            title="Ajouts récents"
+            items={optimizeBookData(data.recentlyRead)}
+            icon={<History className="w-6 h-6" />}
+          />
         )}
       </div>
     </main>
