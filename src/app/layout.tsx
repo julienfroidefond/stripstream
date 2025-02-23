@@ -4,7 +4,6 @@ import "@/styles/globals.css";
 import { cn } from "@/lib/utils";
 import ClientLayout from "@/components/layout/ClientLayout";
 import { PreferencesProvider } from "@/contexts/PreferencesContext";
-import { DebugWrapper } from "@/components/debug/DebugWrapper";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -117,7 +116,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={cn("min-h-screen bg-background font-sans antialiased", inter.className)}>
         <PreferencesProvider>
           <ClientLayout>{children}</ClientLayout>
-          <DebugWrapper />
         </PreferencesProvider>
       </body>
     </html>

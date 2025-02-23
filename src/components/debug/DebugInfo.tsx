@@ -2,6 +2,7 @@
 
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import {
   X,
   Database,
@@ -46,10 +47,10 @@ function formatDuration(duration: number) {
 }
 
 export function DebugInfo() {
-  const { preferences } = usePreferences();
   const [logs, setLogs] = useState<RequestTiming[]>([]);
   const [isMinimized, setIsMinimized] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const pathname = usePathname();
 
   const fetchLogs = async () => {
     try {
@@ -66,9 +67,21 @@ export function DebugInfo() {
     }
   };
 
+  // Rafraîchir les logs au montage et à chaque changement de page
   useEffect(() => {
     fetchLogs();
-  }, []);
+  }, [pathname]);
+
+  // Rafraîchir les logs périodiquement si la fenêtre n'est pas minimisée
+  useEffect(() => {
+    if (isMinimized) return;
+
+    const interval = setInterval(() => {
+      fetchLogs();
+    }, 5000); // Rafraîchir toutes les 5 secondes
+
+    return () => clearInterval(interval);
+  }, [isMinimized]);
 
   const clearLogs = async () => {
     try {
@@ -83,12 +96,19 @@ export function DebugInfo() {
 
   return (
     <div
-      className={`fixed bottom-4 right-4 bg-zinc-900 border border-zinc-700 rounded-lg shadow-lg p-4 text-zinc-100 ${
+      className={`fixed bottom-4 right-4 bg-zinc-900 border border-zinc-700 rounded-lg shadow-lg p-4 text-zinc-100 z-50 ${
         isMinimized ? "w-auto" : "w-[800px] max-h-[50vh] overflow-auto"
       }`}
     >
       <div className="flex items-center justify-between mb-4 sticky top-0 bg-zinc-900 pb-2">
-        <h2 className="font-bold text-lg">DEBUG !</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="font-bold text-lg">DEBUG</h2>
+          {!isMinimized && (
+            <span className="text-xs text-zinc-400">
+              {sortedLogs.length} entrée{sortedLogs.length > 1 ? "s" : ""}
+            </span>
+          )}
+        </div>
         <div className="flex items-center gap-2">
           <button
             onClick={fetchLogs}

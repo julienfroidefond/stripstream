@@ -53,34 +53,12 @@ export abstract class BaseApiService {
     type: CacheType = "DEFAULT"
   ): Promise<T> {
     const cacheService = await getServerCacheService();
-    const startTime = performance.now();
 
     try {
       const result = await cacheService.getOrSet(key, fetcher, type);
-      const endTime = performance.now();
-
-      // Log la requête avec l'indication du cache
-      await DebugService.logRequest({
-        url: key,
-        startTime,
-        endTime,
-        fromCache: true,
-        cacheType: type,
-      });
 
       return result;
     } catch (error) {
-      const endTime = performance.now();
-
-      // Log aussi les erreurs
-      await DebugService.logRequest({
-        url: key,
-        startTime,
-        endTime,
-        fromCache: true,
-        cacheType: type,
-      });
-
       throw error;
     }
   }
