@@ -15,7 +15,7 @@ async function refreshLibrary(libraryId: string) {
   "use server";
 
   try {
-    await LibraryService.clearLibrarySeriesCache(libraryId);
+    await LibraryService.invalidateLibrarySeriesCache(libraryId);
 
     revalidatePath(`/libraries/${libraryId}`);
     return { success: true };

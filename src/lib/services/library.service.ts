@@ -1,7 +1,7 @@
 import { BaseApiService } from "./base-api.service";
 import { Library, LibraryResponse } from "@/types/library";
 import { Series } from "@/types/series";
-import { serverCacheService } from "./server-cache.service";
+import { getServerCacheService } from "./server-cache.service";
 
 export class LibraryService extends BaseApiService {
   static async getLibraries(): Promise<Library[]> {
@@ -134,7 +134,8 @@ export class LibraryService extends BaseApiService {
     }
   }
 
-  static async clearLibrarySeriesCache(libraryId: string) {
-    serverCacheService.delete(`library-${libraryId}-all-series`);
+  static async invalidateLibrarySeriesCache(libraryId: string): Promise<void> {
+    const cacheService = await getServerCacheService();
+    cacheService.delete(`library-${libraryId}-all-series`);
   }
 }

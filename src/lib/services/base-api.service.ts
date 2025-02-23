@@ -1,5 +1,5 @@
 import { AuthConfig } from "@/types/auth";
-import { serverCacheService } from "./server-cache.service";
+import { getServerCacheService } from "./server-cache.service";
 import { ConfigDBService } from "./config-db.service";
 
 // Types de cache disponibles
@@ -51,7 +51,8 @@ export abstract class BaseApiService {
     fetcher: () => Promise<T>,
     type: CacheType = "DEFAULT"
   ): Promise<T> {
-    return serverCacheService.getOrSet(key, fetcher, type);
+    const cacheService = await getServerCacheService();
+    return cacheService.getOrSet(key, fetcher, type);
   }
 
   protected static handleError(error: unknown, defaultMessage: string): never {

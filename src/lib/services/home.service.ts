@@ -1,7 +1,7 @@
 import { BaseApiService } from "./base-api.service";
 import { KomgaBook, KomgaSeries } from "@/types/komga";
 import { LibraryResponse } from "@/types/library";
-import { serverCacheService } from "./server-cache.service";
+import { getServerCacheService } from "./server-cache.service";
 
 interface HomeData {
   ongoing: KomgaSeries[];
@@ -67,9 +67,10 @@ export class HomeService extends BaseApiService {
     }
   }
 
-  static async clearHomeCache() {
-    serverCacheService.delete("home-ongoing");
-    serverCacheService.delete("home-recently-read");
-    serverCacheService.delete("home-on-deck");
+  static async invalidateHomeCache(): Promise<void> {
+    const cacheService = await getServerCacheService();
+    cacheService.delete("home-ongoing");
+    cacheService.delete("home-recently-read");
+    cacheService.delete("home-on-deck");
   }
 }

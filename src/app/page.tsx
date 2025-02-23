@@ -7,7 +7,7 @@ async function refreshHome() {
   "use server";
 
   try {
-    await HomeService.clearHomeCache();
+    await HomeService.invalidateHomeCache();
     revalidatePath("/");
     return { success: true };
   } catch (error) {
