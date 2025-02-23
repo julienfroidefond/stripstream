@@ -339,6 +339,39 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
                   }}
                 />
               </div>
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="debug-mode">Mode debug</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Afficher les informations de debug dans l'interface
+                  </p>
+                </div>
+                <Switch
+                  id="debug-mode"
+                  checked={preferences.debug}
+                  onCheckedChange={async (checked) => {
+                    try {
+                      await updatePreferences({ debug: checked });
+                      toast({
+                        title: "Préférences sauvegardées",
+                        description: `Le mode debug est maintenant ${
+                          checked ? "activé" : "désactivé"
+                        }`,
+                      });
+                    } catch (error) {
+                      console.error("Erreur détaillée:", error);
+                      toast({
+                        variant: "destructive",
+                        title: "Erreur",
+                        description:
+                          error instanceof Error
+                            ? error.message
+                            : "Une erreur est survenue lors de la mise à jour des préférences",
+                      });
+                    }
+                  }}
+                />
+              </div>
             </div>
           </div>
         </div>

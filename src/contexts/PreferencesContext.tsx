@@ -6,12 +6,14 @@ export interface UserPreferences {
   showThumbnails: boolean;
   cacheMode: "memory" | "file";
   showOnlyUnread: boolean;
+  debug: boolean;
 }
 
 const defaultPreferences: UserPreferences = {
   showThumbnails: true,
   cacheMode: "memory",
   showOnlyUnread: false,
+  debug: false,
 };
 
 interface PreferencesContextType {
@@ -67,11 +69,9 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
           ...prev,
           ...updatedPreferences,
         };
-        console.log("Nouvel état des préférences:", newState);
         return newState;
       });
     } catch (error) {
-      console.error("Erreur lors de la mise à jour des préférences:", error);
       throw error;
     }
   };

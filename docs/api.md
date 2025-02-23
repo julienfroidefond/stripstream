@@ -111,7 +111,13 @@
 ### GET /api/preferences
 
 - **Description** : Récupération des préférences utilisateur
-- **Réponse** : `Preferences`
+- **Réponse** : `{ showThumbnails: boolean, cacheMode: "memory" | "file", showOnlyUnread: boolean, debug: boolean }`
+
+### PUT /api/preferences
+
+- **Description** : Mise à jour des préférences utilisateur
+- **Body** : `{ showThumbnails?: boolean, cacheMode?: "memory" | "file", showOnlyUnread?: boolean, debug?: boolean }`
+- **Réponse** : `{ showThumbnails: boolean, cacheMode: "memory" | "file", showOnlyUnread: boolean, debug: boolean }`
 
 ## 🧪 Test
 
