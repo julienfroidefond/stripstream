@@ -16,7 +16,7 @@ export class ImageService extends BaseApiService {
       return this.fetchWithCache<ImageResponse>(
         `image-${path}`,
         async () => {
-          const response = await this.fetchFromApi<Response>(url, headers, true);
+          const response = await this.fetchFromApi<Response>(url, headers, { isImage: true });
           const contentType = response.headers.get("content-type");
           const arrayBuffer = await response.arrayBuffer();
           const buffer = Buffer.from(arrayBuffer);

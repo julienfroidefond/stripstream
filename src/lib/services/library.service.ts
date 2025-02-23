@@ -29,6 +29,41 @@ export class LibraryService extends BaseApiService {
     return library;
   }
 
+  static async getAllLibrarySeries(libraryId: string): Promise<Series[]> {
+    try {
+      const config = await this.getKomgaConfig();
+      const url = this.buildUrl(config, "series/list", {
+        size: "1000", // On récupère un maximum de séries
+      });
+      const headers = this.getAuthHeaders(config);
+      headers.set("Content-Type", "application/json");
+
+      const searchBody = {
+        condition: {
+          libraryId: {
+            operator: "is",
+            value: libraryId,
+          },
+        },
+      };
+
+      const cacheKey = `library-${libraryId}-all-series`;
+      const response = await this.fetchWithCache<LibraryResponse<Series>>(
+        cacheKey,
+        async () =>
+          this.fetchFromApi<LibraryResponse<Series>>(url, headers, {
+            method: "POST",
+            body: JSON.stringify(searchBody),
+          }),
+        "SERIES"
+      );
+
+      return response.content;
+    } catch (error) {
+      return this.handleError(error, "Impossible de récupérer toutes les séries");
+    }
+  }
+
   static async getLibrarySeries(
     libraryId: string,
     page: number = 0,
@@ -37,21 +72,64 @@ export class LibraryService extends BaseApiService {
     search?: string
   ): Promise<LibraryResponse<Series>> {
     try {
-      const config = await this.getKomgaConfig();
-      const url = this.buildUrl(config, "series", {
-        library_id: libraryId,
-        page: page.toString(),
-        size: size.toString(),
-        ...(unreadOnly && { read_status: "UNREAD,IN_PROGRESS" }),
-        ...(search && { search }),
-      });
-      const headers = this.getAuthHeaders(config);
+      // Récupérer toutes les séries depuis le cache
+      const allSeries = await this.getAllLibrarySeries(libraryId);
 
-      return this.fetchWithCache<LibraryResponse<Series>>(
-        `library-${libraryId}-series-${page}-${size}-${unreadOnly}-${search}`,
-        async () => this.fetchFromApi<LibraryResponse<Series>>(url, headers),
-        "SERIES"
-      );
+      // Filtrer les séries
+      let filteredSeries = allSeries;
+
+      if (unreadOnly) {
+        filteredSeries = filteredSeries.filter(
+          (series) => series.booksReadCount < series.booksCount
+        );
+      }
+
+      if (search) {
+        const searchLower = search.toLowerCase();
+        filteredSeries = filteredSeries.filter((series) =>
+          series.metadata.title.toLowerCase().includes(searchLower)
+        );
+      }
+
+      // Trier les séries
+      filteredSeries.sort((a, b) => a.metadata.titleSort.localeCompare(b.metadata.titleSort));
+
+      // Calculer la pagination
+      const totalElements = filteredSeries.length;
+      const totalPages = Math.ceil(totalElements / size);
+      const startIndex = page * size;
+      const endIndex = Math.min(startIndex + size, totalElements);
+      const paginatedSeries = filteredSeries.slice(startIndex, endIndex);
+
+      // Construire la réponse
+      return {
+        content: paginatedSeries,
+        empty: paginatedSeries.length === 0,
+        first: page === 0,
+        last: page >= totalPages - 1,
+        number: page,
+        numberOfElements: paginatedSeries.length,
+        pageable: {
+          offset: startIndex,
+          pageNumber: page,
+          pageSize: size,
+          paged: true,
+          sort: {
+            empty: false,
+            sorted: true,
+            unsorted: false,
+          },
+          unpaged: false,
+        },
+        size,
+        sort: {
+          empty: false,
+          sorted: true,
+          unsorted: false,
+        },
+        totalElements,
+        totalPages,
+      };
     } catch (error) {
       return this.handleError(error, "Impossible de récupérer les séries");
     }

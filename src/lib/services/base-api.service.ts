@@ -5,6 +5,10 @@ import { ConfigDBService } from "./config-db.service";
 // Types de cache disponibles
 export type CacheType = "DEFAULT" | "HOME" | "LIBRARIES" | "SERIES" | "BOOKS" | "IMAGES";
 
+interface KomgaRequestInit extends RequestInit {
+  isImage?: boolean;
+}
+
 export abstract class BaseApiService {
   protected static async getKomgaConfig(): Promise<AuthConfig> {
     try {
@@ -76,26 +80,14 @@ export abstract class BaseApiService {
   protected static async fetchFromApi<T>(
     url: string,
     headers: Headers,
-    isImage: boolean = false
+    options: KomgaRequestInit = {}
   ): Promise<T> {
-    // const startTime = Date.now(); // Capture le temps de début
-
-    const response = await fetch(url, { headers });
-
-    // const endTime = Date.now(); // Capture le temps de fin
-    // const responseTime = endTime - startTime; // Calcule le temps de réponse
-
-    // // Log le temps de réponse en ms ou en s
-    // if (responseTime >= 1000) {
-    //   console.log(`Temps de réponse pour ${url}: ${(responseTime / 1000).toFixed(2)}s`);
-    // } else {
-    //   console.log(`Temps de réponse pour ${url}: ${responseTime}ms`);
-    // }
+    const response = await fetch(url, { headers, ...options });
 
     if (!response.ok) {
       throw new Error(`Erreur HTTP: ${response.status} ${response.statusText}`);
     }
 
-    return isImage ? response : response.json();
+    return options.isImage ? response : response.json();
   }
 }
