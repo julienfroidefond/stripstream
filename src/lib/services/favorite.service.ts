@@ -1,6 +1,6 @@
-import { cookies } from "next/headers";
 import connectDB from "@/lib/mongodb";
 import { FavoriteModel } from "@/lib/models/favorite.model";
+import { AuthServerService } from "./auth-server.service";
 
 interface User {
   id: string;
@@ -17,19 +17,12 @@ export class FavoriteService {
     }
   }
 
-  private static async getCurrentUser(): Promise<User> {
-    const userCookie = cookies().get("stripUser");
-
-    if (!userCookie) {
+  private static getCurrentUser(): User {
+    const user = AuthServerService.getCurrentUser();
+    if (!user) {
       throw new Error("Utilisateur non authentifié");
     }
-
-    try {
-      return JSON.parse(atob(userCookie.value));
-    } catch (error) {
-      console.error("Erreur lors de la récupération de l'utilisateur depuis le cookie:", error);
-      throw new Error("Utilisateur non authentifié");
-    }
+    return user;
   }
 
   /**
@@ -37,7 +30,7 @@ export class FavoriteService {
    */
   static async isFavorite(seriesId: string): Promise<boolean> {
     try {
-      const user = await this.getCurrentUser();
+      const user = this.getCurrentUser();
       await connectDB();
 
       const favorite = await FavoriteModel.findOne({
@@ -57,7 +50,7 @@ export class FavoriteService {
    */
   static async addToFavorites(seriesId: string): Promise<void> {
     try {
-      const user = await this.getCurrentUser();
+      const user = this.getCurrentUser();
       await connectDB();
 
       await FavoriteModel.findOneAndUpdate(
@@ -78,7 +71,7 @@ export class FavoriteService {
    */
   static async removeFromFavorites(seriesId: string): Promise<void> {
     try {
-      const user = await this.getCurrentUser();
+      const user = this.getCurrentUser();
       await connectDB();
 
       await FavoriteModel.findOneAndDelete({
@@ -98,7 +91,7 @@ export class FavoriteService {
    */
   static async getAllFavoriteIds(): Promise<string[]> {
     try {
-      const user = await this.getCurrentUser();
+      const user = this.getCurrentUser();
       await connectDB();
 
       const favorites = await FavoriteModel.find({ userId: user.id });

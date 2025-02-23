@@ -1,7 +1,7 @@
-import { cookies } from "next/headers";
 import connectDB from "@/lib/mongodb";
 import { KomgaConfig } from "@/lib/models/config.model";
 import { TTLConfig } from "@/lib/models/ttl-config.model";
+import { AuthServerService } from "./auth-server.service";
 
 interface User {
   id: string;
@@ -24,23 +24,16 @@ interface TTLConfigData {
 }
 
 export class ConfigDBService {
-  private static async getCurrentUser(): Promise<User> {
-    const userCookie = cookies().get("stripUser");
-
-    if (!userCookie) {
+  private static getCurrentUser(): User {
+    const user = AuthServerService.getCurrentUser();
+    if (!user) {
       throw new Error("Utilisateur non authentifié");
     }
-
-    try {
-      return JSON.parse(atob(userCookie.value));
-    } catch (error) {
-      console.error("Erreur lors de la récupération de l'utilisateur depuis le cookie:", error);
-      throw new Error("Utilisateur non authentifié");
-    }
+    return user;
   }
 
   static async saveConfig(data: KomgaConfigData) {
-    const user = await this.getCurrentUser();
+    const user = this.getCurrentUser();
     await connectDB();
 
     const config = await KomgaConfig.findOneAndUpdate(
@@ -58,7 +51,7 @@ export class ConfigDBService {
   }
 
   static async getConfig() {
-    const user = await this.getCurrentUser();
+    const user = this.getCurrentUser();
     await connectDB();
 
     const config = await KomgaConfig.findOne({ userId: user.id });
@@ -71,7 +64,7 @@ export class ConfigDBService {
   }
 
   static async saveTTLConfig(data: TTLConfigData) {
-    const user = await this.getCurrentUser();
+    const user = this.getCurrentUser();
     await connectDB();
 
     const config = await TTLConfig.findOneAndUpdate(
@@ -87,7 +80,7 @@ export class ConfigDBService {
   }
 
   static async getTTLConfig() {
-    const user = await this.getCurrentUser();
+    const user = this.getCurrentUser();
     await connectDB();
 
     const config = await TTLConfig.findOne({ userId: user.id });
