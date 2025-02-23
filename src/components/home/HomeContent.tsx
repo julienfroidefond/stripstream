@@ -7,6 +7,7 @@ interface HomeData {
   ongoing: KomgaSeries[];
   recentlyRead: KomgaBook[];
   onDeck: KomgaBook[];
+  latestSeries: KomgaSeries[];
 }
 
 interface HomeContentProps {
@@ -66,6 +67,10 @@ export function HomeContent({ data, refreshHome }: HomeContentProps) {
 
         {data.onDeck && data.onDeck.length > 0 && (
           <MediaRow title="À suivre" items={optimizeBookData(data.onDeck)} />
+        )}
+
+        {data.latestSeries && data.latestSeries.length > 0 && (
+          <MediaRow title="Dernières séries" items={optimizeSeriesData(data.latestSeries)} />
         )}
 
         {data.recentlyRead && data.recentlyRead.length > 0 && (
