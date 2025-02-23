@@ -3,8 +3,9 @@ import { ClientBookWrapper } from "@/components/reader/ClientBookWrapper";
 import { BookSkeleton } from "@/components/skeletons/BookSkeleton";
 import { BookService } from "@/lib/services/book.service";
 import { notFound } from "next/navigation";
+import { withPageTiming } from "@/lib/hoc/withPageTiming";
 
-export default async function BookPage({ params }: { params: { bookId: string } }) {
+async function BookPage({ params }: { params: { bookId: string } }) {
   try {
     const data = await BookService.getBook(params.bookId);
 
@@ -18,3 +19,5 @@ export default async function BookPage({ params }: { params: { bookId: string } 
     notFound();
   }
 }
+
+export default withPageTiming("BookPage", BookPage);

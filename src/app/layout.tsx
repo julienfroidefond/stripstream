@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "@/styles/globals.css";
 import { cn } from "@/lib/utils";
 import ClientLayout from "@/components/layout/ClientLayout";
+import { PreferencesProvider } from "@/contexts/PreferencesContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -113,7 +114,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className={cn("min-h-screen bg-background font-sans antialiased", inter.className)}>
-        <ClientLayout>{children}</ClientLayout>
+        <PreferencesProvider>
+          <ClientLayout>{children}</ClientLayout>
+        </PreferencesProvider>
       </body>
     </html>
   );

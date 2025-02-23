@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { PreferencesService } from "./preferences.service";
+import { DebugService } from "./debug.service";
 
 type CacheMode = "file" | "memory";
 
@@ -370,13 +371,26 @@ class ServerCacheService {
     fetcher: () => Promise<T>,
     type: keyof typeof ServerCacheService.DEFAULT_TTL = "DEFAULT"
   ): Promise<T> {
+    const startTime = performance.now();
+
     const cached = this.get(key);
     if (cached !== null) {
+      const endTime = performance.now();
+
+      // Log la requête avec l'indication du cache
+      await DebugService.logRequest({
+        url: key,
+        startTime,
+        endTime,
+        fromCache: true,
+        cacheType: type,
+      });
       return cached as T;
     }
 
     try {
       const data = await fetcher();
+
       this.set(key, data, type);
       return data;
     } catch (error) {

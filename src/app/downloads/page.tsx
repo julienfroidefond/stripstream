@@ -1,7 +1,8 @@
 import { PageHeader } from "@/components/layout/PageHeader";
 import { DownloadManager } from "@/components/downloads/DownloadManager";
+import { withPageTiming } from "@/lib/hoc/withPageTiming";
 
-export default function DownloadsPage() {
+function DownloadsPage() {
   return (
     <>
       <PageHeader title="Téléchargements" description="Gérez vos livres disponibles hors ligne" />
@@ -9,3 +10,5 @@ export default function DownloadsPage() {
     </>
   );
 }
+
+export default withPageTiming("DownloadsPage", DownloadsPage);

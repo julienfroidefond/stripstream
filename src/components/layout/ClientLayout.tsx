@@ -11,6 +11,7 @@ import { PreferencesProvider } from "@/contexts/PreferencesContext";
 import { registerServiceWorker } from "@/lib/registerSW";
 import { NetworkStatus } from "../ui/NetworkStatus";
 import { LoadingBar } from "@/components/ui/loading-bar";
+import { DebugWrapper } from "@/components/debug/DebugWrapper";
 
 // Routes qui ne nécessitent pas d'authentification
 const publicRoutes = ["/login", "/register"];
@@ -71,6 +72,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
           <InstallPWA />
           <Toaster />
           <NetworkStatus />
+          <DebugWrapper />
         </div>
       </PreferencesProvider>
     </ThemeProvider>

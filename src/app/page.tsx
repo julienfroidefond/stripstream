@@ -2,6 +2,7 @@ import { HomeContent } from "@/components/home/HomeContent";
 import { HomeService } from "@/lib/services/home.service";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { withPageTiming } from "@/lib/hoc/withPageTiming";
 
 async function refreshHome() {
   "use server";
@@ -16,7 +17,7 @@ async function refreshHome() {
   }
 }
 
-export default async function HomePage() {
+async function HomePage() {
   try {
     const data = await HomeService.getHomeData();
 
@@ -38,3 +39,5 @@ export default async function HomePage() {
     );
   }
 }
+
+export default withPageTiming("HomePage", HomePage);

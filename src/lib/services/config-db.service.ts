@@ -1,6 +1,7 @@
 import connectDB from "@/lib/mongodb";
 import { KomgaConfig } from "@/lib/models/config.model";
 import { TTLConfig } from "@/lib/models/ttl-config.model";
+import { DebugService } from "./debug.service";
 import { AuthServerService } from "./auth-server.service";
 
 interface User {
@@ -54,56 +55,36 @@ export class ConfigDBService {
     const user = this.getCurrentUser();
     await connectDB();
 
-    const config = await KomgaConfig.findOne({ userId: user.id });
-
-    if (!config) {
-      throw new Error("Configuration non trouvée");
-    }
-
-    return config;
-  }
-
-  static async saveTTLConfig(data: TTLConfigData) {
-    const user = this.getCurrentUser();
-    await connectDB();
-
-    const config = await TTLConfig.findOneAndUpdate(
-      { userId: user.id },
-      {
-        userId: user.id,
-        ...data,
-      },
-      { upsert: true, new: true }
-    );
-
-    return config;
+    return DebugService.measureMongoOperation("getConfig", async () => {
+      const config = await KomgaConfig.findOne({ userId: user.id });
+      return config;
+    });
   }
 
   static async getTTLConfig() {
     const user = this.getCurrentUser();
     await connectDB();
 
-    const config = await TTLConfig.findOne({ userId: user.id });
+    return DebugService.measureMongoOperation("getTTLConfig", async () => {
+      const config = await TTLConfig.findOne({ userId: user.id });
+      return config;
+    });
+  }
 
-    if (!config) {
-      // Retourner la configuration par défaut si aucune configuration n'existe
-      return {
-        defaultTTL: 5,
-        homeTTL: 5,
-        librariesTTL: 1440,
-        seriesTTL: 5,
-        booksTTL: 5,
-        imagesTTL: 1440,
-      };
-    }
+  static async saveTTLConfig(data: TTLConfigData) {
+    const user = this.getCurrentUser();
+    await connectDB();
 
-    return {
-      defaultTTL: config.defaultTTL,
-      homeTTL: config.homeTTL,
-      librariesTTL: config.librariesTTL,
-      seriesTTL: config.seriesTTL,
-      booksTTL: config.booksTTL,
-      imagesTTL: config.imagesTTL,
-    };
+    return DebugService.measureMongoOperation("saveTTLConfig", async () => {
+      const config = await TTLConfig.findOneAndUpdate(
+        { userId: user.id },
+        {
+          userId: user.id,
+          ...data,
+        },
+        { upsert: true, new: true }
+      );
+      return config;
+    });
   }
 }

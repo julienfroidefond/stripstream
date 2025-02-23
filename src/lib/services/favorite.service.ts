@@ -1,5 +1,6 @@
 import connectDB from "@/lib/mongodb";
 import { FavoriteModel } from "@/lib/models/favorite.model";
+import { DebugService } from "./debug.service";
 import { AuthServerService } from "./auth-server.service";
 
 interface User {
@@ -33,12 +34,13 @@ export class FavoriteService {
       const user = this.getCurrentUser();
       await connectDB();
 
-      const favorite = await FavoriteModel.findOne({
-        userId: user.id,
-        seriesId: seriesId,
+      return DebugService.measureMongoOperation("isFavorite", async () => {
+        const favorite = await FavoriteModel.findOne({
+          userId: user.id,
+          seriesId: seriesId,
+        });
+        return !!favorite;
       });
-
-      return !!favorite;
     } catch (error) {
       console.error("Erreur lors de la vérification du favori:", error);
       return false;
@@ -53,11 +55,13 @@ export class FavoriteService {
       const user = this.getCurrentUser();
       await connectDB();
 
-      await FavoriteModel.findOneAndUpdate(
-        { userId: user.id, seriesId },
-        { userId: user.id, seriesId },
-        { upsert: true }
-      );
+      await DebugService.measureMongoOperation("addToFavorites", async () => {
+        await FavoriteModel.findOneAndUpdate(
+          { userId: user.id, seriesId },
+          { userId: user.id, seriesId },
+          { upsert: true }
+        );
+      });
 
       this.dispatchFavoritesChanged();
     } catch (error) {
@@ -74,9 +78,11 @@ export class FavoriteService {
       const user = this.getCurrentUser();
       await connectDB();
 
-      await FavoriteModel.findOneAndDelete({
-        userId: user.id,
-        seriesId,
+      await DebugService.measureMongoOperation("removeFromFavorites", async () => {
+        await FavoriteModel.findOneAndDelete({
+          userId: user.id,
+          seriesId,
+        });
       });
 
       this.dispatchFavoritesChanged();
@@ -90,15 +96,36 @@ export class FavoriteService {
    * Récupère tous les IDs des séries favorites
    */
   static async getAllFavoriteIds(): Promise<string[]> {
-    try {
-      const user = this.getCurrentUser();
-      await connectDB();
+    const user = this.getCurrentUser();
+    await connectDB();
 
+    return DebugService.measureMongoOperation("getAllFavoriteIds", async () => {
       const favorites = await FavoriteModel.find({ userId: user.id });
       return favorites.map((favorite) => favorite.seriesId);
-    } catch (error) {
-      console.error("Erreur lors de la récupération des favoris:", error);
-      return [];
-    }
+    });
+  }
+
+  static async addFavorite(seriesId: string) {
+    const user = this.getCurrentUser();
+    await connectDB();
+
+    return DebugService.measureMongoOperation("addFavorite", async () => {
+      const favorite = await FavoriteModel.findOneAndUpdate(
+        { userId: user.id, seriesId },
+        { userId: user.id, seriesId },
+        { upsert: true, new: true }
+      );
+      return favorite;
+    });
+  }
+
+  static async removeFavorite(seriesId: string): Promise<boolean> {
+    const user = this.getCurrentUser();
+    await connectDB();
+
+    return DebugService.measureMongoOperation("removeFavorite", async () => {
+      const result = await FavoriteModel.deleteOne({ userId: user.id, seriesId });
+      return result.deletedCount > 0;
+    });
   }
 }

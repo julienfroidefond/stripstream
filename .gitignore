@@ -37,6 +37,7 @@ next-env.d.ts
 .vscode
 
 .cache
+debug-logs
 
 # Environment variables
 .env

@@ -28,25 +28,25 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
   const [preferences, setPreferences] = useState<UserPreferences>(defaultPreferences);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchPreferences = async () => {
-      try {
-        const response = await fetch("/api/preferences");
-        if (!response.ok) throw new Error("Erreur lors de la récupération des préférences");
-        const data = await response.json();
-        setPreferences({
-          ...defaultPreferences,
-          ...data,
-        });
-      } catch (error) {
-        console.error("Erreur lors de la récupération des préférences:", error);
-        // En cas d'erreur, on garde les préférences par défaut
-        setPreferences(defaultPreferences);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchPreferences = async () => {
+    try {
+      const response = await fetch("/api/preferences");
+      if (!response.ok) throw new Error("Erreur lors de la récupération des préférences");
+      const data = await response.json();
+      setPreferences({
+        ...defaultPreferences,
+        ...data,
+      });
+    } catch (error) {
+      console.error("Erreur lors de la récupération des préférences:", error);
+      // En cas d'erreur, on garde les préférences par défaut
+      setPreferences(defaultPreferences);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchPreferences();
   }, []);
 
@@ -64,14 +64,17 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
 
       const updatedPreferences = await response.json();
 
-      setPreferences((prev) => {
-        const newState = {
-          ...prev,
-          ...updatedPreferences,
-        };
-        return newState;
-      });
+      setPreferences((prev) => ({
+        ...prev,
+        ...updatedPreferences,
+      }));
+
+      // Forcer un rafraîchissement des préférences
+      await fetchPreferences();
+
+      return updatedPreferences;
     } catch (error) {
+      console.error("Erreur lors de la mise à jour des préférences:", error);
       throw error;
     }
   };

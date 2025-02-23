@@ -3,6 +3,7 @@ import { LibraryService } from "@/lib/services/library.service";
 import { PreferencesService } from "@/lib/services/preferences.service";
 import { revalidatePath } from "next/cache";
 import { RefreshButton } from "@/components/library/RefreshButton";
+import { withPageTiming } from "@/lib/hoc/withPageTiming";
 
 interface PageProps {
   params: { libraryId: string };
@@ -49,7 +50,7 @@ async function getLibrarySeries(
   }
 }
 
-export default async function LibraryPage({ params, searchParams }: PageProps) {
+async function LibraryPage({ params, searchParams }: PageProps) {
   const currentPage = searchParams.page ? parseInt(searchParams.page) : 1;
   const preferences = await PreferencesService.getPreferences();
 
@@ -105,3 +106,5 @@ export default async function LibraryPage({ params, searchParams }: PageProps) {
     );
   }
 }
+
+export default withPageTiming("LibraryPage", LibraryPage);
