@@ -61,6 +61,26 @@ export class BookService extends BaseApiService {
     }
   }
 
+  static async deleteReadProgress(bookId: string): Promise<void> {
+    try {
+      const config = await this.getKomgaConfig();
+      const url = this.buildUrl(config, `books/${bookId}/read-progress`);
+      const headers = this.getAuthHeaders(config);
+      headers.set("Content-Type", "application/json");
+
+      const response = await fetch(url, {
+        method: "DELETE",
+        headers,
+      });
+
+      if (!response.ok) {
+        throw new Error("Erreur lors de la suppression de la progression");
+      }
+    } catch (error) {
+      return this.handleError(error, "Impossible de supprimer la progression");
+    }
+  }
+
   static async getPage(bookId: string, pageNumber: number): Promise<Response> {
     try {
       // Ajuster le numéro de page pour l'API Komga (zero-based)

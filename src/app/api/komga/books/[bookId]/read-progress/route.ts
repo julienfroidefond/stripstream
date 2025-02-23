@@ -24,7 +24,7 @@ export async function PATCH(request: Request, { params }: { params: { bookId: st
 }
 export async function DELETE(request: Request, { params }: { params: { bookId: string } }) {
   try {
-    await BookService.updateReadProgress(params.bookId, 1, false);
+    await BookService.deleteReadProgress(params.bookId);
     return NextResponse.json({ message: "Progression supprimée avec succès" });
   } catch (error) {
     console.error("API Delete Read Progress - Erreur:", error);
