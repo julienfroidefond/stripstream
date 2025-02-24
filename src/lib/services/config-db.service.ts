@@ -13,6 +13,7 @@ interface KomgaConfigData {
   url: string;
   username: string;
   password: string;
+  authHeader: string;
 }
 
 interface TTLConfigData {
@@ -37,13 +38,16 @@ export class ConfigDBService {
     const user = this.getCurrentUser();
     await connectDB();
 
+    const authHeader = Buffer.from(`${data.username}:${data.password}`).toString("base64");
+
     const config = await KomgaConfig.findOneAndUpdate(
       { userId: user.id },
       {
         userId: user.id,
         url: data.url,
         username: data.username,
-        password: data.password,
+        // password: data.password,
+        authHeader,
       },
       { upsert: true, new: true }
     );

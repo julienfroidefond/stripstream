@@ -21,10 +21,7 @@ export abstract class BaseApiService {
       const config = await ConfigDBService.getConfig();
       return {
         serverUrl: config.url,
-        credentials: {
-          username: config.username,
-          password: config.password,
-        },
+        authHeader: config.authHeader,
       };
     } catch (error) {
       console.error("Erreur lors de la récupération de la configuration:", error);
@@ -33,16 +30,12 @@ export abstract class BaseApiService {
   }
 
   protected static getAuthHeaders(config: AuthConfig): Headers {
-    if (!config.credentials?.username || !config.credentials?.password) {
+    if (!config.authHeader) {
       throw new Error("Credentials Komga manquants");
     }
 
-    const auth = Buffer.from(
-      `${config.credentials.username}:${config.credentials.password}`
-    ).toString("base64");
-
     return new Headers({
-      Authorization: `Basic ${auth}`,
+      Authorization: `Basic ${config.authHeader}`,
       Accept: "application/json",
     });
   }

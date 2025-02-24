@@ -15,7 +15,7 @@ const configSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    password: {
+    authHeader: {
       type: String,
       required: true,
     },

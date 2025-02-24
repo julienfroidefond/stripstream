@@ -18,7 +18,6 @@ export default async function SettingsPage() {
       config = {
         url: mongoConfig.url,
         username: mongoConfig.username,
-        password: mongoConfig.password,
         userId: mongoConfig.userId,
       };
     }

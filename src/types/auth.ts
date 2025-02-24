@@ -2,10 +2,7 @@ import { KomgaUser } from "./komga";
 
 export interface AuthConfig {
   serverUrl: string;
-  credentials: {
-    username: string;
-    password: string;
-  };
+  authHeader: string;
 }
 
 export interface AuthState {

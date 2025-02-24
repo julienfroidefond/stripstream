@@ -13,7 +13,6 @@ import { CacheModeSwitch } from "@/components/settings/CacheModeSwitch";
 interface KomgaConfig {
   url: string;
   username: string;
-  password: string;
   userId: string;
 }
 
