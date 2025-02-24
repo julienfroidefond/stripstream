@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import { TestService } from "@/lib/services/test.service";
-import { ConfigDBService } from "@/lib/services/config-db.service";
 
-export async function POST() {
+export async function POST(request: Request) {
   try {
-    const config = await ConfigDBService.getConfig();
+    const { serverUrl, username, password } = await request.json();
+    const authHeader = Buffer.from(`${username}:${password}`).toString("base64");
 
     const { libraries } = await TestService.testConnection({
-      serverUrl: config.url,
-      authHeader: config.authHeader,
+      serverUrl,
+      authHeader,
     });
 
     return NextResponse.json({

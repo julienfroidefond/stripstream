@@ -15,6 +15,7 @@ interface KomgaConfig {
   username: string;
   userId: string;
   password?: string;
+  authHeader: string;
 }
 
 interface TTLConfigData {
@@ -43,7 +44,10 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
     serverUrl: initialConfig?.url || "",
     username: initialConfig?.username || "",
     password: initialConfig?.password || "",
+    authHeader: initialConfig?.authHeader || "",
   });
+  const [isEditingConfig, setIsEditingConfig] = useState(false);
+  const [localInitialConfig, setLocalInitialConfig] = useState(initialConfig);
   const [ttlConfig, setTTLConfig] = useState<TTLConfigData>(
     initialTTLConfig || {
       defaultTTL: 5,
@@ -55,6 +59,10 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
     }
   );
   const { preferences, updatePreferences } = usePreferences();
+
+  const hasToShowEditForm =
+    localInitialConfig && config.serverUrl !== null && config.username !== null;
+  const shouldShowForm = !hasToShowEditForm || isEditingConfig;
 
   const handleClearCache = async () => {
     setIsCacheClearing(true);
@@ -93,6 +101,12 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
     setError(null);
     setSuccess(null);
 
+    const form = document.querySelector("form") as HTMLFormElement;
+    const formData = new FormData(form);
+    const serverUrl = formData.get("serverUrl") as string;
+    const username = formData.get("username") as string;
+    const password = formData.get("password") as string;
+
     try {
       const response = await fetch("/api/komga/test", {
         method: "POST",
@@ -100,9 +114,9 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          serverUrl: config.serverUrl,
-          username: config.username,
-          password: config.password,
+          serverUrl: serverUrl.trim(),
+          username,
+          password: password || config.password,
         }),
       });
 
@@ -142,6 +156,7 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
       serverUrl: serverUrl.trim(),
       username,
       password,
+      authHeader: config.authHeader,
     };
 
     try {
@@ -162,19 +177,16 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
         throw new Error(data.error || "Erreur lors de la sauvegarde de la configuration");
       }
 
-      const komgaConfig = {
-        serverUrl: newConfig.serverUrl,
-        credentials: {
-          username: newConfig.username,
-          password: newConfig.password,
-        },
-      };
+      const savedConfig = await response.json();
 
       setConfig(newConfig);
-
-      // Émettre un événement pour notifier les autres composants
-      const configChangeEvent = new CustomEvent("komga-config-changed", { detail: komgaConfig });
-      window.dispatchEvent(configChangeEvent);
+      setLocalInitialConfig({
+        url: newConfig.serverUrl,
+        username: newConfig.username,
+        userId: savedConfig.userId,
+        authHeader: savedConfig.authHeader,
+      });
+      setIsEditingConfig(false);
 
       toast({
         title: "Configuration sauvegardée",
@@ -389,84 +401,126 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
               </p>
             </div>
 
-            {/* Formulaire de configuration */}
-            <form onSubmit={handleSave} className="space-y-4">
-              <div className="space-y-3">
-                <div className="space-y-2">
-                  <label htmlFor="serverUrl" className="text-sm font-medium">
-                    L&apos;URL du serveur
-                  </label>
-                  <input
-                    type="url"
-                    id="serverUrl"
-                    name="serverUrl"
-                    required
-                    value={config.serverUrl}
-                    onChange={handleInputChange}
-                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  />
+            {!shouldShowForm ? (
+              <div className="space-y-4">
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">L&apos;URL du serveur</label>
+                    <p className="text-sm text-muted-foreground">{config.serverUrl}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">L&apos;adresse email de connexion</label>
+                    <p className="text-sm text-muted-foreground">{config.username}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Mot de passe</label>
+                    <p className="text-sm text-muted-foreground">••••••••</p>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <label htmlFor="username" className="text-sm font-medium">
-                    L&apos;adresse email de connexion
-                  </label>
-                  <input
-                    type="text"
-                    id="username"
-                    name="username"
-                    required
-                    value={config.username}
-                    onChange={handleInputChange}
-                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="password" className="text-sm font-medium">
-                    Mot de passe
-                  </label>
-                  <input
-                    type="password"
-                    id="password"
-                    name="password"
-                    required
-                    value={config.password}
-                    onChange={handleInputChange}
-                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  />
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <button
-                  type="submit"
-                  disabled={isSaving}
-                  className="flex-1 inline-flex items-center justify-center rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground ring-offset-background transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
-                >
-                  {isSaving ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Sauvegarde...
-                    </>
-                  ) : (
-                    "Sauvegarder"
-                  )}
-                </button>
                 <button
                   type="button"
-                  onClick={handleTest}
-                  disabled={isLoading}
-                  className="flex-1 inline-flex items-center justify-center rounded-md bg-secondary px-3 py-2 text-sm font-medium text-secondary-foreground ring-offset-background transition-colors hover:bg-secondary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+                  onClick={() => setIsEditingConfig(true)}
+                  className="inline-flex items-center justify-center rounded-md bg-secondary px-3 py-2 text-sm font-medium text-secondary-foreground ring-offset-background transition-colors hover:bg-secondary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Test en cours...
-                    </>
-                  ) : (
-                    "Tester la connexion"
-                  )}
+                  Modifier la configuration
                 </button>
               </div>
-            </form>
+            ) : (
+              <form onSubmit={handleSave} className="space-y-4">
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <label htmlFor="serverUrl" className="text-sm font-medium">
+                      L&apos;URL du serveur
+                    </label>
+                    <input
+                      type="url"
+                      id="serverUrl"
+                      name="serverUrl"
+                      required
+                      value={config.serverUrl}
+                      onChange={handleInputChange}
+                      className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label htmlFor="username" className="text-sm font-medium">
+                      L&apos;adresse email de connexion
+                    </label>
+                    <input
+                      type="text"
+                      id="username"
+                      name="username"
+                      required
+                      value={config.username}
+                      onChange={handleInputChange}
+                      className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label htmlFor="password" className="text-sm font-medium">
+                      Mot de passe
+                    </label>
+                    <input
+                      type="password"
+                      id="password"
+                      name="password"
+                      required
+                      value={config.password}
+                      onChange={handleInputChange}
+                      className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    type="submit"
+                    disabled={isSaving}
+                    className="flex-1 inline-flex items-center justify-center rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground ring-offset-background transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+                  >
+                    {isSaving ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Sauvegarde...
+                      </>
+                    ) : (
+                      "Sauvegarder"
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleTest}
+                    disabled={isLoading}
+                    className="flex-1 inline-flex items-center justify-center rounded-md bg-secondary px-3 py-2 text-sm font-medium text-secondary-foreground ring-offset-background transition-colors hover:bg-secondary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Test en cours...
+                      </>
+                    ) : (
+                      "Tester la connexion"
+                    )}
+                  </button>
+                  {initialConfig && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsEditingConfig(false);
+                        setConfig({
+                          serverUrl: initialConfig.url,
+                          username: initialConfig.username,
+                          password: "",
+                          authHeader: initialConfig.authHeader,
+                        });
+                      }}
+                      className="flex-1 inline-flex items-center justify-center rounded-md bg-secondary px-3 py-2 text-sm font-medium text-secondary-foreground ring-offset-background transition-colors hover:bg-secondary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    >
+                      Annuler
+                    </button>
+                  )}
+                </div>
+              </form>
+            )}
           </div>
         </div>
 
