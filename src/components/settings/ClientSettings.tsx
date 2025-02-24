@@ -14,6 +14,7 @@ interface KomgaConfig {
   url: string;
   username: string;
   userId: string;
+  password?: string;
 }
 
 interface TTLConfigData {
