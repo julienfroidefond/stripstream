@@ -24,7 +24,7 @@ async function HomePage() {
     return <HomeContent data={data} refreshHome={refreshHome} />;
   } catch (error) {
     // Si l'erreur indique une configuration manquante, rediriger vers les préférences
-    if (error instanceof Error && error.message.includes("Configuration Komga manquante")) {
+    if (error instanceof Error && error.message.includes("Configuration Komga non trouvée")) {
       redirect("/settings");
     }
 

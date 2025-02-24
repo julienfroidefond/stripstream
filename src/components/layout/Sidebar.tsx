@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { authService } from "@/lib/services/auth.service";
 import { useEffect, useState, useCallback } from "react";
 import { KomgaLibrary, KomgaSeries } from "@/types/komga";
+import { usePreferences } from "@/contexts/PreferencesContext";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ interface SidebarProps {
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { preferences } = usePreferences();
   const [libraries, setLibraries] = useState<KomgaLibrary[]>([]);
   const [favorites, setFavorites] = useState<KomgaSeries[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -78,6 +80,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     fetchLibraries();
     fetchFavorites();
   }, [fetchLibraries, fetchFavorites]);
+
+  // Rafraîchir les données quand les préférences changent
+  useEffect(() => {
+    fetchLibraries();
+    fetchFavorites();
+  }, [preferences, fetchLibraries, fetchFavorites]);
 
   // Mettre à jour les favoris quand ils changent
   useEffect(() => {
