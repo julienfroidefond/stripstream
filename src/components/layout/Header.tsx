@@ -17,11 +17,13 @@ export function Header({ onToggleSidebar }: HeaderProps) {
       <div className="container flex h-14 max-w-screen-2xl items-center">
         <button
           onClick={onToggleSidebar}
-          className="mr-2 px-2 hover:bg-accent hover:text-accent-foreground rounded-md"
+          className="mr-2 px-2 py-1.5 hover:bg-accent hover:text-accent-foreground rounded-md"
           aria-label="Toggle sidebar"
           id="sidebar-toggle"
         >
-          <Menu className="h-5 w-5" />
+          <div className="flex items-center justify-center w-5 h-5">
+            <Menu className="h-[1.2rem] w-[1.2rem]" />
+          </div>
         </button>
 
         <div className="mr-4 hidden md:flex">
@@ -37,9 +39,9 @@ export function Header({ onToggleSidebar }: HeaderProps) {
               className="px-2 py-1.5 hover:bg-accent hover:text-accent-foreground rounded-md"
               aria-label="Toggle theme"
             >
-              <div className="relative w-5 h-5">
-                <Sun className="absolute inset-0 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                <Moon className="absolute inset-0 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+              <div className="relative flex items-center justify-center w-5 h-5">
+                <Sun className="absolute inset-0 h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                <Moon className="absolute inset-0 h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
               </div>
               <span className="sr-only">Toggle theme</span>
             </button>
