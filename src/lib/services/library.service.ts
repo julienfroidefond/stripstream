@@ -136,6 +136,6 @@ export class LibraryService extends BaseApiService {
 
   static async invalidateLibrarySeriesCache(libraryId: string): Promise<void> {
     const cacheService = await getServerCacheService();
-    cacheService.delete(`library-${libraryId}-all-series`);
+    await cacheService.delete(`library-${libraryId}-all-series`);
   }
 }

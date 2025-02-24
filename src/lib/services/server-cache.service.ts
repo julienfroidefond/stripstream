@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import { PreferencesService } from "./preferences.service";
 import { DebugService } from "./debug.service";
+import { AuthServerService } from "./auth-server.service";
 
 type CacheMode = "file" | "memory";
 
@@ -286,11 +287,17 @@ class ServerCacheService {
   /**
    * Supprime une entrée du cache
    */
-  delete(key: string): void {
+  async delete(key: string): Promise<void> {
+    const user = await AuthServerService.getCurrentUser();
+    if (!user) {
+      throw new Error("Utilisateur non authentifié");
+    }
+    const cacheKey = `${user.id}-${key}`;
+
     if (this.config.mode === "memory") {
-      this.memoryCache.delete(key);
+      this.memoryCache.delete(cacheKey);
     } else {
-      const filePath = this.getCacheFilePath(key);
+      const filePath = this.getCacheFilePath(cacheKey);
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
       }
@@ -300,15 +307,21 @@ class ServerCacheService {
   /**
    * Supprime toutes les entrées du cache qui commencent par un préfixe
    */
-  deleteAll(prefix: string): void {
+  async deleteAll(prefix: string): Promise<void> {
+    const user = await AuthServerService.getCurrentUser();
+    if (!user) {
+      throw new Error("Utilisateur non authentifié");
+    }
+    const prefixKey = `${user.id}-${prefix}`;
+
     if (this.config.mode === "memory") {
       this.memoryCache.forEach((value, key) => {
-        if (key.startsWith(prefix)) {
+        if (key.startsWith(prefixKey)) {
           this.memoryCache.delete(key);
         }
       });
     } else {
-      const cacheDir = path.join(this.cacheDir, prefix);
+      const cacheDir = path.join(this.cacheDir, prefixKey);
       if (fs.existsSync(cacheDir)) {
         fs.rmdirSync(cacheDir, { recursive: true });
       }
@@ -372,14 +385,19 @@ class ServerCacheService {
     type: keyof typeof ServerCacheService.DEFAULT_TTL = "DEFAULT"
   ): Promise<T> {
     const startTime = performance.now();
+    const user = await AuthServerService.getCurrentUser();
+    if (!user) {
+      throw new Error("Utilisateur non authentifié");
+    }
 
-    const cached = this.get(key);
+    const cacheKey = `${user.id}-${key}`;
+    const cached = this.get(cacheKey);
     if (cached !== null) {
       const endTime = performance.now();
 
       // Log la requête avec l'indication du cache
       await DebugService.logRequest({
-        url: key,
+        url: cacheKey,
         startTime,
         endTime,
         fromCache: true,
@@ -391,7 +409,7 @@ class ServerCacheService {
     try {
       const data = await fetcher();
 
-      this.set(key, data, type);
+      this.set(cacheKey, data, type);
       return data;
     } catch (error) {
       throw error;

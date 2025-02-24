@@ -84,8 +84,9 @@ export class HomeService extends BaseApiService {
 
   static async invalidateHomeCache(): Promise<void> {
     const cacheService = await getServerCacheService();
-    cacheService.delete("home-ongoing");
-    cacheService.delete("home-recently-read");
-    cacheService.delete("home-on-deck");
+    await cacheService.delete("home-ongoing");
+    await cacheService.delete("home-recently-read");
+    await cacheService.delete("home-on-deck");
+    await cacheService.delete("home-latest-series");
   }
 }

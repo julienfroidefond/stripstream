@@ -21,7 +21,7 @@ export class SeriesService extends BaseApiService {
 
   static async invalidateSeriesCache(seriesId: string): Promise<void> {
     const cacheService = await getServerCacheService();
-    cacheService.delete(`series-${seriesId}`);
+    await cacheService.delete(`series-${seriesId}`);
   }
 
   static async getAllSeriesBooks(seriesId: string): Promise<KomgaBook[]> {
@@ -128,7 +128,7 @@ export class SeriesService extends BaseApiService {
 
   static async invalidateSeriesBooksCache(seriesId: string): Promise<void> {
     const cacheService = await getServerCacheService();
-    cacheService.delete(`series-${seriesId}-all-books`);
+    await cacheService.delete(`series-${seriesId}-all-books`);
   }
 
   static async getFirstBook(seriesId: string): Promise<string> {
