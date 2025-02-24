@@ -3,7 +3,6 @@ import { MediaRow } from "./MediaRow";
 import { KomgaBook, KomgaSeries } from "@/types/komga";
 import { RefreshButton } from "@/components/library/RefreshButton";
 import { BookOpenCheck, History, Sparkles, Clock } from "lucide-react";
-import { usePreferences } from "@/contexts/PreferencesContext";
 
 interface HomeData {
   ongoing: KomgaSeries[];
@@ -24,7 +23,7 @@ export function HomeContent({ data, refreshHome }: HomeContentProps) {
   //   recentlyReadCount: data.recentlyRead?.length || 0,
   //   onDeckCount: data.onDeck?.length || 0,
   // });
-  const { preferences } = usePreferences();
+
   const optimizeSeriesData = (series: KomgaSeries[]) => {
     return series.map(({ id, metadata, booksCount }) => ({
       id,
