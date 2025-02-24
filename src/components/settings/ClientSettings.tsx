@@ -192,6 +192,9 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
         title: "Configuration sauvegardée",
         description: "La configuration a été sauvegardée avec succès",
       });
+
+      // Forcer un rechargement complet de la page
+      window.location.reload();
     } catch (error) {
       console.error("Erreur lors de la sauvegarde:", error);
       toast({
