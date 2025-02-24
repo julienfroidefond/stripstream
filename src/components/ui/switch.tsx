@@ -3,7 +3,8 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-interface SwitchProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "type" | "role" | "aria-checked"> {
+interface SwitchProps
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "type" | "role" | "aria-checked"> {
   onCheckedChange?: (checked: boolean) => void;
 }
 
@@ -33,10 +34,12 @@ const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(
           aria-checked={checked ?? defaultChecked ?? false}
           {...props}
         />
-        <span className={cn(
-          "pointer-events-none absolute left-1 h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform",
-          "peer-checked:translate-x-5"
-        )} />
+        <span
+          className={cn(
+            "pointer-events-none absolute left-0.5 h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform",
+            "peer-checked:translate-x-[20px]"
+          )}
+        />
       </div>
     );
   }
