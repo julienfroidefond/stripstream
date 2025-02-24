@@ -18,9 +18,9 @@ export function HeroSection({ series }: HeroSectionProps) {
   // });
 
   return (
-    <div className="relative h-[500px] -mx-4 sm:-mx-8 lg:-mx-14 overflow-hidden">
+    <div className="relative h-[300px] sm:h-[400px] lg:h-[500px] -mx-4 sm:-mx-8 lg:-mx-14 overflow-hidden">
       {/* Grille de couvertures en arrière-plan */}
-      <div className="absolute inset-0 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 p-4 opacity-10">
+      <div className="absolute inset-0 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-4 p-4 opacity-10">
         {series?.map((series) => (
           <div
             key={series.id}
@@ -41,11 +41,11 @@ export function HeroSection({ series }: HeroSectionProps) {
       <div className="absolute inset-0 bg-gradient-to-b from-background/50 to-background" />
 
       {/* Contenu */}
-      <div className="relative h-full container flex flex-col items-center justify-center text-center space-y-4">
-        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight">
+      <div className="relative h-full container flex flex-col items-center justify-center text-center space-y-2 sm:space-y-4">
+        <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold tracking-tight">
           Bienvenue sur StripStream
         </h1>
-        <p className="text-xl text-muted-foreground max-w-[600px]">
+        <p className="text-lg sm:text-xl text-muted-foreground max-w-[600px]">
           Votre bibliothèque numérique pour lire vos BD, mangas et comics préférés.
         </p>
       </div>
