@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { authService } from "@/lib/services/auth.service";
 import { AuthError } from "@/types/auth";
+import { ERROR_CODES } from "@/constants/errorCodes";
+import { ERROR_MESSAGES } from "@/constants/errorMessages";
 
 interface RegisterFormProps {
   from?: string;
@@ -26,8 +28,8 @@ export function RegisterForm({ from }: RegisterFormProps) {
 
     if (password !== confirmPassword) {
       setError({
-        code: "SERVER_ERROR",
-        message: "Les mots de passe ne correspondent pas",
+        code: ERROR_CODES.AUTH.PASSWORD_MISMATCH,
+        message: ERROR_MESSAGES[ERROR_CODES.AUTH.PASSWORD_MISMATCH],
       });
       setIsLoading(false);
       return;

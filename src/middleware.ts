@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { ERROR_CODES } from "./constants/errorCodes";
+import { ERROR_MESSAGES } from "./constants/errorMessages";
 
 // Routes qui ne nécessitent pas d'authentification
 const publicRoutes = ["/login", "/register", "/images"];
@@ -30,7 +32,10 @@ export function middleware(request: NextRequest) {
   // Pour toutes les routes protégées, vérifier la présence de l'utilisateur
   if (!user || !user.value) {
     if (pathname.startsWith("/api/")) {
-      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+      return NextResponse.json(
+        { error: ERROR_MESSAGES[ERROR_CODES.MIDDLEWARE.UNAUTHORIZED] },
+        { status: 401 }
+      );
     }
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("from", pathname);
@@ -40,12 +45,15 @@ export function middleware(request: NextRequest) {
   try {
     const userData = JSON.parse(atob(user.value));
     if (!userData || !userData.authenticated || !userData.id || !userData.email) {
-      throw new Error("Invalid user data");
+      throw new Error(ERROR_MESSAGES[ERROR_CODES.MIDDLEWARE.INVALID_SESSION]);
     }
   } catch (error) {
     console.error("Erreur de validation du cookie:", error);
     if (pathname.startsWith("/api/")) {
-      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+      return NextResponse.json(
+        { error: ERROR_MESSAGES[ERROR_CODES.MIDDLEWARE.INVALID_TOKEN] },
+        { status: 401 }
+      );
     }
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("from", pathname);

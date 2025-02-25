@@ -1,6 +1,8 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { ERROR_CODES } from "../constants/errorCodes";
+import { AppError } from "../utils/errors";
 
 export interface UserPreferences {
   showThumbnails: boolean;
@@ -31,7 +33,9 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
   const fetchPreferences = async () => {
     try {
       const response = await fetch("/api/preferences");
-      if (!response.ok) throw new Error("Erreur lors de la récupération des préférences");
+      if (!response.ok) {
+        throw new AppError(ERROR_CODES.PREFERENCES.FETCH_ERROR);
+      }
       const data = await response.json();
       setPreferences({
         ...defaultPreferences,
@@ -60,7 +64,9 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
         body: JSON.stringify(newPreferences),
       });
 
-      if (!response.ok) throw new Error("Erreur lors de la mise à jour des préférences");
+      if (!response.ok) {
+        throw new AppError(ERROR_CODES.PREFERENCES.UPDATE_ERROR);
+      }
 
       const updatedPreferences = await response.json();
 
@@ -89,7 +95,7 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
 export function usePreferences() {
   const context = useContext(PreferencesContext);
   if (context === undefined) {
-    throw new Error("usePreferences must be used within a PreferencesProvider");
+    throw new AppError(ERROR_CODES.PREFERENCES.CONTEXT_ERROR);
   }
   return context;
 }

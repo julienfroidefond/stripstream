@@ -1,6 +1,8 @@
 "use client";
 
 import { AuthError } from "@/types/auth";
+import { ERROR_CODES } from "@/constants/errorCodes";
+import { ERROR_MESSAGES } from "@/constants/errorMessages";
 
 class AuthService {
   private static instance: AuthService;
@@ -39,8 +41,8 @@ class AuthService {
         throw error;
       }
       throw {
-        code: "SERVER_ERROR",
-        message: "Une erreur est survenue lors de la connexion",
+        code: ERROR_CODES.AUTH.INVALID_CREDENTIALS,
+        message: ERROR_MESSAGES[ERROR_CODES.AUTH.INVALID_CREDENTIALS],
       } as AuthError;
     }
   }
@@ -67,8 +69,8 @@ class AuthService {
         throw error;
       }
       throw {
-        code: "SERVER_ERROR",
-        message: "Une erreur est survenue lors de l'inscription",
+        code: ERROR_CODES.AUTH.INVALID_USER_DATA,
+        message: ERROR_MESSAGES[ERROR_CODES.AUTH.INVALID_USER_DATA],
       } as AuthError;
     }
   }
@@ -77,9 +79,24 @@ class AuthService {
    * Déconnecte l'utilisateur
    */
   async logout(): Promise<void> {
-    await fetch("/api/auth/logout", {
-      method: "POST",
-    });
+    try {
+      const response = await fetch("/api/auth/logout", {
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw data.error;
+      }
+    } catch (error) {
+      if ((error as AuthError).code) {
+        throw error;
+      }
+      throw {
+        code: ERROR_CODES.AUTH.LOGOUT_ERROR,
+        message: ERROR_MESSAGES[ERROR_CODES.AUTH.LOGOUT_ERROR],
+      } as AuthError;
+    }
   }
 }
 

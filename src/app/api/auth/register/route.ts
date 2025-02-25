@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { AuthServerService } from "@/lib/services/auth-server.service";
+import { ERROR_CODES } from "@/constants/errorCodes";
+import { ERROR_MESSAGES } from "@/constants/errorMessages";
+import { AppError } from "@/utils/errors";
 
 export async function POST(request: Request) {
   try {
@@ -9,28 +12,25 @@ export async function POST(request: Request) {
       const userData = await AuthServerService.createUser(email, password);
       AuthServerService.setUserCookie(userData);
 
-      return NextResponse.json({ message: "Inscription réussie", user: userData });
+      return NextResponse.json({
+        message: "✅ Inscription réussie",
+        user: userData,
+      });
     } catch (error) {
-      if (error instanceof Error && error.message === "EMAIL_EXISTS") {
+      if (error instanceof AppError) {
+        const status =
+          error.code === ERROR_CODES.AUTH.EMAIL_EXISTS ||
+          error.code === ERROR_CODES.AUTH.PASSWORD_NOT_STRONG
+            ? 400
+            : 500;
         return NextResponse.json(
           {
             error: {
-              code: "EMAIL_EXISTS",
-              message: "Cet email est déjà utilisé",
+              code: error.code,
+              message: ERROR_MESSAGES[error.code],
             },
           },
-          { status: 400 }
-        );
-      }
-      if (error instanceof Error && error.message === "PASSWORD_NOT_STRONG") {
-        return NextResponse.json(
-          {
-            error: {
-              code: "PASSWORD_NOT_STRONG",
-              message: "Le mot de passe est trop faible",
-            },
-          },
-          { status: 400 }
+          { status }
         );
       }
       throw error;
@@ -40,8 +40,8 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error: {
-          code: "SERVER_ERROR",
-          message: "Une erreur est survenue lors de l'inscription",
+          code: ERROR_CODES.AUTH.INVALID_USER_DATA,
+          message: ERROR_MESSAGES[ERROR_CODES.AUTH.INVALID_USER_DATA],
         },
       },
       { status: 500 }

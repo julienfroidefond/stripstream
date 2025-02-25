@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { TestService } from "@/lib/services/test.service";
+import { ERROR_CODES } from "@/constants/errorCodes";
+import { ERROR_MESSAGES } from "@/constants/errorMessages";
 
 export async function POST(request: Request) {
   try {
@@ -12,14 +14,18 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({
-      message: "Connexion réussie",
-      librariesCount: libraries.length,
+      message: `✅ Connexion réussie ! ${libraries.length} bibliothèque${
+        libraries.length > 1 ? "s" : ""
+      } trouvée${libraries.length > 1 ? "s" : ""}`,
     });
   } catch (error) {
     console.error("Erreur lors du test de connexion:", error);
     return NextResponse.json(
       {
-        error: error instanceof Error ? error.message : "Erreur inconnue",
+        error: {
+          code: ERROR_CODES.KOMGA.CONNECTION_ERROR,
+          message: ERROR_MESSAGES[ERROR_CODES.KOMGA.CONNECTION_ERROR],
+        },
       },
       { status: 400 }
     );

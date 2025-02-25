@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { BookService } from "@/lib/services/book.service";
+import { ERROR_CODES } from "@/constants/errorCodes";
+import { ERROR_MESSAGES } from "@/constants/errorMessages";
+import { AppError } from "@/utils/errors";
 
 export async function GET(request: NextRequest, { params }: { params: { bookId: string } }) {
   try {
@@ -7,6 +10,25 @@ export async function GET(request: NextRequest, { params }: { params: { bookId: 
     return response;
   } catch (error) {
     console.error("Erreur lors de la récupération de la miniature du livre:", error);
-    return new NextResponse("Erreur lors de la récupération de la miniature", { status: 500 });
+    if (error instanceof AppError) {
+      return NextResponse.json(
+        {
+          error: {
+            code: error.code,
+            message: ERROR_MESSAGES[error.code],
+          },
+        },
+        { status: 500 }
+      );
+    }
+    return NextResponse.json(
+      {
+        error: {
+          code: ERROR_CODES.IMAGE.FETCH_ERROR,
+          message: ERROR_MESSAGES[ERROR_CODES.IMAGE.FETCH_ERROR],
+        },
+      },
+      { status: 500 }
+    );
   }
 }

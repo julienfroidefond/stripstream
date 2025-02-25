@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { AuthServerService } from "@/lib/services/auth-server.service";
+import { ERROR_CODES } from "@/constants/errorCodes";
+import { ERROR_MESSAGES } from "@/constants/errorMessages";
+import { AppError } from "@/utils/errors";
 
 export async function POST(request: Request) {
   try {
@@ -9,14 +12,17 @@ export async function POST(request: Request) {
       const userData = await AuthServerService.loginUser(email, password);
       AuthServerService.setUserCookie(userData);
 
-      return NextResponse.json({ message: "Connexion réussie", user: userData });
+      return NextResponse.json({
+        message: "✅ Connexion réussie",
+        user: userData,
+      });
     } catch (error) {
-      if (error instanceof Error && error.message === "INVALID_CREDENTIALS") {
+      if (error instanceof AppError) {
         return NextResponse.json(
           {
             error: {
-              code: "INVALID_CREDENTIALS",
-              message: "Email ou mot de passe incorrect",
+              code: error.code,
+              message: ERROR_MESSAGES[error.code],
             },
           },
           { status: 401 }
@@ -29,8 +35,8 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error: {
-          code: "SERVER_ERROR",
-          message: "Une erreur est survenue lors de la connexion",
+          code: ERROR_CODES.AUTH.INVALID_CREDENTIALS,
+          message: ERROR_MESSAGES[ERROR_CODES.AUTH.INVALID_CREDENTIALS],
         },
       },
       { status: 500 }

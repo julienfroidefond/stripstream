@@ -1,6 +1,11 @@
 import { ERROR_CODES } from "./errorCodes";
 
 export const ERROR_MESSAGES: Record<string, string> = {
+  // Middleware
+  [ERROR_CODES.MIDDLEWARE.UNAUTHORIZED]: "🚫 Accès non autorisé",
+  [ERROR_CODES.MIDDLEWARE.INVALID_TOKEN]: "🔐 Session invalide ou expirée",
+  [ERROR_CODES.MIDDLEWARE.INVALID_SESSION]: "⚠️ Données de session invalides",
+
   // MongoDB
   [ERROR_CODES.MONGODB.MISSING_URI]:
     "🔧 Veuillez définir la variable d'environnement MONGODB_URI dans votre fichier .env",
@@ -10,8 +15,10 @@ export const ERROR_MESSAGES: Record<string, string> = {
   [ERROR_CODES.AUTH.UNAUTHENTICATED]: "🔒 Utilisateur non authentifié",
   [ERROR_CODES.AUTH.INVALID_CREDENTIALS]: "⛔️ Identifiants invalides",
   [ERROR_CODES.AUTH.PASSWORD_NOT_STRONG]: "💪 Le mot de passe n'est pas assez fort",
+  [ERROR_CODES.AUTH.PASSWORD_MISMATCH]: "❌ Les mots de passe ne correspondent pas",
   [ERROR_CODES.AUTH.EMAIL_EXISTS]: "📧 Cette adresse email est déjà utilisée",
   [ERROR_CODES.AUTH.INVALID_USER_DATA]: "👤 Données utilisateur invalides",
+  [ERROR_CODES.AUTH.LOGOUT_ERROR]: "🚪 Erreur lors de la déconnexion",
 
   // Komga
   [ERROR_CODES.KOMGA.MISSING_CONFIG]: "⚙️ Configuration Komga non trouvée",
@@ -53,6 +60,9 @@ export const ERROR_MESSAGES: Record<string, string> = {
   [ERROR_CODES.CACHE.SAVE_ERROR]: "💾 Erreur lors de la sauvegarde dans le cache",
   [ERROR_CODES.CACHE.LOAD_ERROR]: "📂 Erreur lors du chargement du cache",
   [ERROR_CODES.CACHE.CLEAR_ERROR]: "🧹 Erreur lors de la suppression complète du cache",
+  [ERROR_CODES.CACHE.MODE_FETCH_ERROR]: "⚙️ Erreur lors de la récupération du mode de cache",
+  [ERROR_CODES.CACHE.MODE_UPDATE_ERROR]: "⚙️ Erreur lors de la mise à jour du mode de cache",
+  [ERROR_CODES.CACHE.INVALID_MODE]: "⚠️ Mode de cache invalide. Doit être 'file' ou 'memory'",
 
   // UI
   [ERROR_CODES.UI.TABS_TRIGGER_ERROR]: "🔄 TabsTrigger doit être utilisé dans un composant Tabs",
@@ -70,4 +80,9 @@ export const ERROR_MESSAGES: Record<string, string> = {
   [ERROR_CODES.CONFIG.FETCH_ERROR]: "⚙️ Erreur lors de la récupération de la configuration",
   [ERROR_CODES.CONFIG.TTL_SAVE_ERROR]: "⏱️ Erreur lors de la sauvegarde de la configuration TTL",
   [ERROR_CODES.CONFIG.TTL_FETCH_ERROR]: "⏱️ Erreur lors de la récupération de la configuration TTL",
+
+  // Debug
+  [ERROR_CODES.DEBUG.FETCH_ERROR]: "🔍 Erreur lors de la récupération des logs",
+  [ERROR_CODES.DEBUG.SAVE_ERROR]: "💾 Erreur lors de l'enregistrement du log",
+  [ERROR_CODES.DEBUG.CLEAR_ERROR]: "🧹 Erreur lors de la suppression des logs",
 } as const;

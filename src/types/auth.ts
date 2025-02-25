@@ -1,4 +1,5 @@
 import { KomgaUser } from "./komga";
+import { ErrorCode } from "@/constants/errorCodes";
 
 export interface AuthConfig {
   serverUrl: string;
@@ -12,8 +13,9 @@ export interface AuthState {
 }
 
 export interface AuthError {
-  code: AuthErrorCode;
+  code: ErrorCode;
   message: string;
 }
 
-export type AuthErrorCode = "INVALID_CREDENTIALS" | "SERVER_ERROR" | "EMAIL_EXISTS";
+// Deprecated - Use ErrorCode from @/constants/errorCodes instead
+export type AuthErrorCode = ErrorCode;
