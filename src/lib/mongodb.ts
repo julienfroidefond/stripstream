@@ -1,11 +1,11 @@
 import mongoose from "mongoose";
+import { ERROR_CODES } from "../constants/errorCodes";
+import { AppError } from "../utils/errors";
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {
-  throw new Error(
-    "Veuillez définir la variable d'environnement MONGODB_URI dans votre fichier .env"
-  );
+  throw new AppError(ERROR_CODES.MONGODB.MISSING_URI);
 }
 
 interface MongooseCache {
@@ -42,7 +42,7 @@ async function connectDB(): Promise<typeof mongoose> {
     cached.conn = await cached.promise;
   } catch (e) {
     cached.promise = null;
-    throw e;
+    throw new AppError(ERROR_CODES.MONGODB.CONNECTION_FAILED, {}, e);
   }
 
   return cached.conn;

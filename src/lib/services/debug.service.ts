@@ -3,6 +3,8 @@ import path from "path";
 import { CacheType } from "./base-api.service";
 import { AuthServerService } from "./auth-server.service";
 import { PreferencesService } from "./preferences.service";
+import { ERROR_CODES } from "../../constants/errorCodes";
+import { AppError } from "../../utils/errors";
 
 interface RequestTiming {
   url: string;
@@ -26,7 +28,7 @@ export class DebugService {
   private static getCurrentUserId(): string {
     const user = AuthServerService.getCurrentUser();
     if (!user) {
-      throw new Error("Utilisateur non authentifié");
+      throw new AppError(ERROR_CODES.AUTH.UNAUTHENTICATED);
     }
     return user.id;
   }
@@ -73,7 +75,7 @@ export class DebugService {
 
       await fs.writeFile(filePath, JSON.stringify(logs, null, 2));
     } catch (error) {
-      // Ignore les erreurs de logging
+      // On ignore les erreurs de logging mais on les trace quand même
       console.error("Erreur lors de l'enregistrement du log:", error);
     }
   }
@@ -84,7 +86,10 @@ export class DebugService {
       const filePath = this.getLogFilePath(userId);
       const content = await fs.readFile(filePath, "utf-8");
       return JSON.parse(content);
-    } catch {
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
       return [];
     }
   }
@@ -94,8 +99,11 @@ export class DebugService {
       const userId = await this.getCurrentUserId();
       const filePath = this.getLogFilePath(userId);
       await fs.writeFile(filePath, "[]");
-    } catch {
-      // Ignore les erreurs si le fichier n'existe pas
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      // On ignore les autres erreurs si le fichier n'existe pas
     }
   }
 
@@ -136,8 +144,8 @@ export class DebugService {
 
       await fs.writeFile(filePath, JSON.stringify(logs, null, 2));
     } catch (error) {
-      // Ignore les erreurs de logging
-      console.error("Erreur lors de l'enregistrement du log de page:", error);
+      // On ignore les erreurs de logging mais on les trace quand même
+      console.error("Erreur lors de l'enregistrement du log de rendu:", error);
     }
   }
 

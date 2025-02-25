@@ -2,6 +2,8 @@ import { BaseApiService } from "./base-api.service";
 import { KomgaBook } from "@/types/komga";
 import { ImageService } from "./image.service";
 import { PreferencesService } from "./preferences.service";
+import { ERROR_CODES } from "../../constants/errorCodes";
+import { AppError } from "../../utils/errors";
 
 export class BookService extends BaseApiService {
   static async getBook(bookId: string): Promise<{ book: KomgaBook; pages: number[] }> {
@@ -25,7 +27,7 @@ export class BookService extends BaseApiService {
         "BOOKS"
       );
     } catch (error) {
-      return this.handleError(error, "Impossible de récupérer le tome");
+      throw new AppError(ERROR_CODES.BOOK.NOT_FOUND, {}, error);
     }
   }
 
@@ -47,10 +49,13 @@ export class BookService extends BaseApiService {
       });
 
       if (!response.ok) {
-        throw new Error("Erreur lors de la mise à jour de la progression");
+        throw new AppError(ERROR_CODES.BOOK.PROGRESS_UPDATE_ERROR);
       }
     } catch (error) {
-      return this.handleError(error, "Impossible de mettre à jour la progression");
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError(ERROR_CODES.BOOK.PROGRESS_UPDATE_ERROR, {}, error);
     }
   }
 
@@ -67,10 +72,13 @@ export class BookService extends BaseApiService {
       });
 
       if (!response.ok) {
-        throw new Error("Erreur lors de la suppression de la progression");
+        throw new AppError(ERROR_CODES.BOOK.PROGRESS_DELETE_ERROR);
       }
     } catch (error) {
-      return this.handleError(error, "Impossible de supprimer la progression");
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError(ERROR_CODES.BOOK.PROGRESS_DELETE_ERROR, {}, error);
     }
   }
 
@@ -88,7 +96,7 @@ export class BookService extends BaseApiService {
         },
       });
     } catch (error) {
-      throw this.handleError(error, "Impossible de récupérer la page");
+      throw new AppError(ERROR_CODES.BOOK.PAGES_FETCH_ERROR, {}, error);
     }
   }
 
@@ -111,7 +119,7 @@ export class BookService extends BaseApiService {
       // Sinon, récupérer la première page
       return this.getPage(bookId, 1);
     } catch (error) {
-      throw this.handleError(error, "Impossible de récupérer la couverture");
+      throw new AppError(ERROR_CODES.BOOK.PAGES_FETCH_ERROR, {}, error);
     }
   }
 
@@ -135,7 +143,7 @@ export class BookService extends BaseApiService {
         },
       });
     } catch (error) {
-      throw this.handleError(error, "Impossible de récupérer la miniature de la page");
+      throw new AppError(ERROR_CODES.BOOK.PAGES_FETCH_ERROR, {}, error);
     }
   }
 

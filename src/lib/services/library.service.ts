@@ -2,6 +2,8 @@ import { BaseApiService } from "./base-api.service";
 import { Library, LibraryResponse } from "@/types/library";
 import { Series } from "@/types/series";
 import { getServerCacheService } from "./server-cache.service";
+import { ERROR_CODES } from "../../constants/errorCodes";
+import { AppError } from "../../utils/errors";
 
 export class LibraryService extends BaseApiService {
   static async getLibraries(): Promise<Library[]> {
@@ -12,17 +14,24 @@ export class LibraryService extends BaseApiService {
         "LIBRARIES"
       );
     } catch (error) {
-      return this.handleError(error, "Impossible de récupérer les bibliothèques");
+      throw new AppError(ERROR_CODES.LIBRARY.FETCH_ERROR, {}, error);
     }
   }
 
   static async getLibrary(libraryId: string): Promise<Library> {
-    const libraries = await this.getLibraries();
-    const library = libraries.find((library) => library.id === libraryId);
-    if (!library) {
-      throw new Error(`Bibliothèque ${libraryId} non trouvée`);
+    try {
+      const libraries = await this.getLibraries();
+      const library = libraries.find((library) => library.id === libraryId);
+      if (!library) {
+        throw new AppError(ERROR_CODES.LIBRARY.NOT_FOUND, { libraryId });
+      }
+      return library;
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError(ERROR_CODES.LIBRARY.FETCH_ERROR, {}, error);
     }
-    return library;
   }
 
   static async getAllLibrarySeries(libraryId: string): Promise<Series[]> {
@@ -60,7 +69,7 @@ export class LibraryService extends BaseApiService {
 
       return response.content;
     } catch (error) {
-      return this.handleError(error, "Impossible de récupérer toutes les séries");
+      throw new AppError(ERROR_CODES.SERIES.FETCH_ERROR, {}, error);
     }
   }
 
@@ -130,12 +139,17 @@ export class LibraryService extends BaseApiService {
         totalPages,
       };
     } catch (error) {
-      return this.handleError(error, "Impossible de récupérer les séries");
+      throw new AppError(ERROR_CODES.SERIES.FETCH_ERROR, {}, error);
     }
   }
 
   static async invalidateLibrarySeriesCache(libraryId: string): Promise<void> {
-    const cacheService = await getServerCacheService();
-    await cacheService.delete(`library-${libraryId}-all-series`);
+    try {
+      const cacheService = await getServerCacheService();
+      const cacheKey = `library-${libraryId}-all-series`;
+      await cacheService.delete(cacheKey);
+    } catch (error) {
+      throw new AppError(ERROR_CODES.CACHE.DELETE_ERROR, {}, error);
+    }
   }
 }

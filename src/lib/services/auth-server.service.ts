@@ -2,6 +2,8 @@ import { cookies } from "next/headers";
 import connectDB from "@/lib/mongodb";
 import { UserModel } from "@/lib/models/user.model";
 import bcrypt from "bcrypt";
+import { ERROR_CODES } from "../../constants/errorCodes";
+import { AppError } from "../../utils/errors";
 
 interface UserData {
   id: string;
@@ -18,13 +20,13 @@ export class AuthServerService {
 
     //check if password is strong
     if (!AuthServerService.isPasswordStrong(password)) {
-      throw new Error("PASSWORD_NOT_STRONG");
+      throw new AppError(ERROR_CODES.AUTH.PASSWORD_NOT_STRONG);
     }
 
     // Check if user already exists
     const existingUser = await UserModel.findOne({ email: email.toLowerCase() });
     if (existingUser) {
-      throw new Error("EMAIL_EXISTS");
+      throw new AppError(ERROR_CODES.AUTH.EMAIL_EXISTS);
     }
 
     // Hash password
@@ -98,13 +100,15 @@ export class AuthServerService {
     await connectDB();
 
     const user = await UserModel.findOne({ email: email.toLowerCase() });
+
     if (!user) {
-      throw new Error("INVALID_CREDENTIALS");
+      throw new AppError(ERROR_CODES.AUTH.INVALID_CREDENTIALS);
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
+
     if (!isPasswordValid) {
-      throw new Error("INVALID_CREDENTIALS");
+      throw new AppError(ERROR_CODES.AUTH.INVALID_CREDENTIALS);
     }
 
     const userData: UserData = {

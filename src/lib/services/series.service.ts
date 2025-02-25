@@ -5,6 +5,8 @@ import { BookService } from "./book.service";
 import { ImageService } from "./image.service";
 import { PreferencesService } from "./preferences.service";
 import { getServerCacheService } from "./server-cache.service";
+import { ERROR_CODES } from "../../constants/errorCodes";
+import { AppError } from "../../utils/errors";
 
 export class SeriesService extends BaseApiService {
   static async getSeries(seriesId: string): Promise<KomgaSeries> {
@@ -15,13 +17,17 @@ export class SeriesService extends BaseApiService {
         "SERIES"
       );
     } catch (error) {
-      return this.handleError(error, "Impossible de récupérer la série");
+      throw new AppError(ERROR_CODES.SERIES.FETCH_ERROR, {}, error);
     }
   }
 
   static async invalidateSeriesCache(seriesId: string): Promise<void> {
-    const cacheService = await getServerCacheService();
-    await cacheService.delete(`series-${seriesId}`);
+    try {
+      const cacheService = await getServerCacheService();
+      await cacheService.delete(`series-${seriesId}`);
+    } catch (error) {
+      throw new AppError(ERROR_CODES.CACHE.DELETE_ERROR, {}, error);
+    }
   }
 
   static async getAllSeriesBooks(seriesId: string): Promise<KomgaBook[]> {
@@ -57,9 +63,16 @@ export class SeriesService extends BaseApiService {
         "BOOKS"
       );
 
+      if (!response.content.length) {
+        throw new AppError(ERROR_CODES.SERIES.NO_BOOKS_FOUND);
+      }
+
       return response.content;
     } catch (error) {
-      return this.handleError(error, "Impossible de récupérer tous les tomes");
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError(ERROR_CODES.SERIES.FETCH_ERROR, {}, error);
     }
   }
 
@@ -122,7 +135,7 @@ export class SeriesService extends BaseApiService {
         totalPages,
       };
     } catch (error) {
-      return this.handleError(error, "Impossible de récupérer les tomes");
+      throw new AppError(ERROR_CODES.SERIES.FETCH_ERROR, {}, error);
     }
   }
 
@@ -141,7 +154,7 @@ export class SeriesService extends BaseApiService {
             params: { page: "0", size: "1" },
           });
           if (!data.content || data.content.length === 0) {
-            throw new Error("Aucun livre trouvé dans la série");
+            throw new AppError(ERROR_CODES.SERIES.NO_BOOKS_FOUND);
           }
 
           return data.content[0].id;
@@ -150,7 +163,7 @@ export class SeriesService extends BaseApiService {
       );
     } catch (error) {
       console.error("Erreur lors de la récupération du premier livre:", error);
-      return this.handleError(error, "Impossible de récupérer le premier livre");
+      throw new AppError(ERROR_CODES.SERIES.FETCH_ERROR, {}, error);
     }
   }
 
@@ -175,7 +188,7 @@ export class SeriesService extends BaseApiService {
       const response = await BookService.getPage(firstBookId, 1);
       return response;
     } catch (error) {
-      throw this.handleError(error, "Impossible de récupérer la couverture");
+      throw new AppError(ERROR_CODES.SERIES.FETCH_ERROR, {}, error);
     }
   }
 
@@ -189,7 +202,7 @@ export class SeriesService extends BaseApiService {
       const series = await Promise.all(seriesPromises);
       return series.filter(Boolean);
     } catch (error) {
-      return this.handleError(error, "Impossible de récupérer les séries");
+      throw new AppError(ERROR_CODES.SERIES.FETCH_ERROR, {}, error);
     }
   }
 }

@@ -1,5 +1,7 @@
 import { PreferencesModel } from "@/lib/models/preferences.model";
 import { AuthServerService } from "./auth-server.service";
+import { ERROR_CODES } from "../../constants/errorCodes";
+import { AppError } from "../../utils/errors";
 
 interface User {
   id: string;
@@ -24,7 +26,7 @@ export class PreferencesService {
   static getCurrentUser(): User {
     const user = AuthServerService.getCurrentUser();
     if (!user) {
-      throw new Error("Utilisateur non authentifié");
+      throw new AppError(ERROR_CODES.AUTH.UNAUTHENTICATED);
     }
     return user;
   }
@@ -41,8 +43,10 @@ export class PreferencesService {
         ...preferences.toObject(),
       };
     } catch (error) {
-      console.error("Error getting preferences:", error);
-      return defaultPreferences;
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError(ERROR_CODES.PREFERENCES.FETCH_ERROR, {}, error);
     }
   }
 
@@ -61,8 +65,10 @@ export class PreferencesService {
       };
       return result;
     } catch (error) {
-      console.error("Error updating preferences:", error);
-      throw error;
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError(ERROR_CODES.PREFERENCES.UPDATE_ERROR, {}, error);
     }
   }
 }

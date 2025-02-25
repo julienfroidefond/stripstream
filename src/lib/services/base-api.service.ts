@@ -2,6 +2,8 @@ import { AuthConfig } from "@/types/auth";
 import { getServerCacheService } from "./server-cache.service";
 import { ConfigDBService } from "./config-db.service";
 import { DebugService } from "./debug.service";
+import { ERROR_CODES } from "../../constants/errorCodes";
+import { AppError } from "../../utils/errors";
 
 // Types de cache disponibles
 export type CacheType = "DEFAULT" | "HOME" | "LIBRARIES" | "SERIES" | "BOOKS" | "IMAGES";
@@ -25,13 +27,13 @@ export abstract class BaseApiService {
       };
     } catch (error) {
       console.error("Erreur lors de la récupération de la configuration:", error);
-      throw new Error("Configuration Komga non trouvée");
+      throw new AppError(ERROR_CODES.KOMGA.MISSING_CONFIG, {}, error);
     }
   }
 
   protected static getAuthHeaders(config: AuthConfig): Headers {
     if (!config.authHeader) {
-      throw new Error("Credentials Komga manquants");
+      throw new AppError(ERROR_CODES.KOMGA.MISSING_CREDENTIALS);
     }
 
     return new Headers({
@@ -54,16 +56,6 @@ export abstract class BaseApiService {
     } catch (error) {
       throw error;
     }
-  }
-
-  protected static handleError(error: unknown, defaultMessage: string): never {
-    console.error("API Error:", error);
-
-    if (error instanceof Error) {
-      throw error;
-    }
-
-    throw new Error(defaultMessage);
   }
 
   protected static buildUrl(
@@ -114,7 +106,10 @@ export abstract class BaseApiService {
       });
 
       if (!response.ok) {
-        throw new Error(`Erreur HTTP: ${response.status} ${response.statusText}`);
+        throw new AppError(ERROR_CODES.KOMGA.HTTP_ERROR, {
+          status: response.status,
+          statusText: response.statusText,
+        });
       }
 
       return options.isImage ? response : response.json();

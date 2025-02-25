@@ -2,6 +2,8 @@ import { BaseApiService } from "./base-api.service";
 import { KomgaBook, KomgaSeries } from "@/types/komga";
 import { LibraryResponse } from "@/types/library";
 import { getServerCacheService } from "./server-cache.service";
+import { ERROR_CODES } from "../../constants/errorCodes";
+import { AppError } from "../../utils/errors";
 
 interface HomeData {
   ongoing: KomgaSeries[];
@@ -78,15 +80,19 @@ export class HomeService extends BaseApiService {
         latestSeries: latestSeries.content || [],
       };
     } catch (error) {
-      return this.handleError(error, "Impossible de récupérer les données de la page d'accueil");
+      throw new AppError(ERROR_CODES.HOME.FETCH_ERROR, {}, error);
     }
   }
 
   static async invalidateHomeCache(): Promise<void> {
-    const cacheService = await getServerCacheService();
-    await cacheService.delete("home-ongoing");
-    await cacheService.delete("home-recently-read");
-    await cacheService.delete("home-on-deck");
-    await cacheService.delete("home-latest-series");
+    try {
+      const cacheService = await getServerCacheService();
+      await cacheService.delete("home-ongoing");
+      await cacheService.delete("home-recently-read");
+      await cacheService.delete("home-on-deck");
+      await cacheService.delete("home-latest-series");
+    } catch (error) {
+      throw new AppError(ERROR_CODES.CACHE.DELETE_ERROR, {}, error);
+    }
   }
 }

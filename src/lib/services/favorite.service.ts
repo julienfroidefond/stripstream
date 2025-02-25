@@ -2,6 +2,8 @@ import connectDB from "@/lib/mongodb";
 import { FavoriteModel } from "@/lib/models/favorite.model";
 import { DebugService } from "./debug.service";
 import { AuthServerService } from "./auth-server.service";
+import { ERROR_CODES } from "../../constants/errorCodes";
+import { AppError } from "../../utils/errors";
 
 interface User {
   id: string;
@@ -21,7 +23,7 @@ export class FavoriteService {
   private static getCurrentUser(): User {
     const user = AuthServerService.getCurrentUser();
     if (!user) {
-      throw new Error("Utilisateur non authentifié");
+      throw new AppError(ERROR_CODES.AUTH.UNAUTHENTICATED);
     }
     return user;
   }
@@ -65,8 +67,7 @@ export class FavoriteService {
 
       this.dispatchFavoritesChanged();
     } catch (error) {
-      console.error("Erreur lors de l'ajout aux favoris:", error);
-      throw new Error("Erreur lors de l'ajout aux favoris");
+      throw new AppError(ERROR_CODES.FAVORITE.ADD_ERROR, {}, error);
     }
   }
 
@@ -87,8 +88,7 @@ export class FavoriteService {
 
       this.dispatchFavoritesChanged();
     } catch (error) {
-      console.error("Erreur lors de la suppression des favoris:", error);
-      throw new Error("Erreur lors de la suppression des favoris");
+      throw new AppError(ERROR_CODES.FAVORITE.DELETE_ERROR, {}, error);
     }
   }
 

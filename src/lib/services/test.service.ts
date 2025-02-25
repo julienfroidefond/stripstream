@@ -1,6 +1,8 @@
 import { BaseApiService } from "./base-api.service";
 import { AuthConfig } from "@/types/auth";
 import { KomgaLibrary } from "@/types/komga";
+import { ERROR_CODES } from "../../constants/errorCodes";
+import { AppError } from "../../utils/errors";
 
 export class TestService extends BaseApiService {
   static async testConnection(config: AuthConfig): Promise<{ libraries: KomgaLibrary[] }> {
@@ -12,19 +14,20 @@ export class TestService extends BaseApiService {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Erreur lors du test de connexion");
+        throw new AppError(ERROR_CODES.KOMGA.CONNECTION_ERROR, { message: errorData.message });
       }
 
       const libraries = await response.json();
       return { libraries };
     } catch (error) {
       console.error("Erreur lors du test de connexion:", error);
-      if (error instanceof Error && error.message.includes("fetch")) {
-        throw new Error(
-          "Impossible de se connecter au serveur. Vérifiez l'URL et que le serveur est accessible."
-        );
+      if (error instanceof AppError) {
+        throw error;
       }
-      throw error instanceof Error ? error : new Error("Erreur lors du test de connexion");
+      if (error instanceof Error && error.message.includes("fetch")) {
+        throw new AppError(ERROR_CODES.KOMGA.SERVER_UNREACHABLE);
+      }
+      throw new AppError(ERROR_CODES.KOMGA.CONNECTION_ERROR, {}, error);
     }
   }
 }
