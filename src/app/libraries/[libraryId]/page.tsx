@@ -4,6 +4,7 @@ import { PreferencesService } from "@/lib/services/preferences.service";
 import { revalidatePath } from "next/cache";
 import { RefreshButton } from "@/components/library/RefreshButton";
 import { withPageTiming } from "@/lib/hoc/withPageTiming";
+import { ErrorMessage } from "@/components/ui/ErrorMessage";
 
 interface PageProps {
   params: { libraryId: string };
@@ -97,11 +98,11 @@ async function LibraryPage({ params, searchParams }: PageProps) {
           <h1 className="text-3xl font-bold">Séries</h1>
           <RefreshButton libraryId={params.libraryId} refreshLibrary={refreshLibrary} />
         </div>
-        <div className="rounded-md bg-destructive/15 p-4">
-          <p className="text-sm text-destructive">
-            {error instanceof Error ? error.message : "Erreur lors de la récupération des séries"}
-          </p>
-        </div>
+        <ErrorMessage
+          message={
+            error instanceof Error ? error.message : "Erreur lors de la récupération des séries"
+          }
+        />
       </div>
     );
   }

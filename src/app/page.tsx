@@ -3,6 +3,7 @@ import { HomeService } from "@/lib/services/home.service";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { withPageTiming } from "@/lib/hoc/withPageTiming";
+import { ErrorMessage } from "@/components/ui/ErrorMessage";
 
 async function refreshHome() {
   "use server";
@@ -30,11 +31,9 @@ async function HomePage() {
 
     return (
       <main className="container mx-auto px-4 py-8">
-        <div className="rounded-md bg-destructive/15 p-4">
-          <p className="text-sm text-destructive">
-            {error instanceof Error ? error.message : "Une erreur est survenue"}
-          </p>
-        </div>
+        <ErrorMessage
+          message={error instanceof Error ? error.message : "Une erreur est survenue"}
+        />
       </main>
     );
   }
