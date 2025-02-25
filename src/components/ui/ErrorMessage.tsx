@@ -1,10 +1,25 @@
 import { AlertCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface ErrorMessageProps {
   message: string;
+  variant?: "default" | "form";
 }
 
-export const ErrorMessage = ({ message }: ErrorMessageProps) => {
+export const ErrorMessage = ({ message, variant = "default" }: ErrorMessageProps) => {
+  if (variant === "form") {
+    return (
+      <div
+        role="alert"
+        aria-live="assertive"
+        className="flex items-center gap-2 rounded-md bg-destructive/15 p-2.5 text-sm text-destructive"
+      >
+        <AlertCircle className="h-4 w-4" />
+        <p>{message}</p>
+      </div>
+    );
+  }
+
   return (
     <div
       role="alert"

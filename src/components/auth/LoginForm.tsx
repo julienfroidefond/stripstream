@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { authService } from "@/lib/services/auth.service";
 import { AuthError } from "@/types/auth";
+import { ErrorMessage } from "@/components/ui/ErrorMessage";
 
 interface LoginFormProps {
   from?: string;
@@ -86,11 +87,7 @@ export function LoginForm({ from }: LoginFormProps) {
           Se souvenir de moi
         </label>
       </div>
-      {error && (
-        <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
-          {error.message}
-        </div>
-      )}
+      {error && <ErrorMessage message={error.message} variant="form" />}
       <button
         type="submit"
         disabled={isLoading}
