@@ -65,6 +65,8 @@ export function SeriesGrid({ series }: SeriesGridProps) {
             id={series.id}
             alt={`Couverture de ${series.metadata.title}`}
             isCompleted={series.booksCount === series.booksReadCount}
+            readBooks={series.booksReadCount}
+            totalBooks={series.booksCount}
           />
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-4 space-y-2 translate-y-full group-hover:translate-y-0 transition-transform duration-200">
             <h3 className="font-medium text-sm text-white line-clamp-2">{series.metadata.title}</h3>

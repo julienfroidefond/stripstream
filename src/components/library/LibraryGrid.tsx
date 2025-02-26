@@ -63,6 +63,8 @@ function LibraryCard({ library, onClick }: LibraryCardProps) {
             alt={`Couverture de ${library.name}`}
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             quality={25}
+            readBooks={library.booksReadCount}
+            totalBooks={library.booksCount}
           />
         </div>
       </div>

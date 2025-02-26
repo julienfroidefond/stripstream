@@ -6,6 +6,7 @@ import { Cover } from "@/components/ui/cover";
 import { MarkAsReadButton } from "@/components/ui/mark-as-read-button";
 import { MarkAsUnreadButton } from "@/components/ui/mark-as-unread-button";
 import { BookOfflineButton } from "@/components/ui/book-offline-button";
+import { ProgressBar } from "@/components/ui/progress-bar";
 import { useState, useEffect } from "react";
 
 interface BookGridProps {
@@ -97,6 +98,7 @@ export function BookGrid({ books, onBookClick }: BookGridProps) {
       {localBooks.map((book) => {
         const statusInfo = getReadingStatusInfo(book);
         const isRead = book.readProgress?.completed || false;
+        const currentPage = book.readProgress?.page || 0;
 
         return (
           <div
@@ -112,6 +114,8 @@ export function BookGrid({ books, onBookClick }: BookGridProps) {
                 id={book.id}
                 alt={`Couverture de ${book.metadata.title || `Tome ${book.metadata.number}`}`}
                 isCompleted={isRead}
+                currentPage={currentPage}
+                totalPages={book.media.pagesCount}
               />
             </button>
 

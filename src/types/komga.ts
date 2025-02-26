@@ -17,6 +17,8 @@ export interface KomgaLibrary {
   importLastModified: string;
   lastModified: string;
   unavailable: boolean;
+  booksCount: number;
+  booksReadCount: number;
 }
 
 export interface KomgaSeries {
