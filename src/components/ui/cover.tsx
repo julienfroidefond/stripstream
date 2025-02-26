@@ -44,19 +44,19 @@ export function Cover(props: CoverProps) {
   } = props;
 
   const imageUrl = getImageUrl(type, id);
-
+  
   const showProgress = () => {
     if (type === "book") {
       const { currentPage, totalPages } = props;
       return currentPage && totalPages && currentPage > 0 && !isCompleted ? (
-        <ProgressBar progress={currentPage} total={totalPages} />
+        <ProgressBar progress={currentPage} total={totalPages} type="book" />
       ) : null;
     }
     
     if (type === "series") {
       const { readBooks, totalBooks } = props;
       return readBooks && totalBooks && readBooks > 0 && !isCompleted ? (
-        <ProgressBar progress={readBooks} total={totalBooks} />
+        <ProgressBar progress={readBooks} total={totalBooks} type="series" />
       ) : null;
     }
   };

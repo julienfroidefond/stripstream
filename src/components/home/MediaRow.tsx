@@ -14,6 +14,7 @@ interface BaseItem {
 
 interface OptimizedSeries extends BaseItem {
   booksCount: number;
+  booksReadCount: number;
 }
 
 interface OptimizedBook extends BaseItem {
@@ -124,6 +125,9 @@ function MediaCard({ item, onClick }: MediaCardProps) {
           id={item.id}
           alt={`Couverture de ${title}`}
           quality={100}
+          readBooks={isSeries ? item.booksReadCount : undefined}
+          totalBooks={isSeries ? item.booksCount : undefined}
+          isCompleted={isSeries ? item.booksCount === item.booksReadCount : undefined}
         />
         {/* Overlay avec les informations au survol */}
         <div className="absolute inset-0 bg-black/60 opacity-0 hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3">

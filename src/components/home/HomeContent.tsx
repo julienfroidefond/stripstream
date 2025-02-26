@@ -25,27 +25,32 @@ export function HomeContent({ data, refreshHome }: HomeContentProps) {
   // });
 
   const optimizeSeriesData = (series: KomgaSeries[]) => {
-    return series.map(({ id, metadata, booksCount }) => ({
+    return series.map(({ id, metadata, booksCount, booksReadCount }) => ({
       id,
       metadata: { title: metadata.title },
       booksCount,
+      booksReadCount
     }));
   };
 
   const optimizeHeroSeriesData = (series: KomgaSeries[]) => {
-    return series.map(({ id, metadata }) => ({
+    return series.map(({ id, metadata, booksCount, booksReadCount }) => ({
       id,
       metadata: { title: metadata.title },
+      booksCount,
+      booksReadCount
     }));
   };
 
   const optimizeBookData = (books: KomgaBook[]) => {
-    return books.map(({ id, metadata }) => ({
+    return books.map(({ id, metadata, readProgress, media }) => ({
       id,
       metadata: {
         title: metadata.title,
         number: metadata.number,
       },
+      readProgress,
+      media
     }));
   };
 
