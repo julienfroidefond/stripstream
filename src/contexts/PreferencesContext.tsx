@@ -3,20 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { ERROR_CODES } from "../constants/errorCodes";
 import { AppError } from "../utils/errors";
-
-export interface UserPreferences {
-  showThumbnails: boolean;
-  cacheMode: "memory" | "file";
-  showOnlyUnread: boolean;
-  debug: boolean;
-}
-
-const defaultPreferences: UserPreferences = {
-  showThumbnails: true,
-  cacheMode: "memory",
-  showOnlyUnread: false,
-  debug: false,
-};
+import { UserPreferences, defaultPreferences } from "@/types/preferences";
 
 interface PreferencesContextType {
   preferences: UserPreferences;

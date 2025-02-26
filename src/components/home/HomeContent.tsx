@@ -3,14 +3,7 @@ import { MediaRow } from "./MediaRow";
 import { KomgaBook, KomgaSeries } from "@/types/komga";
 import { RefreshButton } from "@/components/library/RefreshButton";
 import { History, Sparkles, Clock, LibraryBig, BookOpen } from "lucide-react";
-
-interface HomeData {
-  ongoing: KomgaSeries[];
-  ongoingBooks: KomgaBook[];
-  recentlyRead: KomgaBook[];
-  onDeck: KomgaBook[];
-  latestSeries: KomgaSeries[];
-}
+import { HomeData } from "@/lib/services/home.service";
 
 interface HomeContentProps {
   data: HomeData;
@@ -30,7 +23,7 @@ export function HomeContent({ data, refreshHome }: HomeContentProps) {
       id,
       metadata: { title: metadata.title },
       booksCount,
-      booksReadCount
+      booksReadCount,
     }));
   };
 
@@ -39,7 +32,7 @@ export function HomeContent({ data, refreshHome }: HomeContentProps) {
       id,
       metadata: { title: metadata.title },
       booksCount,
-      booksReadCount
+      booksReadCount,
     }));
   };
 
@@ -51,7 +44,7 @@ export function HomeContent({ data, refreshHome }: HomeContentProps) {
         number: metadata.number,
       },
       readProgress: readProgress || { page: 0 },
-      media
+      media,
     }));
   };
 

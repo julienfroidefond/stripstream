@@ -2,25 +2,12 @@ import { PreferencesModel } from "@/lib/models/preferences.model";
 import { AuthServerService } from "./auth-server.service";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
+import { UserPreferences, defaultPreferences } from "@/types/preferences";
 
 interface User {
   id: string;
   email: string;
 }
-
-export interface UserPreferences {
-  showThumbnails: boolean;
-  cacheMode: "memory" | "file";
-  showOnlyUnread: boolean;
-  debug: boolean;
-}
-
-const defaultPreferences: UserPreferences = {
-  showThumbnails: true,
-  cacheMode: "memory",
-  showOnlyUnread: false,
-  debug: false,
-};
 
 export class PreferencesService {
   static getCurrentUser(): User {

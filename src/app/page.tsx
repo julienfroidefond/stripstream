@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { withPageTiming } from "@/lib/hoc/withPageTiming";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
+import { HomeData } from "@/lib/services/home.service";
 
 async function refreshHome() {
   "use server";
@@ -20,7 +21,7 @@ async function refreshHome() {
 
 async function HomePage() {
   try {
-    const data = await HomeService.getHomeData();
+    const data: HomeData = await HomeService.getHomeData();
 
     return <HomeContent data={data} refreshHome={refreshHome} />;
   } catch (error) {

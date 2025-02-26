@@ -5,9 +5,9 @@ import { getServerCacheService } from "./server-cache.service";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
 
-interface HomeData {
+export interface HomeData {
   ongoing: KomgaSeries[];
-  ongoingBooks: KomgaBook[]; // Nouveau champ
+  ongoingBooks: KomgaBook[];
   recentlyRead: KomgaBook[];
   onDeck: KomgaBook[];
   latestSeries: KomgaSeries[];
