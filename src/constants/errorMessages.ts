@@ -44,10 +44,13 @@ export const ERROR_MESSAGES: Record<string, string> = {
   [ERROR_CODES.BOOK.DOWNLOAD_CANCELLED]: "❌ Téléchargement annulé",
 
   // Favorite
-  [ERROR_CODES.FAVORITE.ADD_ERROR]: "⭐️ Erreur lors de l'ajout aux favoris",
-  [ERROR_CODES.FAVORITE.DELETE_ERROR]: "🗑️ Erreur lors de la suppression des favoris",
-  [ERROR_CODES.FAVORITE.FETCH_ERROR]: "⭐️ Erreur lors de la récupération des favoris",
-  [ERROR_CODES.FAVORITE.UPDATE_ERROR]: "📝 Erreur lors de la modification des favoris",
+  [ERROR_CODES.FAVORITE.ADD_ERROR]: "⭐️ Impossible d'ajouter la série aux favoris",
+  [ERROR_CODES.FAVORITE.DELETE_ERROR]: "🗑️ Impossible de retirer la série des favoris",
+  [ERROR_CODES.FAVORITE.FETCH_ERROR]: "⭐️ Impossible de récupérer la liste des favoris",
+  [ERROR_CODES.FAVORITE.UPDATE_ERROR]: "📝 Impossible de mettre à jour les favoris",
+  [ERROR_CODES.FAVORITE.NETWORK_ERROR]: "📡 Erreur réseau lors de l'accès aux favoris",
+  [ERROR_CODES.FAVORITE.SERVER_ERROR]: "🔧 Le serveur a rencontré une erreur lors du traitement des favoris",
+  [ERROR_CODES.FAVORITE.STATUS_CHECK_ERROR]: "❓ Impossible de vérifier le statut des favoris",
 
   // Preferences
   [ERROR_CODES.PREFERENCES.FETCH_ERROR]: "⚙️ Erreur lors de la récupération des préférences",
@@ -85,4 +88,9 @@ export const ERROR_MESSAGES: Record<string, string> = {
   [ERROR_CODES.DEBUG.FETCH_ERROR]: "🔍 Erreur lors de la récupération des logs",
   [ERROR_CODES.DEBUG.SAVE_ERROR]: "💾 Erreur lors de l'enregistrement du log",
   [ERROR_CODES.DEBUG.CLEAR_ERROR]: "🧹 Erreur lors de la suppression des logs",
+
+  // Client
+  [ERROR_CODES.CLIENT.FETCH_ERROR]: "🌐 Erreur lors de la requête",
+  [ERROR_CODES.CLIENT.NETWORK_ERROR]: "📡 Erreur de connexion réseau",
+  [ERROR_CODES.CLIENT.REQUEST_FAILED]: "❌ La requête a échoué",
 } as const;

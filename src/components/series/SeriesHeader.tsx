@@ -7,6 +7,8 @@ import { Button } from "../ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Cover } from "@/components/ui/cover";
 import { RefreshButton } from "@/components/library/RefreshButton";
+import { AppError } from "@/utils/errors";
+import { ERROR_CODES } from "@/constants/errorCodes";
 
 interface SeriesHeaderProps {
   series: KomgaSeries;
@@ -18,21 +20,26 @@ export const SeriesHeader = ({ series, refreshSeries }: SeriesHeaderProps) => {
   const [isFavorite, setIsFavorite] = useState(false);
 
   useEffect(() => {
-    // Vérifier si la série est dans les favoris
     const checkFavorite = async () => {
       try {
         const response = await fetch("/api/komga/favorites");
-        if (response.ok) {
-          const favoriteIds = await response.json();
-          setIsFavorite(favoriteIds.includes(series.id));
+        if (!response.ok) {
+          throw new AppError(ERROR_CODES.FAVORITE.STATUS_CHECK_ERROR);
         }
+        const favoriteIds = await response.json();
+        setIsFavorite(favoriteIds.includes(series.id));
       } catch (error) {
         console.error("Erreur lors de la vérification des favoris:", error);
+        toast({
+          title: "Erreur",
+          description: error instanceof AppError ? error.message : ERROR_MESSAGES[ERROR_CODES.FAVORITE.NETWORK_ERROR],
+          variant: "destructive",
+        });
       }
     };
 
     checkFavorite();
-  }, [series.id]);
+  }, [series.id, toast]);
 
   const handleToggleFavorite = async () => {
     try {
@@ -46,20 +53,25 @@ export const SeriesHeader = ({ series, refreshSeries }: SeriesHeaderProps) => {
 
       if (response.ok) {
         setIsFavorite(!isFavorite);
-        // Déclencher l'événement pour mettre à jour la sidebar
         window.dispatchEvent(new Event("favoritesChanged"));
         toast({
           title: !isFavorite ? "Ajouté aux favoris" : "Retiré des favoris",
           description: series.metadata.title,
         });
+      } else if (response.status === 500) {
+        throw new AppError(ERROR_CODES.FAVORITE.SERVER_ERROR);
+      } else if (response.status === 404) {
+        throw new AppError(ERROR_CODES.FAVORITE.UPDATE_ERROR);
       } else {
-        throw new Error("Erreur lors de la modification des favoris");
+        throw new AppError(
+          isFavorite ? ERROR_CODES.FAVORITE.DELETE_ERROR : ERROR_CODES.FAVORITE.ADD_ERROR
+        );
       }
     } catch (error) {
       console.error("Erreur lors de la modification des favoris:", error);
       toast({
         title: "Erreur",
-        description: "Impossible de modifier les favoris",
+        description: error instanceof AppError ? error.message : ERROR_MESSAGES[ERROR_CODES.FAVORITE.NETWORK_ERROR],
         variant: "destructive",
       });
     }
