@@ -2,10 +2,11 @@ import { HeroSection } from "./HeroSection";
 import { MediaRow } from "./MediaRow";
 import { KomgaBook, KomgaSeries } from "@/types/komga";
 import { RefreshButton } from "@/components/library/RefreshButton";
-import { BookOpenCheck, History, Sparkles, Clock } from "lucide-react";
+import { BookOpenCheck, History, Sparkles, Clock, LibraryBig, BookOpen } from "lucide-react";
 
 interface HomeData {
   ongoing: KomgaSeries[];
+  ongoingBooks: KomgaBook[];
   recentlyRead: KomgaBook[];
   onDeck: KomgaBook[];
   latestSeries: KomgaSeries[];
@@ -49,7 +50,7 @@ export function HomeContent({ data, refreshHome }: HomeContentProps) {
         title: metadata.title,
         number: metadata.number,
       },
-      readProgress,
+      readProgress: readProgress || { page: 0 },
       media
     }));
   };
@@ -69,9 +70,17 @@ export function HomeContent({ data, refreshHome }: HomeContentProps) {
       <div className="space-y-12">
         {data.ongoing && data.ongoing.length > 0 && (
           <MediaRow
-            title="Continuer la lecture"
+            title="Continuer la série"
             items={optimizeSeriesData(data.ongoing)}
-            icon={<BookOpenCheck className="w-6 h-6" />}
+            icon={<LibraryBig className="w-6 h-6" />}
+          />
+        )}
+
+        {data.ongoingBooks && data.ongoingBooks.length > 0 && (
+          <MediaRow
+            title="Continuer la lecture"
+            items={optimizeBookData(data.ongoingBooks)}
+            icon={<BookOpen className="w-6 h-6" />}
           />
         )}
 

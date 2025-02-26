@@ -7,6 +7,7 @@ import { AppError } from "../../utils/errors";
 
 interface HomeData {
   ongoing: KomgaSeries[];
+  ongoingBooks: KomgaBook[]; // Nouveau champ
   recentlyRead: KomgaBook[];
   onDeck: KomgaBook[];
   latestSeries: KomgaSeries[];
@@ -15,8 +16,7 @@ interface HomeData {
 export class HomeService extends BaseApiService {
   static async getHomeData(): Promise<HomeData> {
     try {
-      // Appels API parallèles avec cache individuel
-      const [ongoing, recentlyRead, onDeck, latestSeries] = await Promise.all([
+      const [ongoing, ongoingBooks, recentlyRead, onDeck, latestSeries] = await Promise.all([
         this.fetchWithCache<LibraryResponse<KomgaSeries>>(
           "home-ongoing",
           async () =>
@@ -25,6 +25,21 @@ export class HomeService extends BaseApiService {
               params: {
                 read_status: "IN_PROGRESS",
                 sort: "readDate,desc",
+                page: "0",
+                size: "10",
+                media_status: "READY",
+              },
+            }),
+          "HOME"
+        ),
+        this.fetchWithCache<LibraryResponse<KomgaBook>>(
+          "home-ongoing-books",
+          async () =>
+            this.fetchFromApi<LibraryResponse<KomgaBook>>({
+              path: "books",
+              params: {
+                read_status: "IN_PROGRESS",
+                sort: "readProgress.readDate,desc",
                 page: "0",
                 size: "10",
                 media_status: "READY",
@@ -75,6 +90,7 @@ export class HomeService extends BaseApiService {
 
       return {
         ongoing: ongoing.content || [],
+        ongoingBooks: ongoingBooks.content || [], // Nouveau champ
         recentlyRead: recentlyRead.content || [],
         onDeck: onDeck.content || [],
         latestSeries: latestSeries.content || [],
@@ -88,6 +104,7 @@ export class HomeService extends BaseApiService {
     try {
       const cacheService = await getServerCacheService();
       await cacheService.delete("home-ongoing");
+      await cacheService.delete("home-ongoing-books"); // Nouvelle clé de cache
       await cacheService.delete("home-recently-read");
       await cacheService.delete("home-on-deck");
       await cacheService.delete("home-latest-series");

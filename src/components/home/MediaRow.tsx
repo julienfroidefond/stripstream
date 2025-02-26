@@ -18,6 +18,12 @@ interface OptimizedSeries extends BaseItem {
 }
 
 interface OptimizedBook extends BaseItem {
+  readProgress:{
+    page: number
+  }
+  media: {
+    pagesCount: number;
+  }
   metadata: {
     title: string;
     number?: string;
@@ -128,6 +134,8 @@ function MediaCard({ item, onClick }: MediaCardProps) {
           readBooks={isSeries ? item.booksReadCount : undefined}
           totalBooks={isSeries ? item.booksCount : undefined}
           isCompleted={isSeries ? item.booksCount === item.booksReadCount : undefined}
+          currentPage={isSeries ? undefined : item.readProgress?.page}
+          totalPages={isSeries ? undefined : item.media?.pagesCount}
         />
         {/* Overlay avec les informations au survol */}
         <div className="absolute inset-0 bg-black/60 opacity-0 hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3">
