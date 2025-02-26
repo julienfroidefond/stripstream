@@ -7,6 +7,10 @@ import { authService } from "@/lib/services/auth.service";
 import { useEffect, useState, useCallback } from "react";
 import { KomgaLibrary, KomgaSeries } from "@/types/komga";
 import { usePreferences } from "@/contexts/PreferencesContext";
+import { AppError } from "@/utils/errors";
+import { ERROR_CODES } from "@/constants/errorCodes";
+import { ERROR_MESSAGES } from "@/constants/errorMessages";
+import { useToast } from "@/components/ui/use-toast";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -23,32 +27,37 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLoadingFavorites, setIsLoadingFavorites] = useState(true);
 
+  const { toast } = useToast();
+
   const fetchLibraries = useCallback(async () => {
     setIsLoading(true);
     try {
       const response = await fetch("/api/komga/libraries");
       if (!response.ok) {
-        throw new Error("Erreur lors de la récupération des bibliothèques");
+        throw new AppError(ERROR_CODES.LIBRARY.FETCH_ERROR);
       }
       const data = await response.json();
       setLibraries(data);
     } catch (error) {
-      if (error instanceof Error) {
-        console.error("Erreur de chargement des bibliothèques:", error.message);
-      }
+      console.error("Erreur de chargement des bibliothèques:", error);
+      toast({
+        title: "Erreur",
+        description: error instanceof AppError ? error.message : ERROR_MESSAGES[ERROR_CODES.LIBRARY.FETCH_ERROR],
+        variant: "destructive",
+      });
       setLibraries([]);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, []);
+  }, [toast]);
 
   const fetchFavorites = useCallback(async () => {
     setIsLoadingFavorites(true);
     try {
       const favoritesResponse = await fetch("/api/komga/favorites");
       if (!favoritesResponse.ok) {
-        throw new Error("Erreur lors de la récupération des favoris");
+        throw new AppError(ERROR_CODES.FAVORITE.FETCH_ERROR);
       }
       const favoriteIds = await favoritesResponse.json();
 
@@ -59,21 +68,26 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
       const promises = favoriteIds.map(async (id: string) => {
         const response = await fetch(`/api/komga/series/${id}`);
-        if (!response.ok) return null;
+        if (!response.ok) {
+          throw new AppError(ERROR_CODES.SERIES.FETCH_ERROR);
+        }
         return response.json();
       });
 
       const results = await Promise.all(promises);
       setFavorites(results.filter((series): series is KomgaSeries => series !== null));
     } catch (error) {
-      if (error instanceof Error) {
-        console.error("Erreur de chargement des favoris:", error.message);
-      }
+      console.error("Erreur de chargement des favoris:", error);
+      toast({
+        title: "Erreur",
+        description: error instanceof AppError ? error.message : ERROR_MESSAGES[ERROR_CODES.FAVORITE.FETCH_ERROR],
+        variant: "destructive",
+      });
       setFavorites([]);
     } finally {
       setIsLoadingFavorites(false);
     }
-  }, []);
+  }, [toast]);
 
   // Chargement initial des données
   useEffect(() => {
@@ -106,11 +120,20 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   };
 
   const handleLogout = async () => {
-    await authService.logout();
-    setLibraries([]);
-    setFavorites([]);
-    onClose();
-    router.push("/login");
+    try {
+      await authService.logout();
+      setLibraries([]);
+      setFavorites([]);
+      onClose();
+      router.push("/login");
+    } catch (error) {
+      console.error("Erreur lors de la déconnexion:", error);
+      toast({
+        title: "Erreur",
+        description: error instanceof AppError ? error.message : ERROR_MESSAGES[ERROR_CODES.AUTH.LOGOUT_ERROR],
+        variant: "destructive",
+      });
+    }
   };
 
   const handleLinkClick = useCallback(
