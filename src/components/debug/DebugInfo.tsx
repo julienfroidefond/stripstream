@@ -1,6 +1,4 @@
 "use client";
-
-import { usePreferences } from "@/contexts/PreferencesContext";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import {

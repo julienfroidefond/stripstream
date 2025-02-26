@@ -6,7 +6,6 @@ import { Cover } from "@/components/ui/cover";
 import { MarkAsReadButton } from "@/components/ui/mark-as-read-button";
 import { MarkAsUnreadButton } from "@/components/ui/mark-as-unread-button";
 import { BookOfflineButton } from "@/components/ui/book-offline-button";
-import { ProgressBar } from "@/components/ui/progress-bar";
 import { useState, useEffect } from "react";
 
 interface BookGridProps {

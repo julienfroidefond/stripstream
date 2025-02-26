@@ -2,7 +2,7 @@ import { HeroSection } from "./HeroSection";
 import { MediaRow } from "./MediaRow";
 import { KomgaBook, KomgaSeries } from "@/types/komga";
 import { RefreshButton } from "@/components/library/RefreshButton";
-import { BookOpenCheck, History, Sparkles, Clock, LibraryBig, BookOpen } from "lucide-react";
+import { History, Sparkles, Clock, LibraryBig, BookOpen } from "lucide-react";
 
 interface HomeData {
   ongoing: KomgaSeries[];

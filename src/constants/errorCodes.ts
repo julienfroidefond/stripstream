@@ -82,9 +82,4 @@ export const ERROR_CODES = {
   },
 } as const;
 
-type ValueOf<T> = T[keyof T];
-type ErrorCodeValues = ValueOf<{
-  [K in keyof typeof ERROR_CODES]: ValueOf<(typeof ERROR_CODES)[K]>;
-}>;
-
-export type ErrorCode = ErrorCodeValues;
+export type ErrorCode = typeof ERROR_CODES[keyof typeof ERROR_CODES][keyof typeof ERROR_CODES[keyof typeof ERROR_CODES]];
