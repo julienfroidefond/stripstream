@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 export const ERROR_CODES = {
   MONGODB: {
     MISSING_URI: "MONGODB_MISSING_URI",
@@ -82,4 +84,7 @@ export const ERROR_CODES = {
   },
 } as const;
 
-export type ErrorCode = typeof ERROR_CODES[keyof typeof ERROR_CODES][keyof typeof ERROR_CODES[keyof typeof ERROR_CODES]];
+type Values<T> = T[keyof T];
+type ErrorCodeValues<T> = T extends { [key: string]: infer U } ? U extends { [key: string]: string } ? Values<U> : never : never;
+
+export type ErrorCode = ErrorCodeValues<typeof ERROR_CODES>;
