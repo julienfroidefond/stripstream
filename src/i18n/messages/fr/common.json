@@ -111,5 +111,35 @@
         "cleared": "Cache serveur supprimé avec succès"
       }
     }
+  },
+  "library": {
+    "empty": "Aucune bibliothèque disponible",
+    "coverAlt": "Couverture de {name}",
+    "status": {
+      "available": "Disponible",
+      "unavailable": "Non disponible"
+    },
+    "lastUpdated": "Dernière mise à jour : {date}"
+  },
+  "series": {
+    "empty": "Aucune série disponible",
+    "coverAlt": "Couverture de {title}",
+    "status": {
+      "noBooks": "Pas de tomes",
+      "read": "Lu",
+      "unread": "Non lu",
+      "progress": "{read}/{total}"
+    },
+    "books": "{count} tome | {count} tomes",
+    "filters": {
+      "title": "Filtres",
+      "showAll": "Afficher tout",
+      "unread": "À lire",
+      "search": "Rechercher une série..."
+    },
+    "display": {
+      "showing": "Affichage des séries {start} à {end} sur {total}",
+      "page": "Page {current} sur {total}"
+    }
   }
 }

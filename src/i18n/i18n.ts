@@ -36,6 +36,10 @@ if (!i18n.isInitialized) {
           maxAge: 365 * 24 * 60 * 60, // 1 an
         },
       },
+      react: {
+        transSupportBasicHtmlNodes: true, // Permet l'utilisation de balises HTML de base
+        transKeepBasicHtmlNodesFor: ["br", "strong", "i", "p", "span"], // Liste des balises autorisées
+      },
     });
 }
 

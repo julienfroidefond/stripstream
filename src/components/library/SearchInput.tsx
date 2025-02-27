@@ -8,7 +8,7 @@ interface SearchInputProps {
   placeholder?: string;
 }
 
-export const SearchInput = ({ placeholder = "Rechercher une série..." }: SearchInputProps) => {
+export const SearchInput = ({ placeholder }: SearchInputProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
@@ -42,7 +42,7 @@ export const SearchInput = ({ placeholder = "Rechercher une série..." }: Search
         className="pl-9"
         defaultValue={searchParams.get("search") ?? ""}
         onChange={(e) => handleSearch(e.target.value)}
-        aria-label="Rechercher une série"
+        aria-label={placeholder}
       />
       {isPending && (
         <div className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2">

@@ -9,7 +9,7 @@ export function I18nProvider({ children, locale }: PropsWithChildren<{ locale: s
   // Synchroniser la langue avec celle du cookie côté client
   if (typeof window !== "undefined") {
     const localeCookie = document.cookie.split("; ").find((row) => row.startsWith("NEXT_LOCALE="));
-    console.log(localeCookie);
+
     if (localeCookie) {
       const locale = localeCookie.split("=")[1];
       if (i18n.language !== locale) {

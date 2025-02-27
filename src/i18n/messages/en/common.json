@@ -111,5 +111,35 @@
         "cleared": "Server cache cleared successfully"
       }
     }
+  },
+  "library": {
+    "empty": "No libraries available",
+    "coverAlt": "Cover of {name}",
+    "status": {
+      "available": "Available",
+      "unavailable": "Unavailable"
+    },
+    "lastUpdated": "Last updated: {date}"
+  },
+  "series": {
+    "empty": "No series available",
+    "coverAlt": "Cover of {title}",
+    "status": {
+      "noBooks": "No books",
+      "read": "Read",
+      "unread": "Unread",
+      "progress": "{read}/{total}"
+    },
+    "books": "{count} book | {count} books",
+    "filters": {
+      "title": "Filters",
+      "showAll": "Show all",
+      "unread": "Unread",
+      "search": "Search series..."
+    },
+    "display": {
+      "showing": "Showing series {start} to {end} of {total}",
+      "page": "Page {current} of {total}"
+    }
   }
 }
