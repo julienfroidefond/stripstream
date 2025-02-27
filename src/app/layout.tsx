@@ -7,7 +7,6 @@ import { PreferencesProvider } from "@/contexts/PreferencesContext";
 import { I18nProvider } from "@/components/providers/I18nProvider";
 import "@/i18n/i18n"; // Import i18next configuration
 import { cookies } from "next/headers";
-import { defaultLocale } from "@/i18n/config";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -61,7 +60,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = cookies();
-  const locale = cookieStore.get("NEXT_LOCALE")?.value || defaultLocale;
+  const locale = cookieStore.get("NEXT_LOCALE")?.value || "fr";
 
   return (
     <html lang={locale} suppressHydrationWarning>
