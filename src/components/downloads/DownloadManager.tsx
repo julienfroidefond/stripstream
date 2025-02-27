@@ -11,6 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import Image from "next/image";
 import Link from "next/link";
 import { BookOfflineButton } from "@/components/ui/book-offline-button";
+import { useTranslate } from "@/hooks/useTranslate";
 
 type BookStatus = "idle" | "downloading" | "available" | "error";
 
@@ -30,6 +31,7 @@ export function DownloadManager() {
   const [downloadedBooks, setDownloadedBooks] = useState<DownloadedBook[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const { t } = useTranslate();
 
   const getStorageKey = useCallback((bookId: string) => `book-status-${bookId}`, []);
 
@@ -116,26 +118,25 @@ export function DownloadManager() {
       localStorage.removeItem(getStorageKey(book.id));
       setDownloadedBooks((prev) => prev.filter((b) => b.book.id !== book.id));
       toast({
-        title: "Livre supprimé",
-        description: "Le livre n'est plus disponible hors ligne",
+        title: t("downloads.toast.deleted"),
+        description: t("downloads.toast.deletedDesc"),
       });
     } catch (error) {
       console.error("Erreur lors de la suppression du livre:", error);
       toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la suppression",
+        title: t("downloads.toast.error"),
+        description: t("downloads.toast.errorDesc"),
         variant: "destructive",
       });
     }
   };
 
   const handleRetryDownload = async (book: KomgaBook) => {
-    // Réinitialise le statut et laisse le composant BookOfflineButton gérer le téléchargement
     localStorage.removeItem(getStorageKey(book.id));
     setDownloadedBooks((prev) => prev.filter((b) => b.book.id !== book.id));
     toast({
-      title: "Téléchargement relancé",
-      description: "Le téléchargement va reprendre depuis le début",
+      title: t("downloads.toast.retry"),
+      description: t("downloads.toast.retryDesc"),
     });
   };
 
@@ -148,59 +149,57 @@ export function DownloadManager() {
   }
 
   return (
-    <Tabs defaultValue="all" className="space-y-4">
-      <div className="flex items-center justify-between">
-        <TabsList>
-          <TabsTrigger value="all">Tous ({downloadedBooks.length})</TabsTrigger>
-          <TabsTrigger value="downloading">
-            En cours ({downloadedBooks.filter((b) => b.status.status === "downloading").length})
-          </TabsTrigger>
-          <TabsTrigger value="available">
-            Disponibles ({downloadedBooks.filter((b) => b.status.status === "available").length})
-          </TabsTrigger>
-          <TabsTrigger value="error">
-            Erreurs ({downloadedBooks.filter((b) => b.status.status === "error").length})
-          </TabsTrigger>
-        </TabsList>
-        {downloadedBooks.some((b) => b.status.status === "error") && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              const errorBooks = downloadedBooks.filter((b) => b.status.status === "error");
-              errorBooks.forEach((book) => handleRetryDownload(book.book));
-              toast({
-                title: "Relance des téléchargements",
-                description: `${errorBooks.length} téléchargement(s) relancé(s)`,
-              });
-            }}
-            className="gap-2"
-          >
-            <Download className="h-4 w-4" />
-            Tout relancer
-          </Button>
+    <>
+      <div className="flex flex-col gap-1 mb-8">
+        <h1 className="text-3xl font-bold tracking-tight">{t("downloads.page.title")}</h1>
+        {t("downloads.page.description") && (
+          <p className="text-lg text-muted-foreground">{t("downloads.page.description")}</p>
         )}
       </div>
+      <Tabs defaultValue="all" className="space-y-4">
+        <div className="flex items-center justify-between">
+          <TabsList>
+            <TabsTrigger value="all">
+              {t("downloads.tabs.all", { count: downloadedBooks.length })}
+            </TabsTrigger>
+            <TabsTrigger value="downloading">
+              {t("downloads.tabs.downloading", {
+                count: downloadedBooks.filter((b) => b.status.status === "downloading").length,
+              })}
+            </TabsTrigger>
+            <TabsTrigger value="available">
+              {t("downloads.tabs.available", {
+                count: downloadedBooks.filter((b) => b.status.status === "available").length,
+              })}
+            </TabsTrigger>
+            <TabsTrigger value="error">
+              {t("downloads.tabs.error", {
+                count: downloadedBooks.filter((b) => b.status.status === "error").length,
+              })}
+            </TabsTrigger>
+          </TabsList>
+          {downloadedBooks.some((b) => b.status.status === "error") && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const errorBooks = downloadedBooks.filter((b) => b.status.status === "error");
+                errorBooks.forEach((book) => handleRetryDownload(book.book));
+                toast({
+                  title: t("downloads.toast.retryAll"),
+                  description: t("downloads.toast.retryAllDesc", { count: errorBooks.length }),
+                });
+              }}
+              className="gap-2"
+            >
+              <Download className="h-4 w-4" />
+              {t("downloads.actions.retryAll")}
+            </Button>
+          )}
+        </div>
 
-      <TabsContent value="all" className="space-y-4">
-        {downloadedBooks.map(({ book, status }) => (
-          <BookDownloadCard
-            key={book.id}
-            book={book}
-            status={status}
-            onDelete={() => handleDeleteBook(book)}
-            onRetry={() => handleRetryDownload(book)}
-          />
-        ))}
-        {downloadedBooks.length === 0 && (
-          <p className="text-center text-muted-foreground p-8">Aucun livre téléchargé</p>
-        )}
-      </TabsContent>
-
-      <TabsContent value="downloading" className="space-y-4">
-        {downloadedBooks
-          .filter((b) => b.status.status === "downloading")
-          .map(({ book, status }) => (
+        <TabsContent value="all" className="space-y-4">
+          {downloadedBooks.map(({ book, status }) => (
             <BookDownloadCard
               key={book.id}
               book={book}
@@ -209,45 +208,67 @@ export function DownloadManager() {
               onRetry={() => handleRetryDownload(book)}
             />
           ))}
-        {downloadedBooks.filter((b) => b.status.status === "downloading").length === 0 && (
-          <p className="text-center text-muted-foreground p-8">Aucun téléchargement en cours</p>
-        )}
-      </TabsContent>
+          {downloadedBooks.length === 0 && (
+            <p className="text-center text-muted-foreground p-8">{t("downloads.empty.all")}</p>
+          )}
+        </TabsContent>
 
-      <TabsContent value="available" className="space-y-4">
-        {downloadedBooks
-          .filter((b) => b.status.status === "available")
-          .map(({ book, status }) => (
-            <BookDownloadCard
-              key={book.id}
-              book={book}
-              status={status}
-              onDelete={() => handleDeleteBook(book)}
-              onRetry={() => handleRetryDownload(book)}
-            />
-          ))}
-        {downloadedBooks.filter((b) => b.status.status === "available").length === 0 && (
-          <p className="text-center text-muted-foreground p-8">Aucun livre disponible hors ligne</p>
-        )}
-      </TabsContent>
+        <TabsContent value="downloading" className="space-y-4">
+          {downloadedBooks
+            .filter((b) => b.status.status === "downloading")
+            .map(({ book, status }) => (
+              <BookDownloadCard
+                key={book.id}
+                book={book}
+                status={status}
+                onDelete={() => handleDeleteBook(book)}
+                onRetry={() => handleRetryDownload(book)}
+              />
+            ))}
+          {downloadedBooks.filter((b) => b.status.status === "downloading").length === 0 && (
+            <p className="text-center text-muted-foreground p-8">
+              {t("downloads.empty.downloading")}
+            </p>
+          )}
+        </TabsContent>
 
-      <TabsContent value="error" className="space-y-4">
-        {downloadedBooks
-          .filter((b) => b.status.status === "error")
-          .map(({ book, status }) => (
-            <BookDownloadCard
-              key={book.id}
-              book={book}
-              status={status}
-              onDelete={() => handleDeleteBook(book)}
-              onRetry={() => handleRetryDownload(book)}
-            />
-          ))}
-        {downloadedBooks.filter((b) => b.status.status === "error").length === 0 && (
-          <p className="text-center text-muted-foreground p-8">Aucune erreur</p>
-        )}
-      </TabsContent>
-    </Tabs>
+        <TabsContent value="available" className="space-y-4">
+          {downloadedBooks
+            .filter((b) => b.status.status === "available")
+            .map(({ book, status }) => (
+              <BookDownloadCard
+                key={book.id}
+                book={book}
+                status={status}
+                onDelete={() => handleDeleteBook(book)}
+                onRetry={() => handleRetryDownload(book)}
+              />
+            ))}
+          {downloadedBooks.filter((b) => b.status.status === "available").length === 0 && (
+            <p className="text-center text-muted-foreground p-8">
+              {t("downloads.empty.available")}
+            </p>
+          )}
+        </TabsContent>
+
+        <TabsContent value="error" className="space-y-4">
+          {downloadedBooks
+            .filter((b) => b.status.status === "error")
+            .map(({ book, status }) => (
+              <BookDownloadCard
+                key={book.id}
+                book={book}
+                status={status}
+                onDelete={() => handleDeleteBook(book)}
+                onRetry={() => handleRetryDownload(book)}
+              />
+            ))}
+          {downloadedBooks.filter((b) => b.status.status === "error").length === 0 && (
+            <p className="text-center text-muted-foreground p-8">{t("downloads.empty.error")}</p>
+          )}
+        </TabsContent>
+      </Tabs>
+    </>
   );
 }
 
@@ -259,9 +280,11 @@ interface BookDownloadCardProps {
 }
 
 function BookDownloadCard({ book, status, onDelete, onRetry }: BookDownloadCardProps) {
+  const { t } = useTranslate();
+
   const formatSize = (bytes: number) => {
     const mb = bytes / (1024 * 1024);
-    return `${mb.toFixed(1)} Mo`;
+    return t("downloads.info.size", { size: mb.toFixed(1) });
   };
 
   const getStatusIcon = (status: BookStatus) => {
@@ -278,16 +301,7 @@ function BookDownloadCard({ book, status, onDelete, onRetry }: BookDownloadCardP
   };
 
   const getStatusText = (status: BookStatus) => {
-    switch (status) {
-      case "downloading":
-        return "En cours de téléchargement";
-      case "available":
-        return "Disponible hors ligne";
-      case "error":
-        return "Erreur de téléchargement";
-      default:
-        return "Non téléchargé";
-    }
+    return t(`downloads.status.${status}`);
   };
 
   return (
@@ -296,7 +310,7 @@ function BookDownloadCard({ book, status, onDelete, onRetry }: BookDownloadCardP
         <div className="relative w-12 aspect-[2/3] bg-muted rounded overflow-hidden">
           <Image
             src={`/api/komga/images/books/${book.id}/thumbnail`}
-            alt={`Couverture de ${book.metadata?.title}`}
+            alt={t("books.coverAlt", { title: book.metadata?.title })}
             className="object-cover"
             fill
             sizes="48px"
@@ -309,7 +323,7 @@ function BookDownloadCard({ book, status, onDelete, onRetry }: BookDownloadCardP
             className="hover:underline hover:text-primary transition-colors"
           >
             <h3 className="font-medium truncate">
-              {book.metadata?.title || `Tome ${book.metadata?.number}`}
+              {book.metadata?.title || t("books.title", { number: book.metadata?.number })}
             </h3>
           </Link>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -317,10 +331,11 @@ function BookDownloadCard({ book, status, onDelete, onRetry }: BookDownloadCardP
             <span>•</span>
             <span>
               {status.status === "downloading"
-                ? `${Math.floor((status.progress * book.media.pagesCount) / 100)}/${
-                    book.media.pagesCount
-                  } pages`
-                : `${book.media.pagesCount} pages`}
+                ? t("downloads.info.pages", {
+                    current: Math.floor((status.progress * book.media.pagesCount) / 100),
+                    total: book.media.pagesCount,
+                  })
+                : t("downloads.info.totalPages", { count: book.media.pagesCount })}
             </span>
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -342,7 +357,7 @@ function BookDownloadCard({ book, status, onDelete, onRetry }: BookDownloadCardP
               variant="ghost"
               size="icon"
               onClick={onRetry}
-              title="Réessayer"
+              title={t("downloads.actions.retry")}
               className="h-8 w-8 p-0 rounded-br-lg rounded-tl-lg"
             >
               <Download className="h-5 w-5" />
@@ -354,7 +369,7 @@ function BookDownloadCard({ book, status, onDelete, onRetry }: BookDownloadCardP
               variant="ghost"
               size="icon"
               onClick={onDelete}
-              title="Supprimer"
+              title={t("downloads.actions.delete")}
               className="h-8 w-8 p-0 rounded-br-lg rounded-tl-lg"
             >
               <Trash2 className="h-5 w-5" />

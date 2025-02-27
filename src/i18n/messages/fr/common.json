@@ -174,5 +174,49 @@
       "unread": "À lire"
     },
     "loading": "Chargement..."
+  },
+  "downloads": {
+    "page": {
+      "title": "Téléchargements",
+      "description": "Gérez vos livres disponibles hors ligne"
+    },
+    "tabs": {
+      "all": "Tous ({count})",
+      "downloading": "En cours ({count})",
+      "available": "Disponibles ({count})",
+      "error": "Erreurs ({count})"
+    },
+    "empty": {
+      "all": "Aucun livre téléchargé",
+      "downloading": "Aucun téléchargement en cours",
+      "available": "Aucun livre disponible hors ligne",
+      "error": "Aucune erreur"
+    },
+    "actions": {
+      "retryAll": "Tout relancer",
+      "retry": "Réessayer",
+      "delete": "Supprimer"
+    },
+    "status": {
+      "downloading": "En cours de téléchargement",
+      "available": "Disponible hors ligne",
+      "error": "Erreur de téléchargement",
+      "idle": "Non téléchargé"
+    },
+    "toast": {
+      "deleted": "Livre supprimé",
+      "deletedDesc": "Le livre n'est plus disponible hors ligne",
+      "error": "Erreur",
+      "errorDesc": "Une erreur est survenue lors de la suppression",
+      "retryAll": "Relance des téléchargements",
+      "retryAllDesc": "{count} téléchargement(s) relancé(s)",
+      "retryDesc": "Le téléchargement va reprendre depuis le début",
+      "retry": "Téléchargement relancé"
+    },
+    "info": {
+      "size": "{size} Mo",
+      "pages": "{current}/{total} pages",
+      "totalPages": "{count} pages"
+    }
   }
 }

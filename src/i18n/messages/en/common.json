@@ -174,5 +174,49 @@
       "unread": "Unread"
     },
     "loading": "Loading..."
+  },
+  "downloads": {
+    "page": {
+      "title": "Downloads",
+      "description": "Manage your offline available books"
+    },
+    "tabs": {
+      "all": "All ({count})",
+      "downloading": "Downloading ({count})",
+      "available": "Available ({count})",
+      "error": "Errors ({count})"
+    },
+    "empty": {
+      "all": "No downloaded books",
+      "downloading": "No downloads in progress",
+      "available": "No books available offline",
+      "error": "No errors"
+    },
+    "actions": {
+      "retryAll": "Retry all",
+      "retry": "Retry",
+      "delete": "Delete"
+    },
+    "status": {
+      "downloading": "Downloading",
+      "available": "Available offline",
+      "error": "Download error",
+      "idle": "Not downloaded"
+    },
+    "toast": {
+      "deleted": "Book deleted",
+      "deletedDesc": "The book is no longer available offline",
+      "error": "Error",
+      "errorDesc": "An error occurred while deleting",
+      "retryAll": "Retrying downloads",
+      "retryAllDesc": "{count} download(s) restarted",
+      "retryDesc": "Download will start from the beginning",
+      "retry": "Download restarted"
+    },
+    "info": {
+      "size": "{size} MB",
+      "pages": "{current}/{total} pages",
+      "totalPages": "{count} pages"
+    }
   }
 }
