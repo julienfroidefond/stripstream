@@ -27,5 +27,89 @@
       "latest_series": "Dernières séries",
       "recently_added": "Ajouts récents"
     }
+  },
+  "sidebar": {
+    "navigation": "Navigation",
+    "home": "Accueil",
+    "downloads": "Téléchargements",
+    "favorites": {
+      "title": "Favoris",
+      "empty": "Aucun favori",
+      "loading": "Chargement..."
+    },
+    "libraries": {
+      "title": "Bibliothèques",
+      "empty": "Aucune bibliothèque",
+      "loading": "Chargement...",
+      "refresh": "Rafraîchir les bibliothèques"
+    },
+    "settings": {
+      "title": "Configuration",
+      "preferences": "Préférences"
+    },
+    "logout": "Se déconnecter"
+  },
+  "settings": {
+    "title": "Préférences",
+    "display": {
+      "title": "Préférences d'affichage",
+      "description": "Personnalisez l'affichage de votre bibliothèque.",
+      "thumbnails": {
+        "label": "Afficher les vignettes",
+        "description": "Utiliser les vignettes au lieu des premières pages pour l'affichage des séries"
+      },
+      "unreadFilter": {
+        "label": "Filtre \"À lire\" par défaut",
+        "description": "Afficher uniquement les séries non lues par défaut"
+      },
+      "debugMode": {
+        "label": "Mode debug",
+        "description": "Afficher les informations de debug dans l'interface"
+      }
+    },
+    "komga": {
+      "title": "Configuration Komga",
+      "description": "Configurez les informations de connexion à votre serveur Komga.",
+      "serverUrl": "L'URL du serveur",
+      "email": "L'adresse email de connexion",
+      "password": "Mot de passe",
+      "buttons": {
+        "edit": "Modifier la configuration",
+        "save": "Sauvegarder",
+        "test": "Tester la connexion",
+        "cancel": "Annuler",
+        "saving": "Sauvegarde...",
+        "testing": "Test en cours..."
+      },
+      "messages": {
+        "connectionSuccess": "La connexion au serveur Komga a été établie avec succès",
+        "configSaved": "La configuration a été sauvegardée avec succès"
+      }
+    },
+    "cache": {
+      "title": "Configuration du Cache",
+      "description": "Gérez les paramètres de mise en cache des données.",
+      "mode": {
+        "label": "Mode de cache",
+        "description": "Le cache en mémoire est plus rapide mais ne persiste pas entre les redémarrages"
+      },
+      "ttl": {
+        "default": "TTL par défaut (minutes)",
+        "home": "TTL page d'accueil",
+        "libraries": "TTL bibliothèques",
+        "series": "TTL séries",
+        "books": "TTL tomes",
+        "images": "TTL images"
+      },
+      "buttons": {
+        "saveTTL": "Sauvegarder les TTL",
+        "clear": "Vider le cache",
+        "clearing": "Suppression..."
+      },
+      "messages": {
+        "ttlSaved": "La configuration des TTL a été sauvegardée avec succès",
+        "cleared": "Cache serveur supprimé avec succès"
+      }
+    }
   }
 }

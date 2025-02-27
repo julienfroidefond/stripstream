@@ -11,6 +11,7 @@ import { AppError } from "@/utils/errors";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { ERROR_MESSAGES } from "@/constants/errorMessages";
 import { useToast } from "@/components/ui/use-toast";
+import { useTranslate } from "@/hooks/useTranslate";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
+  const { t } = useTranslate();
   const pathname = usePathname();
   const router = useRouter();
   const { preferences } = usePreferences();
@@ -161,12 +163,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   const mainNavItems = [
     {
-      title: "Accueil",
+      title: t("sidebar.home"),
       href: "/",
       icon: Home,
     },
     {
-      title: "Téléchargements",
+      title: t("sidebar.downloads"),
       href: "/downloads",
       icon: Download,
     },
@@ -186,7 +188,9 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       <div className="flex-1 space-y-4 py-4 overflow-y-auto">
         <div className="px-3 py-2">
           <div className="space-y-1">
-            <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">Navigation</h2>
+            <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
+              {t("sidebar.navigation")}
+            </h2>
             {mainNavItems.map((item) => (
               <button
                 key={item.href}
@@ -206,13 +210,19 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div className="px-3 py-2">
           <div className="space-y-1">
             <div className="mb-2 px-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold tracking-tight">Favoris</h2>
+              <h2 className="text-lg font-semibold tracking-tight">
+                {t("sidebar.favorites.title")}
+              </h2>
               <span className="text-xs text-muted-foreground">{favorites.length}</span>
             </div>
             {isLoadingFavorites ? (
-              <div className="px-3 py-2 text-sm text-muted-foreground">Chargement...</div>
+              <div className="px-3 py-2 text-sm text-muted-foreground">
+                {t("sidebar.favorites.loading")}
+              </div>
             ) : favorites.length === 0 ? (
-              <div className="px-3 py-2 text-sm text-muted-foreground">Aucun favori</div>
+              <div className="px-3 py-2 text-sm text-muted-foreground">
+                {t("sidebar.favorites.empty")}
+              </div>
             ) : (
               favorites.map((series) => (
                 <button
@@ -234,20 +244,26 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div className="px-3 py-2">
           <div className="space-y-1">
             <div className="mb-2 px-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold tracking-tight">Bibliothèques</h2>
+              <h2 className="text-lg font-semibold tracking-tight">
+                {t("sidebar.libraries.title")}
+              </h2>
               <button
                 onClick={handleRefresh}
                 disabled={isRefreshing}
                 className="p-1 hover:bg-accent hover:text-accent-foreground rounded-md transition-colors"
-                aria-label="Rafraîchir les bibliothèques"
+                aria-label={t("sidebar.libraries.refresh")}
               >
                 <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
               </button>
             </div>
             {isLoading ? (
-              <div className="px-3 py-2 text-sm text-muted-foreground">Chargement...</div>
+              <div className="px-3 py-2 text-sm text-muted-foreground">
+                {t("sidebar.libraries.loading")}
+              </div>
             ) : libraries.length === 0 ? (
-              <div className="px-3 py-2 text-sm text-muted-foreground">Aucune bibliothèque</div>
+              <div className="px-3 py-2 text-sm text-muted-foreground">
+                {t("sidebar.libraries.empty")}
+              </div>
             ) : (
               libraries.map((library) => (
                 <button
@@ -268,7 +284,9 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         <div className="px-3 py-2">
           <div className="space-y-1">
-            <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">Configuration</h2>
+            <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
+              {t("sidebar.settings.title")}
+            </h2>
             <button
               onClick={() => handleLinkClick("/settings")}
               className={cn(
@@ -277,7 +295,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               )}
             >
               <Settings className="mr-2 h-4 w-4" />
-              Préférences
+              {t("sidebar.settings.preferences")}
             </button>
           </div>
         </div>
@@ -289,7 +307,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           className="flex w-full items-center rounded-lg px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 hover:text-destructive"
         >
           <LogOut className="mr-2 h-4 w-4" />
-          Se déconnecter
+          {t("sidebar.logout")}
         </button>
       </div>
     </aside>

@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { CacheModeSwitch } from "@/components/settings/CacheModeSwitch";
 import { KomgaConfig, TTLConfigData } from "@/types/komga";
+import { useTranslate } from "@/hooks/useTranslate";
 
 interface ClientSettingsProps {
   initialConfig: KomgaConfig | null;
@@ -17,6 +18,7 @@ interface ClientSettingsProps {
 }
 
 export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettingsProps) {
+  const { t } = useTranslate();
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -64,8 +66,8 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
       }
 
       toast({
-        title: "Cache supprimé",
-        description: "Cache serveur supprimé avec succès",
+        title: t("settings.cache.title"),
+        description: t("settings.cache.messages.cleared"),
       });
       router.refresh();
     } catch (error) {
@@ -110,8 +112,8 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
       }
 
       toast({
-        title: "Connexion réussie",
-        description: "La connexion au serveur Komga a été établie avec succès",
+        title: t("settings.komga.title"),
+        description: t("settings.komga.messages.connectionSuccess"),
       });
     } catch (error) {
       console.error("Erreur:", error);
@@ -173,8 +175,8 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
       setIsEditingConfig(false);
 
       toast({
-        title: "Configuration sauvegardée",
-        description: "La configuration a été sauvegardée avec succès",
+        title: t("settings.komga.title"),
+        description: t("settings.komga.messages.configSaved"),
       });
 
       // Forcer un rechargement complet de la page
@@ -227,8 +229,8 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
       }
 
       toast({
-        title: "Configuration TTL sauvegardée",
-        description: "La configuration des TTL a été sauvegardée avec succès",
+        title: t("settings.cache.title"),
+        description: t("settings.cache.messages.ttlSaved"),
       });
     } catch (error) {
       console.error("Erreur lors de la sauvegarde:", error);
@@ -245,8 +247,8 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
     try {
       await updatePreferences({ showThumbnails: checked });
       toast({
-        title: "Préférences sauvegardées",
-        description: "Les préférences ont été mises à jour avec succès",
+        title: t("settings.title"),
+        description: t("settings.komga.messages.configSaved"),
       });
     } catch (error) {
       toast({
@@ -263,7 +265,7 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
   return (
     <div className="container max-w-3xl mx-auto py-8 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Préférences</h1>
+        <h1 className="text-3xl font-bold">{t("settings.title")}</h1>
       </div>
 
       {/* Messages de succès/erreur */}
@@ -284,19 +286,19 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
           <div className="p-5 space-y-4">
             <div>
               <h2 className="text-xl font-semibold flex items-center gap-2">
-                Préférences d'affichage
+                {t("settings.display.title")}
               </h2>
               <p className="text-sm text-muted-foreground mt-1">
-                Personnalisez l'affichage de votre bibliothèque.
+                {t("settings.display.description")}
               </p>
             </div>
 
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label htmlFor="thumbnails">Afficher les vignettes</Label>
+                  <Label htmlFor="thumbnails">{t("settings.display.thumbnails.label")}</Label>
                   <p className="text-sm text-muted-foreground">
-                    Utiliser les vignettes au lieu des premières pages pour l'affichage des séries
+                    {t("settings.display.thumbnails.description")}
                   </p>
                 </div>
                 <Switch
@@ -307,9 +309,9 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
               </div>
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label htmlFor="unread-filter">Filtre "À lire" par défaut</Label>
+                  <Label htmlFor="unread-filter">{t("settings.display.unreadFilter.label")}</Label>
                   <p className="text-sm text-muted-foreground">
-                    Afficher uniquement les séries non lues par défaut
+                    {t("settings.display.unreadFilter.description")}
                   </p>
                 </div>
                 <Switch
@@ -319,10 +321,8 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
                     try {
                       await updatePreferences({ showOnlyUnread: checked });
                       toast({
-                        title: "Préférences sauvegardées",
-                        description: `Le filtre "À lire" par défaut est maintenant ${
-                          checked ? "activé" : "désactivé"
-                        }`,
+                        title: t("settings.title"),
+                        description: t("settings.komga.messages.configSaved"),
                       });
                     } catch (error) {
                       console.error("Erreur détaillée:", error);
@@ -340,9 +340,9 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
               </div>
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label htmlFor="debug-mode">Mode debug</Label>
+                  <Label htmlFor="debug-mode">{t("settings.display.debugMode.label")}</Label>
                   <p className="text-sm text-muted-foreground">
-                    Afficher les informations de debug dans l'interface
+                    {t("settings.display.debugMode.description")}
                   </p>
                 </div>
                 <Switch
@@ -352,10 +352,8 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
                     try {
                       await updatePreferences({ debug: checked });
                       toast({
-                        title: "Préférences sauvegardées",
-                        description: `Le mode debug est maintenant ${
-                          checked ? "activé" : "désactivé"
-                        }`,
+                        title: t("settings.title"),
+                        description: t("settings.komga.messages.configSaved"),
                       });
                     } catch (error) {
                       console.error("Erreur détaillée:", error);
@@ -381,10 +379,10 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
             <div>
               <h2 className="text-xl font-semibold flex items-center gap-2">
                 <Network className="h-5 w-5" />
-                Configuration Komga
+                {t("settings.komga.title")}
               </h2>
               <p className="text-sm text-muted-foreground mt-1">
-                Configurez les informations de connexion à votre serveur Komga.
+                {t("settings.komga.description")}
               </p>
             </div>
 
@@ -392,15 +390,15 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
               <div className="space-y-4">
                 <div className="space-y-3">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">L&apos;URL du serveur</label>
+                    <label className="text-sm font-medium">{t("settings.komga.serverUrl")}</label>
                     <p className="text-sm text-muted-foreground">{config.serverUrl}</p>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">L&apos;adresse email de connexion</label>
+                    <label className="text-sm font-medium">{t("settings.komga.email")}</label>
                     <p className="text-sm text-muted-foreground">{config.username}</p>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Mot de passe</label>
+                    <label className="text-sm font-medium">{t("settings.komga.password")}</label>
                     <p className="text-sm text-muted-foreground">••••••••</p>
                   </div>
                 </div>
@@ -409,7 +407,7 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
                   onClick={() => setIsEditingConfig(true)}
                   className="inline-flex items-center justify-center rounded-md bg-secondary px-3 py-2 text-sm font-medium text-secondary-foreground ring-offset-background transition-colors hover:bg-secondary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
-                  Modifier la configuration
+                  {t("settings.komga.buttons.edit")}
                 </button>
               </div>
             ) : (
@@ -417,7 +415,7 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
                 <div className="space-y-3">
                   <div className="space-y-2">
                     <label htmlFor="serverUrl" className="text-sm font-medium">
-                      L&apos;URL du serveur
+                      {t("settings.komga.serverUrl")}
                     </label>
                     <input
                       type="url"
@@ -431,7 +429,7 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
                   </div>
                   <div className="space-y-2">
                     <label htmlFor="username" className="text-sm font-medium">
-                      L&apos;adresse email de connexion
+                      {t("settings.komga.email")}
                     </label>
                     <input
                       type="text"
@@ -445,7 +443,7 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
                   </div>
                   <div className="space-y-2">
                     <label htmlFor="password" className="text-sm font-medium">
-                      Mot de passe
+                      {t("settings.komga.password")}
                     </label>
                     <input
                       type="password"
@@ -467,10 +465,10 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
                     {isSaving ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Sauvegarde...
+                        {t("settings.komga.buttons.saving")}
                       </>
                     ) : (
-                      "Sauvegarder"
+                      t("settings.komga.buttons.save")
                     )}
                   </button>
                   <button
@@ -482,10 +480,10 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
                     {isLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Test en cours...
+                        {t("settings.komga.buttons.testing")}
                       </>
                     ) : (
-                      "Tester la connexion"
+                      t("settings.komga.buttons.test")
                     )}
                   </button>
                   {initialConfig && (
@@ -502,7 +500,7 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
                       }}
                       className="flex-1 inline-flex items-center justify-center rounded-md bg-secondary px-3 py-2 text-sm font-medium text-secondary-foreground ring-offset-background transition-colors hover:bg-secondary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     >
-                      Annuler
+                      {t("settings.komga.buttons.cancel")}
                     </button>
                   )}
                 </div>
@@ -517,18 +515,18 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
             <div>
               <h2 className="text-xl font-semibold flex items-center gap-2">
                 <Trash2 className="h-5 w-5" />
-                Configuration du Cache
+                {t("settings.cache.title")}
               </h2>
               <p className="text-sm text-muted-foreground mt-1">
-                Gérez les paramètres de mise en cache des données.
+                {t("settings.cache.description")}
               </p>
             </div>
 
             <div className="flex items-center justify-between mb-4">
               <div className="space-y-0.5">
-                <Label htmlFor="cache-mode">Mode de cache</Label>
+                <Label htmlFor="cache-mode">{t("settings.cache.mode.label")}</Label>
                 <p className="text-sm text-muted-foreground">
-                  Le cache en mémoire est plus rapide mais ne persiste pas entre les redémarrages
+                  {t("settings.cache.mode.description")}
                 </p>
               </div>
               <CacheModeSwitch />
@@ -539,7 +537,7 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-2">
                   <label htmlFor="defaultTTL" className="text-sm font-medium">
-                    TTL par défaut (minutes)
+                    {t("settings.cache.ttl.default")}
                   </label>
                   <input
                     type="number"
@@ -553,7 +551,7 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
                 </div>
                 <div className="space-y-2">
                   <label htmlFor="homeTTL" className="text-sm font-medium">
-                    TTL page d'accueil
+                    {t("settings.cache.ttl.home")}
                   </label>
                   <input
                     type="number"
@@ -567,7 +565,7 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
                 </div>
                 <div className="space-y-2">
                   <label htmlFor="librariesTTL" className="text-sm font-medium">
-                    TTL bibliothèques
+                    {t("settings.cache.ttl.libraries")}
                   </label>
                   <input
                     type="number"
@@ -581,7 +579,7 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
                 </div>
                 <div className="space-y-2">
                   <label htmlFor="seriesTTL" className="text-sm font-medium">
-                    TTL séries
+                    {t("settings.cache.ttl.series")}
                   </label>
                   <input
                     type="number"
@@ -595,7 +593,7 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
                 </div>
                 <div className="space-y-2">
                   <label htmlFor="booksTTL" className="text-sm font-medium">
-                    TTL tomes
+                    {t("settings.cache.ttl.books")}
                   </label>
                   <input
                     type="number"
@@ -609,7 +607,7 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
                 </div>
                 <div className="space-y-2">
                   <label htmlFor="imagesTTL" className="text-sm font-medium">
-                    TTL images
+                    {t("settings.cache.ttl.images")}
                   </label>
                   <input
                     type="number"
@@ -627,7 +625,7 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
                   type="submit"
                   className="flex-1 inline-flex items-center justify-center rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground ring-offset-background transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
                 >
-                  Sauvegarder les TTL
+                  {t("settings.cache.buttons.saveTTL")}
                 </button>
                 <button
                   type="button"
@@ -638,10 +636,10 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
                   {isCacheClearing ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Suppression...
+                      {t("settings.cache.buttons.clearing")}
                     </>
                   ) : (
-                    "Vider le cache"
+                    t("settings.cache.buttons.clear")
                   )}
                 </button>
               </div>

@@ -27,5 +27,89 @@
       "latest_series": "Latest series",
       "recently_added": "Recently added"
     }
+  },
+  "sidebar": {
+    "navigation": "Navigation",
+    "home": "Home",
+    "downloads": "Downloads",
+    "favorites": {
+      "title": "Favorites",
+      "empty": "No favorites",
+      "loading": "Loading..."
+    },
+    "libraries": {
+      "title": "Libraries",
+      "empty": "No libraries",
+      "loading": "Loading...",
+      "refresh": "Refresh libraries"
+    },
+    "settings": {
+      "title": "Settings",
+      "preferences": "Preferences"
+    },
+    "logout": "Sign out"
+  },
+  "settings": {
+    "title": "Preferences",
+    "display": {
+      "title": "Display Preferences",
+      "description": "Customize your library display.",
+      "thumbnails": {
+        "label": "Show thumbnails",
+        "description": "Use thumbnails instead of first pages for series display"
+      },
+      "unreadFilter": {
+        "label": "Default Unread Filter",
+        "description": "Show only unread series by default"
+      },
+      "debugMode": {
+        "label": "Debug mode",
+        "description": "Show debug information in the interface"
+      }
+    },
+    "komga": {
+      "title": "Komga Configuration",
+      "description": "Configure your Komga server connection information.",
+      "serverUrl": "Server URL",
+      "email": "Login email address",
+      "password": "Password",
+      "buttons": {
+        "edit": "Edit configuration",
+        "save": "Save",
+        "test": "Test connection",
+        "cancel": "Cancel",
+        "saving": "Saving...",
+        "testing": "Testing..."
+      },
+      "messages": {
+        "connectionSuccess": "Successfully connected to Komga server",
+        "configSaved": "Configuration saved successfully"
+      }
+    },
+    "cache": {
+      "title": "Cache Configuration",
+      "description": "Manage data caching settings.",
+      "mode": {
+        "label": "Cache mode",
+        "description": "Memory cache is faster but doesn't persist between restarts"
+      },
+      "ttl": {
+        "default": "Default TTL (minutes)",
+        "home": "Home page TTL",
+        "libraries": "Libraries TTL",
+        "series": "Series TTL",
+        "books": "Books TTL",
+        "images": "Images TTL"
+      },
+      "buttons": {
+        "saveTTL": "Save TTL",
+        "clear": "Clear cache",
+        "clearing": "Clearing..."
+      },
+      "messages": {
+        "ttlSaved": "TTL configuration saved successfully",
+        "cleared": "Server cache cleared successfully"
+      }
+    }
   }
 }
