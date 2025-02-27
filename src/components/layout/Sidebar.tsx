@@ -42,7 +42,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       console.error("Erreur de chargement des bibliothèques:", error);
       toast({
         title: "Erreur",
-        description: error instanceof AppError ? error.message : ERROR_MESSAGES[ERROR_CODES.LIBRARY.FETCH_ERROR],
+        description:
+          error instanceof AppError
+            ? error.message
+            : ERROR_MESSAGES[ERROR_CODES.LIBRARY.FETCH_ERROR],
         variant: "destructive",
       });
       setLibraries([]);
@@ -80,7 +83,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       console.error("Erreur de chargement des favoris:", error);
       toast({
         title: "Erreur",
-        description: error instanceof AppError ? error.message : ERROR_MESSAGES[ERROR_CODES.FAVORITE.FETCH_ERROR],
+        description:
+          error instanceof AppError
+            ? error.message
+            : ERROR_MESSAGES[ERROR_CODES.FAVORITE.FETCH_ERROR],
         variant: "destructive",
       });
       setFavorites([]);
@@ -130,7 +136,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       console.error("Erreur lors de la déconnexion:", error);
       toast({
         title: "Erreur",
-        description: error instanceof AppError ? error.message : ERROR_MESSAGES[ERROR_CODES.AUTH.LOGOUT_ERROR],
+        description:
+          error instanceof AppError ? error.message : ERROR_MESSAGES[ERROR_CODES.AUTH.LOGOUT_ERROR],
         variant: "destructive",
       });
     }

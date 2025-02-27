@@ -3,12 +3,12 @@ import { LibraryService } from "@/lib/services/library.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { ERROR_MESSAGES } from "@/constants/errorMessages";
 import { AppError } from "@/utils/errors";
-
+import { KomgaLibrary } from "@/types/komga";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const libraries = await LibraryService.getLibraries();
+    const libraries: KomgaLibrary[] = await LibraryService.getLibraries();
     return NextResponse.json(libraries);
   } catch (error) {
     console.error("API Libraries - Erreur:", error);

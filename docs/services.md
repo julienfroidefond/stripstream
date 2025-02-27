@@ -166,7 +166,7 @@ Service de test de connexion
 
 ### Méthodes
 
-- `testConnection(config: AuthConfig): Promise<{ libraries: Library[] }>`
+- `testConnection(config: AuthConfig): Promise<{ libraries: KomgaLibrary[] }>`
   - Teste la connexion au serveur Komga
   - Retourne les bibliothèques si succès
 

@@ -1,3 +1,34 @@
+// Types liés à la configuration
+export interface User {
+  id: string;
+  email: string;
+}
+
+export interface KomgaConfigData {
+  url: string;
+  username: string;
+  password?: string | null;
+  authHeader: string;
+}
+
+export interface KomgaConfig extends KomgaConfigData {
+  userId: string;
+}
+
+export interface TTLConfigData {
+  defaultTTL: number;
+  homeTTL: number;
+  librariesTTL: number;
+  seriesTTL: number;
+  booksTTL: number;
+  imagesTTL: number;
+}
+
+export interface TTLConfig extends TTLConfigData {
+  userId: string;
+}
+
+// Types liés à l'API Komga
 export interface KomgaUser {
   id: string;
   email: string;
@@ -106,4 +137,9 @@ export interface BookMetadata {
   tags: string[];
   releaseDate: string;
   isbn: string;
+}
+
+export interface KomgaBookWithPages {
+  book: KomgaBook;
+  pages: number[];
 }

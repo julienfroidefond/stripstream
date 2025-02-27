@@ -12,7 +12,7 @@ export async function GET(
 ) {
   try {
     // Convertir le numéro de page en nombre
-    const pageNumber = parseInt(params.pageNumber);
+    const pageNumber: number = parseInt(params.pageNumber);
     if (isNaN(pageNumber) || pageNumber < 0) {
       return NextResponse.json(
         {

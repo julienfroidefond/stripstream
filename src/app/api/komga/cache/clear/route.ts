@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { getServerCacheService } from "@/lib/services/server-cache.service";
+import { getServerCacheService, ServerCacheService } from "@/lib/services/server-cache.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { ERROR_MESSAGES } from "@/constants/errorMessages";
 
 export async function POST() {
   try {
-    const cacheService = await getServerCacheService();
+    const cacheService: ServerCacheService = await getServerCacheService();
     cacheService.clear();
     return NextResponse.json({ message: "🧹 Cache vidé avec succès" });
   } catch (error) {

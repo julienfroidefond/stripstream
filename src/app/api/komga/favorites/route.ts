@@ -6,7 +6,7 @@ import { AppError } from "@/utils/errors";
 
 export async function GET() {
   try {
-    const favoriteIds = await FavoriteService.getAllFavoriteIds();
+    const favoriteIds: string[] = await FavoriteService.getAllFavoriteIds();
     return NextResponse.json(favoriteIds);
   } catch (error) {
     console.error("Erreur lors de la récupération des favoris:", error);
@@ -35,7 +35,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { seriesId } = await request.json();
+    const { seriesId }: { seriesId: string } = await request.json();
     await FavoriteService.addToFavorites(seriesId);
     return NextResponse.json({ message: "⭐️ Série ajoutée aux favoris" });
   } catch (error) {
@@ -65,7 +65,7 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const { seriesId } = await request.json();
+    const { seriesId }: { seriesId: string } = await request.json();
     await FavoriteService.removeFromFavorites(seriesId);
     return NextResponse.json({ message: "💔 Série retirée des favoris" });
   } catch (error) {

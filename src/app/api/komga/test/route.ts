@@ -2,13 +2,14 @@ import { NextResponse } from "next/server";
 import { TestService } from "@/lib/services/test.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { ERROR_MESSAGES } from "@/constants/errorMessages";
+import { KomgaLibrary } from "@/types/komga";
 
 export async function POST(request: Request) {
   try {
     const { serverUrl, username, password } = await request.json();
     const authHeader = Buffer.from(`${username}:${password}`).toString("base64");
 
-    const { libraries } = await TestService.testConnection({
+    const { libraries }: { libraries: KomgaLibrary[] } = await TestService.testConnection({
       serverUrl,
       authHeader,
     });

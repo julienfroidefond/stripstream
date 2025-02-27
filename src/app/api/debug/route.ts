@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { DebugService } from "@/lib/services/debug.service";
+import { DebugService, RequestTiming } from "@/lib/services/debug.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { ERROR_MESSAGES } from "@/constants/errorMessages";
 import { AppError } from "@/utils/errors";
 
 export async function GET() {
   try {
-    const logs = await DebugService.getRequestLogs();
+    const logs: RequestTiming[] = await DebugService.getRequestLogs();
     return NextResponse.json(logs);
   } catch (error) {
     console.error("Erreur lors de la récupération des logs:", error);
@@ -35,7 +35,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const timing = await request.json();
+    const timing: RequestTiming = await request.json();
     await DebugService.logRequest(timing);
     return NextResponse.json({
       message: "✅ Log enregistré avec succès",

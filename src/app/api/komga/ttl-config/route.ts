@@ -2,10 +2,11 @@ import { NextResponse } from "next/server";
 import { ConfigDBService } from "@/lib/services/config-db.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { ERROR_MESSAGES } from "@/constants/errorMessages";
+import { TTLConfig } from "@/types/komga";
 
 export async function GET() {
   try {
-    const config = await ConfigDBService.getTTLConfig();
+    const config: TTLConfig | null = await ConfigDBService.getTTLConfig();
     return NextResponse.json(config);
   } catch (error) {
     console.error("Erreur lors de la récupération de la configuration TTL:", error);
@@ -37,7 +38,8 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const data = await request.json();
-    const config = await ConfigDBService.saveTTLConfig(data);
+    const config: TTLConfig = await ConfigDBService.saveTTLConfig(data);
+
     return NextResponse.json({
       message: "⏱️ Configuration TTL sauvegardée avec succès",
       config: {

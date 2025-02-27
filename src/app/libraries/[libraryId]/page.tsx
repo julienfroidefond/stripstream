@@ -5,7 +5,9 @@ import { revalidatePath } from "next/cache";
 import { RefreshButton } from "@/components/library/RefreshButton";
 import { withPageTiming } from "@/lib/hoc/withPageTiming";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
-
+import { LibraryResponse } from "@/types/library";
+import { KomgaSeries, KomgaLibrary } from "@/types/komga";
+import { UserPreferences } from "@/types/preferences";
 interface PageProps {
   params: { libraryId: string };
   searchParams: { page?: string; unread?: string; search?: string };
@@ -36,14 +38,14 @@ async function getLibrarySeries(
   try {
     const pageIndex = page - 1;
 
-    const series = await LibraryService.getLibrarySeries(
+    const series: LibraryResponse<KomgaSeries> = await LibraryService.getLibrarySeries(
       libraryId,
       pageIndex,
       PAGE_SIZE,
       unreadOnly,
       search
     );
-    const library = await LibraryService.getLibrary(libraryId);
+    const library: KomgaLibrary = await LibraryService.getLibrary(libraryId);
 
     return { data: series, library };
   } catch (error) {
@@ -53,19 +55,15 @@ async function getLibrarySeries(
 
 async function LibraryPage({ params, searchParams }: PageProps) {
   const currentPage = searchParams.page ? parseInt(searchParams.page) : 1;
-  const preferences = await PreferencesService.getPreferences();
+  const preferences: UserPreferences = await PreferencesService.getPreferences();
 
   // Utiliser le paramètre d'URL s'il existe, sinon utiliser la préférence utilisateur
   const unreadOnly =
     searchParams.unread !== undefined ? searchParams.unread === "true" : preferences.showOnlyUnread;
 
   try {
-    const { data: series, library } = await getLibrarySeries(
-      params.libraryId,
-      currentPage,
-      unreadOnly,
-      searchParams.search
-    );
+    const { data: series, library }: { data: LibraryResponse<KomgaSeries>; library: KomgaLibrary } =
+      await getLibrarySeries(params.libraryId, currentPage, unreadOnly, searchParams.search);
 
     return (
       <div className="container py-8 space-y-8">

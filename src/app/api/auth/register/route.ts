@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { AuthServerService } from "@/lib/services/auth-server.service";
+import { AuthServerService, UserData } from "@/lib/services/auth-server.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { ERROR_MESSAGES } from "@/constants/errorMessages";
 import { AppError } from "@/utils/errors";
@@ -9,7 +9,7 @@ export async function POST(request: Request) {
     const { email, password } = await request.json();
 
     try {
-      const userData = await AuthServerService.createUser(email, password);
+      const userData: UserData = await AuthServerService.createUser(email, password);
       AuthServerService.setUserCookie(userData);
 
       return NextResponse.json({

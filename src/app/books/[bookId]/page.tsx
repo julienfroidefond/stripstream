@@ -4,10 +4,11 @@ import { BookSkeleton } from "@/components/skeletons/BookSkeleton";
 import { BookService } from "@/lib/services/book.service";
 import { notFound } from "next/navigation";
 import { withPageTiming } from "@/lib/hoc/withPageTiming";
+import { KomgaBookWithPages } from "@/types/komga";
 
 async function BookPage({ params }: { params: { bookId: string } }) {
   try {
-    const data = await BookService.getBook(params.bookId);
+    const data: KomgaBookWithPages = await BookService.getBook(params.bookId);
 
     return (
       <Suspense fallback={<BookSkeleton />}>

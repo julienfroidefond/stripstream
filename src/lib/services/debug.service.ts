@@ -6,7 +6,7 @@ import { PreferencesService } from "./preferences.service";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
 
-interface RequestTiming {
+export interface RequestTiming {
   url: string;
   startTime: number;
   endTime: number;

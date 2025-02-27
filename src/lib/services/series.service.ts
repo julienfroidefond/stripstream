@@ -2,11 +2,13 @@ import { BaseApiService } from "./base-api.service";
 import { LibraryResponse } from "@/types/library";
 import { KomgaBook, KomgaSeries } from "@/types/komga";
 import { BookService } from "./book.service";
-import { ImageService } from "./image.service";
+import { ImageService, ImageResponse } from "./image.service";
 import { PreferencesService } from "./preferences.service";
 import { getServerCacheService } from "./server-cache.service";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
+import { UserPreferences } from "@/types/preferences";
+import { ServerCacheService } from "./server-cache.service";
 
 export class SeriesService extends BaseApiService {
   static async getSeries(seriesId: string): Promise<KomgaSeries> {
@@ -84,19 +86,19 @@ export class SeriesService extends BaseApiService {
   ): Promise<LibraryResponse<KomgaBook>> {
     try {
       // Récupérer tous les livres depuis le cache
-      const allBooks = await this.getAllSeriesBooks(seriesId);
+      const allBooks: KomgaBook[] = await this.getAllSeriesBooks(seriesId);
 
       // Filtrer les livres
       let filteredBooks = allBooks;
 
       if (unreadOnly) {
         filteredBooks = filteredBooks.filter(
-          (book) => !book.readProgress || !book.readProgress.completed
+          (book: KomgaBook) => !book.readProgress || !book.readProgress.completed
         );
       }
 
       // Trier les livres par numéro
-      filteredBooks.sort((a, b) => a.number - b.number);
+      filteredBooks.sort((a: KomgaBook, b: KomgaBook) => a.number - b.number);
 
       // Calculer la pagination
       const totalElements = filteredBooks.length;
@@ -140,7 +142,7 @@ export class SeriesService extends BaseApiService {
   }
 
   static async invalidateSeriesBooksCache(seriesId: string): Promise<void> {
-    const cacheService = await getServerCacheService();
+    const cacheService: ServerCacheService = await getServerCacheService();
     await cacheService.delete(`series-${seriesId}-all-books`);
   }
 
@@ -149,7 +151,9 @@ export class SeriesService extends BaseApiService {
       return this.fetchWithCache<string>(
         `series-first-book-${seriesId}`,
         async () => {
-          const data = await this.fetchFromApi<LibraryResponse<KomgaBook>>({
+          const data: LibraryResponse<KomgaBook> = await this.fetchFromApi<
+            LibraryResponse<KomgaBook>
+          >({
             path: `series/${seriesId}/books`,
             params: { page: "0", size: "1" },
           });
@@ -170,11 +174,11 @@ export class SeriesService extends BaseApiService {
   static async getCover(seriesId: string): Promise<Response> {
     try {
       // Récupérer les préférences de l'utilisateur
-      const preferences = await PreferencesService.getPreferences();
+      const preferences: UserPreferences = await PreferencesService.getPreferences();
 
       // Si l'utilisateur préfère les vignettes, utiliser la miniature
       if (preferences.showThumbnails) {
-        const response = await ImageService.getImage(`series/${seriesId}/thumbnail`);
+        const response: ImageResponse = await ImageService.getImage(`series/${seriesId}/thumbnail`);
         return new Response(response.buffer, {
           headers: {
             "Content-Type": response.contentType || "image/jpeg",
@@ -198,8 +202,10 @@ export class SeriesService extends BaseApiService {
 
   static async getMultipleSeries(seriesIds: string[]): Promise<KomgaSeries[]> {
     try {
-      const seriesPromises = seriesIds.map((id) => this.getSeries(id));
-      const series = await Promise.all(seriesPromises);
+      const seriesPromises: Promise<KomgaSeries>[] = seriesIds.map((id: string) =>
+        this.getSeries(id)
+      );
+      const series: KomgaSeries[] = await Promise.all(seriesPromises);
       return series.filter(Boolean);
     } catch (error) {
       throw new AppError(ERROR_CODES.SERIES.FETCH_ERROR, {}, error);

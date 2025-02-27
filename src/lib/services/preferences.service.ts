@@ -3,11 +3,7 @@ import { AuthServerService } from "./auth-server.service";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
 import { UserPreferences, defaultPreferences } from "@/types/preferences";
-
-interface User {
-  id: string;
-  email: string;
-}
+import { User } from "@/types/komga";
 
 export class PreferencesService {
   static getCurrentUser(): User {

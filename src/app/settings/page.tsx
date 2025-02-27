@@ -1,6 +1,7 @@
 import { ConfigDBService } from "@/lib/services/config-db.service";
 import { ClientSettings } from "@/components/settings/ClientSettings";
 import { Metadata } from "next";
+import { KomgaConfig, TTLConfig } from "@/types/komga";
 
 export const metadata: Metadata = {
   title: "Préférences",
@@ -8,18 +9,19 @@ export const metadata: Metadata = {
 };
 
 export default async function SettingsPage() {
-  let config = null;
-  let ttlConfig = null;
+  let config: KomgaConfig | null = null;
+  let ttlConfig: TTLConfig | null = null;
 
   try {
     // Récupérer la configuration Komga
-    const mongoConfig = await ConfigDBService.getConfig();
+    const mongoConfig: KomgaConfig | null = await ConfigDBService.getConfig();
     if (mongoConfig) {
       config = {
         url: mongoConfig.url,
         username: mongoConfig.username,
         userId: mongoConfig.userId,
         authHeader: mongoConfig.authHeader,
+        password: null,
       };
     }
 

@@ -1,49 +1,31 @@
 import connectDB from "@/lib/mongodb";
-import { KomgaConfig } from "@/lib/models/config.model";
-import { TTLConfig } from "@/lib/models/ttl-config.model";
+import { KomgaConfig as KomgaConfigModel } from "@/lib/models/config.model";
+import { TTLConfig as TTLConfigModel } from "@/lib/models/ttl-config.model";
 import { DebugService } from "./debug.service";
 import { AuthServerService } from "./auth-server.service";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
-
-interface User {
-  id: string;
-  email: string;
-}
-
-interface KomgaConfigData {
-  url: string;
-  username: string;
-  password: string;
-  authHeader: string;
-}
-
-interface TTLConfigData {
-  defaultTTL: number;
-  homeTTL: number;
-  librariesTTL: number;
-  seriesTTL: number;
-  booksTTL: number;
-  imagesTTL: number;
-}
+import { User, KomgaConfigData, TTLConfigData, KomgaConfig, TTLConfig } from "@/types/komga";
 
 export class ConfigDBService {
   private static getCurrentUser(): User {
-    const user = AuthServerService.getCurrentUser();
+    const user: User | null = AuthServerService.getCurrentUser();
     if (!user) {
       throw new AppError(ERROR_CODES.AUTH.UNAUTHENTICATED);
     }
     return user;
   }
 
-  static async saveConfig(data: KomgaConfigData) {
+  static async saveConfig(data: KomgaConfigData): Promise<KomgaConfig> {
     try {
-      const user = this.getCurrentUser();
+      const user: User | null = this.getCurrentUser();
       await connectDB();
 
-      const authHeader = Buffer.from(`${data.username}:${data.password}`).toString("base64");
+      const authHeader: string = Buffer.from(`${data.username}:${data.password}`).toString(
+        "base64"
+      );
 
-      const config = await KomgaConfig.findOneAndUpdate(
+      const config: KomgaConfig | null = await KomgaConfigModel.findOneAndUpdate(
         { userId: user.id },
         {
           userId: user.id,
@@ -54,6 +36,9 @@ export class ConfigDBService {
         },
         { upsert: true, new: true }
       );
+      if (!config) {
+        throw new AppError(ERROR_CODES.CONFIG.SAVE_ERROR);
+      }
 
       return config;
     } catch (error) {
@@ -64,13 +49,13 @@ export class ConfigDBService {
     }
   }
 
-  static async getConfig() {
+  static async getConfig(): Promise<KomgaConfig | null> {
     try {
-      const user = this.getCurrentUser();
+      const user: User | null = this.getCurrentUser();
       await connectDB();
 
       return DebugService.measureMongoOperation("getConfig", async () => {
-        const config = await KomgaConfig.findOne({ userId: user.id });
+        const config: KomgaConfig | null = await KomgaConfigModel.findOne({ userId: user.id });
         return config;
       });
     } catch (error) {
@@ -81,13 +66,13 @@ export class ConfigDBService {
     }
   }
 
-  static async getTTLConfig() {
+  static async getTTLConfig(): Promise<TTLConfig | null> {
     try {
-      const user = this.getCurrentUser();
+      const user: User | null = this.getCurrentUser();
       await connectDB();
 
       return DebugService.measureMongoOperation("getTTLConfig", async () => {
-        const config = await TTLConfig.findOne({ userId: user.id });
+        const config: TTLConfig | null = await TTLConfigModel.findOne({ userId: user.id });
         return config;
       });
     } catch (error) {
@@ -98,13 +83,13 @@ export class ConfigDBService {
     }
   }
 
-  static async saveTTLConfig(data: TTLConfigData) {
+  static async saveTTLConfig(data: TTLConfigData): Promise<TTLConfig> {
     try {
-      const user = this.getCurrentUser();
+      const user: User | null = this.getCurrentUser();
       await connectDB();
 
       return DebugService.measureMongoOperation("saveTTLConfig", async () => {
-        const config = await TTLConfig.findOneAndUpdate(
+        const config: TTLConfig | null = await TTLConfigModel.findOneAndUpdate(
           { userId: user.id },
           {
             userId: user.id,
@@ -112,6 +97,11 @@ export class ConfigDBService {
           },
           { upsert: true, new: true }
         );
+
+        if (!config) {
+          throw new AppError(ERROR_CODES.CONFIG.TTL_SAVE_ERROR);
+        }
+
         return config;
       });
     } catch (error) {

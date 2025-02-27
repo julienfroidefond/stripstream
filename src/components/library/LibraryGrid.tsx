@@ -1,6 +1,6 @@
-import { KomgaLibrary } from "@/types/komga";
 import { Book } from "lucide-react";
 import { Cover } from "@/components/ui/cover";
+import { KomgaLibrary } from "@/types/komga";
 
 interface LibraryGridProps {
   libraries: KomgaLibrary[];

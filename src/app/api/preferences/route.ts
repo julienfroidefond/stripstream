@@ -3,10 +3,11 @@ import { PreferencesService } from "@/lib/services/preferences.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { ERROR_MESSAGES } from "@/constants/errorMessages";
 import { AppError } from "@/utils/errors";
+import { UserPreferences } from "@/types/preferences";
 
 export async function GET() {
   try {
-    const preferences = await PreferencesService.getPreferences();
+    const preferences: UserPreferences = await PreferencesService.getPreferences();
     return NextResponse.json(preferences);
   } catch (error) {
     console.error("Erreur lors de la récupération des préférences:", error);
@@ -35,8 +36,10 @@ export async function GET() {
 
 export async function PUT(request: NextRequest) {
   try {
-    const preferences = await request.json();
-    const updatedPreferences = await PreferencesService.updatePreferences(preferences);
+    const preferences: UserPreferences = await request.json();
+    const updatedPreferences: UserPreferences = await PreferencesService.updatePreferences(
+      preferences
+    );
     return NextResponse.json(updatedPreferences);
   } catch (error) {
     console.error("Erreur lors de la mise à jour des préférences:", error);

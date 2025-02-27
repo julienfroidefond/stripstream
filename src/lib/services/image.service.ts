@@ -2,7 +2,7 @@ import { BaseApiService } from "./base-api.service";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
 
-interface ImageResponse {
+export interface ImageResponse {
   buffer: Buffer;
   contentType: string | null;
 }

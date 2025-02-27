@@ -9,23 +9,7 @@ import { usePreferences } from "@/contexts/PreferencesContext";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { CacheModeSwitch } from "@/components/settings/CacheModeSwitch";
-
-interface KomgaConfig {
-  url: string;
-  username: string;
-  userId: string;
-  password?: string;
-  authHeader: string;
-}
-
-interface TTLConfigData {
-  defaultTTL: number;
-  homeTTL: number;
-  librariesTTL: number;
-  seriesTTL: number;
-  booksTTL: number;
-  imagesTTL: number;
-}
+import { KomgaConfig, TTLConfigData } from "@/types/komga";
 
 interface ClientSettingsProps {
   initialConfig: KomgaConfig | null;

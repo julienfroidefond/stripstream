@@ -1,16 +1,17 @@
 import { BaseApiService } from "./base-api.service";
-import { Library, LibraryResponse } from "@/types/library";
+import { LibraryResponse } from "@/types/library";
 import { Series } from "@/types/series";
 import { getServerCacheService } from "./server-cache.service";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
+import { KomgaLibrary } from "@/types/komga";
 
 export class LibraryService extends BaseApiService {
-  static async getLibraries(): Promise<Library[]> {
+  static async getLibraries(): Promise<KomgaLibrary[]> {
     try {
-      return this.fetchWithCache<Library[]>(
+      return this.fetchWithCache<KomgaLibrary[]>(
         "libraries",
-        async () => this.fetchFromApi<Library[]>({ path: "libraries" }),
+        async () => this.fetchFromApi<KomgaLibrary[]>({ path: "libraries" }),
         "LIBRARIES"
       );
     } catch (error) {
@@ -18,7 +19,7 @@ export class LibraryService extends BaseApiService {
     }
   }
 
-  static async getLibrary(libraryId: string): Promise<Library> {
+  static async getLibrary(libraryId: string): Promise<KomgaLibrary> {
     try {
       const libraries = await this.getLibraries();
       const library = libraries.find((library) => library.id === libraryId);

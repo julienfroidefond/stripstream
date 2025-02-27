@@ -9,6 +9,7 @@ import { Cover } from "@/components/ui/cover";
 import { RefreshButton } from "@/components/library/RefreshButton";
 import { AppError } from "@/utils/errors";
 import { ERROR_CODES } from "@/constants/errorCodes";
+import { ERROR_MESSAGES } from "@/constants/errorMessages";
 
 interface SeriesHeaderProps {
   series: KomgaSeries;
@@ -32,7 +33,10 @@ export const SeriesHeader = ({ series, refreshSeries }: SeriesHeaderProps) => {
         console.error("Erreur lors de la vérification des favoris:", error);
         toast({
           title: "Erreur",
-          description: error instanceof AppError ? error.message : ERROR_MESSAGES[ERROR_CODES.FAVORITE.NETWORK_ERROR],
+          description:
+            error instanceof AppError
+              ? error.message
+              : ERROR_MESSAGES[ERROR_CODES.FAVORITE.NETWORK_ERROR],
           variant: "destructive",
         });
       }
@@ -71,7 +75,10 @@ export const SeriesHeader = ({ series, refreshSeries }: SeriesHeaderProps) => {
       console.error("Erreur lors de la modification des favoris:", error);
       toast({
         title: "Erreur",
-        description: error instanceof AppError ? error.message : ERROR_MESSAGES[ERROR_CODES.FAVORITE.NETWORK_ERROR],
+        description:
+          error instanceof AppError
+            ? error.message
+            : ERROR_MESSAGES[ERROR_CODES.FAVORITE.NETWORK_ERROR],
         variant: "destructive",
       });
     }

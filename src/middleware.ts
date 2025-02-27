@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { ERROR_CODES } from "./constants/errorCodes";
 import { ERROR_MESSAGES } from "./constants/errorMessages";
+import { UserData } from "./lib/services/auth-server.service";
 
 // Routes qui ne nécessitent pas d'authentification
 const publicRoutes = ["/login", "/register", "/images"];
@@ -43,7 +44,7 @@ export function middleware(request: NextRequest) {
   }
 
   try {
-    const userData = JSON.parse(atob(user.value));
+    const userData: UserData = JSON.parse(atob(user.value));
     if (!userData || !userData.authenticated || !userData.id || !userData.email) {
       throw new Error(ERROR_MESSAGES[ERROR_CODES.MIDDLEWARE.INVALID_SESSION]);
     }

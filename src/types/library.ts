@@ -1,12 +1,3 @@
-export interface Library {
-  id: string;
-  name: string;
-  root: string;
-  importLastModified: string;
-  lastModified: string;
-  unavailable: boolean;
-}
-
 export interface LibraryResponse<T> {
   content: T[];
   empty: boolean;

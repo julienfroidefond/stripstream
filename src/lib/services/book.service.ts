@@ -1,14 +1,14 @@
 import { BaseApiService } from "./base-api.service";
-import { KomgaBook } from "@/types/komga";
-import { ImageService } from "./image.service";
+import { KomgaBook, KomgaBookWithPages } from "@/types/komga";
+import { ImageService, ImageResponse } from "./image.service";
 import { PreferencesService } from "./preferences.service";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
 
 export class BookService extends BaseApiService {
-  static async getBook(bookId: string): Promise<{ book: KomgaBook; pages: number[] }> {
+  static async getBook(bookId: string): Promise<KomgaBookWithPages> {
     try {
-      return this.fetchWithCache<{ book: KomgaBook; pages: number[] }>(
+      return this.fetchWithCache<KomgaBookWithPages>(
         `book-${bookId}`,
         async () => {
           // Récupération des détails du tome
@@ -86,7 +86,7 @@ export class BookService extends BaseApiService {
     try {
       // Ajuster le numéro de page pour l'API Komga (zero-based)
       const adjustedPageNumber = pageNumber - 1;
-      const response = await ImageService.getImage(
+      const response: ImageResponse = await ImageService.getImage(
         `books/${bookId}/pages/${adjustedPageNumber}?zero_based=true`
       );
       return new Response(response.buffer, {
@@ -107,7 +107,7 @@ export class BookService extends BaseApiService {
 
       // Si l'utilisateur préfère les vignettes, utiliser la miniature
       if (preferences.showThumbnails) {
-        const response = await ImageService.getImage(`books/${bookId}/thumbnail`);
+        const response: ImageResponse = await ImageService.getImage(`books/${bookId}/thumbnail`);
         return new Response(response.buffer, {
           headers: {
             "Content-Type": response.contentType || "image/jpeg",
@@ -133,7 +133,7 @@ export class BookService extends BaseApiService {
 
   static async getPageThumbnail(bookId: string, pageNumber: number): Promise<Response> {
     try {
-      const response = await ImageService.getImage(
+      const response: ImageResponse = await ImageService.getImage(
         `books/${bookId}/pages/${pageNumber}/thumbnail?zero_based=true`
       );
       return new Response(response.buffer, {

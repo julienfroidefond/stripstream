@@ -3,13 +3,14 @@ import { AuthServerService } from "@/lib/services/auth-server.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { ERROR_MESSAGES } from "@/constants/errorMessages";
 import { AppError } from "@/utils/errors";
+import { UserData } from "@/lib/services/auth-server.service";
 
 export async function POST(request: Request) {
   try {
     const { email, password } = await request.json();
 
     try {
-      const userData = await AuthServerService.loginUser(email, password);
+      const userData: UserData = await AuthServerService.loginUser(email, password);
       AuthServerService.setUserCookie(userData);
 
       return NextResponse.json({

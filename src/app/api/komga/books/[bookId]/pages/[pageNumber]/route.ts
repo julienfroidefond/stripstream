@@ -11,7 +11,7 @@ export async function GET(
   { params }: { params: { bookId: string; pageNumber: string } }
 ) {
   try {
-    const pageNumber = parseInt(params.pageNumber);
+    const pageNumber: number = parseInt(params.pageNumber);
     if (isNaN(pageNumber) || pageNumber < 0) {
       return NextResponse.json(
         {

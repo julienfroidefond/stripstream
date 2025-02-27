@@ -2,22 +2,17 @@ import { NextResponse } from "next/server";
 import { ConfigDBService } from "@/lib/services/config-db.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { ERROR_MESSAGES } from "@/constants/errorMessages";
+import { KomgaConfig, KomgaConfigData } from "@/types/komga";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   try {
-    const data = await request.json();
-    const mongoConfig = await ConfigDBService.saveConfig(data);
-    // Convertir le document Mongoose en objet simple
-    const config = {
-      url: mongoConfig.url,
-      username: mongoConfig.username,
-      password: mongoConfig.password,
-      userId: mongoConfig.userId,
-    };
+    const data: KomgaConfigData = await request.json();
+    const mongoConfig: KomgaConfig = await ConfigDBService.saveConfig(data);
+
     return NextResponse.json(
-      { message: "⚙️ Configuration sauvegardée avec succès", config },
+      { message: "⚙️ Configuration sauvegardée avec succès", mongoConfig },
       { status: 200 }
     );
   } catch (error) {
@@ -47,15 +42,9 @@ export async function POST(request: Request) {
 
 export async function GET() {
   try {
-    const mongoConfig = await ConfigDBService.getConfig();
-    // Convertir le document Mongoose en objet simple
-    const config = {
-      url: mongoConfig.url,
-      username: mongoConfig.username,
-      password: mongoConfig.password,
-      userId: mongoConfig.userId,
-    };
-    return NextResponse.json(config, { status: 200 });
+    const mongoConfig: KomgaConfig | null = await ConfigDBService.getConfig();
+
+    return NextResponse.json(mongoConfig, { status: 200 });
   } catch (error) {
     console.error("Erreur lors de la récupération de la configuration:", error);
     if (error instanceof Error) {

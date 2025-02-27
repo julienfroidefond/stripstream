@@ -4,7 +4,7 @@ import { PreferencesService } from "./preferences.service";
 import { DebugService } from "./debug.service";
 import { AuthServerService } from "./auth-server.service";
 
-type CacheMode = "file" | "memory";
+export type CacheMode = "file" | "memory";
 
 interface CacheConfig {
   mode: CacheMode;

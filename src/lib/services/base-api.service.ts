@@ -4,7 +4,8 @@ import { ConfigDBService } from "./config-db.service";
 import { DebugService } from "./debug.service";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
-
+import { KomgaConfig } from "@/types/komga";
+import { ServerCacheService } from "./server-cache.service";
 // Types de cache disponibles
 export type CacheType = "DEFAULT" | "HOME" | "LIBRARIES" | "SERIES" | "BOOKS" | "IMAGES";
 
@@ -20,7 +21,11 @@ interface KomgaUrlBuilder {
 export abstract class BaseApiService {
   protected static async getKomgaConfig(): Promise<AuthConfig> {
     try {
-      const config = await ConfigDBService.getConfig();
+      const config: KomgaConfig | null = await ConfigDBService.getConfig();
+      if (!config) {
+        throw new AppError(ERROR_CODES.KOMGA.MISSING_CONFIG);
+      }
+
       return {
         serverUrl: config.url,
         authHeader: config.authHeader,
@@ -47,7 +52,7 @@ export abstract class BaseApiService {
     fetcher: () => Promise<T>,
     type: CacheType = "DEFAULT"
   ): Promise<T> {
-    const cacheService = await getServerCacheService();
+    const cacheService: ServerCacheService = await getServerCacheService();
 
     try {
       const result = await cacheService.getOrSet(key, fetcher, type);
@@ -82,11 +87,11 @@ export abstract class BaseApiService {
     options: KomgaRequestInit = {}
   ): Promise<T> {
     const startTime = performance.now();
-    const config = await this.getKomgaConfig();
+    const config: AuthConfig = await this.getKomgaConfig();
     const { path, params } = urlBuilder;
     const url = this.buildUrl(config, path, params);
 
-    const headers = this.getAuthHeaders(config);
+    const headers: Headers = this.getAuthHeaders(config);
     if (headersOptions) {
       for (const [key, value] of Object.entries(headersOptions)) {
         headers.set(key as string, value as string);

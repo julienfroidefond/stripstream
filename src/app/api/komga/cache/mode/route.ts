@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
-import { getServerCacheService } from "@/lib/services/server-cache.service";
+import {
+  CacheMode,
+  getServerCacheService,
+  ServerCacheService,
+} from "@/lib/services/server-cache.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { ERROR_MESSAGES } from "@/constants/errorMessages";
 
 export async function GET() {
   try {
-    const cacheService = await getServerCacheService();
+    const cacheService: ServerCacheService = await getServerCacheService();
     return NextResponse.json({ mode: cacheService.getCacheMode() });
   } catch (error) {
     console.error("Erreur lors de la récupération du mode de cache:", error);
@@ -23,7 +27,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { mode } = await request.json();
+    const { mode }: { mode: CacheMode } = await request.json();
     if (mode !== "file" && mode !== "memory") {
       return NextResponse.json(
         {
@@ -36,7 +40,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const cacheService = await getServerCacheService();
+    const cacheService: ServerCacheService = await getServerCacheService();
     cacheService.setCacheMode(mode);
     return NextResponse.json({ mode: cacheService.getCacheMode() });
   } catch (error) {

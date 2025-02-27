@@ -3,12 +3,13 @@ import { SeriesService } from "@/lib/services/series.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { ERROR_MESSAGES } from "@/constants/errorMessages";
 import { AppError } from "@/utils/errors";
+import { KomgaSeries } from "@/types/komga";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request, { params }: { params: { seriesId: string } }) {
   try {
-    const series = await SeriesService.getSeries(params.seriesId);
+    const series: KomgaSeries = await SeriesService.getSeries(params.seriesId);
     return NextResponse.json(series);
   } catch (error) {
     console.error("API Series - Erreur:", error);

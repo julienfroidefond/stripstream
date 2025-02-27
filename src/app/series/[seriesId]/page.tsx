@@ -5,6 +5,9 @@ import { PreferencesService } from "@/lib/services/preferences.service";
 import { revalidatePath } from "next/cache";
 import { withPageTiming } from "@/lib/hoc/withPageTiming";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
+import { LibraryResponse } from "@/types/library";
+import { KomgaBook, KomgaSeries } from "@/types/komga";
+import { UserPreferences } from "@/types/preferences";
 
 interface PageProps {
   params: { seriesId: string };
@@ -17,8 +20,13 @@ async function getSeriesBooks(seriesId: string, page: number = 1, unreadOnly: bo
   try {
     const pageIndex = page - 1;
 
-    const books = await SeriesService.getSeriesBooks(seriesId, pageIndex, PAGE_SIZE, unreadOnly);
-    const series = await SeriesService.getSeries(seriesId);
+    const books: LibraryResponse<KomgaBook> = await SeriesService.getSeriesBooks(
+      seriesId,
+      pageIndex,
+      PAGE_SIZE,
+      unreadOnly
+    );
+    const series: KomgaSeries = await SeriesService.getSeries(seriesId);
 
     return { data: books, series };
   } catch (error) {
@@ -42,14 +50,15 @@ async function refreshSeries(seriesId: string) {
 
 async function SeriesPage({ params, searchParams }: PageProps) {
   const currentPage = searchParams.page ? parseInt(searchParams.page) : 1;
-  const preferences = await PreferencesService.getPreferences();
+  const preferences: UserPreferences = await PreferencesService.getPreferences();
 
   // Utiliser le paramètre d'URL s'il existe, sinon utiliser la préférence utilisateur
   const unreadOnly =
     searchParams.unread !== undefined ? searchParams.unread === "true" : preferences.showOnlyUnread;
 
   try {
-    const { data: books, series } = await getSeriesBooks(params.seriesId, currentPage, unreadOnly);
+    const { data: books, series }: { data: LibraryResponse<KomgaBook>; series: KomgaSeries } =
+      await getSeriesBooks(params.seriesId, currentPage, unreadOnly);
 
     return (
       <div className="container py-8 space-y-8">
