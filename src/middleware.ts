@@ -10,8 +10,31 @@ const publicRoutes = ["/login", "/register", "/images"];
 // Routes d'API qui ne nécessitent pas d'authentification
 const publicApiRoutes = ["/api/auth/login", "/api/auth/register", "/api/komga/test"];
 
+// Langues supportées
+const locales = ["fr", "en"];
+const defaultLocale = "fr";
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Gestion de la langue
+  let locale = request.cookies.get("NEXT_LOCALE")?.value;
+
+  // Si pas de cookie de langue ou langue non supportée, on utilise la langue par défaut
+  if (!locale || !locales.includes(locale)) {
+    locale = defaultLocale;
+
+    // On crée une nouvelle réponse avec le cookie de langue
+    const response = NextResponse.next();
+    response.cookies.set("NEXT_LOCALE", locale, {
+      path: "/",
+      maxAge: 365 * 24 * 60 * 60, // 1 an
+    });
+
+    return response;
+  }
+
+  // Gestion de l'authentification
   const user = request.cookies.get("stripUser");
 
   // Si l'utilisateur est connecté et essaie d'accéder à la page de login ou register

@@ -6,6 +6,8 @@ import ClientLayout from "@/components/layout/ClientLayout";
 import { PreferencesProvider } from "@/contexts/PreferencesContext";
 import { I18nProvider } from "@/components/providers/I18nProvider";
 import "@/i18n/i18n"; // Import i18next configuration
+import { cookies } from "next/headers";
+import { defaultLocale } from "@/i18n/config";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -58,8 +60,11 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const cookieStore = cookies();
+  const locale = cookieStore.get("NEXT_LOCALE")?.value || defaultLocale;
+
   return (
-    <html lang="fr" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <head>
         <meta
           name="viewport"
@@ -116,7 +121,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className={cn("min-h-screen bg-background font-sans antialiased", inter.className)}>
-        <I18nProvider>
+        <I18nProvider locale={locale}>
           <PreferencesProvider>
             <ClientLayout>{children}</ClientLayout>
           </PreferencesProvider>
