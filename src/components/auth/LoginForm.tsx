@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { authService } from "@/lib/services/auth.service";
 import { AuthError } from "@/types/auth";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
+import { useTranslate } from "@/hooks/useTranslate";
 
 interface LoginFormProps {
   from?: string;
@@ -14,6 +15,7 @@ export function LoginForm({ from }: LoginFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<AuthError | null>(null);
+  const { t } = useTranslate();
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -43,7 +45,7 @@ export function LoginForm({ from }: LoginFormProps) {
           htmlFor="email"
           className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
         >
-          Email
+          {t("login.form.email")}
         </label>
         <input
           id="email"
@@ -60,7 +62,7 @@ export function LoginForm({ from }: LoginFormProps) {
           htmlFor="password"
           className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
         >
-          Mot de passe
+          {t("login.form.password")}
         </label>
         <input
           id="password"
@@ -84,7 +86,7 @@ export function LoginForm({ from }: LoginFormProps) {
           htmlFor="remember"
           className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
         >
-          Se souvenir de moi
+          {t("login.form.remember")}
         </label>
       </div>
       {error && <ErrorMessage message={error.message} variant="form" />}
@@ -93,7 +95,7 @@ export function LoginForm({ from }: LoginFormProps) {
         disabled={isLoading}
         className="inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground ring-offset-background transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
       >
-        {isLoading ? "Connexion en cours..." : "Se connecter"}
+        {isLoading ? t("login.form.submit.loading.login") : t("login.form.submit.login")}
       </button>
     </form>
   );

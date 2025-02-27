@@ -11,7 +11,21 @@
       "login": "Sign in",
       "register": "Sign up"
     },
-    "description": "Enjoy your favorite comics, manga and graphic novels with a modern and smooth reading experience."
+    "description": "Enjoy your favorite comics, manga and graphic novels with a modern and smooth reading experience.",
+    "form": {
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm password",
+      "remember": "Remember me",
+      "submit": {
+        "login": "Sign in",
+        "register": "Sign up",
+        "loading": {
+          "login": "Signing in...",
+          "register": "Signing up..."
+        }
+      }
+    }
   },
   "home": {
     "hero": {

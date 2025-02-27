@@ -11,7 +11,21 @@
       "login": "Connexion",
       "register": "Inscription"
     },
-    "description": "Profitez de vos BD, mangas et comics préférés avec une expérience de lecture moderne et fluide."
+    "description": "Profitez de vos BD, mangas et comics préférés avec une expérience de lecture moderne et fluide.",
+    "form": {
+      "email": "Email",
+      "password": "Mot de passe",
+      "confirmPassword": "Confirmer le mot de passe",
+      "remember": "Se souvenir de moi",
+      "submit": {
+        "login": "Se connecter",
+        "register": "S'inscrire",
+        "loading": {
+          "login": "Connexion en cours...",
+          "register": "Inscription en cours..."
+        }
+      }
+    }
   },
   "home": {
     "hero": {

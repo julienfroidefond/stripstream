@@ -4,6 +4,7 @@ import { LoginForm } from "@/components/auth/LoginForm";
 import { RegisterForm } from "@/components/auth/RegisterForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTranslate } from "@/hooks/useTranslate";
+import LanguageSelector from "@/components/LanguageSelector";
 
 interface LoginContentProps {
   searchParams: {
@@ -18,6 +19,10 @@ export function LoginContent({ searchParams }: LoginContentProps) {
 
   return (
     <div className="container relative min-h-screen flex-col items-center justify-center grid lg:max-w-none lg:grid-cols-2 lg:px-0">
+      <div className="absolute top-4 right-4 z-50">
+        <LanguageSelector />
+      </div>
+
       <div className="relative hidden h-full flex-col bg-slate-800/80 p-10 text-white lg:flex dark:border-r overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40 transition-opacity duration-200 ease-in-out"
