@@ -18,6 +18,7 @@ export async function GET(request: Request, { params }: { params: { seriesId: st
         {
           error: {
             code: error.code,
+            name: "Series fetch error",
             message: getErrorMessage(error.code),
           },
         },
@@ -28,6 +29,7 @@ export async function GET(request: Request, { params }: { params: { seriesId: st
       {
         error: {
           code: ERROR_CODES.SERIES.FETCH_ERROR,
+          name: "Series fetch error",
           message: getErrorMessage(ERROR_CODES.SERIES.FETCH_ERROR),
         },
       },

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { authService } from "@/lib/services/auth.service";
-import { AuthError } from "@/types/auth";
+import { AppErrorType } from "@/types/global";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { useTranslate } from "@/hooks/useTranslate";
 
@@ -14,7 +14,7 @@ interface LoginFormProps {
 export function LoginForm({ from }: LoginFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<AuthError | null>(null);
+  const [error, setError] = useState<AppErrorType | null>(null);
   const { t } = useTranslate();
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -32,7 +32,7 @@ export function LoginForm({ from }: LoginFormProps) {
       router.push(from || "/");
       router.refresh();
     } catch (error) {
-      setError(error as AuthError);
+      setError(error as AppErrorType);
     } finally {
       setIsLoading(false);
     }
@@ -89,7 +89,7 @@ export function LoginForm({ from }: LoginFormProps) {
           {t("login.form.remember")}
         </label>
       </div>
-      {error && <ErrorMessage errorCode={error.code} variant="form" />}
+      {error && <ErrorMessage error={error as Error} errorCode={error.code} variant="form" />}
       <button
         type="submit"
         disabled={isLoading}

@@ -81,6 +81,10 @@
         "description": "Afficher les informations de debug dans l'interface"
       }
     },
+    "error": {
+      "title": "Erreur",
+      "message": "Une erreur est survenue lors de la mise à jour des préférences"
+    },
     "komga": {
       "title": "Configuration Komga",
       "description": "Configurez les informations de connexion à votre serveur Komga.",
@@ -98,6 +102,10 @@
       "messages": {
         "connectionSuccess": "La connexion au serveur Komga a été établie avec succès",
         "configSaved": "La configuration a été sauvegardée avec succès"
+      },
+      "error": {
+        "title": "Erreur lors de la sauvegarde de la configuration",
+        "message": "Une erreur est survenue lors de la sauvegarde de la configuration"
       }
     },
     "cache": {
@@ -123,6 +131,11 @@
       "messages": {
         "ttlSaved": "La configuration des TTL a été sauvegardée avec succès",
         "cleared": "Cache serveur supprimé avec succès"
+      },
+      "error": {
+        "title": "Erreur lors de la suppression du cache",
+        "message": "Une erreur est survenue lors de la suppression du cache",
+        "ttl": "Erreur lors de la sauvegarde de la configuration TTL"
       }
     }
   },
@@ -241,6 +254,8 @@
     "AUTH_LOGOUT_ERROR": "Erreur lors de la déconnexion",
     "AUTH_INVALID_USER_DATA": "Données utilisateur invalides",
     "AUTH_UNAUTHENTICATED": "Non authentifié",
+    "AUTH_LOGIN_ERROR": "Erreur lors de la connexion",
+    "AUTH_REGISTER_ERROR": "Erreur lors de l'inscription",
 
     "SERIES_FETCH_ERROR": "Erreur lors de la récupération des séries",
     "HOME_FETCH_ERROR": "Erreur lors de la récupération de l'accueil",

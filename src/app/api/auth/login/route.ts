@@ -3,6 +3,7 @@ import { AuthServerService } from "@/lib/services/auth-server.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 import { UserData } from "@/lib/services/auth-server.service";
+import { getErrorMessage } from "@/utils/errors";
 
 export async function POST(request: Request) {
   try {
@@ -20,9 +21,7 @@ export async function POST(request: Request) {
       if (error instanceof AppError) {
         return NextResponse.json(
           {
-            error: {
-              code: error.code,
-            },
+            error: AppError,
           },
           { status: 401 }
         );
@@ -35,7 +34,9 @@ export async function POST(request: Request) {
       {
         error: {
           code: ERROR_CODES.AUTH.INVALID_CREDENTIALS,
-        },
+          name: "Invalid credentials",
+          message: getErrorMessage(ERROR_CODES.AUTH.INVALID_CREDENTIALS),
+        } as AppError,
       },
       { status: 500 }
     );

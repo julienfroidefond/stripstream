@@ -17,6 +17,7 @@ export async function GET() {
       {
         error: {
           code: ERROR_CODES.CACHE.MODE_FETCH_ERROR,
+          name: "Cache mode fetch error",
           message: getErrorMessage(ERROR_CODES.CACHE.MODE_FETCH_ERROR),
         },
       },
@@ -33,6 +34,7 @@ export async function POST(request: Request) {
         {
           error: {
             code: ERROR_CODES.CACHE.INVALID_MODE,
+            name: "Invalid cache mode",
             message: getErrorMessage(ERROR_CODES.CACHE.INVALID_MODE),
           },
         },
@@ -49,6 +51,7 @@ export async function POST(request: Request) {
       {
         error: {
           code: ERROR_CODES.CACHE.MODE_UPDATE_ERROR,
+          name: "Cache mode update error",
           message: getErrorMessage(ERROR_CODES.CACHE.MODE_UPDATE_ERROR),
         },
       },

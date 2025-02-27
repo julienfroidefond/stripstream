@@ -25,6 +25,7 @@ export async function POST(request: Request) {
       {
         error: {
           code: ERROR_CODES.KOMGA.CONNECTION_ERROR,
+          name: "Connection error",
           message: getErrorMessage(ERROR_CODES.KOMGA.CONNECTION_ERROR),
         },
       },

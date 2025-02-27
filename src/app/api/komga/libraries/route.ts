@@ -17,6 +17,7 @@ export async function GET() {
         {
           error: {
             code: error.code,
+            name: "Library fetch error",
             message: getErrorMessage(error.code),
           },
         },
@@ -27,6 +28,7 @@ export async function GET() {
       {
         error: {
           code: ERROR_CODES.LIBRARY.FETCH_ERROR,
+          name: "Library fetch error",
           message: getErrorMessage(ERROR_CODES.LIBRARY.FETCH_ERROR),
         },
       },

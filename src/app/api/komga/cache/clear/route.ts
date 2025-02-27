@@ -14,6 +14,7 @@ export async function POST() {
       {
         error: {
           code: ERROR_CODES.CACHE.CLEAR_ERROR,
+          name: "Cache clear error",
           message: getErrorMessage(ERROR_CODES.CACHE.CLEAR_ERROR),
         },
       },

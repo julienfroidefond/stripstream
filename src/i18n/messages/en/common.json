@@ -81,6 +81,10 @@
         "description": "Show debug information in the interface"
       }
     },
+    "error": {
+      "title": "Error",
+      "message": "An error occurred while updating preferences"
+    },
     "komga": {
       "title": "Komga Configuration",
       "description": "Configure your Komga server connection information.",
@@ -98,6 +102,10 @@
       "messages": {
         "connectionSuccess": "Successfully connected to Komga server",
         "configSaved": "Configuration saved successfully"
+      },
+      "error": {
+        "title": "Error saving configuration",
+        "message": "An error occurred while saving the configuration"
       }
     },
     "cache": {
@@ -123,6 +131,11 @@
       "messages": {
         "ttlSaved": "TTL configuration saved successfully",
         "cleared": "Server cache cleared successfully"
+      },
+      "error": {
+        "title": "Error clearing server cache",
+        "message": "An error occurred while clearing the server cache",
+        "ttl": "Error saving TTL configuration"
       }
     }
   },
@@ -241,6 +254,8 @@
     "AUTH_LOGOUT_ERROR": "Logout error",
     "AUTH_INVALID_USER_DATA": "Invalid user data",
     "AUTH_UNAUTHENTICATED": "Unauthenticated",
+    "AUTH_LOGIN_ERROR": "Login error",
+    "AUTH_REGISTER_ERROR": "Register error",
 
     "SERIES_FETCH_ERROR": "Error fetching series",
     "HOME_FETCH_ERROR": "Error fetching home",

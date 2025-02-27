@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { ERROR_CODES } from "@/constants/errorCodes";
+import { getErrorMessage } from "@/utils/errors";
+import { AppErrorType } from "@/types/global";
 
 export async function POST() {
   try {
@@ -13,7 +15,9 @@ export async function POST() {
       {
         error: {
           code: ERROR_CODES.AUTH.LOGOUT_ERROR,
-        },
+          name: "Logout error",
+          message: getErrorMessage(ERROR_CODES.AUTH.LOGOUT_ERROR),
+        } as AppErrorType,
       },
       { status: 500 }
     );

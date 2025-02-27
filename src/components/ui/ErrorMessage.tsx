@@ -5,12 +5,15 @@ import { useTranslate } from "@/hooks/useTranslate";
 
 interface ErrorMessageProps {
   errorCode: string;
+  error?: Error;
   variant?: "default" | "form";
 }
 
-export const ErrorMessage = ({ errorCode, variant = "default" }: ErrorMessageProps) => {
+export const ErrorMessage = ({ errorCode, error, variant = "default" }: ErrorMessageProps) => {
   const { t } = useTranslate();
   const message = t(`errors.${errorCode}`);
+
+  console.error(error);
 
   if (variant === "form") {
     return (

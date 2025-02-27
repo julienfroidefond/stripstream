@@ -15,8 +15,9 @@ export async function GET() {
         {
           error: {
             code: error.code,
+            name: "Debug fetch error",
             message: getErrorMessage(error.code),
-          },
+          } as AppError,
         },
         { status: 500 }
       );
@@ -25,8 +26,9 @@ export async function GET() {
       {
         error: {
           code: ERROR_CODES.DEBUG.FETCH_ERROR,
+          name: "Debug fetch error",
           message: getErrorMessage(ERROR_CODES.DEBUG.FETCH_ERROR),
-        },
+        } as AppError,
       },
       { status: 500 }
     );
@@ -47,8 +49,9 @@ export async function POST(request: NextRequest) {
         {
           error: {
             code: error.code,
+            name: "Debug save error",
             message: getErrorMessage(error.code),
-          },
+          } as AppError,
         },
         { status: 500 }
       );
@@ -57,8 +60,9 @@ export async function POST(request: NextRequest) {
       {
         error: {
           code: ERROR_CODES.DEBUG.SAVE_ERROR,
+          name: "Debug save error",
           message: getErrorMessage(ERROR_CODES.DEBUG.SAVE_ERROR),
-        },
+        } as AppError,
       },
       { status: 500 }
     );
@@ -78,8 +82,9 @@ export async function DELETE() {
         {
           error: {
             code: error.code,
+            name: "Debug clear error",
             message: getErrorMessage(error.code),
-          },
+          } as AppError,
         },
         { status: 500 }
       );
@@ -88,8 +93,9 @@ export async function DELETE() {
       {
         error: {
           code: ERROR_CODES.DEBUG.CLEAR_ERROR,
+          name: "Debug clear error",
           message: getErrorMessage(ERROR_CODES.DEBUG.CLEAR_ERROR),
-        },
+        } as AppError,
       },
       { status: 500 }
     );

@@ -57,7 +57,13 @@ export function middleware(request: NextRequest) {
   if (!user || !user.value) {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json(
-        { error: getErrorMessage(ERROR_CODES.MIDDLEWARE.UNAUTHORIZED) },
+        {
+          error: {
+            code: ERROR_CODES.MIDDLEWARE.UNAUTHORIZED,
+            message: getErrorMessage(ERROR_CODES.MIDDLEWARE.UNAUTHORIZED),
+            name: "Unauthorized",
+          },
+        },
         { status: 401 }
       );
     }
@@ -75,7 +81,13 @@ export function middleware(request: NextRequest) {
     console.error("Erreur de validation du cookie:", error);
     if (pathname.startsWith("/api/")) {
       return NextResponse.json(
-        { error: getErrorMessage(ERROR_CODES.MIDDLEWARE.INVALID_TOKEN) },
+        {
+          error: {
+            code: ERROR_CODES.MIDDLEWARE.INVALID_TOKEN,
+            message: getErrorMessage(ERROR_CODES.MIDDLEWARE.INVALID_TOKEN),
+            name: "Invalid token",
+          },
+        },
         { status: 401 }
       );
     }

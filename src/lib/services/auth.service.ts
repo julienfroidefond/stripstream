@@ -1,6 +1,6 @@
 "use client";
 
-import { AuthError } from "@/types/auth";
+import { AppErrorType } from "@/types/global";
 import { ERROR_CODES } from "@/constants/errorCodes";
 
 class AuthService {
@@ -36,12 +36,14 @@ class AuthService {
         throw data.error;
       }
     } catch (error) {
-      if ((error as AuthError).code) {
+      if ((error as AppErrorType).code) {
         throw error;
       }
       throw {
         code: ERROR_CODES.AUTH.INVALID_CREDENTIALS,
-      } as AuthError;
+        name: "Invalid credentials",
+        message: "The email or password is incorrect",
+      } as AppErrorType;
     }
   }
 
@@ -63,12 +65,14 @@ class AuthService {
         throw data.error;
       }
     } catch (error) {
-      if ((error as AuthError).code) {
+      if ((error as AppErrorType).code) {
         throw error;
       }
       throw {
         code: ERROR_CODES.AUTH.INVALID_USER_DATA,
-      } as AuthError;
+        name: "Invalid user data",
+        message: "The email or password is incorrect",
+      } as AppErrorType;
     }
   }
 
@@ -86,12 +90,14 @@ class AuthService {
         throw data.error;
       }
     } catch (error) {
-      if ((error as AuthError).code) {
+      if ((error as AppErrorType).code) {
         throw error;
       }
       throw {
         code: ERROR_CODES.AUTH.LOGOUT_ERROR,
-      } as AuthError;
+        name: "Logout error",
+        message: "The logout failed",
+      } as AppErrorType;
     }
   }
 }

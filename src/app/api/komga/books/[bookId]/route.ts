@@ -15,8 +15,9 @@ export async function GET(request: Request, { params }: { params: { bookId: stri
         {
           error: {
             code: error.code,
+            name: "Book fetch error",
             message: getErrorMessage(error.code),
-          },
+          } as AppError,
         },
         { status: 500 }
       );
@@ -25,8 +26,9 @@ export async function GET(request: Request, { params }: { params: { bookId: stri
       {
         error: {
           code: ERROR_CODES.BOOK.NOT_FOUND,
+          name: "Book fetch error",
           message: getErrorMessage(ERROR_CODES.BOOK.NOT_FOUND),
-        },
+        } as AppError,
       },
       { status: 500 }
     );

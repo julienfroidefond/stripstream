@@ -11,10 +11,11 @@ export async function GET() {
   } catch (error) {
     console.error("Erreur lors de la récupération de la configuration TTL:", error);
     if (error instanceof Error) {
-      if (error.message === "Utilisateur non authentifié") {
+      if (error.message === getErrorMessage(ERROR_CODES.MIDDLEWARE.UNAUTHORIZED)) {
         return NextResponse.json(
           {
             error: {
+              name: "Unauthorized",
               code: ERROR_CODES.MIDDLEWARE.UNAUTHORIZED,
               message: getErrorMessage(ERROR_CODES.MIDDLEWARE.UNAUTHORIZED),
             },
@@ -26,6 +27,7 @@ export async function GET() {
     return NextResponse.json(
       {
         error: {
+          name: "TTL fetch error",
           code: ERROR_CODES.CONFIG.TTL_FETCH_ERROR,
           message: getErrorMessage(ERROR_CODES.CONFIG.TTL_FETCH_ERROR),
         },
@@ -53,10 +55,14 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("Erreur lors de la sauvegarde de la configuration TTL:", error);
-    if (error instanceof Error && error.message === "Utilisateur non authentifié") {
+    if (
+      error instanceof Error &&
+      error.message === getErrorMessage(ERROR_CODES.MIDDLEWARE.UNAUTHORIZED)
+    ) {
       return NextResponse.json(
         {
           error: {
+            name: "Unauthorized",
             code: ERROR_CODES.MIDDLEWARE.UNAUTHORIZED,
             message: getErrorMessage(ERROR_CODES.MIDDLEWARE.UNAUTHORIZED),
           },
@@ -67,6 +73,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error: {
+          name: "TTL save error",
           code: ERROR_CODES.CONFIG.TTL_SAVE_ERROR,
           message: getErrorMessage(ERROR_CODES.CONFIG.TTL_SAVE_ERROR),
         },

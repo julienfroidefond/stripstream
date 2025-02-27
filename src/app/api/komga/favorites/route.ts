@@ -15,6 +15,7 @@ export async function GET() {
         {
           error: {
             code: error.code,
+            name: "Favorite fetch error",
             message: getErrorMessage(error.code),
           },
         },
@@ -25,6 +26,7 @@ export async function GET() {
       {
         error: {
           code: ERROR_CODES.FAVORITE.FETCH_ERROR,
+          name: "Favorite fetch error",
           message: getErrorMessage(ERROR_CODES.FAVORITE.FETCH_ERROR),
         },
       },
@@ -45,6 +47,7 @@ export async function POST(request: Request) {
         {
           error: {
             code: error.code,
+            name: "Favorite add error",
             message: getErrorMessage(error.code),
           },
         },
@@ -55,6 +58,7 @@ export async function POST(request: Request) {
       {
         error: {
           code: ERROR_CODES.FAVORITE.ADD_ERROR,
+          name: "Favorite add error",
           message: getErrorMessage(ERROR_CODES.FAVORITE.ADD_ERROR),
         },
       },
@@ -75,6 +79,7 @@ export async function DELETE(request: Request) {
         {
           error: {
             code: error.code,
+            name: "Favorite delete error",
             message: getErrorMessage(error.code),
           },
         },
@@ -85,6 +90,7 @@ export async function DELETE(request: Request) {
       {
         error: {
           code: ERROR_CODES.FAVORITE.DELETE_ERROR,
+          name: "Favorite delete error",
           message: getErrorMessage(ERROR_CODES.FAVORITE.DELETE_ERROR),
         },
       },

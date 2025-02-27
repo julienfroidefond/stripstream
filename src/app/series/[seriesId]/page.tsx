@@ -78,7 +78,7 @@ async function SeriesPage({ params, searchParams }: PageProps) {
     return (
       <div className="container py-8 space-y-8">
         <h1 className="text-3xl font-bold">Série</h1>
-        <ErrorMessage errorCode="SERIES_FETCH_ERROR" />
+        <ErrorMessage error={error as Error} errorCode="SERIES_FETCH_ERROR" />
       </div>
     );
   }

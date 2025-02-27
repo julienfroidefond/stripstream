@@ -13,6 +13,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { bookId
         {
           error: {
             code: ERROR_CODES.BOOK.PROGRESS_UPDATE_ERROR,
+            name: "Progress update error",
             message: getErrorMessage(ERROR_CODES.BOOK.PROGRESS_UPDATE_ERROR),
           },
         },
@@ -29,6 +30,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { bookId
         {
           error: {
             code: error.code,
+            name: "Progress update error",
             message: getErrorMessage(error.code),
           },
         },
@@ -39,6 +41,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { bookId
       {
         error: {
           code: ERROR_CODES.BOOK.PROGRESS_UPDATE_ERROR,
+          name: "Progress update error",
           message: getErrorMessage(ERROR_CODES.BOOK.PROGRESS_UPDATE_ERROR),
         },
       },
@@ -58,6 +61,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { bookI
         {
           error: {
             code: error.code,
+            name: "Progress delete error",
             message: getErrorMessage(error.code),
           },
         },
@@ -68,6 +72,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { bookI
       {
         error: {
           code: ERROR_CODES.BOOK.PROGRESS_DELETE_ERROR,
+          name: "Progress delete error",
           message: getErrorMessage(ERROR_CODES.BOOK.PROGRESS_DELETE_ERROR),
         },
       },

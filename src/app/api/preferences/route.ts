@@ -15,6 +15,7 @@ export async function GET() {
       return NextResponse.json(
         {
           error: {
+            name: "Preferences fetch error",
             code: error.code,
             message: getErrorMessage(error.code),
           },
@@ -25,6 +26,7 @@ export async function GET() {
     return NextResponse.json(
       {
         error: {
+          name: "Preferences fetch error",
           code: ERROR_CODES.PREFERENCES.FETCH_ERROR,
           message: getErrorMessage(ERROR_CODES.PREFERENCES.FETCH_ERROR),
         },
@@ -47,6 +49,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json(
         {
           error: {
+            name: "Preferences update error",
             code: error.code,
             message: getErrorMessage(error.code),
           },
@@ -57,6 +60,7 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json(
       {
         error: {
+          name: "Preferences update error",
           code: ERROR_CODES.PREFERENCES.UPDATE_ERROR,
           message: getErrorMessage(ERROR_CODES.PREFERENCES.UPDATE_ERROR),
         },

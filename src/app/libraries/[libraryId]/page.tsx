@@ -8,7 +8,6 @@ import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { LibraryResponse } from "@/types/library";
 import { KomgaSeries, KomgaLibrary } from "@/types/komga";
 import { UserPreferences } from "@/types/preferences";
-import { ERROR_CODES } from "@/constants/errorCodes";
 
 interface PageProps {
   params: { libraryId: string };
@@ -99,13 +98,13 @@ async function LibraryPage({ params, searchParams }: PageProps) {
             <h1 className="text-3xl font-bold">Séries</h1>
             <RefreshButton libraryId={params.libraryId} refreshLibrary={refreshLibrary} />
           </div>
-          <ErrorMessage errorCode="SERIES_FETCH_ERROR" />
+          <ErrorMessage error={error as Error} errorCode="SERIES_FETCH_ERROR" />
         </div>
       );
     }
     return (
       <div className="container py-8 space-y-8">
-        <ErrorMessage errorCode="SERIES_FETCH_ERROR" />
+        <ErrorMessage error={error as Error} errorCode="SERIES_FETCH_ERROR" />
       </div>
     );
   }

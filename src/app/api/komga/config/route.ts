@@ -22,6 +22,7 @@ export async function POST(request: Request) {
         {
           error: {
             code: ERROR_CODES.MIDDLEWARE.UNAUTHORIZED,
+            name: "Unauthorized",
             message: getErrorMessage(ERROR_CODES.MIDDLEWARE.UNAUTHORIZED),
           },
         },
@@ -32,6 +33,7 @@ export async function POST(request: Request) {
       {
         error: {
           code: ERROR_CODES.CONFIG.SAVE_ERROR,
+          name: "Config save error",
           message: getErrorMessage(ERROR_CODES.CONFIG.SAVE_ERROR),
         },
       },
@@ -53,6 +55,7 @@ export async function GET() {
           {
             error: {
               code: ERROR_CODES.MIDDLEWARE.UNAUTHORIZED,
+              name: "Unauthorized",
               message: getErrorMessage(ERROR_CODES.MIDDLEWARE.UNAUTHORIZED),
             },
           },
@@ -64,6 +67,7 @@ export async function GET() {
           {
             error: {
               code: ERROR_CODES.KOMGA.MISSING_CONFIG,
+              name: "Missing config",
               message: getErrorMessage(ERROR_CODES.KOMGA.MISSING_CONFIG),
             },
           },
@@ -75,6 +79,7 @@ export async function GET() {
       {
         error: {
           code: ERROR_CODES.CONFIG.FETCH_ERROR,
+          name: "Config fetch error",
           message: getErrorMessage(ERROR_CODES.CONFIG.FETCH_ERROR),
         },
       },

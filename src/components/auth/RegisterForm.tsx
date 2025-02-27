@@ -3,10 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { authService } from "@/lib/services/auth.service";
-import { AuthError } from "@/types/auth";
+import { AppErrorType } from "@/types/global";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { useTranslate } from "@/hooks/useTranslate";
+import { getErrorMessage } from "@/utils/errors";
 
 interface RegisterFormProps {
   from?: string;
@@ -15,7 +16,7 @@ interface RegisterFormProps {
 export function RegisterForm({ from }: RegisterFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<AuthError | null>(null);
+  const [error, setError] = useState<AppErrorType | null>(null);
   const { t } = useTranslate();
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -31,6 +32,8 @@ export function RegisterForm({ from }: RegisterFormProps) {
     if (password !== confirmPassword) {
       setError({
         code: ERROR_CODES.AUTH.PASSWORD_MISMATCH,
+        name: "Password mismatch",
+        message: getErrorMessage(ERROR_CODES.AUTH.PASSWORD_MISMATCH),
       });
       setIsLoading(false);
       return;
@@ -41,7 +44,7 @@ export function RegisterForm({ from }: RegisterFormProps) {
       router.push(from || "/");
       router.refresh();
     } catch (error) {
-      setError(error as AuthError);
+      setError(error as AppErrorType);
     } finally {
       setIsLoading(false);
     }
@@ -97,7 +100,7 @@ export function RegisterForm({ from }: RegisterFormProps) {
           className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
         />
       </div>
-      {error && <ErrorMessage errorCode={error.code} variant="form" />}
+      {error && <ErrorMessage error={error as Error} errorCode={error.code} variant="form" />}
       <button
         type="submit"
         disabled={isLoading}

@@ -17,6 +17,7 @@ export async function GET(request: NextRequest, { params }: { params: { seriesId
         {
           error: {
             code: error.code,
+            name: "Image fetch error",
             message: getErrorMessage(error.code),
           },
         },
@@ -27,6 +28,7 @@ export async function GET(request: NextRequest, { params }: { params: { seriesId
       {
         error: {
           code: ERROR_CODES.IMAGE.FETCH_ERROR,
+          name: "Image fetch error",
           message: getErrorMessage(ERROR_CODES.IMAGE.FETCH_ERROR),
         },
       },

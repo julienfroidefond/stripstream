@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { withPageTiming } from "@/lib/hoc/withPageTiming";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { HomeData } from "@/lib/services/home.service";
-import { ERROR_CODES } from "@/constants/errorCodes";
+
 async function refreshHome() {
   "use server";
 
@@ -32,7 +32,7 @@ async function HomePage() {
 
     return (
       <main className="container mx-auto px-4 py-8">
-        <ErrorMessage errorCode="HOME_FETCH_ERROR" />
+        <ErrorMessage error={error as Error} errorCode="HOME_FETCH_ERROR" />
       </main>
     );
   }
