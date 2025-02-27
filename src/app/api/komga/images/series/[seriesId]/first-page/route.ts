@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SeriesService } from "@/lib/services/series.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
-import { ERROR_MESSAGES } from "@/constants/errorMessages";
 import { AppError } from "@/utils/errors";
+import { getErrorMessage } from "@/utils/errors";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest, { params }: { params: { seriesId
         {
           error: {
             code: error.code,
-            message: ERROR_MESSAGES[error.code],
+            message: getErrorMessage(error.code),
           },
         },
         { status: 500 }
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest, { params }: { params: { seriesId
       {
         error: {
           code: ERROR_CODES.IMAGE.FETCH_ERROR,
-          message: ERROR_MESSAGES[ERROR_CODES.IMAGE.FETCH_ERROR],
+          message: getErrorMessage(ERROR_CODES.IMAGE.FETCH_ERROR),
         },
       },
       { status: 500 }

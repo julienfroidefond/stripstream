@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { DebugService, RequestTiming } from "@/lib/services/debug.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
-import { ERROR_MESSAGES } from "@/constants/errorMessages";
+import { getErrorMessage } from "@/utils/errors";
 import { AppError } from "@/utils/errors";
 
 export async function GET() {
@@ -15,7 +15,7 @@ export async function GET() {
         {
           error: {
             code: error.code,
-            message: ERROR_MESSAGES[error.code],
+            message: getErrorMessage(error.code),
           },
         },
         { status: 500 }
@@ -25,7 +25,7 @@ export async function GET() {
       {
         error: {
           code: ERROR_CODES.DEBUG.FETCH_ERROR,
-          message: ERROR_MESSAGES[ERROR_CODES.DEBUG.FETCH_ERROR],
+          message: getErrorMessage(ERROR_CODES.DEBUG.FETCH_ERROR),
         },
       },
       { status: 500 }
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
         {
           error: {
             code: error.code,
-            message: ERROR_MESSAGES[error.code],
+            message: getErrorMessage(error.code),
           },
         },
         { status: 500 }
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
       {
         error: {
           code: ERROR_CODES.DEBUG.SAVE_ERROR,
-          message: ERROR_MESSAGES[ERROR_CODES.DEBUG.SAVE_ERROR],
+          message: getErrorMessage(ERROR_CODES.DEBUG.SAVE_ERROR),
         },
       },
       { status: 500 }
@@ -78,7 +78,7 @@ export async function DELETE() {
         {
           error: {
             code: error.code,
-            message: ERROR_MESSAGES[error.code],
+            message: getErrorMessage(error.code),
           },
         },
         { status: 500 }
@@ -88,7 +88,7 @@ export async function DELETE() {
       {
         error: {
           code: ERROR_CODES.DEBUG.CLEAR_ERROR,
-          message: ERROR_MESSAGES[ERROR_CODES.DEBUG.CLEAR_ERROR],
+          message: getErrorMessage(ERROR_CODES.DEBUG.CLEAR_ERROR),
         },
       },
       { status: 500 }

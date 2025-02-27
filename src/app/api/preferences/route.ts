@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PreferencesService } from "@/lib/services/preferences.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
-import { ERROR_MESSAGES } from "@/constants/errorMessages";
 import { AppError } from "@/utils/errors";
 import { UserPreferences } from "@/types/preferences";
+import { getErrorMessage } from "@/utils/errors";
 
 export async function GET() {
   try {
@@ -16,7 +16,7 @@ export async function GET() {
         {
           error: {
             code: error.code,
-            message: ERROR_MESSAGES[error.code],
+            message: getErrorMessage(error.code),
           },
         },
         { status: 500 }
@@ -26,7 +26,7 @@ export async function GET() {
       {
         error: {
           code: ERROR_CODES.PREFERENCES.FETCH_ERROR,
-          message: ERROR_MESSAGES[ERROR_CODES.PREFERENCES.FETCH_ERROR],
+          message: getErrorMessage(ERROR_CODES.PREFERENCES.FETCH_ERROR),
         },
       },
       { status: 500 }
@@ -48,7 +48,7 @@ export async function PUT(request: NextRequest) {
         {
           error: {
             code: error.code,
-            message: ERROR_MESSAGES[error.code],
+            message: getErrorMessage(error.code),
           },
         },
         { status: 500 }
@@ -58,7 +58,7 @@ export async function PUT(request: NextRequest) {
       {
         error: {
           code: ERROR_CODES.PREFERENCES.UPDATE_ERROR,
-          message: ERROR_MESSAGES[ERROR_CODES.PREFERENCES.UPDATE_ERROR],
+          message: getErrorMessage(ERROR_CODES.PREFERENCES.UPDATE_ERROR),
         },
       },
       { status: 500 }

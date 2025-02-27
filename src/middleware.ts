@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { ERROR_CODES } from "./constants/errorCodes";
-import { ERROR_MESSAGES } from "./constants/errorMessages";
 import { UserData } from "./lib/services/auth-server.service";
+import { getErrorMessage } from "./utils/errors";
+import i18nServer from "./i18n/i18n-server"; // Initialisation de i18n côté serveur
 
 // Routes qui ne nécessitent pas d'authentification
 const publicRoutes = ["/login", "/register", "/images"];
@@ -16,10 +17,10 @@ const defaultLocale = "fr";
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-
+  console.log("ICIIII");
   // Gestion de la langue
   let locale = request.cookies.get("NEXT_LOCALE")?.value;
-
+  i18nServer.changeLanguage(locale);
   // Si pas de cookie de langue ou langue non supportée, on utilise la langue par défaut
   if (!locale || !locales.includes(locale)) {
     locale = defaultLocale;
@@ -30,7 +31,7 @@ export function middleware(request: NextRequest) {
       path: "/",
       maxAge: 365 * 24 * 60 * 60, // 1 an
     });
-
+    i18nServer.changeLanguage(locale);
     return response;
   }
 
@@ -57,7 +58,7 @@ export function middleware(request: NextRequest) {
   if (!user || !user.value) {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json(
-        { error: ERROR_MESSAGES[ERROR_CODES.MIDDLEWARE.UNAUTHORIZED] },
+        { error: getErrorMessage(ERROR_CODES.MIDDLEWARE.UNAUTHORIZED) },
         { status: 401 }
       );
     }
@@ -69,13 +70,13 @@ export function middleware(request: NextRequest) {
   try {
     const userData: UserData = JSON.parse(atob(user.value));
     if (!userData || !userData.authenticated || !userData.id || !userData.email) {
-      throw new Error(ERROR_MESSAGES[ERROR_CODES.MIDDLEWARE.INVALID_SESSION]);
+      throw new Error(getErrorMessage(ERROR_CODES.MIDDLEWARE.INVALID_SESSION));
     }
   } catch (error) {
     console.error("Erreur de validation du cookie:", error);
     if (pathname.startsWith("/api/")) {
       return NextResponse.json(
-        { error: ERROR_MESSAGES[ERROR_CODES.MIDDLEWARE.INVALID_TOKEN] },
+        { error: getErrorMessage(ERROR_CODES.MIDDLEWARE.INVALID_TOKEN) },
         { status: 401 }
       );
     }

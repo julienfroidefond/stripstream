@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { TestService } from "@/lib/services/test.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
-import { ERROR_MESSAGES } from "@/constants/errorMessages";
+import { getErrorMessage } from "@/utils/errors";
 import { KomgaLibrary } from "@/types/komga";
 
 export async function POST(request: Request) {
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
       {
         error: {
           code: ERROR_CODES.KOMGA.CONNECTION_ERROR,
-          message: ERROR_MESSAGES[ERROR_CODES.KOMGA.CONNECTION_ERROR],
+          message: getErrorMessage(ERROR_CODES.KOMGA.CONNECTION_ERROR),
         },
       },
       { status: 400 }

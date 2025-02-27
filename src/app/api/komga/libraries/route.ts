@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { LibraryService } from "@/lib/services/library.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
-import { ERROR_MESSAGES } from "@/constants/errorMessages";
 import { AppError } from "@/utils/errors";
 import { KomgaLibrary } from "@/types/komga";
+import { getErrorMessage } from "@/utils/errors";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
@@ -17,7 +17,7 @@ export async function GET() {
         {
           error: {
             code: error.code,
-            message: ERROR_MESSAGES[error.code],
+            message: getErrorMessage(error.code),
           },
         },
         { status: 500 }
@@ -27,7 +27,7 @@ export async function GET() {
       {
         error: {
           code: ERROR_CODES.LIBRARY.FETCH_ERROR,
-          message: ERROR_MESSAGES[ERROR_CODES.LIBRARY.FETCH_ERROR],
+          message: getErrorMessage(ERROR_CODES.LIBRARY.FETCH_ERROR),
         },
       },
       { status: 500 }

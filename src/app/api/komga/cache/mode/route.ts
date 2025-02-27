@@ -5,7 +5,7 @@ import {
   ServerCacheService,
 } from "@/lib/services/server-cache.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
-import { ERROR_MESSAGES } from "@/constants/errorMessages";
+import { getErrorMessage } from "@/utils/errors";
 
 export async function GET() {
   try {
@@ -17,7 +17,7 @@ export async function GET() {
       {
         error: {
           code: ERROR_CODES.CACHE.MODE_FETCH_ERROR,
-          message: ERROR_MESSAGES[ERROR_CODES.CACHE.MODE_FETCH_ERROR],
+          message: getErrorMessage(ERROR_CODES.CACHE.MODE_FETCH_ERROR),
         },
       },
       { status: 500 }
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
         {
           error: {
             code: ERROR_CODES.CACHE.INVALID_MODE,
-            message: ERROR_MESSAGES[ERROR_CODES.CACHE.INVALID_MODE],
+            message: getErrorMessage(ERROR_CODES.CACHE.INVALID_MODE),
           },
         },
         { status: 400 }
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
       {
         error: {
           code: ERROR_CODES.CACHE.MODE_UPDATE_ERROR,
-          message: ERROR_MESSAGES[ERROR_CODES.CACHE.MODE_UPDATE_ERROR],
+          message: getErrorMessage(ERROR_CODES.CACHE.MODE_UPDATE_ERROR),
         },
       },
       { status: 500 }

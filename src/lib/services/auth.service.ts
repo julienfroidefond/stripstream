@@ -2,7 +2,7 @@
 
 import { AuthError } from "@/types/auth";
 import { ERROR_CODES } from "@/constants/errorCodes";
-import { ERROR_MESSAGES } from "@/constants/errorMessages";
+import { getErrorMessage } from "@/utils/errors";
 
 class AuthService {
   private static instance: AuthService;
@@ -42,7 +42,7 @@ class AuthService {
       }
       throw {
         code: ERROR_CODES.AUTH.INVALID_CREDENTIALS,
-        message: ERROR_MESSAGES[ERROR_CODES.AUTH.INVALID_CREDENTIALS],
+        message: getErrorMessage(ERROR_CODES.AUTH.INVALID_CREDENTIALS),
       } as AuthError;
     }
   }
@@ -70,7 +70,7 @@ class AuthService {
       }
       throw {
         code: ERROR_CODES.AUTH.INVALID_USER_DATA,
-        message: ERROR_MESSAGES[ERROR_CODES.AUTH.INVALID_USER_DATA],
+        message: getErrorMessage(ERROR_CODES.AUTH.INVALID_USER_DATA),
       } as AuthError;
     }
   }
@@ -94,7 +94,7 @@ class AuthService {
       }
       throw {
         code: ERROR_CODES.AUTH.LOGOUT_ERROR,
-        message: ERROR_MESSAGES[ERROR_CODES.AUTH.LOGOUT_ERROR],
+        message: getErrorMessage(ERROR_CODES.AUTH.LOGOUT_ERROR),
       } as AuthError;
     }
   }

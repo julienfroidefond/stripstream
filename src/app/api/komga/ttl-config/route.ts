@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { ConfigDBService } from "@/lib/services/config-db.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
-import { ERROR_MESSAGES } from "@/constants/errorMessages";
 import { TTLConfig } from "@/types/komga";
+import { getErrorMessage } from "@/utils/errors";
 
 export async function GET() {
   try {
@@ -16,7 +16,7 @@ export async function GET() {
           {
             error: {
               code: ERROR_CODES.MIDDLEWARE.UNAUTHORIZED,
-              message: ERROR_MESSAGES[ERROR_CODES.MIDDLEWARE.UNAUTHORIZED],
+              message: getErrorMessage(ERROR_CODES.MIDDLEWARE.UNAUTHORIZED),
             },
           },
           { status: 401 }
@@ -27,7 +27,7 @@ export async function GET() {
       {
         error: {
           code: ERROR_CODES.CONFIG.TTL_FETCH_ERROR,
-          message: ERROR_MESSAGES[ERROR_CODES.CONFIG.TTL_FETCH_ERROR],
+          message: getErrorMessage(ERROR_CODES.CONFIG.TTL_FETCH_ERROR),
         },
       },
       { status: 500 }
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
         {
           error: {
             code: ERROR_CODES.MIDDLEWARE.UNAUTHORIZED,
-            message: ERROR_MESSAGES[ERROR_CODES.MIDDLEWARE.UNAUTHORIZED],
+            message: getErrorMessage(ERROR_CODES.MIDDLEWARE.UNAUTHORIZED),
           },
         },
         { status: 401 }
@@ -68,7 +68,7 @@ export async function POST(request: Request) {
       {
         error: {
           code: ERROR_CODES.CONFIG.TTL_SAVE_ERROR,
-          message: ERROR_MESSAGES[ERROR_CODES.CONFIG.TTL_SAVE_ERROR],
+          message: getErrorMessage(ERROR_CODES.CONFIG.TTL_SAVE_ERROR),
         },
       },
       { status: 500 }

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { AuthServerService } from "@/lib/services/auth-server.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
-import { ERROR_MESSAGES } from "@/constants/errorMessages";
+import { getErrorMessage } from "@/utils/errors";
 import { AppError } from "@/utils/errors";
 import { UserData } from "@/lib/services/auth-server.service";
 
@@ -23,7 +23,7 @@ export async function POST(request: Request) {
           {
             error: {
               code: error.code,
-              message: ERROR_MESSAGES[error.code],
+              message: getErrorMessage(error.code),
             },
           },
           { status: 401 }
@@ -37,7 +37,7 @@ export async function POST(request: Request) {
       {
         error: {
           code: ERROR_CODES.AUTH.INVALID_CREDENTIALS,
-          message: ERROR_MESSAGES[ERROR_CODES.AUTH.INVALID_CREDENTIALS],
+          message: getErrorMessage(ERROR_CODES.AUTH.INVALID_CREDENTIALS),
         },
       },
       { status: 500 }

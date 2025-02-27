@@ -9,7 +9,7 @@ import { Cover } from "@/components/ui/cover";
 import { RefreshButton } from "@/components/library/RefreshButton";
 import { AppError } from "@/utils/errors";
 import { ERROR_CODES } from "@/constants/errorCodes";
-import { ERROR_MESSAGES } from "@/constants/errorMessages";
+import { getErrorMessage } from "@/utils/errors";
 import { useTranslate } from "@/hooks/useTranslate";
 
 interface SeriesHeaderProps {
@@ -38,7 +38,7 @@ export const SeriesHeader = ({ series, refreshSeries }: SeriesHeaderProps) => {
           description:
             error instanceof AppError
               ? error.message
-              : ERROR_MESSAGES[ERROR_CODES.FAVORITE.NETWORK_ERROR],
+              : getErrorMessage(ERROR_CODES.FAVORITE.NETWORK_ERROR),
           variant: "destructive",
         });
       }
@@ -80,7 +80,7 @@ export const SeriesHeader = ({ series, refreshSeries }: SeriesHeaderProps) => {
         description:
           error instanceof AppError
             ? error.message
-            : ERROR_MESSAGES[ERROR_CODES.FAVORITE.NETWORK_ERROR],
+            : getErrorMessage(ERROR_CODES.FAVORITE.NETWORK_ERROR),
         variant: "destructive",
       });
     }

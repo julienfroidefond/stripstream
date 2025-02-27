@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { ConfigDBService } from "@/lib/services/config-db.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
-import { ERROR_MESSAGES } from "@/constants/errorMessages";
 import { KomgaConfig, KomgaConfigData } from "@/types/komga";
+import { getErrorMessage } from "@/utils/errors";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
         {
           error: {
             code: ERROR_CODES.MIDDLEWARE.UNAUTHORIZED,
-            message: ERROR_MESSAGES[ERROR_CODES.MIDDLEWARE.UNAUTHORIZED],
+            message: getErrorMessage(ERROR_CODES.MIDDLEWARE.UNAUTHORIZED),
           },
         },
         { status: 401 }
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
       {
         error: {
           code: ERROR_CODES.CONFIG.SAVE_ERROR,
-          message: ERROR_MESSAGES[ERROR_CODES.CONFIG.SAVE_ERROR],
+          message: getErrorMessage(ERROR_CODES.CONFIG.SAVE_ERROR),
         },
       },
       { status: 500 }
@@ -53,7 +53,7 @@ export async function GET() {
           {
             error: {
               code: ERROR_CODES.MIDDLEWARE.UNAUTHORIZED,
-              message: ERROR_MESSAGES[ERROR_CODES.MIDDLEWARE.UNAUTHORIZED],
+              message: getErrorMessage(ERROR_CODES.MIDDLEWARE.UNAUTHORIZED),
             },
           },
           { status: 401 }
@@ -64,7 +64,7 @@ export async function GET() {
           {
             error: {
               code: ERROR_CODES.KOMGA.MISSING_CONFIG,
-              message: ERROR_MESSAGES[ERROR_CODES.KOMGA.MISSING_CONFIG],
+              message: getErrorMessage(ERROR_CODES.KOMGA.MISSING_CONFIG),
             },
           },
           { status: 404 }
@@ -75,7 +75,7 @@ export async function GET() {
       {
         error: {
           code: ERROR_CODES.CONFIG.FETCH_ERROR,
-          message: ERROR_MESSAGES[ERROR_CODES.CONFIG.FETCH_ERROR],
+          message: getErrorMessage(ERROR_CODES.CONFIG.FETCH_ERROR),
         },
       },
       { status: 500 }

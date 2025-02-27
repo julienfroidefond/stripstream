@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { BookService } from "@/lib/services/book.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
-import { ERROR_MESSAGES } from "@/constants/errorMessages";
 import { AppError } from "@/utils/errors";
+import { getErrorMessage } from "@/utils/errors";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +18,7 @@ export async function GET(
         {
           error: {
             code: ERROR_CODES.BOOK.PAGES_FETCH_ERROR,
-            message: ERROR_MESSAGES[ERROR_CODES.BOOK.PAGES_FETCH_ERROR],
+            message: getErrorMessage(ERROR_CODES.BOOK.PAGES_FETCH_ERROR),
           },
         },
         { status: 400 }
@@ -34,7 +34,7 @@ export async function GET(
         {
           error: {
             code: error.code,
-            message: ERROR_MESSAGES[error.code],
+            message: getErrorMessage(error.code),
           },
         },
         { status: 500 }
@@ -44,7 +44,7 @@ export async function GET(
       {
         error: {
           code: ERROR_CODES.IMAGE.FETCH_ERROR,
-          message: ERROR_MESSAGES[ERROR_CODES.IMAGE.FETCH_ERROR],
+          message: getErrorMessage(ERROR_CODES.IMAGE.FETCH_ERROR),
         },
       },
       { status: 500 }

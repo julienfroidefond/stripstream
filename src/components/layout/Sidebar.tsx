@@ -9,7 +9,7 @@ import { KomgaLibrary, KomgaSeries } from "@/types/komga";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { AppError } from "@/utils/errors";
 import { ERROR_CODES } from "@/constants/errorCodes";
-import { ERROR_MESSAGES } from "@/constants/errorMessages";
+import { getErrorMessage } from "@/utils/errors";
 import { useToast } from "@/components/ui/use-toast";
 import { useTranslate } from "@/hooks/useTranslate";
 
@@ -47,7 +47,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         description:
           error instanceof AppError
             ? error.message
-            : ERROR_MESSAGES[ERROR_CODES.LIBRARY.FETCH_ERROR],
+            : getErrorMessage(ERROR_CODES.LIBRARY.FETCH_ERROR),
         variant: "destructive",
       });
       setLibraries([]);
@@ -88,7 +88,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         description:
           error instanceof AppError
             ? error.message
-            : ERROR_MESSAGES[ERROR_CODES.FAVORITE.FETCH_ERROR],
+            : getErrorMessage(ERROR_CODES.FAVORITE.FETCH_ERROR),
         variant: "destructive",
       });
       setFavorites([]);
@@ -139,7 +139,9 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       toast({
         title: "Erreur",
         description:
-          error instanceof AppError ? error.message : ERROR_MESSAGES[ERROR_CODES.AUTH.LOGOUT_ERROR],
+          error instanceof AppError
+            ? error.message
+            : getErrorMessage(ERROR_CODES.AUTH.LOGOUT_ERROR),
         variant: "destructive",
       });
     }

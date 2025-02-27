@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { authService } from "@/lib/services/auth.service";
 import { AuthError } from "@/types/auth";
 import { ERROR_CODES } from "@/constants/errorCodes";
-import { ERROR_MESSAGES } from "@/constants/errorMessages";
+import { getErrorMessage } from "@/utils/errors";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { useTranslate } from "@/hooks/useTranslate";
 
@@ -32,7 +32,7 @@ export function RegisterForm({ from }: RegisterFormProps) {
     if (password !== confirmPassword) {
       setError({
         code: ERROR_CODES.AUTH.PASSWORD_MISMATCH,
-        message: ERROR_MESSAGES[ERROR_CODES.AUTH.PASSWORD_MISMATCH],
+        message: getErrorMessage(ERROR_CODES.AUTH.PASSWORD_MISMATCH),
       });
       setIsLoading(false);
       return;
