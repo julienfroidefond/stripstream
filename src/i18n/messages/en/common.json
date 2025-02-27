@@ -130,7 +130,7 @@
       "unread": "Unread",
       "progress": "{read}/{total}"
     },
-    "books": "{count} book | {count} books",
+    "books": "{count} books",
     "filters": {
       "title": "Filters",
       "showAll": "Show all",
@@ -140,6 +140,39 @@
     "display": {
       "showing": "Showing series {start} to {end} of {total}",
       "page": "Page {current} of {total}"
+    },
+    "header": {
+      "coverAlt": "Cover of {{title}}",
+      "books": "{{count}} book",
+      "books_plural": "{{count}} books",
+      "status": {
+        "read": "Read",
+        "unread": "Unread",
+        "progress": "{{read}}/{{total}}"
+      },
+      "favorite": {
+        "add": "Added to favorites",
+        "remove": "Removed from favorites"
+      }
     }
+  },
+  "books": {
+    "empty": "No books available",
+    "coverAlt": "Cover of {{title}}",
+    "status": {
+      "unread": "Unread",
+      "read": "Read",
+      "readDate": "Read on {{date}}",
+      "progress": "Page {{current}}/{{total}}"
+    },
+    "display": {
+      "showing": "Showing books {start} to {end} of {total}",
+      "page": "Page {current} of {total}"
+    },
+    "filters": {
+      "showAll": "Show all",
+      "unread": "Unread"
+    },
+    "loading": "Loading..."
   }
 }

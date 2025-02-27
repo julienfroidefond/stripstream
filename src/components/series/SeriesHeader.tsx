@@ -10,6 +10,7 @@ import { RefreshButton } from "@/components/library/RefreshButton";
 import { AppError } from "@/utils/errors";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { ERROR_MESSAGES } from "@/constants/errorMessages";
+import { useTranslate } from "@/hooks/useTranslate";
 
 interface SeriesHeaderProps {
   series: KomgaSeries;
@@ -19,6 +20,7 @@ interface SeriesHeaderProps {
 export const SeriesHeader = ({ series, refreshSeries }: SeriesHeaderProps) => {
   const { toast } = useToast();
   const [isFavorite, setIsFavorite] = useState(false);
+  const { t } = useTranslate();
 
   useEffect(() => {
     const checkFavorite = async () => {
@@ -59,7 +61,7 @@ export const SeriesHeader = ({ series, refreshSeries }: SeriesHeaderProps) => {
         setIsFavorite(!isFavorite);
         window.dispatchEvent(new Event("favoritesChanged"));
         toast({
-          title: !isFavorite ? "Ajouté aux favoris" : "Retiré des favoris",
+          title: t(isFavorite ? "series.header.favorite.remove" : "series.header.favorite.add"),
           description: series.metadata.title,
         });
       } else if (response.status === 500) {
@@ -90,7 +92,7 @@ export const SeriesHeader = ({ series, refreshSeries }: SeriesHeaderProps) => {
 
     if (booksReadCount === booksCount) {
       return {
-        label: "Lu",
+        label: t("series.header.status.read"),
         className: "bg-green-500/10 text-green-500",
         icon: BookMarked,
       };
@@ -98,14 +100,17 @@ export const SeriesHeader = ({ series, refreshSeries }: SeriesHeaderProps) => {
 
     if (booksInProgressCount > 0 || (booksReadCount > 0 && booksReadCount < booksCount)) {
       return {
-        label: `${booksReadCount}/${booksCount}`,
+        label: t("series.header.status.progress", {
+          read: booksReadCount,
+          total: booksCount,
+        }),
         className: "bg-blue-500/10 text-blue-500",
         icon: BookOpen,
       };
     }
 
     return {
-      label: "Non lu",
+      label: t("series.header.status.unread"),
       className: "bg-yellow-500/10 text-yellow-500",
       icon: Book,
     };
@@ -120,7 +125,7 @@ export const SeriesHeader = ({ series, refreshSeries }: SeriesHeaderProps) => {
         <Cover
           type="series"
           id={series.id}
-          alt={`Couverture de ${series.metadata.title}`}
+          alt={t("series.header.coverAlt", { title: series.metadata.title })}
           className="blur-sm scale-105 brightness-50"
           quality={60}
         />
@@ -134,7 +139,7 @@ export const SeriesHeader = ({ series, refreshSeries }: SeriesHeaderProps) => {
             <Cover
               type="series"
               id={series.id}
-              alt={`Couverture de ${series.metadata.title}`}
+              alt={t("series.header.coverAlt", { title: series.metadata.title })}
               quality={90}
             />
           </div>
@@ -155,7 +160,7 @@ export const SeriesHeader = ({ series, refreshSeries }: SeriesHeaderProps) => {
                 {statusInfo.label}
               </span>
               <span className="text-sm text-white/80">
-                {series.booksCount} tome{series.booksCount > 1 ? "s" : ""}
+                {t("series.header.books", { count: series.booksCount })}
               </span>
               <Button
                 variant="ghost"

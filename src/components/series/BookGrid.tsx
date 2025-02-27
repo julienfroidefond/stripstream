@@ -7,6 +7,7 @@ import { MarkAsReadButton } from "@/components/ui/mark-as-read-button";
 import { MarkAsUnreadButton } from "@/components/ui/mark-as-unread-button";
 import { BookOfflineButton } from "@/components/ui/book-offline-button";
 import { useState, useEffect } from "react";
+import { useTranslate } from "@/hooks/useTranslate";
 
 interface BookGridProps {
   books: KomgaBook[];
@@ -14,10 +15,10 @@ interface BookGridProps {
 }
 
 // Fonction utilitaire pour obtenir les informations de statut de lecture
-const getReadingStatusInfo = (book: KomgaBook) => {
+const getReadingStatusInfo = (book: KomgaBook, t: (key: string, options?: any) => string) => {
   if (!book.readProgress) {
     return {
-      label: "Non lu",
+      label: t("books.status.unread"),
       className: "bg-yellow-500/10 text-yellow-500",
     };
   }
@@ -25,26 +26,30 @@ const getReadingStatusInfo = (book: KomgaBook) => {
   if (book.readProgress.completed) {
     const readDate = book.readProgress.readDate ? formatDate(book.readProgress.readDate) : null;
     return {
-      label: readDate ? `Lu le ${readDate}` : "Lu",
+      label: readDate ? t("books.status.readDate", { date: readDate }) : t("books.status.read"),
       className: "bg-green-500/10 text-green-500",
     };
   }
 
   if (book.readProgress.page > 0) {
     return {
-      label: `Page ${book.readProgress.page}/${book.media.pagesCount}`,
+      label: t("books.status.progress", {
+        current: book.readProgress.page,
+        total: book.media.pagesCount,
+      }),
       className: "bg-blue-500/10 text-blue-500",
     };
   }
 
   return {
-    label: "Non lu",
+    label: t("books.status.unread"),
     className: "bg-yellow-500/10 text-yellow-500",
   };
 };
 
 export function BookGrid({ books, onBookClick }: BookGridProps) {
   const [localBooks, setLocalBooks] = useState(books);
+  const { t } = useTranslate();
 
   // Synchroniser localBooks avec les props books
   useEffect(() => {
@@ -54,7 +59,7 @@ export function BookGrid({ books, onBookClick }: BookGridProps) {
   if (!localBooks.length) {
     return (
       <div className="text-center p-8">
-        <p className="text-muted-foreground">Aucun tome disponible</p>
+        <p className="text-muted-foreground">{t("books.empty")}</p>
       </div>
     );
   }
@@ -95,7 +100,7 @@ export function BookGrid({ books, onBookClick }: BookGridProps) {
   return (
     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
       {localBooks.map((book) => {
-        const statusInfo = getReadingStatusInfo(book);
+        const statusInfo = getReadingStatusInfo(book, t);
         const isRead = book.readProgress?.completed || false;
         const currentPage = book.readProgress?.page || 0;
 
@@ -111,7 +116,9 @@ export function BookGrid({ books, onBookClick }: BookGridProps) {
               <Cover
                 type="book"
                 id={book.id}
-                alt={`Couverture de ${book.metadata.title || `Tome ${book.metadata.number}`}`}
+                alt={t("books.coverAlt", {
+                  title: book.metadata.title || `Tome ${book.metadata.number}`,
+                })}
                 isCompleted={isRead}
                 currentPage={currentPage}
                 totalPages={book.media.pagesCount}
