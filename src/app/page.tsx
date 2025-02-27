@@ -4,7 +4,9 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { withPageTiming } from "@/lib/hoc/withPageTiming";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
+import { ERROR_CODES } from "@/constants/errorCodes";
 import { HomeData } from "@/lib/services/home.service";
+import { AppError } from "@/utils/errors";
 
 async function refreshHome() {
   "use server";
@@ -26,7 +28,7 @@ async function HomePage() {
     return <HomeContent data={data} refreshHome={refreshHome} />;
   } catch (error) {
     // Si l'erreur indique une configuration manquante, rediriger vers les préférences
-    if (error instanceof Error && error.message.includes("Configuration Komga non trouvée")) {
+    if (error instanceof AppError && error.code === ERROR_CODES.KOMGA.MISSING_CONFIG) {
       redirect("/settings");
     }
 
