@@ -1,11 +1,17 @@
+"use client";
+
 import { AlertCircle } from "lucide-react";
+import { useTranslate } from "@/hooks/useTranslate";
 
 interface ErrorMessageProps {
-  message: string;
+  errorCode: string;
   variant?: "default" | "form";
 }
 
-export const ErrorMessage = ({ message, variant = "default" }: ErrorMessageProps) => {
+export const ErrorMessage = ({ errorCode, variant = "default" }: ErrorMessageProps) => {
+  const { t } = useTranslate();
+  const message = t(`errors.${errorCode}`);
+
   if (variant === "form") {
     return (
       <div

@@ -89,7 +89,7 @@ export function LoginForm({ from }: LoginFormProps) {
           {t("login.form.remember")}
         </label>
       </div>
-      {error && <ErrorMessage message={error.message} variant="form" />}
+      {error && <ErrorMessage errorCode={error.code} variant="form" />}
       <button
         type="submit"
         disabled={isLoading}

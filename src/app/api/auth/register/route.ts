@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { AuthServerService, UserData } from "@/lib/services/auth-server.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
-import { getErrorMessage } from "@/utils/errors";
 
 export async function POST(request: Request) {
   try {
@@ -27,7 +26,6 @@ export async function POST(request: Request) {
           {
             error: {
               code: error.code,
-              message: getErrorMessage(error.code),
             },
           },
           { status }
@@ -41,7 +39,6 @@ export async function POST(request: Request) {
       {
         error: {
           code: ERROR_CODES.AUTH.INVALID_USER_DATA,
-          message: getErrorMessage(ERROR_CODES.AUTH.INVALID_USER_DATA),
         },
       },
       { status: 500 }

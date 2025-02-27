@@ -14,7 +14,6 @@ export interface AuthState {
 
 export interface AuthError {
   code: ErrorCode;
-  message: string;
 }
 
 // Deprecated - Use ErrorCode from @/constants/errorCodes instead

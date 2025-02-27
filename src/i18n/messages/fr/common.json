@@ -232,5 +232,18 @@
       "pages": "{current}/{total} pages",
       "totalPages": "{count} pages"
     }
+  },
+  "errors": {
+    "AUTH_INVALID_CREDENTIALS": "Identifiants invalides",
+    "AUTH_PASSWORD_MISMATCH": "Les mots de passe ne correspondent pas",
+    "AUTH_EMAIL_EXISTS": "Cette adresse email existe déjà",
+    "AUTH_PASSWORD_NOT_STRONG": "Le mot de passe n'est pas assez fort",
+    "AUTH_LOGOUT_ERROR": "Erreur lors de la déconnexion",
+    "AUTH_INVALID_USER_DATA": "Données utilisateur invalides",
+    "AUTH_UNAUTHENTICATED": "Non authentifié",
+
+    "SERIES_FETCH_ERROR": "Erreur lors de la récupération des séries",
+    "HOME_FETCH_ERROR": "Erreur lors de la récupération de l'accueil",
+    "SERIES_NO_BOOKS_FOUND": "Aucun livre trouvé dans la série"
   }
 }

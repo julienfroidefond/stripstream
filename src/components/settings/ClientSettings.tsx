@@ -271,7 +271,7 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
       {/* Messages de succès/erreur */}
       {error && (
         <div className="rounded-md bg-destructive/15 p-4">
-          <p className="text-sm text-destructive">{error.message}</p>
+          <p className="text-sm text-destructive">{t(`errors.${error.code}`)}</p>
         </div>
       )}
       {success && (
