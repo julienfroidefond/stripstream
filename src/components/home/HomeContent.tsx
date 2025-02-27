@@ -1,9 +1,12 @@
+"use client";
+
 import { HeroSection } from "./HeroSection";
 import { MediaRow } from "./MediaRow";
 import { KomgaBook, KomgaSeries } from "@/types/komga";
 import { RefreshButton } from "@/components/library/RefreshButton";
 import { History, Sparkles, Clock, LibraryBig, BookOpen } from "lucide-react";
 import { HomeData } from "@/lib/services/home.service";
+import { useTranslate } from "@/hooks/useTranslate";
 
 interface HomeContentProps {
   data: HomeData;
@@ -11,6 +14,8 @@ interface HomeContentProps {
 }
 
 export function HomeContent({ data, refreshHome }: HomeContentProps) {
+  const { t } = useTranslate();
+
   // Vérification des données pour le debug
   // console.log("HomeContent - Données reçues:", {
   //   ongoingCount: data.ongoing?.length || 0,
@@ -51,7 +56,7 @@ export function HomeContent({ data, refreshHome }: HomeContentProps) {
   return (
     <main className="container mx-auto px-4 py-8 space-y-12">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Accueil</h1>
+        <h1 className="text-3xl font-bold">{t("home.title")}</h1>
         <RefreshButton libraryId="home" refreshLibrary={refreshHome} />
       </div>
       {/* Hero Section - Afficher uniquement si nous avons des séries en cours */}
@@ -63,7 +68,7 @@ export function HomeContent({ data, refreshHome }: HomeContentProps) {
       <div className="space-y-12">
         {data.ongoing && data.ongoing.length > 0 && (
           <MediaRow
-            title="Continuer la série"
+            title={t("home.sections.continue_series")}
             items={optimizeSeriesData(data.ongoing)}
             icon={<LibraryBig className="w-6 h-6" />}
           />
@@ -71,7 +76,7 @@ export function HomeContent({ data, refreshHome }: HomeContentProps) {
 
         {data.ongoingBooks && data.ongoingBooks.length > 0 && (
           <MediaRow
-            title="Continuer la lecture"
+            title={t("home.sections.continue_reading")}
             items={optimizeBookData(data.ongoingBooks)}
             icon={<BookOpen className="w-6 h-6" />}
           />
@@ -79,7 +84,7 @@ export function HomeContent({ data, refreshHome }: HomeContentProps) {
 
         {data.onDeck && data.onDeck.length > 0 && (
           <MediaRow
-            title="À suivre"
+            title={t("home.sections.up_next")}
             items={optimizeBookData(data.onDeck)}
             icon={<Clock className="w-6 h-6" />}
           />
@@ -87,7 +92,7 @@ export function HomeContent({ data, refreshHome }: HomeContentProps) {
 
         {data.latestSeries && data.latestSeries.length > 0 && (
           <MediaRow
-            title="Dernières séries"
+            title={t("home.sections.latest_series")}
             items={optimizeSeriesData(data.latestSeries)}
             icon={<Sparkles className="w-6 h-6" />}
           />
@@ -95,7 +100,7 @@ export function HomeContent({ data, refreshHome }: HomeContentProps) {
 
         {data.recentlyRead && data.recentlyRead.length > 0 && (
           <MediaRow
-            title="Ajouts récents"
+            title={t("home.sections.recently_added")}
             items={optimizeBookData(data.recentlyRead)}
             icon={<History className="w-6 h-6" />}
           />

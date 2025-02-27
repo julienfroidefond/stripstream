@@ -1,0 +1,31 @@
+{
+  "language": {
+    "select": "Change language",
+    "fr": "French",
+    "en": "English"
+  },
+  "login": {
+    "title": "Welcome to StripStream",
+    "subtitle": "Sign in or create an account to get started",
+    "tabs": {
+      "login": "Sign in",
+      "register": "Sign up"
+    },
+    "description": "Enjoy your favorite comics, manga and graphic novels with a modern and smooth reading experience."
+  },
+  "home": {
+    "hero": {
+      "title": "Welcome to StripStream",
+      "subtitle": "Your digital library to read your favorite comics, manga and graphic novels.",
+      "coverAlt": "Cover of {title}"
+    },
+    "title": "Home",
+    "sections": {
+      "continue_series": "Continue series",
+      "continue_reading": "Continue reading",
+      "up_next": "Up next",
+      "latest_series": "Latest series",
+      "recently_added": "Recently added"
+    }
+  }
+}

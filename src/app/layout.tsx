@@ -4,6 +4,8 @@ import "@/styles/globals.css";
 import { cn } from "@/lib/utils";
 import ClientLayout from "@/components/layout/ClientLayout";
 import { PreferencesProvider } from "@/contexts/PreferencesContext";
+import { I18nProvider } from "@/components/providers/I18nProvider";
+import "@/i18n/i18n"; // Import i18next configuration
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -114,9 +116,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className={cn("min-h-screen bg-background font-sans antialiased", inter.className)}>
-        <PreferencesProvider>
-          <ClientLayout>{children}</ClientLayout>
-        </PreferencesProvider>
+        <I18nProvider>
+          <PreferencesProvider>
+            <ClientLayout>{children}</ClientLayout>
+          </PreferencesProvider>
+        </I18nProvider>
       </body>
     </html>
   );

@@ -1,4 +1,7 @@
+"use client";
+
 import { Cover } from "@/components/ui/cover";
+import { useTranslate } from "@/hooks/useTranslate";
 
 interface OptimizedHeroSeries {
   id: string;
@@ -12,6 +15,8 @@ interface HeroSectionProps {
 }
 
 export function HeroSection({ series }: HeroSectionProps) {
+  const { t } = useTranslate();
+
   // console.log("HeroSection - Séries reçues:", {
   //   count: series?.length || 0,
   //   firstSeries: series?.[0],
@@ -29,7 +34,7 @@ export function HeroSection({ series }: HeroSectionProps) {
             <Cover
               type="series"
               id={series.id}
-              alt={`Couverture de ${series.metadata.title}`}
+              alt={t("home.hero.coverAlt", { title: series.metadata.title })}
               quality={25}
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16.666vw"
             />
@@ -43,10 +48,10 @@ export function HeroSection({ series }: HeroSectionProps) {
       {/* Contenu */}
       <div className="relative h-full container flex flex-col items-center justify-center text-center space-y-2 sm:space-y-4">
         <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold tracking-tight">
-          Bienvenue sur StripStream
+          {t("home.hero.title")}
         </h1>
         <p className="text-lg sm:text-xl text-muted-foreground max-w-[600px]">
-          Votre bibliothèque numérique pour lire vos BD, mangas et comics préférés.
+          {t("home.hero.subtitle")}
         </p>
       </div>
     </div>

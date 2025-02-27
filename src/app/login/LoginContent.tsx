@@ -3,6 +3,7 @@
 import { LoginForm } from "@/components/auth/LoginForm";
 import { RegisterForm } from "@/components/auth/RegisterForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useTranslate } from "@/hooks/useTranslate";
 
 interface LoginContentProps {
   searchParams: {
@@ -12,6 +13,7 @@ interface LoginContentProps {
 }
 
 export function LoginContent({ searchParams }: LoginContentProps) {
+  const { t } = useTranslate();
   const defaultTab = searchParams.tab || "login";
 
   return (
@@ -41,25 +43,20 @@ export function LoginContent({ searchParams }: LoginContentProps) {
         </div>
         <div className="relative z-20 mt-auto">
           <blockquote className="space-y-2">
-            <p className="text-lg">
-              Profitez de vos BD, mangas et comics préférés avec une expérience de lecture moderne
-              et fluide.
-            </p>
+            <p className="text-lg">{t("login.description")}</p>
           </blockquote>
         </div>
       </div>
       <div className="lg:p-8">
         <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
           <div className="flex flex-col space-y-2 text-center">
-            <h1 className="text-2xl font-semibold tracking-tight">Bienvenue sur StripStream</h1>
-            <p className="text-sm text-muted-foreground">
-              Connectez-vous ou créez un compte pour commencer
-            </p>
+            <h1 className="text-2xl font-semibold tracking-tight">{t("login.title")}</h1>
+            <p className="text-sm text-muted-foreground">{t("login.subtitle")}</p>
           </div>
           <Tabs defaultValue={defaultTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">Connexion</TabsTrigger>
-              <TabsTrigger value="register">Inscription</TabsTrigger>
+              <TabsTrigger value="login">{t("login.tabs.login")}</TabsTrigger>
+              <TabsTrigger value="register">{t("login.tabs.register")}</TabsTrigger>
             </TabsList>
             <TabsContent value="login">
               <LoginForm from={searchParams.from} />

@@ -1,5 +1,6 @@
 import { Menu, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
+import LanguageSelector from "@/components/LanguageSelector";
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -33,7 +34,8 @@ export function Header({ onToggleSidebar }: HeaderProps) {
         </div>
 
         <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
-          <nav className="flex items-center">
+          <nav className="flex items-center space-x-2">
+            <LanguageSelector />
             <button
               onClick={toggleTheme}
               className="px-2 py-1.5 hover:bg-accent hover:text-accent-foreground rounded-md"
