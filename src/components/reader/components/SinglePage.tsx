@@ -9,6 +9,7 @@ interface SinglePageProps {
   isDoublePage?: boolean;
   isRTL?: boolean;
   order?: "first" | "second";
+  zoomLevel?: number;
 }
 
 export const SinglePage = ({
@@ -19,6 +20,7 @@ export const SinglePage = ({
   isDoublePage = false,
   isRTL = false,
   order = "first",
+  zoomLevel,
 }: SinglePageProps) => {
   return (
     <div
@@ -36,6 +38,9 @@ export const SinglePage = ({
       {pageUrl && (
         <img
           src={pageUrl}
+          style={{
+            transform: `scale(${zoomLevel})`,
+          }}
           alt={`Page ${pageNumber}`}
           className={cn(
             "max-h-full w-auto object-contain transition-opacity duration-300",

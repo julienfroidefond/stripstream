@@ -24,6 +24,8 @@ export const usePageNavigation = ({
   const touchStartYRef = useRef<number | null>(null);
   const currentPageRef = useRef(currentPage);
   const isRTL = direction === "rtl";
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const initialDistanceRef = useRef<number | null>(null);
 
   useEffect(() => {
     currentPageRef.current = currentPage;
@@ -68,6 +70,8 @@ export const usePageNavigation = ({
 
   const shouldShowDoublePage = useCallback(
     (pageNumber: number) => {
+      const isMobile = window.innerHeight < 700;
+      if (isMobile) return false;
       if (!isDoublePage) return false;
       if (pageNumber === 1) return false;
       return pageNumber < pages.length;
@@ -103,17 +107,40 @@ export const usePageNavigation = ({
     }
   }, [currentPage, isDoublePage, navigateToPage, pages.length, shouldShowDoublePage]);
 
+  const calculateDistance = (touch1: Touch, touch2: Touch) => {
+    const dx = touch2.clientX - touch1.clientX;
+    const dy = touch2.clientY - touch1.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
+  const handleTouchMove = useCallback((event: TouchEvent) => {
+    if (event.touches.length === 2) {
+      const distance = calculateDistance(event.touches[0], event.touches[1]);
+      if (initialDistanceRef.current !== null) {
+        const scale = distance / initialDistanceRef.current;
+        setZoomLevel((prevZoomLevel) => Math.max(1, prevZoomLevel * scale));
+      }
+    }
+  }, []);
+
   const handleTouchStart = useCallback(
     (event: TouchEvent) => {
-      touchStartXRef.current = event.touches[0].clientX;
-      touchStartYRef.current = event.touches[0].clientY;
-      currentPageRef.current = currentPage;
+      if (event.touches.length === 2) {
+        initialDistanceRef.current = calculateDistance(event.touches[0], event.touches[1]);
+      } else {
+        touchStartXRef.current = event.touches[0].clientX;
+        touchStartYRef.current = event.touches[0].clientY;
+        currentPageRef.current = currentPage;
+      }
     },
     [currentPage]
   );
 
   const handleTouchEnd = useCallback(
     (event: TouchEvent) => {
+      if (event.touches.length < 2) {
+        initialDistanceRef.current = null;
+      }
       if (touchStartXRef.current === null || touchStartYRef.current === null) return;
 
       const touchEndX = event.changedTouches[0].clientX;
@@ -180,13 +207,23 @@ export const usePageNavigation = ({
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("touchstart", handleTouchStart);
     window.addEventListener("touchend", handleTouchEnd);
+    window.addEventListener("touchmove", handleTouchMove);
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("touchstart", handleTouchStart);
       window.removeEventListener("touchend", handleTouchEnd);
+      window.removeEventListener("touchmove", handleTouchMove);
     };
-  }, [handleNextPage, handlePreviousPage, handleTouchStart, handleTouchEnd, onClose, isRTL]);
+  }, [
+    handleNextPage,
+    handlePreviousPage,
+    handleTouchStart,
+    handleTouchEnd,
+    onClose,
+    isRTL,
+    handleTouchMove,
+  ]);
 
   useEffect(() => {
     return () => {
@@ -207,5 +244,6 @@ export const usePageNavigation = ({
     handlePreviousPage,
     handleNextPage,
     shouldShowDoublePage,
+    zoomLevel,
   };
 };

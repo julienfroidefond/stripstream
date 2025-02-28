@@ -10,6 +10,7 @@ interface ReaderContentProps {
   shouldShowDoublePage: (page: number) => boolean;
   isRTL: boolean;
   onThumbnailLoad: (pageNumber: number) => void;
+  zoomLevel: number;
 }
 
 export const ReaderContent = ({
@@ -22,6 +23,7 @@ export const ReaderContent = ({
   shouldShowDoublePage,
   isRTL,
   onThumbnailLoad,
+  zoomLevel,
 }: ReaderContentProps) => {
   return (
     <div className="relative flex-1 flex items-center justify-center overflow-hidden p-1">
@@ -34,6 +36,7 @@ export const ReaderContent = ({
           isDoublePage={isDoublePage}
           isRTL={isRTL}
           order="first"
+          zoomLevel={zoomLevel}
         />
 
         {isDoublePage && shouldShowDoublePage(currentPage) && (
