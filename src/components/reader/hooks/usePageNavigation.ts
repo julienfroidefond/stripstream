@@ -118,7 +118,10 @@ export const usePageNavigation = ({
       const distance = calculateDistance(event.touches[0], event.touches[1]);
       if (initialDistanceRef.current !== null) {
         const scale = distance / initialDistanceRef.current;
-        setZoomLevel((prevZoomLevel) => Math.max(1, prevZoomLevel * scale));
+        const zoomFactor = 0.3;
+        setZoomLevel((prevZoomLevel) =>
+          Math.min(3, Math.max(1, prevZoomLevel + (scale - 1) * zoomFactor))
+        );
       }
     }
   }, []);
