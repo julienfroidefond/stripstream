@@ -110,6 +110,6 @@ export const config = {
      * 4. /images/* (inside public directory)
      * 5. Static files (manifest.json, favicon.ico, etc.)
      */
-    "/((?!api/auth|_next/static|_next/image|fonts|images|manifest.json|favicon.ico|sitemap.xml|sw.js|offline.html).*)",
+    "/((?!api/auth/*|_next/static|_next/image|fonts|images|manifest.json|favicon.ico|sitemap.xml|sw.js|offline.html).*)",
   ],
 };
