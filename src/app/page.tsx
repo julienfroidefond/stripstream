@@ -24,7 +24,6 @@ async function refreshHome() {
 async function HomePage() {
   try {
     const data: HomeData = await HomeService.getHomeData();
-
     return <HomeContent data={data} refreshHome={refreshHome} />;
   } catch (error) {
     // Si l'erreur indique une configuration manquante, rediriger vers les préférences
@@ -34,7 +33,7 @@ async function HomePage() {
 
     return (
       <main className="container mx-auto px-4 py-8">
-        <ErrorMessage error={error as Error} errorCode="HOME_FETCH_ERROR" />
+        <ErrorMessage errorCode={ERROR_CODES.KOMGA.SERVER_UNREACHABLE} />
       </main>
     );
   }

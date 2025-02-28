@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import { withPageTiming } from "@/lib/hoc/withPageTiming";
 import { KomgaBookWithPages } from "@/types/komga";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
+import { ERROR_CODES } from "@/constants/errorCodes";
 
 async function BookPage({ params }: { params: { bookId: string } }) {
   try {
@@ -20,7 +21,7 @@ async function BookPage({ params }: { params: { bookId: string } }) {
     console.error("Erreur:", error);
     return (
       <div className="container py-8 space-y-8">
-        <ErrorMessage error={error as Error} errorCode="BOOK_FETCH_ERROR" />
+        <ErrorMessage errorCode={ERROR_CODES.SERIES.FETCH_ERROR} />
       </div>
     );
   }
