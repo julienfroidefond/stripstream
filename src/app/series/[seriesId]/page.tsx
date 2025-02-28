@@ -32,7 +32,7 @@ async function getSeriesBooks(seriesId: string, page: number = 1, unreadOnly: bo
 
     return { data: books, series };
   } catch (error) {
-    throw error instanceof Error ? error : new Error("Erreur lors de la récupération des tomes");
+    throw error instanceof AppError ? error : new AppError(ERROR_CODES.BOOK.PAGES_FETCH_ERROR);
   }
 }
 

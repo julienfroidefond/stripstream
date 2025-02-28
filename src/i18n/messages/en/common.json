@@ -260,6 +260,7 @@
     "SERIES_FETCH_ERROR": "Error fetching series",
     "HOME_FETCH_ERROR": "Error fetching home",
     "SERIES_NO_BOOKS_FOUND": "No books found in the series",
+    "BOOK_PAGES_FETCH_ERROR": "Error fetching book pages",
 
     "GENERIC_ERROR": "An error occurred"
   }
