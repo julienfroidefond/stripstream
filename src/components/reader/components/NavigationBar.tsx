@@ -2,7 +2,7 @@ import { NavigationBarProps } from "../types";
 import { cn } from "@/lib/utils";
 import { Thumbnail } from "./Thumbnail";
 import { useThumbnails } from "../hooks/useThumbnails";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export const NavigationBar = ({
   currentPage,
@@ -11,6 +11,7 @@ export const NavigationBar = ({
   showControls,
   book,
 }: NavigationBarProps) => {
+  const [isTooSmall, setIsTooSmall] = useState(false);
   const { loadedThumbnails, handleThumbnailLoad, getThumbnailUrl, visibleThumbnails } =
     useThumbnails({
       book,
@@ -19,9 +20,20 @@ export const NavigationBar = ({
 
   const thumbnailsContainerRef = useRef<HTMLDivElement>(null);
 
+  // Vérification de la hauteur de la fenêtre
+  useEffect(() => {
+    const checkHeight = () => {
+      setIsTooSmall(window.innerHeight < 580);
+    };
+
+    checkHeight();
+    window.addEventListener("resize", checkHeight);
+    return () => window.removeEventListener("resize", checkHeight);
+  }, []);
+
   // Scroll à l'ouverture des contrôles et au changement de page
   useEffect(() => {
-    if (showControls) {
+    if (showControls && !isTooSmall) {
       requestAnimationFrame(() => {
         const thumbnail = document.getElementById(`thumbnail-${currentPage}`);
         if (thumbnail) {
@@ -33,7 +45,11 @@ export const NavigationBar = ({
         }
       });
     }
-  }, [showControls, currentPage]);
+  }, [showControls, currentPage, isTooSmall]);
+
+  if (isTooSmall) {
+    return null;
+  }
 
   return (
     <div
