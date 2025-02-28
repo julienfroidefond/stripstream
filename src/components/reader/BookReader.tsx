@@ -33,6 +33,8 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
     handleNextPage,
     shouldShowDoublePage,
     zoomLevel,
+    panPosition,
+    handleDoubleClick,
   } = usePageNavigation({
     book,
     pages,
@@ -118,6 +120,8 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
             isRTL={isRTL}
             onThumbnailLoad={handleThumbnailLoad}
             zoomLevel={zoomLevel}
+            panPosition={panPosition}
+            onDoubleClick={handleDoubleClick}
           />
 
           <NavigationBar

@@ -10,6 +10,8 @@ interface SinglePageProps {
   isRTL?: boolean;
   order?: "first" | "second";
   zoomLevel?: number;
+  panPosition?: { x: number; y: number };
+  onDoubleClick?: () => void;
 }
 
 export const SinglePage = ({
@@ -20,7 +22,9 @@ export const SinglePage = ({
   isDoublePage = false,
   isRTL = false,
   order = "first",
-  zoomLevel,
+  zoomLevel = 1,
+  panPosition = { x: 0, y: 0 },
+  onDoubleClick,
 }: SinglePageProps) => {
   return (
     <div
@@ -39,14 +43,18 @@ export const SinglePage = ({
         <img
           src={pageUrl}
           style={{
-            transform: `scale(${zoomLevel})`,
+            transform: `scale(${zoomLevel}) translate(${panPosition.x}px, ${panPosition.y}px)`,
+            transformOrigin: "center",
+            transition: zoomLevel === 1 ? "transform 0.3s ease-out" : "none",
+            cursor: "pointer",
           }}
           alt={`Page ${pageNumber}`}
           className={cn(
-            "max-h-full w-auto object-contain transition-opacity duration-300",
+            "max-h-full w-auto object-contain",
             isLoading ? "opacity-0" : "opacity-100"
           )}
           onLoad={() => onLoad(pageNumber)}
+          onDoubleClick={onDoubleClick}
         />
       )}
     </div>

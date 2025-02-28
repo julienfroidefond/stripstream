@@ -19,13 +19,16 @@ export const usePageNavigation = ({
   const [currentPage, setCurrentPage] = useState(book.readProgress?.page || 1);
   const [isLoading, setIsLoading] = useState(true);
   const [secondPageLoading, setSecondPageLoading] = useState(true);
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [panPosition, setPanPosition] = useState({ x: 0, y: 0 });
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const touchStartXRef = useRef<number | null>(null);
   const touchStartYRef = useRef<number | null>(null);
+  const lastPanPositionRef = useRef({ x: 0, y: 0 });
   const currentPageRef = useRef(currentPage);
   const isRTL = direction === "rtl";
-  const [zoomLevel, setZoomLevel] = useState(1);
   const initialDistanceRef = useRef<number | null>(null);
+  const DEFAULT_ZOOM_LEVEL = 2;
 
   useEffect(() => {
     currentPageRef.current = currentPage;
@@ -113,18 +116,33 @@ export const usePageNavigation = ({
     return Math.sqrt(dx * dx + dy * dy);
   };
 
-  const handleTouchMove = useCallback((event: TouchEvent) => {
-    if (event.touches.length === 2) {
-      const distance = calculateDistance(event.touches[0], event.touches[1]);
-      if (initialDistanceRef.current !== null) {
-        const scale = distance / initialDistanceRef.current;
-        const zoomFactor = 0.3;
-        setZoomLevel((prevZoomLevel) =>
-          Math.min(3, Math.max(1, prevZoomLevel + (scale - 1) * zoomFactor))
-        );
+  const handleTouchMove = useCallback(
+    (event: TouchEvent) => {
+      if (event.touches.length === 2) {
+        const distance = calculateDistance(event.touches[0], event.touches[1]);
+        if (initialDistanceRef.current !== null) {
+          const scale = distance / initialDistanceRef.current;
+          const zoomFactor = 0.3;
+          setZoomLevel((prevZoomLevel) =>
+            Math.min(3, Math.max(1, prevZoomLevel + (scale - 1) * zoomFactor))
+          );
+        }
+      } else if (event.touches.length === 1 && zoomLevel > 1) {
+        // Gestion du pan uniquement quand on est zoomé
+        if (touchStartXRef.current !== null && touchStartYRef.current !== null) {
+          const deltaX = event.touches[0].clientX - touchStartXRef.current;
+          const deltaY = event.touches[0].clientY - touchStartYRef.current;
+
+          setPanPosition({
+            x: lastPanPositionRef.current.x + deltaX,
+            y: lastPanPositionRef.current.y + deltaY,
+          });
+        }
+        event.preventDefault(); // Empêcher le scroll de la page
       }
-    }
-  }, []);
+    },
+    [zoomLevel]
+  );
 
   const handleTouchStart = useCallback(
     (event: TouchEvent) => {
@@ -133,10 +151,11 @@ export const usePageNavigation = ({
       } else {
         touchStartXRef.current = event.touches[0].clientX;
         touchStartYRef.current = event.touches[0].clientY;
+        lastPanPositionRef.current = panPosition;
         currentPageRef.current = currentPage;
       }
     },
-    [currentPage]
+    [currentPage, panPosition]
   );
 
   const handleTouchEnd = useCallback(
@@ -150,6 +169,15 @@ export const usePageNavigation = ({
       const touchEndY = event.changedTouches[0].clientY;
       const deltaX = touchEndX - touchStartXRef.current;
       const deltaY = touchEndY - touchStartYRef.current;
+
+      // Si on est zoomé, on met à jour la position finale du pan
+      if (zoomLevel > 1) {
+        lastPanPositionRef.current = {
+          x: lastPanPositionRef.current.x + deltaX,
+          y: lastPanPositionRef.current.y + deltaY,
+        };
+        return;
+      }
 
       // Si le déplacement vertical est plus important que le déplacement horizontal,
       // on ne fait rien (pour éviter de confondre avec un scroll)
@@ -177,8 +205,16 @@ export const usePageNavigation = ({
       touchStartXRef.current = null;
       touchStartYRef.current = null;
     },
-    [handleNextPage, handlePreviousPage, isRTL]
+    [handleNextPage, handlePreviousPage, isRTL, zoomLevel]
   );
+
+  // Reset du pan quand on change de page ou dezoom
+  useEffect(() => {
+    if (zoomLevel === 1) {
+      setPanPosition({ x: 0, y: 0 });
+      lastPanPositionRef.current = { x: 0, y: 0 };
+    }
+  }, [zoomLevel, currentPage]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -237,6 +273,15 @@ export const usePageNavigation = ({
     };
   }, [syncReadProgress]);
 
+  const handleDoubleClick = useCallback(() => {
+    setZoomLevel((prevZoom) => {
+      if (prevZoom === 1) {
+        return DEFAULT_ZOOM_LEVEL;
+      }
+      return 1;
+    });
+  }, []);
+
   return {
     currentPage,
     navigateToPage,
@@ -248,5 +293,7 @@ export const usePageNavigation = ({
     handleNextPage,
     shouldShowDoublePage,
     zoomLevel,
+    panPosition,
+    handleDoubleClick,
   };
 };

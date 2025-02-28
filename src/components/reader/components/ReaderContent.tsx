@@ -11,6 +11,8 @@ interface ReaderContentProps {
   isRTL: boolean;
   onThumbnailLoad: (pageNumber: number) => void;
   zoomLevel: number;
+  panPosition: { x: number; y: number };
+  onDoubleClick: () => void;
 }
 
 export const ReaderContent = ({
@@ -24,6 +26,8 @@ export const ReaderContent = ({
   isRTL,
   onThumbnailLoad,
   zoomLevel,
+  panPosition,
+  onDoubleClick,
 }: ReaderContentProps) => {
   return (
     <div className="relative flex-1 flex items-center justify-center overflow-hidden p-1">
@@ -37,6 +41,8 @@ export const ReaderContent = ({
           isRTL={isRTL}
           order="first"
           zoomLevel={zoomLevel}
+          panPosition={panPosition}
+          onDoubleClick={onDoubleClick}
         />
 
         {isDoublePage && shouldShowDoublePage(currentPage) && (
@@ -48,6 +54,9 @@ export const ReaderContent = ({
             isDoublePage={true}
             isRTL={isRTL}
             order="second"
+            zoomLevel={zoomLevel}
+            panPosition={panPosition}
+            onDoubleClick={onDoubleClick}
           />
         )}
       </div>
