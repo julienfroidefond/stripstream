@@ -41,7 +41,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
               className="px-2 py-1.5 hover:bg-accent hover:text-accent-foreground rounded-md"
               aria-label="Toggle theme"
             >
-              <div className="relative flex items-center justify-center w-5 h-5">
+              <div className="relative flex items-center  w-5 h-5">
                 <Sun className="absolute inset-0 h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
                 <Moon className="absolute inset-0 h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
               </div>

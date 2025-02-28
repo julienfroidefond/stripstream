@@ -21,6 +21,7 @@ export function ClientBookReader({ book, pages }: ClientBookReaderProps) {
 
   const handleCloseReader = () => {
     setIsReading(false);
+    //Fetch une nouvelle route pour rafraichir les différents caches
     router.back();
   };
 
