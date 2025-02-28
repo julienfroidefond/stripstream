@@ -6,6 +6,7 @@ import { authService } from "@/lib/services/auth.service";
 import { AppErrorType } from "@/types/global";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { useTranslate } from "@/hooks/useTranslate";
+import { AppError } from "@/utils/errors";
 
 interface LoginFormProps {
   from?: string;
@@ -89,7 +90,7 @@ export function LoginForm({ from }: LoginFormProps) {
           {t("login.form.remember")}
         </label>
       </div>
-      {error && <ErrorMessage errorCode={error.code} variant="form" />}
+      {error && error instanceof AppError && <ErrorMessage errorCode={error.code} variant="form" />}
       <button
         type="submit"
         disabled={isLoading}

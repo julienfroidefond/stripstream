@@ -259,6 +259,8 @@
 
     "SERIES_FETCH_ERROR": "Erreur lors de la récupération des séries",
     "HOME_FETCH_ERROR": "Erreur lors de la récupération de l'accueil",
-    "SERIES_NO_BOOKS_FOUND": "Aucun livre trouvé dans la série"
+    "SERIES_NO_BOOKS_FOUND": "Aucun livre trouvé dans la série",
+
+    "GENERIC_ERROR": "Une erreur est survenue"
   }
 }

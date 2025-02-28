@@ -7,6 +7,7 @@ import { withPageTiming } from "@/lib/hoc/withPageTiming";
 import { KomgaBookWithPages } from "@/types/komga";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { ERROR_CODES } from "@/constants/errorCodes";
+import { AppError } from "@/utils/errors";
 
 async function BookPage({ params }: { params: { bookId: string } }) {
   try {
@@ -19,6 +20,13 @@ async function BookPage({ params }: { params: { bookId: string } }) {
     );
   } catch (error) {
     console.error("Erreur:", error);
+    if (error instanceof AppError) {
+      return (
+        <div className="container py-8 space-y-8">
+          <ErrorMessage errorCode={error.code} />
+        </div>
+      );
+    }
     return (
       <div className="container py-8 space-y-8">
         <ErrorMessage errorCode={ERROR_CODES.SERIES.FETCH_ERROR} />

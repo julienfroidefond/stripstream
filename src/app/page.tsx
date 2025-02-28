@@ -30,6 +30,13 @@ async function HomePage() {
     if (error instanceof AppError && error.code === ERROR_CODES.KOMGA.MISSING_CONFIG) {
       redirect("/settings");
     }
+    if (error instanceof AppError) {
+      return (
+        <main className="container mx-auto px-4 py-8">
+          <ErrorMessage errorCode={error.code} />
+        </main>
+      );
+    }
 
     return (
       <main className="container mx-auto px-4 py-8">

@@ -9,6 +9,7 @@ import { LibraryResponse } from "@/types/library";
 import { KomgaSeries, KomgaLibrary } from "@/types/komga";
 import { UserPreferences } from "@/types/preferences";
 import { ERROR_CODES } from "@/constants/errorCodes";
+import { AppError } from "@/utils/errors";
 
 interface PageProps {
   params: { libraryId: string };
@@ -51,7 +52,7 @@ async function getLibrarySeries(
 
     return { data: series, library };
   } catch (error) {
-    throw error instanceof Error ? error : new Error("Erreur lors de la récupération des séries");
+    throw error instanceof Error ? error : new AppError(ERROR_CODES.SERIES.FETCH_ERROR, {}, error);
   }
 }
 
@@ -92,14 +93,14 @@ async function LibraryPage({ params, searchParams }: PageProps) {
       </div>
     );
   } catch (error) {
-    if (error instanceof Error) {
+    if (error instanceof AppError) {
       return (
         <div className="container py-8 space-y-8">
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold">Séries</h1>
             <RefreshButton libraryId={params.libraryId} refreshLibrary={refreshLibrary} />
           </div>
-          <ErrorMessage errorCode={ERROR_CODES.SERIES.FETCH_ERROR} />
+          <ErrorMessage errorCode={error.code} />
         </div>
       );
     }

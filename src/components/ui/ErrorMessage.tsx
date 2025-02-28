@@ -43,7 +43,7 @@ export const ErrorMessage = ({ errorCode, error, variant = "default" }: ErrorMes
 
         <div className="flex-1">
           <h3 className="mb-1 font-medium text-destructive dark:text-red-400">
-            Une erreur est survenue
+            {t("errors.GENERIC_ERROR")}
           </h3>
           <p className="text-sm text-destructive/90 dark:text-red-300/90">{message}</p>
         </div>
