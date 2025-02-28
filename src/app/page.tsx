@@ -27,10 +27,11 @@ async function HomePage() {
     return <HomeContent data={data} refreshHome={refreshHome} />;
   } catch (error) {
     // Si l'erreur indique une configuration manquante, rediriger vers les préférences
-    if (error instanceof AppError && error.code === ERROR_CODES.KOMGA.MISSING_CONFIG) {
-      redirect("/settings");
-    }
+
     if (error instanceof AppError) {
+      if (error.code === ERROR_CODES.KOMGA.MISSING_CONFIG) {
+        redirect("/settings");
+      }
       return (
         <main className="container mx-auto px-4 py-8">
           <ErrorMessage errorCode={error.code} />

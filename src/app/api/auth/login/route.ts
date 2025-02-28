@@ -21,7 +21,7 @@ export async function POST(request: Request) {
       if (error instanceof AppError) {
         return NextResponse.json(
           {
-            error: AppError,
+            error,
           },
           { status: 401 }
         );

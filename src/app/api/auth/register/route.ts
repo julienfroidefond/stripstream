@@ -25,7 +25,7 @@ export async function POST(request: Request) {
             : 500;
         return NextResponse.json(
           {
-            error: AppError,
+            error,
           },
           { status }
         );
