@@ -68,7 +68,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
           <LoadingBar />
           {!isPublicRoute && <Header onToggleSidebar={handleToggleSidebar} />}
           {!isPublicRoute && <Sidebar isOpen={isSidebarOpen} onClose={handleCloseSidebar} />}
-          <main className={`${!isPublicRoute ? "container pt-4 md:pt-8" : ""}`}>{children}</main>
+          <main className={`${!isPublicRoute ? "container" : ""}`}>{children}</main>
           <InstallPWA />
           <Toaster />
           <NetworkStatus />

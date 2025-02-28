@@ -63,7 +63,7 @@ async function SeriesPage({ params, searchParams }: PageProps) {
       await getSeriesBooks(params.seriesId, currentPage, unreadOnly);
 
     return (
-      <div className="container py-8 space-y-8">
+      <div className="container">
         <SeriesHeader series={series} refreshSeries={refreshSeries} />
         <PaginatedBookGrid
           books={books.content || []}

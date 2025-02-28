@@ -94,7 +94,7 @@ export function PaginatedBookGrid({
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 py-8">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <p className="text-sm text-muted-foreground flex-1 min-w-[200px]">{getShowingText()}</p>
         <button
