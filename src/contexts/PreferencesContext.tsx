@@ -13,11 +13,32 @@ interface PreferencesContextType {
 
 const PreferencesContext = createContext<PreferencesContextType | undefined>(undefined);
 
+const isAuthenticated = (): boolean => {
+  if (typeof window === "undefined") return false;
+
+  const userCookie = document.cookie.split("; ").find((row) => row.startsWith("stripUser="));
+
+  if (!userCookie) return false;
+
+  try {
+    const userData = JSON.parse(atob(userCookie.split("=")[1]));
+    return userData?.authenticated === true;
+  } catch (error) {
+    console.error("Error parsing user cookie:", error);
+    return false;
+  }
+};
+
 export function PreferencesProvider({ children }: { children: React.ReactNode }) {
   const [preferences, setPreferences] = useState<UserPreferences>(defaultPreferences);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchPreferences = async () => {
+    if (!isAuthenticated()) {
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const response = await fetch("/api/preferences");
       if (!response.ok) {
@@ -30,7 +51,6 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
       });
     } catch (error) {
       console.error("Erreur lors de la récupération des préférences:", error);
-      // En cas d'erreur, on garde les préférences par défaut
       setPreferences(defaultPreferences);
     } finally {
       setIsLoading(false);
@@ -42,6 +62,10 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
   }, []);
 
   const updatePreferences = async (newPreferences: Partial<UserPreferences>) => {
+    if (!isAuthenticated()) {
+      throw new AppError(ERROR_CODES.AUTH.UNAUTHENTICATED);
+    }
+
     try {
       const response = await fetch("/api/preferences", {
         method: "PUT",
@@ -62,7 +86,6 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
         ...updatedPreferences,
       }));
 
-      // Forcer un rafraîchissement des préférences
       await fetchPreferences();
 
       return updatedPreferences;
