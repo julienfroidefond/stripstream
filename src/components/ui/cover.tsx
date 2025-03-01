@@ -1,3 +1,5 @@
+"use client";
+
 import { CoverClient } from "./cover-client";
 import { ProgressBar } from "./progress-bar";
 
