@@ -10,15 +10,14 @@ export function SeriesCover({
   className,
   quality = 80,
   sizes = "100vw",
+  showProgressUi = true,
 }: SeriesCoverProps) {
-  if (!series) return null;
-
   const imageUrl = getImageUrl("series", series.id);
   const isCompleted = series.booksCount === series.booksReadCount;
 
   const readBooks = series.booksReadCount;
   const totalBooks = series.booksCount;
-  const showProgress = readBooks && totalBooks && readBooks > 0 && !isCompleted;
+  const showProgress = showProgressUi && readBooks && totalBooks && readBooks > 0 && !isCompleted;
 
   return (
     <div className="relative w-full h-full">

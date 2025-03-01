@@ -1,9 +1,10 @@
 "use client";
 
-import { BookCheck } from "lucide-react";
+import { BookCheck, Loader2 } from "lucide-react";
 import { Button } from "./button";
 import { useToast } from "./use-toast";
 import { ClientOfflineBookService } from "@/lib/services/client-offlinebook.service";
+import { useState } from "react";
 
 interface MarkAsReadButtonProps {
   bookId: string;
@@ -21,9 +22,11 @@ export function MarkAsReadButton({
   className,
 }: MarkAsReadButtonProps) {
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleMarkAsRead = async (e: React.MouseEvent) => {
     e.stopPropagation(); // Empêcher la propagation au parent
+    setIsLoading(true);
     try {
       ClientOfflineBookService.removeCurrentPageById(bookId);
       const response = await fetch(`/api/komga/books/${bookId}/read-progress`, {
@@ -50,6 +53,8 @@ export function MarkAsReadButton({
         description: "Impossible de marquer le tome comme lu",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -59,10 +64,10 @@ export function MarkAsReadButton({
       size="icon"
       onClick={handleMarkAsRead}
       className={`h-8 w-8 p-0 rounded-br-lg rounded-tl-lg ${className}`}
-      disabled={isRead}
+      disabled={isRead || isLoading}
       aria-label="Marquer comme lu"
     >
-      <BookCheck className="h-5 w-5" />
+      {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <BookCheck className="h-5 w-5" />}
     </Button>
   );
 }
