@@ -2,10 +2,10 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRef, useState } from "react";
-import { Cover } from "@/components/ui/cover";
 import { useRouter } from "next/navigation";
-import { ClientOfflineBookService } from "@/lib/services/client-offlinebook.service";
-import { KomgaBook } from "@/types/komga";
+import { KomgaBook, KomgaSeries } from "@/types/komga";
+import { BookCover } from "../ui/book-cover";
+import { SeriesCover } from "../ui/series-cover";
 
 interface BaseItem {
   id: string;
@@ -128,24 +128,9 @@ function MediaCard({ item, onClick }: MediaCardProps) {
     >
       <div className="relative aspect-[2/3] bg-muted">
         {isSeries ? (
-          <Cover
-            type={isSeries ? "series" : "book"}
-            id={item.id}
-            alt={`Couverture de ${title}`}
-            quality={100}
-            readBooks={item.booksReadCount}
-            totalBooks={item.booksCount}
-            isCompleted={item.booksCount === item.booksReadCount}
-          />
+          <SeriesCover series={item as KomgaSeries} alt={`Couverture de ${title}`} quality={100} />
         ) : (
-          <Cover
-            type="book"
-            id={item.id}
-            alt={`Couverture de ${title}`}
-            quality={100}
-            currentPage={ClientOfflineBookService.getCurrentPage(item as KomgaBook)}
-            totalPages={item.media?.pagesCount}
-          />
+          <BookCover book={item as KomgaBook} alt={`Couverture de ${title}`} quality={100} />
         )}
         {/* Overlay avec les informations au survol */}
         <div className="absolute inset-0 bg-black/60 opacity-0 hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3">

@@ -1,7 +1,8 @@
 "use client";
 
-import { Cover } from "@/components/ui/cover";
+import { SeriesCover } from "@/components/ui/series-cover";
 import { useTranslate } from "@/hooks/useTranslate";
+import { KomgaSeries } from "@/types/komga";
 
 interface OptimizedHeroSeries {
   id: string;
@@ -31,9 +32,8 @@ export function HeroSection({ series }: HeroSectionProps) {
             key={series.id}
             className="relative aspect-[2/3] bg-muted rounded-lg overflow-hidden"
           >
-            <Cover
-              type="series"
-              id={series.id}
+            <SeriesCover
+              series={series as KomgaSeries}
               alt={t("home.hero.coverAlt", { title: series.metadata.title })}
               quality={25}
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16.666vw"

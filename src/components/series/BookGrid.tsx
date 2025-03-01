@@ -2,7 +2,7 @@
 
 import { KomgaBook } from "@/types/komga";
 import { formatDate } from "@/lib/utils";
-import { Cover } from "@/components/ui/cover";
+import { BookCover } from "@/components/ui/book-cover";
 import { MarkAsReadButton } from "@/components/ui/mark-as-read-button";
 import { MarkAsUnreadButton } from "@/components/ui/mark-as-unread-button";
 import { BookOfflineButton } from "@/components/ui/book-offline-button";
@@ -106,7 +106,6 @@ export function BookGrid({ books, onBookClick }: BookGridProps) {
         const statusInfo = getReadingStatusInfo(book, t);
         const isRead = book.readProgress?.completed || false;
         const hasReadProgress = book.readProgress !== null;
-        const currentPage = ClientOfflineBookService.getCurrentPage(book);
 
         return (
           <div
@@ -117,15 +116,11 @@ export function BookGrid({ books, onBookClick }: BookGridProps) {
               onClick={() => onBookClick(book)}
               className="w-full h-full hover:opacity-100 transition-all"
             >
-              <Cover
-                type="book"
-                id={book.id}
+              <BookCover
+                book={book}
                 alt={t("books.coverAlt", {
                   title: book.metadata.title || `Tome ${book.metadata.number}`,
                 })}
-                isCompleted={isRead}
-                currentPage={currentPage}
-                totalPages={book.media.pagesCount}
               />
             </button>
 

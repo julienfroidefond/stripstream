@@ -5,12 +5,12 @@ import { KomgaSeries } from "@/types/komga";
 import { useState, useEffect } from "react";
 import { Button } from "../ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { Cover } from "@/components/ui/cover";
 import { RefreshButton } from "@/components/library/RefreshButton";
 import { AppError } from "@/utils/errors";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { getErrorMessage } from "@/utils/errors";
 import { useTranslate } from "@/hooks/useTranslate";
+import { SeriesCover } from "@/components/ui/series-cover";
 
 interface SeriesHeaderProps {
   series: KomgaSeries;
@@ -122,9 +122,8 @@ export const SeriesHeader = ({ series, refreshSeries }: SeriesHeaderProps) => {
     <div className="relative min-h-[300px] md:h-[300px] w-screen -ml-[calc((100vw-100%)/2)] overflow-hidden">
       {/* Image de fond */}
       <div className="absolute inset-0">
-        <Cover
-          type="series"
-          id={series.id}
+        <SeriesCover
+          series={series as KomgaSeries}
           alt={t("series.header.coverAlt", { title: series.metadata.title })}
           className="blur-sm scale-105 brightness-50"
           quality={60}
@@ -136,9 +135,8 @@ export const SeriesHeader = ({ series, refreshSeries }: SeriesHeaderProps) => {
         <div className="flex flex-col md:flex-row gap-6 items-center md:items-start w-full">
           {/* Image principale */}
           <div className="relative w-[180px] aspect-[2/3] rounded-lg overflow-hidden shadow-lg bg-muted flex-shrink-0">
-            <Cover
-              type="series"
-              id={series.id}
+            <SeriesCover
+              series={series as KomgaSeries}
               alt={t("series.header.coverAlt", { title: series.metadata.title })}
               quality={90}
             />
