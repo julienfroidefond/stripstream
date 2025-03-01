@@ -1,27 +1,22 @@
 "use client";
 
-import { XCircle } from "lucide-react";
+import { BookX } from "lucide-react";
 import { Button } from "./button";
 import { useToast } from "./use-toast";
-
+import { ClientOfflineBookService } from "@/lib/services/client-offlinebook.service";
 interface MarkAsUnreadButtonProps {
   bookId: string;
-  isRead: boolean;
   onSuccess?: () => void;
   className?: string;
 }
 
-export function MarkAsUnreadButton({
-  bookId,
-  isRead = false,
-  onSuccess,
-  className,
-}: MarkAsUnreadButtonProps) {
+export function MarkAsUnreadButton({ bookId, onSuccess, className }: MarkAsUnreadButtonProps) {
   const { toast } = useToast();
 
   const handleMarkAsUnread = async (e: React.MouseEvent) => {
     e.stopPropagation(); // Empêcher la propagation au parent
     try {
+      ClientOfflineBookService.removeCurrentPageById(bookId);
       const response = await fetch(`/api/komga/books/${bookId}/read-progress`, {
         method: "DELETE",
       });
@@ -51,10 +46,9 @@ export function MarkAsUnreadButton({
       size="icon"
       onClick={handleMarkAsUnread}
       className={`h-8 w-8 p-0 rounded-br-lg rounded-tl-lg ${className}`}
-      disabled={!isRead}
       aria-label="Marquer comme non lu"
     >
-      <XCircle className="h-5 w-5" />
+      <BookX className="h-5 w-5" />
     </Button>
   );
 }

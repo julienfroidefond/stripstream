@@ -4,6 +4,7 @@ import { getErrorMessage } from "@/utils/errors";
 import { LibraryService } from "@/lib/services/library.service";
 import { HomeService } from "@/lib/services/home.service";
 import { SeriesService } from "@/lib/services/series.service";
+import { revalidatePath } from "next/cache";
 
 export async function POST(
   request: Request,
@@ -13,13 +14,17 @@ export async function POST(
     const { libraryId, seriesId } = params;
 
     await HomeService.invalidateHomeCache();
+    revalidatePath("/");
 
     if (libraryId) {
       await LibraryService.invalidateLibrarySeriesCache(libraryId);
+      revalidatePath(`/library/${libraryId}`);
     }
+
     if (seriesId) {
       await SeriesService.invalidateSeriesBooksCache(seriesId);
       await SeriesService.invalidateSeriesCache(seriesId);
+      revalidatePath(`/series/${seriesId}`);
     }
 
     return NextResponse.json({ message: "🧹 Cache vidé avec succès" });

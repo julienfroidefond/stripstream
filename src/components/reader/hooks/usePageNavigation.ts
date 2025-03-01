@@ -1,11 +1,12 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { KomgaBook } from "@/types/komga";
+import { ClientOfflineBookService } from "@/lib/services/client-offlinebook.service";
 
 interface UsePageNavigationProps {
   book: KomgaBook;
   pages: number[];
   isDoublePage: boolean;
-  onClose?: () => void;
+  onClose?: (currentPage: number) => void;
   direction: "ltr" | "rtl";
 }
 
@@ -16,7 +17,7 @@ export const usePageNavigation = ({
   onClose,
   direction,
 }: UsePageNavigationProps) => {
-  const [currentPage, setCurrentPage] = useState(book.readProgress?.page || 1);
+  const [currentPage, setCurrentPage] = useState(ClientOfflineBookService.getCurrentPage(book));
   const [isLoading, setIsLoading] = useState(true);
   const [secondPageLoading, setSecondPageLoading] = useState(true);
   const [zoomLevel, setZoomLevel] = useState(1);
@@ -37,6 +38,7 @@ export const usePageNavigation = ({
   const syncReadProgress = useCallback(
     async (page: number) => {
       try {
+        ClientOfflineBookService.setCurrentPage(book, page);
         const completed = page === pages.length;
         await fetch(`/api/komga/books/${book.id}/read-progress`, {
           method: "PATCH",
@@ -239,7 +241,7 @@ export const usePageNavigation = ({
         }
       } else if (e.key === "Escape" && onClose) {
         e.preventDefault();
-        onClose();
+        onClose(currentPage);
       }
     };
 
@@ -269,6 +271,7 @@ export const usePageNavigation = ({
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
         syncReadProgress(currentPageRef.current);
+        ClientOfflineBookService.removeCurrentPage(book);
       }
     };
   }, [syncReadProgress]);

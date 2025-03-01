@@ -8,6 +8,7 @@ import { MarkAsUnreadButton } from "@/components/ui/mark-as-unread-button";
 import { BookOfflineButton } from "@/components/ui/book-offline-button";
 import { useState, useEffect } from "react";
 import { useTranslate } from "@/hooks/useTranslate";
+import { ClientOfflineBookService } from "@/lib/services/client-offlinebook.service";
 
 interface BookGridProps {
   books: KomgaBook[];
@@ -31,10 +32,12 @@ const getReadingStatusInfo = (book: KomgaBook, t: (key: string, options?: any) =
     };
   }
 
-  if (book.readProgress.page > 0) {
+  const currentPage = ClientOfflineBookService.getCurrentPage(book);
+
+  if (currentPage > 0) {
     return {
       label: t("books.status.progress", {
-        current: book.readProgress.page,
+        current: currentPage,
         total: book.media.pagesCount,
       }),
       className: "bg-blue-500/10 text-blue-500",
@@ -102,7 +105,8 @@ export function BookGrid({ books, onBookClick }: BookGridProps) {
       {localBooks.map((book) => {
         const statusInfo = getReadingStatusInfo(book, t);
         const isRead = book.readProgress?.completed || false;
-        const currentPage = book.readProgress?.page || 0;
+        const hasReadProgress = book.readProgress !== null;
+        const currentPage = ClientOfflineBookService.getCurrentPage(book);
 
         return (
           <div
@@ -138,10 +142,9 @@ export function BookGrid({ books, onBookClick }: BookGridProps) {
                     className="bg-white/90 hover:bg-white text-black shadow-sm"
                   />
                 )}
-                {isRead && (
+                {hasReadProgress && (
                   <MarkAsUnreadButton
                     bookId={book.id}
-                    isRead={isRead}
                     onSuccess={() => handleMarkAsUnread(book.id)}
                     className="bg-white/90 hover:bg-white text-black shadow-sm"
                   />

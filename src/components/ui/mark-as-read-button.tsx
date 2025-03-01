@@ -1,8 +1,9 @@
 "use client";
 
-import { CheckCircle2 } from "lucide-react";
+import { BookCheck } from "lucide-react";
 import { Button } from "./button";
 import { useToast } from "./use-toast";
+import { ClientOfflineBookService } from "@/lib/services/client-offlinebook.service";
 
 interface MarkAsReadButtonProps {
   bookId: string;
@@ -24,6 +25,7 @@ export function MarkAsReadButton({
   const handleMarkAsRead = async (e: React.MouseEvent) => {
     e.stopPropagation(); // Empêcher la propagation au parent
     try {
+      ClientOfflineBookService.removeCurrentPageById(bookId);
       const response = await fetch(`/api/komga/books/${bookId}/read-progress`, {
         method: "PATCH",
         headers: {
@@ -60,7 +62,7 @@ export function MarkAsReadButton({
       disabled={isRead}
       aria-label="Marquer comme lu"
     >
-      <CheckCircle2 className="h-5 w-5" />
+      <BookCheck className="h-5 w-5" />
     </Button>
   );
 }

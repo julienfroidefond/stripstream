@@ -12,7 +12,7 @@ export interface PageCache {
 export interface BookReaderProps {
   book: KomgaBook;
   pages: number[];
-  onClose?: () => void;
+  onClose?: (currentPage: number) => void;
 }
 
 export interface ThumbnailProps {
@@ -39,7 +39,7 @@ export interface ControlButtonsProps {
   onPreviousPage: () => void;
   onNextPage: () => void;
   onPageChange: (page: number) => void;
-  onClose?: () => void;
+  onClose?: (currentPage: number) => void;
   currentPage: number;
   totalPages: number;
   isDoublePage: boolean;

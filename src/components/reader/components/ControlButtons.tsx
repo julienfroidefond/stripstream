@@ -101,7 +101,7 @@ export const ControlButtons = ({
         <button
           onClick={(e) => {
             e.stopPropagation();
-            onClose();
+            onClose(currentPage);
           }}
           className={cn(
             "absolute top-4 right-4 p-2 rounded-full bg-background/50 hover:bg-background/80 transition-all duration-300 z-30",

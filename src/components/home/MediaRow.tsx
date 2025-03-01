@@ -4,6 +4,8 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRef, useState } from "react";
 import { Cover } from "@/components/ui/cover";
 import { useRouter } from "next/navigation";
+import { ClientOfflineBookService } from "@/lib/services/client-offlinebook.service";
+import { KomgaBook } from "@/types/komga";
 
 interface BaseItem {
   id: string;
@@ -18,12 +20,12 @@ interface OptimizedSeries extends BaseItem {
 }
 
 interface OptimizedBook extends BaseItem {
-  readProgress:{
-    page: number
-  }
+  readProgress: {
+    page: number;
+  };
   media: {
     pagesCount: number;
-  }
+  };
   metadata: {
     title: string;
     number?: string;
@@ -124,19 +126,27 @@ function MediaCard({ item, onClick }: MediaCardProps) {
       onClick={onClick}
       className="flex-shrink-0 w-[200px] relative flex flex-col rounded-lg border bg-card text-card-foreground shadow-sm hover:bg-accent hover:text-accent-foreground transition-colors overflow-hidden cursor-pointer"
     >
-      {/* Image de couverture */}
       <div className="relative aspect-[2/3] bg-muted">
-        <Cover
-          type={isSeries ? "series" : "book"}
-          id={item.id}
-          alt={`Couverture de ${title}`}
-          quality={100}
-          readBooks={isSeries ? item.booksReadCount : undefined}
-          totalBooks={isSeries ? item.booksCount : undefined}
-          isCompleted={isSeries ? item.booksCount === item.booksReadCount : undefined}
-          currentPage={isSeries ? undefined : item.readProgress?.page}
-          totalPages={isSeries ? undefined : item.media?.pagesCount}
-        />
+        {isSeries ? (
+          <Cover
+            type={isSeries ? "series" : "book"}
+            id={item.id}
+            alt={`Couverture de ${title}`}
+            quality={100}
+            readBooks={item.booksReadCount}
+            totalBooks={item.booksCount}
+            isCompleted={item.booksCount === item.booksReadCount}
+          />
+        ) : (
+          <Cover
+            type="book"
+            id={item.id}
+            alt={`Couverture de ${title}`}
+            quality={100}
+            currentPage={ClientOfflineBookService.getCurrentPage(item as KomgaBook)}
+            totalPages={item.media?.pagesCount}
+          />
+        )}
         {/* Overlay avec les informations au survol */}
         <div className="absolute inset-0 bg-black/60 opacity-0 hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3">
           <h3 className="font-medium text-sm text-white line-clamp-2">{title}</h3>

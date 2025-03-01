@@ -44,7 +44,7 @@ export function Cover(props: CoverProps) {
   } = props;
 
   const imageUrl = getImageUrl(type, id);
-  
+
   const showProgress = () => {
     if (type === "book") {
       const { currentPage, totalPages } = props;
@@ -52,7 +52,7 @@ export function Cover(props: CoverProps) {
         <ProgressBar progress={currentPage} total={totalPages} type="book" />
       ) : null;
     }
-    
+
     if (type === "series") {
       const { readBooks, totalBooks } = props;
       return readBooks && totalBooks && readBooks > 0 && !isCompleted ? (
