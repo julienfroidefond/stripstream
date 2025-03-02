@@ -7,6 +7,10 @@ You can try it out with the following credentials on https://stripstream.julienf
 - Email: `demo@stripstream.local`
 - Password: `fft$VSD96dis`
 
+The demo site is hosted on a small server, so it may be occasionally unavailable.
+
+Although this application was designed to handle multiple users with their own Komga configuration, it is recommended to install it on your server and configure the Komga URL to localhost for better performance and stability.
+
 ## 📸 Capture
 
 ### Home
