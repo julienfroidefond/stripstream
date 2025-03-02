@@ -146,7 +146,18 @@
       "available": "Available",
       "unavailable": "Unavailable"
     },
-    "lastUpdated": "Last updated: {date}"
+    "lastUpdated": "Last updated: {date}",
+    "refresh": {
+      "button": "Refresh library",
+      "success": {
+        "title": "Library refreshed",
+        "description": "The library has been refreshed successfully"
+      },
+      "error": {
+        "title": "Error",
+        "description": "An error occurred"
+      }
+    }
   },
   "series": {
     "empty": "No series available",
@@ -180,7 +191,9 @@
       "favorite": {
         "add": "Added to favorites",
         "remove": "Removed from favorites"
-      }
+      },
+      "toggleSidebar": "Toggle sidebar",
+      "toggleTheme": "Toggle theme"
     }
   },
   "books": {
@@ -200,7 +213,33 @@
       "showAll": "Show all",
       "unread": "Unread"
     },
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "actions": {
+      "markAsRead": {
+        "button": "Mark as read",
+        "success": {
+          "title": "Success",
+          "description": "Book has been marked as read"
+        },
+        "error": {
+          "title": "Error",
+          "description": "Unable to mark book as read",
+          "update": "Error updating status"
+        }
+      },
+      "markAsUnread": {
+        "button": "Mark as unread",
+        "success": {
+          "title": "Success",
+          "description": "Book has been marked as unread"
+        },
+        "error": {
+          "title": "Error",
+          "description": "Unable to mark book as unread",
+          "update": "Error updating status"
+        }
+      }
+    }
   },
   "downloads": {
     "page": {
@@ -278,7 +317,30 @@
       "fullscreen": {
         "enter": "Enter fullscreen",
         "exit": "Exit fullscreen"
-      }
+      },
+      "close": "Close",
+      "previousPage": "Previous page",
+      "nextPage": "Next page"
+    }
+  },
+  "debug": {
+    "title": "DEBUG",
+    "entries": "entry",
+    "entries_plural": "entries",
+    "noRequests": "No recorded requests",
+    "actions": {
+      "refresh": "Refresh logs",
+      "maximize": "Maximize",
+      "minimize": "Minimize",
+      "clear": "Clear logs"
+    },
+    "tooltips": {
+      "cache": "Cache: {{type}}",
+      "mongodb": "MongoDB: {{operation}}",
+      "pageRender": "Page Render: {{page}}",
+      "apiCall": "API Call",
+      "logTime": "Log time",
+      "mongoAccess": "MongoDB access time"
     }
   }
 }

@@ -5,6 +5,7 @@ import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 interface RefreshButtonProps {
   libraryId: string;
@@ -14,6 +15,7 @@ interface RefreshButtonProps {
 export function RefreshButton({ libraryId, refreshLibrary }: RefreshButtonProps) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -22,8 +24,8 @@ export function RefreshButton({ libraryId, refreshLibrary }: RefreshButtonProps)
 
       if (result.success) {
         toast({
-          title: "Bibliothèque rafraîchie",
-          description: "La bibliothèque a été rafraîchie avec succès",
+          title: t("library.refresh.success.title"),
+          description: t("library.refresh.success.description"),
         });
       } else {
         throw new Error(result.error);
@@ -31,8 +33,9 @@ export function RefreshButton({ libraryId, refreshLibrary }: RefreshButtonProps)
     } catch (error) {
       toast({
         variant: "destructive",
-        title: "Erreur",
-        description: error instanceof Error ? error.message : "Une erreur est survenue",
+        title: t("library.refresh.error.title"),
+        description:
+          error instanceof Error ? error.message : t("library.refresh.error.description"),
       });
     } finally {
       setIsRefreshing(false);
@@ -46,7 +49,7 @@ export function RefreshButton({ libraryId, refreshLibrary }: RefreshButtonProps)
       onClick={handleRefresh}
       disabled={isRefreshing}
       className="ml-2"
-      aria-label="Rafraîchir la bibliothèque"
+      aria-label={t("library.refresh.button")}
     >
       <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
     </Button>

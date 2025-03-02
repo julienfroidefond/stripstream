@@ -146,7 +146,18 @@
       "available": "Disponible",
       "unavailable": "Non disponible"
     },
-    "lastUpdated": "Dernière mise à jour : {date}"
+    "lastUpdated": "Dernière mise à jour : {date}",
+    "refresh": {
+      "button": "Rafraîchir la bibliothèque",
+      "success": {
+        "title": "Bibliothèque rafraîchie",
+        "description": "La bibliothèque a été rafraîchie avec succès"
+      },
+      "error": {
+        "title": "Erreur",
+        "description": "Une erreur est survenue"
+      }
+    }
   },
   "series": {
     "empty": "Aucune série disponible",
@@ -200,7 +211,33 @@
       "showAll": "Afficher tout",
       "unread": "À lire"
     },
-    "loading": "Chargement..."
+    "loading": "Chargement...",
+    "actions": {
+      "markAsRead": {
+        "button": "Marquer comme lu",
+        "success": {
+          "title": "Succès",
+          "description": "Le tome a été marqué comme lu"
+        },
+        "error": {
+          "title": "Erreur",
+          "description": "Impossible de marquer le tome comme lu",
+          "update": "Erreur lors de la mise à jour"
+        }
+      },
+      "markAsUnread": {
+        "button": "Marquer comme non lu",
+        "success": {
+          "title": "Succès",
+          "description": "Le tome a été marqué comme non lu"
+        },
+        "error": {
+          "title": "Erreur",
+          "description": "Impossible de marquer le tome comme non lu",
+          "update": "Erreur lors de la mise à jour"
+        }
+      }
+    }
   },
   "downloads": {
     "page": {
@@ -278,7 +315,34 @@
       "fullscreen": {
         "enter": "Plein écran",
         "exit": "Quitter le plein écran"
-      }
+      },
+      "close": "Fermer",
+      "previousPage": "Page précédente",
+      "nextPage": "Page suivante"
+    }
+  },
+  "header": {
+    "toggleSidebar": "Afficher/masquer le menu latéral",
+    "toggleTheme": "Changer le thème"
+  },
+  "debug": {
+    "title": "DEBUG",
+    "entries": "entrée",
+    "entries_plural": "entrées",
+    "noRequests": "Aucune requête enregistrée",
+    "actions": {
+      "refresh": "Rafraîchir les logs",
+      "maximize": "Agrandir",
+      "minimize": "Minimiser",
+      "clear": "Effacer les logs"
+    },
+    "tooltips": {
+      "cache": "Cache: {{type}}",
+      "mongodb": "MongoDB: {{operation}}",
+      "pageRender": "Page Render: {{page}}",
+      "apiCall": "API Call",
+      "logTime": "Heure du log",
+      "mongoAccess": "Temps d'accès MongoDB"
     }
   }
 }

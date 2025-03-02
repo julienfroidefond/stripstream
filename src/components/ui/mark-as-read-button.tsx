@@ -5,6 +5,7 @@ import { Button } from "./button";
 import { useToast } from "./use-toast";
 import { ClientOfflineBookService } from "@/lib/services/client-offlinebook.service";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface MarkAsReadButtonProps {
   bookId: string;
@@ -23,6 +24,7 @@ export function MarkAsReadButton({
 }: MarkAsReadButtonProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const { t } = useTranslation();
 
   const handleMarkAsRead = async (e: React.MouseEvent) => {
     e.stopPropagation(); // Empêcher la propagation au parent
@@ -38,19 +40,19 @@ export function MarkAsReadButton({
       });
 
       if (!response.ok) {
-        throw new Error("Erreur lors de la mise à jour");
+        throw new Error(t("books.actions.markAsRead.error.update"));
       }
 
       toast({
-        title: "Succès",
-        description: "Le tome a été marqué comme lu",
+        title: t("books.actions.markAsRead.success.title"),
+        description: t("books.actions.markAsRead.success.description"),
       });
       onSuccess?.();
     } catch (error) {
       console.error("Erreur lors de la mise à jour du progresseur de lecture:", error);
       toast({
-        title: "Erreur",
-        description: "Impossible de marquer le tome comme lu",
+        title: t("books.actions.markAsRead.error.title"),
+        description: t("books.actions.markAsRead.error.description"),
         variant: "destructive",
       });
     } finally {
@@ -65,7 +67,7 @@ export function MarkAsReadButton({
       onClick={handleMarkAsRead}
       className={`h-8 w-8 p-0 rounded-br-lg rounded-tl-lg ${className}`}
       disabled={isRead || isLoading}
-      aria-label="Marquer comme lu"
+      aria-label={t("books.actions.markAsRead.button")}
     >
       {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <BookCheck className="h-5 w-5" />}
     </Button>

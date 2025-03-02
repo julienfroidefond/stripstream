@@ -13,6 +13,7 @@ import {
   Globe,
 } from "lucide-react";
 import { CacheType } from "@/lib/services/base-api.service";
+import { useTranslation } from "react-i18next";
 
 interface RequestTiming {
   url: string;
@@ -49,6 +50,7 @@ export function DebugInfo() {
   const [isMinimized, setIsMinimized] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const pathname = usePathname();
+  const { t } = useTranslation();
 
   const fetchLogs = async () => {
     try {
@@ -100,10 +102,10 @@ export function DebugInfo() {
     >
       <div className="flex items-center justify-between mb-4 sticky top-0 bg-zinc-900 pb-2">
         <div className="flex items-center gap-2">
-          <h2 className="font-bold text-lg">DEBUG</h2>
+          <h2 className="font-bold text-lg">{t("debug.title")}</h2>
           {!isMinimized && (
             <span className="text-xs text-zinc-400">
-              {sortedLogs.length} entrée{sortedLogs.length > 1 ? "s" : ""}
+              {sortedLogs.length} {t("debug.entries", { count: sortedLogs.length })}
             </span>
           )}
         </div>
@@ -111,7 +113,7 @@ export function DebugInfo() {
           <button
             onClick={fetchLogs}
             className="hover:bg-zinc-700 rounded-full p-1.5"
-            aria-label="Rafraîchir les logs"
+            aria-label={t("debug.actions.refresh")}
             disabled={isRefreshing}
           >
             <RefreshCw className={`h-5 w-5 ${isRefreshing ? "animate-spin" : ""}`} />
@@ -119,14 +121,14 @@ export function DebugInfo() {
           <button
             onClick={() => setIsMinimized(!isMinimized)}
             className="hover:bg-zinc-700 rounded-full p-1.5"
-            aria-label={isMinimized ? "Agrandir" : "Minimiser"}
+            aria-label={t(isMinimized ? "debug.actions.maximize" : "debug.actions.minimize")}
           >
             {isMinimized ? <Maximize2 className="h-5 w-5" /> : <Minimize2 className="h-5 w-5" />}
           </button>
           <button
             onClick={clearLogs}
             className="hover:bg-zinc-700 rounded-full p-1.5"
-            aria-label="Effacer les logs"
+            aria-label={t("debug.actions.clear")}
           >
             <X className="h-5 w-5" />
           </button>
@@ -136,32 +138,40 @@ export function DebugInfo() {
       {!isMinimized && (
         <div className="space-y-3">
           {sortedLogs.length === 0 ? (
-            <p className="text-sm opacity-75">Aucune requête enregistrée</p>
+            <p className="text-sm opacity-75">{t("debug.noRequests")}</p>
           ) : (
             sortedLogs.map((log, index) => (
               <div key={index} className="text-sm space-y-1.5 bg-zinc-800 p-2 rounded">
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-2 min-w-0 flex-1">
                     {log.fromCache && (
-                      <div title={`Cache: ${log.cacheType || "DEFAULT"}`} className="flex-shrink-0">
+                      <div
+                        title={t("debug.tooltips.cache", { type: log.cacheType || "DEFAULT" })}
+                        className="flex-shrink-0"
+                      >
                         <Database className="h-4 w-4" />
                       </div>
                     )}
                     {log.mongoAccess && (
                       <div
-                        title={`MongoDB: ${log.mongoAccess.operation}`}
+                        title={t("debug.tooltips.mongodb", {
+                          operation: log.mongoAccess.operation,
+                        })}
                         className="flex-shrink-0"
                       >
                         <CircleDot className="h-4 w-4 text-blue-400" />
                       </div>
                     )}
                     {log.pageRender && (
-                      <div title={`Page Render: ${log.pageRender.page}`} className="flex-shrink-0">
+                      <div
+                        title={t("debug.tooltips.pageRender", { page: log.pageRender.page })}
+                        className="flex-shrink-0"
+                      >
                         <Layout className="h-4 w-4 text-purple-400" />
                       </div>
                     )}
                     {!log.fromCache && !log.mongoAccess && !log.pageRender && (
-                      <div title="API Call" className="flex-shrink-0">
+                      <div title={t("debug.tooltips.apiCall")} className="flex-shrink-0">
                         <Globe className="h-4 w-4 text-rose-400" />
                       </div>
                     )}
@@ -170,7 +180,10 @@ export function DebugInfo() {
                     </span>
                   </div>
                   <div className="flex items-center gap-3 flex-shrink-0">
-                    <div className="flex items-center gap-1 text-zinc-400" title="Heure du log">
+                    <div
+                      className="flex items-center gap-1 text-zinc-400"
+                      title={t("debug.tooltips.logTime")}
+                    >
                       <Clock className="h-3 w-3" />
                       <span>{formatTime(log.timestamp)}</span>
                     </div>
@@ -188,7 +201,7 @@ export function DebugInfo() {
                       {formatDuration(log.duration)}ms
                     </span>
                     {log.mongoAccess && (
-                      <span className="text-blue-400" title="Temps d'accès MongoDB">
+                      <span className="text-blue-400" title={t("debug.tooltips.mongoAccess")}>
                         +{formatDuration(log.mongoAccess.duration)}ms
                       </span>
                     )}

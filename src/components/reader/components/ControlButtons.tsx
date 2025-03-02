@@ -118,7 +118,7 @@ export const ControlButtons = ({
             "absolute top-4 right-4 p-2 rounded-full bg-background/50 hover:bg-background/80 transition-all duration-300 z-30",
             showControls ? "opacity-100" : "opacity-0 pointer-events-none"
           )}
-          aria-label="Fermer"
+          aria-label={t("reader.controls.close")}
         >
           <X className="h-6 w-6" />
         </button>
@@ -136,7 +136,7 @@ export const ControlButtons = ({
             direction === "rtl" ? "right-4" : "left-4",
             showControls ? "opacity-100" : "opacity-0 pointer-events-none"
           )}
-          aria-label="Page précédente"
+          aria-label={t("reader.controls.previousPage")}
         >
           <ChevronLeft className="h-8 w-8" />
         </button>
@@ -154,7 +154,7 @@ export const ControlButtons = ({
             direction === "rtl" ? "left-4" : "right-4",
             showControls ? "opacity-100" : "opacity-0 pointer-events-none"
           )}
-          aria-label="Page suivante"
+          aria-label={t("reader.controls.nextPage")}
         >
           <ChevronRight className="h-8 w-8" />
         </button>
