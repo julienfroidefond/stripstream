@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Download, Check, Loader2 } from "lucide-react";
 import { Button } from "./button";
 import { useToast } from "./use-toast";
-import { KomgaBook } from "@/types/komga";
+import type { KomgaBook } from "@/types/komga";
 
 interface BookOfflineButtonProps {
   book: KomgaBook;

@@ -1,6 +1,6 @@
 "use client";
 
-import { PropsWithChildren } from "react";
+import type { PropsWithChildren } from "react";
 import { useTranslate } from "@/hooks/useTranslate";
 import "@/i18n/i18n";
 

@@ -5,9 +5,9 @@ import { revalidatePath } from "next/cache";
 import { RefreshButton } from "@/components/library/RefreshButton";
 import { withPageTiming } from "@/lib/hoc/withPageTiming";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
-import { LibraryResponse } from "@/types/library";
-import { KomgaSeries, KomgaLibrary } from "@/types/komga";
-import { UserPreferences } from "@/types/preferences";
+import type { LibraryResponse } from "@/types/library";
+import type { KomgaSeries, KomgaLibrary } from "@/types/komga";
+import type { UserPreferences } from "@/types/preferences";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 

@@ -2,7 +2,8 @@
 
 import { CoverClient } from "./cover-client";
 import { ProgressBar } from "./progress-bar";
-import { SeriesCoverProps, getImageUrl } from "./cover-utils";
+import type { SeriesCoverProps} from "./cover-utils";
+import { getImageUrl } from "./cover-utils";
 
 export function SeriesCover({
   series,

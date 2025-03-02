@@ -1,6 +1,6 @@
 import fs from "fs/promises";
 import path from "path";
-import { CacheType } from "./base-api.service";
+import type { CacheType } from "./base-api.service";
 import { AuthServerService } from "./auth-server.service";
 import { PreferencesService } from "./preferences.service";
 import { ERROR_CODES } from "../../constants/errorCodes";

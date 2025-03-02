@@ -2,7 +2,7 @@
 
 import { SeriesCover } from "@/components/ui/series-cover";
 import { useTranslate } from "@/hooks/useTranslate";
-import { KomgaSeries } from "@/types/komga";
+import type { KomgaSeries } from "@/types/komga";
 
 interface OptimizedHeroSeries {
   id: string;

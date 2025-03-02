@@ -1,6 +1,6 @@
 "use client";
 
-import { KomgaConfig, TTLConfigData } from "@/types/komga";
+import type { KomgaConfig, TTLConfigData } from "@/types/komga";
 import { useTranslate } from "@/hooks/useTranslate";
 import { DisplaySettings } from "./DisplaySettings";
 import { KomgaSettings } from "./KomgaSettings";

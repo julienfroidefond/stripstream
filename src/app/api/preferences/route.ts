@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest} from "next/server";
+import { NextResponse } from "next/server";
 import { PreferencesService } from "@/lib/services/preferences.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
-import { UserPreferences } from "@/types/preferences";
+import type { UserPreferences } from "@/types/preferences";
 import { getErrorMessage } from "@/utils/errors";
 
 export async function GET() {

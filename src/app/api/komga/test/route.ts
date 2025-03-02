@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { TestService } from "@/lib/services/test.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { getErrorMessage } from "@/utils/errors";
-import { KomgaLibrary } from "@/types/komga";
+import type { KomgaLibrary } from "@/types/komga";
 
 export async function POST(request: Request) {
   try {

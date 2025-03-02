@@ -1,5 +1,5 @@
 import { ERROR_MESSAGES } from "../constants/errorMessages";
-import { ErrorCode } from "../constants/errorCodes";
+import type { ErrorCode } from "../constants/errorCodes";
 
 export class AppError extends Error {
   constructor(

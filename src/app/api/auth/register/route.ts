@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { AuthServerService, UserData } from "@/lib/services/auth-server.service";
+import type { UserData } from "@/lib/services/auth-server.service";
+import { AuthServerService } from "@/lib/services/auth-server.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 import { getErrorMessage } from "@/utils/errors";

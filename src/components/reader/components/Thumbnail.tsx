@@ -1,4 +1,4 @@
-import { ThumbnailProps } from "../types";
+import type { ThumbnailProps } from "../types";
 import { ImageLoader } from "@/components/ui/image-loader";
 import { cn } from "@/lib/utils";
 import Image from "next/image";

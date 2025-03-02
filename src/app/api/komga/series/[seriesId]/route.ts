@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { SeriesService } from "@/lib/services/series.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
-import { KomgaSeries } from "@/types/komga";
+import type { KomgaSeries } from "@/types/komga";
 import { getErrorMessage } from "@/utils/errors";
 
 export const dynamic = "force-dynamic";

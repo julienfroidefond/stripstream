@@ -1,6 +1,6 @@
 import { BaseApiService } from "./base-api.service";
-import { KomgaBook, KomgaSeries } from "@/types/komga";
-import { LibraryResponse } from "@/types/library";
+import type { KomgaBook, KomgaSeries } from "@/types/komga";
+import type { LibraryResponse } from "@/types/library";
 import { getServerCacheService } from "./server-cache.service";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";

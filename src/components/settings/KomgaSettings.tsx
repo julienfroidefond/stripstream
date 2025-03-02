@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useTranslate } from "@/hooks/useTranslate";
 import { useToast } from "@/components/ui/use-toast";
 import { Network, Loader2 } from "lucide-react";
-import { KomgaConfig } from "@/types/komga";
+import type { KomgaConfig } from "@/types/komga";
 
 interface KomgaSettingsProps {
   initialConfig: KomgaConfig | null;

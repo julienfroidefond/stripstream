@@ -1,7 +1,7 @@
 import { ConfigDBService } from "@/lib/services/config-db.service";
 import { ClientSettings } from "@/components/settings/ClientSettings";
-import { Metadata } from "next";
-import { KomgaConfig, TTLConfig } from "@/types/komga";
+import type { Metadata } from "next";
+import type { KomgaConfig, TTLConfig } from "@/types/komga";
 
 export const metadata: Metadata = {
   title: "Préférences",

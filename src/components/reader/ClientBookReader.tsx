@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { KomgaBook } from "@/types/komga";
+import type { KomgaBook } from "@/types/komga";
 import { BookReader } from "./BookReader";
 import { Button } from "@/components/ui/button";
 

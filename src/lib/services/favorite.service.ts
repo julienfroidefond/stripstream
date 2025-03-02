@@ -4,7 +4,7 @@ import { DebugService } from "./debug.service";
 import { AuthServerService } from "./auth-server.service";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
-import { User } from "@/types/komga";
+import type { User } from "@/types/komga";
 
 export class FavoriteService {
   private static readonly FAVORITES_CHANGE_EVENT = "favoritesChanged";

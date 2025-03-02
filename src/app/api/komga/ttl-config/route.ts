@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { ConfigDBService } from "@/lib/services/config-db.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
-import { TTLConfig } from "@/types/komga";
+import type { TTLConfig } from "@/types/komga";
 import { getErrorMessage } from "@/utils/errors";
 
 export async function GET() {

@@ -2,13 +2,14 @@
 
 import { CoverClient } from "./cover-client";
 import { ProgressBar } from "./progress-bar";
-import { BookCoverProps, getImageUrl } from "./cover-utils";
+import type { BookCoverProps} from "./cover-utils";
+import { getImageUrl } from "./cover-utils";
 import { ClientOfflineBookService } from "@/lib/services/client-offlinebook.service";
 import { MarkAsReadButton } from "./mark-as-read-button";
 import { MarkAsUnreadButton } from "./mark-as-unread-button";
 import { BookOfflineButton } from "./book-offline-button";
 import { useTranslate } from "@/hooks/useTranslate";
-import { KomgaBook } from "@/types/komga";
+import type { KomgaBook } from "@/types/komga";
 import { formatDate } from "@/lib/utils";
 
 // Fonction utilitaire pour obtenir les informations de statut de lecture

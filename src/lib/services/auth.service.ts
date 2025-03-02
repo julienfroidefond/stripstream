@@ -1,6 +1,6 @@
 "use client";
 
-import { AppErrorType } from "@/types/global";
+import type { AppErrorType } from "@/types/global";
 import { ERROR_CODES } from "@/constants/errorCodes";
 
 class AuthService {

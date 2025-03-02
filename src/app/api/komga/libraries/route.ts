@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { LibraryService } from "@/lib/services/library.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
-import { KomgaLibrary } from "@/types/komga";
+import type { KomgaLibrary } from "@/types/komga";
 import { getErrorMessage } from "@/utils/errors";
 export const dynamic = "force-dynamic";
 

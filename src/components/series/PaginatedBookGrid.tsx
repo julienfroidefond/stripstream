@@ -6,7 +6,7 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Loader2, Filter } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { KomgaBook } from "@/types/komga";
+import type { KomgaBook } from "@/types/komga";
 import { useTranslate } from "@/hooks/useTranslate";
 
 interface PaginatedBookGridProps {

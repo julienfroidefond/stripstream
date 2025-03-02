@@ -3,8 +3,9 @@
   "parser": "@typescript-eslint/parser",
   "plugins": ["@typescript-eslint", "unused-imports"],
   "rules": {
+    "no-unused-vars": "off",
     "@typescript-eslint/no-unused-vars": [
-      "warn",
+      "error",
       {
         "argsIgnorePattern": "^_",
         "varsIgnorePattern": "^_",
@@ -22,7 +23,7 @@
     "no-unreachable": "error",
     "no-unused-expressions": "warn",
     "no-unused-private-class-members": "warn",
-    "unused-imports/no-unused-imports": "warn",
+    "unused-imports/no-unused-imports": "error",
     "unused-imports/no-unused-vars": [
       "warn",
       {
@@ -33,6 +34,7 @@
       }
     ],
     "no-empty-function": "warn",
-    "no-empty": ["warn", { "allowEmptyCatch": true }]
+    "no-empty": ["warn", { "allowEmptyCatch": true }],
+    "@typescript-eslint/consistent-type-imports": ["error", { "prefer": "type-imports" }]
   }
 }

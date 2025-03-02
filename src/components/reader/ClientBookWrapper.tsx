@@ -1,6 +1,6 @@
 "use client";
 
-import { KomgaBook } from "@/types/komga";
+import type { KomgaBook } from "@/types/komga";
 import { BookReader } from "./BookReader";
 import { useRouter } from "next/navigation";
 import { ClientOfflineBookService } from "@/lib/services/client-offlinebook.service";

@@ -1,6 +1,6 @@
 "use client";
 
-import { KomgaBook } from "@/types/komga";
+import type { KomgaBook } from "@/types/komga";
 import { BookCover } from "@/components/ui/book-cover";
 import { useState, useEffect } from "react";
 import { useTranslate } from "@/hooks/useTranslate";

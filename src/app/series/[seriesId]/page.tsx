@@ -5,9 +5,9 @@ import { PreferencesService } from "@/lib/services/preferences.service";
 import { revalidatePath } from "next/cache";
 import { withPageTiming } from "@/lib/hoc/withPageTiming";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
-import { LibraryResponse } from "@/types/library";
-import { KomgaBook, KomgaSeries } from "@/types/komga";
-import { UserPreferences } from "@/types/preferences";
+import type { LibraryResponse } from "@/types/library";
+import type { KomgaBook, KomgaSeries } from "@/types/komga";
+import type { UserPreferences } from "@/types/preferences";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 

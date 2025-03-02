@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { getErrorMessage } from "@/utils/errors";
-import { AppErrorType } from "@/types/global";
+import type { AppErrorType } from "@/types/global";
 
 export async function POST() {
   try {

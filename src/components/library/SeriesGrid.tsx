@@ -1,6 +1,6 @@
 "use client";
 
-import { KomgaSeries } from "@/types/komga";
+import type { KomgaSeries } from "@/types/komga";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { SeriesCover } from "@/components/ui/series-cover";

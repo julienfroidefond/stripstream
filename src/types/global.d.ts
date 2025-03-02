@@ -1,4 +1,4 @@
-import { ErrorCode } from "@/constants/errorCodes";
+import type { ErrorCode } from "@/constants/errorCodes";
 
 export interface AppErrorType extends Error {
   code: ErrorCode;

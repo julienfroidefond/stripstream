@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { ConfigDBService } from "@/lib/services/config-db.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
-import { KomgaConfig, KomgaConfigData } from "@/types/komga";
+import type { KomgaConfig, KomgaConfigData } from "@/types/komga";
 import { getErrorMessage } from "@/utils/errors";
 
 export const dynamic = "force-dynamic";

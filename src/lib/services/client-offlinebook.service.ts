@@ -1,4 +1,4 @@
-import { KomgaBook } from "@/types/komga";
+import type { KomgaBook } from "@/types/komga";
 
 export class ClientOfflineBookService {
   static setCurrentPage(book: KomgaBook, page: number) {

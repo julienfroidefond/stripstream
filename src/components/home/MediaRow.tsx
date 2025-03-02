@@ -3,7 +3,7 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { KomgaBook, KomgaSeries } from "@/types/komga";
+import type { KomgaBook, KomgaSeries } from "@/types/komga";
 import { BookCover } from "../ui/book-cover";
 import { SeriesCover } from "../ui/series-cover";
 

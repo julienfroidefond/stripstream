@@ -5,7 +5,7 @@ import { DebugService } from "./debug.service";
 import { AuthServerService } from "./auth-server.service";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
-import { User, KomgaConfigData, TTLConfigData, KomgaConfig, TTLConfig } from "@/types/komga";
+import type { User, KomgaConfigData, TTLConfigData, KomgaConfig, TTLConfig } from "@/types/komga";
 
 export class ConfigDBService {
   private static getCurrentUser(): User {

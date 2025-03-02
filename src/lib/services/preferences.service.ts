@@ -2,8 +2,9 @@ import { PreferencesModel } from "@/lib/models/preferences.model";
 import { AuthServerService } from "./auth-server.service";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
-import { UserPreferences, defaultPreferences } from "@/types/preferences";
-import { User } from "@/types/komga";
+import type { UserPreferences} from "@/types/preferences";
+import { defaultPreferences } from "@/types/preferences";
+import type { User } from "@/types/komga";
 
 export class PreferencesService {
   static getCurrentUser(): User {
