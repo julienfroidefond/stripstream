@@ -1,7 +1,7 @@
 "use client";
 
 import { Book, BookOpen, BookMarked, Star, StarOff } from "lucide-react";
-import { KomgaSeries } from "@/types/komga";
+import type { KomgaSeries } from "@/types/komga";
 import { useState, useEffect } from "react";
 import { Button } from "../ui/button";
 import { useToast } from "@/components/ui/use-toast";

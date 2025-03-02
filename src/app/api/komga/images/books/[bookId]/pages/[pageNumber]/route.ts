@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { BookService } from "@/lib/services/book.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
@@ -8,10 +9,12 @@ export const dynamic = "force-dynamic";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { bookId: string; pageNumber: string } }
+  { params }: { params: Promise<{ bookId: string; pageNumber: string }> }
 ) {
   try {
-    const response = await BookService.getPage(params.bookId, parseInt(params.pageNumber));
+    const { bookId, pageNumber } = await params;
+
+    const response = await BookService.getPage(bookId, parseInt(pageNumber));
     return response;
   } catch (error) {
     console.error("Erreur lors de la récupération de la page du livre:", error);

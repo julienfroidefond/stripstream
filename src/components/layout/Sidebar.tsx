@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { authService } from "@/lib/services/auth.service";
 import { useEffect, useState, useCallback } from "react";
-import { KomgaLibrary, KomgaSeries } from "@/types/komga";
+import type { KomgaLibrary, KomgaSeries } from "@/types/komga";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { AppError } from "@/utils/errors";
 import { ERROR_CODES } from "@/constants/errorCodes";

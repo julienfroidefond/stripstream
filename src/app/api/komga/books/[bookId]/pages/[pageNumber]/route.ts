@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { BookService } from "@/lib/services/book.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { getErrorMessage } from "@/utils/errors";
@@ -8,10 +9,12 @@ export const dynamic = "force-dynamic";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { bookId: string; pageNumber: string } }
+  { params }: { params: Promise<{ bookId: string; pageNumber: string }> }
 ) {
   try {
-    const pageNumber: number = parseInt(params.pageNumber);
+    const { bookId: bookIdParam, pageNumber: pageNumberParam } = await params;
+
+    const pageNumber: number = parseInt(pageNumberParam);
     if (isNaN(pageNumber) || pageNumber < 0) {
       return NextResponse.json(
         {
@@ -25,7 +28,7 @@ export async function GET(
       );
     }
 
-    const response = await BookService.getPage(params.bookId, pageNumber);
+    const response = await BookService.getPage(bookIdParam, pageNumber);
     const buffer = await response.arrayBuffer();
     const headers = new Headers();
     headers.set("Content-Type", response.headers.get("Content-Type") || "image/jpeg");

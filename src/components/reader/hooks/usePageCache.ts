@@ -1,6 +1,6 @@
 import { useCallback, useRef } from "react";
-import { PageCache } from "../types";
-import { KomgaBook } from "@/types/komga";
+import type { PageCache } from "../types";
+import type { KomgaBook } from "@/types/komga";
 
 interface UsePageCacheProps {
   book: KomgaBook;

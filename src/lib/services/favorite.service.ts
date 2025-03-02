@@ -4,7 +4,7 @@ import { DebugService } from "./debug.service";
 import { AuthServerService } from "./auth-server.service";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
-import { User } from "@/types/komga";
+import type { User } from "@/types/komga";
 
 export class FavoriteService {
   private static readonly FAVORITES_CHANGE_EVENT = "favoritesChanged";
@@ -16,8 +16,8 @@ export class FavoriteService {
     }
   }
 
-  private static getCurrentUser(): User {
-    const user = AuthServerService.getCurrentUser();
+  private static async getCurrentUser(): Promise<User> {
+    const user = await AuthServerService.getCurrentUser();
     if (!user) {
       throw new AppError(ERROR_CODES.AUTH.UNAUTHENTICATED);
     }
@@ -29,7 +29,7 @@ export class FavoriteService {
    */
   static async isFavorite(seriesId: string): Promise<boolean> {
     try {
-      const user = this.getCurrentUser();
+      const user = await this.getCurrentUser();
       await connectDB();
 
       return DebugService.measureMongoOperation("isFavorite", async () => {
@@ -50,7 +50,7 @@ export class FavoriteService {
    */
   static async addToFavorites(seriesId: string): Promise<void> {
     try {
-      const user = this.getCurrentUser();
+      const user = await this.getCurrentUser();
       await connectDB();
 
       await DebugService.measureMongoOperation("addToFavorites", async () => {
@@ -72,7 +72,7 @@ export class FavoriteService {
    */
   static async removeFromFavorites(seriesId: string): Promise<void> {
     try {
-      const user = this.getCurrentUser();
+      const user = await this.getCurrentUser();
       await connectDB();
 
       await DebugService.measureMongoOperation("removeFromFavorites", async () => {
@@ -92,7 +92,7 @@ export class FavoriteService {
    * Récupère tous les IDs des séries favorites
    */
   static async getAllFavoriteIds(): Promise<string[]> {
-    const user = this.getCurrentUser();
+    const user = await this.getCurrentUser();
     await connectDB();
 
     return DebugService.measureMongoOperation("getAllFavoriteIds", async () => {
@@ -102,7 +102,7 @@ export class FavoriteService {
   }
 
   static async addFavorite(seriesId: string) {
-    const user = this.getCurrentUser();
+    const user = await this.getCurrentUser();
     await connectDB();
 
     return DebugService.measureMongoOperation("addFavorite", async () => {
@@ -116,7 +116,7 @@ export class FavoriteService {
   }
 
   static async removeFavorite(seriesId: string): Promise<boolean> {
-    const user = this.getCurrentUser();
+    const user = await this.getCurrentUser();
     await connectDB();
 
     return DebugService.measureMongoOperation("removeFavorite", async () => {

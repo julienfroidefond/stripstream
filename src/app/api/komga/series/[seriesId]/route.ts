@@ -2,14 +2,19 @@ import { NextResponse } from "next/server";
 import { SeriesService } from "@/lib/services/series.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
-import { KomgaSeries } from "@/types/komga";
+import type { KomgaSeries } from "@/types/komga";
 import { getErrorMessage } from "@/utils/errors";
-
+import type { NextRequest } from "next/server";
 export const dynamic = "force-dynamic";
 
-export async function GET(request: Request, { params }: { params: { seriesId: string } }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ seriesId: string }> }
+) {
   try {
-    const series: KomgaSeries = await SeriesService.getSeries(params.seriesId);
+    const seriesId: string = (await params).seriesId;
+
+    const series: KomgaSeries = await SeriesService.getSeries(seriesId);
     return NextResponse.json(series);
   } catch (error) {
     console.error("API Series - Erreur:", error);

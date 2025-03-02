@@ -1,5 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
-import { DebugService, RequestTiming } from "@/lib/services/debug.service";
+import type { NextRequest} from "next/server";
+import { NextResponse } from "next/server";
+import type { RequestTiming } from "@/lib/services/debug.service";
+import { DebugService } from "@/lib/services/debug.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { getErrorMessage } from "@/utils/errors";
 import { AppError } from "@/utils/errors";

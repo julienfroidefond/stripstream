@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { authService } from "@/lib/services/auth.service";
-import { AppErrorType } from "@/types/global";
+import type { AppErrorType } from "@/types/global";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { useTranslate } from "@/hooks/useTranslate";

@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { KomgaBook } from "@/types/komga";
+import type { KomgaBook } from "@/types/komga";
 import { ClientOfflineBookService } from "@/lib/services/client-offlinebook.service";
 
 interface UsePageNavigationProps {

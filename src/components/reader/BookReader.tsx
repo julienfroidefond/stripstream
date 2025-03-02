@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { BookReaderProps } from "./types";
+import type { BookReaderProps } from "./types";
 import { useOrientation } from "./hooks/useOrientation";
 import { usePageNavigation } from "./hooks/usePageNavigation";
 import { usePageCache } from "./hooks/usePageCache";

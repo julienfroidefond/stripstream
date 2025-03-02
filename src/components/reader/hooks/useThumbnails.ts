@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { KomgaBook } from "@/types/komga";
+import type { KomgaBook } from "@/types/komga";
 
 interface UseThumbnailsProps {
   book: KomgaBook;

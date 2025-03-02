@@ -1,11 +1,11 @@
-import { AuthConfig } from "@/types/auth";
+import type { AuthConfig } from "@/types/auth";
 import { getServerCacheService } from "./server-cache.service";
 import { ConfigDBService } from "./config-db.service";
 import { DebugService } from "./debug.service";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
-import { KomgaConfig } from "@/types/komga";
-import { ServerCacheService } from "./server-cache.service";
+import type { KomgaConfig } from "@/types/komga";
+import type { ServerCacheService } from "./server-cache.service";
 // Types de cache disponibles
 export type CacheType = "DEFAULT" | "HOME" | "LIBRARIES" | "SERIES" | "BOOKS" | "IMAGES";
 

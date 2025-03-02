@@ -1,10 +1,10 @@
 import { BaseApiService } from "./base-api.service";
-import { LibraryResponse } from "@/types/library";
-import { Series } from "@/types/series";
+import type { LibraryResponse } from "@/types/library";
+import type { Series } from "@/types/series";
 import { getServerCacheService } from "./server-cache.service";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
-import { KomgaLibrary } from "@/types/komga";
+import type { KomgaLibrary } from "@/types/komga";
 
 export class LibraryService extends BaseApiService {
   static async getLibraries(): Promise<KomgaLibrary[]> {

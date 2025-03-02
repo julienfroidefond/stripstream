@@ -12,7 +12,7 @@ import {
   RefreshCw,
   Globe,
 } from "lucide-react";
-import { CacheType } from "@/lib/services/base-api.service";
+import type { CacheType } from "@/lib/services/base-api.service";
 import { useTranslation } from "react-i18next";
 
 interface RequestTiming {

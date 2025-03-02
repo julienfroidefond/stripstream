@@ -1,4 +1,4 @@
-import { KomgaUser } from "./komga";
+import type { KomgaUser } from "./komga";
 
 export interface AuthConfig {
   serverUrl: string;

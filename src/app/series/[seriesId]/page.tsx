@@ -5,9 +5,9 @@ import { PreferencesService } from "@/lib/services/preferences.service";
 import { revalidatePath } from "next/cache";
 import { withPageTiming } from "@/lib/hoc/withPageTiming";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
-import { LibraryResponse } from "@/types/library";
-import { KomgaBook, KomgaSeries } from "@/types/komga";
-import { UserPreferences } from "@/types/preferences";
+import type { LibraryResponse } from "@/types/library";
+import type { KomgaBook, KomgaSeries } from "@/types/komga";
+import type { UserPreferences } from "@/types/preferences";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 
@@ -51,16 +51,19 @@ async function refreshSeries(seriesId: string) {
 }
 
 async function SeriesPage({ params, searchParams }: PageProps) {
-  const currentPage = searchParams.page ? parseInt(searchParams.page) : 1;
+  const seriesId = (await params).seriesId;
+  const page = (await searchParams).page;
+  const unread = (await searchParams).unread;
+
+  const currentPage = page ? parseInt(page) : 1;
   const preferences: UserPreferences = await PreferencesService.getPreferences();
 
   // Utiliser le paramètre d'URL s'il existe, sinon utiliser la préférence utilisateur
-  const unreadOnly =
-    searchParams.unread !== undefined ? searchParams.unread === "true" : preferences.showOnlyUnread;
+  const unreadOnly = unread !== undefined ? unread === "true" : preferences.showOnlyUnread;
 
   try {
     const { data: books, series }: { data: LibraryResponse<KomgaBook>; series: KomgaSeries } =
-      await getSeriesBooks(params.seriesId, currentPage, unreadOnly);
+      await getSeriesBooks(seriesId, currentPage, unreadOnly);
 
     return (
       <div className="container">

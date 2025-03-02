@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { SeriesService } from "@/lib/services/series.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
@@ -6,9 +7,14 @@ import { getErrorMessage } from "@/utils/errors";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(request: NextRequest, { params }: { params: { seriesId: string } }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ seriesId: string }> }
+) {
   try {
-    const response = await SeriesService.getCover(params.seriesId);
+    const seriesId: string = (await params).seriesId;
+
+    const response = await SeriesService.getCover(seriesId);
     return response;
   } catch (error) {
     console.error("Erreur lors de la récupération de la couverture de la série:", error);

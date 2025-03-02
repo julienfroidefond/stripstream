@@ -1,4 +1,4 @@
-import { KomgaBook, KomgaSeries } from "@/types/komga";
+import type { KomgaBook, KomgaSeries } from "@/types/komga";
 
 export interface BaseCoverProps {
   alt?: string;

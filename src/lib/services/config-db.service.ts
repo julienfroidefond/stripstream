@@ -5,11 +5,11 @@ import { DebugService } from "./debug.service";
 import { AuthServerService } from "./auth-server.service";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
-import { User, KomgaConfigData, TTLConfigData, KomgaConfig, TTLConfig } from "@/types/komga";
+import type { User, KomgaConfigData, TTLConfigData, KomgaConfig, TTLConfig } from "@/types/komga";
 
 export class ConfigDBService {
-  private static getCurrentUser(): User {
-    const user: User | null = AuthServerService.getCurrentUser();
+  private static async getCurrentUser(): Promise<User> {
+    const user: User | null = await AuthServerService.getCurrentUser();
     if (!user) {
       throw new AppError(ERROR_CODES.AUTH.UNAUTHENTICATED);
     }
@@ -18,7 +18,7 @@ export class ConfigDBService {
 
   static async saveConfig(data: KomgaConfigData): Promise<KomgaConfig> {
     try {
-      const user: User | null = this.getCurrentUser();
+      const user: User | null = await this.getCurrentUser();
       await connectDB();
 
       const authHeader: string = Buffer.from(`${data.username}:${data.password}`).toString(
@@ -51,7 +51,7 @@ export class ConfigDBService {
 
   static async getConfig(): Promise<KomgaConfig | null> {
     try {
-      const user: User | null = this.getCurrentUser();
+      const user: User | null = await this.getCurrentUser();
       await connectDB();
 
       return DebugService.measureMongoOperation("getConfig", async () => {
@@ -68,7 +68,7 @@ export class ConfigDBService {
 
   static async getTTLConfig(): Promise<TTLConfig | null> {
     try {
-      const user: User | null = this.getCurrentUser();
+      const user: User | null = await this.getCurrentUser();
       await connectDB();
 
       return DebugService.measureMongoOperation("getTTLConfig", async () => {
@@ -85,7 +85,7 @@ export class ConfigDBService {
 
   static async saveTTLConfig(data: TTLConfigData): Promise<TTLConfig> {
     try {
-      const user: User | null = this.getCurrentUser();
+      const user: User | null = await this.getCurrentUser();
       await connectDB();
 
       return DebugService.measureMongoOperation("saveTTLConfig", async () => {

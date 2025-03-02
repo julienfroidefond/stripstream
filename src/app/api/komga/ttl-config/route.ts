@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { ConfigDBService } from "@/lib/services/config-db.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
-import { TTLConfig } from "@/types/komga";
+import type { TTLConfig } from "@/types/komga";
 import { getErrorMessage } from "@/utils/errors";
+import type { NextRequest } from "next/server";
 
 export async function GET() {
   try {
@@ -37,7 +38,7 @@ export async function GET() {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
     const config: TTLConfig = await ConfigDBService.saveTTLConfig(data);

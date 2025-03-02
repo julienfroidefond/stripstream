@@ -1,4 +1,4 @@
-import { NavigationBarProps } from "../types";
+import type { NavigationBarProps } from "../types";
 import { cn } from "@/lib/utils";
 import { Thumbnail } from "./Thumbnail";
 import { useThumbnails } from "../hooks/useThumbnails";

@@ -67,12 +67,13 @@ export class AuthServerService {
     return true;
   }
 
-  static setUserCookie(userData: UserData): void {
+  static async setUserCookie(userData: UserData): Promise<void> {
     // Encode user data in base64
     const encodedUserData = Buffer.from(JSON.stringify(userData)).toString("base64");
 
     // Set cookie with user data
-    cookies().set("stripUser", encodedUserData, {
+    const cookieStore = await cookies();
+    cookieStore.set("stripUser", encodedUserData, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
@@ -81,8 +82,9 @@ export class AuthServerService {
     });
   }
 
-  static getCurrentUser(): UserData | null {
-    const userCookie = cookies().get("stripUser");
+  static async getCurrentUser(): Promise<UserData | null> {
+    const cookieStore = await cookies();
+    const userCookie = cookieStore.get("stripUser");
 
     if (!userCookie) {
       return null;

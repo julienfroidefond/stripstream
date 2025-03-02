@@ -3,6 +3,7 @@ import { FavoriteService } from "@/lib/services/favorite.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 import { getErrorMessage } from "@/utils/errors";
+import type { NextRequest } from "next/server";
 
 export async function GET() {
   try {
@@ -35,7 +36,7 @@ export async function GET() {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const { seriesId }: { seriesId: string } = await request.json();
     await FavoriteService.addToFavorites(seriesId);
@@ -67,7 +68,7 @@ export async function POST(request: Request) {
   }
 }
 
-export async function DELETE(request: Request) {
+export async function DELETE(request: NextRequest) {
   try {
     const { seriesId }: { seriesId: string } = await request.json();
     await FavoriteService.removeFromFavorites(seriesId);

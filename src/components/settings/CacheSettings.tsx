@@ -6,7 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Trash2, Loader2 } from "lucide-react";
 import { CacheModeSwitch } from "@/components/settings/CacheModeSwitch";
 import { Label } from "@/components/ui/label";
-import { TTLConfigData } from "@/types/komga";
+import type { TTLConfigData } from "@/types/komga";
 
 interface CacheSettingsProps {
   initialTTLConfig: TTLConfigData | null;

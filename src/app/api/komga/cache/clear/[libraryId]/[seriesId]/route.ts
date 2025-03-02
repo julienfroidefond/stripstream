@@ -5,13 +5,14 @@ import { LibraryService } from "@/lib/services/library.service";
 import { HomeService } from "@/lib/services/home.service";
 import { SeriesService } from "@/lib/services/series.service";
 import { revalidatePath } from "next/cache";
+import type { NextRequest } from "next/server";
 
 export async function POST(
-  request: Request,
-  { params }: { params: { libraryId: string; seriesId: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ libraryId: string; seriesId: string }> }
 ) {
   try {
-    const { libraryId, seriesId } = params;
+    const { libraryId, seriesId } = await params;
 
     await HomeService.invalidateHomeCache();
     revalidatePath("/");

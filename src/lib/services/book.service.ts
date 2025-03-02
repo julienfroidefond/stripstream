@@ -1,6 +1,7 @@
 import { BaseApiService } from "./base-api.service";
-import { KomgaBook, KomgaBookWithPages } from "@/types/komga";
-import { ImageService, ImageResponse } from "./image.service";
+import type { KomgaBook, KomgaBookWithPages } from "@/types/komga";
+import type { ImageResponse } from "./image.service";
+import { ImageService } from "./image.service";
 import { PreferencesService } from "./preferences.service";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";

@@ -1,14 +1,15 @@
 import { BaseApiService } from "./base-api.service";
-import { LibraryResponse } from "@/types/library";
-import { KomgaBook, KomgaSeries } from "@/types/komga";
+import type { LibraryResponse } from "@/types/library";
+import type { KomgaBook, KomgaSeries } from "@/types/komga";
 import { BookService } from "./book.service";
-import { ImageService, ImageResponse } from "./image.service";
+import type { ImageResponse } from "./image.service";
+import { ImageService } from "./image.service";
 import { PreferencesService } from "./preferences.service";
 import { getServerCacheService } from "./server-cache.service";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
-import { UserPreferences } from "@/types/preferences";
-import { ServerCacheService } from "./server-cache.service";
+import type { UserPreferences } from "@/types/preferences";
+import type { ServerCacheService } from "./server-cache.service";
 
 export class SeriesService extends BaseApiService {
   static async getSeries(seriesId: string): Promise<KomgaSeries> {

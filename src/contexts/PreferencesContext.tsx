@@ -3,7 +3,8 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { ERROR_CODES } from "../constants/errorCodes";
 import { AppError } from "../utils/errors";
-import { UserPreferences, defaultPreferences } from "@/types/preferences";
+import type { UserPreferences} from "@/types/preferences";
+import { defaultPreferences } from "@/types/preferences";
 
 interface PreferencesContextType {
   preferences: UserPreferences;

@@ -1,4 +1,4 @@
-import { ControlButtonsProps } from "../types";
+import type { ControlButtonsProps } from "../types";
 import {
   ChevronLeft,
   ChevronRight,

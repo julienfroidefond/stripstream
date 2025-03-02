@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { withPageTiming } from "@/lib/hoc/withPageTiming";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { ERROR_CODES } from "@/constants/errorCodes";
-import { HomeData } from "@/lib/services/home.service";
+import type { HomeData } from "@/lib/services/home.service";
 import { AppError } from "@/utils/errors";
 
 async function refreshHome() {

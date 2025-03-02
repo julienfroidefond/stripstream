@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { ERROR_CODES } from "./constants/errorCodes";
-import { UserData } from "./lib/services/auth-server.service";
+import type { UserData } from "./lib/services/auth-server.service";
 import { getErrorMessage } from "./utils/errors";
 
 // Routes qui ne nécessitent pas d'authentification
