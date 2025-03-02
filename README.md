@@ -1,6 +1,6 @@
 # Stripstream
 
-Une application web moderne pour lire des bandes dessinées numériques, construite avec Next.js 14 et l'API Komga.
+A modern web application for reading digital comics, built with Next.js 14 and the Komga API.
 
 ## 🚀 Technologies
 
@@ -11,96 +11,133 @@ Une application web moderne pour lire des bandes dessinées numériques, constru
 - [Shadcn/ui](https://ui.shadcn.com/)
 - [Docker](https://www.docker.com/)
 
-## 🛠 Prérequis
+## 🛠 Prerequisites
 
-- Node.js 20.x ou supérieur
-- npm 10.x ou supérieur
-- Docker et Docker Compose (optionnel)
+- Node.js 20.x or higher
+- Yarn 1.22.x or higher
+- Docker and Docker Compose (optional)
 
 ## 📦 Installation
 
-### Méthode classique
+### Standard Method
 
-1. Cloner le repository
+1. Clone the repository
 
 ```bash
-git clone [url-du-repo]
+git clone [repo-url]
 cd stripstream
 ```
 
-2. Installer les dépendances
+2. Install dependencies
 
 ```bash
-npm install
+yarn install
 ```
 
-3. Créer un fichier `.env.local` à la racine du projet
-
-4. Lancer le serveur de développement
+3. Copy the example environment file and adjust it to your needs
 
 ```bash
-npm run dev
+cp .env.example .env.local
 ```
 
-### Avec Docker
-
-1. Cloner le repository et se placer dans le dossier
+4. Start the development server
 
 ```bash
-git clone [url-du-repo]
+yarn dev
+```
+
+### With Docker
+
+1. Clone the repository and navigate to the folder
+
+```bash
+git clone [repo-url]
 cd stripstream
 ```
 
-2. Lancer avec Docker Compose
+2. Launch with Docker Compose
 
 ```bash
 docker-compose up --build
 ```
 
-L'application sera accessible sur `http://localhost:3000`
+The application will be accessible at `http://localhost:3000`
 
-## 🔧 Scripts disponibles
+## 🔧 Available Scripts
 
-- `npm run dev` - Lance le serveur de développement
-- `npm run build` - Crée une version de production
-- `npm start` - Lance la version de production
-- `npm run lint` - Vérifie le code avec ESLint
+- `yarn dev` - Starts the development server
+- `yarn build` - Creates a production build
+- `yarn start` - Runs the production version
+- `yarn lint` - Checks code with ESLint
+- `yarn format` - Formats code with Prettier
 
-## 🌐 API Komga
+## 🌐 Komga API
 
-L'application utilise l'API Komga pour la gestion des bandes dessinées. La documentation de l'API est disponible ici :
-[Documentation Komga API](https://cloud.julienfroidefond.com/swagger-ui/index.html#/)
+The application uses the Komga API for comic book management. The API documentation is available here:
+[Komga API Documentation](https://cloud.julienfroidefond.com/swagger-ui/index.html#/)
 
-## 🏗 Structure du projet
+## 🏗 Project Structure
 
 ```
 src/
-├── app/                 # Pages et routes Next.js
-├── components/          # Composants React réutilisables
-│   ├── home/           # Composants spécifiques à la page d'accueil
-│   ├── layout/         # Composants de mise en page
-│   ├── reader/         # Composants du lecteur de BD
-│   └── ui/             # Composants UI réutilisables
-├── lib/                # Utilitaires et services
-│   └── services/       # Services pour l'API et autres fonctionnalités
-└── styles/             # Styles globaux
+├── app/                 # Next.js pages and routes
+├── components/          # Reusable React components
+├── constants/          # Application constants
+├── contexts/           # React contexts
+├── hooks/              # Custom React hooks
+├── i18n/               # Internationalization configuration
+├── lib/                # Utilities and services
+├── messages/           # Translation messages
+├── middleware.ts       # Next.js middleware
+├── styles/             # Global styles
+├── types/              # TypeScript type definitions
+└── utils/              # Helper functions and utilities
+
+docs/                   # Project documentation
+scripts/                # Utility scripts
+public/                 # Static assets
 ```
 
-## 🤝 Contribution
+## 🤝 Contributing
 
-1. Créer une branche pour votre fonctionnalité
-2. Commiter vos changements
-3. Pousser vers la branche
-4. Ouvrir une Pull Request
+1. Create a branch for your feature
+2. Commit your changes
+3. Push to the branch
+4. Open a Pull Request
 
-## 📝 Guidelines de développement
+## 📝 Development Guidelines
 
-- Suivre les principes DRY (Don't Repeat Yourself)
-- Utiliser TypeScript pour tout nouveau code
-- Utiliser les classes Tailwind pour le styling
-- Implémenter les fonctionnalités d'accessibilité
-- Mettre à jour le devbook.md pour toute modification significative
+- Follow DRY (Don't Repeat Yourself) principles
+- Use TypeScript for all new code
+- Use Tailwind classes for styling
+- Implement accessibility features
+- Update devbook.md for any significant changes
+- Follow the project's code style (enforced by ESLint and Prettier)
 
-## 📄 Licence
+## 📄 License
 
-Ce projet est sous licence [insérer type de licence]
+This project is licensed under the MIT License.
+
+```text
+MIT License
+
+Copyright (c) 2025 Julien Froidefond
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
