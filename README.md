@@ -2,6 +2,33 @@
 
 A modern web application for reading digital comics, built with Next.js 14 and the Komga API.
 
+You can try it out with the following credentials on https://stripstream.julienfroidefond.com :
+
+- Email: `demo@stripstream.local`
+- Password: `fft$VSD96dis`
+
+## 📸 Capture
+
+### Home
+
+![Capture d'écran de l'application](./docs/images/home.png)
+
+![Capture d'écran de l'application](./docs/images/nav.png)
+
+### Series
+
+![Capture d'écran de l'application](./docs/images/series%20list.png)
+
+### Books
+
+![Capture d'écran de l'application](./docs/images/books%20list.png)
+
+### Reader
+
+![Capture d'écran de l'application](./docs/images/reader%20double%20page.png)
+
+![Capture d'écran de l'application](./docs/images/reader%20nav.png)
+
 ## 🚀 Technologies
 
 - [Next.js 14](https://nextjs.org/)
