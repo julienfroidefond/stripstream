@@ -38,6 +38,44 @@ You can try it out with the following credentials on https://stripstream.julienf
 - [Shadcn/ui](https://ui.shadcn.com/)
 - [Docker](https://www.docker.com/)
 
+## 📦 Major features
+
+- Synchronize with Komga : read progress, series list, books list
+- Reader
+  - Right to left
+  - Page view : double page, single page
+  - Page navigation : page number, page percentage, page scroll
+  - Page zoom : fit to width, fit to height, fit to page
+  - Auto double page on ipad if horizontal
+  - Fullscreen button for desktop and ipad safari
+  - Thumbnail view : carousel of pages
+  - Handling touch and key events
+- Language : english / french
+- Favorites : local only, not synchronized with Komga
+- UI
+  - Dark / light mode
+  - Responsive design
+  - Loading state
+  - Error states
+  - progress bars on series and books
+- books list
+  - Pagination
+  - Mark as read / mark as unread buttons
+  - Download button
+- Series list
+  - Pagination
+  - search
+- Server caching for all ressources and TTL in settings
+- PWA
+  - Download locally in storage books
+  - Offline mode
+- Settings to configure the application
+  - Komga configuration
+  - Cache and TTLs
+  - Default filter
+  - Thumbnail with first page high quality or thumbnails
+  - Debug mode (show Komga API / next / mongo requests and responses timings)
+
 ## 🛠 Prerequisites
 
 - Node.js 20.x or higher
