@@ -57,16 +57,20 @@ async function getLibrarySeries(
 }
 
 async function LibraryPage({ params, searchParams }: PageProps) {
-  const currentPage = searchParams.page ? parseInt(searchParams.page) : 1;
+  const libraryId = (await params).libraryId;
+  const unread = (await searchParams).unread;
+  const search = (await searchParams).search;
+  const page = (await searchParams).page;
+
+  const currentPage = page ? parseInt(page) : 1;
   const preferences: UserPreferences = await PreferencesService.getPreferences();
 
   // Utiliser le paramètre d'URL s'il existe, sinon utiliser la préférence utilisateur
-  const unreadOnly =
-    searchParams.unread !== undefined ? searchParams.unread === "true" : preferences.showOnlyUnread;
+  const unreadOnly = unread !== undefined ? unread === "true" : preferences.showOnlyUnread;
 
   try {
     const { data: series, library }: { data: LibraryResponse<KomgaSeries>; library: KomgaLibrary } =
-      await getLibrarySeries(params.libraryId, currentPage, unreadOnly, searchParams.search);
+      await getLibrarySeries(libraryId, currentPage, unreadOnly, search);
 
     return (
       <div className="container py-8 space-y-8">
@@ -78,7 +82,7 @@ async function LibraryPage({ params, searchParams }: PageProps) {
                 {series.totalElements} série{series.totalElements > 1 ? "s" : ""}
               </p>
             )}
-            <RefreshButton libraryId={params.libraryId} refreshLibrary={refreshLibrary} />
+            <RefreshButton libraryId={libraryId} refreshLibrary={refreshLibrary} />
           </div>
         </div>
         <PaginatedSeriesGrid
@@ -98,7 +102,7 @@ async function LibraryPage({ params, searchParams }: PageProps) {
         <div className="container py-8 space-y-8">
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold">Séries</h1>
-            <RefreshButton libraryId={params.libraryId} refreshLibrary={refreshLibrary} />
+            <RefreshButton libraryId={libraryId} refreshLibrary={refreshLibrary} />
           </div>
           <ErrorMessage errorCode={error.code} />
         </div>
