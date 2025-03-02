@@ -56,7 +56,7 @@ export const usePageNavigation = ({
         }
       }
     },
-    [book.id, pages.length]
+    [book, pages.length]
   );
 
   const debouncedSyncReadProgress = useCallback(
@@ -274,7 +274,7 @@ export const usePageNavigation = ({
         ClientOfflineBookService.removeCurrentPage(book);
       }
     };
-  }, [syncReadProgress]);
+  }, [syncReadProgress, book]);
 
   const handleDoubleClick = useCallback(() => {
     setZoomLevel((prevZoom) => {

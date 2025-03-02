@@ -2,7 +2,6 @@ import { Suspense } from "react";
 import { ClientBookWrapper } from "@/components/reader/ClientBookWrapper";
 import { BookSkeleton } from "@/components/skeletons/BookSkeleton";
 import { BookService } from "@/lib/services/book.service";
-import { notFound } from "next/navigation";
 import { withPageTiming } from "@/lib/hoc/withPageTiming";
 import { KomgaBookWithPages } from "@/types/komga";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";

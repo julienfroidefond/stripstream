@@ -8,7 +8,6 @@ import { ERROR_CODES } from "@/constants/errorCodes";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { useTranslate } from "@/hooks/useTranslate";
 import { getErrorMessage } from "@/utils/errors";
-import { AppError } from "@/utils/errors";
 
 interface RegisterFormProps {
   from?: string;

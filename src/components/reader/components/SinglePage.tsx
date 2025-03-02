@@ -40,6 +40,7 @@ export const SinglePage = ({
     >
       <ImageLoader isLoading={isLoading} />
       {pageUrl && (
+        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={pageUrl}
           style={{
