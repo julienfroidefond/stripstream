@@ -168,7 +168,7 @@
       "unread": "Non lu",
       "progress": "{read}/{total}"
     },
-    "books": "{count} tome | {count} tomes",
+    "books": "{count} tomes",
     "filters": {
       "title": "Filtres",
       "showAll": "Afficher tout",
