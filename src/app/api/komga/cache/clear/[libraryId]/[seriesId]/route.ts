@@ -5,13 +5,13 @@ import { LibraryService } from "@/lib/services/library.service";
 import { HomeService } from "@/lib/services/home.service";
 import { SeriesService } from "@/lib/services/series.service";
 import { revalidatePath } from "next/cache";
+import type { NextRequest } from "next/server";
 
-export async function POST(
-  request: Request,
-  { params }: { params: { libraryId: string; seriesId: string } }
-) {
+export async function POST(request: NextRequest) {
   try {
-    const { libraryId, seriesId } = params;
+    const params = request.nextUrl.searchParams;
+    const libraryId: string = params.get("libraryId") || "";
+    const seriesId: string = params.get("seriesId") || "";
 
     await HomeService.invalidateHomeCache();
     revalidatePath("/");

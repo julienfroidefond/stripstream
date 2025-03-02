@@ -4,12 +4,15 @@ import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 import type { KomgaSeries } from "@/types/komga";
 import { getErrorMessage } from "@/utils/errors";
-
+import type { NextRequest } from "next/server";
 export const dynamic = "force-dynamic";
 
-export async function GET(request: Request, { params }: { params: { seriesId: string } }) {
+export async function GET(request: NextRequest) {
   try {
-    const series: KomgaSeries = await SeriesService.getSeries(params.seriesId);
+    const params = request.nextUrl.searchParams;
+    const seriesId: string = params.get("seriesId") || "";
+
+    const series: KomgaSeries = await SeriesService.getSeries(seriesId);
     return NextResponse.json(series);
   } catch (error) {
     console.error("API Series - Erreur:", error);

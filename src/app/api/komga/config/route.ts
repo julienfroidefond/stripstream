@@ -3,10 +3,11 @@ import { ConfigDBService } from "@/lib/services/config-db.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import type { KomgaConfig, KomgaConfigData } from "@/types/komga";
 import { getErrorMessage } from "@/utils/errors";
+import type { NextRequest } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const data: KomgaConfigData = await request.json();
     const mongoConfig: KomgaConfig = await ConfigDBService.saveConfig(data);

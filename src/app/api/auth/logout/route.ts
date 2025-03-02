@@ -7,7 +7,9 @@ import type { AppErrorType } from "@/types/global";
 export async function POST() {
   try {
     // Supprimer le cookie
-    cookies().delete("stripUser");
+    const cookieStore = await cookies();
+    cookieStore.delete("stripUser");
+
     return NextResponse.json({ message: "👋 Déconnexion réussie" });
   } catch (error) {
     console.error("Erreur lors de la déconnexion:", error);

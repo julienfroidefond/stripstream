@@ -25,8 +25,8 @@ export interface RequestTiming {
 }
 
 export class DebugService {
-  private static getCurrentUserId(): string {
-    const user = AuthServerService.getCurrentUser();
+  private static async getCurrentUserId(): Promise<string> {
+    const user = await AuthServerService.getCurrentUser();
     if (!user) {
       throw new AppError(ERROR_CODES.AUTH.UNAUTHENTICATED);
     }

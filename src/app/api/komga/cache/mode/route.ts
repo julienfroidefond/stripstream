@@ -1,12 +1,9 @@
 import { NextResponse } from "next/server";
-import type {
-  CacheMode,
-  ServerCacheService} from "@/lib/services/server-cache.service";
-import {
-  getServerCacheService
-} from "@/lib/services/server-cache.service";
+import type { CacheMode, ServerCacheService } from "@/lib/services/server-cache.service";
+import { getServerCacheService } from "@/lib/services/server-cache.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { getErrorMessage } from "@/utils/errors";
+import type { NextRequest } from "next/server";
 
 export async function GET() {
   try {
@@ -27,7 +24,7 @@ export async function GET() {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const { mode }: { mode: CacheMode } = await request.json();
     if (mode !== "file" && mode !== "memory") {

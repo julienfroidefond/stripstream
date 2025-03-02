@@ -3,8 +3,9 @@ import { TestService } from "@/lib/services/test.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { getErrorMessage } from "@/utils/errors";
 import type { KomgaLibrary } from "@/types/komga";
+import type { NextRequest } from "next/server";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const { serverUrl, username, password } = await request.json();
     const authHeader = Buffer.from(`${username}:${password}`).toString("base64");

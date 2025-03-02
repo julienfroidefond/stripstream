@@ -4,14 +4,14 @@ import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 import type { UserData } from "@/lib/services/auth-server.service";
 import { getErrorMessage } from "@/utils/errors";
-
-export async function POST(request: Request) {
+import type { NextRequest } from "next/server";
+export async function POST(request: NextRequest) {
   try {
     const { email, password } = await request.json();
 
     try {
       const userData: UserData = await AuthServerService.loginUser(email, password);
-      AuthServerService.setUserCookie(userData);
+      await AuthServerService.setUserCookie(userData);
 
       return NextResponse.json({
         message: "✅ Connexion réussie",

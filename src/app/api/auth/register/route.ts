@@ -4,14 +4,15 @@ import { AuthServerService } from "@/lib/services/auth-server.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 import { getErrorMessage } from "@/utils/errors";
+import type { NextRequest } from "next/server";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const { email, password } = await request.json();
 
     try {
       const userData: UserData = await AuthServerService.createUser(email, password);
-      AuthServerService.setUserCookie(userData);
+      await AuthServerService.setUserCookie(userData);
 
       return NextResponse.json({
         message: "✅ Inscription réussie",

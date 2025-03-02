@@ -1,4 +1,4 @@
-import type { NextRequest} from "next/server";
+import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { BookService } from "@/lib/services/book.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
@@ -7,13 +7,13 @@ import { getErrorMessage } from "@/utils/errors";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { bookId: string; pageNumber: string } }
-) {
+export async function GET(request: NextRequest) {
   try {
-    // Convertir le numéro de page en nombre
-    const pageNumber: number = parseInt(params.pageNumber);
+    const params = request.nextUrl.searchParams;
+    const bookId: string = params.get("bookId") || "";
+    const pageNumberParam: string = params.get("pageNumber") || "";
+
+    const pageNumber: number = parseInt(pageNumberParam);
     if (isNaN(pageNumber) || pageNumber < 0) {
       return NextResponse.json(
         {
@@ -27,7 +27,7 @@ export async function GET(
       );
     }
 
-    const response = await BookService.getPageThumbnail(params.bookId, pageNumber);
+    const response = await BookService.getPageThumbnail(bookId, pageNumber);
     return response;
   } catch (error) {
     console.error("Erreur lors de la récupération de la miniature de la page:", error);

@@ -1,4 +1,4 @@
-import type { NextRequest} from "next/server";
+import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { BookService } from "@/lib/services/book.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
@@ -7,12 +7,13 @@ import { getErrorMessage } from "@/utils/errors";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { bookId: string; pageNumber: string } }
-) {
+export async function GET(request: NextRequest) {
   try {
-    const response = await BookService.getPage(params.bookId, parseInt(params.pageNumber));
+    const params = request.nextUrl.searchParams;
+    const bookId: string = params.get("bookId") || "";
+    const pageNumber: string = params.get("pageNumber") || "";
+
+    const response = await BookService.getPage(bookId, parseInt(pageNumber));
     return response;
   } catch (error) {
     console.error("Erreur lors de la récupération de la page du livre:", error);
