@@ -70,7 +70,7 @@ export function BookCover({
 
   const statusInfo = getReadingStatusInfo(book, t);
   const isRead = book.readProgress?.completed || false;
-  const hasReadProgress = book.readProgress !== null;
+  const hasReadProgress = book.readProgress !== null || currentPage > 0;
 
   const handleMarkAsRead = () => {
     onSuccess?.(book, "read");
