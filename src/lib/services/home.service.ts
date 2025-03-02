@@ -96,6 +96,9 @@ export class HomeService extends BaseApiService {
         latestSeries: latestSeries.content || [],
       };
     } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
       throw new AppError(ERROR_CODES.HOME.FETCH_ERROR, {}, error);
     }
   }
