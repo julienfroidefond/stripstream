@@ -2,7 +2,7 @@
 
 import { CoverClient } from "./cover-client";
 import { ProgressBar } from "./progress-bar";
-import type { BookCoverProps} from "./cover-utils";
+import type { BookCoverProps } from "./cover-utils";
 import { getImageUrl } from "./cover-utils";
 import { ClientOfflineBookService } from "@/lib/services/client-offlinebook.service";
 import { MarkAsReadButton } from "./mark-as-read-button";
@@ -52,7 +52,7 @@ export function BookCover({
   alt = "Image de couverture",
   className,
   quality = 80,
-  sizes = "100vw",
+  sizes = "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw",
   showProgressUi = true,
   onSuccess,
   showControls = true,
