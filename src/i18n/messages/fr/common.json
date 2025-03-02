@@ -263,5 +263,22 @@
     "BOOK_PAGES_FETCH_ERROR": "Erreur lors de la récupération des pages du livre",
 
     "GENERIC_ERROR": "Une erreur est survenue"
+  },
+  "reader": {
+    "controls": {
+      "doublePage": {
+        "enable": "Activer le mode double page",
+        "disable": "Désactiver le mode double page"
+      },
+      "direction": {
+        "current": "Changer le sens de lecture (actuellement de {{direction}})",
+        "ltr": "gauche à droite",
+        "rtl": "droite à gauche"
+      },
+      "fullscreen": {
+        "enter": "Plein écran",
+        "exit": "Quitter le plein écran"
+      }
+    }
   }
 }

@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PageInput } from "./PageInput";
+import { useTranslation } from "react-i18next";
 
 export const ControlButtons = ({
   showControls,
@@ -29,6 +30,8 @@ export const ControlButtons = ({
   onToggleDirection,
   onPageChange,
 }: ControlButtonsProps) => {
+  const { t } = useTranslation();
+
   return (
     <>
       {/* Boutons de contrôle */}
@@ -48,9 +51,11 @@ export const ControlButtons = ({
             onToggleDoublePage();
           }}
           className="p-2 rounded-full bg-background/50 hover:bg-background/80 transition-colors"
-          aria-label={
-            isDoublePage ? "Désactiver le mode double page" : "Activer le mode double page"
-          }
+          aria-label={t(
+            isDoublePage
+              ? "reader.controls.doublePage.disable"
+              : "reader.controls.doublePage.enable"
+          )}
         >
           {isDoublePage ? (
             <LayoutTemplate className="h-6 w-6" />
@@ -64,9 +69,13 @@ export const ControlButtons = ({
             onToggleDirection();
           }}
           className="p-2 rounded-full bg-background/50 hover:bg-background/80 transition-colors"
-          aria-label={`Changer le sens de lecture (actuellement de ${
-            direction === "ltr" ? "gauche à droite" : "droite à gauche"
-          })`}
+          aria-label={t("reader.controls.direction.current", {
+            direction: t(
+              direction === "ltr"
+                ? "reader.controls.direction.ltr"
+                : "reader.controls.direction.rtl"
+            ),
+          })}
         >
           {direction === "rtl" ? (
             <MoveLeft className="h-6 w-6" />
@@ -80,7 +89,9 @@ export const ControlButtons = ({
             onToggleFullscreen();
           }}
           className="p-2 rounded-full bg-background/50 hover:bg-background/80 transition-colors"
-          aria-label={isFullscreen ? "Quitter le plein écran" : "Plein écran"}
+          aria-label={t(
+            isFullscreen ? "reader.controls.fullscreen.exit" : "reader.controls.fullscreen.enter"
+          )}
         >
           {isFullscreen ? <Minimize2 className="h-6 w-6" /> : <Maximize2 className="h-6 w-6" />}
         </button>

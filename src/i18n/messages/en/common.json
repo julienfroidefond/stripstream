@@ -263,5 +263,22 @@
     "BOOK_PAGES_FETCH_ERROR": "Error fetching book pages",
 
     "GENERIC_ERROR": "An error occurred"
+  },
+  "reader": {
+    "controls": {
+      "doublePage": {
+        "enable": "Enable double page mode",
+        "disable": "Disable double page mode"
+      },
+      "direction": {
+        "current": "Change reading direction (currently {{direction}})",
+        "ltr": "left to right",
+        "rtl": "right to left"
+      },
+      "fullscreen": {
+        "enter": "Enter fullscreen",
+        "exit": "Exit fullscreen"
+      }
+    }
   }
 }
