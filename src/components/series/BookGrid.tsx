@@ -65,9 +65,9 @@ export function BookGrid({ books, onBookClick }: BookGridProps) {
             key={book.id}
             className="group relative aspect-[2/3] overflow-hidden rounded-lg bg-muted"
           >
-            <button
+            <div
               onClick={() => onBookClick(book)}
-              className="w-full h-full hover:opacity-100 transition-all"
+              className="w-full h-full hover:opacity-100 transition-all cursor-pointer"
             >
               <BookCover
                 book={book}
@@ -76,7 +76,7 @@ export function BookGrid({ books, onBookClick }: BookGridProps) {
                 })}
                 onSuccess={(book, action) => handleOnSuccess(book, action)}
               />
-            </button>
+            </div>
           </div>
         );
       })}

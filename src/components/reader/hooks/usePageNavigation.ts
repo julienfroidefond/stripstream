@@ -17,7 +17,8 @@ export const usePageNavigation = ({
   onClose,
   direction,
 }: UsePageNavigationProps) => {
-  const [currentPage, setCurrentPage] = useState(ClientOfflineBookService.getCurrentPage(book));
+  const cPage = ClientOfflineBookService.getCurrentPage(book);
+  const [currentPage, setCurrentPage] = useState(cPage < 1 ? 1 : cPage);
   const [isLoading, setIsLoading] = useState(true);
   const [secondPageLoading, setSecondPageLoading] = useState(true);
   const [zoomLevel, setZoomLevel] = useState(1);
