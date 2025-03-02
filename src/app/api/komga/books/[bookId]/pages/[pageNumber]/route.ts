@@ -7,11 +7,12 @@ import { AppError } from "@/utils/errors";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ bookId: string; pageNumber: string }> }
+) {
   try {
-    const params = request.nextUrl.searchParams;
-    const pageNumberParam = params.get("pageNumber") || "0";
-    const bookIdParam = params.get("bookId") || "";
+    const { bookId: bookIdParam, pageNumber: pageNumberParam } = await params;
 
     const pageNumber: number = parseInt(pageNumberParam);
     if (isNaN(pageNumber) || pageNumber < 0) {

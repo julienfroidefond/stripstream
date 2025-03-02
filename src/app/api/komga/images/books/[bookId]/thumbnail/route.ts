@@ -5,10 +5,12 @@ import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 import { getErrorMessage } from "@/utils/errors";
 
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ bookId: string }> }
+) {
   try {
-    const params = request.nextUrl.searchParams;
-    const bookId: string = params.get("bookId") || "";
+    const bookId: string = (await params).bookId;
 
     const response = await BookService.getCover(bookId);
     return response;

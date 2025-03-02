@@ -5,11 +5,13 @@ import { ERROR_CODES } from "@/constants/errorCodes";
 import { getErrorMessage } from "@/utils/errors";
 import { AppError } from "@/utils/errors";
 
-export async function PATCH(request: NextRequest) {
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ bookId: string }> }
+) {
   try {
     const { page, completed } = await request.json();
-    const params = request.nextUrl.searchParams;
-    const bookId: string = params.get("bookId") || "";
+    const bookId: string = (await params).bookId;
 
     if (typeof page !== "number") {
       return NextResponse.json(
@@ -53,10 +55,12 @@ export async function PATCH(request: NextRequest) {
   }
 }
 
-export async function DELETE(request: NextRequest) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ bookId: string }> }
+) {
   try {
-    const params = request.nextUrl.searchParams;
-    const bookId: string = params.get("bookId") || "";
+    const bookId: string = (await params).bookId;
 
     await BookService.deleteReadProgress(bookId);
     return NextResponse.json({ message: "🗑️ Progression supprimée avec succès" });

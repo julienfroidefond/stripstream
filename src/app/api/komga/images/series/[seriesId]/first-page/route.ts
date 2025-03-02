@@ -7,10 +7,12 @@ import { getErrorMessage } from "@/utils/errors";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ seriesId: string }> }
+) {
   try {
-    const params = request.nextUrl.searchParams;
-    const seriesId: string = params.get("seriesId") || "";
+    const seriesId: string = (await params).seriesId;
 
     const response = await SeriesService.getCover(seriesId);
     return response;

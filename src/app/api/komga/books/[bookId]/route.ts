@@ -6,10 +6,12 @@ import { AppError } from "@/utils/errors";
 import type { KomgaBookWithPages } from "@/types/komga";
 import type { NextRequest } from "next/server";
 
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ bookId: string }> }
+) {
   try {
-    const params = request.nextUrl.searchParams;
-    const bookId: string = params.get("bookId") || "";
+    const bookId: string = (await params).bookId;
 
     const data: KomgaBookWithPages = await BookService.getBook(bookId);
     return NextResponse.json(data);

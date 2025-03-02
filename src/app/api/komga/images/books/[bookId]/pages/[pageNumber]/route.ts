@@ -7,11 +7,12 @@ import { getErrorMessage } from "@/utils/errors";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ bookId: string; pageNumber: string }> }
+) {
   try {
-    const params = request.nextUrl.searchParams;
-    const bookId: string = params.get("bookId") || "";
-    const pageNumber: string = params.get("pageNumber") || "";
+    const { bookId, pageNumber } = await params;
 
     const response = await BookService.getPage(bookId, parseInt(pageNumber));
     return response;

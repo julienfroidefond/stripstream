@@ -7,11 +7,12 @@ import { SeriesService } from "@/lib/services/series.service";
 import { revalidatePath } from "next/cache";
 import type { NextRequest } from "next/server";
 
-export async function POST(request: NextRequest) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ libraryId: string; seriesId: string }> }
+) {
   try {
-    const params = request.nextUrl.searchParams;
-    const libraryId: string = params.get("libraryId") || "";
-    const seriesId: string = params.get("seriesId") || "";
+    const { libraryId, seriesId } = await params;
 
     await HomeService.invalidateHomeCache();
     revalidatePath("/");

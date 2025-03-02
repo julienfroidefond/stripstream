@@ -7,10 +7,12 @@ import { getErrorMessage } from "@/utils/errors";
 import type { NextRequest } from "next/server";
 export const dynamic = "force-dynamic";
 
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ seriesId: string }> }
+) {
   try {
-    const params = request.nextUrl.searchParams;
-    const seriesId: string = params.get("seriesId") || "";
+    const seriesId: string = (await params).seriesId;
 
     const series: KomgaSeries = await SeriesService.getSeries(seriesId);
     return NextResponse.json(series);
