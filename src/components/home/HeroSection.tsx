@@ -24,7 +24,7 @@ export function HeroSection({ series }: HeroSectionProps) {
   // });
 
   return (
-    <div className="relative h-[300px] sm:h-[400px] lg:h-[500px] -mx-4 sm:-mx-8 lg:-mx-14 overflow-hidden">
+    <div className="relative h-[300px] sm:h-[400px] lg:h-[500px] -mx-4 sm:-mx-8 overflow-hidden">
       {/* Grille de couvertures en arrière-plan */}
       <div className="absolute inset-0 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-4 p-4 opacity-10">
         {series?.map((series) => (
