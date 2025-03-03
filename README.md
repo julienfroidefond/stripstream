@@ -26,8 +26,8 @@ A modern web application for reading digital comics, built with Next.js 14 and t
 
 ## 🚀 Technologies
 
-- [Next.js 14](https://nextjs.org/)
-- [React 18](https://reactjs.org/)
+- [Next.js](https://nextjs.org/)
+- [React](https://reactjs.org/)
 - [TypeScript](https://www.typescriptlang.org/)
 - [Tailwind CSS](https://tailwindcss.com/)
 - [Shadcn/ui](https://ui.shadcn.com/)
