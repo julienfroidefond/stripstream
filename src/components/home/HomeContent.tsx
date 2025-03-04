@@ -7,6 +7,7 @@ import { RefreshButton } from "@/components/library/RefreshButton";
 import { History, Sparkles, Clock, LibraryBig, BookOpen } from "lucide-react";
 import type { HomeData } from "@/lib/services/home.service";
 import { useTranslate } from "@/hooks/useTranslate";
+import { useEffect, useState } from "react";
 
 interface HomeContentProps {
   data: HomeData;
@@ -15,6 +16,16 @@ interface HomeContentProps {
 
 export function HomeContent({ data, refreshHome }: HomeContentProps) {
   const { t } = useTranslate();
+  const [showHero, setShowHero] = useState(false);
+
+  // Vérifier si la HeroSection a déjà été affichée
+  useEffect(() => {
+    const heroShown = localStorage.getItem('heroSectionShown');
+    if (!heroShown && data.ongoing && data.ongoing.length > 0) {
+      setShowHero(true);
+      localStorage.setItem('heroSectionShown', 'true');
+    }
+  }, [data.ongoing]);
 
   // Vérification des données pour le debug
   // console.log("HomeContent - Données reçues:", {
@@ -59,8 +70,8 @@ export function HomeContent({ data, refreshHome }: HomeContentProps) {
         <h1 className="text-3xl font-bold">{t("home.title")}</h1>
         <RefreshButton libraryId="home" refreshLibrary={refreshHome} />
       </div>
-      {/* Hero Section - Afficher uniquement si nous avons des séries en cours */}
-      {data.ongoing && data.ongoing.length > 0 && (
+      {/* Hero Section - Afficher uniquement si nous avons des séries en cours et si elle n'a jamais été affichée */}
+      {showHero && data.ongoing && data.ongoing.length > 0 && (
         <HeroSection series={optimizeHeroSeriesData(data.ongoing)} />
       )}
 
