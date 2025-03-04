@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 
 export function LoadingBar() {
   const [isLoading, setIsLoading] = useState(false);
   const [shouldRender, setShouldRender] = useState(false);
+  const pendingRequestsRef = useRef<number>(0);
 
   useEffect(() => {
     if (isLoading) {
@@ -26,7 +27,9 @@ export function LoadingBar() {
 
     const handleStop = () => {
       setTimeout(() => {
-        setIsLoading(false);
+        if (pendingRequestsRef.current === 0) {
+          setIsLoading(false);
+        }
       }, 300);
     };
 
@@ -36,6 +39,39 @@ export function LoadingBar() {
     return () => {
       window.removeEventListener("navigationStart", handleStart);
       window.removeEventListener("navigationComplete", handleStop);
+    };
+  }, []);
+
+  useEffect(() => {
+    const originalFetch = window.fetch;
+    
+    window.fetch = async function(...args) {
+      const url = args[0].toString();
+      const isStaticRequest = /\.(css|js|png|jpg|jpeg|gif|webp|svg|ico|mp3|mp4|webm|ttf|woff|woff2)$/.test(url);
+      
+      if (!isStaticRequest) {
+        pendingRequestsRef.current++;
+        setIsLoading(true);
+      }
+      
+      try {
+        const response = await originalFetch.apply(this, args);
+        return response;
+      } finally {
+        if (!isStaticRequest) {
+          pendingRequestsRef.current = Math.max(0, pendingRequestsRef.current - 1);
+          
+          if (pendingRequestsRef.current === 0) {
+            setTimeout(() => {
+              setIsLoading(false);
+            }, 200);
+          }
+        }
+      }
+    };
+
+    return () => {
+      window.fetch = originalFetch;
     };
   }, []);
 
