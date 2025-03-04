@@ -7,7 +7,7 @@ body {
   overscroll-behavior: none;
 }
 
-/* Ajout des règles pour gérer le safe-area-inset sur iOS */
+/* Ajout des règles pour gérer le safe-area-inset sur iOS
 @supports (padding-top: env(safe-area-inset-top)) {
   body {
     padding-top: env(safe-area-inset-top);
@@ -15,9 +15,9 @@ body {
 
   header.sticky {
     padding-top: env(safe-area-inset-top);
-    height: env(safe-area-inset-top);
+    height: calc(3.5rem + env(safe-area-inset-top)); 
   }
-}
+} */
 
 @layer base {
   :root {
