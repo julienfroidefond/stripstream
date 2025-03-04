@@ -63,7 +63,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const locale = cookieStore.get("NEXT_LOCALE")?.value || "fr";
 
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning className="h-full">
       <head>
         <meta
           name="viewport"
@@ -119,7 +119,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
         />
       </head>
-      <body className={cn("min-h-screen bg-background font-sans antialiased", inter.className)}>
+      <body
+        className={cn("min-h-screen bg-background font-sans antialiased h-full", inter.className)}
+      >
         <I18nProvider locale={locale}>
           <PreferencesProvider>
             <ClientLayout>{children}</ClientLayout>

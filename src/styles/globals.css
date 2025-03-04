@@ -2,7 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
-html, body {overscroll-behavior:none}
+html,
+body {
+  overscroll-behavior: none;
+}
+
+/* Ajout des règles pour gérer le safe-area-inset sur iOS */
+@supports (padding-top: env(safe-area-inset-top)) {
+  body {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  header.sticky {
+    padding-top: env(safe-area-inset-top);
+    height: calc(3.5rem + env(safe-area-inset-top)); /* 3.5rem (h-14) + safe-area-inset-top */
+  }
+}
 
 @layer base {
   :root {
@@ -84,5 +99,10 @@ html, body {overscroll-behavior:none}
   }
   .hide-scrollbar::-webkit-scrollbar {
     display: none; /* Chrome, Safari and Opera */
+  }
+
+  /* Classe utilitaire pour le padding-top avec safe-area-inset */
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0);
   }
 }

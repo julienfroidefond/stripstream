@@ -64,11 +64,11 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <PreferencesProvider>
-        <div className="relative min-h-screen">
+        <div className="relative min-h-screen h-full">
           <LoadingBar />
           {!isPublicRoute && <Header onToggleSidebar={handleToggleSidebar} />}
           {!isPublicRoute && <Sidebar isOpen={isSidebarOpen} onClose={handleCloseSidebar} />}
-          <main className={`${!isPublicRoute ? "container" : ""}`}>{children}</main>
+          <main className={`${!isPublicRoute ? "container pt-safe" : ""}`}>{children}</main>
           <InstallPWA />
           <Toaster />
           <NetworkStatus />
