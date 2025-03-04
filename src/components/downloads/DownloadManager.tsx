@@ -150,7 +150,7 @@ export function DownloadManager() {
 
   return (
     <>
-      <div className="flex flex-col gap-1 mb-8">
+      <div className="container mx-auto px-4 py-8 space-y-12">
         <h1 className="text-3xl font-bold tracking-tight">{t("downloads.page.title")}</h1>
         {t("downloads.page.description") && (
           <p className="text-lg text-muted-foreground">{t("downloads.page.description")}</p>
