@@ -89,7 +89,7 @@ export function LoginContent({ searchParams }: LoginContentProps) {
                   src="/images/icons/apple-icon-180x180.png"
                   alt="StripStream Logo"
                   className="w-[100%] h-[100%] object-cover"
-                  initial={{ scale: 0.8, opacity: 0 }}
+                  initial={{ scale: 1.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ duration: 0.5 }}
                   whileHover={{ scale: 1.05 }}
