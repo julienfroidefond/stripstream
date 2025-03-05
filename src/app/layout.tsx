@@ -3,10 +3,17 @@ import { Inter } from "next/font/google";
 import "@/styles/globals.css";
 import { cn } from "@/lib/utils";
 import ClientLayout from "@/components/layout/ClientLayout";
+import { PreferencesService } from "@/lib/services/preferences.service";
 import { PreferencesProvider } from "@/contexts/PreferencesContext";
 import { I18nProvider } from "@/components/providers/I18nProvider";
 import "@/i18n/i18n"; // Import i18next configuration
 import { cookies } from "next/headers";
+import { defaultPreferences } from "@/types/preferences";
+import type { UserPreferences } from "@/types/preferences";
+import type { KomgaLibrary, KomgaSeries } from "@/types/komga";
+import { FavoriteService } from "@/lib/services/favorite.service";
+import { LibraryService } from "@/lib/services/library.service";
+import { SeriesService } from "@/lib/services/series.service";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -61,6 +68,41 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies();
   const locale = cookieStore.get("NEXT_LOCALE")?.value || "fr";
+
+  // Récupération des données pour la sidebar côté serveur
+  let libraries: KomgaLibrary[] = [];
+  let favorites: KomgaSeries[] = [];
+  let preferences: UserPreferences = defaultPreferences;
+
+  try {
+    // Tentative de chargement des données. Si l'utilisateur n'est pas authentifié,
+    // les services lanceront une erreur mais l'application continuera de fonctionner
+    const [librariesData, favoritesData, preferencesData] = await Promise.allSettled([
+      LibraryService.getLibraries(),
+      FavoriteService.getAllFavoriteIds(),
+      PreferencesService.getPreferences(),
+    ]);
+
+    if (librariesData.status === "fulfilled") {
+      libraries = librariesData.value;
+    }
+
+    if (favoritesData.status === "fulfilled") {
+      favorites = await SeriesService.getMultipleSeries(favoritesData.value);
+    }
+
+    if (preferencesData.status === "fulfilled") {
+      const { showThumbnails, cacheMode, showOnlyUnread, debug } = preferencesData.value;
+      preferences = {
+        showThumbnails,
+        cacheMode,
+        showOnlyUnread,
+        debug,
+      };
+    }
+  } catch (error) {
+    console.error("Erreur lors du chargement des données de la sidebar:", error);
+  }
 
   return (
     <html lang={locale} suppressHydrationWarning className="h-full">
@@ -123,8 +165,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         className={cn("min-h-screen bg-background font-sans antialiased h-full", inter.className)}
       >
         <I18nProvider locale={locale}>
-          <PreferencesProvider>
-            <ClientLayout>{children}</ClientLayout>
+          <PreferencesProvider initialPreferences={preferences}>
+            <ClientLayout initialLibraries={libraries} initialFavorites={favorites}>
+              {children}
+            </ClientLayout>
           </PreferencesProvider>
         </I18nProvider>
       </body>

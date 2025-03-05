@@ -7,16 +7,22 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { InstallPWA } from "../ui/InstallPWA";
 import { Toaster } from "@/components/ui/toaster";
 import { usePathname } from "next/navigation";
-import { PreferencesProvider } from "@/contexts/PreferencesContext";
 import { registerServiceWorker } from "@/lib/registerSW";
 import { NetworkStatus } from "../ui/NetworkStatus";
 import { LoadingBar } from "@/components/ui/loading-bar";
 import { DebugWrapper } from "@/components/debug/DebugWrapper";
+import type { KomgaLibrary, KomgaSeries } from "@/types/komga";
 
 // Routes qui ne nécessitent pas d'authentification
 const publicRoutes = ["/login", "/register"];
 
-export default function ClientLayout({ children }: { children: React.ReactNode }) {
+interface ClientLayoutProps {
+  children: React.ReactNode;
+  initialLibraries: KomgaLibrary[];
+  initialFavorites: KomgaSeries[];
+}
+
+export default function ClientLayout({ children, initialLibraries = [], initialFavorites = [] }: ClientLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const pathname = usePathname();
 
@@ -63,18 +69,23 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <PreferencesProvider>
         <div className="relative min-h-screen h-full">
           <LoadingBar />
           {!isPublicRoute && <Header onToggleSidebar={handleToggleSidebar} />}
-          {!isPublicRoute && <Sidebar isOpen={isSidebarOpen} onClose={handleCloseSidebar} />}
+          {!isPublicRoute && (
+            <Sidebar 
+              isOpen={isSidebarOpen} 
+              onClose={handleCloseSidebar} 
+              initialLibraries={initialLibraries} 
+              initialFavorites={initialFavorites} 
+            />
+          )}
           <main className={`${!isPublicRoute ? "container pt-safe" : ""}`}>{children}</main>
           <InstallPWA />
           <Toaster />
           <NetworkStatus />
           <DebugWrapper />
         </div>
-      </PreferencesProvider>
     </ThemeProvider>
   );
 }

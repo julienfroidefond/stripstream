@@ -16,23 +16,23 @@ import { useTranslate } from "@/hooks/useTranslate";
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  initialLibraries: KomgaLibrary[];
+  initialFavorites: KomgaSeries[];
 }
 
-export function Sidebar({ isOpen, onClose }: SidebarProps) {
+export function Sidebar({ isOpen, onClose, initialLibraries, initialFavorites }: SidebarProps) {
   const { t } = useTranslate();
   const pathname = usePathname();
   const router = useRouter();
   const { preferences } = usePreferences();
-  const [libraries, setLibraries] = useState<KomgaLibrary[]>([]);
-  const [favorites, setFavorites] = useState<KomgaSeries[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [libraries, setLibraries] = useState<KomgaLibrary[]>(initialLibraries || []);
+  const [favorites, setFavorites] = useState<KomgaSeries[]>(initialFavorites || []);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isLoadingFavorites, setIsLoadingFavorites] = useState(true);
 
   const { toast } = useToast();
 
-  const fetchLibraries = useCallback(async () => {
-    setIsLoading(true);
+  const refreshLibraries = useCallback(async () => {
+    setIsRefreshing(true);
     try {
       const response = await fetch("/api/komga/libraries");
       if (!response.ok) {
@@ -50,15 +50,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             : getErrorMessage(ERROR_CODES.LIBRARY.FETCH_ERROR),
         variant: "destructive",
       });
-      setLibraries([]);
     } finally {
-      setIsLoading(false);
       setIsRefreshing(false);
     }
   }, [toast]);
 
-  const fetchFavorites = useCallback(async () => {
-    setIsLoadingFavorites(true);
+  const refreshFavorites = useCallback(async () => {
     try {
       const favoritesResponse = await fetch("/api/komga/favorites");
       if (!favoritesResponse.ok) {
@@ -91,28 +88,20 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             : getErrorMessage(ERROR_CODES.FAVORITE.FETCH_ERROR),
         variant: "destructive",
       });
-      setFavorites([]);
-    } finally {
-      setIsLoadingFavorites(false);
     }
   }, [toast]);
 
-  // Chargement initial des données
   useEffect(() => {
-    fetchLibraries();
-    fetchFavorites();
-  }, [fetchLibraries, fetchFavorites]);
-
-  // Rafraîchir les données quand les préférences changent
-  useEffect(() => {
-    fetchLibraries();
-    fetchFavorites();
-  }, [preferences, fetchLibraries, fetchFavorites]);
+    if (Object.keys(preferences).length > 0) {
+      refreshLibraries();
+      refreshFavorites();
+    }
+  }, [preferences, refreshLibraries, refreshFavorites]);
 
   // Mettre à jour les favoris quand ils changent
   useEffect(() => {
     const handleFavoritesChange = () => {
-      fetchFavorites();
+      refreshFavorites();
     };
 
     window.addEventListener("favoritesChanged", handleFavoritesChange);
@@ -120,11 +109,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     return () => {
       window.removeEventListener("favoritesChanged", handleFavoritesChange);
     };
-  }, [fetchFavorites]);
+  }, [refreshFavorites]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await Promise.all([fetchLibraries(), fetchFavorites()]);
+    await Promise.all([refreshLibraries(), refreshFavorites()]);
   };
 
   const handleLogout = async () => {
@@ -217,7 +206,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               </h2>
               <span className="text-xs text-muted-foreground">{favorites.length}</span>
             </div>
-            {isLoadingFavorites ? (
+            {isRefreshing ? (
               <div className="px-3 py-2 text-sm text-muted-foreground">
                 {t("sidebar.favorites.loading")}
               </div>
@@ -258,7 +247,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
               </button>
             </div>
-            {isLoading ? (
+            {isRefreshing ? (
               <div className="px-3 py-2 text-sm text-muted-foreground">
                 {t("sidebar.libraries.loading")}
               </div>

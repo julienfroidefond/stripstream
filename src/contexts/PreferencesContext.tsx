@@ -1,9 +1,9 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useState } from "react";
 import { ERROR_CODES } from "../constants/errorCodes";
 import { AppError } from "../utils/errors";
-import type { UserPreferences} from "@/types/preferences";
+import type { UserPreferences } from "@/types/preferences";
 import { defaultPreferences } from "@/types/preferences";
 
 interface PreferencesContextType {
@@ -14,8 +14,16 @@ interface PreferencesContextType {
 
 const PreferencesContext = createContext<PreferencesContextType | undefined>(undefined);
 
-export function PreferencesProvider({ children }: { children: React.ReactNode }) {
-  const [preferences, setPreferences] = useState<UserPreferences>(defaultPreferences);
+export function PreferencesProvider({
+  children,
+  initialPreferences,
+}: {
+  children: React.ReactNode;
+  initialPreferences?: UserPreferences;
+}) {
+  const [preferences, setPreferences] = useState<UserPreferences>(
+    initialPreferences || defaultPreferences
+  );
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchPreferences = async () => {
@@ -36,10 +44,6 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
       setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchPreferences();
-  }, []);
 
   const updatePreferences = async (newPreferences: Partial<UserPreferences>) => {
 
