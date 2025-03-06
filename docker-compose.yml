@@ -23,6 +23,8 @@ services:
         limits:
           cpus: "1"
           memory: 1G
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false"
     healthcheck:
       test:
         ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
