@@ -286,24 +286,82 @@
     }
   },
   "errors": {
+    "MONGODB_MISSING_URI": "MongoDB URI missing",
+    "MONGODB_CONNECTION_FAILED": "MongoDB connection failed",
+
+    "AUTH_UNAUTHENTICATED": "Unauthenticated",
     "AUTH_INVALID_CREDENTIALS": "Invalid credentials",
+    "AUTH_PASSWORD_NOT_STRONG": "Password is not strong enough",
     "AUTH_PASSWORD_MISMATCH": "Passwords do not match",
     "AUTH_EMAIL_EXISTS": "Email already exists",
-    "AUTH_PASSWORD_NOT_STRONG": "Password is not strong enough",
-    "AUTH_LOGOUT_ERROR": "Logout error",
     "AUTH_INVALID_USER_DATA": "Invalid user data",
-    "AUTH_UNAUTHENTICATED": "Unauthenticated",
-    "AUTH_LOGIN_ERROR": "Login error",
-    "AUTH_REGISTER_ERROR": "Register error",
+    "AUTH_LOGOUT_ERROR": "Error during logout",
+    "AUTH_LOGIN_ERROR": "Error during login",
+    "AUTH_REGISTER_ERROR": "Error during registration",
+
+    "KOMGA_MISSING_CONFIG": "Komga configuration missing",
+    "KOMGA_MISSING_CREDENTIALS": "Komga credentials missing",
+    "KOMGA_CONNECTION_ERROR": "Error connecting to Komga server",
+    "KOMGA_HTTP_ERROR": "HTTP error while communicating with Komga",
+    "KOMGA_SERVER_UNREACHABLE": "Komga server unreachable",
+
+    "CONFIG_SAVE_ERROR": "Error saving configuration",
+    "CONFIG_FETCH_ERROR": "Error fetching configuration",
+    "CONFIG_TTL_SAVE_ERROR": "Error saving TTL configuration",
+    "CONFIG_TTL_FETCH_ERROR": "Error fetching TTL configuration",
+
+    "LIBRARY_NOT_FOUND": "Library not found",
+    "LIBRARY_FETCH_ERROR": "Error fetching library",
 
     "SERIES_FETCH_ERROR": "Error fetching series",
-    "HOME_FETCH_ERROR": "Error fetching home",
-    "SERIES_NO_BOOKS_FOUND": "No books found in the series",
+    "SERIES_NO_BOOKS_FOUND": "No books found in series",
+
+    "BOOK_NOT_FOUND": "Book not found",
+    "BOOK_PROGRESS_UPDATE_ERROR": "Error updating reading progress",
+    "BOOK_PROGRESS_DELETE_ERROR": "Error deleting reading progress",
     "BOOK_PAGES_FETCH_ERROR": "Error fetching book pages",
+    "BOOK_DOWNLOAD_CANCELLED": "Book download cancelled",
 
-    "GENERIC_ERROR": "An error occurred",
+    "FAVORITE_ADD_ERROR": "Error adding to favorites",
+    "FAVORITE_DELETE_ERROR": "Error removing from favorites",
+    "FAVORITE_FETCH_ERROR": "Error fetching favorites",
+    "FAVORITE_UPDATE_ERROR": "Error updating favorites",
+    "FAVORITE_NETWORK_ERROR": "Network error while accessing favorites",
+    "FAVORITE_SERVER_ERROR": "Server error while accessing favorites",
+    "FAVORITE_STATUS_CHECK_ERROR": "Error checking favorites status",
 
-    "MONGODB_CONNECTION_FAILED": "MongoDB connection failed"
+    "PREFERENCES_FETCH_ERROR": "Error fetching preferences",
+    "PREFERENCES_UPDATE_ERROR": "Error updating preferences",
+    "PREFERENCES_CONTEXT_ERROR": "Preferences context error",
+
+    "CACHE_DELETE_ERROR": "Error deleting cache",
+    "CACHE_SAVE_ERROR": "Error saving cache",
+    "CACHE_LOAD_ERROR": "Error loading cache",
+    "CACHE_CLEAR_ERROR": "Error clearing cache",
+    "CACHE_MODE_FETCH_ERROR": "Error fetching cache mode",
+    "CACHE_MODE_UPDATE_ERROR": "Error updating cache mode",
+    "CACHE_INVALID_MODE": "Invalid cache mode",
+
+    "UI_TABS_TRIGGER_ERROR": "Error triggering tabs",
+    "UI_TABS_CONTENT_ERROR": "Error loading tabs content",
+
+    "IMAGE_FETCH_ERROR": "Error fetching image",
+
+    "HOME_FETCH_ERROR": "Error fetching home page",
+
+    "MIDDLEWARE_UNAUTHORIZED": "Unauthorized",
+    "MIDDLEWARE_INVALID_TOKEN": "Invalid authentication token",
+    "MIDDLEWARE_INVALID_SESSION": "Invalid session",
+
+    "DEBUG_FETCH_ERROR": "Error fetching debug logs",
+    "DEBUG_SAVE_ERROR": "Error saving debug logs",
+    "DEBUG_CLEAR_ERROR": "Error clearing debug logs",
+
+    "CLIENT_FETCH_ERROR": "Error fetching data",
+    "CLIENT_NETWORK_ERROR": "Network error",
+    "CLIENT_REQUEST_FAILED": "Request failed",
+
+    "GENERIC_ERROR": "An error occurred"
   },
   "reader": {
     "controls": {
