@@ -46,36 +46,70 @@ export class DebugService {
     }
   }
 
+  private static async isDebugEnabled(): Promise<boolean> {
+    const user = await AuthServerService.getCurrentUser();
+    if (!user) {
+      return false;
+    }
+    const preferences = await PreferencesService.getPreferences();
+    return preferences.debug === true;
+  }
+
+  private static async readLogs(filePath: string): Promise<RequestTiming[]> {
+    try {
+      const content = await fs.readFile(filePath, "utf-8");
+      return JSON.parse(content);
+    } catch {
+      return [];
+    }
+  }
+
+  private static async writeLogs(filePath: string, logs: RequestTiming[]): Promise<void> {
+    const trimmedLogs = logs.slice(-99);
+    await fs.writeFile(filePath, JSON.stringify(trimmedLogs, null, 2));
+  }
+
+  private static createTiming(
+    url: string,
+    startTime: number,
+    endTime: number,
+    fromCache: boolean,
+    additionalData?: Partial<RequestTiming>
+  ): RequestTiming {
+    return {
+      url,
+      startTime,
+      endTime,
+      duration: endTime - startTime,
+      timestamp: new Date().toISOString(),
+      fromCache,
+      ...additionalData,
+    };
+  }
+
   static async logRequest(timing: Omit<RequestTiming, "duration" | "timestamp">) {
     try {
+      if (!(await this.isDebugEnabled())) return;
+
       const userId = await this.getCurrentUserId();
-      const preferences = await PreferencesService.getPreferences();
-      if (!preferences.debug) {
-        return;
-      }
       await this.ensureDebugDir();
       const filePath = this.getLogFilePath(userId);
 
-      let logs: RequestTiming[] = [];
-      try {
-        const content = await fs.readFile(filePath, "utf-8");
-        logs = JSON.parse(content);
-      } catch {
-        // Le fichier n'existe pas encore ou est vide
-      }
+      const logs = await this.readLogs(filePath);
+      const newTiming = this.createTiming(
+        timing.url,
+        timing.startTime,
+        timing.endTime,
+        timing.fromCache,
+        {
+          cacheType: timing.cacheType,
+          mongoAccess: timing.mongoAccess,
+          pageRender: timing.pageRender,
+        }
+      );
 
-      const newTiming: RequestTiming = {
-        ...timing,
-        duration: timing.endTime - timing.startTime,
-        timestamp: new Date().toISOString(),
-      };
-
-      // Garde les 100 dernières requêtes
-      logs = [...logs.slice(-99), newTiming];
-
-      await fs.writeFile(filePath, JSON.stringify(logs, null, 2));
+      await this.writeLogs(filePath, [...logs, newTiming]);
     } catch (error) {
-      // On ignore les erreurs de logging mais on les trace quand même
       console.error("Erreur lors de l'enregistrement du log:", error);
     }
   }
@@ -84,12 +118,9 @@ export class DebugService {
     try {
       const userId = await this.getCurrentUserId();
       const filePath = this.getLogFilePath(userId);
-      const content = await fs.readFile(filePath, "utf-8");
-      return JSON.parse(content);
+      return await this.readLogs(filePath);
     } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
+      if (error instanceof AppError) throw error;
       return [];
     }
   }
@@ -98,53 +129,28 @@ export class DebugService {
     try {
       const userId = await this.getCurrentUserId();
       const filePath = this.getLogFilePath(userId);
-      await fs.writeFile(filePath, "[]");
+      await this.writeLogs(filePath, []);
     } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-      // On ignore les autres erreurs si le fichier n'existe pas
+      if (error instanceof AppError) throw error;
     }
   }
 
   static async logPageRender(page: string, duration: number) {
     try {
+      if (!(await this.isDebugEnabled())) return;
+
       const userId = await this.getCurrentUserId();
-      const preferences = await PreferencesService.getPreferences();
-      if (!preferences.debug) {
-        return;
-      }
       await this.ensureDebugDir();
       const filePath = this.getLogFilePath(userId);
 
-      let logs: RequestTiming[] = [];
-      try {
-        const content = await fs.readFile(filePath, "utf-8");
-        logs = JSON.parse(content);
-      } catch {
-        // Le fichier n'existe pas encore ou est vide
-      }
-
+      const logs = await this.readLogs(filePath);
       const now = performance.now();
-      const newTiming: RequestTiming = {
-        url: `Page Render: ${page}`,
-        startTime: now - duration,
-        endTime: now,
-        duration,
-        timestamp: new Date().toISOString(),
-        fromCache: false,
-        pageRender: {
-          page,
-          duration,
-        },
-      };
+      const newTiming = this.createTiming(`Page Render: ${page}`, now - duration, now, false, {
+        pageRender: { page, duration },
+      });
 
-      // Garde les 100 dernières requêtes
-      logs = [...logs.slice(-99), newTiming];
-
-      await fs.writeFile(filePath, JSON.stringify(logs, null, 2));
+      await this.writeLogs(filePath, [...logs, newTiming]);
     } catch (error) {
-      // On ignore les erreurs de logging mais on les trace quand même
       console.error("Erreur lors de l'enregistrement du log de rendu:", error);
     }
   }
@@ -152,10 +158,10 @@ export class DebugService {
   static async measureMongoOperation<T>(operation: string, func: () => Promise<T>): Promise<T> {
     const startTime = performance.now();
     try {
-      const preferences = await PreferencesService.getPreferences();
-      if (!preferences.debug) {
+      if (!(await this.isDebugEnabled())) {
         return func();
       }
+
       const result = await func();
       const endTime = performance.now();
 

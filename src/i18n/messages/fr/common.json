@@ -299,7 +299,8 @@
     "SERIES_NO_BOOKS_FOUND": "Aucun livre trouvé dans la série",
     "BOOK_PAGES_FETCH_ERROR": "Erreur lors de la récupération des pages du livre",
 
-    "GENERIC_ERROR": "Une erreur est survenue"
+    "GENERIC_ERROR": "Une erreur est survenue",
+    "MONGODB_CONNECTION_FAILED": "Erreur lors de la connexion à MongoDB"
   },
   "reader": {
     "controls": {

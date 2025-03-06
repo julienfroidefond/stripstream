@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   description: "Connectez-vous à votre compte StripStream",
 };
 
-function LoginPage({ searchParams }: PageProps) {
-  return <LoginContent searchParams={searchParams} />;
+async function LoginPage({ searchParams }: PageProps) {
+  return <LoginContent searchParams={await searchParams} />;
 }
 export default withPageTiming("LoginPage", LoginPage);

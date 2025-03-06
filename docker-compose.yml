@@ -48,6 +48,8 @@ services:
         limits:
           cpus: "0.5"
           memory: 512M
+    ports:
+      - "27017:27017"
     command: ["mongod", "--auth", "--bind_ip_all"]
 
 networks:

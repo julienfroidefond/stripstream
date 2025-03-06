@@ -45,6 +45,11 @@ class ServerCacheService {
 
   private async initializeCacheMode(): Promise<void> {
     try {
+      const user = await AuthServerService.getCurrentUser();
+      if (!user) {
+        this.setCacheMode("memory");
+        return;
+      }
       const preferences = await PreferencesService.getPreferences();
       this.setCacheMode(preferences.cacheMode);
     } catch (error) {
