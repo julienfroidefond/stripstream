@@ -11,10 +11,10 @@ import { AppError } from "@/utils/errors";
 async function BookPage({ params }: { params: { bookId: string } }) {
   try {
     const data: KomgaBookWithPages = await BookService.getBook(params.bookId);
-
+    const nextBook = await BookService.getNextBook(params.bookId, data.book.seriesId);
     return (
       <Suspense fallback={<BookSkeleton />}>
-        <ClientBookWrapper book={data.book} pages={data.pages} />
+        <ClientBookWrapper book={data.book} pages={data.pages} nextBook={nextBook} />
       </Suspense>
     );
   } catch (error) {

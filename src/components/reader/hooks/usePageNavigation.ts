@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import type { KomgaBook } from "@/types/komga";
 import { ClientOfflineBookService } from "@/lib/services/client-offlinebook.service";
+import { useRouter } from "next/navigation";
 
 interface UsePageNavigationProps {
   book: KomgaBook;
@@ -8,6 +9,7 @@ interface UsePageNavigationProps {
   isDoublePage: boolean;
   onClose?: (currentPage: number) => void;
   direction: "ltr" | "rtl";
+  nextBook?: KomgaBook | null;
 }
 
 export const usePageNavigation = ({
@@ -16,13 +18,16 @@ export const usePageNavigation = ({
   isDoublePage,
   onClose,
   direction,
+  nextBook,
 }: UsePageNavigationProps) => {
+  const router = useRouter();
   const cPage = ClientOfflineBookService.getCurrentPage(book);
   const [currentPage, setCurrentPage] = useState(cPage < 1 ? 1 : cPage);
   const [isLoading, setIsLoading] = useState(true);
   const [secondPageLoading, setSecondPageLoading] = useState(true);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [panPosition, setPanPosition] = useState({ x: 0, y: 0 });
+  const [showEndMessage, setShowEndMessage] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const touchStartXRef = useRef<number | null>(null);
   const touchStartYRef = useRef<number | null>(null);
@@ -107,13 +112,29 @@ export const usePageNavigation = ({
   }, [currentPage, isDoublePage, navigateToPage, shouldShowDoublePage]);
 
   const handleNextPage = useCallback(() => {
-    if (currentPage === pages.length) return;
+    if (currentPage === pages.length) {
+      if (nextBook) {
+        router.push(`/books/${nextBook.id}`);
+        return;
+      } else {
+        setShowEndMessage(true);
+        return;
+      }
+    }
     if (isDoublePage && shouldShowDoublePage(currentPage)) {
       navigateToPage(Math.min(pages.length, currentPage + 2));
     } else {
       navigateToPage(Math.min(pages.length, currentPage + 1));
     }
-  }, [currentPage, isDoublePage, navigateToPage, pages.length, shouldShowDoublePage]);
+  }, [
+    currentPage,
+    isDoublePage,
+    navigateToPage,
+    pages.length,
+    shouldShowDoublePage,
+    nextBook,
+    router,
+  ]);
 
   const calculateDistance = (touch1: Touch, touch2: Touch) => {
     const dx = touch2.clientX - touch1.clientX;
@@ -301,5 +322,6 @@ export const usePageNavigation = ({
     zoomLevel,
     panPosition,
     handleDoubleClick,
+    showEndMessage,
   };
 };

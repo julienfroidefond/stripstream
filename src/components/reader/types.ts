@@ -13,6 +13,7 @@ export interface BookReaderProps {
   book: KomgaBook;
   pages: number[];
   onClose?: (currentPage: number) => void;
+  nextBook?: KomgaBook | null;
 }
 
 export interface ThumbnailProps {

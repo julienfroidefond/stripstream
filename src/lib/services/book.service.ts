@@ -5,6 +5,7 @@ import { ImageService } from "./image.service";
 import { PreferencesService } from "./preferences.service";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
+import { SeriesService } from "./series.service";
 
 export class BookService extends BaseApiService {
   static async getBook(bookId: string): Promise<KomgaBookWithPages> {
@@ -30,6 +31,11 @@ export class BookService extends BaseApiService {
     } catch (error) {
       throw new AppError(ERROR_CODES.BOOK.NOT_FOUND, {}, error);
     }
+  }
+  public static async getNextBook(bookId: string, seriesId: string): Promise<KomgaBook | null> {
+    const books = await SeriesService.getAllSeriesBooks(seriesId);
+    const currentIndex = books.findIndex((book) => book.id === bookId);
+    return books[currentIndex + 1] || null;
   }
 
   static async updateReadProgress(

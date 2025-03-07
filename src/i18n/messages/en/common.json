@@ -381,7 +381,10 @@
       "close": "Close",
       "previousPage": "Previous page",
       "nextPage": "Next page"
-    }
+    },
+    "endOfSeries": "End of series",
+    "endOfSeriesMessage": "You have finished all the books in this series!",
+    "backToSeries": "Back to series"
   },
   "debug": {
     "title": "DEBUG",

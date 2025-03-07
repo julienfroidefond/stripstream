@@ -13,14 +13,16 @@ import { NavigationBar } from "./components/NavigationBar";
 import { ControlButtons } from "./components/ControlButtons";
 import { ReaderContent } from "./components/ReaderContent";
 import { useReadingDirection } from "./hooks/useReadingDirection";
+import { useTranslate } from "@/hooks/useTranslate";
 
-export function BookReader({ book, pages, onClose }: BookReaderProps) {
+export function BookReader({ book, pages, onClose, nextBook }: BookReaderProps) {
   const [isDoublePage, setIsDoublePage] = useState(false);
   const [showControls, setShowControls] = useState(false);
   const readerRef = useRef<HTMLDivElement>(null);
   const isLandscape = useOrientation();
   const { direction, toggleDirection, isRTL } = useReadingDirection();
   const { isFullscreen, toggleFullscreen } = useFullscreen();
+  const { t } = useTranslate();
 
   const {
     currentPage,
@@ -35,12 +37,14 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
     zoomLevel,
     panPosition,
     handleDoubleClick,
+    showEndMessage,
   } = usePageNavigation({
     book,
     pages,
     isDoublePage,
     onClose,
     direction,
+    nextBook,
   });
 
   const { preloadPage, getPageUrl, cleanCache } = usePageCache({
@@ -92,6 +96,21 @@ export function BookReader({ book, pages, onClose }: BookReaderProps) {
         onClick={() => setShowControls(!showControls)}
       >
         <div className="relative h-full w-full flex items-center justify-center">
+          {showEndMessage && (
+            <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm z-50">
+              <div className="bg-background border rounded-lg shadow-lg p-6 max-w-md text-center">
+                <h3 className="text-lg font-semibold mb-2">{t("reader.endOfSeries")}</h3>
+                <p className="text-muted-foreground mb-4">{t("reader.endOfSeriesMessage")}</p>
+                <button
+                  onClick={() => onClose?.(currentPage)}
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+                >
+                  {t("reader.backToSeries")}
+                </button>
+              </div>
+            </div>
+          )}
+
           <ControlButtons
             showControls={showControls}
             onToggleControls={() => setShowControls(!showControls)}

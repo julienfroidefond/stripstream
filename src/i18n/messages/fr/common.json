@@ -379,7 +379,10 @@
       "close": "Fermer",
       "previousPage": "Page précédente",
       "nextPage": "Page suivante"
-    }
+    },
+    "endOfSeries": "Fin de la série",
+    "endOfSeriesMessage": "Vous avez terminé tous les tomes de cette série !",
+    "backToSeries": "Retourner à la série"
   },
   "header": {
     "toggleSidebar": "Afficher/masquer le menu latéral",

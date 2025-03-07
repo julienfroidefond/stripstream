@@ -8,9 +8,10 @@ import { ClientOfflineBookService } from "@/lib/services/client-offlinebook.serv
 interface ClientBookWrapperProps {
   book: KomgaBook;
   pages: number[];
+  nextBook: KomgaBook | null;
 }
 
-export function ClientBookWrapper({ book, pages }: ClientBookWrapperProps) {
+export function ClientBookWrapper({ book, pages, nextBook }: ClientBookWrapperProps) {
   const router = useRouter();
 
   const handleCloseReader = (currentPage: number) => {
@@ -18,8 +19,9 @@ export function ClientBookWrapper({ book, pages }: ClientBookWrapperProps) {
       method: "POST",
     });
     ClientOfflineBookService.setCurrentPage(book, currentPage);
-    router.back();
+    router.push(`/series/${book.seriesId}`);
+    //router.back();
   };
 
-  return <BookReader book={book} pages={pages} onClose={handleCloseReader} />;
+  return <BookReader book={book} pages={pages} onClose={handleCloseReader} nextBook={nextBook} />;
 }
