@@ -98,6 +98,7 @@ export const usePageNavigation = ({
   );
 
   const handlePreviousPage = useCallback(() => {
+    if (currentPage === 1) return;
     if (isDoublePage && shouldShowDoublePage(currentPage - 2)) {
       navigateToPage(Math.max(1, currentPage - 2));
     } else {
@@ -106,6 +107,7 @@ export const usePageNavigation = ({
   }, [currentPage, isDoublePage, navigateToPage, shouldShowDoublePage]);
 
   const handleNextPage = useCallback(() => {
+    if (currentPage === pages.length) return;
     if (isDoublePage && shouldShowDoublePage(currentPage)) {
       navigateToPage(Math.min(pages.length, currentPage + 2));
     } else {
