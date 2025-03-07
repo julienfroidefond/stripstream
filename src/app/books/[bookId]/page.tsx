@@ -10,8 +10,9 @@ import { AppError } from "@/utils/errors";
 
 async function BookPage({ params }: { params: { bookId: string } }) {
   try {
-    const data: KomgaBookWithPages = await BookService.getBook(params.bookId);
-    const nextBook = await BookService.getNextBook(params.bookId, data.book.seriesId);
+    const { bookId } = await params;
+    const data: KomgaBookWithPages = await BookService.getBook(bookId);
+    const nextBook = await BookService.getNextBook(bookId, data.book.seriesId);
     return (
       <Suspense fallback={<BookSkeleton />}>
         <ClientBookWrapper book={data.book} pages={data.pages} nextBook={nextBook} />
