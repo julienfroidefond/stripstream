@@ -127,6 +127,7 @@ export interface BookMedia {
   status: "READY" | "UNKNOWN" | "ERROR";
   mediaType: string;
   pagesCount: number;
+  mediaProfile?: string;
 }
 
 export interface BookMetadata {

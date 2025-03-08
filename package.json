@@ -32,6 +32,7 @@
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-i18next": "^15.4.1",
+    "react-reader": "^2.0.12",
     "sharp": "0.33.2",
     "tailwind-merge": "^3.0.2",
     "tailwindcss-animate": "1.0.7",

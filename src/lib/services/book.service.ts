@@ -16,7 +16,15 @@ export class BookService extends BaseApiService {
           // Récupération des détails du tome
           const book = await this.fetchFromApi<KomgaBook>({ path: `books/${bookId}` });
 
-          // Récupération des pages du tome
+          // Si c'est un EPUB, on ne récupère pas les pages car l'API renvoie une erreur
+          if (book.media.mediaProfile === "EPUB") {
+            return {
+              book,
+              pages: [], // Pas de pages pour les EPUB via l'API standard
+            };
+          }
+
+          // Récupération des pages du tome (uniquement pour les formats image)
           const pages = await this.fetchFromApi<{ number: number }[]>({
             path: `books/${bookId}/pages`,
           });
@@ -91,6 +99,16 @@ export class BookService extends BaseApiService {
 
   static async getPage(bookId: string, pageNumber: number): Promise<Response> {
     try {
+      // D'abord, récupérons les informations du livre pour vérifier s'il s'agit d'un EPUB
+      const bookData = await this.fetchFromApi<KomgaBook>({ path: `books/${bookId}` });
+
+      // Si c'est un EPUB ou si le numéro de page est 0 (convention pour récupérer le fichier complet)
+      if (bookData.media.mediaProfile === "EPUB" || pageNumber === 0) {
+        // Pour les EPUB, on utilise la méthode getEpubFile
+        return this.getEpubFile(bookId);
+      }
+
+      // Pour les formats image, on continue comme avant
       // Ajuster le numéro de page pour l'API Komga (zero-based)
       const adjustedPageNumber = pageNumber - 1;
       const response: ImageResponse = await ImageService.getImage(
@@ -156,5 +174,55 @@ export class BookService extends BaseApiService {
 
   static getCoverUrl(bookId: string): string {
     return `/api/komga/images/books/${bookId}/thumbnail`;
+  }
+
+  static async getEpubFile(bookId: string): Promise<Response> {
+    try {
+      const bookData = await this.fetchFromApi<KomgaBook>({ path: `books/${bookId}` });
+
+      const config = await this.getKomgaConfig();
+
+      const url = this.buildUrl(config, `books/${bookId}/file`);
+
+      const headers = this.getAuthHeaders(config);
+      headers.set("Accept", "application/octet-stream");
+
+      const response = await fetch(url, {
+        headers,
+        method: "GET",
+        cache: "no-store", // Désactiver le cache
+      });
+
+      if (!response.ok) {
+        try {
+          const errorText = await response.text();
+          console.error(`Erreur: ${response.status} ${response.statusText}`, errorText);
+        } catch (e) {
+          console.error(`Impossible de lire le corps de l'erreur`);
+        }
+        throw new AppError(ERROR_CODES.BOOK.PAGES_FETCH_ERROR);
+      }
+
+      const buffer = await response.arrayBuffer();
+
+      return new Response(buffer, {
+        headers: {
+          "Content-Type": "application/epub+zip",
+          "Content-Disposition": `inline; filename="${bookData.name.replace(
+            /[^a-z0-9]/gi,
+            "_"
+          )}.epub"`,
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+      });
+    } catch (error) {
+      console.error("Erreur dans getEpubFile:", error);
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError(ERROR_CODES.BOOK.PAGES_FETCH_ERROR, {}, error);
+    }
   }
 }
