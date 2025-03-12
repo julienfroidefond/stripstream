@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export const useFullscreen = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const elementRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -18,12 +19,19 @@ export const useFullscreen = () => {
     };
   }, []);
 
-  const toggleFullscreen = async (element: HTMLElement | null) => {
+  const setFullscreenElement = (element: HTMLElement | null) => {
+    elementRef.current = element;
+  };
+
+  const toggleFullscreen = async () => {
     try {
       if (isFullscreen) {
         await document.exitFullscreen();
-      } else if (element) {
-        await element.requestFullscreen();
+      } else if (elementRef.current) {
+        await elementRef.current.requestFullscreen();
+      } else if (document.documentElement) {
+        // Si aucun élément n'est défini, utiliser l'élément racine du document
+        await document.documentElement.requestFullscreen();
       }
     } catch (error) {
       console.error("Erreur lors du changement de mode plein écran:", error);
@@ -33,5 +41,6 @@ export const useFullscreen = () => {
   return {
     isFullscreen,
     toggleFullscreen,
+    setFullscreenElement,
   };
 };
