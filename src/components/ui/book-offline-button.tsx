@@ -219,7 +219,9 @@ export function BookOfflineButton({ book, className }: BookOfflineButtonProps) {
     checkStatus();
   }, [book.id, checkOfflineAvailability, downloadBook, getBookStatus, setBookStatus]);
 
-  const handleToggleOffline = async () => {
+  const handleToggleOffline = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Empêcher la propagation au parent
+
     if (!("caches" in window)) {
       toast({
         title: "Non supporté",
