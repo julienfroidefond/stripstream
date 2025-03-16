@@ -44,23 +44,25 @@ export function LoadingBar() {
 
   useEffect(() => {
     const originalFetch = window.fetch;
-    
-    window.fetch = async function(...args) {
+
+    window.fetch = async function (...args) {
       const url = args[0].toString();
-      const isStaticRequest = /\.(css|js|png|jpg|jpeg|gif|webp|svg|ico|mp3|mp4|webm|ttf|woff|woff2)$/.test(url);
-      
-      if (!isStaticRequest) {
+      const isStaticRequest =
+        /\.(css|js|png|jpg|jpeg|gif|webp|svg|ico|mp3|mp4|webm|ttf|woff|woff2)$/.test(url);
+      const isBookPageRequest = url.includes("/api/komga/images/books/") && url.includes("/pages");
+
+      if (!isStaticRequest && !isBookPageRequest) {
         pendingRequestsRef.current++;
         setIsLoading(true);
       }
-      
+
       try {
         const response = await originalFetch.apply(this, args);
         return response;
       } finally {
-        if (!isStaticRequest) {
+        if (!isStaticRequest && !isBookPageRequest) {
           pendingRequestsRef.current = Math.max(0, pendingRequestsRef.current - 1);
-          
+
           if (pendingRequestsRef.current === 0) {
             setTimeout(() => {
               setIsLoading(false);
