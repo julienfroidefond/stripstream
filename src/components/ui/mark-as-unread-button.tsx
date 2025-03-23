@@ -22,7 +22,6 @@ export function MarkAsUnreadButton({ bookId, onSuccess, className }: MarkAsUnrea
     e.stopPropagation(); // Empêcher la propagation au parent
     setIsLoading(true);
     try {
-      ClientOfflineBookService.removeCurrentPageById(bookId);
       const response = await fetch(`/api/komga/books/${bookId}/read-progress`, {
         method: "DELETE",
       });
@@ -30,6 +29,9 @@ export function MarkAsUnreadButton({ bookId, onSuccess, className }: MarkAsUnrea
       if (!response.ok) {
         throw new Error(t("books.actions.markAsUnread.error.update"));
       }
+
+      // On supprime la page courante du localStorage seulement après que l'API a répondu
+      ClientOfflineBookService.removeCurrentPageById(bookId);
 
       toast({
         title: t("books.actions.markAsUnread.success.title"),
