@@ -13,10 +13,10 @@ import { AppError } from "@/utils/errors";
 
 interface PageProps {
   params: { libraryId: string };
-  searchParams: { page?: string; unread?: string; search?: string };
+  searchParams: { page?: string; unread?: string; search?: string; size?: string };
 }
 
-const PAGE_SIZE = 20;
+const DEFAULT_PAGE_SIZE = 20;
 
 async function refreshLibrary(libraryId: string) {
   "use server";
@@ -36,7 +36,8 @@ async function getLibrarySeries(
   libraryId: string,
   page: number = 1,
   unreadOnly: boolean = false,
-  search?: string
+  search?: string,
+  size: number = DEFAULT_PAGE_SIZE
 ) {
   try {
     const pageIndex = page - 1;
@@ -44,7 +45,7 @@ async function getLibrarySeries(
     const series: LibraryResponse<KomgaSeries> = await LibraryService.getLibrarySeries(
       libraryId,
       pageIndex,
-      PAGE_SIZE,
+      size,
       unreadOnly,
       search
     );
@@ -61,16 +62,18 @@ async function LibraryPage({ params, searchParams }: PageProps) {
   const unread = (await searchParams).unread;
   const search = (await searchParams).search;
   const page = (await searchParams).page;
+  const size = (await searchParams).size;
 
   const currentPage = page ? parseInt(page) : 1;
+  const pageSize = size ? parseInt(size) : DEFAULT_PAGE_SIZE;
   const preferences: UserPreferences = await PreferencesService.getPreferences();
 
   // Utiliser le paramètre d'URL s'il existe, sinon utiliser la préférence utilisateur
   const unreadOnly = unread !== undefined ? unread === "true" : preferences.showOnlyUnread;
-
+  console.log(unreadOnly);
   try {
     const { data: series, library }: { data: LibraryResponse<KomgaSeries>; library: KomgaLibrary } =
-      await getLibrarySeries(libraryId, currentPage, unreadOnly, search);
+      await getLibrarySeries(libraryId, currentPage, unreadOnly, search, pageSize);
 
     return (
       <div className="container py-8 space-y-8">
@@ -90,7 +93,7 @@ async function LibraryPage({ params, searchParams }: PageProps) {
           currentPage={currentPage}
           totalPages={series.totalPages}
           totalElements={series.totalElements}
-          pageSize={PAGE_SIZE}
+          pageSize={pageSize}
           defaultShowOnlyUnread={preferences.showOnlyUnread}
           showOnlyUnread={unreadOnly}
         />

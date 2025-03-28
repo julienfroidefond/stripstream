@@ -4,11 +4,18 @@ import { SeriesGrid } from "./SeriesGrid";
 import { Pagination } from "@/components/ui/Pagination";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Loader2, Filter } from "lucide-react";
+import { Loader2, Filter, LayoutGrid, LayoutList, LayoutTemplate } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { KomgaSeries } from "@/types/komga";
 import { SearchInput } from "./SearchInput";
 import { useTranslate } from "@/hooks/useTranslate";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface PaginatedSeriesGridProps {
   series: KomgaSeries[];
@@ -34,7 +41,24 @@ export function PaginatedSeriesGrid({
   const searchParams = useSearchParams();
   const [isChangingPage, setIsChangingPage] = useState(false);
   const [showOnlyUnread, setShowOnlyUnread] = useState(initialShowOnlyUnread);
+  const [isCompact, setIsCompact] = useState(searchParams.get("compact") === "true");
   const { t } = useTranslate();
+
+  const updateUrlParams = async (updates: Record<string, string | null>) => {
+    setIsChangingPage(true);
+    const params = new URLSearchParams(searchParams.toString());
+
+    // Mettre à jour les paramètres
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === null) {
+        params.delete(key);
+      } else {
+        params.set(key, value);
+      }
+    });
+
+    await router.push(`${pathname}?${params.toString()}`);
+  };
 
   // Reset loading state when series change
   useEffect(() => {
@@ -49,31 +73,39 @@ export function PaginatedSeriesGrid({
   // Apply default filter on initial load
   useEffect(() => {
     if (defaultShowOnlyUnread && !searchParams.has("unread")) {
-      const params = new URLSearchParams(searchParams.toString());
-      params.set("page", "1");
-      params.set("unread", "true");
-      router.push(`${pathname}?${params.toString()}`);
+      updateUrlParams({ page: "1", unread: "true" });
     }
   }, [defaultShowOnlyUnread, pathname, router, searchParams]);
 
   const handlePageChange = async (page: number) => {
-    setIsChangingPage(true);
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("page", page.toString());
-    params.set("unread", showOnlyUnread.toString());
-    await router.push(`${pathname}?${params.toString()}`);
+    await updateUrlParams({ page: page.toString(), compact: isCompact.toString() });
   };
 
   const handleUnreadFilter = async () => {
-    setIsChangingPage(true);
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("page", "1");
-
     const newUnreadState = !showOnlyUnread;
     setShowOnlyUnread(newUnreadState);
-    params.set("unread", newUnreadState.toString());
+    await updateUrlParams({
+      page: "1",
+      unread: newUnreadState ? "true" : "false",
+      compact: isCompact.toString(),
+    });
+  };
 
-    await router.push(`${pathname}?${params.toString()}`);
+  const handleCompactToggle = async () => {
+    const newCompactState = !isCompact;
+    setIsCompact(newCompactState);
+    await updateUrlParams({
+      page: "1",
+      compact: newCompactState.toString(),
+    });
+  };
+
+  const handlePageSizeChange = async (value: string) => {
+    await updateUrlParams({
+      page: "1",
+      size: value,
+      compact: isCompact.toString(),
+    });
   };
 
   // Calculate start and end indices for display
@@ -92,15 +124,42 @@ export function PaginatedSeriesGrid({
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div className="flex-1">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="w-full sm:w-auto sm:flex-1">
           <SearchInput placeholder={t("series.filters.search")} />
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
           <p className="text-sm text-muted-foreground">{getShowingText()}</p>
+          <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
+            <SelectTrigger className="w-[80px]">
+              <LayoutList className="h-4 w-4 mr-2" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="20">20</SelectItem>
+              <SelectItem value="50">50</SelectItem>
+              <SelectItem value="100">100</SelectItem>
+            </SelectContent>
+          </Select>
+          <button
+            onClick={handleCompactToggle}
+            className="inline-flex items-center gap-2 px-2 py-1.5 text-sm font-medium rounded-lg hover:bg-accent hover:text-accent-foreground whitespace-nowrap"
+          >
+            {isCompact ? (
+              <>
+                <LayoutTemplate className="h-4 w-4" />
+                {t("series.filters.normal")}
+              </>
+            ) : (
+              <>
+                <LayoutGrid className="h-4 w-4" />
+                {t("series.filters.compact")}
+              </>
+            )}
+          </button>
           <button
             onClick={handleUnreadFilter}
-            className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg hover:bg-accent hover:text-accent-foreground whitespace-nowrap"
+            className="inline-flex items-center gap-2 px-2 py-1.5 text-sm font-medium rounded-lg hover:bg-accent hover:text-accent-foreground whitespace-nowrap"
           >
             <Filter className="h-4 w-4" />
             {showOnlyUnread ? t("series.filters.showAll") : t("series.filters.unread")}
@@ -126,7 +185,7 @@ export function PaginatedSeriesGrid({
             isChangingPage ? "opacity-25" : "opacity-100"
           )}
         >
-          <SeriesGrid series={series} />
+          <SeriesGrid series={series} isCompact={isCompact} />
         </div>
       </div>
 

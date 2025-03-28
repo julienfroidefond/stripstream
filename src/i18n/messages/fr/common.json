@@ -173,10 +173,12 @@
       "title": "Filtres",
       "showAll": "Afficher tout",
       "unread": "À lire",
-      "search": "Rechercher une série..."
+      "search": "Rechercher une série...",
+      "normal": "Affichage normal",
+      "compact": "Affichage compact"
     },
     "display": {
-      "showing": "Affichage des séries {start} à {end} sur {total}",
+      "showing": "{start}-{end} sur {total}",
       "page": "Page {current} sur {total}"
     },
     "header": {

@@ -50,6 +50,18 @@
 - **Description** : Liste des bibliothèques
 - **Réponse** : `Library[]`
 
+### GET /libraries/[libraryId]
+
+- **Description** : Page d'une bibliothèque
+- **Paramètres** : `libraryId` dans l'URL
+- **Query Parameters** :
+  - `page` : Numéro de page (défaut: 1)
+  - `size` : Nombre d'éléments par page (défaut: 20, valeurs possibles: 20, 50, 100)
+  - `unread` : Filtrer les séries non lues (défaut: false)
+  - `search` : Rechercher une série par titre
+  - `compact` : Mode d'affichage compact (défaut: false)
+- **Réponse** : Page HTML avec la liste des séries
+
 ## 📖 Séries
 
 ### GET /api/komga/series/[seriesId]

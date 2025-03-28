@@ -35,9 +35,14 @@ Service de gestion des bibliothèques
   - Récupère une bibliothèque spécifique
   - Lance une erreur si non trouvée
 
-- `getLibrarySeries(libraryId: string, page: number = 0, size: number = 20, unreadOnly: boolean = false): Promise<LibraryResponse<Series>>`
+- `getLibrarySeries(libraryId: string, page: number = 0, size: number = 20, unreadOnly: boolean = false, search?: string): Promise<LibraryResponse<Series>>`
   - Récupère les séries d'une bibliothèque
   - Supporte la pagination et le filtrage
+  - Paramètres :
+    - `page` : Numéro de page (défaut: 0)
+    - `size` : Nombre d'éléments par page (défaut: 20, valeurs possibles: 20, 50, 100)
+    - `unreadOnly` : Filtrer les séries non lues (défaut: false)
+    - `search` : Rechercher une série par titre (optionnel)
 
 ## 📖 SeriesService
 

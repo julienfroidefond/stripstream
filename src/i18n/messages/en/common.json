@@ -173,10 +173,12 @@
       "title": "Filters",
       "showAll": "Show all",
       "unread": "Unread",
-      "search": "Search series..."
+      "search": "Search series...",
+      "normal": "Normal",
+      "compact": "Compact"
     },
     "display": {
-      "showing": "Showing series {start} to {end} of {total}",
+      "showing": "{start}-{end} of {total}",
       "page": "Page {current} of {total}"
     },
     "header": {

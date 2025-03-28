@@ -8,6 +8,7 @@ import { useTranslate } from "@/hooks/useTranslate";
 
 interface SeriesGridProps {
   series: KomgaSeries[];
+  isCompact?: boolean;
 }
 
 // Utility function to get reading status info
@@ -42,7 +43,7 @@ const getReadingStatusInfo = (series: KomgaSeries, t: (key: string, options?: an
   };
 };
 
-export function SeriesGrid({ series }: SeriesGridProps) {
+export function SeriesGrid({ series, isCompact = false }: SeriesGridProps) {
   const router = useRouter();
   const { t } = useTranslate();
 
@@ -55,14 +56,22 @@ export function SeriesGrid({ series }: SeriesGridProps) {
   }
 
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+    <div
+      className={cn(
+        "grid gap-4",
+        isCompact
+          ? "grid-cols-3 sm:grid-cols-4 lg:grid-cols-6"
+          : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5"
+      )}
+    >
       {series.map((series) => (
         <button
           key={series.id}
           onClick={() => router.push(`/series/${series.id}`)}
           className={cn(
             "group relative aspect-[2/3] overflow-hidden rounded-lg bg-muted",
-            series.booksCount === series.booksReadCount && "opacity-50"
+            series.booksCount === series.booksReadCount && "opacity-50",
+            isCompact && "aspect-[3/4]"
           )}
         >
           <SeriesCover
