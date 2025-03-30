@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import type { KomgaSeries } from "@/types/komga";
 import { SearchInput } from "./SearchInput";
 import { useTranslate } from "@/hooks/useTranslate";
+import { useDisplayPreferences } from "@/hooks/useDisplayPreferences";
 import {
   Select,
   SelectContent,
@@ -22,7 +23,6 @@ interface PaginatedSeriesGridProps {
   currentPage: number;
   totalPages: number;
   totalElements: number;
-  pageSize: number;
   defaultShowOnlyUnread: boolean;
   showOnlyUnread: boolean;
 }
@@ -32,7 +32,6 @@ export function PaginatedSeriesGrid({
   currentPage,
   totalPages,
   totalElements,
-  pageSize,
   defaultShowOnlyUnread,
   showOnlyUnread: initialShowOnlyUnread,
 }: PaginatedSeriesGridProps) {
@@ -41,7 +40,8 @@ export function PaginatedSeriesGrid({
   const searchParams = useSearchParams();
   const [isChangingPage, setIsChangingPage] = useState(false);
   const [showOnlyUnread, setShowOnlyUnread] = useState(initialShowOnlyUnread);
-  const [isCompact, setIsCompact] = useState(searchParams.get("compact") === "true");
+  const { isCompact, itemsPerPage, handleCompactToggle, handlePageSizeChange } =
+    useDisplayPreferences();
   const { t } = useTranslate();
 
   const updateUrlParams = async (updates: Record<string, string | null>) => {
@@ -78,7 +78,7 @@ export function PaginatedSeriesGrid({
   }, [defaultShowOnlyUnread, pathname, router, searchParams]);
 
   const handlePageChange = async (page: number) => {
-    await updateUrlParams({ page: page.toString(), compact: isCompact.toString() });
+    await updateUrlParams({ page: page.toString() });
   };
 
   const handleUnreadFilter = async () => {
@@ -87,30 +87,30 @@ export function PaginatedSeriesGrid({
     await updateUrlParams({
       page: "1",
       unread: newUnreadState ? "true" : "false",
-      compact: isCompact.toString(),
     });
   };
 
-  const handleCompactToggle = async () => {
+  const handleCompactToggleClick = async () => {
     const newCompactState = !isCompact;
-    setIsCompact(newCompactState);
+    await handleCompactToggle(newCompactState);
     await updateUrlParams({
       page: "1",
       compact: newCompactState.toString(),
     });
   };
 
-  const handlePageSizeChange = async (value: string) => {
+  const handlePageSizeChangeClick = async (value: string) => {
+    const size = parseInt(value);
+    await handlePageSizeChange(size);
     await updateUrlParams({
       page: "1",
       size: value,
-      compact: isCompact.toString(),
     });
   };
 
   // Calculate start and end indices for display
-  const startIndex = (currentPage - 1) * pageSize + 1;
-  const endIndex = Math.min(currentPage * pageSize, totalElements);
+  const startIndex = (currentPage - 1) * itemsPerPage + 1;
+  const endIndex = Math.min(currentPage * itemsPerPage, totalElements);
 
   const getShowingText = () => {
     if (!totalElements) return t("series.empty");
@@ -130,7 +130,7 @@ export function PaginatedSeriesGrid({
         </div>
         <div className="flex items-center gap-2">
           <p className="text-sm text-muted-foreground">{getShowingText()}</p>
-          <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
+          <Select value={itemsPerPage.toString()} onValueChange={handlePageSizeChangeClick}>
             <SelectTrigger className="w-[80px]">
               <LayoutList className="h-4 w-4 mr-2" />
               <SelectValue />
@@ -142,7 +142,7 @@ export function PaginatedSeriesGrid({
             </SelectContent>
           </Select>
           <button
-            onClick={handleCompactToggle}
+            onClick={handleCompactToggleClick}
             className="inline-flex items-center gap-2 px-2 py-1.5 text-sm font-medium rounded-lg hover:bg-accent hover:text-accent-foreground whitespace-nowrap"
           >
             {isCompact ? (

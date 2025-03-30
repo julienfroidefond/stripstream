@@ -3,6 +3,10 @@ export interface UserPreferences {
   cacheMode: "memory" | "file";
   showOnlyUnread: boolean;
   debug: boolean;
+  displayMode: {
+    compact: boolean;
+    itemsPerPage: number;
+  };
 }
 
 export const defaultPreferences: UserPreferences = {
@@ -10,4 +14,8 @@ export const defaultPreferences: UserPreferences = {
   cacheMode: "memory",
   showOnlyUnread: false,
   debug: false,
+  displayMode: {
+    compact: false,
+    itemsPerPage: 20,
+  },
 } as const;

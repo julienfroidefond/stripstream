@@ -26,6 +26,17 @@ const preferencesSchema = new mongoose.Schema(
       default: false,
       required: false,
     },
+    displayMode: {
+      compact: {
+        type: Boolean,
+        default: false,
+      },
+      itemsPerPage: {
+        type: Number,
+        default: 20,
+        enum: [20, 50, 100],
+      },
+    },
   },
   {
     timestamps: true,
@@ -35,6 +46,8 @@ const preferencesSchema = new mongoose.Schema(
         // Force la conversion en booléen
         ret.showOnlyUnread = Boolean(ret.showOnlyUnread);
         ret.debug = Boolean(ret.debug);
+        ret.displayMode = ret.displayMode || { compact: false, itemsPerPage: 20 };
+        ret.displayMode.compact = Boolean(ret.displayMode.compact);
         return ret;
       },
     },
@@ -49,8 +62,12 @@ preferencesSchema.pre("save", function (next) {
   if (this.debug === undefined) {
     this.debug = false;
   }
+  if (!this.displayMode) {
+    this.displayMode = { compact: false, itemsPerPage: 20 };
+  }
   this.showOnlyUnread = Boolean(this.showOnlyUnread);
   this.debug = Boolean(this.debug);
+  this.displayMode.compact = Boolean(this.displayMode.compact);
   next();
 });
 
@@ -62,6 +79,12 @@ preferencesSchema.pre("findOneAndUpdate", function (next) {
     }
     if ("debug" in update.$set) {
       update.$set.debug = Boolean(update.$set.debug);
+    }
+    if ("displayMode" in update.$set) {
+      update.$set.displayMode = {
+        compact: Boolean(update.$set.displayMode?.compact),
+        itemsPerPage: update.$set.displayMode?.itemsPerPage || 20,
+      };
     }
   }
   next();
