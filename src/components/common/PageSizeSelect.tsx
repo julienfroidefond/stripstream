@@ -24,8 +24,8 @@ export function PageSizeSelect({ onSizeChange }: PageSizeSelectProps) {
   return (
     <Select value={itemsPerPage.toString()} onValueChange={handleChange}>
       <SelectTrigger className="w-[80px]">
-        <LayoutList className="h-4 w-4 mr-2" />
-        <SelectValue />
+        <LayoutList className="h-4 w-4" />
+        <SelectValue className="ml-2" />
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="20">20</SelectItem>
