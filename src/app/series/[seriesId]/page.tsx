@@ -62,11 +62,14 @@ async function SeriesPage({ params, searchParams }: PageProps) {
   const size = (await searchParams).size;
 
   const currentPage = page ? parseInt(page) : 1;
-  const pageSize = size ? parseInt(size) : DEFAULT_PAGE_SIZE;
   const preferences: UserPreferences = await PreferencesService.getPreferences();
 
   // Utiliser le paramètre d'URL s'il existe, sinon utiliser la préférence utilisateur
   const unreadOnly = unread !== undefined ? unread === "true" : preferences.showOnlyUnread;
+  // Utiliser le paramètre de pageSize s'il existe, sinon utiliser la préférence utilisateur
+  const pageSize = size
+    ? parseInt(size)
+    : preferences.displayMode?.itemsPerPage || DEFAULT_PAGE_SIZE;
 
   try {
     const { data: books, series }: { data: LibraryResponse<KomgaBook>; series: KomgaSeries } =
