@@ -24,11 +24,17 @@ export function middleware(request: NextRequest) {
   if (!locale || !locales.includes(locale)) {
     locale = defaultLocale;
 
-    // On crée une nouvelle réponse avec le cookie de langue
-    const response = NextResponse.next();
+    // On s'assure que la réponse est bien une redirection si nécessaire
+    const response =
+      pathname === "/login"
+        ? NextResponse.next()
+        : NextResponse.redirect(new URL("/login", request.url));
+
     response.cookies.set("NEXT_LOCALE", locale, {
       path: "/",
       maxAge: 365 * 24 * 60 * 60, // 1 an
+      secure: true, // Ajout de secure pour HTTPS
+      sameSite: "lax", // Protection CSRF
     });
 
     return response;
@@ -37,12 +43,7 @@ export function middleware(request: NextRequest) {
   // Gestion de l'authentification
   const user = request.cookies.get("stripUser");
 
-  // Si l'utilisateur est connecté et essaie d'accéder à la page de login ou register
-  if (user?.value && (pathname === "/login" || pathname === "/register")) {
-    return NextResponse.redirect(new URL("/", request.url));
-  }
-
-  // Vérifier si c'est une route publique ou commence par certains préfixes
+  // Vérifier si c'est une route publique avant de gérer l'authentification
   if (
     publicRoutes.includes(pathname) ||
     publicApiRoutes.includes(pathname) ||
@@ -54,7 +55,7 @@ export function middleware(request: NextRequest) {
   }
 
   // Pour toutes les routes protégées, vérifier la présence de l'utilisateur
-  if (!user || !user.value) {
+  if (!user?.value) {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json(
         {
@@ -67,8 +68,9 @@ export function middleware(request: NextRequest) {
         { status: 401 }
       );
     }
+
     const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("from", pathname);
+    loginUrl.searchParams.set("from", encodeURIComponent(pathname));
     return NextResponse.redirect(loginUrl);
   }
 
