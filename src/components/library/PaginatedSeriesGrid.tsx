@@ -39,7 +39,10 @@ export function PaginatedSeriesGrid({
   const { isCompact, itemsPerPage } = useDisplayPreferences();
   const { t } = useTranslate();
 
-  const updateUrlParams = async (updates: Record<string, string | null>) => {
+  const updateUrlParams = async (
+    updates: Record<string, string | null>,
+    replace: boolean = false
+  ) => {
     setIsChangingPage(true);
     const params = new URLSearchParams(searchParams.toString());
 
@@ -51,7 +54,11 @@ export function PaginatedSeriesGrid({
       }
     });
 
-    await router.push(`${pathname}?${params.toString()}`);
+    if (replace) {
+      await router.replace(`${pathname}?${params.toString()}`);
+    } else {
+      await router.push(`${pathname}?${params.toString()}`);
+    }
   };
 
   // Reset loading state when series change
@@ -67,7 +74,7 @@ export function PaginatedSeriesGrid({
   // Apply default filter on initial load
   useEffect(() => {
     if (defaultShowOnlyUnread && !searchParams.has("unread")) {
-      updateUrlParams({ page: "1", unread: "true" });
+      updateUrlParams({ page: "1", unread: "true" }, true);
     }
   }, [defaultShowOnlyUnread, pathname, router, searchParams]);
 
