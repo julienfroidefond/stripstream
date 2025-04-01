@@ -92,13 +92,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     }
 
     if (preferencesData.status === "fulfilled") {
-      const { showThumbnails, cacheMode, showOnlyUnread, debug } = preferencesData.value;
-      preferences = {
-        showThumbnails,
-        cacheMode,
-        showOnlyUnread,
-        debug,
-      };
+      preferences = preferencesData.value;
     }
   } catch (error) {
     console.error("Erreur lors du chargement des données de la sidebar:", error);

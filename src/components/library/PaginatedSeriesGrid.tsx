@@ -4,19 +4,15 @@ import { SeriesGrid } from "./SeriesGrid";
 import { Pagination } from "@/components/ui/Pagination";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Loader2, Filter, LayoutGrid, LayoutList, LayoutTemplate } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { KomgaSeries } from "@/types/komga";
 import { SearchInput } from "./SearchInput";
 import { useTranslate } from "@/hooks/useTranslate";
 import { useDisplayPreferences } from "@/hooks/useDisplayPreferences";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { PageSizeSelect } from "@/components/common/PageSizeSelect";
+import { CompactModeButton } from "@/components/common/CompactModeButton";
+import { UnreadFilterButton } from "@/components/common/UnreadFilterButton";
 
 interface PaginatedSeriesGridProps {
   series: KomgaSeries[];
@@ -40,15 +36,13 @@ export function PaginatedSeriesGrid({
   const searchParams = useSearchParams();
   const [isChangingPage, setIsChangingPage] = useState(false);
   const [showOnlyUnread, setShowOnlyUnread] = useState(initialShowOnlyUnread);
-  const { isCompact, itemsPerPage, handleCompactToggle, handlePageSizeChange } =
-    useDisplayPreferences();
+  const { isCompact, itemsPerPage } = useDisplayPreferences();
   const { t } = useTranslate();
 
   const updateUrlParams = async (updates: Record<string, string | null>) => {
     setIsChangingPage(true);
     const params = new URLSearchParams(searchParams.toString());
 
-    // Mettre à jour les paramètres
     Object.entries(updates).forEach(([key, value]) => {
       if (value === null) {
         params.delete(key);
@@ -90,21 +84,17 @@ export function PaginatedSeriesGrid({
     });
   };
 
-  const handleCompactToggleClick = async () => {
-    const newCompactState = !isCompact;
-    await handleCompactToggle(newCompactState);
+  const handleCompactToggle = async (newCompactState: boolean) => {
     await updateUrlParams({
       page: "1",
       compact: newCompactState.toString(),
     });
   };
 
-  const handlePageSizeChangeClick = async (value: string) => {
-    const size = parseInt(value);
-    await handlePageSizeChange(size);
+  const handlePageSizeChange = async (size: number) => {
     await updateUrlParams({
       page: "1",
-      size: value,
+      size: size.toString(),
     });
   };
 
@@ -124,46 +114,17 @@ export function PaginatedSeriesGrid({
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="w-full sm:w-auto sm:flex-1">
-          <SearchInput placeholder={t("series.filters.search")} />
-        </div>
-        <div className="flex items-center gap-2">
-          <p className="text-sm text-muted-foreground">{getShowingText()}</p>
-          <Select value={itemsPerPage.toString()} onValueChange={handlePageSizeChangeClick}>
-            <SelectTrigger className="w-[80px]">
-              <LayoutList className="h-4 w-4 mr-2" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="20">20</SelectItem>
-              <SelectItem value="50">50</SelectItem>
-              <SelectItem value="100">100</SelectItem>
-            </SelectContent>
-          </Select>
-          <button
-            onClick={handleCompactToggleClick}
-            className="inline-flex items-center gap-2 px-2 py-1.5 text-sm font-medium rounded-lg hover:bg-accent hover:text-accent-foreground whitespace-nowrap"
-          >
-            {isCompact ? (
-              <>
-                <LayoutTemplate className="h-4 w-4" />
-                {t("series.filters.normal")}
-              </>
-            ) : (
-              <>
-                <LayoutGrid className="h-4 w-4" />
-                {t("series.filters.compact")}
-              </>
-            )}
-          </button>
-          <button
-            onClick={handleUnreadFilter}
-            className="inline-flex items-center gap-2 px-2 py-1.5 text-sm font-medium rounded-lg hover:bg-accent hover:text-accent-foreground whitespace-nowrap"
-          >
-            <Filter className="h-4 w-4" />
-            {showOnlyUnread ? t("series.filters.showAll") : t("series.filters.unread")}
-          </button>
+      <div className="flex flex-col gap-4">
+        <p className="text-sm text-muted-foreground text-right">{getShowingText()}</p>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="w-full">
+            <SearchInput placeholder={t("series.filters.search")} />
+          </div>
+          <div className="flex items-center justify-end gap-2">
+            <PageSizeSelect onSizeChange={handlePageSizeChange} />
+            <CompactModeButton onToggle={handleCompactToggle} />
+            <UnreadFilterButton showOnlyUnread={showOnlyUnread} onToggle={handleUnreadFilter} />
+          </div>
         </div>
       </div>
 

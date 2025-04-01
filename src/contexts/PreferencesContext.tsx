@@ -46,7 +46,6 @@ export function PreferencesProvider({
   };
 
   const updatePreferences = async (newPreferences: Partial<UserPreferences>) => {
-
     try {
       const response = await fetch("/api/preferences", {
         method: "PUT",

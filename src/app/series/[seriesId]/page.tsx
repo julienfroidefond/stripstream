@@ -13,19 +13,24 @@ import { AppError } from "@/utils/errors";
 
 interface PageProps {
   params: { seriesId: string };
-  searchParams: { page?: string; unread?: string };
+  searchParams: { page?: string; unread?: string; size?: string };
 }
 
-const PAGE_SIZE = 24;
+const DEFAULT_PAGE_SIZE = 20;
 
-async function getSeriesBooks(seriesId: string, page: number = 1, unreadOnly: boolean = false) {
+async function getSeriesBooks(
+  seriesId: string,
+  page: number = 1,
+  unreadOnly: boolean = false,
+  size: number = DEFAULT_PAGE_SIZE
+) {
   try {
     const pageIndex = page - 1;
 
     const books: LibraryResponse<KomgaBook> = await SeriesService.getSeriesBooks(
       seriesId,
       pageIndex,
-      PAGE_SIZE,
+      size,
       unreadOnly
     );
     const series: KomgaSeries = await SeriesService.getSeries(seriesId);
@@ -54,8 +59,10 @@ async function SeriesPage({ params, searchParams }: PageProps) {
   const seriesId = (await params).seriesId;
   const page = (await searchParams).page;
   const unread = (await searchParams).unread;
+  const size = (await searchParams).size;
 
   const currentPage = page ? parseInt(page) : 1;
+  const pageSize = size ? parseInt(size) : DEFAULT_PAGE_SIZE;
   const preferences: UserPreferences = await PreferencesService.getPreferences();
 
   // Utiliser le paramètre d'URL s'il existe, sinon utiliser la préférence utilisateur
@@ -63,7 +70,7 @@ async function SeriesPage({ params, searchParams }: PageProps) {
 
   try {
     const { data: books, series }: { data: LibraryResponse<KomgaBook>; series: KomgaSeries } =
-      await getSeriesBooks(seriesId, currentPage, unreadOnly);
+      await getSeriesBooks(seriesId, currentPage, unreadOnly, pageSize);
 
     return (
       <div className="container">
@@ -73,7 +80,6 @@ async function SeriesPage({ params, searchParams }: PageProps) {
           currentPage={currentPage}
           totalPages={books.totalPages}
           totalElements={books.totalElements}
-          pageSize={PAGE_SIZE}
           defaultShowOnlyUnread={preferences.showOnlyUnread}
           showOnlyUnread={unreadOnly}
         />

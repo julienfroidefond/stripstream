@@ -4,13 +4,15 @@ import type { KomgaBook } from "@/types/komga";
 import { BookCover } from "@/components/ui/book-cover";
 import { useState, useEffect } from "react";
 import { useTranslate } from "@/hooks/useTranslate";
+import { cn } from "@/lib/utils";
 
 interface BookGridProps {
   books: KomgaBook[];
   onBookClick: (book: KomgaBook) => void;
+  isCompact?: boolean;
 }
 
-export function BookGrid({ books, onBookClick }: BookGridProps) {
+export function BookGrid({ books, onBookClick, isCompact = false }: BookGridProps) {
   const [localBooks, setLocalBooks] = useState(books);
   const { t } = useTranslate();
 
@@ -21,10 +23,11 @@ export function BookGrid({ books, onBookClick }: BookGridProps) {
   if (!localBooks.length) {
     return (
       <div className="text-center p-8">
-        <p className="text-muted-foreground">{t("books.empty")}</p>
+        <p className="text-muted-foreground whitespace-pre-line">{t("books.empty")}</p>
       </div>
     );
   }
+
   const handleOnSuccess = (book: KomgaBook, action: "read" | "unread") => {
     if (action === "read") {
       setLocalBooks(
@@ -58,12 +61,22 @@ export function BookGrid({ books, onBookClick }: BookGridProps) {
   };
 
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+    <div
+      className={cn(
+        "grid gap-4",
+        isCompact
+          ? "grid-cols-3 sm:grid-cols-4 lg:grid-cols-6"
+          : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5"
+      )}
+    >
       {localBooks.map((book) => {
         return (
           <div
             key={book.id}
-            className="group relative aspect-[2/3] overflow-hidden rounded-lg bg-muted"
+            className={cn(
+              "group relative aspect-[2/3] overflow-hidden rounded-lg bg-muted",
+              isCompact ? "hover:scale-105 transition-transform" : ""
+            )}
           >
             <div
               onClick={() => onBookClick(book)}

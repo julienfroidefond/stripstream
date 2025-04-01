@@ -4,17 +4,20 @@ import { BookGrid } from "./BookGrid";
 import { Pagination } from "@/components/ui/Pagination";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Loader2, Filter } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { KomgaBook } from "@/types/komga";
 import { useTranslate } from "@/hooks/useTranslate";
+import { useDisplayPreferences } from "@/hooks/useDisplayPreferences";
+import { PageSizeSelect } from "@/components/common/PageSizeSelect";
+import { CompactModeButton } from "@/components/common/CompactModeButton";
+import { UnreadFilterButton } from "@/components/common/UnreadFilterButton";
 
 interface PaginatedBookGridProps {
   books: KomgaBook[];
   currentPage: number;
   totalPages: number;
   totalElements: number;
-  pageSize: number;
   defaultShowOnlyUnread: boolean;
   showOnlyUnread: boolean;
 }
@@ -24,7 +27,6 @@ export function PaginatedBookGrid({
   currentPage,
   totalPages,
   totalElements,
-  pageSize,
   defaultShowOnlyUnread,
   showOnlyUnread: initialShowOnlyUnread,
 }: PaginatedBookGridProps) {
@@ -33,55 +35,75 @@ export function PaginatedBookGrid({
   const searchParams = useSearchParams();
   const [isChangingPage, setIsChangingPage] = useState(false);
   const [showOnlyUnread, setShowOnlyUnread] = useState(initialShowOnlyUnread);
+  const { isCompact, itemsPerPage } = useDisplayPreferences();
   const { t } = useTranslate();
 
-  // Réinitialiser l'état de chargement quand les tomes changent
+  const updateUrlParams = async (updates: Record<string, string | null>) => {
+    setIsChangingPage(true);
+    const params = new URLSearchParams(searchParams.toString());
+
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === null) {
+        params.delete(key);
+      } else {
+        params.set(key, value);
+      }
+    });
+
+    await router.push(`${pathname}?${params.toString()}`);
+  };
+
+  // Reset loading state when books change
   useEffect(() => {
     setIsChangingPage(false);
   }, [books]);
 
-  // Mettre à jour l'état local quand la prop change
+  // Update local state when prop changes
   useEffect(() => {
     setShowOnlyUnread(initialShowOnlyUnread);
   }, [initialShowOnlyUnread]);
 
-  // Appliquer le filtre par défaut au chargement initial
+  // Apply default filter on initial load
   useEffect(() => {
     if (defaultShowOnlyUnread && !searchParams.has("unread")) {
-      const params = new URLSearchParams(searchParams.toString());
-      params.set("page", "1");
-      params.set("unread", "true");
-      router.push(`${pathname}?${params.toString()}`);
+      updateUrlParams({ page: "1", unread: "true" });
     }
   }, [defaultShowOnlyUnread, pathname, router, searchParams]);
 
   const handlePageChange = async (page: number) => {
-    setIsChangingPage(true);
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("page", page.toString());
-    params.set("unread", showOnlyUnread.toString());
-    await router.push(`${pathname}?${params.toString()}`);
+    await updateUrlParams({ page: page.toString() });
   };
 
   const handleUnreadFilter = async () => {
-    setIsChangingPage(true);
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("page", "1");
-
     const newUnreadState = !showOnlyUnread;
     setShowOnlyUnread(newUnreadState);
-    params.set("unread", newUnreadState.toString());
+    await updateUrlParams({
+      page: "1",
+      unread: newUnreadState ? "true" : "false",
+    });
+  };
 
-    await router.push(`${pathname}?${params.toString()}`);
+  const handleCompactToggle = async (newCompactState: boolean) => {
+    await updateUrlParams({
+      page: "1",
+      compact: newCompactState.toString(),
+    });
+  };
+
+  const handlePageSizeChange = async (size: number) => {
+    await updateUrlParams({
+      page: "1",
+      size: size.toString(),
+    });
   };
 
   const handleBookClick = (book: KomgaBook) => {
     router.push(`/books/${book.id}`);
   };
 
-  // Calcul des indices de début et de fin pour l'affichage
-  const startIndex = (currentPage - 1) * pageSize + 1;
-  const endIndex = Math.min(currentPage * pageSize, totalElements);
+  // Calculate start and end indices for display
+  const startIndex = (currentPage - 1) * itemsPerPage + 1;
+  const endIndex = Math.min(currentPage * itemsPerPage, totalElements);
 
   const getShowingText = () => {
     if (!totalElements) return t("books.empty");
@@ -95,19 +117,17 @@ export function PaginatedBookGrid({
 
   return (
     <div className="space-y-8 py-8">
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <p className="text-sm text-muted-foreground flex-1 min-w-[200px]">{getShowingText()}</p>
-        <button
-          onClick={handleUnreadFilter}
-          className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg hover:bg-accent hover:text-accent-foreground whitespace-nowrap ml-auto"
-        >
-          <Filter className="h-4 w-4" />
-          {showOnlyUnread ? t("books.filters.showAll") : t("books.filters.unread")}
-        </button>
+      <div className="flex flex-col gap-4">
+        <p className="text-sm text-muted-foreground text-right">{getShowingText()}</p>
+        <div className="flex items-center justify-end gap-2">
+          <PageSizeSelect onSizeChange={handlePageSizeChange} />
+          <CompactModeButton onToggle={handleCompactToggle} />
+          <UnreadFilterButton showOnlyUnread={showOnlyUnread} onToggle={handleUnreadFilter} />
+        </div>
       </div>
 
       <div className="relative">
-        {/* Indicateur de chargement */}
+        {/* Loading indicator */}
         {isChangingPage && (
           <div className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-sm z-10">
             <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-background border shadow-sm">
@@ -117,14 +137,14 @@ export function PaginatedBookGrid({
           </div>
         )}
 
-        {/* Grille avec animation de transition */}
+        {/* Grid with transition animation */}
         <div
           className={cn(
             "transition-opacity duration-200",
             isChangingPage ? "opacity-25" : "opacity-100"
           )}
         >
-          <BookGrid books={books} onBookClick={handleBookClick} />
+          <BookGrid books={books} onBookClick={handleBookClick} isCompact={isCompact} />
         </div>
       </div>
 
