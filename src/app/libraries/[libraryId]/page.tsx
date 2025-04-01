@@ -70,7 +70,7 @@ async function LibraryPage({ params, searchParams }: PageProps) {
 
   // Utiliser le paramètre d'URL s'il existe, sinon utiliser la préférence utilisateur
   const unreadOnly = unread !== undefined ? unread === "true" : preferences.showOnlyUnread;
-  console.log(unreadOnly);
+
   try {
     const { data: series, library }: { data: LibraryResponse<KomgaSeries>; library: KomgaLibrary } =
       await getLibrarySeries(libraryId, currentPage, unreadOnly, search, pageSize);
@@ -93,7 +93,6 @@ async function LibraryPage({ params, searchParams }: PageProps) {
           currentPage={currentPage}
           totalPages={series.totalPages}
           totalElements={series.totalElements}
-          pageSize={pageSize}
           defaultShowOnlyUnread={preferences.showOnlyUnread}
           showOnlyUnread={unreadOnly}
         />
