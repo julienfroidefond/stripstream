@@ -70,7 +70,7 @@ export function middleware(request: NextRequest) {
     }
 
     const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("from", encodeURIComponent(pathname));
+    // loginUrl.searchParams.set("from", encodeURIComponent(pathname));
     return NextResponse.redirect(loginUrl);
   }
 
@@ -94,7 +94,7 @@ export function middleware(request: NextRequest) {
       );
     }
     const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("from", pathname);
+    // loginUrl.searchParams.set("from", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
