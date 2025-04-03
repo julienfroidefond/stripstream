@@ -129,11 +129,7 @@ function MediaCard({ item, onClick }: MediaCardProps) {
       <div className="relative aspect-[2/3] bg-muted">
         {isSeries ? (
           <>
-            <SeriesCover
-              series={item as KomgaSeries}
-              alt={`Couverture de ${title}`}
-              quality={100}
-            />
+            <SeriesCover series={item as KomgaSeries} alt={`Couverture de ${title}`} />
             <div className="absolute inset-0 bg-black/60 opacity-0 hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3">
               <h3 className="font-medium text-sm text-white line-clamp-2">{title}</h3>
               <p className="text-xs text-white/80 mt-1">
@@ -146,7 +142,6 @@ function MediaCard({ item, onClick }: MediaCardProps) {
             <BookCover
               book={item as KomgaBook}
               alt={`Couverture de ${title}`}
-              quality={100}
               showControls={false}
               overlayVariant="home"
             />

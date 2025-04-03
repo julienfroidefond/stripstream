@@ -77,8 +77,6 @@ export function SeriesGrid({ series, isCompact = false }: SeriesGridProps) {
           <SeriesCover
             series={series as KomgaSeries}
             alt={t("series.coverAlt", { title: series.metadata.title })}
-            quality={25}
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-4 space-y-2 translate-y-full group-hover:translate-y-0 transition-transform duration-200">
             <h3 className="font-medium text-sm text-white line-clamp-2">{series.metadata.title}</h3>

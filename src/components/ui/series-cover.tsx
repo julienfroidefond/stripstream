@@ -9,8 +9,6 @@ export function SeriesCover({
   series,
   alt = "Image de couverture",
   className,
-  quality = 80,
-  sizes = "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw",
   showProgressUi = true,
 }: SeriesCoverProps) {
   const imageUrl = getImageUrl("series", series.id);
@@ -22,14 +20,7 @@ export function SeriesCover({
 
   return (
     <div className="relative w-full h-full">
-      <CoverClient
-        imageUrl={imageUrl}
-        alt={alt}
-        className={className}
-        quality={quality}
-        sizes={sizes}
-        isCompleted={isCompleted}
-      />
+      <CoverClient imageUrl={imageUrl} alt={alt} className={className} isCompleted={isCompleted} />
       {showProgress && <ProgressBar progress={readBooks} total={totalBooks} type="series" />}
     </div>
   );

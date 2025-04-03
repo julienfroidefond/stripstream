@@ -126,7 +126,6 @@ export const SeriesHeader = ({ series, refreshSeries }: SeriesHeaderProps) => {
           series={series as KomgaSeries}
           alt={t("series.header.coverAlt", { title: series.metadata.title })}
           className="blur-sm scale-105 brightness-50"
-          quality={60}
           showProgressUi={false}
         />
       </div>
@@ -139,7 +138,6 @@ export const SeriesHeader = ({ series, refreshSeries }: SeriesHeaderProps) => {
             <SeriesCover
               series={series as KomgaSeries}
               alt={t("series.header.coverAlt", { title: series.metadata.title })}
-              quality={90}
               showProgressUi={false}
             />
           </div>

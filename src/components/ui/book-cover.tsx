@@ -51,8 +51,6 @@ export function BookCover({
   book,
   alt = "Image de couverture",
   className,
-  quality = 80,
-  sizes = "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw",
   showProgressUi = true,
   onSuccess,
   showControls = true,
@@ -88,8 +86,6 @@ export function BookCover({
           imageUrl={imageUrl}
           alt={alt}
           className={className}
-          quality={quality}
-          sizes={sizes}
           isCompleted={isCompleted}
         />
         {showProgress && <ProgressBar progress={currentPage} total={totalPages} type="book" />}
