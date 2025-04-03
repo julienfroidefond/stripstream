@@ -126,16 +126,20 @@
       "buttons": {
         "saveTTL": "Sauvegarder les TTL",
         "clear": "Vider le cache",
-        "clearing": "Suppression..."
+        "clearing": "Suppression...",
+        "clearServiceWorker": "Vider le cache du service worker",
+        "clearingServiceWorker": "Suppression du cache service worker..."
       },
       "messages": {
         "ttlSaved": "La configuration des TTL a été sauvegardée avec succès",
-        "cleared": "Cache serveur supprimé avec succès"
+        "cleared": "Cache serveur supprimé avec succès",
+        "serviceWorkerCleared": "Cache du service worker supprimé avec succès"
       },
       "error": {
         "title": "Erreur lors de la suppression du cache",
         "message": "Une erreur est survenue lors de la suppression du cache",
-        "ttl": "Erreur lors de la sauvegarde de la configuration TTL"
+        "ttl": "Erreur lors de la sauvegarde de la configuration TTL",
+        "serviceWorkerMessage": "Une erreur est survenue lors de la suppression du cache du service worker"
       }
     }
   },

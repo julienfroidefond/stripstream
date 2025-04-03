@@ -16,6 +16,7 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
   const { t } = useTranslate();
   const { toast } = useToast();
   const [isCacheClearing, setIsCacheClearing] = useState(false);
+  const [isServiceWorkerClearing, setIsServiceWorkerClearing] = useState(false);
   const [ttlConfig, setTTLConfig] = useState<TTLConfigData>(
     initialTTLConfig || {
       defaultTTL: 5,
@@ -53,6 +54,29 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
       });
     } finally {
       setIsCacheClearing(false);
+    }
+  };
+
+  const handleClearServiceWorkerCache = async () => {
+    setIsServiceWorkerClearing(true);
+    try {
+      if ("serviceWorker" in navigator && "caches" in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
+        toast({
+          title: t("settings.cache.title"),
+          description: t("settings.cache.messages.serviceWorkerCleared"),
+        });
+      }
+    } catch (error) {
+      console.error("Erreur lors de la suppression des caches:", error);
+      toast({
+        variant: "destructive",
+        title: t("settings.cache.error.title"),
+        description: t("settings.cache.error.serviceWorkerMessage"),
+      });
+    } finally {
+      setIsServiceWorkerClearing(false);
     }
   };
 
@@ -222,6 +246,23 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
                 </>
               ) : (
                 t("settings.cache.buttons.clear")
+              )}
+            </button>
+          </div>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={handleClearServiceWorkerCache}
+              disabled={isServiceWorkerClearing}
+              className="flex-1 inline-flex items-center justify-center rounded-md bg-destructive px-3 py-2 text-sm font-medium text-destructive-foreground ring-offset-background transition-colors hover:bg-destructive/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+            >
+              {isServiceWorkerClearing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {t("settings.cache.buttons.clearingServiceWorker")}
+                </>
+              ) : (
+                t("settings.cache.buttons.clearServiceWorker")
               )}
             </button>
           </div>
