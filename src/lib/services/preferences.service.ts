@@ -27,6 +27,7 @@ export class PreferencesService {
       return {
         ...defaultPreferences,
         ...preferences.toObject(),
+        _id: undefined, //plain object KO on server components hydration
       };
     } catch (error) {
       if (error instanceof AppError) {
