@@ -1,3 +1,5 @@
+"use client";
+
 import { useTranslate } from "@/hooks/useTranslate";
 import { Filter } from "lucide-react";
 

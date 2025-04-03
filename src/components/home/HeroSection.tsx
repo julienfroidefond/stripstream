@@ -35,8 +35,6 @@ export function HeroSection({ series }: HeroSectionProps) {
             <SeriesCover
               series={series as KomgaSeries}
               alt={t("home.hero.coverAlt", { title: series.metadata.title })}
-              quality={25}
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16.666vw"
               showProgressUi={false}
             />
           </div>
