@@ -5,6 +5,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - MONGODB_URI=${MONGODB_URI}
     container_name: stripstream-app
     ports:
       - "3000:3000"
@@ -14,6 +16,9 @@ services:
       - /app/.next
     environment:
       - NODE_ENV=development
+      - MONGO_USER=admin
+      - MONGO_PASSWORD=password123
+      - MONGODB_URI=mongodb://admin:password123@mongodb:27017/stripstream?authSource=admin
     command: npm run dev
 
   mongodb:
@@ -21,12 +26,14 @@ services:
     container_name: stripstream_mongodb
     restart: always
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+      MONGO_INITDB_DATABASE: stripstream
     ports:
       - "27017:27017"
     volumes:
       - mongodb_data:/data/db
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
 
 volumes:
   mongodb_data:

@@ -1,6 +1,10 @@
 # Build stage
 FROM node:20-alpine AS builder
 
+# Declare MONGODB_URI as an argument for the builder stage
+ARG MONGODB_URI
+ENV MONGODB_URI=$MONGODB_URI
+
 # Set working directory
 WORKDIR /app
 
@@ -14,8 +18,8 @@ RUN corepack enable
 COPY package.json yarn.lock ./
 
 # Copy configuration files
-COPY tsconfig.json next-env.d.ts .eslintrc.json ./
-COPY tailwind.config.ts postcss.config.js .env ./
+COPY tsconfig.json .eslintrc.json ./
+COPY tailwind.config.ts postcss.config.js ./
 
 # Install dependencies with Yarn
 RUN yarn install --frozen-lockfile
@@ -43,7 +47,6 @@ COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/next-env.d.ts ./
 COPY --from=builder /app/tailwind.config.ts ./
-COPY --from=builder /app/.env ./
 
 # Add non-root user for security
 RUN addgroup --system --gid 1001 nodejs && \
