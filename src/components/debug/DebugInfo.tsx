@@ -51,7 +51,7 @@ function formatDuration(duration: number) {
 type FilterType = "all" | "current-page" | "api" | "cache" | "mongodb" | "page-render";
 
 export function DebugInfo() {
-  const { logs, setLogs, clearLogs: clearLogsContext, isRefreshing, setIsRefreshing } = useDebug();
+  const { logs, setLogs, clearLogs, isRefreshing, setIsRefreshing } = useDebug();
   const [isMinimized, setIsMinimized] = useState(false);
   const [filter, setFilter] = useState<FilterType>("all");
   const [showFilters, setShowFilters] = useState(false);
@@ -70,15 +70,6 @@ export function DebugInfo() {
       console.error("Erreur lors de la récupération des logs:", error);
     } finally {
       setIsRefreshing(false);
-    }
-  };
-
-  const clearLogs = async () => {
-    try {
-      await fetch("/api/debug", { method: "DELETE" });
-      clearLogsContext();
-    } catch (error) {
-      console.error("Erreur lors de la suppression des logs:", error);
     }
   };
 

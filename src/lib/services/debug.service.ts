@@ -234,9 +234,51 @@ export class DebugService {
     try {
       const userId = await this.getCurrentUserId();
       const filePath = this.getLogFilePath(userId);
-      await this.writeLogs(filePath, []);
+      await this.clearFile(filePath);
     } catch (error) {
       if (error instanceof AppError) throw error;
+    }
+  }
+
+  private static async clearFile(filePath: string): Promise<void> {
+    try {
+      // Obtenir la queue existante ou créer une nouvelle
+      const existingQueue = this.writeQueues.get(filePath);
+      
+      // Créer une nouvelle promesse qui attend la queue précédente
+      const newQueue = existingQueue 
+        ? existingQueue.then(() => this.performClear(filePath))
+        : this.performClear(filePath);
+      
+      // Mettre à jour la queue
+      this.writeQueues.set(filePath, newQueue);
+      
+      try {
+        await newQueue;
+      } finally {
+        // Nettoyer la queue si c'est la dernière opération
+        if (this.writeQueues.get(filePath) === newQueue) {
+          this.writeQueues.delete(filePath);
+        }
+      }
+    } catch (error) {
+      console.error(`Erreur lors du vidage du fichier ${filePath}:`, error);
+    }
+  }
+
+  private static async performClear(filePath: string): Promise<void> {
+    try {
+      // Créer une sauvegarde avant de vider
+      try {
+        await fs.copyFile(filePath, filePath + '.backup');
+      } catch {
+        // Ignorer si le fichier n'existe pas encore
+      }
+      
+      // Écrire un tableau vide pour vider le fichier
+      await fs.writeFile(filePath, JSON.stringify([], null, 2), { flag: 'w' });
+    } catch (error) {
+      console.error(`Erreur lors du vidage du fichier ${filePath}:`, error);
     }
   }
 

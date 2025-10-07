@@ -38,8 +38,17 @@ export function DebugProvider({ children }: DebugProviderProps) {
     });
   };
 
-  const clearLogs = () => {
-    setLogs([]);
+  const clearLogs = async () => {
+    try {
+      // Vider le fichier côté serveur
+      await fetch("/api/debug", { method: "DELETE" });
+      // Vider le state côté client
+      setLogs([]);
+    } catch (error) {
+      console.error("Erreur lors de la suppression des logs:", error);
+      // Même en cas d'erreur, vider le state côté client
+      setLogs([]);
+    }
   };
 
   // Charger les logs au montage du provider et les rafraîchir périodiquement
