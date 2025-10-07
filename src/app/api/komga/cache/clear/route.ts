@@ -3,11 +3,19 @@ import type { ServerCacheService } from "@/lib/services/server-cache.service";
 import { getServerCacheService } from "@/lib/services/server-cache.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { getErrorMessage } from "@/utils/errors";
+import { revalidatePath } from "next/cache";
 
 export async function POST() {
   try {
     const cacheService: ServerCacheService = await getServerCacheService();
-    cacheService.clear();
+    await cacheService.clear();
+    
+    // Revalider toutes les pages importantes après le vidage du cache
+    revalidatePath("/");
+    revalidatePath("/libraries");
+    revalidatePath("/series");
+    revalidatePath("/books");
+    
     return NextResponse.json({ message: "🧹 Cache vidé avec succès" });
   } catch (error) {
     console.error("Erreur lors de la suppression du cache:", error);

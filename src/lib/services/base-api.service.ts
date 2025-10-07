@@ -5,7 +5,7 @@ import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
 import type { KomgaConfig } from "@/types/komga";
 import type { ServerCacheService } from "./server-cache.service";
-import { fetchWithCacheDetection } from "../utils/fetch-with-cache-detection";
+import { DebugService } from "./debug.service";
 // Types de cache disponibles
 export type CacheType = "DEFAULT" | "HOME" | "LIBRARIES" | "SERIES" | "BOOKS" | "IMAGES";
 
@@ -97,8 +97,19 @@ export abstract class BaseApiService {
       }
     }
 
+    const startTime = performance.now();
+    
     try {
-      const response = await fetchWithCacheDetection(url, { headers, ...options });
+      const response = await fetch(url, { headers, ...options });
+      const endTime = performance.now();
+
+      // Logger la requête côté serveur
+      await DebugService.logRequest({
+        url: url,
+        startTime,
+        endTime,
+        fromCache: false, // Côté serveur, on ne peut pas détecter le cache navigateur
+      });
 
       if (!response.ok) {
         throw new AppError(ERROR_CODES.KOMGA.HTTP_ERROR, {
@@ -109,6 +120,16 @@ export abstract class BaseApiService {
 
       return options.isImage ? (response as T) : response.json();
     } catch (error) {
+      const endTime = performance.now();
+      
+      // Logger l'erreur côté serveur
+      await DebugService.logRequest({
+        url: url,
+        startTime,
+        endTime,
+        fromCache: false,
+      });
+      
       throw error;
     }
   }
