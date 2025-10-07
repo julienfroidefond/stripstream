@@ -42,14 +42,10 @@ async function getLibrarySeries(
   try {
     const pageIndex = page - 1;
 
-    const series: LibraryResponse<KomgaSeries> = await LibraryService.getLibrarySeries(
-      libraryId,
-      pageIndex,
-      size,
-      unreadOnly,
-      search
-    );
-    const library: KomgaLibrary = await LibraryService.getLibrary(libraryId);
+    const [series, library] = await Promise.all([
+      LibraryService.getLibrarySeries(libraryId, pageIndex, size, unreadOnly, search),
+      LibraryService.getLibrary(libraryId)
+    ]);
 
     return { data: series, library };
   } catch (error) {

@@ -27,13 +27,10 @@ async function getSeriesBooks(
   try {
     const pageIndex = page - 1;
 
-    const books: LibraryResponse<KomgaBook> = await SeriesService.getSeriesBooks(
-      seriesId,
-      pageIndex,
-      size,
-      unreadOnly
-    );
-    const series: KomgaSeries = await SeriesService.getSeries(seriesId);
+    const [books, series] = await Promise.all([
+      SeriesService.getSeriesBooks(seriesId, pageIndex, size, unreadOnly),
+      SeriesService.getSeries(seriesId)
+    ]);
 
     return { data: books, series };
   } catch (error) {
