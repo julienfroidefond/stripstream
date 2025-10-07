@@ -9,7 +9,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { usePathname } from "next/navigation";
 import { registerServiceWorker } from "@/lib/registerSW";
 import { NetworkStatus } from "../ui/NetworkStatus";
-import { LoadingBar } from "@/components/ui/loading-bar";
 import { DebugWrapper } from "@/components/debug/DebugWrapper";
 import type { KomgaLibrary, KomgaSeries } from "@/types/komga";
 
@@ -70,7 +69,6 @@ export default function ClientLayout({ children, initialLibraries = [], initialF
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
         <div className="relative min-h-screen h-full">
-          <LoadingBar />
           {!isPublicRoute && <Header onToggleSidebar={handleToggleSidebar} />}
           {!isPublicRoute && (
             <Sidebar 
