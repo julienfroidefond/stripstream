@@ -10,6 +10,7 @@ import { usePathname } from "next/navigation";
 import { registerServiceWorker } from "@/lib/registerSW";
 import { NetworkStatus } from "../ui/NetworkStatus";
 import { DebugWrapper } from "@/components/debug/DebugWrapper";
+import { DebugProvider } from "@/contexts/DebugContext";
 import type { KomgaLibrary, KomgaSeries } from "@/types/komga";
 
 // Routes qui ne nécessitent pas d'authentification
@@ -68,6 +69,7 @@ export default function ClientLayout({ children, initialLibraries = [], initialF
 
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <DebugProvider>
         <div className="relative min-h-screen h-full">
           {!isPublicRoute && <Header onToggleSidebar={handleToggleSidebar} />}
           {!isPublicRoute && (
@@ -84,6 +86,7 @@ export default function ClientLayout({ children, initialLibraries = [], initialF
           <NetworkStatus />
           <DebugWrapper />
         </div>
+      </DebugProvider>
     </ThemeProvider>
   );
 }

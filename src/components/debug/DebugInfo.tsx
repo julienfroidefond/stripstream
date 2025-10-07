@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import {
   X,
@@ -11,9 +11,12 @@ import {
   Layout,
   RefreshCw,
   Globe,
+  Filter,
+  Calendar,
 } from "lucide-react";
 import type { CacheType } from "@/lib/services/base-api.service";
 import { useTranslation } from "react-i18next";
+import { useDebug } from "@/contexts/DebugContext";
 
 interface RequestTiming {
   url: string;
@@ -45,10 +48,13 @@ function formatDuration(duration: number) {
   return Math.round(duration);
 }
 
+type FilterType = "all" | "current-page" | "api" | "cache" | "mongodb" | "page-render";
+
 export function DebugInfo() {
-  const [logs, setLogs] = useState<RequestTiming[]>([]);
+  const { logs, setLogs, clearLogs: clearLogsContext, isRefreshing, setIsRefreshing } = useDebug();
   const [isMinimized, setIsMinimized] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [filter, setFilter] = useState<FilterType>("all");
+  const [showFilters, setShowFilters] = useState(false);
   const pathname = usePathname();
   const { t } = useTranslation();
 
@@ -67,32 +73,46 @@ export function DebugInfo() {
     }
   };
 
-  // Rafraîchir les logs au montage et à chaque changement de page
-  useEffect(() => {
-    fetchLogs();
-  }, [pathname]);
-
-  // Rafraîchir les logs périodiquement si la fenêtre n'est pas minimisée
-  useEffect(() => {
-    if (isMinimized) return;
-
-    const interval = setInterval(() => {
-      fetchLogs();
-    }, 5000); // Rafraîchir toutes les 5 secondes
-
-    return () => clearInterval(interval);
-  }, [isMinimized]);
-
   const clearLogs = async () => {
     try {
       await fetch("/api/debug", { method: "DELETE" });
-      setLogs([]);
+      clearLogsContext();
     } catch (error) {
       console.error("Erreur lors de la suppression des logs:", error);
     }
   };
 
-  const sortedLogs = [...logs].reverse();
+  // Fonction pour déterminer si une requête appartient à la page courante
+  const isCurrentPageRequest = (log: RequestTiming): boolean => {
+    if (log.pageRender) {
+      return log.pageRender.page === pathname;
+    }
+    // Pour les requêtes API, on considère qu'elles appartiennent à la page courante
+    // si elles ont été faites récemment (dans les 30 dernières secondes)
+    const logTime = new Date(log.timestamp).getTime();
+    const now = Date.now();
+    return now - logTime < 30000; // 30 secondes
+  };
+
+  // Filtrer les logs selon le filtre sélectionné
+  const filteredLogs = logs.filter((log) => {
+    switch (filter) {
+      case "current-page":
+        return isCurrentPageRequest(log);
+      case "api":
+        return !log.fromCache && !log.mongoAccess && !log.pageRender;
+      case "cache":
+        return log.fromCache;
+      case "mongodb":
+        return log.mongoAccess;
+      case "page-render":
+        return log.pageRender;
+      default:
+        return true;
+    }
+  });
+
+  const sortedLogs = [...filteredLogs].reverse();
 
   return (
     <div
@@ -110,6 +130,15 @@ export function DebugInfo() {
           )}
         </div>
         <div className="flex items-center gap-2">
+          {!isMinimized && (
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`hover:bg-zinc-700 rounded-full p-1.5 ${showFilters ? "bg-zinc-700" : ""}`}
+              aria-label="Filtres"
+            >
+              <Filter className="h-5 w-5" />
+            </button>
+          )}
           <button
             onClick={fetchLogs}
             className="hover:bg-zinc-700 rounded-full p-1.5"
@@ -135,15 +164,52 @@ export function DebugInfo() {
         </div>
       </div>
 
+      {!isMinimized && showFilters && (
+        <div className="mb-4 p-3 bg-zinc-800 rounded-lg">
+          <div className="flex flex-wrap gap-2">
+            {[
+              { key: "all", label: "Toutes", icon: Calendar },
+              { key: "current-page", label: "Page courante", icon: Layout },
+              { key: "api", label: "API", icon: Globe },
+              { key: "cache", label: "Cache", icon: Database },
+              { key: "mongodb", label: "MongoDB", icon: CircleDot },
+              { key: "page-render", label: "Rendu", icon: Layout },
+            ].map(({ key, label, icon: Icon }) => (
+              <button
+                key={key}
+                onClick={() => setFilter(key as FilterType)}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs transition-colors ${
+                  filter === key
+                    ? "bg-blue-600 text-white"
+                    : "bg-zinc-700 text-zinc-300 hover:bg-zinc-600"
+                }`}
+              >
+                <Icon className="h-3 w-3" />
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {!isMinimized && (
         <div className="space-y-3">
           {sortedLogs.length === 0 ? (
             <p className="text-sm opacity-75">{t("debug.noRequests")}</p>
           ) : (
-            sortedLogs.map((log, index) => (
-              <div key={index} className="text-sm space-y-1.5 bg-zinc-800 p-2 rounded">
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2 min-w-0 flex-1">
+            sortedLogs.map((log, index) => {
+              const isCurrentPage = isCurrentPageRequest(log);
+              return (
+                <div 
+                  key={index} 
+                  className={`text-sm space-y-1.5 p-2 rounded border-l-2 ${
+                    isCurrentPage 
+                      ? "bg-blue-900/20 border-blue-500" 
+                      : "bg-zinc-800 border-zinc-700"
+                  }`}
+                >
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
                     {log.fromCache && (
                       <div
                         title={t("debug.tooltips.cache", { type: log.cacheType || "DEFAULT" })}
@@ -231,7 +297,8 @@ export function DebugInfo() {
                   )}
                 </div>
               </div>
-            ))
+              );
+            })
           )}
         </div>
       )}

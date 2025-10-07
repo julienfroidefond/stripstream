@@ -1,6 +1,7 @@
 import { useCallback, useRef } from "react";
 import type { PageCache } from "../types";
 import type { KomgaBook } from "@/types/komga";
+import { usePreferences } from "@/contexts/PreferencesContext";
 
 interface UsePageCacheProps {
   book: KomgaBook;
@@ -9,6 +10,7 @@ interface UsePageCacheProps {
 
 export const usePageCache = ({ book, pages }: UsePageCacheProps) => {
   const pageCache = useRef<PageCache>({});
+  const { preferences } = usePreferences();
 
   const preloadPage = useCallback(
     async (pageNumber: number) => {
@@ -32,9 +34,29 @@ export const usePageCache = ({ book, pages }: UsePageCacheProps) => {
       };
 
       try {
+        const startTime = performance.now();
         const response = await fetch(`/api/komga/books/${book.id}/pages/${pageNumber}`);
         const blob = await response.blob();
         const url = URL.createObjectURL(blob);
+        const endTime = performance.now();
+
+        // Logger la requête côté client seulement si le mode debug est activé et ce n'est pas une requête de debug
+        if (!url.includes('/api/debug') && preferences.debug) {
+          try {
+            await fetch("/api/debug", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                url: `/api/komga/books/${book.id}/pages/${pageNumber}`,
+                startTime,
+                endTime,
+                fromCache: false,
+              }),
+            });
+          } catch {
+            // Ignorer les erreurs de logging
+          }
+        }
 
         pageCache.current[pageNumber] = {
           blob,
@@ -49,12 +71,30 @@ export const usePageCache = ({ book, pages }: UsePageCacheProps) => {
         resolveLoading!();
       }
     },
-    [book.id, pages.length]
+    [book.id, pages.length, preferences.debug]
   );
 
   const getPageUrl = useCallback(
     async (pageNumber: number) => {
       if (pageCache.current[pageNumber]?.url) {
+        // Logger l'utilisation du cache côté client seulement si le mode debug est activé et ce n'est pas une requête de debug
+        const cacheUrl = `[CLIENT-CACHE] /api/komga/books/${book.id}/pages/${pageNumber}`;
+        if (!cacheUrl.includes('/api/debug') && preferences.debug) {
+          try {
+            await fetch("/api/debug", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                url: cacheUrl,
+                startTime: performance.now(),
+                endTime: performance.now(),
+                fromCache: true,
+              }),
+            });
+          } catch {
+            // Ignorer les erreurs de logging
+          }
+        }
         return pageCache.current[pageNumber].url;
       }
 
@@ -69,7 +109,7 @@ export const usePageCache = ({ book, pages }: UsePageCacheProps) => {
         `/api/komga/images/books/${book.id}/pages/${pageNumber}`
       );
     },
-    [book.id, preloadPage]
+    [book.id, preloadPage, preferences.debug]
   );
 
   const cleanCache = useCallback(

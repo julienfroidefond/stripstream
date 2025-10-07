@@ -400,9 +400,9 @@ class ServerCacheService {
     if (cached !== null) {
       const endTime = performance.now();
 
-      // Log la requête avec l'indication du cache
+      // Log la requête avec l'indication du cache (URL plus claire)
       await DebugService.logRequest({
-        url: cacheKey,
+        url: `[CACHE] ${key}`,
         startTime,
         endTime,
         fromCache: true,

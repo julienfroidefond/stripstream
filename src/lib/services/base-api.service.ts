@@ -1,11 +1,11 @@
 import type { AuthConfig } from "@/types/auth";
 import { getServerCacheService } from "./server-cache.service";
 import { ConfigDBService } from "./config-db.service";
-import { DebugService } from "./debug.service";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
 import type { KomgaConfig } from "@/types/komga";
 import type { ServerCacheService } from "./server-cache.service";
+import { fetchWithCacheDetection } from "../utils/fetch-with-cache-detection";
 // Types de cache disponibles
 export type CacheType = "DEFAULT" | "HOME" | "LIBRARIES" | "SERIES" | "BOOKS" | "IMAGES";
 
@@ -86,7 +86,6 @@ export abstract class BaseApiService {
     headersOptions = {},
     options: KomgaRequestInit = {}
   ): Promise<T> {
-    const startTime = performance.now();
     const config: AuthConfig = await this.getKomgaConfig();
     const { path, params } = urlBuilder;
     const url = this.buildUrl(config, path, params);
@@ -99,16 +98,7 @@ export abstract class BaseApiService {
     }
 
     try {
-      const response = await fetch(url, { headers, ...options });
-      const endTime = performance.now();
-
-      // Log la requête
-      await DebugService.logRequest({
-        url: path,
-        startTime,
-        endTime,
-        fromCache: false,
-      });
+      const response = await fetchWithCacheDetection(url, { headers, ...options });
 
       if (!response.ok) {
         throw new AppError(ERROR_CODES.KOMGA.HTTP_ERROR, {
@@ -117,18 +107,8 @@ export abstract class BaseApiService {
         });
       }
 
-      return options.isImage ? response : response.json();
+      return options.isImage ? (response as T) : response.json();
     } catch (error) {
-      const endTime = performance.now();
-
-      // Log aussi les erreurs
-      await DebugService.logRequest({
-        url: path,
-        startTime,
-        endTime,
-        fromCache: false,
-      });
-
       throw error;
     }
   }

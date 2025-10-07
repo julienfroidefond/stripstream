@@ -200,6 +200,17 @@ Application web moderne pour la lecture de BD/mangas/comics via un serveur Komga
     - [x] API responses
     - [x] Static assets
     - [x] Images
+- [x] Mode Debug
+  - [x] Système de logging des requêtes
+    - [x] Historique des requêtes API
+    - [x] Mesure des temps de réponse
+    - [x] Détection des accès cache/MongoDB
+    - [x] Logging des rendus de pages
+  - [x] Interface de debug améliorée
+    - [x] Filtres par type de requête
+    - [x] Distinction visuelle page courante/historique
+    - [x] Historique étendu (500 entrées)
+    - [x] Rafraîchissement intelligent
 - [x] SEO
   - [x] Meta tags
   - [x] Sitemap
