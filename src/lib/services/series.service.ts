@@ -180,7 +180,7 @@ export class SeriesService extends BaseApiService {
       // Si l'utilisateur préfère les vignettes, utiliser la miniature
       if (preferences.showThumbnails) {
         const response: ImageResponse = await ImageService.getImage(`series/${seriesId}/thumbnail`);
-        return new Response(response.buffer, {
+        return new Response(response.buffer.buffer as ArrayBuffer, {
           headers: {
             "Content-Type": response.contentType || "image/jpeg",
             "Cache-Control": "public, max-age=31536000, immutable",

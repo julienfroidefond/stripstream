@@ -96,7 +96,7 @@ export class BookService extends BaseApiService {
       const response: ImageResponse = await ImageService.getImage(
         `books/${bookId}/pages/${adjustedPageNumber}?zero_based=true`
       );
-      return new Response(response.buffer, {
+      return new Response(response.buffer.buffer as ArrayBuffer, {
         headers: {
           "Content-Type": response.contentType || "image/jpeg",
           "Cache-Control": "public, max-age=31536000, immutable",
@@ -115,7 +115,7 @@ export class BookService extends BaseApiService {
       // Si l'utilisateur préfère les vignettes, utiliser la miniature
       if (preferences.showThumbnails) {
         const response: ImageResponse = await ImageService.getImage(`books/${bookId}/thumbnail`);
-        return new Response(response.buffer, {
+        return new Response(response.buffer.buffer as ArrayBuffer, {
           headers: {
             "Content-Type": response.contentType || "image/jpeg",
             "Cache-Control": "public, max-age=31536000, immutable",
@@ -143,7 +143,7 @@ export class BookService extends BaseApiService {
       const response: ImageResponse = await ImageService.getImage(
         `books/${bookId}/pages/${pageNumber}/thumbnail?zero_based=true`
       );
-      return new Response(response.buffer, {
+      return new Response(response.buffer.buffer as ArrayBuffer, {
         headers: {
           "Content-Type": response.contentType || "image/jpeg",
           "Cache-Control": "public, max-age=31536000, immutable",
