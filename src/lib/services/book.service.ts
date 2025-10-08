@@ -13,13 +13,11 @@ export class BookService extends BaseApiService {
       return this.fetchWithCache<KomgaBookWithPages>(
         `book-${bookId}`,
         async () => {
-          // Récupération des détails du tome
-          const book = await this.fetchFromApi<KomgaBook>({ path: `books/${bookId}` });
-
-          // Récupération des pages du tome
-          const pages = await this.fetchFromApi<{ number: number }[]>({
-            path: `books/${bookId}/pages`,
-          });
+          // Récupération parallèle des détails du tome et des pages
+          const [book, pages] = await Promise.all([
+            this.fetchFromApi<KomgaBook>({ path: `books/${bookId}` }),
+            this.fetchFromApi<{ number: number }[]>({ path: `books/${bookId}/pages` })
+          ]);
 
           return {
             book,
