@@ -35,14 +35,14 @@ export const usePreloadPages = ({
 
       const pagesToPreload = [];
 
+      // Précharger les 2 pages précédentes en priorité
+      for (let i = 1; i <= 2 && currentPage - i >= 1; i++) {
+        pagesToPreload.push(currentPage - i);
+      }
+
       // Précharger les 4 pages suivantes
       for (let i = 1; i <= 4 && currentPage + i <= totalPages; i++) {
         pagesToPreload.push(currentPage + i);
-      }
-
-      // Précharger les 2 pages précédentes
-      for (let i = 1; i <= 2 && currentPage - i >= 1; i++) {
-        pagesToPreload.push(currentPage - i);
       }
 
       for (const page of pagesToPreload) {
