@@ -11,7 +11,7 @@ services:
     container_name: stripstream-app
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "3020:3000"
     environment:
       - NODE_ENV=production
       - MONGODB_URI=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongodb:27017/stripstream?authSource=admin

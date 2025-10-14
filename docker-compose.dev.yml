@@ -9,7 +9,7 @@ services:
         - MONGODB_URI=${MONGODB_URI}
     container_name: stripstream-app
     ports:
-      - "3000:3000"
+      - "3020:3000"
     volumes:
       - .:/app
       - /app/node_modules
