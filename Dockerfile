@@ -11,25 +11,25 @@ WORKDIR /app
 # Install dependencies for node-gyp
 RUN apk add --no-cache python3 make g++
 
-# Enable Yarn
-RUN corepack enable
+# Enable pnpm via corepack
+RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
 
 # Copy package files first to leverage Docker cache
-COPY package.json yarn.lock ./
+COPY package.json pnpm-lock.yaml ./
 
 # Copy configuration files
 COPY tsconfig.json .eslintrc.json ./
 COPY tailwind.config.ts postcss.config.js ./
 
-# Install dependencies with Yarn
-RUN yarn install --frozen-lockfile
+# Install dependencies with pnpm
+RUN pnpm install --frozen-lockfile
 
 # Copy source files
 COPY src ./src
 COPY public ./public
 
 # Build the application
-RUN yarn build
+RUN pnpm build
 
 # Production stage
 FROM node:20-alpine AS runner
@@ -37,10 +37,11 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 
 # Install production dependencies only
-COPY package.json yarn.lock ./
+COPY package.json pnpm-lock.yaml ./
 RUN corepack enable && \
-    yarn install --production --frozen-lockfile && \
-    yarn cache clean
+    corepack prepare pnpm@9.0.0 --activate && \
+    pnpm install --prod --frozen-lockfile && \
+    pnpm store prune
 
 # Copy built application from builder stage
 COPY --from=builder /app/.next ./.next
@@ -67,4 +68,4 @@ HEALTHCHECK --interval=30s --timeout=3s \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
 
 # Start the application
-CMD ["yarn", "start"] 
+CMD ["pnpm", "start"] 

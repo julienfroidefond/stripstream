@@ -22,7 +22,7 @@ export const Thumbnail = forwardRef<HTMLButtonElement, ThumbnailProps>(
     const [hasError, setHasError] = useState(false);
     const [isInViewport, setIsInViewport] = useState(false);
     const loadAttempts = useRef(0);
-    const maxAttempts = 3;
+    const maxAttempts = 1; // Désactivé pour réduire la charge sur Komga
     const internalRef = useRef<HTMLButtonElement>(null);
 
     useImperativeHandle(ref, () => internalRef.current as HTMLButtonElement);
@@ -94,7 +94,14 @@ export const Thumbnail = forwardRef<HTMLButtonElement, ThumbnailProps>(
         // Réessayer avec un délai croissant
         const delay = Math.min(1000 * Math.pow(2, loadAttempts.current - 1), 5000);
         setTimeout(() => {
-          setImageUrl((prev) => (prev ? `${prev}?retry=${loadAttempts.current}` : null));
+          setImageUrl((prev) => {
+            if (!prev) return null;
+            // Utiliser & si l'URL contient déjà des query params
+            const separator = prev.includes('?') ? '&' : '?';
+            // Supprimer l'ancien retry param si présent
+            const baseUrl = prev.replace(/[?&]retry=\d+/g, '');
+            return `${baseUrl}${separator}retry=${loadAttempts.current}`;
+          });
         }, delay);
       } else {
         console.error(

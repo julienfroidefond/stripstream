@@ -23,7 +23,7 @@ export const useThumbnails = ({ book, currentPage }: UseThumbnailsProps) => {
 
   // Mettre à jour les thumbnails visibles autour de la page courante
   useEffect(() => {
-    const windowSize = 10; // Nombre de pages à charger de chaque côté
+    const windowSize = 0; // DÉSACTIVÉ TEMPORAIREMENT: Thumbnails désactivés pour éviter de surcharger Komga
     const start = Math.max(1, currentPage - windowSize);
     const end = currentPage + windowSize;
     const newVisibleThumbnails = Array.from({ length: end - start + 1 }, (_, i) => start + i);

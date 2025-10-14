@@ -6,6 +6,8 @@ import { AppError } from "../../utils/errors";
 import type { KomgaConfig } from "@/types/komga";
 import type { ServerCacheService } from "./server-cache.service";
 import { DebugService } from "./debug.service";
+import { RequestMonitorService } from "./request-monitor.service";
+import { RequestQueueService } from "./request-queue.service";
 // Types de cache disponibles
 export type CacheType = "DEFAULT" | "HOME" | "LIBRARIES" | "SERIES" | "BOOKS" | "IMAGES";
 
@@ -99,9 +101,27 @@ export abstract class BaseApiService {
 
     const startTime = performance.now();
     
+    // Timeout de 60 secondes au lieu de 10 par défaut
+    const timeoutMs = 60000;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    
     try {
-      const response = await fetch(url, { headers, ...options });
-      const endTime = performance.now();
+      // Enqueue la requête pour limiter la concurrence
+      const response = await RequestQueueService.enqueue(async () => {
+        return await fetch(url, { 
+          headers, 
+          ...options,
+          signal: controller.signal,
+          // Configure undici connection timeouts
+          // @ts-ignore - undici-specific options not in standard fetch types
+          connectTimeout: timeoutMs,
+          bodyTimeout: timeoutMs,
+          headersTimeout: timeoutMs,
+        });
+      });
+      clearTimeout(timeoutId);
+        const endTime = performance.now();
 
       // Logger la requête côté serveur
       await DebugService.logRequest({
@@ -131,6 +151,9 @@ export abstract class BaseApiService {
       });
       
       throw error;
+    } finally {
+      clearTimeout(timeoutId);
+      RequestMonitorService.decrementActive();
     }
   }
 }
