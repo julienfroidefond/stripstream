@@ -1,7 +1,6 @@
 import type { ThumbnailProps } from "../types";
 import { ImageLoader } from "@/components/ui/image-loader";
 import { cn } from "@/lib/utils";
-import Image from "next/image";
 import { forwardRef, useEffect, useState, useCallback, useRef, useImperativeHandle } from "react";
 
 export const Thumbnail = forwardRef<HTMLButtonElement, ThumbnailProps>(
@@ -128,17 +127,14 @@ export const Thumbnail = forwardRef<HTMLButtonElement, ThumbnailProps>(
       >
         <ImageLoader isLoading={isLoading} />
         {imageUrl && !hasError && (
-          <Image
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
             src={imageUrl}
             alt={`Miniature page ${pageNumber}`}
             className={cn(
-              "object-contain transition-opacity duration-300",
+              "absolute inset-0 w-full h-full object-contain transition-opacity duration-300",
               isLoading ? "opacity-0" : "opacity-100"
             )}
-            fill
-            sizes="100px"
-            loading="lazy"
-            quality={50}
             onLoad={handleImageLoad}
             onError={handleImageError}
           />
