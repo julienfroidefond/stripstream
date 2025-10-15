@@ -8,6 +8,9 @@ ENV MONGODB_URI=$MONGODB_URI
 # Set working directory
 WORKDIR /app
 
+# Configure pnpm store location
+ENV PNPM_HOME="/app/.pnpm-store"
+
 # Install dependencies for node-gyp
 RUN apk add --no-cache python3 make g++
 
@@ -22,7 +25,8 @@ COPY tsconfig.json .eslintrc.json ./
 COPY tailwind.config.ts postcss.config.js ./
 
 # Install dependencies with pnpm
-RUN pnpm install --frozen-lockfile
+RUN pnpm config set store-dir /app/.pnpm-store && \
+    pnpm install --frozen-lockfile
 
 # Copy source files
 COPY src ./src
@@ -40,6 +44,7 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 RUN corepack enable && \
     corepack prepare pnpm@9.0.0 --activate && \
+    pnpm config set store-dir /app/.pnpm-store && \
     pnpm install --prod --frozen-lockfile && \
     pnpm store prune
 

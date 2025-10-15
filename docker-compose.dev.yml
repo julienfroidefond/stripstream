@@ -14,12 +14,14 @@ services:
       - .:/app
       - /app/node_modules
       - /app/.next
+      - pnpm_store:/app/.pnpm-store
     environment:
       - NODE_ENV=development
       - MONGO_USER=admin
       - MONGO_PASSWORD=password123
       - MONGODB_URI=mongodb://admin:password123@mongodb:27017/stripstream?authSource=admin
-    command: npm run dev
+      - PNPM_HOME=/app/.pnpm-store
+    command: sh -c "pnpm config set store-dir /app/.pnpm-store && pnpm install && pnpm dev"
 
   mongodb:
     image: mongo:latest
@@ -37,3 +39,4 @@ services:
 
 volumes:
   mongodb_data:
+  pnpm_store:
