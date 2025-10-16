@@ -31,6 +31,7 @@ export interface NavigationBarProps {
   pages: number[];
   onPageChange: (page: number) => void;
   showControls: boolean;
+  showThumbnails: boolean;
   book: KomgaBook;
 }
 
@@ -49,6 +50,8 @@ export interface ControlButtonsProps {
   onToggleFullscreen: () => void;
   direction: "ltr" | "rtl";
   onToggleDirection: () => void;
+  showThumbnails: boolean;
+  onToggleThumbnails: () => void;
 }
 
 export interface UsePageNavigationProps {

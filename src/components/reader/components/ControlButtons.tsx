@@ -9,6 +9,7 @@ import {
   Minimize2,
   MoveRight,
   MoveLeft,
+  Images,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PageInput } from "./PageInput";
@@ -29,6 +30,8 @@ export const ControlButtons = ({
   direction,
   onToggleDirection,
   onPageChange,
+  showThumbnails,
+  onToggleThumbnails,
 }: ControlButtonsProps) => {
   const { t } = useTranslation();
 
@@ -94,6 +97,21 @@ export const ControlButtons = ({
           )}
         >
           {isFullscreen ? <Minimize2 className="h-6 w-6" /> : <Maximize2 className="h-6 w-6" />}
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleThumbnails();
+          }}
+          className={cn(
+            "p-2 rounded-full bg-background/50 hover:bg-background/80 transition-colors",
+            showThumbnails && "ring-2 ring-primary"
+          )}
+          aria-label={t(
+            showThumbnails ? "reader.controls.thumbnails.hide" : "reader.controls.thumbnails.show"
+          )}
+        >
+          <Images className="h-6 w-6" />
         </button>
         <div className="p-2 rounded-full bg-background/50" onClick={(e) => e.stopPropagation()}>
           <PageInput

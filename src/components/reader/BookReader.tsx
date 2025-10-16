@@ -18,6 +18,7 @@ import { useTranslate } from "@/hooks/useTranslate";
 export function BookReader({ book, pages, onClose, nextBook }: BookReaderProps) {
   const [isDoublePage, setIsDoublePage] = useState(false);
   const [showControls, setShowControls] = useState(false);
+  const [showThumbnails, setShowThumbnails] = useState(false);
   const readerRef = useRef<HTMLDivElement>(null);
   const isLandscape = useOrientation();
   const { direction, toggleDirection, isRTL } = useReadingDirection();
@@ -126,6 +127,8 @@ export function BookReader({ book, pages, onClose, nextBook }: BookReaderProps) 
             onToggleFullscreen={() => toggleFullscreen(readerRef.current)}
             direction={direction}
             onToggleDirection={toggleDirection}
+            showThumbnails={showThumbnails}
+            onToggleThumbnails={() => setShowThumbnails(!showThumbnails)}
           />
 
           <ReaderContent
@@ -148,6 +151,7 @@ export function BookReader({ book, pages, onClose, nextBook }: BookReaderProps) 
             pages={pages}
             onPageChange={navigateToPage}
             showControls={showControls}
+            showThumbnails={showThumbnails}
             book={book}
           />
         </div>
