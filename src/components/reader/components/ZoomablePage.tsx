@@ -60,6 +60,7 @@ export const ZoomablePage = ({
             wrapperClass="w-full h-full flex items-center justify-center"
             contentClass="cursor-pointer"
           >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={pageUrl}
               alt={`Page ${pageNumber}`}

@@ -133,15 +133,25 @@ export const usePageNavigation = ({
 
   const handleTouchStart = useCallback(
     (event: TouchEvent) => {
-      touchStartXRef.current = event.touches[0].clientX;
-      touchStartYRef.current = event.touches[0].clientY;
-      currentPageRef.current = currentPage;
+      // Ne gérer que les gestes à un seul doigt
+      if (event.touches.length === 1) {
+        touchStartXRef.current = event.touches[0].clientX;
+        touchStartYRef.current = event.touches[0].clientY;
+        currentPageRef.current = currentPage;
+      } else {
+        // Reset les références pour les gestes multi-touch (pinch)
+        touchStartXRef.current = null;
+        touchStartYRef.current = null;
+      }
     },
     [currentPage]
   );
 
   const handleTouchEnd = useCallback(
     (event: TouchEvent) => {
+      // Ne traiter que les gestes à un seul doigt
+      if (event.touches.length > 1) return;
+      
       if (touchStartXRef.current === null || touchStartYRef.current === null) return;
 
       const touchEndX = event.changedTouches[0].clientX;
@@ -153,8 +163,8 @@ export const usePageNavigation = ({
       // on ne fait rien (pour éviter de confondre avec un scroll)
       if (Math.abs(deltaY) > Math.abs(deltaX)) return;
 
-      // On vérifie si le déplacement est suffisant pour changer de page
-      if (Math.abs(deltaX) > 50) {
+      // Augmenter le seuil pour éviter les changements de page accidentels
+      if (Math.abs(deltaX) > 100) {
         if (deltaX > 0) {
           // Swipe vers la droite
           if (isRTL) {
