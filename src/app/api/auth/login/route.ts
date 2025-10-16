@@ -7,11 +7,11 @@ import { getErrorMessage } from "@/utils/errors";
 import type { NextRequest } from "next/server";
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json();
+    const { email, password, remember } = await request.json();
 
     try {
       const userData: UserData = await AuthServerService.loginUser(email, password);
-      await AuthServerService.setUserCookie(userData);
+      await AuthServerService.setUserCookie(userData, remember);
 
       return NextResponse.json({
         message: "✅ Connexion réussie",

@@ -67,7 +67,7 @@ export class AuthServerService {
     return true;
   }
 
-  static async setUserCookie(userData: UserData): Promise<void> {
+  static async setUserCookie(userData: UserData, remember: boolean = false): Promise<void> {
     // Encode user data in base64
     const encodedUserData = Buffer.from(JSON.stringify(userData)).toString("base64");
 
@@ -78,7 +78,7 @@ export class AuthServerService {
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
-      maxAge: 24 * 60 * 60, // 24 hours by default for new users
+      maxAge: remember ? 30 * 24 * 60 * 60 : 24 * 60 * 60, // 30 days if remember, 24 hours otherwise
     });
   }
 
