@@ -20,6 +20,9 @@ RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
 # Copy package files first to leverage Docker cache
 COPY package.json pnpm-lock.yaml ./
 
+# Copy Prisma schema
+COPY prisma ./prisma
+
 # Copy configuration files
 COPY tsconfig.json .eslintrc.json ./
 COPY tailwind.config.ts postcss.config.js ./
@@ -27,6 +30,9 @@ COPY tailwind.config.ts postcss.config.js ./
 # Install dependencies with pnpm
 RUN pnpm config set store-dir /app/.pnpm-store && \
     pnpm install --frozen-lockfile
+
+# Generate Prisma Client
+RUN pnpm prisma generate
 
 # Copy source files
 COPY src ./src
@@ -40,13 +46,18 @@ FROM node:20-alpine AS runner
 
 WORKDIR /app
 
-# Install production dependencies only
+# Install OpenSSL (required by Prisma)
+RUN apk add --no-cache openssl libc6-compat
+
+# Copy package files and prisma schema
 COPY package.json pnpm-lock.yaml ./
-RUN corepack enable && \
-    corepack prepare pnpm@9.0.0 --activate && \
-    pnpm config set store-dir /app/.pnpm-store && \
-    pnpm install --prod --frozen-lockfile && \
-    pnpm store prune
+COPY prisma ./prisma
+
+# Enable pnpm
+RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
+
+# Copy the entire node_modules from builder (includes Prisma Client)
+COPY --from=builder /app/node_modules ./node_modules
 
 # Copy built application from builder stage
 COPY --from=builder /app/.next ./.next

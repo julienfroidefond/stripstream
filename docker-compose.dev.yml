@@ -12,6 +12,7 @@ services:
       - "3020:3000"
     volumes:
       - ./src:/app/src
+      - ./prisma:/app/prisma
       - ./public:/app/public
       - ./package.json:/app/package.json
       - ./pnpm-lock.yaml:/app/pnpm-lock.yaml
@@ -31,7 +32,7 @@ services:
       - WATCHPACK_POLLING=true
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
       - NEXTAUTH_URL=${NEXTAUTH_URL}
-    command: sh -c "pnpm config set store-dir /app/.pnpm-store && pnpm install --frozen-lockfile && pnpm dev"
+    command: sh -c "pnpm config set store-dir /app/.pnpm-store && pnpm install --frozen-lockfile && pnpm prisma generate && pnpm dev"
 
   mongodb:
     image: mongo:latest
@@ -46,6 +47,14 @@ services:
     volumes:
       - mongodb_data:/data/db
       - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - ./mongo-keyfile:/data/keyfile:ro
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all", "--keyFile", "/data/keyfile"]
+    healthcheck:
+      test: echo "try { rs.status() } catch (err) { rs.initiate({_id:'rs0',members:[{_id:0,host:'mongodb:27017'}]}) }" | mongosh -u ${MONGO_USER} -p ${MONGO_PASSWORD} --authenticationDatabase admin --quiet
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
 
 volumes:
   mongodb_data:

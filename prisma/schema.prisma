@@ -1,0 +1,91 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("MONGODB_URI")
+}
+
+model User {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  email         String   @unique
+  password      String
+  roles         String[] @default(["ROLE_USER"])
+  authenticated Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  config      KomgaConfig?
+  ttlConfig   TTLConfig?
+  preferences Preferences?
+  favorites   Favorite[]
+
+  @@map("users")
+}
+
+model KomgaConfig {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String   @unique
+  url        String
+  username   String
+  authHeader String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("komgaconfigs")
+}
+
+model TTLConfig {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String   @unique
+  defaultTTL    Int      @default(5)
+  homeTTL       Int      @default(5)
+  librariesTTL  Int      @default(1440)
+  seriesTTL     Int      @default(5)
+  booksTTL      Int      @default(5)
+  imagesTTL     Int      @default(1440)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("ttlconfigs")
+}
+
+model Preferences {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String   @unique
+  showThumbnails Boolean  @default(true)
+  cacheMode      String   @default("memory") // "memory" | "file"
+  showOnlyUnread Boolean  @default(false)
+  debug          Boolean  @default(false)
+  displayMode    Json     @default("{\"compact\": false, \"itemsPerPage\": 20}")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("preferences")
+}
+
+model Favorite {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String
+  seriesId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, seriesId])
+  @@index([userId])
+  @@map("favorites")
+}
+

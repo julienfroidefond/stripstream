@@ -1,5 +1,4 @@
-import connectDB from "@/lib/mongodb";
-import { UserModel } from "@/lib/models/user.model";
+import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
@@ -15,15 +14,16 @@ export class AuthServerService {
   private static readonly SALT_ROUNDS = 10;
 
   static async registerUser(email: string, password: string): Promise<UserData> {
-    await connectDB();
-
     //check if password is strong
     if (!AuthServerService.isPasswordStrong(password)) {
       throw new AppError(ERROR_CODES.AUTH.PASSWORD_NOT_STRONG);
     }
 
     // Check if user already exists
-    const existingUser = await UserModel.findOne({ email: email.toLowerCase() });
+    const existingUser = await prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+    });
+
     if (existingUser) {
       throw new AppError(ERROR_CODES.AUTH.EMAIL_EXISTS);
     }
@@ -32,15 +32,17 @@ export class AuthServerService {
     const hashedPassword = await bcrypt.hash(password, this.SALT_ROUNDS);
 
     // Create new user
-    const user = await UserModel.create({
-      email: email.toLowerCase(),
-      password: hashedPassword,
-      roles: ["ROLE_USER"],
-      authenticated: true,
+    const user = await prisma.user.create({
+      data: {
+        email: email.toLowerCase(),
+        password: hashedPassword,
+        roles: ["ROLE_USER"],
+        authenticated: true,
+      },
     });
 
     const userData: UserData = {
-      id: user._id.toString(),
+      id: user.id,
       email: user.email,
       roles: user.roles,
       authenticated: true,
@@ -67,9 +69,9 @@ export class AuthServerService {
   }
 
   static async loginUser(email: string, password: string): Promise<UserData> {
-    await connectDB();
-
-    const user = await UserModel.findOne({ email: email.toLowerCase() });
+    const user = await prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+    });
 
     if (!user) {
       throw new AppError(ERROR_CODES.AUTH.INVALID_CREDENTIALS);
@@ -82,7 +84,7 @@ export class AuthServerService {
     }
 
     const userData: UserData = {
-      id: user._id.toString(),
+      id: user.id,
       email: user.email,
       roles: user.roles,
       authenticated: true,

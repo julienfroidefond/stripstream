@@ -45,6 +45,7 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
     volumes:
       - stripstream_mongodb_data:/data/db
+      - ./mongo-keyfile:/data/keyfile:ro
     networks:
       - stripstream-network
     deploy:
@@ -54,7 +55,13 @@ services:
           memory: 512M
     ports:
       - "27017:27017"
-    command: ["mongod", "--auth", "--bind_ip_all"]
+    command: ["mongod", "--auth", "--bind_ip_all", "--replSet", "rs0", "--keyFile", "/data/keyfile"]
+    healthcheck:
+      test: echo "try { rs.status() } catch (err) { rs.initiate({_id:'rs0',members:[{_id:0,host:'mongodb:27017'}]}) }" | mongosh -u ${MONGO_USER} -p ${MONGO_PASSWORD} --authenticationDatabase admin --quiet
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
 
 networks:
   stripstream-network:

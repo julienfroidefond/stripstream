@@ -1,6 +1,4 @@
-import connectDB from "@/lib/mongodb";
-import { KomgaConfig as KomgaConfigModel } from "@/lib/models/config.model";
-import { TTLConfig as TTLConfigModel } from "@/lib/models/ttl-config.model";
+import prisma from "@/lib/prisma";
 import { DebugService } from "./debug.service";
 import { getCurrentUser } from "../auth-utils";
 import { ERROR_CODES } from "../../constants/errorCodes";
@@ -19,28 +17,27 @@ export class ConfigDBService {
   static async saveConfig(data: KomgaConfigData): Promise<KomgaConfig> {
     try {
       const user: User | null = await this.getCurrentUser();
-      await connectDB();
 
       const authHeader: string = Buffer.from(`${data.username}:${data.password}`).toString(
         "base64"
       );
 
-      const config: KomgaConfig | null = await KomgaConfigModel.findOneAndUpdate(
-        { userId: user.id },
-        {
+      const config = await prisma.komgaConfig.upsert({
+        where: { userId: user.id },
+        update: {
+          url: data.url,
+          username: data.username,
+          authHeader,
+        },
+        create: {
           userId: user.id,
           url: data.url,
           username: data.username,
-          // password: data.password,
           authHeader,
         },
-        { upsert: true, new: true }
-      );
-      if (!config) {
-        throw new AppError(ERROR_CODES.CONFIG.SAVE_ERROR);
-      }
+      });
 
-      return config;
+      return config as KomgaConfig;
     } catch (error) {
       if (error instanceof AppError) {
         throw error;
@@ -52,11 +49,12 @@ export class ConfigDBService {
   static async getConfig(): Promise<KomgaConfig | null> {
     try {
       const user: User | null = await this.getCurrentUser();
-      await connectDB();
 
       return DebugService.measureMongoOperation("getConfig", async () => {
-        const config: KomgaConfig | null = await KomgaConfigModel.findOne({ userId: user.id });
-        return config;
+        const config = await prisma.komgaConfig.findUnique({
+          where: { userId: user.id },
+        });
+        return config as KomgaConfig | null;
       });
     } catch (error) {
       if (error instanceof AppError) {
@@ -69,11 +67,12 @@ export class ConfigDBService {
   static async getTTLConfig(): Promise<TTLConfig | null> {
     try {
       const user: User | null = await this.getCurrentUser();
-      await connectDB();
 
       return DebugService.measureMongoOperation("getTTLConfig", async () => {
-        const config: TTLConfig | null = await TTLConfigModel.findOne({ userId: user.id });
-        return config;
+        const config = await prisma.tTLConfig.findUnique({
+          where: { userId: user.id },
+        });
+        return config as TTLConfig | null;
       });
     } catch (error) {
       if (error instanceof AppError) {
@@ -86,23 +85,30 @@ export class ConfigDBService {
   static async saveTTLConfig(data: TTLConfigData): Promise<TTLConfig> {
     try {
       const user: User | null = await this.getCurrentUser();
-      await connectDB();
 
       return DebugService.measureMongoOperation("saveTTLConfig", async () => {
-        const config: TTLConfig | null = await TTLConfigModel.findOneAndUpdate(
-          { userId: user.id },
-          {
-            userId: user.id,
-            ...data,
+        const config = await prisma.tTLConfig.upsert({
+          where: { userId: user.id },
+          update: {
+            defaultTTL: data.defaultTTL,
+            homeTTL: data.homeTTL,
+            librariesTTL: data.librariesTTL,
+            seriesTTL: data.seriesTTL,
+            booksTTL: data.booksTTL,
+            imagesTTL: data.imagesTTL,
           },
-          { upsert: true, new: true }
-        );
+          create: {
+            userId: user.id,
+            defaultTTL: data.defaultTTL,
+            homeTTL: data.homeTTL,
+            librariesTTL: data.librariesTTL,
+            seriesTTL: data.seriesTTL,
+            booksTTL: data.booksTTL,
+            imagesTTL: data.imagesTTL,
+          },
+        });
 
-        if (!config) {
-          throw new AppError(ERROR_CODES.CONFIG.TTL_SAVE_ERROR);
-        }
-
-        return config;
+        return config as TTLConfig;
       });
     } catch (error) {
       if (error instanceof AppError) {

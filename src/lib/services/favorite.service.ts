@@ -1,5 +1,4 @@
-import connectDB from "@/lib/mongodb";
-import { FavoriteModel } from "@/lib/models/favorite.model";
+import prisma from "@/lib/prisma";
 import { DebugService } from "./debug.service";
 import { getCurrentUser } from "../auth-utils";
 import { ERROR_CODES } from "../../constants/errorCodes";
@@ -30,12 +29,13 @@ export class FavoriteService {
   static async isFavorite(seriesId: string): Promise<boolean> {
     try {
       const user = await this.getCurrentUser();
-      await connectDB();
 
       return DebugService.measureMongoOperation("isFavorite", async () => {
-        const favorite = await FavoriteModel.findOne({
-          userId: user.id,
-          seriesId: seriesId,
+        const favorite = await prisma.favorite.findFirst({
+          where: {
+            userId: user.id,
+            seriesId: seriesId,
+          },
         });
         return !!favorite;
       });
@@ -51,14 +51,21 @@ export class FavoriteService {
   static async addToFavorites(seriesId: string): Promise<void> {
     try {
       const user = await this.getCurrentUser();
-      await connectDB();
 
       await DebugService.measureMongoOperation("addToFavorites", async () => {
-        await FavoriteModel.findOneAndUpdate(
-          { userId: user.id, seriesId },
-          { userId: user.id, seriesId },
-          { upsert: true }
-        );
+        await prisma.favorite.upsert({
+          where: {
+            userId_seriesId: {
+              userId: user.id,
+              seriesId,
+            },
+          },
+          update: {},
+          create: {
+            userId: user.id,
+            seriesId,
+          },
+        });
       });
 
       this.dispatchFavoritesChanged();
@@ -73,12 +80,13 @@ export class FavoriteService {
   static async removeFromFavorites(seriesId: string): Promise<void> {
     try {
       const user = await this.getCurrentUser();
-      await connectDB();
 
       await DebugService.measureMongoOperation("removeFromFavorites", async () => {
-        await FavoriteModel.findOneAndDelete({
-          userId: user.id,
-          seriesId,
+        await prisma.favorite.deleteMany({
+          where: {
+            userId: user.id,
+            seriesId,
+          },
         });
       });
 
@@ -93,35 +101,48 @@ export class FavoriteService {
    */
   static async getAllFavoriteIds(): Promise<string[]> {
     const user = await this.getCurrentUser();
-    await connectDB();
 
     return DebugService.measureMongoOperation("getAllFavoriteIds", async () => {
-      const favorites = await FavoriteModel.find({ userId: user.id });
+      const favorites = await prisma.favorite.findMany({
+        where: { userId: user.id },
+        select: { seriesId: true },
+      });
       return favorites.map((favorite) => favorite.seriesId);
     });
   }
 
   static async addFavorite(seriesId: string) {
     const user = await this.getCurrentUser();
-    await connectDB();
 
     return DebugService.measureMongoOperation("addFavorite", async () => {
-      const favorite = await FavoriteModel.findOneAndUpdate(
-        { userId: user.id, seriesId },
-        { userId: user.id, seriesId },
-        { upsert: true, new: true }
-      );
+      const favorite = await prisma.favorite.upsert({
+        where: {
+          userId_seriesId: {
+            userId: user.id,
+            seriesId,
+          },
+        },
+        update: {},
+        create: {
+          userId: user.id,
+          seriesId,
+        },
+      });
       return favorite;
     });
   }
 
   static async removeFavorite(seriesId: string): Promise<boolean> {
     const user = await this.getCurrentUser();
-    await connectDB();
 
     return DebugService.measureMongoOperation("removeFavorite", async () => {
-      const result = await FavoriteModel.deleteOne({ userId: user.id, seriesId });
-      return result.deletedCount > 0;
+      const result = await prisma.favorite.deleteMany({
+        where: {
+          userId: user.id,
+          seriesId,
+        },
+      });
+      return result.count > 0;
     });
   }
 }

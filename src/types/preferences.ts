@@ -18,4 +18,4 @@ export const defaultPreferences: UserPreferences = {
     compact: false,
     itemsPerPage: 20,
   },
-} as const;
+};
