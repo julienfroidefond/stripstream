@@ -11,7 +11,14 @@ services:
     ports:
       - "3020:3000"
     volumes:
-      - .:/app
+      - ./src:/app/src
+      - ./public:/app/public
+      - ./package.json:/app/package.json
+      - ./pnpm-lock.yaml:/app/pnpm-lock.yaml
+      - ./tsconfig.json:/app/tsconfig.json
+      - ./tailwind.config.ts:/app/tailwind.config.ts
+      - ./postcss.config.js:/app/postcss.config.js
+      - ./next.config.js:/app/next.config.js
       - /app/node_modules
       - /app/.next
       - pnpm_store:/app/.pnpm-store
@@ -21,7 +28,8 @@ services:
       - MONGO_PASSWORD=password123
       - MONGODB_URI=mongodb://admin:password123@mongodb:27017/stripstream?authSource=admin
       - PNPM_HOME=/app/.pnpm-store
-    command: sh -c "pnpm config set store-dir /app/.pnpm-store && pnpm install && pnpm dev"
+      - WATCHPACK_POLLING=true
+    command: sh -c "pnpm config set store-dir /app/.pnpm-store && pnpm install --frozen-lockfile && pnpm dev"
 
   mongodb:
     image: mongo:latest
