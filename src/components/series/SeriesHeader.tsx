@@ -158,7 +158,10 @@ export const SeriesHeader = ({ series, refreshSeries }: SeriesHeaderProps) => {
                 {statusInfo.label}
               </span>
               <span className="text-sm text-white/80">
-                {t("series.header.books", { count: series.booksCount })}
+                {series.booksCount === 1 
+                  ? t("series.header.books", { count: series.booksCount })
+                  : t("series.header.books_plural", { count: series.booksCount })
+                }
               </span>
               <Button
                 variant="ghost"

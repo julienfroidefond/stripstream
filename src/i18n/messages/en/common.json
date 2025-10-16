@@ -201,6 +201,7 @@
   "books": {
     "empty": "No books available",
     "coverAlt": "Cover of {{title}}",
+    "defaultCoverAlt": "Cover image",
     "status": {
       "unread": "Unread",
       "read": "Read",
@@ -380,6 +381,10 @@
         "enter": "Enter fullscreen",
         "exit": "Exit fullscreen"
       },
+      "thumbnails": {
+        "show": "Show thumbnails",
+        "hide": "Hide thumbnails"
+      },
       "close": "Close",
       "previousPage": "Previous page",
       "nextPage": "Next page"
@@ -387,6 +392,11 @@
     "endOfSeries": "End of series",
     "endOfSeriesMessage": "You have finished all the books in this series!",
     "backToSeries": "Back to series"
+  },
+  "navigation": {
+    "scrollLeft": "Scroll left",
+    "scrollRight": "Scroll right",
+    "volume": "Volume {number}"
   },
   "debug": {
     "title": "DEBUG",

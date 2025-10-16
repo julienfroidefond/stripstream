@@ -203,6 +203,7 @@
   "books": {
     "empty": "Aucun tome disponible",
     "coverAlt": "Couverture de {{title}}",
+    "defaultCoverAlt": "Image de couverture",
     "status": {
       "unread": "Non lu",
       "read": "Lu",
@@ -382,6 +383,10 @@
         "enter": "Plein écran",
         "exit": "Quitter le plein écran"
       },
+      "thumbnails": {
+        "show": "Afficher les vignettes",
+        "hide": "Masquer les vignettes"
+      },
       "close": "Fermer",
       "previousPage": "Page précédente",
       "nextPage": "Page suivante"
@@ -393,6 +398,11 @@
   "header": {
     "toggleSidebar": "Afficher/masquer le menu latéral",
     "toggleTheme": "Changer le thème"
+  },
+  "navigation": {
+    "scrollLeft": "Défiler vers la gauche",
+    "scrollRight": "Défiler vers la droite",
+    "volume": "Tome {number}"
   },
   "debug": {
     "title": "DEBUG",

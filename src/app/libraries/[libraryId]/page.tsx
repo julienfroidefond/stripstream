@@ -1,15 +1,13 @@
-import { PaginatedSeriesGrid } from "@/components/library/PaginatedSeriesGrid";
 import { LibraryService } from "@/lib/services/library.service";
 import { PreferencesService } from "@/lib/services/preferences.service";
 import { revalidatePath } from "next/cache";
-import { RefreshButton } from "@/components/library/RefreshButton";
 import { withPageTiming } from "@/lib/hoc/withPageTiming";
-import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import type { LibraryResponse } from "@/types/library";
 import type { KomgaSeries, KomgaLibrary } from "@/types/komga";
 import type { UserPreferences } from "@/types/preferences";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
+import { ClientLibraryPage } from "./ClientLibraryPage";
 
 interface PageProps {
   params: { libraryId: string };
@@ -27,8 +25,8 @@ async function refreshLibrary(libraryId: string) {
     revalidatePath(`/libraries/${libraryId}`);
     return { success: true };
   } catch (error) {
-    console.error("Erreur lors du rafraîchissement:", error);
-    return { success: false, error: "Erreur lors du rafraîchissement de la bibliothèque" };
+    console.error("Error during refresh:", error);
+    return { success: false, error: "Error refreshing library" };
   }
 }
 
@@ -75,44 +73,42 @@ async function LibraryPage({ params, searchParams }: PageProps) {
       await getLibrarySeries(libraryId, currentPage, unreadOnly, search, pageSize);
 
     return (
-      <div className="container py-8 space-y-8">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">{library.name}</h1>
-          <div className="flex items-center gap-2">
-            {series.totalElements > 0 && (
-              <p className="text-sm text-muted-foreground">
-                {series.totalElements} série{series.totalElements > 1 ? "s" : ""}
-              </p>
-            )}
-            <RefreshButton libraryId={libraryId} refreshLibrary={refreshLibrary} />
-          </div>
-        </div>
-        <PaginatedSeriesGrid
-          series={series.content || []}
-          currentPage={currentPage}
-          totalPages={series.totalPages}
-          totalElements={series.totalElements}
-          defaultShowOnlyUnread={preferences.showOnlyUnread}
-          showOnlyUnread={unreadOnly}
-        />
-      </div>
+      <ClientLibraryPage
+        library={library}
+        series={series}
+        currentPage={currentPage}
+        libraryId={libraryId}
+        refreshLibrary={refreshLibrary}
+        preferences={preferences}
+        unreadOnly={unreadOnly}
+      />
     );
   } catch (error) {
     if (error instanceof AppError) {
       return (
-        <div className="container py-8 space-y-8">
-          <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold">Séries</h1>
-            <RefreshButton libraryId={libraryId} refreshLibrary={refreshLibrary} />
-          </div>
-          <ErrorMessage errorCode={error.code} />
-        </div>
+        <ClientLibraryPage
+          library={null}
+          series={null}
+          currentPage={currentPage}
+          libraryId={libraryId}
+          refreshLibrary={refreshLibrary}
+          preferences={preferences}
+          unreadOnly={unreadOnly}
+          errorCode={error.code}
+        />
       );
     }
     return (
-      <div className="container py-8 space-y-8">
-        <ErrorMessage errorCode={ERROR_CODES.SERIES.FETCH_ERROR} />
-      </div>
+      <ClientLibraryPage
+        library={null}
+        series={null}
+        currentPage={currentPage}
+        libraryId={libraryId}
+        refreshLibrary={refreshLibrary}
+        preferences={preferences}
+        unreadOnly={unreadOnly}
+        errorCode={ERROR_CODES.SERIES.FETCH_ERROR}
+      />
     );
   }
 }

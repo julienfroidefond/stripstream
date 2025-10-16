@@ -105,24 +105,9 @@ export function PaginatedSeriesGrid({
     });
   };
 
-  // Calculate start and end indices for display
-  const startIndex = (currentPage - 1) * itemsPerPage + 1;
-  const endIndex = Math.min(currentPage * itemsPerPage, totalElements);
-
-  const getShowingText = () => {
-    if (!totalElements) return t("series.empty");
-
-    return t("series.display.showing", {
-      start: startIndex,
-      end: endIndex,
-      total: totalElements,
-    });
-  };
-
   return (
     <div className="space-y-8">
       <div className="flex flex-col gap-4">
-        <p className="text-sm text-muted-foreground text-right">{getShowingText()}</p>
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           <div className="w-full">
             <SearchInput placeholder={t("series.filters.search")} />

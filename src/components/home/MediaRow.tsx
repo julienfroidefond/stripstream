@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import type { KomgaBook, KomgaSeries } from "@/types/komga";
 import { BookCover } from "../ui/book-cover";
 import { SeriesCover } from "../ui/series-cover";
+import { useTranslate } from "@/hooks/useTranslate";
 
 interface BaseItem {
   id: string;
@@ -43,6 +44,7 @@ export function MediaRow({ title, items, icon }: MediaRowProps) {
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
   const router = useRouter();
+  const { t } = useTranslate();
 
   const onItemClick = (item: OptimizedSeries | OptimizedBook) => {
     const path = "booksCount" in item ? `/series/${item.id}` : `/books/${item.id}`;
@@ -78,7 +80,7 @@ export function MediaRow({ title, items, icon }: MediaRowProps) {
           <button
             onClick={() => scroll("left")}
             className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-background/90 shadow-md border transition-opacity"
-            aria-label="Défiler vers la gauche"
+            aria-label={t("navigation.scrollLeft")}
           >
             <ChevronLeft className="h-6 w-6" />
           </button>
@@ -100,7 +102,7 @@ export function MediaRow({ title, items, icon }: MediaRowProps) {
           <button
             onClick={() => scroll("right")}
             className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-background/90 shadow-md border transition-opacity"
-            aria-label="Défiler vers la droite"
+            aria-label={t("navigation.scrollRight")}
           >
             <ChevronRight className="h-6 w-6" />
           </button>
@@ -116,10 +118,14 @@ interface MediaCardProps {
 }
 
 function MediaCard({ item, onClick }: MediaCardProps) {
+  const { t } = useTranslate();
   const isSeries = "booksCount" in item;
   const title = isSeries
     ? item.metadata.title
-    : item.metadata.title || `Tome ${item.metadata.number}`;
+    : item.metadata.title ||
+      (item.metadata.number
+        ? t("navigation.volume", { number: item.metadata.number })
+        : "");
 
   return (
     <div
@@ -133,7 +139,7 @@ function MediaCard({ item, onClick }: MediaCardProps) {
             <div className="absolute inset-0 bg-black/60 opacity-0 hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3">
               <h3 className="font-medium text-sm text-white line-clamp-2">{title}</h3>
               <p className="text-xs text-white/80 mt-1">
-                {item.booksCount} tome{item.booksCount > 1 ? "s" : ""}
+                {t("series.books", { count: item.booksCount })}
               </p>
             </div>
           </>

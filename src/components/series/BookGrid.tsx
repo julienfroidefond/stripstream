@@ -85,7 +85,10 @@ export function BookGrid({ books, onBookClick, isCompact = false }: BookGridProp
               <BookCover
                 book={book}
                 alt={t("books.coverAlt", {
-                  title: book.metadata.title || `Tome ${book.metadata.number}`,
+                  title: book.metadata.title || 
+                    (book.metadata.number 
+                      ? t("navigation.volume", { number: book.metadata.number })
+                      : ""),
                 })}
                 onSuccess={(book, action) => handleOnSuccess(book, action)}
               />
