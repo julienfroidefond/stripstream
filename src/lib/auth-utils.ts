@@ -15,3 +15,22 @@ export async function getCurrentUser(): Promise<UserData | null> {
     authenticated: true,
   };
 }
+
+export async function isAdmin(): Promise<boolean> {
+  const user = await getCurrentUser();
+  return user?.roles.includes("ROLE_ADMIN") ?? false;
+}
+
+export async function requireAdmin(): Promise<UserData> {
+  const user = await getCurrentUser();
+  
+  if (!user) {
+    throw new Error("Unauthenticated");
+  }
+  
+  if (!user.roles.includes("ROLE_ADMIN")) {
+    throw new Error("Forbidden: Admin access required");
+  }
+  
+  return user;
+}

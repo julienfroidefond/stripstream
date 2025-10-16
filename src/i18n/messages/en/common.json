@@ -62,6 +62,7 @@
       "title": "Settings",
       "preferences": "Preferences"
     },
+    "admin": "Administration",
     "logout": "Sign out"
   },
   "settings": {

@@ -20,9 +20,10 @@ interface ClientLayoutProps {
   children: React.ReactNode;
   initialLibraries: KomgaLibrary[];
   initialFavorites: KomgaSeries[];
+  userIsAdmin?: boolean;
 }
 
-export default function ClientLayout({ children, initialLibraries = [], initialFavorites = [] }: ClientLayoutProps) {
+export default function ClientLayout({ children, initialLibraries = [], initialFavorites = [], userIsAdmin = false }: ClientLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const pathname = usePathname();
 
@@ -77,7 +78,8 @@ export default function ClientLayout({ children, initialLibraries = [], initialF
               isOpen={isSidebarOpen} 
               onClose={handleCloseSidebar} 
               initialLibraries={initialLibraries} 
-              initialFavorites={initialFavorites} 
+              initialFavorites={initialFavorites}
+              userIsAdmin={userIsAdmin}
             />
           )}
           <main className={`${!isPublicRoute ? "container pt-safe" : ""}`}>{children}</main>

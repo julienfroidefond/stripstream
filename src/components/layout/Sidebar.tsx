@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, Library, Settings, LogOut, RefreshCw, Star, Download, User } from "lucide-react";
+import { Home, Library, Settings, LogOut, RefreshCw, Star, Download, User, Shield } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
@@ -18,9 +18,10 @@ interface SidebarProps {
   onClose: () => void;
   initialLibraries: KomgaLibrary[];
   initialFavorites: KomgaSeries[];
+  userIsAdmin?: boolean;
 }
 
-export function Sidebar({ isOpen, onClose, initialLibraries, initialFavorites }: SidebarProps) {
+export function Sidebar({ isOpen, onClose, initialLibraries, initialFavorites, userIsAdmin = false }: SidebarProps) {
   const { t } = useTranslate();
   const pathname = usePathname();
   const router = useRouter();
@@ -294,6 +295,18 @@ export function Sidebar({ isOpen, onClose, initialLibraries, initialFavorites }:
               <Settings className="mr-2 h-4 w-4" />
               {t("sidebar.settings.preferences")}
             </button>
+            {userIsAdmin && (
+              <button
+                onClick={() => handleLinkClick("/admin")}
+                className={cn(
+                  "w-full flex items-center rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+                  pathname === "/admin" ? "bg-accent" : "transparent"
+                )}
+              >
+                <Shield className="mr-2 h-4 w-4" />
+                {t("sidebar.admin")}
+              </button>
+            )}
           </div>
         </div>
       </div>

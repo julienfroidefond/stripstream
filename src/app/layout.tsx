@@ -74,14 +74,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   let libraries: KomgaLibrary[] = [];
   let favorites: KomgaSeries[] = [];
   let preferences: UserPreferences = defaultPreferences;
+  let userIsAdmin = false;
 
   try {
     // Tentative de chargement des données. Si l'utilisateur n'est pas authentifié,
     // les services lanceront une erreur mais l'application continuera de fonctionner
-    const [librariesData, favoritesData, preferencesData] = await Promise.allSettled([
+    const [librariesData, favoritesData, preferencesData, isAdminCheck] = await Promise.allSettled([
       LibraryService.getLibraries(),
       FavoriteService.getAllFavoriteIds(),
       PreferencesService.getPreferences(),
+      import("@/lib/auth-utils").then((m) => m.isAdmin()),
     ]);
 
     if (librariesData.status === "fulfilled") {
@@ -94,6 +96,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
     if (preferencesData.status === "fulfilled") {
       preferences = preferencesData.value;
+    }
+
+    if (isAdminCheck.status === "fulfilled") {
+      userIsAdmin = isAdminCheck.value;
     }
   } catch (error) {
     console.error("Erreur lors du chargement des données de la sidebar:", error);
@@ -162,7 +168,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <AuthProvider>
           <I18nProvider locale={locale}>
             <PreferencesProvider initialPreferences={preferences}>
-              <ClientLayout initialLibraries={libraries} initialFavorites={favorites}>
+              <ClientLayout 
+                initialLibraries={libraries} 
+                initialFavorites={favorites}
+                userIsAdmin={userIsAdmin}
+              >
                 {children}
               </ClientLayout>
             </PreferencesProvider>
