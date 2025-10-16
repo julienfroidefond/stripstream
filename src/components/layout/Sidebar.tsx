@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, Library, Settings, LogOut, RefreshCw, Star, Download } from "lucide-react";
+import { Home, Library, Settings, LogOut, RefreshCw, Star, Download, User } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
@@ -274,6 +274,16 @@ export function Sidebar({ isOpen, onClose, initialLibraries, initialFavorites }:
             <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
               {t("sidebar.settings.title")}
             </h2>
+            <button
+              onClick={() => handleLinkClick("/account")}
+              className={cn(
+                "w-full flex items-center rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+                pathname === "/account" ? "bg-accent" : "transparent"
+              )}
+            >
+              <User className="mr-2 h-4 w-4" />
+              {t("sidebar.account")}
+            </button>
             <button
               onClick={() => handleLinkClick("/settings")}
               className={cn(
