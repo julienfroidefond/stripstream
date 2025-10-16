@@ -5,10 +5,11 @@ export async function getAuthSession(request: NextRequest) {
   try {
     const token = await getToken({ 
       req: request,
-      secret: process.env.NEXTAUTH_SECRET 
+      secret: process.env.NEXTAUTH_SECRET,
+      cookieName: process.env.NODE_ENV === "production" 
+        ? "__Secure-authjs.session-token"
+        : "authjs.session-token"
     });
-    
-    console.log(`[getAuthSession] Token exists: ${!!token}, Secret configured: ${!!process.env.NEXTAUTH_SECRET}`);
     
     if (!token) {
       return null;

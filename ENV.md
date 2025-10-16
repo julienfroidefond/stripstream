@@ -9,7 +9,10 @@ MONGODB_URI=mongodb://admin:your-secure-password@mongodb:27017/stripstream?authS
 
 # NextAuth Configuration
 NEXTAUTH_SECRET=your-secret-key-here-generate-with-openssl-rand-base64-32
-NEXTAUTH_URL=http://localhost:3020
+# Si derrière un reverse proxy HTTPS, utiliser l'URL HTTPS publique :
+NEXTAUTH_URL=https://ton-domaine.com
+# Sinon en local :
+# NEXTAUTH_URL=http://localhost:3020
 
 # Admin User (optional - default password for julienfroidefond@gmail.com)
 ADMIN_DEFAULT_PASSWORD=Admin@2025

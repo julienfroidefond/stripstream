@@ -40,8 +40,6 @@ export default async function middleware(request: NextRequest) {
   // Vérifier l'authentification avec NextAuth v5
   const session = await getAuthSession(request);
   
-  console.log(`[Middleware] Path: ${pathname}, Has session: ${!!session}`);
-  
   if (!session) {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json(
