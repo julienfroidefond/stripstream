@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { FavoriteService } from "@/lib/services/favorite.service";
+import { SeriesService } from "@/lib/services/series.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 import { getErrorMessage } from "@/utils/errors";
@@ -8,7 +9,25 @@ import type { NextRequest } from "next/server";
 export async function GET() {
   try {
     const favoriteIds: string[] = await FavoriteService.getAllFavoriteIds();
-    return NextResponse.json(favoriteIds);
+    
+    // Valider que chaque série existe encore dans Komga
+    const validFavoriteIds: string[] = [];
+    
+    for (const seriesId of favoriteIds) {
+      try {
+        await SeriesService.getSeries(seriesId);
+        validFavoriteIds.push(seriesId);
+      } catch {
+        // Si la série n'existe plus dans Komga, on la retire des favoris
+        try {
+          await FavoriteService.removeFromFavorites(seriesId);
+        } catch {
+          // Erreur silencieuse, la série reste dans les favoris
+        }
+      }
+    }
+    
+    return NextResponse.json(validFavoriteIds);
   } catch (error) {
     console.error("Erreur lors de la récupération des favoris:", error);
     if (error instanceof AppError) {
