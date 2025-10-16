@@ -61,6 +61,3 @@ docker-compose.dev.yml
 # documentation
 README.md
 docs
-
-# scripts
-scripts

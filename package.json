@@ -6,6 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "start:prod": "node scripts/init-db.mjs && pnpm start",
+    "init-db": "node scripts/init-db.mjs",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "icons": "node scripts/generate-icons.js"

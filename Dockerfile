@@ -37,6 +37,7 @@ RUN pnpm prisma generate
 # Copy source files
 COPY src ./src
 COPY public ./public
+COPY scripts ./scripts
 
 # Build the application
 RUN pnpm build
@@ -64,6 +65,7 @@ COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/next-env.d.ts ./
 COPY --from=builder /app/tailwind.config.ts ./
+COPY --from=builder /app/scripts ./scripts
 
 # Add non-root user for security
 RUN addgroup --system --gid 1001 nodejs && \
@@ -83,5 +85,5 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=3s \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
 
-# Start the application
-CMD ["pnpm", "start"] 
+# Start the application (init DB then start)
+CMD ["pnpm", "start:prod"] 

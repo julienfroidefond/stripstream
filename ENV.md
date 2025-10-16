@@ -11,6 +11,9 @@ MONGODB_URI=mongodb://admin:your-secure-password@mongodb:27017/stripstream?authS
 NEXTAUTH_SECRET=your-secret-key-here-generate-with-openssl-rand-base64-32
 NEXTAUTH_URL=http://localhost:3020
 
+# Admin User (optional - default password for julienfroidefond@gmail.com)
+ADMIN_DEFAULT_PASSWORD=Admin@2025
+
 # Node Environment
 NODE_ENV=production
 ```
