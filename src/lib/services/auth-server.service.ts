@@ -1,7 +1,6 @@
-import { cookies } from "next/headers";
 import connectDB from "@/lib/mongodb";
 import { UserModel } from "@/lib/models/user.model";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
 
@@ -15,7 +14,7 @@ export interface UserData {
 export class AuthServerService {
   private static readonly SALT_ROUNDS = 10;
 
-  static async createUser(email: string, password: string): Promise<UserData> {
+  static async registerUser(email: string, password: string): Promise<UserData> {
     await connectDB();
 
     //check if password is strong
@@ -65,37 +64,6 @@ export class AuthServerService {
     //   return false;
     // }
     return true;
-  }
-
-  static async setUserCookie(userData: UserData, remember: boolean = false): Promise<void> {
-    // Encode user data in base64
-    const encodedUserData = Buffer.from(JSON.stringify(userData)).toString("base64");
-
-    // Set cookie with user data
-    const cookieStore = await cookies();
-    cookieStore.set("stripUser", encodedUserData, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: remember ? 30 * 24 * 60 * 60 : 24 * 60 * 60, // 30 days if remember, 24 hours otherwise
-    });
-  }
-
-  static async getCurrentUser(): Promise<UserData | null> {
-    const cookieStore = await cookies();
-    const userCookie = cookieStore.get("stripUser");
-
-    if (!userCookie) {
-      return null;
-    }
-
-    try {
-      return JSON.parse(atob(userCookie.value));
-    } catch (error) {
-      console.error("Error while getting user from cookie:", error);
-      return null;
-    }
   }
 
   static async loginUser(email: string, password: string): Promise<UserData> {

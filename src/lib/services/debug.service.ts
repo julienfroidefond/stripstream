@@ -1,8 +1,8 @@
 import fs from "fs/promises";
 import path from "path";
 import type { CacheType } from "./base-api.service";
-import { AuthServerService } from "./auth-server.service";
 import { PreferencesService } from "./preferences.service";
+import { getCurrentUser } from "../auth-utils";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
 
@@ -28,7 +28,7 @@ export class DebugService {
   private static writeQueues = new Map<string, Promise<void>>();
 
   private static async getCurrentUserId(): Promise<string> {
-    const user = await AuthServerService.getCurrentUser();
+    const user = await getCurrentUser();
     if (!user) {
       throw new AppError(ERROR_CODES.AUTH.UNAUTHENTICATED);
     }
@@ -49,7 +49,7 @@ export class DebugService {
   }
 
   private static async isDebugEnabled(): Promise<boolean> {
-    const user = await AuthServerService.getCurrentUser();
+    const user = await getCurrentUser();
     if (!user) {
       return false;
     }

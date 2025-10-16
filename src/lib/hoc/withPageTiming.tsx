@@ -10,7 +10,14 @@ export function withPageTiming(pageName: string, Component: PageComponent) {
 
     // Ensure params is awaited before using it
     const params = props.params ? await Promise.resolve(props.params) : {};
-    await DebugService.logPageRender(pageName + JSON.stringify(params), duration);
+    
+    // Only log if debug is enabled and user is authenticated
+    try {
+      await DebugService.logPageRender(pageName + JSON.stringify(params), duration);
+    } catch {
+      // Silently fail if user is not authenticated or debug is disabled
+      // This prevents errors on public pages like /login
+    }
 
     return result;
   };

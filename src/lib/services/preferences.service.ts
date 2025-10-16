@@ -1,5 +1,5 @@
 import { PreferencesModel } from "@/lib/models/preferences.model";
-import { AuthServerService } from "./auth-server.service";
+import { getCurrentUser } from "../auth-utils";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
 import type { UserPreferences } from "@/types/preferences";
@@ -9,7 +9,7 @@ import connectDB from "@/lib/mongodb";
 
 export class PreferencesService {
   static async getCurrentUser(): Promise<User> {
-    const user = await AuthServerService.getCurrentUser();
+    const user = await getCurrentUser();
     if (!user) {
       throw new AppError(ERROR_CODES.AUTH.UNAUTHENTICATED);
     }

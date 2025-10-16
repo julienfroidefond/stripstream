@@ -6,6 +6,7 @@ import ClientLayout from "@/components/layout/ClientLayout";
 import { PreferencesService } from "@/lib/services/preferences.service";
 import { PreferencesProvider } from "@/contexts/PreferencesContext";
 import { I18nProvider } from "@/components/providers/I18nProvider";
+import { AuthProvider } from "@/components/providers/AuthProvider";
 import "@/i18n/i18n"; // Import i18next configuration
 import { cookies } from "next/headers";
 import { defaultPreferences } from "@/types/preferences";
@@ -158,13 +159,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body
         className={cn("min-h-screen bg-background font-sans antialiased h-full", inter.className)}
       >
-        <I18nProvider locale={locale}>
-          <PreferencesProvider initialPreferences={preferences}>
-            <ClientLayout initialLibraries={libraries} initialFavorites={favorites}>
-              {children}
-            </ClientLayout>
-          </PreferencesProvider>
-        </I18nProvider>
+        <AuthProvider>
+          <I18nProvider locale={locale}>
+            <PreferencesProvider initialPreferences={preferences}>
+              <ClientLayout initialLibraries={libraries} initialFavorites={favorites}>
+                {children}
+              </ClientLayout>
+            </PreferencesProvider>
+          </I18nProvider>
+        </AuthProvider>
       </body>
     </html>
   );

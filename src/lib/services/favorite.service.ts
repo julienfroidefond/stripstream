@@ -1,7 +1,7 @@
 import connectDB from "@/lib/mongodb";
 import { FavoriteModel } from "@/lib/models/favorite.model";
 import { DebugService } from "./debug.service";
-import { AuthServerService } from "./auth-server.service";
+import { getCurrentUser } from "../auth-utils";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
 import type { User } from "@/types/komga";
@@ -17,7 +17,7 @@ export class FavoriteService {
   }
 
   private static async getCurrentUser(): Promise<User> {
-    const user = await AuthServerService.getCurrentUser();
+    const user = await getCurrentUser();
     if (!user) {
       throw new AppError(ERROR_CODES.AUTH.UNAUTHENTICATED);
     }

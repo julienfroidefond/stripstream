@@ -2,9 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { authService } from "@/lib/services/auth.service";
-import type { AppErrorType } from "@/types/global";
-import { ErrorMessage } from "@/components/ui/ErrorMessage";
+import { signIn } from "next-auth/react";
 import { useTranslate } from "@/hooks/useTranslate";
 
 interface LoginFormProps {
@@ -14,7 +12,7 @@ interface LoginFormProps {
 export function LoginForm({ from }: LoginFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<AppErrorType | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const { t } = useTranslate();
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -28,11 +26,21 @@ export function LoginForm({ from }: LoginFormProps) {
     const remember = formData.get("remember") === "on";
 
     try {
-      await authService.login(email, password, remember);
-      router.push(from || "/");
-      router.refresh();
-    } catch (error) {
-      setError(error as AppErrorType);
+      const result = await signIn("credentials", {
+        email,
+        password,
+        remember,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError("Email ou mot de passe incorrect");
+      } else {
+        router.push(from || "/");
+        router.refresh();
+      }
+    } catch (_error) {
+      setError("Une erreur est survenue lors de la connexion : " + _error);
     } finally {
       setIsLoading(false);
     }
@@ -89,7 +97,11 @@ export function LoginForm({ from }: LoginFormProps) {
           {t("login.form.remember")}
         </label>
       </div>
-      {error && <ErrorMessage errorCode={error.code} variant="form" />}
+      {error && (
+        <div className="text-red-600 text-sm">
+          {error}
+        </div>
+      )}
       <button
         type="submit"
         disabled={isLoading}

@@ -19,6 +19,7 @@ export const ERROR_MESSAGES: Record<string, string> = {
   [ERROR_CODES.AUTH.EMAIL_EXISTS]: "📧 This email is already in use",
   [ERROR_CODES.AUTH.INVALID_USER_DATA]: "👤 Invalid user data",
   [ERROR_CODES.AUTH.LOGOUT_ERROR]: "🚪 Error during logout",
+  [ERROR_CODES.AUTH.REGISTRATION_FAILED]: "❌ Registration failed",
 
   // Komga
   [ERROR_CODES.KOMGA.MISSING_CONFIG]: "⚙️ Komga configuration not found",

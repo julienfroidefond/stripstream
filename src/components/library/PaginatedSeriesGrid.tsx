@@ -3,7 +3,7 @@
 import { SeriesGrid } from "./SeriesGrid";
 import { Pagination } from "@/components/ui/Pagination";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { KomgaSeries } from "@/types/komga";
@@ -27,7 +27,7 @@ export function PaginatedSeriesGrid({
   series,
   currentPage,
   totalPages,
-  totalElements,
+  totalElements: _totalElements,
   defaultShowOnlyUnread,
   showOnlyUnread: initialShowOnlyUnread,
 }: PaginatedSeriesGridProps) {
@@ -36,10 +36,10 @@ export function PaginatedSeriesGrid({
   const searchParams = useSearchParams();
   const [isChangingPage, setIsChangingPage] = useState(false);
   const [showOnlyUnread, setShowOnlyUnread] = useState(initialShowOnlyUnread);
-  const { isCompact, itemsPerPage } = useDisplayPreferences();
+  const { isCompact, itemsPerPage: _itemsPerPage } = useDisplayPreferences();
   const { t } = useTranslate();
 
-  const updateUrlParams = async (
+  const updateUrlParams = useCallback(async (
     updates: Record<string, string | null>,
     replace: boolean = false
   ) => {
@@ -59,7 +59,7 @@ export function PaginatedSeriesGrid({
     } else {
       await router.push(`${pathname}?${params.toString()}`);
     }
-  };
+  }, [router, pathname, searchParams]);
 
   // Reset loading state when series change
   useEffect(() => {
@@ -76,7 +76,7 @@ export function PaginatedSeriesGrid({
     if (defaultShowOnlyUnread && !searchParams.has("unread")) {
       updateUrlParams({ page: "1", unread: "true" }, true);
     }
-  }, [defaultShowOnlyUnread, pathname, router, searchParams]);
+  }, [defaultShowOnlyUnread, pathname, router, searchParams, updateUrlParams]);
 
   const handlePageChange = async (page: number) => {
     await updateUrlParams({ page: page.toString() });

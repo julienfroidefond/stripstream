@@ -3,7 +3,7 @@
 import { BookGrid } from "./BookGrid";
 import { Pagination } from "@/components/ui/Pagination";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { KomgaBook } from "@/types/komga";
@@ -38,7 +38,7 @@ export function PaginatedBookGrid({
   const { isCompact, itemsPerPage } = useDisplayPreferences();
   const { t } = useTranslate();
 
-  const updateUrlParams = async (
+  const updateUrlParams = useCallback(async (
     updates: Record<string, string | null>,
     replace: boolean = false
   ) => {
@@ -58,7 +58,7 @@ export function PaginatedBookGrid({
     } else {
       await router.push(`${pathname}?${params.toString()}`);
     }
-  };
+  }, [router, pathname, searchParams]);
 
   // Reset loading state when books change
   useEffect(() => {
@@ -75,7 +75,7 @@ export function PaginatedBookGrid({
     if (defaultShowOnlyUnread && !searchParams.has("unread")) {
       updateUrlParams({ page: "1", unread: "true" }, true);
     }
-  }, [defaultShowOnlyUnread, pathname, router, searchParams]);
+  }, [defaultShowOnlyUnread, pathname, router, searchParams, updateUrlParams]);
 
   const handlePageChange = async (page: number) => {
     await updateUrlParams({ page: page.toString() });

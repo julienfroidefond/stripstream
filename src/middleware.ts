@@ -1,52 +1,32 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-import { ERROR_CODES } from "./constants/errorCodes";
-import type { UserData } from "./lib/services/auth-server.service";
-import { getErrorMessage } from "./utils/errors";
+import { NextResponse, NextRequest } from "next/server";
+import { getAuthSession } from "@/lib/middleware-auth";
 
 // Routes qui ne nécessitent pas d'authentification
 const publicRoutes = ["/login", "/register", "/images"];
 
 // Routes d'API qui ne nécessitent pas d'authentification
-const publicApiRoutes = ["/api/auth/login", "/api/auth/register", "/api/komga/test"];
+const publicApiRoutes = ["/api/auth/register", "/api/komga/test"];
 
 // Langues supportées
 const locales = ["fr", "en"];
 const defaultLocale = "fr";
 
-export function middleware(request: NextRequest) {
+export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Gestion de la langue
-  let locale = request.cookies.get("NEXT_LOCALE")?.value;
+  let locale = request.headers.get("cookie")?.match(/NEXT_LOCALE=([^;]+)/)?.[1];
 
   // Si pas de cookie de langue ou langue non supportée, on utilise la langue par défaut
   if (!locale || !locales.includes(locale)) {
     locale = defaultLocale;
-
-    // On s'assure que la réponse est bien une redirection si nécessaire
-    const response =
-      pathname === "/login"
-        ? NextResponse.next()
-        : NextResponse.redirect(new URL("/login", request.url));
-
-    response.cookies.set("NEXT_LOCALE", locale, {
-      path: "/",
-      maxAge: 365 * 24 * 60 * 60, // 1 an
-      secure: true, // Ajout de secure pour HTTPS
-      sameSite: "lax", // Protection CSRF
-    });
-
-    return response;
   }
-
-  // Gestion de l'authentification
-  const user = request.cookies.get("stripUser");
 
   // Vérifier si c'est une route publique avant de gérer l'authentification
   if (
     publicRoutes.includes(pathname) ||
     publicApiRoutes.includes(pathname) ||
+    pathname.startsWith("/api/auth/") ||
     pathname.startsWith("/images/") ||
     pathname.startsWith("/_next/") ||
     pathname.startsWith("/fonts/")
@@ -54,14 +34,16 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Pour toutes les routes protégées, vérifier la présence de l'utilisateur
-  if (!user?.value) {
+  // Vérifier l'authentification avec NextAuth v5
+  const session = await getAuthSession(request);
+  
+  if (!session) {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json(
         {
           error: {
-            code: ERROR_CODES.MIDDLEWARE.UNAUTHORIZED,
-            message: getErrorMessage(ERROR_CODES.MIDDLEWARE.UNAUTHORIZED),
+            code: "UNAUTHORIZED",
+            message: "Unauthorized access",
             name: "Unauthorized",
           },
         },
@@ -70,35 +52,21 @@ export function middleware(request: NextRequest) {
     }
 
     const loginUrl = new URL("/login", request.url);
-    // loginUrl.searchParams.set("from", encodeURIComponent(pathname));
     return NextResponse.redirect(loginUrl);
   }
 
-  try {
-    const userData: UserData = JSON.parse(atob(user.value));
-    if (!userData || !userData.authenticated || !userData.id || !userData.email) {
-      throw new Error(getErrorMessage(ERROR_CODES.MIDDLEWARE.INVALID_SESSION));
-    }
-  } catch (error) {
-    console.error("Erreur de validation du cookie:", error);
-    if (pathname.startsWith("/api/")) {
-      return NextResponse.json(
-        {
-          error: {
-            code: ERROR_CODES.MIDDLEWARE.INVALID_TOKEN,
-            message: getErrorMessage(ERROR_CODES.MIDDLEWARE.INVALID_TOKEN),
-            name: "Invalid token",
-          },
-        },
-        { status: 401 }
-      );
-    }
-    const loginUrl = new URL("/login", request.url);
-    // loginUrl.searchParams.set("from", pathname);
-    return NextResponse.redirect(loginUrl);
+  // Définir le cookie de langue si nécessaire
+  const response = NextResponse.next();
+  if (!request.headers.get("cookie")?.includes("NEXT_LOCALE") && locale) {
+    response.cookies.set("NEXT_LOCALE", locale, {
+      path: "/",
+      maxAge: 365 * 24 * 60 * 60, // 1 an
+      secure: true, // Ajout de secure pour HTTPS
+      sameSite: "lax", // Protection CSRF
+    });
   }
 
-  return NextResponse.next();
+  return response;
 }
 
 // Configuration des routes à protéger
@@ -106,12 +74,12 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except:
-     * 1. /api/auth/* (authentication routes)
+     * 1. /api/auth/* (NextAuth routes)
      * 2. /_next/* (Next.js internals)
      * 3. /fonts/* (inside public directory)
      * 4. /images/* (inside public directory)
      * 5. Static files (manifest.json, favicon.ico, etc.)
      */
-    "/((?!api/auth/*|_next/static|_next/image|fonts|images|manifest.json|favicon.ico|sitemap.xml|sw.js|offline.html).*)",
+    "/((?!api/auth|_next/static|_next/image|fonts|images|manifest.json|favicon.ico|sitemap.xml|sw.js|offline.html).*)",
   ],
 };

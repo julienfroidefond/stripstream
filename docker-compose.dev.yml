@@ -29,6 +29,8 @@ services:
       - MONGODB_URI=mongodb://admin:password123@mongodb:27017/stripstream?authSource=admin
       - PNPM_HOME=/app/.pnpm-store
       - WATCHPACK_POLLING=true
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - NEXTAUTH_URL=${NEXTAUTH_URL}
     command: sh -c "pnpm config set store-dir /app/.pnpm-store && pnpm install --frozen-lockfile && pnpm dev"
 
   mongodb:

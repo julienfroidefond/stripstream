@@ -1,6 +1,5 @@
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
 
 interface ZoomablePageProps {
   pageUrl: string | null;
@@ -23,10 +22,7 @@ export const ZoomablePage = ({
   order = "first",
   onZoomChange,
 }: ZoomablePageProps) => {
-  const [currentScale, setCurrentScale] = useState(1);
-
   const handleTransform = (ref: any, state: { scale: number; positionX: number; positionY: number }) => {
-    setCurrentScale(state.scale);
     onZoomChange?.(state.scale > 1.1);
   };
   return (

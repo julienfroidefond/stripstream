@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { PreferencesService } from "./preferences.service";
 import { DebugService } from "./debug.service";
-import { AuthServerService } from "./auth-server.service";
+import { getCurrentUser } from "../auth-utils";
 
 export type CacheMode = "file" | "memory";
 
@@ -45,7 +45,7 @@ class ServerCacheService {
 
   private async initializeCacheMode(): Promise<void> {
     try {
-      const user = await AuthServerService.getCurrentUser();
+      const user = await getCurrentUser();
       if (!user) {
         this.setCacheMode("memory");
         return;
@@ -293,7 +293,7 @@ class ServerCacheService {
    * Supprime une entrée du cache
    */
   async delete(key: string): Promise<void> {
-    const user = await AuthServerService.getCurrentUser();
+    const user = await getCurrentUser();
     if (!user) {
       throw new Error("Utilisateur non authentifié");
     }
@@ -313,7 +313,7 @@ class ServerCacheService {
    * Supprime toutes les entrées du cache qui commencent par un préfixe
    */
   async deleteAll(prefix: string): Promise<void> {
-    const user = await AuthServerService.getCurrentUser();
+    const user = await getCurrentUser();
     if (!user) {
       throw new Error("Utilisateur non authentifié");
     }
@@ -390,7 +390,7 @@ class ServerCacheService {
     type: keyof typeof ServerCacheService.DEFAULT_TTL = "DEFAULT"
   ): Promise<T> {
     const startTime = performance.now();
-    const user = await AuthServerService.getCurrentUser();
+    const user = await getCurrentUser();
     if (!user) {
       throw new Error("Utilisateur non authentifié");
     }

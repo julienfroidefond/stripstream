@@ -3,7 +3,7 @@
 import { Home, Library, Settings, LogOut, RefreshCw, Star, Download } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { authService } from "@/lib/services/auth.service";
+import { signOut } from "next-auth/react";
 import { useEffect, useState, useCallback } from "react";
 import type { KomgaLibrary, KomgaSeries } from "@/types/komga";
 import { usePreferences } from "@/contexts/PreferencesContext";
@@ -118,19 +118,15 @@ export function Sidebar({ isOpen, onClose, initialLibraries, initialFavorites }:
 
   const handleLogout = async () => {
     try {
-      await authService.logout();
+      await signOut({ callbackUrl: "/login" });
       setLibraries([]);
       setFavorites([]);
       onClose();
-      router.push("/login");
     } catch (error) {
       console.error("Erreur lors de la déconnexion:", error);
       toast({
         title: "Erreur",
-        description:
-          error instanceof AppError
-            ? error.message
-            : getErrorMessage(ERROR_CODES.AUTH.LOGOUT_ERROR),
+        description: "Une erreur est survenue lors de la déconnexion",
         variant: "destructive",
       });
     }

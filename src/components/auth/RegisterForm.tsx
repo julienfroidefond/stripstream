@@ -2,18 +2,16 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { authService } from "@/lib/services/auth.service";
-import type { AppErrorType } from "@/types/global";
-import { ERROR_CODES } from "@/constants/errorCodes";
+import { signIn } from "next-auth/react";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { useTranslate } from "@/hooks/useTranslate";
-import { getErrorMessage } from "@/utils/errors";
+import type { AppErrorType } from "@/types/global";
 
 interface RegisterFormProps {
   from?: string;
 }
 
-export function RegisterForm({ from }: RegisterFormProps) {
+export function RegisterForm({ from: _from }: RegisterFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<AppErrorType | null>(null);
@@ -31,20 +29,57 @@ export function RegisterForm({ from }: RegisterFormProps) {
 
     if (password !== confirmPassword) {
       setError({
-        code: ERROR_CODES.AUTH.PASSWORD_MISMATCH,
+        code: "AUTH_PASSWORD_MISMATCH",
         name: "Password mismatch",
-        message: getErrorMessage(ERROR_CODES.AUTH.PASSWORD_MISMATCH),
+        message: "Les mots de passe ne correspondent pas",
       });
       setIsLoading(false);
       return;
     }
 
     try {
-      await authService.register(email, password);
-      router.push(from || "/");
-      router.refresh();
-    } catch (error) {
-      setError(error as AppErrorType);
+      // Étape 1: Inscription via l'API
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        setError(data.error || {
+          code: "AUTH_REGISTRATION_FAILED",
+          name: "Registration failed",
+          message: "Erreur lors de l'inscription",
+        });
+        return;
+      }
+
+      // Étape 2: Connexion automatique via NextAuth
+      const signInResult = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (signInResult?.error) {
+        setError({
+          code: "AUTH_INVALID_CREDENTIALS",
+          name: "Login failed",
+          message: "Inscription réussie mais erreur lors de la connexion automatique",
+        });
+      } else {
+        router.push("/");
+        router.refresh();
+      }
+    } catch {
+      setError({
+        code: "AUTH_REGISTRATION_FAILED",
+        name: "Registration failed",
+        message: "Une erreur est survenue lors de l'inscription",
+      });
     } finally {
       setIsLoading(false);
     }

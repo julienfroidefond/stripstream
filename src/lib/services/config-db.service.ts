@@ -2,14 +2,14 @@ import connectDB from "@/lib/mongodb";
 import { KomgaConfig as KomgaConfigModel } from "@/lib/models/config.model";
 import { TTLConfig as TTLConfigModel } from "@/lib/models/ttl-config.model";
 import { DebugService } from "./debug.service";
-import { AuthServerService } from "./auth-server.service";
+import { getCurrentUser } from "../auth-utils";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
 import type { User, KomgaConfigData, TTLConfigData, KomgaConfig, TTLConfig } from "@/types/komga";
 
 export class ConfigDBService {
   private static async getCurrentUser(): Promise<User> {
-    const user: User | null = await AuthServerService.getCurrentUser();
+    const user: User | null = await getCurrentUser();
     if (!user) {
       throw new AppError(ERROR_CODES.AUTH.UNAUTHENTICATED);
     }

@@ -33,6 +33,7 @@ class RequestMonitor {
     } else if (count >= this.thresholds.high) {
       console.warn(`[REQUEST-MONITOR] ⚠️  HIGH concurrency: ${count} active requests`);
     } else if (count >= this.thresholds.warning) {
+      // eslint-disable-next-line no-console
       console.log(`[REQUEST-MONITOR] ⚡ Warning concurrency: ${count} active requests`);
     }
   }
