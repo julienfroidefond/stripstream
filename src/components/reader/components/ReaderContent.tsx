@@ -1,4 +1,4 @@
-import { SinglePage } from "./SinglePage";
+import { ZoomablePage } from "./ZoomablePage";
 
 interface ReaderContentProps {
   currentPage: number;
@@ -10,9 +10,6 @@ interface ReaderContentProps {
   shouldShowDoublePage: (page: number) => boolean;
   isRTL: boolean;
   onThumbnailLoad: (pageNumber: number) => void;
-  zoomLevel: number;
-  panPosition: { x: number; y: number };
-  onDoubleClick: () => void;
 }
 
 export const ReaderContent = ({
@@ -25,14 +22,11 @@ export const ReaderContent = ({
   shouldShowDoublePage,
   isRTL,
   onThumbnailLoad,
-  zoomLevel,
-  panPosition,
-  onDoubleClick,
 }: ReaderContentProps) => {
   return (
     <div className="relative flex-1 flex items-center justify-center overflow-hidden p-1">
       <div className="relative w-full h-[calc(100vh-2rem)] flex items-center justify-center gap-0">
-        <SinglePage
+        <ZoomablePage
           pageUrl={currentPageUrl}
           pageNumber={currentPage}
           isLoading={isLoading}
@@ -40,13 +34,10 @@ export const ReaderContent = ({
           isDoublePage={isDoublePage}
           isRTL={isRTL}
           order="first"
-          zoomLevel={zoomLevel}
-          panPosition={panPosition}
-          onDoubleClick={onDoubleClick}
         />
 
         {isDoublePage && shouldShowDoublePage(currentPage) && (
-          <SinglePage
+          <ZoomablePage
             pageUrl={nextPageUrl}
             pageNumber={currentPage + 1}
             isLoading={secondPageLoading}
@@ -54,9 +45,6 @@ export const ReaderContent = ({
             isDoublePage={true}
             isRTL={isRTL}
             order="second"
-            zoomLevel={zoomLevel}
-            panPosition={panPosition}
-            onDoubleClick={onDoubleClick}
           />
         )}
       </div>
