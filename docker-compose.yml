@@ -19,7 +19,10 @@ services:
       - NEXTAUTH_URL=${NEXTAUTH_URL}
       - AUTH_TRUST_HOST=true
     depends_on:
-      - mongodb
+      mongodb:
+        condition: service_healthy
+      mongodb-init:
+        condition: service_completed_successfully
     networks:
       - stripstream-network
     deploy:
@@ -55,13 +58,29 @@ services:
           memory: 512M
     ports:
       - "27017:27017"
-    command: ["mongod", "--auth", "--bind_ip_all", "--replSet", "rs0", "--keyFile", "/data/keyfile"]
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all", "--keyFile", "/data/keyfile"]
     healthcheck:
-      test: echo "try { rs.status() } catch (err) { rs.initiate({_id:'rs0',members:[{_id:0,host:'mongodb:27017'}]}) }" | mongosh -u ${MONGO_USER} -p ${MONGO_PASSWORD} --authenticationDatabase admin --quiet
+      test: mongosh --host localhost:27017 -u ${MONGO_USER} -p ${MONGO_PASSWORD} --authenticationDatabase admin --eval "db.adminCommand('ping')" --quiet || exit 1
       interval: 10s
-      timeout: 10s
+      timeout: 5s
       retries: 5
-      start_period: 40s
+      start_period: 30s
+
+  mongodb-init:
+    image: mongo:latest
+    container_name: stripstream-mongodb-init
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+    volumes:
+      - ./mongo-init-rs.sh:/mongo-init-rs.sh:ro
+    networks:
+      - stripstream-network
+    entrypoint: ["/bin/bash", "/mongo-init-rs.sh"]
+    restart: "no"
 
 networks:
   stripstream-network:
