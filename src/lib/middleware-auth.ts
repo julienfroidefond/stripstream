@@ -8,6 +8,8 @@ export async function getAuthSession(request: NextRequest) {
       secret: process.env.NEXTAUTH_SECRET 
     });
     
+    console.log(`[getAuthSession] Token exists: ${!!token}, Secret configured: ${!!process.env.NEXTAUTH_SECRET}`);
+    
     if (!token) {
       return null;
     }

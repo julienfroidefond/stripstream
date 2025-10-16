@@ -27,15 +27,20 @@ export default async function middleware(request: NextRequest) {
     publicRoutes.includes(pathname) ||
     publicApiRoutes.includes(pathname) ||
     pathname.startsWith("/api/auth/") ||
+    pathname.startsWith("/api/health") ||
     pathname.startsWith("/images/") ||
     pathname.startsWith("/_next/") ||
-    pathname.startsWith("/fonts/")
+    pathname.startsWith("/fonts/") ||
+    pathname === "/favicon.svg" ||
+    pathname === "/favicon.ico"
   ) {
     return NextResponse.next();
   }
 
   // Vérifier l'authentification avec NextAuth v5
   const session = await getAuthSession(request);
+  
+  console.log(`[Middleware] Path: ${pathname}, Has session: ${!!session}`);
   
   if (!session) {
     if (pathname.startsWith("/api/")) {
@@ -61,7 +66,7 @@ export default async function middleware(request: NextRequest) {
     response.cookies.set("NEXT_LOCALE", locale, {
       path: "/",
       maxAge: 365 * 24 * 60 * 60, // 1 an
-      secure: true, // Ajout de secure pour HTTPS
+      secure: process.env.NODE_ENV === "production", // Secure uniquement en prod HTTPS
       sameSite: "lax", // Protection CSRF
     });
   }
@@ -80,6 +85,6 @@ export const config = {
      * 4. /images/* (inside public directory)
      * 5. Static files (manifest.json, favicon.ico, etc.)
      */
-    "/((?!api/auth|_next/static|_next/image|fonts|images|manifest.json|favicon.ico|sitemap.xml|sw.js|offline.html).*)",
+    "/((?!api/auth|api/health|_next/static|_next/image|fonts|images|manifest.json|favicon|sitemap.xml|sw.js|offline.html).*)",
   ],
 };
