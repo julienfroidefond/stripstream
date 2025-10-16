@@ -1,5 +1,6 @@
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
 
 interface ZoomablePageProps {
   pageUrl: string | null;
@@ -9,6 +10,7 @@ interface ZoomablePageProps {
   isDoublePage?: boolean;
   isRTL?: boolean;
   order?: "first" | "second";
+  onZoomChange?: (isZoomed: boolean) => void;
 }
 
 export const ZoomablePage = ({
@@ -19,7 +21,14 @@ export const ZoomablePage = ({
   isDoublePage = false,
   isRTL = false,
   order = "first",
+  onZoomChange,
 }: ZoomablePageProps) => {
+  const [currentScale, setCurrentScale] = useState(1);
+
+  const handleTransform = (ref: any, state: { scale: number; positionX: number; positionY: number }) => {
+    setCurrentScale(state.scale);
+    onZoomChange?.(state.scale > 1.1);
+  };
   return (
     <div
       className={cn(
@@ -55,6 +64,7 @@ export const ZoomablePage = ({
           panning={{ disabled: false }}
           limitToBounds={true}
           centerZoomedOut={false}
+          onTransformed={handleTransform}
         >
           <TransformComponent
             wrapperClass="w-full h-full flex items-center justify-center"

@@ -10,6 +10,7 @@ interface UsePageNavigationProps {
   onClose?: (currentPage: number) => void;
   direction: "ltr" | "rtl";
   nextBook?: KomgaBook | null;
+  isZoomed?: boolean;
 }
 
 export const usePageNavigation = ({
@@ -19,6 +20,7 @@ export const usePageNavigation = ({
   onClose,
   direction,
   nextBook,
+  isZoomed = false,
 }: UsePageNavigationProps) => {
   const router = useRouter();
   const cPage = ClientOfflineBookService.getCurrentPage(book);
@@ -133,25 +135,22 @@ export const usePageNavigation = ({
 
   const handleTouchStart = useCallback(
     (event: TouchEvent) => {
-      // Ne gérer que les gestes à un seul doigt
-      if (event.touches.length === 1) {
-        touchStartXRef.current = event.touches[0].clientX;
-        touchStartYRef.current = event.touches[0].clientY;
-        currentPageRef.current = currentPage;
-      } else {
-        // Reset les références pour les gestes multi-touch (pinch)
+      // Si on est zoomé, on ne gère pas la navigation
+      if (isZoomed) {
         touchStartXRef.current = null;
         touchStartYRef.current = null;
+        return;
       }
+      
+      touchStartXRef.current = event.touches[0].clientX;
+      touchStartYRef.current = event.touches[0].clientY;
+      currentPageRef.current = currentPage;
     },
-    [currentPage]
+    [currentPage, isZoomed]
   );
 
   const handleTouchEnd = useCallback(
     (event: TouchEvent) => {
-      // Ne traiter que les gestes à un seul doigt
-      if (event.touches.length > 1) return;
-      
       if (touchStartXRef.current === null || touchStartYRef.current === null) return;
 
       const touchEndX = event.changedTouches[0].clientX;
@@ -163,7 +162,7 @@ export const usePageNavigation = ({
       // on ne fait rien (pour éviter de confondre avec un scroll)
       if (Math.abs(deltaY) > Math.abs(deltaX)) return;
 
-      // Augmenter le seuil pour éviter les changements de page accidentels
+      // Seuil pour éviter les changements de page accidentels
       if (Math.abs(deltaX) > 100) {
         if (deltaX > 0) {
           // Swipe vers la droite

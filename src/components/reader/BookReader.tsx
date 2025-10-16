@@ -19,6 +19,7 @@ export function BookReader({ book, pages, onClose, nextBook }: BookReaderProps) 
   const [isDoublePage, setIsDoublePage] = useState(false);
   const [showControls, setShowControls] = useState(false);
   const [showThumbnails, setShowThumbnails] = useState(false);
+  const [isZoomed, setIsZoomed] = useState(false);
   const readerRef = useRef<HTMLDivElement>(null);
   const isLandscape = useOrientation();
   const { direction, toggleDirection, isRTL } = useReadingDirection();
@@ -43,6 +44,7 @@ export function BookReader({ book, pages, onClose, nextBook }: BookReaderProps) 
     onClose,
     direction,
     nextBook,
+    isZoomed,
   });
 
   const { preloadPage, getPageUrl, cleanCache } = usePageCache({
@@ -138,6 +140,7 @@ export function BookReader({ book, pages, onClose, nextBook }: BookReaderProps) 
             shouldShowDoublePage={shouldShowDoublePage}
             isRTL={isRTL}
             onThumbnailLoad={handleThumbnailLoad}
+            onZoomChange={setIsZoomed}
           />
 
           <NavigationBar
