@@ -13,7 +13,9 @@ export const ErrorMessage = ({ errorCode, error, variant = "default" }: ErrorMes
   const { t } = useTranslate();
   const message = t(`errors.${errorCode}`);
 
-  console.error(error);
+  if (error) {
+    console.error(error);
+  }
 
   if (variant === "form") {
     return (

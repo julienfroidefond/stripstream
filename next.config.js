@@ -7,6 +7,8 @@ const nextConfig = {
     };
     return config;
   },
+  // Configuration pour améliorer la résolution DNS
+  serverExternalPackages: ['dns'],
 };
 
 module.exports = nextConfig;

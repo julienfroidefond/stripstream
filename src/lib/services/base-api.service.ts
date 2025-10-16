@@ -83,6 +83,26 @@ export abstract class BaseApiService {
     return url.toString();
   }
 
+  protected static async resolveWithFallback(url: string): Promise<string> {
+    try {
+      // Essayer de résoudre le DNS d'abord
+      const urlObj = new URL(url);
+      const hostname = urlObj.hostname;
+      
+      // Si c'est un nom de domaine, essayer de le résoudre
+      if (!/^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
+        // Vérifier si le domaine peut être résolu
+        const { lookup } = await import('dns').then(dns => dns.promises);
+        await lookup(hostname);
+      }
+      
+      return url;
+    } catch (dnsError) {
+      console.warn(`DNS resolution failed for ${url}, using original URL:`, dnsError);
+      return url;
+    }
+  }
+
   protected static async fetchFromApi<T>(
     urlBuilder: KomgaUrlBuilder,
     headersOptions = {},
@@ -90,7 +110,7 @@ export abstract class BaseApiService {
   ): Promise<T> {
     const config: AuthConfig = await this.getKomgaConfig();
     const { path, params } = urlBuilder;
-    const url = this.buildUrl(config, path, params);
+    const url = await this.resolveWithFallback(this.buildUrl(config, path, params));
 
     const headers: Headers = this.getAuthHeaders(config);
     if (headersOptions) {
@@ -109,16 +129,38 @@ export abstract class BaseApiService {
     try {
       // Enqueue la requête pour limiter la concurrence
       const response = await RequestQueueService.enqueue(async () => {
-        return await fetch(url, { 
-          headers, 
-          ...options,
-          signal: controller.signal,
-          // Configure undici connection timeouts
-          // @ts-ignore - undici-specific options not in standard fetch types
-          connectTimeout: timeoutMs,
-          bodyTimeout: timeoutMs,
-          headersTimeout: timeoutMs,
-        });
+        try {
+          return await fetch(url, { 
+            headers, 
+            ...options,
+            signal: controller.signal,
+            // Configure undici connection timeouts
+            // @ts-ignore - undici-specific options not in standard fetch types
+            connectTimeout: timeoutMs,
+            bodyTimeout: timeoutMs,
+            headersTimeout: timeoutMs,
+          });
+        } catch (fetchError: any) {
+          // Gestion spécifique des erreurs DNS
+          if (fetchError?.cause?.code === 'EAI_AGAIN' || fetchError?.code === 'EAI_AGAIN') {
+            console.error(`DNS resolution failed for ${url}. Retrying with different DNS settings...`);
+            
+            // Retry avec des paramètres DNS différents
+            return await fetch(url, { 
+              headers, 
+              ...options,
+              signal: controller.signal,
+              // @ts-ignore - undici-specific options
+              connectTimeout: timeoutMs,
+              bodyTimeout: timeoutMs,
+              headersTimeout: timeoutMs,
+              // Force IPv4 si IPv6 pose problème
+              // @ts-ignore
+              family: 4,
+            });
+          }
+          throw fetchError;
+        }
       });
       clearTimeout(timeoutId);
         const endTime = performance.now();
