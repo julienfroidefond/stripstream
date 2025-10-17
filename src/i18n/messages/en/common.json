@@ -83,6 +83,24 @@
         "description": "Show debug information in the interface"
       }
     },
+    "background": {
+      "title": "Background",
+      "description": "Customize your application background.",
+      "type": {
+        "label": "Background type",
+        "default": "Default",
+        "gradient": "Gradient",
+        "image": "Custom image"
+      },
+      "gradient": {
+        "label": "Choose a gradient"
+      },
+      "image": {
+        "label": "Image URL",
+        "description": "Enter an image URL (HTTPS recommended)",
+        "save": "Save"
+      }
+    },
     "error": {
       "title": "Error",
       "message": "An error occurred while updating preferences"

@@ -2,9 +2,10 @@ import prisma from "@/lib/prisma";
 import { getCurrentUser } from "../auth-utils";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
-import type { UserPreferences } from "@/types/preferences";
+import type { UserPreferences, BackgroundPreferences } from "@/types/preferences";
 import { defaultPreferences } from "@/types/preferences";
 import type { User } from "@/types/komga";
+import type { Prisma } from "@prisma/client";
 
 export class PreferencesService {
   static async getCurrentUser(): Promise<User> {
@@ -32,6 +33,7 @@ export class PreferencesService {
         showOnlyUnread: preferences.showOnlyUnread,
         debug: preferences.debug,
         displayMode: preferences.displayMode as UserPreferences["displayMode"],
+        background: (preferences.background as Prisma.JsonValue) as BackgroundPreferences,
       };
     } catch (error) {
       if (error instanceof AppError) {
@@ -51,6 +53,7 @@ export class PreferencesService {
       if (preferences.showOnlyUnread !== undefined) updateData.showOnlyUnread = preferences.showOnlyUnread;
       if (preferences.debug !== undefined) updateData.debug = preferences.debug;
       if (preferences.displayMode !== undefined) updateData.displayMode = preferences.displayMode;
+      if (preferences.background !== undefined) updateData.background = preferences.background;
 
       const updatedPreferences = await prisma.preferences.upsert({
         where: { userId: user.id },
@@ -62,6 +65,7 @@ export class PreferencesService {
           showOnlyUnread: preferences.showOnlyUnread ?? defaultPreferences.showOnlyUnread,
           debug: preferences.debug ?? defaultPreferences.debug,
           displayMode: preferences.displayMode ?? defaultPreferences.displayMode,
+          background: (preferences.background ?? defaultPreferences.background) as Prisma.InputJsonValue,
         },
       });
 
@@ -71,6 +75,7 @@ export class PreferencesService {
         showOnlyUnread: updatedPreferences.showOnlyUnread,
         debug: updatedPreferences.debug,
         displayMode: updatedPreferences.displayMode as UserPreferences["displayMode"],
+        background: (updatedPreferences.background as Prisma.JsonValue) as BackgroundPreferences,
       };
     } catch (error) {
       if (error instanceof AppError) {

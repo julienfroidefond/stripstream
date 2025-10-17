@@ -1,7 +1,7 @@
 "use client";
 
 import { ThemeProvider } from "next-themes";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { InstallPWA } from "../ui/InstallPWA";
@@ -11,6 +11,7 @@ import { registerServiceWorker } from "@/lib/registerSW";
 import { NetworkStatus } from "../ui/NetworkStatus";
 import { DebugWrapper } from "@/components/debug/DebugWrapper";
 import { DebugProvider } from "@/contexts/DebugContext";
+import { usePreferences } from "@/contexts/PreferencesContext";
 import type { KomgaLibrary, KomgaSeries } from "@/types/komga";
 
 // Routes qui ne nécessitent pas d'authentification
@@ -26,6 +27,29 @@ interface ClientLayoutProps {
 export default function ClientLayout({ children, initialLibraries = [], initialFavorites = [], userIsAdmin = false }: ClientLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const pathname = usePathname();
+  const { preferences } = usePreferences();
+
+  const backgroundStyle = useMemo(() => {
+    const bg = preferences.background;
+    
+    if (bg.type === "gradient" && bg.gradient) {
+      return {
+        background: bg.gradient,
+        backgroundAttachment: "fixed" as const,
+      };
+    }
+    
+    if (bg.type === "image" && bg.imageUrl) {
+      return {
+        backgroundImage: `url(${bg.imageUrl})`,
+        backgroundSize: "cover" as const,
+        backgroundPosition: "center" as const,
+        backgroundAttachment: "fixed" as const,
+      };
+    }
+    
+    return {};
+  }, [preferences.background]);
 
   const handleCloseSidebar = () => {
     setIsSidebarOpen(false);
@@ -71,7 +95,7 @@ export default function ClientLayout({ children, initialLibraries = [], initialF
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <DebugProvider>
-        <div className="relative min-h-screen h-full">
+        <div className="relative min-h-screen h-full" style={backgroundStyle}>
           {!isPublicRoute && <Header onToggleSidebar={handleToggleSidebar} />}
           {!isPublicRoute && (
             <Sidebar 
