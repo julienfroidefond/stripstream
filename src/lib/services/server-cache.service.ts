@@ -424,6 +424,93 @@ class ServerCacheService {
   invalidate(key: string): void {
     this.delete(key);
   }
+
+  /**
+   * Calcule la taille approximative d'un objet en mémoire
+   */
+  private calculateObjectSize(obj: unknown): number {
+    if (obj === null || obj === undefined) return 0;
+
+    // Si c'est un Buffer, utiliser sa taille réelle
+    if (Buffer.isBuffer(obj)) {
+      return obj.length;
+    }
+
+    // Si c'est un objet avec une propriété buffer (comme ImageResponse)
+    if (typeof obj === "object" && obj !== null) {
+      const objAny = obj as any;
+      if (objAny.buffer && Buffer.isBuffer(objAny.buffer)) {
+        // Taille du buffer + taille approximative des autres propriétés
+        let size = objAny.buffer.length;
+        // Ajouter la taille du contentType si présent
+        if (objAny.contentType && typeof objAny.contentType === "string") {
+          size += objAny.contentType.length * 2; // UTF-16
+        }
+        return size;
+      }
+    }
+
+    // Pour les autres types, utiliser JSON.stringify comme approximation
+    try {
+      return JSON.stringify(obj).length * 2; // x2 pour UTF-16
+    } catch {
+      // Si l'objet n'est pas sérialisable, retourner une estimation
+      return 1000; // 1KB par défaut
+    }
+  }
+
+  /**
+   * Calcule la taille du cache
+   */
+  async getCacheSize(): Promise<{ sizeInBytes: number; itemCount: number }> {
+    if (this.config.mode === "memory") {
+      // Calculer la taille approximative en mémoire
+      let sizeInBytes = 0;
+      let itemCount = 0;
+
+      this.memoryCache.forEach((value) => {
+        if (value.expiry > Date.now()) {
+          itemCount++;
+          // Calculer la taille du data + expiry (8 bytes pour le timestamp)
+          sizeInBytes += this.calculateObjectSize(value.data) + 8;
+        }
+      });
+
+      return { sizeInBytes, itemCount };
+    }
+
+    // Calculer la taille du cache sur disque
+    let sizeInBytes = 0;
+    let itemCount = 0;
+
+    const calculateDirectorySize = (dirPath: string): void => {
+      if (!fs.existsSync(dirPath)) return;
+
+      const items = fs.readdirSync(dirPath);
+
+      for (const item of items) {
+        const itemPath = path.join(dirPath, item);
+        try {
+          const stats = fs.statSync(itemPath);
+
+          if (stats.isDirectory()) {
+            calculateDirectorySize(itemPath);
+          } else if (stats.isFile() && item.endsWith(".json")) {
+            sizeInBytes += stats.size;
+            itemCount++;
+          }
+        } catch (error) {
+          console.error(`Could not access ${itemPath}:`, error);
+        }
+      }
+    };
+
+    if (fs.existsSync(this.cacheDir)) {
+      calculateDirectorySize(this.cacheDir);
+    }
+
+    return { sizeInBytes, itemCount };
+  }
 }
 
 // Créer une instance initialisée du service

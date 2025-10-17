@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslate } from "@/hooks/useTranslate";
 import { useToast } from "@/components/ui/use-toast";
-import { Trash2, Loader2 } from "lucide-react";
+import { Trash2, Loader2, HardDrive } from "lucide-react";
 import { CacheModeSwitch } from "@/components/settings/CacheModeSwitch";
 import { Label } from "@/components/ui/label";
 import type { TTLConfigData } from "@/types/komga";
@@ -12,11 +12,19 @@ interface CacheSettingsProps {
   initialTTLConfig: TTLConfigData | null;
 }
 
+interface CacheSizeInfo {
+  sizeInBytes: number;
+  itemCount: number;
+}
+
 export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
   const { t } = useTranslate();
   const { toast } = useToast();
   const [isCacheClearing, setIsCacheClearing] = useState(false);
   const [isServiceWorkerClearing, setIsServiceWorkerClearing] = useState(false);
+  const [serverCacheSize, setServerCacheSize] = useState<CacheSizeInfo | null>(null);
+  const [swCacheSize, setSwCacheSize] = useState<number | null>(null);
+  const [isLoadingCacheSize, setIsLoadingCacheSize] = useState(true);
   const [ttlConfig, setTTLConfig] = useState<TTLConfigData>(
     initialTTLConfig || {
       defaultTTL: 5,
@@ -27,6 +35,58 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
       imagesTTL: 1440,
     }
   );
+
+  const formatBytes = (bytes: number): string => {
+    if (bytes === 0) return "0 B";
+    const k = 1024;
+    const sizes = ["B", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
+  };
+
+  const fetchCacheSize = async () => {
+    setIsLoadingCacheSize(true);
+    try {
+      // Récupérer la taille du cache serveur
+      const serverResponse = await fetch("/api/komga/cache/size");
+      if (serverResponse.ok) {
+        const serverData = await serverResponse.json();
+        setServerCacheSize({
+          sizeInBytes: serverData.sizeInBytes,
+          itemCount: serverData.itemCount,
+        });
+      }
+
+      // Calculer la taille du cache Service Worker
+      if ("caches" in window) {
+        const cacheNames = await caches.keys();
+        let totalSize = 0;
+
+        for (const cacheName of cacheNames) {
+          const cache = await caches.open(cacheName);
+          const requests = await cache.keys();
+
+          for (const request of requests) {
+            const response = await cache.match(request);
+            if (response) {
+              const blob = await response.clone().blob();
+              totalSize += blob.size;
+            }
+          }
+        }
+
+        setSwCacheSize(totalSize);
+      }
+    } catch (error) {
+      console.error("Erreur lors de la récupération de la taille du cache:", error);
+    } finally {
+      setIsLoadingCacheSize(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCacheSize();
+  }, []);
 
   const handleClearCache = async () => {
     setIsCacheClearing(true);
@@ -45,6 +105,9 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
         title: t("settings.cache.title"),
         description: t("settings.cache.messages.cleared"),
       });
+
+      // Rafraîchir la taille du cache
+      await fetchCacheSize();
     } catch (error) {
       console.error("Erreur:", error);
       toast({
@@ -67,6 +130,9 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
           title: t("settings.cache.title"),
           description: t("settings.cache.messages.serviceWorkerCleared"),
         });
+
+        // Rafraîchir la taille du cache
+        await fetchCacheSize();
       }
     } catch (error) {
       console.error("Erreur lors de la suppression des caches:", error);
@@ -136,6 +202,43 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
             <p className="text-sm text-muted-foreground">{t("settings.cache.mode.description")}</p>
           </div>
           <CacheModeSwitch />
+        </div>
+
+        {/* Informations sur la taille du cache */}
+        <div className="rounded-md border bg-muted/50 p-4 space-y-3">
+          <div className="flex items-center gap-2 font-medium">
+            <HardDrive className="h-4 w-4" />
+            {t("settings.cache.size.title")}
+          </div>
+
+          {isLoadingCacheSize ? (
+            <div className="text-sm text-muted-foreground">{t("settings.cache.size.loading")}</div>
+          ) : (
+            <div className="grid gap-2 sm:grid-cols-2">
+              <div className="space-y-1">
+                <div className="text-sm font-medium">{t("settings.cache.size.server")}</div>
+                {serverCacheSize ? (
+                  <div className="text-sm text-muted-foreground">
+                    <div>{formatBytes(serverCacheSize.sizeInBytes)}</div>
+                    <div className="text-xs">
+                      {t("settings.cache.size.items", { count: serverCacheSize.itemCount })}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-sm text-muted-foreground">{t("settings.cache.size.error")}</div>
+                )}
+              </div>
+
+              <div className="space-y-1">
+                <div className="text-sm font-medium">{t("settings.cache.size.serviceWorker")}</div>
+                {swCacheSize !== null ? (
+                  <div className="text-sm text-muted-foreground">{formatBytes(swCacheSize)}</div>
+                ) : (
+                  <div className="text-sm text-muted-foreground">{t("settings.cache.size.error")}</div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Formulaire TTL */}

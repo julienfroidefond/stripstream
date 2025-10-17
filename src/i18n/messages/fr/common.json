@@ -117,6 +117,14 @@
         "label": "Mode de cache",
         "description": "Le cache en mémoire est plus rapide mais ne persiste pas entre les redémarrages"
       },
+      "size": {
+        "title": "Taille du cache",
+        "server": "Cache serveur",
+        "serviceWorker": "Cache service worker",
+        "items": "{count} élément(s)",
+        "loading": "Chargement...",
+        "error": "Erreur lors du chargement"
+      },
       "ttl": {
         "default": "TTL par défaut (minutes)",
         "home": "TTL page d'accueil",

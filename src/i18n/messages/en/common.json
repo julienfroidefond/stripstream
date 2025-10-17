@@ -117,6 +117,14 @@
         "label": "Cache mode",
         "description": "Memory cache is faster but doesn't persist between restarts"
       },
+      "size": {
+        "title": "Cache size",
+        "server": "Server cache",
+        "serviceWorker": "Service worker cache",
+        "items": "{count} item(s)",
+        "loading": "Loading...",
+        "error": "Error loading"
+      },
       "ttl": {
         "default": "Default TTL (minutes)",
         "home": "Home page TTL",
@@ -128,16 +136,20 @@
       "buttons": {
         "saveTTL": "Save TTL",
         "clear": "Clear cache",
-        "clearing": "Clearing..."
+        "clearing": "Clearing...",
+        "clearServiceWorker": "Clear service worker cache",
+        "clearingServiceWorker": "Clearing service worker cache..."
       },
       "messages": {
         "ttlSaved": "TTL configuration saved successfully",
-        "cleared": "Server cache cleared successfully"
+        "cleared": "Server cache cleared successfully",
+        "serviceWorkerCleared": "Service worker cache cleared successfully"
       },
       "error": {
-        "title": "Error clearing server cache",
-        "message": "An error occurred while clearing the server cache",
-        "ttl": "Error saving TTL configuration"
+        "title": "Error clearing cache",
+        "message": "An error occurred while clearing the cache",
+        "ttl": "Error saving TTL configuration",
+        "serviceWorkerMessage": "An error occurred while clearing the service worker cache"
       }
     }
   },

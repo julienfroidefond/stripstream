@@ -67,6 +67,7 @@ export const ERROR_MESSAGES: Record<string, string> = {
   [ERROR_CODES.CACHE.MODE_FETCH_ERROR]: "⚙️ Error fetching cache mode",
   [ERROR_CODES.CACHE.MODE_UPDATE_ERROR]: "⚙️ Error updating cache mode",
   [ERROR_CODES.CACHE.INVALID_MODE]: "⚠️ Invalid cache mode. Must be 'file' or 'memory'",
+  [ERROR_CODES.CACHE.SIZE_FETCH_ERROR]: "📊 Error fetching cache size",
 
   // UI
   [ERROR_CODES.UI.TABS_TRIGGER_ERROR]: "🔄 TabsTrigger must be used within a Tabs component",
