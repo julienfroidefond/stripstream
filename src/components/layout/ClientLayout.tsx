@@ -34,7 +34,7 @@ export default function ClientLayout({ children, initialLibraries = [], initialF
     
     if (bg.type === "gradient" && bg.gradient) {
       return {
-        background: bg.gradient,
+        backgroundImage: bg.gradient,
         backgroundAttachment: "fixed" as const,
       };
     }
