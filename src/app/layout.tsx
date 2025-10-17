@@ -11,10 +11,6 @@ import "@/i18n/i18n"; // Import i18next configuration
 import { cookies } from "next/headers";
 import { defaultPreferences } from "@/types/preferences";
 import type { UserPreferences } from "@/types/preferences";
-import type { KomgaLibrary, KomgaSeries } from "@/types/komga";
-import { FavoriteService } from "@/lib/services/favorite.service";
-import { LibraryService } from "@/lib/services/library.service";
-import { SeriesService } from "@/lib/services/series.service";
 
 const inter = Inter({ subsets: ["latin"], display: "swap", adjustFontFallback: false, preload: false });
 
@@ -70,29 +66,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const cookieStore = await cookies();
   const locale = cookieStore.get("NEXT_LOCALE")?.value || "fr";
 
-  // Récupération des données pour la sidebar côté serveur
-  let libraries: KomgaLibrary[] = [];
-  let favorites: KomgaSeries[] = [];
+  // Les libraries et favorites sont chargés côté client par la Sidebar
   let preferences: UserPreferences = defaultPreferences;
   let userIsAdmin = false;
 
   try {
-    // Tentative de chargement des données. Si l'utilisateur n'est pas authentifié,
-    // les services lanceront une erreur mais l'application continuera de fonctionner
-    const [librariesData, favoritesData, preferencesData, isAdminCheck] = await Promise.allSettled([
-      LibraryService.getLibraries(),
-      FavoriteService.getAllFavoriteIds(),
+    const [preferencesData, isAdminCheck] = await Promise.allSettled([
       PreferencesService.getPreferences(),
       import("@/lib/auth-utils").then((m) => m.isAdmin()),
     ]);
-
-    if (librariesData.status === "fulfilled") {
-      libraries = librariesData.value;
-    }
-
-    if (favoritesData.status === "fulfilled") {
-      favorites = await SeriesService.getMultipleSeries(favoritesData.value);
-    }
 
     if (preferencesData.status === "fulfilled") {
       preferences = preferencesData.value;
@@ -102,7 +84,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       userIsAdmin = isAdminCheck.value;
     }
   } catch (error) {
-    console.error("Erreur lors du chargement des données de la sidebar:", error);
+    console.error("Erreur lors du chargement des préférences:", error);
   }
 
   return (
@@ -169,8 +151,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <I18nProvider locale={locale}>
             <PreferencesProvider initialPreferences={preferences}>
               <ClientLayout 
-                initialLibraries={libraries} 
-                initialFavorites={favorites}
+                initialLibraries={[]} 
+                initialFavorites={[]}
                 userIsAdmin={userIsAdmin}
               >
                 {children}
