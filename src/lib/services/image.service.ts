@@ -12,23 +12,16 @@ export class ImageService extends BaseApiService {
     try {
       const headers = { Accept: "image/jpeg, image/png, image/gif, image/webp, */*" };
 
-      const result = await this.fetchWithCache<ImageResponse>(
-        `image-${path}`,
-        async () => {
-          const response = await this.fetchFromApi<Response>({ path }, headers, { isImage: true });
-          const contentType = response.headers.get("content-type");
-          const arrayBuffer = await response.arrayBuffer();
-          const buffer = Buffer.from(arrayBuffer);
+      // NE PAS mettre en cache - les images sont trop grosses et les Buffers ne sérialisent pas bien
+      const response = await this.fetchFromApi<Response>({ path }, headers, { isImage: true });
+      const contentType = response.headers.get("content-type");
+      const arrayBuffer = await response.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
 
-          return {
-            buffer,
-            contentType,
-          };
-        },
-        "IMAGES"
-      );
-
-      return result;
+      return {
+        buffer,
+        contentType,
+      };
     } catch (error) {
       console.error("Erreur lors de la récupération de l'image:", error);
       throw new AppError(ERROR_CODES.IMAGE.FETCH_ERROR, {}, error);

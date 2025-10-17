@@ -94,7 +94,14 @@ export class BookService extends BaseApiService {
       const response: ImageResponse = await ImageService.getImage(
         `books/${bookId}/pages/${adjustedPageNumber}?zero_based=true`
       );
-      return new Response(response.buffer.buffer as ArrayBuffer, {
+      
+      // Convertir le Buffer Node.js en ArrayBuffer proprement
+      const arrayBuffer = response.buffer.buffer.slice(
+        response.buffer.byteOffset,
+        response.buffer.byteOffset + response.buffer.byteLength
+      );
+      
+      return new Response(arrayBuffer, {
         headers: {
           "Content-Type": response.contentType || "image/jpeg",
           "Cache-Control": "public, max-age=31536000, immutable",

@@ -418,6 +418,7 @@
         "hide": "Hide thumbnails"
       },
       "zoom": "Zoom",
+      "reload": "Reload page",
       "close": "Close",
       "previousPage": "Previous page",
       "nextPage": "Next page"

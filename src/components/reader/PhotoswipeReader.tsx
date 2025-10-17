@@ -31,6 +31,7 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
   const [loadedImages, setLoadedImages] = useState<Record<number, { width: number; height: number }>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [secondPageLoading, setSecondPageLoading] = useState(true);
+  const [imageBlobUrls, setImageBlobUrls] = useState<Record<number, string>>({});
   const isLandscape = useOrientation();
   const { direction, toggleDirection, isRTL } = useReadingDirection();
   const { isFullscreen, toggleFullscreen } = useFullscreen();
@@ -320,8 +321,74 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
       if (pswpRef.current) {
         pswpRef.current.close();
       }
+      // Révoquer toutes les blob URLs
+      Object.values(imageBlobUrls).forEach(url => {
+        if (url) URL.revokeObjectURL(url);
+      });
     };
-  }, []);
+  }, [imageBlobUrls]);
+
+  // Force reload handler
+  const handleForceReload = useCallback(async () => {
+    setIsLoading(true);
+    setSecondPageLoading(true);
+    
+    // Révoquer les anciennes URLs blob
+    if (imageBlobUrls[currentPage]) {
+      URL.revokeObjectURL(imageBlobUrls[currentPage]);
+    }
+    if (imageBlobUrls[currentPage + 1]) {
+      URL.revokeObjectURL(imageBlobUrls[currentPage + 1]);
+    }
+    
+    try {
+      // Fetch page 1 avec cache: reload
+      const response1 = await fetch(getPageUrl(currentPage), {
+        cache: 'reload',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+      
+      if (!response1.ok) {
+        throw new Error(`HTTP ${response1.status}`);
+      }
+      
+      const blob1 = await response1.blob();
+      const blobUrl1 = URL.createObjectURL(blob1);
+      
+      const newUrls: Record<number, string> = {
+        ...imageBlobUrls,
+        [currentPage]: blobUrl1
+      };
+      
+      // Fetch page 2 si double page
+      if (isDoublePage && shouldShowDoublePage(currentPage)) {
+        const response2 = await fetch(getPageUrl(currentPage + 1), {
+          cache: 'reload',
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        });
+        
+        if (!response2.ok) {
+          throw new Error(`HTTP ${response2.status}`);
+        }
+        
+        const blob2 = await response2.blob();
+        const blobUrl2 = URL.createObjectURL(blob2);
+        newUrls[currentPage + 1] = blobUrl2;
+      }
+      
+      setImageBlobUrls(newUrls);
+    } catch (error) {
+      console.error('Error reloading images:', error);
+      setIsLoading(false);
+      setSecondPageLoading(false);
+    }
+  }, [currentPage, imageBlobUrls, isDoublePage, shouldShowDoublePage, getPageUrl]);
 
   return (
     <div
@@ -363,6 +430,7 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
           showThumbnails={showThumbnails}
           onToggleThumbnails={() => setShowThumbnails(!showThumbnails)}
           onZoom={handleZoom}
+          onForceReload={handleForceReload}
         />
 
         {/* Reader content */}
@@ -390,7 +458,8 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
                 </div>
               )}
               <img
-                src={getPageUrl(currentPage)}
+                key={`page-${currentPage}-${imageBlobUrls[currentPage] || ''}`}
+                src={imageBlobUrls[currentPage] || getPageUrl(currentPage)}
                 alt={`Page ${currentPage}`}
                 className={cn(
                   "max-h-full max-w-full object-contain transition-opacity",
@@ -428,7 +497,8 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
                   </div>
                 )}
                 <img
-                  src={getPageUrl(currentPage + 1)}
+                  key={`page-${currentPage + 1}-${imageBlobUrls[currentPage + 1] || ''}`}
+                  src={imageBlobUrls[currentPage + 1] || getPageUrl(currentPage + 1)}
                   alt={`Page ${currentPage + 1}`}
                   className={cn(
                     "max-h-full max-w-full object-contain transition-opacity",
