@@ -24,7 +24,7 @@ export function PreferencesProvider({
   const [preferences, setPreferences] = useState<UserPreferences>(
     initialPreferences || defaultPreferences
   );
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   const fetchPreferences = async () => {
     try {

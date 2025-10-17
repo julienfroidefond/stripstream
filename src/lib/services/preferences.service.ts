@@ -33,7 +33,7 @@ export class PreferencesService {
         showOnlyUnread: preferences.showOnlyUnread,
         debug: preferences.debug,
         displayMode: preferences.displayMode as UserPreferences["displayMode"],
-        background: (preferences.background as Prisma.JsonValue) as BackgroundPreferences,
+        background: preferences.background as unknown as BackgroundPreferences,
       };
     } catch (error) {
       if (error instanceof AppError) {
@@ -65,7 +65,7 @@ export class PreferencesService {
           showOnlyUnread: preferences.showOnlyUnread ?? defaultPreferences.showOnlyUnread,
           debug: preferences.debug ?? defaultPreferences.debug,
           displayMode: preferences.displayMode ?? defaultPreferences.displayMode,
-          background: (preferences.background ?? defaultPreferences.background) as Prisma.InputJsonValue,
+          background: (preferences.background ?? defaultPreferences.background) as unknown as Prisma.InputJsonValue,
         },
       });
 
@@ -75,7 +75,7 @@ export class PreferencesService {
         showOnlyUnread: updatedPreferences.showOnlyUnread,
         debug: updatedPreferences.debug,
         displayMode: updatedPreferences.displayMode as UserPreferences["displayMode"],
-        background: (updatedPreferences.background as Prisma.JsonValue) as BackgroundPreferences,
+        background: updatedPreferences.background as unknown as BackgroundPreferences,
       };
     } catch (error) {
       if (error instanceof AppError) {

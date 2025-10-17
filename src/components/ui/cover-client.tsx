@@ -1,8 +1,7 @@
 "use client";
 
 import { ImageOff } from "lucide-react";
-import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { ImageLoader } from "@/components/ui/image-loader";
 
@@ -21,6 +20,38 @@ export const CoverClient = ({
 }: CoverClientProps) => {
   const [imageError, setImageError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Timeout de sécurité : si l'image ne se charge pas en 10 secondes, on arrête le loading
+  useEffect(() => {
+    timeoutRef.current = setTimeout(() => {
+      if (isLoading) {
+        console.warn("Image loading timeout for:", imageUrl);
+        setIsLoading(false);
+      }
+    }, 10000);
+
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [imageUrl, isLoading]);
+
+  const handleLoad = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    setIsLoading(false);
+  };
+
+  const handleError = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    console.error("Image loading error for:", imageUrl);
+    setImageError(true);
+  };
 
   if (imageError) {
     return (
@@ -33,19 +64,18 @@ export const CoverClient = ({
   return (
     <div className="relative w-full h-full">
       <ImageLoader isLoading={isLoading} />
-      <Image
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
         src={imageUrl}
         alt={alt}
-        fill
+        loading="lazy"
         className={cn(
-          "object-cover transition-opacity duration-300 rounded-lg",
+          "absolute inset-0 w-full h-full object-cover transition-opacity duration-300 rounded-lg",
           isCompleted && "opacity-50",
           className
         )}
-        onError={() => setImageError(true)}
-        onLoad={() => setIsLoading(false)}
-        loading="lazy"
-        unoptimized
+        onError={handleError}
+        onLoad={handleLoad}
       />
     </div>
   );
