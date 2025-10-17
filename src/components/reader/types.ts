@@ -52,6 +52,7 @@ export interface ControlButtonsProps {
   onToggleDirection: () => void;
   showThumbnails: boolean;
   onToggleThumbnails: () => void;
+  onZoom: () => void;
 }
 
 export interface UsePageNavigationProps {

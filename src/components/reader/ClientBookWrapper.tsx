@@ -1,7 +1,7 @@
 "use client";
 
 import type { KomgaBook } from "@/types/komga";
-import { BookReader } from "./BookReader";
+import { PhotoswipeReader } from "./PhotoswipeReader";
 import { useRouter } from "next/navigation";
 import { ClientOfflineBookService } from "@/lib/services/client-offlinebook.service";
 
@@ -23,5 +23,5 @@ export function ClientBookWrapper({ book, pages, nextBook }: ClientBookWrapperPr
     //router.back();
   };
 
-  return <BookReader book={book} pages={pages} onClose={handleCloseReader} nextBook={nextBook} />;
+  return <PhotoswipeReader book={book} pages={pages} onClose={handleCloseReader} nextBook={nextBook} />;
 }
