@@ -4,7 +4,7 @@ import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 import { getErrorMessage } from "@/utils/errors";
 import type { NextRequest } from "next/server";
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 const DEFAULT_PAGE_SIZE = 20;
 
@@ -26,7 +26,14 @@ export async function GET(
       LibraryService.getLibrary(libraryId)
     ]);
 
-    return NextResponse.json({ series, library });
+    return NextResponse.json(
+      { series, library },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120'
+        }
+      }
+    );
   } catch (error) {
     console.error("API Library Series - Erreur:", error);
     if (error instanceof AppError) {

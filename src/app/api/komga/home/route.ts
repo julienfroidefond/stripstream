@@ -3,12 +3,16 @@ import { HomeService } from "@/lib/services/home.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 import { getErrorMessage } from "@/utils/errors";
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export async function GET() {
   try {
     const data = await HomeService.getHomeData();
-    return NextResponse.json(data);
+    return NextResponse.json(data, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120'
+      }
+    });
   } catch (error) {
     console.error("API Home - Erreur:", error);
     if (error instanceof AppError) {

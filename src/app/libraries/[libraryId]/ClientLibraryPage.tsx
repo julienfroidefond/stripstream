@@ -55,7 +55,9 @@ export function ClientLibraryPage({
           params.append("search", search);
         }
 
-        const response = await fetch(`/api/komga/libraries/${libraryId}/series?${params}`);
+        const response = await fetch(`/api/komga/libraries/${libraryId}/series?${params}`, {
+          cache: 'default' // Utilise le cache HTTP du navigateur
+        });
         
         if (!response.ok) {
           const errorData = await response.json();
@@ -98,7 +100,9 @@ export function ClientLibraryPage({
         params.append("search", search);
       }
 
-      const response = await fetch(`/api/komga/libraries/${libraryId}/series?${params}`);
+      const response = await fetch(`/api/komga/libraries/${libraryId}/series?${params}`, {
+        cache: 'reload' // Force un nouveau fetch après invalidation
+      });
       
       if (!response.ok) {
         throw new Error("Error refreshing library");
@@ -130,7 +134,9 @@ export function ClientLibraryPage({
         params.append("search", search);
       }
 
-      const response = await fetch(`/api/komga/libraries/${libraryId}/series?${params}`);
+      const response = await fetch(`/api/komga/libraries/${libraryId}/series?${params}`, {
+        cache: 'reload' // Force un nouveau fetch lors du retry
+      });
       
       if (!response.ok) {
         const errorData = await response.json();

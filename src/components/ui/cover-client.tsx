@@ -22,14 +22,14 @@ export const CoverClient = ({
   const [isLoading, setIsLoading] = useState(true);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Timeout de sécurité : si l'image ne se charge pas en 10 secondes, on arrête le loading
+  // Timeout de sécurité : si l'image ne se charge pas en 30 secondes, on arrête le loading
   useEffect(() => {
     timeoutRef.current = setTimeout(() => {
       if (isLoading) {
-        console.warn("Image loading timeout for:", imageUrl);
         setIsLoading(false);
+        setImageError(true);
       }
-    }, 10000);
+    }, 30000);
 
     return () => {
       if (timeoutRef.current) {
@@ -49,8 +49,8 @@ export const CoverClient = ({
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
-    console.error("Image loading error for:", imageUrl);
     setImageError(true);
+    setIsLoading(false);
   };
 
   if (imageError) {

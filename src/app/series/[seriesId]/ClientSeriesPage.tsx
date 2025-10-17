@@ -46,7 +46,9 @@ export function ClientSeriesPage({
           unread: String(unreadOnly),
         });
 
-        const response = await fetch(`/api/komga/series/${seriesId}/books?${params}`);
+        const response = await fetch(`/api/komga/series/${seriesId}/books?${params}`, {
+          cache: 'default' // Utilise le cache HTTP du navigateur
+        });
 
         if (!response.ok) {
           const errorData = await response.json();
@@ -85,7 +87,9 @@ export function ClientSeriesPage({
         unread: String(unreadOnly),
       });
 
-      const response = await fetch(`/api/komga/series/${seriesId}/books?${params}`);
+      const response = await fetch(`/api/komga/series/${seriesId}/books?${params}`, {
+        cache: 'reload' // Force un nouveau fetch après invalidation
+      });
 
       if (!response.ok) {
         throw new Error("Erreur lors du rafraîchissement de la série");
@@ -113,7 +117,9 @@ export function ClientSeriesPage({
         unread: String(unreadOnly),
       });
 
-      const response = await fetch(`/api/komga/series/${seriesId}/books?${params}`);
+      const response = await fetch(`/api/komga/series/${seriesId}/books?${params}`, {
+        cache: 'reload' // Force un nouveau fetch lors du retry
+      });
 
       if (!response.ok) {
         const errorData = await response.json();

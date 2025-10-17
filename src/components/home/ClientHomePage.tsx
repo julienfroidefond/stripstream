@@ -19,7 +19,9 @@ export function ClientHomePage() {
     setError(null);
 
     try {
-      const response = await fetch("/api/komga/home");
+      const response = await fetch("/api/komga/home", {
+        cache: 'default' // Utilise le cache HTTP du navigateur
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -61,7 +63,9 @@ export function ClientHomePage() {
       }
 
       // Récupérer les nouvelles données
-      const response = await fetch("/api/komga/home");
+      const response = await fetch("/api/komga/home", {
+        cache: 'reload' // Force un nouveau fetch après invalidation
+      });
 
       if (!response.ok) {
         throw new Error("Erreur lors du rafraîchissement de la page d'accueil");

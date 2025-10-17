@@ -5,7 +5,7 @@ import { AppError } from "@/utils/errors";
 import type { KomgaSeries } from "@/types/komga";
 import { getErrorMessage } from "@/utils/errors";
 import type { NextRequest } from "next/server";
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export async function GET(
   request: NextRequest,
@@ -15,7 +15,11 @@ export async function GET(
     const seriesId: string = (await params).seriesId;
 
     const series: KomgaSeries = await SeriesService.getSeries(seriesId);
-    return NextResponse.json(series);
+    return NextResponse.json(series, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120'
+      }
+    });
   } catch (error) {
     console.error("API Series - Erreur:", error);
     if (error instanceof AppError) {
