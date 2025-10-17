@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import { ERROR_CODES } from "../constants/errorCodes";
 import { AppError } from "../utils/errors";
 import type { UserPreferences } from "@/types/preferences";
@@ -44,6 +44,10 @@ export function PreferencesProvider({
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchPreferences();
+  }, []);
 
   const updatePreferences = async (newPreferences: Partial<UserPreferences>) => {
     try {
