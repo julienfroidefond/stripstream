@@ -36,6 +36,12 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
   const touchStartXRef = useRef<number | null>(null);
   const touchStartYRef = useRef<number | null>(null);
   const isPinchingRef = useRef(false);
+  const currentPageRef = useRef(currentPage);
+
+  // Garder currentPage à jour dans la ref pour le cleanup
+  useEffect(() => {
+    currentPageRef.current = currentPage;
+  }, [currentPage]);
 
   // Auto double page en paysage
   useEffect(() => {
@@ -85,10 +91,13 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
     (page: number) => {
       if (page >= 1 && page <= pages.length) {
         setCurrentPage(page);
+        // Mettre à jour le localStorage immédiatement
+        ClientOfflineBookService.setCurrentPage(book, page);
+        // Débouncer seulement l'API Komga
         debouncedSync(page);
       }
     },
-    [pages.length, debouncedSync]
+    [pages.length, debouncedSync, book]
   );
 
   const handlePreviousPage = useCallback(() => {
@@ -209,16 +218,16 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
     };
   }, [handleNextPage, handlePreviousPage, handleTouchStart, handleTouchEnd, onClose, isRTL, currentPage]);
 
-  // Cleanup
+  // Cleanup - Sync final sans debounce
   useEffect(() => {
     return () => {
       if (syncTimeoutRef.current) {
         clearTimeout(syncTimeoutRef.current);
-        syncReadProgress(currentPage);
       }
-      ClientOfflineBookService.removeCurrentPage(book);
+      // Sync immédiatement au cleanup avec la VRAIE valeur actuelle
+      syncReadProgress(currentPageRef.current);
     };
-  }, [syncReadProgress, book, currentPage]);
+  }, [syncReadProgress]);
 
   const getPageUrl = useCallback((pageNum: number) => `/api/komga/books/${book.id}/pages/${pageNum}`, [book.id]);
 
