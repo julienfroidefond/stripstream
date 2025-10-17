@@ -89,8 +89,8 @@ export default function ClientLayout({ children, initialLibraries = [], initialF
     registerServiceWorker();
   }, []);
 
-  // Ne pas afficher le header et la sidebar sur les routes publiques
-  const isPublicRoute = publicRoutes.includes(pathname);
+  // Ne pas afficher le header et la sidebar sur les routes publiques et le reader
+  const isPublicRoute = publicRoutes.includes(pathname) || pathname.startsWith('/books/');
 
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
