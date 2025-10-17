@@ -1,6 +1,7 @@
 import { useDisplayPreferences } from "@/hooks/useDisplayPreferences";
 import { useTranslate } from "@/hooks/useTranslate";
 import { LayoutGrid, LayoutTemplate } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface CompactModeButtonProps {
   onToggle?: (isCompact: boolean) => void;
@@ -16,16 +17,19 @@ export function CompactModeButton({ onToggle }: CompactModeButtonProps) {
     onToggle?.(newCompactState);
   };
 
+  const Icon = isCompact ? LayoutTemplate : LayoutGrid;
+  const label = isCompact ? t("series.filters.normal") : t("series.filters.compact");
+
   return (
-    <button
+    <Button
+      variant="ghost"
+      size="sm"
       onClick={handleClick}
-      className="inline-flex items-center gap-2 px-2 py-1.5 text-sm font-medium rounded-lg hover:bg-accent/80 hover:backdrop-blur-md hover:text-accent-foreground whitespace-nowrap"
-      title={isCompact ? t("series.filters.normal") : t("series.filters.compact")}
+      title={label}
+      className="whitespace-nowrap"
     >
-      {isCompact ? <LayoutTemplate className="h-4 w-4" /> : <LayoutGrid className="h-4 w-4" />}
-      <span className="hidden sm:inline">
-        {isCompact ? t("series.filters.normal") : t("series.filters.compact")}
-      </span>
-    </button>
+      <Icon className="h-4 w-4" />
+      <span className="hidden sm:inline ml-2">{label}</span>
+    </Button>
   );
 }

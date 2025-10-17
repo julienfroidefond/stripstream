@@ -1,12 +1,14 @@
 "use client";
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { KomgaBook, KomgaSeries } from "@/types/komga";
 import { BookCover } from "../ui/book-cover";
 import { SeriesCover } from "../ui/series-cover";
 import { useTranslate } from "@/hooks/useTranslate";
+import { ScrollContainer } from "@/components/ui/scroll-container";
+import { Section } from "@/components/ui/section";
+import type { LucideIcon } from "lucide-react";
+import { Card } from "@/components/ui/card";
 
 interface BaseItem {
   id: string;
@@ -36,13 +38,10 @@ interface OptimizedBook extends BaseItem {
 interface MediaRowProps {
   title: string;
   items: (OptimizedSeries | OptimizedBook)[];
-  icon?: React.ReactNode;
+  icon?: LucideIcon;
 }
 
 export function MediaRow({ title, items, icon }: MediaRowProps) {
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [showLeftArrow, setShowLeftArrow] = useState(false);
-  const [showRightArrow, setShowRightArrow] = useState(true);
   const router = useRouter();
   const { t } = useTranslate();
 
@@ -51,64 +50,21 @@ export function MediaRow({ title, items, icon }: MediaRowProps) {
     router.push(path);
   };
 
-  const handleScroll = () => {
-    if (!scrollContainerRef.current) return;
-
-    const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
-    setShowLeftArrow(scrollLeft > 0);
-    setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10);
-  };
-
-  const scroll = (direction: "left" | "right") => {
-    if (!scrollContainerRef.current) return;
-
-    const scrollAmount = direction === "left" ? -400 : 400;
-    scrollContainerRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
-  };
-
   if (!items.length) return null;
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        {icon}
-        <h2 className="text-2xl font-bold tracking-tight">{title}</h2>
-      </div>
-      <div className="relative">
-        {/* Bouton de défilement gauche */}
-        {showLeftArrow && (
-          <button
-            onClick={() => scroll("left")}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-background/90 shadow-md border transition-opacity"
-            aria-label={t("navigation.scrollLeft")}
-          >
-            <ChevronLeft className="h-6 w-6" />
-          </button>
-        )}
-
-        {/* Conteneur défilant */}
-        <div
-          ref={scrollContainerRef}
-          onScroll={handleScroll}
-          className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth pb-4"
-        >
-          {items.map((item) => (
-            <MediaCard key={item.id} item={item} onClick={() => onItemClick?.(item)} />
-          ))}
-        </div>
-
-        {/* Bouton de défilement droit */}
-        {showRightArrow && (
-          <button
-            onClick={() => scroll("right")}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-background/90 shadow-md border transition-opacity"
-            aria-label={t("navigation.scrollRight")}
-          >
-            <ChevronRight className="h-6 w-6" />
-          </button>
-        )}
-      </div>
-    </div>
+    <Section title={title} icon={icon}>
+      <ScrollContainer
+        showArrows={true}
+        scrollAmount={400}
+        arrowLeftLabel={t("navigation.scrollLeft")}
+        arrowRightLabel={t("navigation.scrollRight")}
+      >
+        {items.map((item) => (
+          <MediaCard key={item.id} item={item} onClick={() => onItemClick?.(item)} />
+        ))}
+      </ScrollContainer>
+    </Section>
   );
 }
 
@@ -128,9 +84,9 @@ function MediaCard({ item, onClick }: MediaCardProps) {
         : "");
 
   return (
-    <div
+    <Card
       onClick={onClick}
-      className="flex-shrink-0 w-[200px] relative flex flex-col rounded-lg border bg-card/70 backdrop-blur-md text-card-foreground shadow-sm hover:bg-accent/80 hover:backdrop-blur-md hover:text-accent-foreground transition-colors overflow-hidden cursor-pointer"
+      className="flex-shrink-0 w-[200px] relative flex flex-col hover:bg-accent hover:text-accent-foreground transition-colors overflow-hidden cursor-pointer"
     >
       <div className="relative aspect-[2/3] bg-muted">
         {isSeries ? (
@@ -154,6 +110,6 @@ function MediaCard({ item, onClick }: MediaCardProps) {
           </>
         )}
       </div>
-    </div>
+    </Card>
   );
 }

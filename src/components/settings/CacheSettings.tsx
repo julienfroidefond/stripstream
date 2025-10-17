@@ -7,6 +7,7 @@ import { Trash2, Loader2, HardDrive } from "lucide-react";
 import { CacheModeSwitch } from "@/components/settings/CacheModeSwitch";
 import { Label } from "@/components/ui/label";
 import type { TTLConfigData } from "@/types/komga";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 interface CacheSettingsProps {
   initialTTLConfig: TTLConfigData | null;
@@ -186,15 +187,15 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
   };
 
   return (
-    <div className="rounded-lg border bg-card/70 backdrop-blur-md text-card-foreground shadow-sm">
-      <div className="p-5 space-y-4">
-        <div>
-          <h2 className="text-xl font-semibold flex items-center gap-2">
-            <Trash2 className="h-5 w-5" />
-            {t("settings.cache.title")}
-          </h2>
-          <p className="text-sm text-muted-foreground mt-1">{t("settings.cache.description")}</p>
-        </div>
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Trash2 className="h-5 w-5" />
+          {t("settings.cache.title")}
+        </CardTitle>
+        <CardDescription>{t("settings.cache.description")}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
 
         <div className="flex items-center justify-between mb-4">
           <div className="space-y-0.5">
@@ -370,7 +371,7 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
             </button>
           </div>
         </form>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

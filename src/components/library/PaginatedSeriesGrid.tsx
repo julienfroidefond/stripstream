@@ -11,6 +11,7 @@ import { useDisplayPreferences } from "@/hooks/useDisplayPreferences";
 import { PageSizeSelect } from "@/components/common/PageSizeSelect";
 import { CompactModeButton } from "@/components/common/CompactModeButton";
 import { UnreadFilterButton } from "@/components/common/UnreadFilterButton";
+import { Container } from "@/components/ui/container";
 
 interface PaginatedSeriesGridProps {
   series: KomgaSeries[];
@@ -97,7 +98,7 @@ export function PaginatedSeriesGrid({
   };
 
   return (
-    <div className="space-y-8">
+    <Container spacing="none" className="space-y-8">
       <div className="flex flex-col gap-4">
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           <div className="w-full">
@@ -124,6 +125,6 @@ export function PaginatedSeriesGrid({
           className="order-1 sm:order-2"
         />
       </div>
-    </div>
+    </Container>
   );
 }

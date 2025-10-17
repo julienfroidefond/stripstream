@@ -2,6 +2,7 @@ import { Menu, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import LanguageSelector from "@/components/LanguageSelector";
 import { useTranslation } from "react-i18next";
+import { IconButton } from "@/components/ui/icon-button";
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -18,16 +19,15 @@ export function Header({ onToggleSidebar }: HeaderProps) {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/70 backdrop-blur-md supports-[backdrop-filter]:bg-background/50 pt-safe">
       <div className="container flex h-14 max-w-screen-2xl items-center">
-        <button
+        <IconButton
+          variant="ghost"
+          size="icon"
+          icon={Menu}
           onClick={onToggleSidebar}
-          className="mr-2 px-2 py-1.5 hover:bg-accent hover:text-accent-foreground rounded-md"
-          aria-label={t("header.toggleSidebar")}
+          tooltip={t("header.toggleSidebar")}
+          className="mr-2"
           id="sidebar-toggle"
-        >
-          <div className="flex items-center justify-center w-5 h-5">
-            <Menu className="h-[1.2rem] w-[1.2rem]" />
-          </div>
-        </button>
+        />
 
         <div className="mr-4 hidden md:flex">
           <a className="mr-6 flex items-center space-x-2" href="/">

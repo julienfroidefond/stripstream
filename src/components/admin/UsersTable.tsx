@@ -16,6 +16,7 @@ import type { AdminUserData } from "@/lib/services/admin.service";
 import { EditUserDialog } from "./EditUserDialog";
 import { DeleteUserDialog } from "./DeleteUserDialog";
 import { ResetPasswordDialog } from "./ResetPasswordDialog";
+import { StatusBadge } from "@/components/ui/status-badge";
 
 interface UsersTableProps {
   users: AdminUserData[];
@@ -29,7 +30,7 @@ export function UsersTable({ users, onUserUpdated }: UsersTableProps) {
 
   return (
     <>
-      <div className="rounded-md border">
+      <div className="rounded-lg border bg-card/70 backdrop-blur-md shadow-sm">
         <Table>
           <TableHeader>
             <TableRow>
@@ -67,28 +68,24 @@ export function UsersTable({ users, onUserUpdated }: UsersTableProps) {
                   </TableCell>
                   <TableCell>
                     {user.hasKomgaConfig ? (
-                      <div className="flex items-center gap-2">
-                        <Check className="h-4 w-4 text-green-500" />
-                        <span className="text-xs text-green-600 dark:text-green-400">Configuré</span>
-                      </div>
+                      <StatusBadge status="success" icon={Check}>
+                        Configuré
+                      </StatusBadge>
                     ) : (
-                      <div className="flex items-center gap-2">
-                        <X className="h-4 w-4 text-red-500" />
-                        <span className="text-xs text-red-600 dark:text-red-400">Non configuré</span>
-                      </div>
+                      <StatusBadge status="error" icon={X}>
+                        Non configuré
+                      </StatusBadge>
                     )}
                   </TableCell>
                   <TableCell>
                     {user.hasPreferences ? (
-                      <div className="flex items-center gap-2">
-                        <Check className="h-4 w-4 text-green-500" />
-                        <span className="text-xs text-green-600 dark:text-green-400">Oui</span>
-                      </div>
+                      <StatusBadge status="success" icon={Check}>
+                        Oui
+                      </StatusBadge>
                     ) : (
-                      <div className="flex items-center gap-2">
-                        <X className="h-4 w-4 text-red-500" />
-                        <span className="text-xs text-red-600 dark:text-red-400">Non</span>
-                      </div>
+                      <StatusBadge status="error" icon={X}>
+                        Non
+                      </StatusBadge>
                     )}
                   </TableCell>
                   <TableCell>{user._count?.favorites || 0}</TableCell>
@@ -134,7 +131,7 @@ export function UsersTable({ users, onUserUpdated }: UsersTableProps) {
         <EditUserDialog
           user={editingUser}
           open={!!editingUser}
-          onOpenChange={(open) => !open && setEditingUser(null)}
+          onOpenChange={(open: boolean) => !open && setEditingUser(null)}
           onSuccess={() => {
             setEditingUser(null);
             onUserUpdated();
@@ -146,7 +143,7 @@ export function UsersTable({ users, onUserUpdated }: UsersTableProps) {
         <ResetPasswordDialog
           user={resettingPasswordUser}
           open={!!resettingPasswordUser}
-          onOpenChange={(open) => !open && setResettingPasswordUser(null)}
+          onOpenChange={(open: boolean) => !open && setResettingPasswordUser(null)}
           onSuccess={() => {
             setResettingPasswordUser(null);
           }}
@@ -157,7 +154,7 @@ export function UsersTable({ users, onUserUpdated }: UsersTableProps) {
         <DeleteUserDialog
           user={deletingUser}
           open={!!deletingUser}
-          onOpenChange={(open) => !open && setDeletingUser(null)}
+          onOpenChange={(open: boolean) => !open && setDeletingUser(null)}
           onSuccess={() => {
             setDeletingUser(null);
             onUserUpdated();

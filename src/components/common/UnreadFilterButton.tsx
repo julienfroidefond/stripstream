@@ -2,6 +2,7 @@
 
 import { useTranslate } from "@/hooks/useTranslate";
 import { Filter } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface UnreadFilterButtonProps {
   showOnlyUnread: boolean;
@@ -11,16 +12,18 @@ interface UnreadFilterButtonProps {
 export function UnreadFilterButton({ showOnlyUnread, onToggle }: UnreadFilterButtonProps) {
   const { t } = useTranslate();
 
+  const label = showOnlyUnread ? t("series.filters.showAll") : t("series.filters.unread");
+
   return (
-    <button
+    <Button
+      variant="ghost"
+      size="sm"
       onClick={onToggle}
-      className="inline-flex items-center gap-2 px-2 py-1.5 text-sm font-medium rounded-lg hover:bg-accent/80 hover:backdrop-blur-md hover:text-accent-foreground whitespace-nowrap"
-      title={showOnlyUnread ? t("series.filters.showAll") : t("series.filters.unread")}
+      title={label}
+      className="whitespace-nowrap"
     >
       <Filter className="h-4 w-4" />
-      <span className="hidden sm:inline">
-        {showOnlyUnread ? t("series.filters.showAll") : t("series.filters.unread")}
-      </span>
-    </button>
+      <span className="hidden sm:inline ml-2">{label}</span>
+    </Button>
   );
 }

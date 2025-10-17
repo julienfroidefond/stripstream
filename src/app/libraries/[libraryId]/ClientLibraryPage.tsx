@@ -9,6 +9,8 @@ import { OptimizedSkeleton } from "@/components/skeletons/OptimizedSkeletons";
 import type { LibraryResponse } from "@/types/library";
 import type { KomgaSeries, KomgaLibrary } from "@/types/komga";
 import type { UserPreferences } from "@/types/preferences";
+import { Container } from "@/components/ui/container";
+import { Section } from "@/components/ui/section";
 
 interface ClientLibraryPageProps {
   currentPage: number;
@@ -148,7 +150,7 @@ export function ClientLibraryPage({
 
   if (loading) {
     return (
-      <div className="container py-8 space-y-8">
+      <Container>
         <div className="flex items-center justify-between">
           <OptimizedSkeleton className="h-10 w-64" />
           <OptimizedSkeleton className="h-10 w-10 rounded-full" />
@@ -158,49 +160,49 @@ export function ClientLibraryPage({
             <OptimizedSkeleton key={i} className="aspect-[3/4] w-full rounded" />
           ))}
         </div>
-      </div>
+      </Container>
     );
   }
 
   if (error) {
     return (
-      <div className="container py-8 space-y-8">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">
-            {library?.name || t("series.empty")}
-          </h1>
-          <RefreshButton libraryId={libraryId} refreshLibrary={handleRefresh} />
-        </div>
+      <Container>
+        <Section
+          title={library?.name || t("series.empty")}
+          actions={<RefreshButton libraryId={libraryId} refreshLibrary={handleRefresh} />}
+        />
         <ErrorMessage errorCode={error} onRetry={handleRetry} />
-      </div>
+      </Container>
     );
   }
 
   if (!library || !series) {
     return (
-      <div className="container py-8 space-y-8">
+      <Container>
         <ErrorMessage errorCode="SERIES_FETCH_ERROR" onRetry={handleRetry} />
-      </div>
+      </Container>
     );
   }
 
   return (
-    <div className="container py-8 space-y-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">{library.name}</h1>
-        <div className="flex items-center gap-2">
-          {series.totalElements > 0 && (
-            <p className="text-sm text-muted-foreground">
-              {t("series.display.showing", {
-                start: ((currentPage - 1) * effectivePageSize) + 1,
-                end: Math.min(currentPage * effectivePageSize, series.totalElements),
-                total: series.totalElements,
-              })}
-            </p>
-          )}
-          <RefreshButton libraryId={libraryId} refreshLibrary={handleRefresh} />
-        </div>
-      </div>
+    <Container>
+      <Section
+        title={library.name}
+        actions={
+          <div className="flex items-center gap-2">
+            {series.totalElements > 0 && (
+              <p className="text-sm text-muted-foreground">
+                {t("series.display.showing", {
+                  start: ((currentPage - 1) * effectivePageSize) + 1,
+                  end: Math.min(currentPage * effectivePageSize, series.totalElements),
+                  total: series.totalElements,
+                })}
+              </p>
+            )}
+            <RefreshButton libraryId={libraryId} refreshLibrary={handleRefresh} />
+          </div>
+        }
+      />
       <PaginatedSeriesGrid
         series={series.content || []}
         currentPage={currentPage}
@@ -209,6 +211,6 @@ export function ClientLibraryPage({
         defaultShowOnlyUnread={preferences.showOnlyUnread}
         showOnlyUnread={unreadOnly}
       />
-    </div>
+    </Container>
   );
 }

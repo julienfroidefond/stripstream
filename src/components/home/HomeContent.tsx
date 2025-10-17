@@ -81,7 +81,7 @@ export function HomeContent({ data, refreshHome }: HomeContentProps) {
           <MediaRow
             title={t("home.sections.continue_series")}
             items={optimizeSeriesData(data.ongoing)}
-            icon={<LibraryBig className="w-6 h-6" />}
+            icon={LibraryBig}
           />
         )}
 
@@ -89,7 +89,7 @@ export function HomeContent({ data, refreshHome }: HomeContentProps) {
           <MediaRow
             title={t("home.sections.continue_reading")}
             items={optimizeBookData(data.ongoingBooks)}
-            icon={<BookOpen className="w-6 h-6" />}
+            icon={BookOpen}
           />
         )}
 
@@ -97,7 +97,7 @@ export function HomeContent({ data, refreshHome }: HomeContentProps) {
           <MediaRow
             title={t("home.sections.up_next")}
             items={optimizeBookData(data.onDeck)}
-            icon={<Clock className="w-6 h-6" />}
+            icon={Clock}
           />
         )}
 
@@ -105,7 +105,7 @@ export function HomeContent({ data, refreshHome }: HomeContentProps) {
           <MediaRow
             title={t("home.sections.latest_series")}
             items={optimizeSeriesData(data.latestSeries)}
-            icon={<Sparkles className="w-6 h-6" />}
+            icon={Sparkles}
           />
         )}
 
@@ -113,7 +113,7 @@ export function HomeContent({ data, refreshHome }: HomeContentProps) {
           <MediaRow
             title={t("home.sections.recently_added")}
             items={optimizeBookData(data.recentlyRead)}
-            icon={<History className="w-6 h-6" />}
+            icon={History}
           />
         )}
       </div>

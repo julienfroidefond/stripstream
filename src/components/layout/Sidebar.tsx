@@ -12,6 +12,8 @@ import { ERROR_CODES } from "@/constants/errorCodes";
 import { getErrorMessage } from "@/utils/errors";
 import { useToast } from "@/components/ui/use-toast";
 import { useTranslate } from "@/hooks/useTranslate";
+import { NavButton } from "@/components/ui/nav-button";
+import { IconButton } from "@/components/ui/icon-button";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -180,17 +182,13 @@ export function Sidebar({ isOpen, onClose, initialLibraries, initialFavorites, u
               {t("sidebar.navigation")}
             </h2>
             {mainNavItems.map((item) => (
-              <button
+              <NavButton
                 key={item.href}
+                icon={item.icon}
+                label={item.title}
+                active={pathname === item.href}
                 onClick={() => handleLinkClick(item.href)}
-                className={cn(
-                  "w-full flex items-center rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
-                  pathname === item.href ? "bg-accent" : "transparent"
-                )}
-              >
-                <item.icon className="mr-2 h-4 w-4" />
-                {item.title}
-              </button>
+              />
             ))}
           </div>
         </div>
@@ -213,17 +211,14 @@ export function Sidebar({ isOpen, onClose, initialLibraries, initialFavorites, u
               </div>
             ) : (
               favorites.map((series) => (
-                <button
+                <NavButton
                   key={series.id}
+                  icon={Star}
+                  label={series.metadata.title}
+                  active={pathname === `/series/${series.id}`}
                   onClick={() => handleLinkClick(`/series/${series.id}`)}
-                  className={cn(
-                    "w-full flex items-center rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
-                    pathname === `/series/${series.id}` ? "bg-accent" : "transparent"
-                  )}
-                >
-                  <Star className="mr-2 h-4 w-4 fill-yellow-400 text-yellow-400" />
-                  <span className="truncate">{series.metadata.title}</span>
-                </button>
+                  className="[&_svg]:fill-yellow-400 [&_svg]:text-yellow-400"
+                />
               ))
             )}
           </div>
@@ -235,14 +230,16 @@ export function Sidebar({ isOpen, onClose, initialLibraries, initialFavorites, u
               <h2 className="text-lg font-semibold tracking-tight">
                 {t("sidebar.libraries.title")}
               </h2>
-              <button
+              <IconButton
+                variant="ghost"
+                size="icon"
+                icon={RefreshCw}
                 onClick={handleRefresh}
                 disabled={isRefreshing}
-                className="p-1 hover:bg-accent hover:text-accent-foreground rounded-md transition-colors"
-                aria-label={t("sidebar.libraries.refresh")}
-              >
-                <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
-              </button>
+                tooltip={t("sidebar.libraries.refresh")}
+                iconClassName={cn(isRefreshing && "animate-spin")}
+                className="h-8 w-8"
+              />
             </div>
             {isRefreshing ? (
               <div className="px-3 py-2 text-sm text-muted-foreground">
@@ -254,17 +251,13 @@ export function Sidebar({ isOpen, onClose, initialLibraries, initialFavorites, u
               </div>
             ) : (
               libraries.map((library) => (
-                <button
+                <NavButton
                   key={library.id}
+                  icon={Library}
+                  label={library.name}
+                  active={pathname === `/libraries/${library.id}`}
                   onClick={() => handleLinkClick(`/libraries/${library.id}`)}
-                  className={cn(
-                    "w-full flex items-center rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
-                    pathname === `/libraries/${library.id}` ? "bg-accent" : "transparent"
-                  )}
-                >
-                  <Library className="mr-2 h-4 w-4" />
-                  {library.name}
-                </button>
+                />
               ))
             )}
           </div>
@@ -275,50 +268,37 @@ export function Sidebar({ isOpen, onClose, initialLibraries, initialFavorites, u
             <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
               {t("sidebar.settings.title")}
             </h2>
-            <button
+            <NavButton
+              icon={User}
+              label={t("sidebar.account")}
+              active={pathname === "/account"}
               onClick={() => handleLinkClick("/account")}
-              className={cn(
-                "w-full flex items-center rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
-                pathname === "/account" ? "bg-accent" : "transparent"
-              )}
-            >
-              <User className="mr-2 h-4 w-4" />
-              {t("sidebar.account")}
-            </button>
-            <button
+            />
+            <NavButton
+              icon={Settings}
+              label={t("sidebar.settings.preferences")}
+              active={pathname === "/settings"}
               onClick={() => handleLinkClick("/settings")}
-              className={cn(
-                "w-full flex items-center rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
-                pathname === "/settings" ? "bg-accent" : "transparent"
-              )}
-            >
-              <Settings className="mr-2 h-4 w-4" />
-              {t("sidebar.settings.preferences")}
-            </button>
+            />
             {userIsAdmin && (
-              <button
+              <NavButton
+                icon={Shield}
+                label={t("sidebar.admin")}
+                active={pathname === "/admin"}
                 onClick={() => handleLinkClick("/admin")}
-                className={cn(
-                  "w-full flex items-center rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
-                  pathname === "/admin" ? "bg-accent" : "transparent"
-                )}
-              >
-                <Shield className="mr-2 h-4 w-4" />
-                {t("sidebar.admin")}
-              </button>
+              />
             )}
           </div>
         </div>
       </div>
 
       <div className="p-3 border-t border-border/40">
-        <button
+        <NavButton
+          icon={LogOut}
+          label={t("sidebar.logout")}
           onClick={handleLogout}
-          className="flex w-full items-center rounded-lg px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 hover:text-destructive"
-        >
-          <LogOut className="mr-2 h-4 w-4" />
-          {t("sidebar.logout")}
-        </button>
+          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+        />
       </div>
     </aside>
   );

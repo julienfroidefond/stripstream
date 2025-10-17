@@ -11,6 +11,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { GRADIENT_PRESETS } from "@/types/preferences";
 import type { BackgroundType } from "@/types/preferences";
 import { Check } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 export function BackgroundSettings() {
   const { t } = useTranslate();
@@ -94,16 +95,12 @@ export function BackgroundSettings() {
   };
 
   return (
-    <div className="rounded-lg border bg-card/70 backdrop-blur-md text-card-foreground shadow-sm">
-      <div className="p-5 space-y-6">
-        <div>
-          <h2 className="text-xl font-semibold flex items-center gap-2">
-            {t("settings.background.title")}
-          </h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            {t("settings.background.description")}
-          </p>
-        </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>{t("settings.background.title")}</CardTitle>
+        <CardDescription>{t("settings.background.description")}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
 
         <div className="space-y-6">
           {/* Type de background */}
@@ -188,8 +185,8 @@ export function BackgroundSettings() {
             </div>
           )}
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
 

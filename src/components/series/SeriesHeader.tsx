@@ -3,7 +3,6 @@
 import { Book, BookOpen, BookMarked, Star, StarOff } from "lucide-react";
 import type { KomgaSeries } from "@/types/komga";
 import { useState, useEffect } from "react";
-import { Button } from "../ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { RefreshButton } from "@/components/library/RefreshButton";
 import { AppError } from "@/utils/errors";
@@ -11,6 +10,8 @@ import { ERROR_CODES } from "@/constants/errorCodes";
 import { getErrorMessage } from "@/utils/errors";
 import { useTranslate } from "@/hooks/useTranslate";
 import { SeriesCover } from "@/components/ui/series-cover";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { IconButton } from "@/components/ui/icon-button";
 
 interface SeriesHeaderProps {
   series: KomgaSeries;
@@ -93,7 +94,7 @@ export const SeriesHeader = ({ series, refreshSeries }: SeriesHeaderProps) => {
     if (booksReadCount === booksCount) {
       return {
         label: t("series.header.status.read"),
-        className: "bg-green-500/10 text-green-500",
+        status: "success" as const,
         icon: BookMarked,
       };
     }
@@ -104,14 +105,14 @@ export const SeriesHeader = ({ series, refreshSeries }: SeriesHeaderProps) => {
           read: booksReadCount,
           total: booksCount,
         }),
-        className: "bg-blue-500/10 text-blue-500",
+        status: "reading" as const,
         icon: BookOpen,
       };
     }
 
     return {
       label: t("series.header.status.unread"),
-      className: "bg-yellow-500/10 text-yellow-500",
+      status: "unread" as const,
       icon: Book,
     };
   };
@@ -151,30 +152,24 @@ export const SeriesHeader = ({ series, refreshSeries }: SeriesHeaderProps) => {
               </p>
             )}
             <div className="flex items-center gap-4 mt-4 justify-center md:justify-start flex-wrap">
-              <span
-                className={`px-2 py-0.5 rounded-full text-sm flex items-center gap-1 ${statusInfo.className}`}
-              >
-                <statusInfo.icon className="w-4 h-4" />
+              <StatusBadge status={statusInfo.status} icon={statusInfo.icon}>
                 {statusInfo.label}
-              </span>
+              </StatusBadge>
               <span className="text-sm text-white/80">
                 {series.booksCount === 1 
                   ? t("series.header.books", { count: series.booksCount })
                   : t("series.header.books_plural", { count: series.booksCount })
                 }
               </span>
-              <Button
+              <IconButton
                 variant="ghost"
                 size="icon"
+                icon={isFavorite ? Star : StarOff}
                 onClick={handleToggleFavorite}
+                tooltip={t(isFavorite ? "series.header.favorite.remove" : "series.header.favorite.add")}
                 className="text-white hover:text-white"
-              >
-                {isFavorite ? (
-                  <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                ) : (
-                  <StarOff className="w-5 h-5" />
-                )}
-              </Button>
+                iconClassName={isFavorite ? "fill-yellow-400 text-yellow-400" : ""}
+              />
               <RefreshButton libraryId={series.id} refreshLibrary={refreshSeries} />
             </div>
           </div>

@@ -5,6 +5,7 @@ import { useTranslate } from "@/hooks/useTranslate";
 import { useToast } from "@/components/ui/use-toast";
 import { Network, Loader2 } from "lucide-react";
 import type { KomgaConfig } from "@/types/komga";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 interface KomgaSettingsProps {
   initialConfig: KomgaConfig | null;
@@ -144,15 +145,15 @@ export function KomgaSettings({ initialConfig }: KomgaSettingsProps) {
   };
 
   return (
-    <div className="rounded-lg border bg-card/70 backdrop-blur-md text-card-foreground shadow-sm">
-      <div className="p-5 space-y-4">
-        <div>
-          <h2 className="text-xl font-semibold flex items-center gap-2">
-            <Network className="h-5 w-5" />
-            {t("settings.komga.title")}
-          </h2>
-          <p className="text-sm text-muted-foreground mt-1">{t("settings.komga.description")}</p>
-        </div>
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Network className="h-5 w-5" />
+          {t("settings.komga.title")}
+        </CardTitle>
+        <CardDescription>{t("settings.komga.description")}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
 
         {!shouldShowForm ? (
           <div className="space-y-4">
@@ -274,7 +275,7 @@ export function KomgaSettings({ initialConfig }: KomgaSettingsProps) {
             </div>
           </form>
         )}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

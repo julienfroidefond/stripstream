@@ -14,6 +14,7 @@ import {
 import { cn } from "@/lib/utils";
 import { PageInput } from "./PageInput";
 import { useTranslation } from "react-i18next";
+import { IconButton } from "@/components/ui/icon-button";
 
 export const ControlButtons = ({
   showControls,
@@ -40,7 +41,7 @@ export const ControlButtons = ({
       {/* Boutons de contrôle */}
       <div
         className={cn(
-          "absolute top-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 transition-all duration-300",
+          "absolute top-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 transition-all duration-300 p-2 rounded-full bg-background/70 backdrop-blur-md",
           showControls ? "opacity-100" : "opacity-0 pointer-events-none"
         )}
         onClick={(e) => {
@@ -48,72 +49,69 @@ export const ControlButtons = ({
           onToggleControls();
         }}
       >
-        <button
+        <IconButton
+          variant="ghost"
+          size="icon"
+          icon={isDoublePage ? LayoutTemplate : SplitSquareVertical}
           onClick={(e) => {
             e.stopPropagation();
             onToggleDoublePage();
           }}
-          className="p-2 rounded-full bg-background/70 backdrop-blur-md hover:bg-background/80 transition-colors"
-          aria-label={t(
+          tooltip={t(
             isDoublePage
               ? "reader.controls.doublePage.disable"
               : "reader.controls.doublePage.enable"
           )}
-        >
-          {isDoublePage ? (
-            <LayoutTemplate className="h-6 w-6" />
-          ) : (
-            <SplitSquareVertical className="h-6 w-6" />
-          )}
-        </button>
-        <button
+          iconClassName="h-6 w-6"
+          className="rounded-full"
+        />
+        <IconButton
+          variant="ghost"
+          size="icon"
+          icon={direction === "rtl" ? MoveLeft : MoveRight}
           onClick={(e) => {
             e.stopPropagation();
             onToggleDirection();
           }}
-          className="p-2 rounded-full bg-background/70 backdrop-blur-md hover:bg-background/80 transition-colors"
-          aria-label={t("reader.controls.direction.current", {
+          tooltip={t("reader.controls.direction.current", {
             direction: t(
               direction === "ltr"
                 ? "reader.controls.direction.ltr"
                 : "reader.controls.direction.rtl"
             ),
           })}
-        >
-          {direction === "rtl" ? (
-            <MoveLeft className="h-6 w-6" />
-          ) : (
-            <MoveRight className="h-6 w-6" />
-          )}
-        </button>
-        <button
+          iconClassName="h-6 w-6"
+          className="rounded-full"
+        />
+        <IconButton
+          variant="ghost"
+          size="icon"
+          icon={isFullscreen ? Minimize2 : Maximize2}
           onClick={(e) => {
             e.stopPropagation();
             onToggleFullscreen();
           }}
-          className="p-2 rounded-full bg-background/70 backdrop-blur-md hover:bg-background/80 transition-colors"
-          aria-label={t(
+          tooltip={t(
             isFullscreen ? "reader.controls.fullscreen.exit" : "reader.controls.fullscreen.enter"
           )}
-        >
-          {isFullscreen ? <Minimize2 className="h-6 w-6" /> : <Maximize2 className="h-6 w-6" />}
-        </button>
-        <button
+          iconClassName="h-6 w-6"
+          className="rounded-full"
+        />
+        <IconButton
+          variant="ghost"
+          size="icon"
+          icon={Images}
           onClick={(e) => {
             e.stopPropagation();
             onToggleThumbnails();
           }}
-          className={cn(
-            "p-2 rounded-full bg-background/70 backdrop-blur-md hover:bg-background/80 transition-colors",
-            showThumbnails && "ring-2 ring-primary"
-          )}
-          aria-label={t(
+          tooltip={t(
             showThumbnails ? "reader.controls.thumbnails.hide" : "reader.controls.thumbnails.show"
           )}
-        >
-          <Images className="h-6 w-6" />
-        </button>
-        <div className="p-2 rounded-full bg-background/70 backdrop-blur-md" onClick={(e) => e.stopPropagation()}>
+          iconClassName="h-6 w-6"
+          className={cn("rounded-full", showThumbnails && "ring-2 ring-primary")}
+        />
+        <div className="p-2 rounded-full" onClick={(e) => e.stopPropagation()}>
           <PageInput
             currentPage={currentPage}
             totalPages={totalPages}
@@ -127,55 +125,61 @@ export const ControlButtons = ({
 
       {/* Bouton fermer */}
       {onClose && (
-        <button
+        <IconButton
+          variant="ghost"
+          size="icon"
+          icon={X}
           onClick={(e) => {
             e.stopPropagation();
             onClose(currentPage);
           }}
+          tooltip={t("reader.controls.close")}
+          iconClassName="h-6 w-6"
           className={cn(
-            "absolute top-4 right-4 p-2 rounded-full bg-background/70 backdrop-blur-md hover:bg-background/80 transition-all duration-300 z-30",
+            "absolute top-4 right-4 rounded-full bg-background/70 backdrop-blur-md hover:bg-background/80 transition-all duration-300 z-30",
             showControls ? "opacity-100" : "opacity-0 pointer-events-none"
           )}
-          aria-label={t("reader.controls.close")}
-        >
-          <X className="h-6 w-6" />
-        </button>
+        />
       )}
 
       {/* Bouton précédent */}
       {currentPage > 1 && (
-        <button
+        <IconButton
+          variant="ghost"
+          size="icon"
+          icon={ChevronLeft}
           onClick={(e) => {
             e.stopPropagation();
             onPreviousPage();
           }}
+          tooltip={t("reader.controls.previousPage")}
+          iconClassName="h-8 w-8"
           className={cn(
-            "absolute top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/70 backdrop-blur-md hover:bg-background/80 transition-all duration-300 z-20",
+            "absolute top-1/2 -translate-y-1/2 rounded-full bg-background/70 backdrop-blur-md hover:bg-background/80 transition-all duration-300 z-20",
             direction === "rtl" ? "right-4" : "left-4",
             showControls ? "opacity-100" : "opacity-0 pointer-events-none"
           )}
-          aria-label={t("reader.controls.previousPage")}
-        >
-          <ChevronLeft className="h-8 w-8" />
-        </button>
+        />
       )}
 
       {/* Bouton suivant */}
       {currentPage < totalPages && (
-        <button
+        <IconButton
+          variant="ghost"
+          size="icon"
+          icon={ChevronRight}
           onClick={(e) => {
             e.stopPropagation();
             onNextPage();
           }}
+          tooltip={t("reader.controls.nextPage")}
+          iconClassName="h-8 w-8"
           className={cn(
-            "absolute top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/70 backdrop-blur-md hover:bg-background/80 transition-all duration-300 z-20",
+            "absolute top-1/2 -translate-y-1/2 rounded-full bg-background/70 backdrop-blur-md hover:bg-background/80 transition-all duration-300 z-20",
             direction === "rtl" ? "left-4" : "right-4",
             showControls ? "opacity-100" : "opacity-0 pointer-events-none"
           )}
-          aria-label={t("reader.controls.nextPage")}
-        >
-          <ChevronRight className="h-8 w-8" />
-        </button>
+        />
       )}
     </>
   );

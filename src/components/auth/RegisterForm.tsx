@@ -6,6 +6,9 @@ import { signIn } from "next-auth/react";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { useTranslate } from "@/hooks/useTranslate";
 import type { AppErrorType } from "@/types/global";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 interface RegisterFormProps {
   from?: string;
@@ -88,61 +91,33 @@ export function RegisterForm({ from: _from }: RegisterFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <label
-          htmlFor="email"
-          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-        >
-          {t("login.form.email")}
-        </label>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          autoComplete="email"
-          required
-          className="flex h-10 w-full rounded-md border border-input bg-background/70 backdrop-blur-md px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-        />
+        <Label htmlFor="email">{t("login.form.email")}</Label>
+        <Input id="email" name="email" type="email" autoComplete="email" required />
       </div>
       <div className="space-y-2">
-        <label
-          htmlFor="password"
-          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-        >
-          {t("login.form.password")}
-        </label>
-        <input
+        <Label htmlFor="password">{t("login.form.password")}</Label>
+        <Input
           id="password"
           name="password"
           type="password"
           autoComplete="new-password"
           required
-          className="flex h-10 w-full rounded-md border border-input bg-background/70 backdrop-blur-md px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
         />
       </div>
       <div className="space-y-2">
-        <label
-          htmlFor="confirmPassword"
-          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-        >
-          {t("login.form.confirmPassword")}
-        </label>
-        <input
+        <Label htmlFor="confirmPassword">{t("login.form.confirmPassword")}</Label>
+        <Input
           id="confirmPassword"
           name="confirmPassword"
           type="password"
           autoComplete="new-password"
           required
-          className="flex h-10 w-full rounded-md border border-input bg-background/70 backdrop-blur-md px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
         />
       </div>
       {error && <ErrorMessage errorCode={error.code} variant="form" />}
-      <button
-        type="submit"
-        disabled={isLoading}
-        className="bg-[#4F46E5] inline-flex w-full items-center justify-center rounded-md bg-primary/90 backdrop-blur-md px-4 py-2 text-sm font-medium text-primary-foreground ring-offset-background transition-colors hover:bg-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
-      >
+      <Button type="submit" disabled={isLoading} className="w-full">
         {isLoading ? t("login.form.submit.loading.register") : t("login.form.submit.register")}
-      </button>
+      </Button>
     </form>
   );
 }
