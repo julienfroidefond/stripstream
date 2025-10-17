@@ -29,6 +29,8 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
   const [showThumbnails, setShowThumbnails] = useState(false);
   const [showEndMessage, setShowEndMessage] = useState(false);
   const [loadedImages, setLoadedImages] = useState<Record<number, { width: number; height: number }>>({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [secondPageLoading, setSecondPageLoading] = useState(true);
   const isLandscape = useOrientation();
   const { direction, toggleDirection, isRTL } = useReadingDirection();
   const { isFullscreen, toggleFullscreen } = useFullscreen();
@@ -47,6 +49,12 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
   useEffect(() => {
     setIsDoublePage(isLandscape);
   }, [isLandscape]);
+
+  // Reset loading quand le mode double page change
+  useEffect(() => {
+    setIsLoading(true);
+    setSecondPageLoading(true);
+  }, [isDoublePage]);
 
   const shouldShowDoublePage = useCallback(
     (pageNumber: number) => {
@@ -91,6 +99,8 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
     (page: number) => {
       if (page >= 1 && page <= pages.length) {
         setCurrentPage(page);
+        setIsLoading(true);
+        setSecondPageLoading(true);
         // Mettre à jour le localStorage immédiatement
         ClientOfflineBookService.setCurrentPage(book, page);
         // Débouncer seulement l'API Komga
@@ -371,11 +381,30 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
                 }
               )}
             >
+              {isLoading && (
+                <div className="absolute inset-0 flex items-center justify-center z-10 opacity-0 animate-fade-in">
+                  <div className="relative">
+                    <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary/20"></div>
+                    <div className="absolute inset-0 animate-spin rounded-full h-16 w-16 border-4 border-transparent border-t-primary" style={{ animationDuration: '0.8s' }}></div>
+                  </div>
+                </div>
+              )}
               <img
                 src={getPageUrl(currentPage)}
                 alt={`Page ${currentPage}`}
-                className="max-h-full max-w-full object-contain transition-opacity"
+                className={cn(
+                  "max-h-full max-w-full object-contain transition-opacity",
+                  isLoading ? "opacity-0" : "opacity-100"
+                )}
                 loading="eager"
+                onLoad={() => setIsLoading(false)}
+                onError={() => setIsLoading(false)}
+                ref={(img) => {
+                  // Si l'image est déjà en cache, onLoad ne sera pas appelé
+                  if (img?.complete && img?.naturalHeight !== 0) {
+                    setIsLoading(false);
+                  }
+                }}
               />
             </div>
 
@@ -390,11 +419,30 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
                   }
                 )}
               >
+                {secondPageLoading && (
+                  <div className="absolute inset-0 flex items-center justify-center z-10 opacity-0 animate-fade-in">
+                    <div className="relative">
+                      <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary/20"></div>
+                      <div className="absolute inset-0 animate-spin rounded-full h-16 w-16 border-4 border-transparent border-t-primary" style={{ animationDuration: '0.8s' }}></div>
+                    </div>
+                  </div>
+                )}
                 <img
                   src={getPageUrl(currentPage + 1)}
                   alt={`Page ${currentPage + 1}`}
-                  className="max-h-full max-w-full object-contain transition-opacity"
+                  className={cn(
+                    "max-h-full max-w-full object-contain transition-opacity",
+                    secondPageLoading ? "opacity-0" : "opacity-100"
+                  )}
                   loading="eager"
+                  onLoad={() => setSecondPageLoading(false)}
+                  onError={() => setSecondPageLoading(false)}
+                  ref={(img) => {
+                    // Si l'image est déjà en cache, onLoad ne sera pas appelé
+                    if (img?.complete && img?.naturalHeight !== 0) {
+                      setSecondPageLoading(false);
+                    }
+                  }}
                 />
               </div>
             )}
