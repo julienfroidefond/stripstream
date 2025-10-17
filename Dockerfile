@@ -70,7 +70,8 @@ COPY --from=builder /app/scripts ./scripts
 # Add non-root user for security
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs && \
-    chown -R nextjs:nodejs /app
+    mkdir -p /app/.cache && \
+    chown -R nextjs:nodejs /app /app/.cache
 
 USER nextjs
 
