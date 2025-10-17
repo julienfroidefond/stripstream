@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { cn } from "@/lib/utils";
 
@@ -22,9 +23,14 @@ export const ZoomablePage = ({
   order = "first",
   onZoomChange,
 }: ZoomablePageProps) => {
+  const [isZoomed, setIsZoomed] = useState(false);
+  
   const handleTransform = (ref: any, state: { scale: number; positionX: number; positionY: number }) => {
-    onZoomChange?.(state.scale > 1.1);
+    const zoomed = state.scale > 1.1;
+    setIsZoomed(zoomed);
+    onZoomChange?.(zoomed);
   };
+  
   return (
     <div
       className={cn(
@@ -57,7 +63,10 @@ export const ZoomablePage = ({
             animationTime: 200,
             animationType: "easeOut"
           }}
-          panning={{ disabled: false }}
+          panning={{ 
+            disabled: false,
+            lockAxisX: !isZoomed
+          }}
           limitToBounds={true}
           centerZoomedOut={false}
           onTransformed={handleTransform}
