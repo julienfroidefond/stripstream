@@ -14,39 +14,40 @@ export function ClientHomePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
+  const fetchData = async () => {
+    setLoading(true);
+    setError(null);
 
-      try {
-        const response = await fetch("/api/komga/home");
+    try {
+      const response = await fetch("/api/komga/home");
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          const errorCode = errorData.error?.code || ERROR_CODES.KOMGA.SERVER_UNREACHABLE;
-          
-          // Si la config Komga est manquante, rediriger vers les settings
-          if (errorCode === ERROR_CODES.KOMGA.MISSING_CONFIG) {
-            router.push("/settings");
-            return;
-          }
-          
-          throw new Error(errorCode);
+      if (!response.ok) {
+        const errorData = await response.json();
+        const errorCode = errorData.error?.code || ERROR_CODES.KOMGA.SERVER_UNREACHABLE;
+        
+        // Si la config Komga est manquante, rediriger vers les settings
+        if (errorCode === ERROR_CODES.KOMGA.MISSING_CONFIG) {
+          router.push("/settings");
+          return;
         }
-
-        const homeData = await response.json();
-        setData(homeData);
-      } catch (err) {
-        console.error("Error fetching home data:", err);
-        setError(err instanceof Error ? err.message : ERROR_CODES.KOMGA.SERVER_UNREACHABLE);
-      } finally {
-        setLoading(false);
+        
+        throw new Error(errorCode);
       }
-    };
 
+      const homeData = await response.json();
+      setData(homeData);
+    } catch (err) {
+      console.error("Error fetching home data:", err);
+      setError(err instanceof Error ? err.message : ERROR_CODES.KOMGA.SERVER_UNREACHABLE);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchData();
-  }, [router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleRefresh = async () => {
     try {
@@ -80,10 +81,14 @@ export function ClientHomePage() {
     return <HomePageSkeleton />;
   }
 
+  const handleRetry = () => {
+    fetchData();
+  };
+
   if (error) {
     return (
       <main className="container mx-auto px-4 py-8">
-        <ErrorMessage errorCode={error} />
+        <ErrorMessage errorCode={error} onRetry={handleRetry} />
       </main>
     );
   }
@@ -91,7 +96,7 @@ export function ClientHomePage() {
   if (!data) {
     return (
       <main className="container mx-auto px-4 py-8">
-        <ErrorMessage errorCode={ERROR_CODES.KOMGA.SERVER_UNREACHABLE} />
+        <ErrorMessage errorCode={ERROR_CODES.KOMGA.SERVER_UNREACHABLE} onRetry={handleRetry} />
       </main>
     );
   }
