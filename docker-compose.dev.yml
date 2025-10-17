@@ -23,6 +23,7 @@ services:
       - /app/node_modules
       - /app/.next
       - ~/.pnpm-store:/app/.pnpm-store
+      - cache_data:/app/.cache
     environment:
       - NODE_ENV=development
       - MONGO_USER=admin
@@ -58,3 +59,4 @@ services:
 
 volumes:
   mongodb_data:
+  cache_data:

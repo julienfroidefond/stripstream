@@ -12,6 +12,8 @@ services:
     restart: unless-stopped
     ports:
       - "3020:3000"
+    volumes:
+      - stripstream_cache:/app/.cache
     environment:
       - NODE_ENV=production
       - MONGODB_URI=${MONGODB_URI}
@@ -88,3 +90,4 @@ networks:
 
 volumes:
   stripstream_mongodb_data:
+  stripstream_cache:
