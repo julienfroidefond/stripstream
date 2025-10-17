@@ -307,7 +307,7 @@ function BookDownloadCard({ book, status, onDelete, onRetry }: BookDownloadCardP
   return (
     <Card className="p-4">
       <div className="flex items-center gap-4">
-        <div className="relative w-12 aspect-[2/3] bg-muted rounded overflow-hidden">
+        <div className="relative w-12 aspect-[2/3] bg-muted/80 backdrop-blur-md rounded overflow-hidden">
           <Image
             src={`/api/komga/images/books/${book.id}/thumbnail`}
             alt={t("books.coverAlt", { title: book.metadata?.title })}

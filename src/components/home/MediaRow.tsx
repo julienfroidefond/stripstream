@@ -130,7 +130,7 @@ function MediaCard({ item, onClick }: MediaCardProps) {
   return (
     <div
       onClick={onClick}
-      className="flex-shrink-0 w-[200px] relative flex flex-col rounded-lg border bg-card text-card-foreground shadow-sm hover:bg-accent hover:text-accent-foreground transition-colors overflow-hidden cursor-pointer"
+      className="flex-shrink-0 w-[200px] relative flex flex-col rounded-lg border bg-card/70 backdrop-blur-md text-card-foreground shadow-sm hover:bg-accent/80 hover:backdrop-blur-md hover:text-accent-foreground transition-colors overflow-hidden cursor-pointer"
     >
       <div className="relative aspect-[2/3] bg-muted">
         {isSeries ? (

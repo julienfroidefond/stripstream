@@ -9,7 +9,7 @@ export function NetworkStatus() {
   if (isOnline) return null;
 
   return (
-    <div className="fixed bottom-4 left-4 z-[100] flex items-center gap-2 rounded-lg bg-destructive px-4 py-2 text-sm text-destructive-foreground shadow-lg">
+    <div className="fixed bottom-4 left-4 z-[100] flex items-center gap-2 rounded-lg bg-destructive/90 backdrop-blur-md px-4 py-2 text-sm text-destructive-foreground shadow-lg">
       <WifiOff className="h-4 w-4" />
       <span>Hors ligne</span>
     </div>

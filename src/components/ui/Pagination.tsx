@@ -61,7 +61,7 @@ export function Pagination({ currentPage, totalPages, onPageChange, className }:
       <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className="inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 py-2 gap-1 hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
+        className="inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 py-2 gap-1 hover:bg-accent/80 hover:backdrop-blur-md hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
         aria-label="Page précédente"
       >
         <ChevronLeft className="h-4 w-4" />
@@ -87,8 +87,8 @@ export function Pagination({ currentPage, totalPages, onPageChange, className }:
               className={cn(
                 "inline-flex items-center justify-center rounded-md text-sm font-medium h-10 w-10",
                 page === currentPage
-                  ? "bg-primary text-primary-foreground"
-                  : "hover:bg-accent hover:text-accent-foreground"
+                  ? "bg-primary/90 backdrop-blur-md text-primary-foreground"
+                  : "hover:bg-accent/80 hover:backdrop-blur-md hover:text-accent-foreground"
               )}
               aria-label={`Page ${page}`}
               aria-current={page === currentPage ? "page" : undefined}
@@ -103,7 +103,7 @@ export function Pagination({ currentPage, totalPages, onPageChange, className }:
       <button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className="inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 py-2 gap-1 hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
+        className="inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 py-2 gap-1 hover:bg-accent/80 hover:backdrop-blur-md hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
         aria-label="Page suivante"
       >
         <span className="sr-only md:not-sr-only">Suivant</span>

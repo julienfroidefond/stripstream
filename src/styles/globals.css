@@ -88,7 +88,7 @@ body {
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
   }
 }
 
@@ -104,5 +104,16 @@ body {
   /* Classe utilitaire pour le padding-top avec safe-area-inset */
   .pt-safe {
     padding-top: env(safe-area-inset-top, 0);
+  }
+
+  /* Glassmorphism utilities */
+  .glass {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  
+  .glass-strong {
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
   }
 }

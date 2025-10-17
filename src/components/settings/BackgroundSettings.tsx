@@ -94,7 +94,7 @@ export function BackgroundSettings() {
   };
 
   return (
-    <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
+    <div className="rounded-lg border bg-card/70 backdrop-blur-md text-card-foreground shadow-sm">
       <div className="p-5 space-y-6">
         <div>
           <h2 className="text-xl font-semibold flex items-center gap-2">

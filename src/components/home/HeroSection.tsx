@@ -30,7 +30,7 @@ export function HeroSection({ series }: HeroSectionProps) {
         {series?.map((series) => (
           <div
             key={series.id}
-            className="relative aspect-[2/3] bg-muted rounded-lg overflow-hidden"
+            className="relative aspect-[2/3] bg-muted/80 backdrop-blur-md rounded-lg overflow-hidden"
           >
             <SeriesCover
               series={series as KomgaSeries}
@@ -42,7 +42,7 @@ export function HeroSection({ series }: HeroSectionProps) {
       </div>
 
       {/* Overlay gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background/50 to-background" />
+      <div className="absolute inset-0 bg-gradient-to-b from-background/70 to-background backdrop-blur-sm" />
 
       {/* Contenu */}
       <div className="relative h-full container flex flex-col items-center justify-center text-center space-y-2 sm:space-y-4">

@@ -134,7 +134,7 @@ export const SeriesHeader = ({ series, refreshSeries }: SeriesHeaderProps) => {
       <div className="relative container mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row gap-6 items-center md:items-start w-full">
           {/* Image principale */}
-          <div className="relative w-[180px] aspect-[2/3] rounded-lg overflow-hidden shadow-lg bg-muted flex-shrink-0">
+          <div className="relative w-[180px] aspect-[2/3] rounded-lg overflow-hidden shadow-lg bg-muted/80 backdrop-blur-md flex-shrink-0">
             <SeriesCover
               series={series as KomgaSeries}
               alt={t("series.header.coverAlt", { title: series.metadata.title })}

@@ -53,7 +53,7 @@ export const ControlButtons = ({
             e.stopPropagation();
             onToggleDoublePage();
           }}
-          className="p-2 rounded-full bg-background/50 hover:bg-background/80 transition-colors"
+          className="p-2 rounded-full bg-background/70 backdrop-blur-md hover:bg-background/80 transition-colors"
           aria-label={t(
             isDoublePage
               ? "reader.controls.doublePage.disable"
@@ -71,7 +71,7 @@ export const ControlButtons = ({
             e.stopPropagation();
             onToggleDirection();
           }}
-          className="p-2 rounded-full bg-background/50 hover:bg-background/80 transition-colors"
+          className="p-2 rounded-full bg-background/70 backdrop-blur-md hover:bg-background/80 transition-colors"
           aria-label={t("reader.controls.direction.current", {
             direction: t(
               direction === "ltr"
@@ -91,7 +91,7 @@ export const ControlButtons = ({
             e.stopPropagation();
             onToggleFullscreen();
           }}
-          className="p-2 rounded-full bg-background/50 hover:bg-background/80 transition-colors"
+          className="p-2 rounded-full bg-background/70 backdrop-blur-md hover:bg-background/80 transition-colors"
           aria-label={t(
             isFullscreen ? "reader.controls.fullscreen.exit" : "reader.controls.fullscreen.enter"
           )}
@@ -104,7 +104,7 @@ export const ControlButtons = ({
             onToggleThumbnails();
           }}
           className={cn(
-            "p-2 rounded-full bg-background/50 hover:bg-background/80 transition-colors",
+            "p-2 rounded-full bg-background/70 backdrop-blur-md hover:bg-background/80 transition-colors",
             showThumbnails && "ring-2 ring-primary"
           )}
           aria-label={t(
@@ -113,7 +113,7 @@ export const ControlButtons = ({
         >
           <Images className="h-6 w-6" />
         </button>
-        <div className="p-2 rounded-full bg-background/50" onClick={(e) => e.stopPropagation()}>
+        <div className="p-2 rounded-full bg-background/70 backdrop-blur-md" onClick={(e) => e.stopPropagation()}>
           <PageInput
             currentPage={currentPage}
             totalPages={totalPages}
@@ -133,7 +133,7 @@ export const ControlButtons = ({
             onClose(currentPage);
           }}
           className={cn(
-            "absolute top-4 right-4 p-2 rounded-full bg-background/50 hover:bg-background/80 transition-all duration-300 z-30",
+            "absolute top-4 right-4 p-2 rounded-full bg-background/70 backdrop-blur-md hover:bg-background/80 transition-all duration-300 z-30",
             showControls ? "opacity-100" : "opacity-0 pointer-events-none"
           )}
           aria-label={t("reader.controls.close")}
@@ -150,7 +150,7 @@ export const ControlButtons = ({
             onPreviousPage();
           }}
           className={cn(
-            "absolute top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/50 hover:bg-background/80 transition-all duration-300 z-20",
+            "absolute top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/70 backdrop-blur-md hover:bg-background/80 transition-all duration-300 z-20",
             direction === "rtl" ? "right-4" : "left-4",
             showControls ? "opacity-100" : "opacity-0 pointer-events-none"
           )}
@@ -168,7 +168,7 @@ export const ControlButtons = ({
             onNextPage();
           }}
           className={cn(
-            "absolute top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/50 hover:bg-background/80 transition-all duration-300 z-20",
+            "absolute top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/70 backdrop-blur-md hover:bg-background/80 transition-all duration-300 z-20",
             direction === "rtl" ? "left-4" : "right-4",
             showControls ? "opacity-100" : "opacity-0 pointer-events-none"
           )}

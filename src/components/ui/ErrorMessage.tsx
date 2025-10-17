@@ -53,7 +53,7 @@ export const ErrorMessage = ({
     <div
       role="alert"
       aria-live="assertive"
-      className="relative overflow-hidden rounded-lg border border-destructive/50 bg-background p-6 shadow-lg dark:border-destructive/30 dark:bg-destructive/5"
+      className="relative overflow-hidden rounded-lg border border-destructive/50 bg-background/80 backdrop-blur-md p-6 shadow-lg dark:border-destructive/30 dark:bg-destructive/5"
     >
       <div className="absolute inset-0 bg-destructive/5 dark:bg-gradient-to-b dark:from-destructive/10 dark:to-destructive/5" />
 

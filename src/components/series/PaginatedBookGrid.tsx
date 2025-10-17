@@ -137,7 +137,7 @@ export function PaginatedBookGrid({
         {/* Loading indicator */}
         {isChangingPage && (
           <div className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-sm z-10">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-background border shadow-sm">
+            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-background/70 backdrop-blur-md border shadow-sm">
               <Loader2 className="h-4 w-4 animate-spin" />
               <span className="text-sm">{t("books.loading")}</span>
             </div>

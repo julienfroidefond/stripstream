@@ -55,7 +55,7 @@ export const CoverClient = ({
 
   if (imageError) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-muted rounded-lg">
+      <div className="w-full h-full flex items-center justify-center bg-muted/80 backdrop-blur-md rounded-lg">
         <ImageOff className="w-12 h-12 text-muted-foreground" />
       </div>
     );

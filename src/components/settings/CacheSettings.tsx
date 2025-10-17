@@ -186,7 +186,7 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
   };
 
   return (
-    <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
+    <div className="rounded-lg border bg-card/70 backdrop-blur-md text-card-foreground shadow-sm">
       <div className="p-5 space-y-4">
         <div>
           <h2 className="text-xl font-semibold flex items-center gap-2">
@@ -205,7 +205,7 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
         </div>
 
         {/* Informations sur la taille du cache */}
-        <div className="rounded-md border bg-muted/50 p-4 space-y-3">
+        <div className="rounded-md border bg-muted/50 backdrop-blur-md p-4 space-y-3">
           <div className="flex items-center gap-2 font-medium">
             <HardDrive className="h-4 w-4" />
             {t("settings.cache.size.title")}
@@ -255,7 +255,7 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
                 min="1"
                 value={ttlConfig.defaultTTL}
                 onChange={handleTTLChange}
-                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-9 w-full rounded-md border border-input bg-background/70 backdrop-blur-md px-3 py-1 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               />
             </div>
             <div className="space-y-2">
@@ -269,7 +269,7 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
                 min="1"
                 value={ttlConfig.homeTTL}
                 onChange={handleTTLChange}
-                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-9 w-full rounded-md border border-input bg-background/70 backdrop-blur-md px-3 py-1 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               />
             </div>
             <div className="space-y-2">
@@ -283,7 +283,7 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
                 min="1"
                 value={ttlConfig.librariesTTL}
                 onChange={handleTTLChange}
-                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-9 w-full rounded-md border border-input bg-background/70 backdrop-blur-md px-3 py-1 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               />
             </div>
             <div className="space-y-2">
@@ -297,7 +297,7 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
                 min="1"
                 value={ttlConfig.seriesTTL}
                 onChange={handleTTLChange}
-                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-9 w-full rounded-md border border-input bg-background/70 backdrop-blur-md px-3 py-1 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               />
             </div>
             <div className="space-y-2">
@@ -311,7 +311,7 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
                 min="1"
                 value={ttlConfig.booksTTL}
                 onChange={handleTTLChange}
-                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-9 w-full rounded-md border border-input bg-background/70 backdrop-blur-md px-3 py-1 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               />
             </div>
             <div className="space-y-2">
@@ -325,14 +325,14 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
                 min="1"
                 value={ttlConfig.imagesTTL}
                 onChange={handleTTLChange}
-                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-9 w-full rounded-md border border-input bg-background/70 backdrop-blur-md px-3 py-1 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               />
             </div>
           </div>
           <div className="flex gap-3">
             <button
               type="submit"
-              className="flex-1 inline-flex items-center justify-center rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground ring-offset-background transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+              className="flex-1 inline-flex items-center justify-center rounded-md bg-primary/90 backdrop-blur-md px-3 py-2 text-sm font-medium text-primary-foreground ring-offset-background transition-colors hover:bg-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
             >
               {t("settings.cache.buttons.saveTTL")}
             </button>
@@ -340,7 +340,7 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
               type="button"
               onClick={handleClearCache}
               disabled={isCacheClearing}
-              className="flex-1 inline-flex items-center justify-center rounded-md bg-destructive px-3 py-2 text-sm font-medium text-destructive-foreground ring-offset-background transition-colors hover:bg-destructive/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+              className="flex-1 inline-flex items-center justify-center rounded-md bg-destructive/90 backdrop-blur-md px-3 py-2 text-sm font-medium text-destructive-foreground ring-offset-background transition-colors hover:bg-destructive/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
             >
               {isCacheClearing ? (
                 <>
@@ -357,7 +357,7 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
               type="button"
               onClick={handleClearServiceWorkerCache}
               disabled={isServiceWorkerClearing}
-              className="flex-1 inline-flex items-center justify-center rounded-md bg-destructive px-3 py-2 text-sm font-medium text-destructive-foreground ring-offset-background transition-colors hover:bg-destructive/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+              className="flex-1 inline-flex items-center justify-center rounded-md bg-destructive/90 backdrop-blur-md px-3 py-2 text-sm font-medium text-destructive-foreground ring-offset-background transition-colors hover:bg-destructive/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
             >
               {isServiceWorkerClearing ? (
                 <>

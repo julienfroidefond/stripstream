@@ -90,11 +90,11 @@ export function DebugInfo() {
 
   return (
     <div
-      className={`fixed bottom-4 right-4 bg-zinc-900 border border-zinc-700 rounded-lg shadow-lg p-4 text-zinc-100 z-50 ${
+      className={`fixed bottom-4 right-4 bg-zinc-900/90 backdrop-blur-md border border-zinc-700 rounded-lg shadow-lg p-4 text-zinc-100 z-50 ${
         isMinimized ? "w-auto" : "w-[800px] max-h-[50vh] overflow-auto"
       }`}
     >
-      <div className="flex items-center justify-between mb-4 sticky top-0 bg-zinc-900 pb-2">
+      <div className="flex items-center justify-between mb-4 sticky top-0 bg-zinc-900/90 backdrop-blur-md pb-2">
         <div className="flex items-center gap-2">
           <h2 className="font-bold text-lg">{t("debug.title")}</h2>
           {!isMinimized && (
@@ -107,7 +107,7 @@ export function DebugInfo() {
           {!isMinimized && (
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className={`hover:bg-zinc-700 rounded-full p-1.5 ${showFilters ? "bg-zinc-700" : ""}`}
+              className={`hover:bg-zinc-700/80 hover:backdrop-blur-md rounded-full p-1.5 ${showFilters ? "bg-zinc-700/80 backdrop-blur-md" : ""}`}
               aria-label="Filtres"
             >
               <Filter className="h-5 w-5" />
@@ -115,7 +115,7 @@ export function DebugInfo() {
           )}
           <button
             onClick={fetchLogs}
-            className="hover:bg-zinc-700 rounded-full p-1.5"
+            className="hover:bg-zinc-700/80 hover:backdrop-blur-md rounded-full p-1.5"
             aria-label={t("debug.actions.refresh")}
             disabled={isRefreshing}
           >
@@ -123,14 +123,14 @@ export function DebugInfo() {
           </button>
           <button
             onClick={() => setIsMinimized(!isMinimized)}
-            className="hover:bg-zinc-700 rounded-full p-1.5"
+            className="hover:bg-zinc-700/80 hover:backdrop-blur-md rounded-full p-1.5"
             aria-label={t(isMinimized ? "debug.actions.maximize" : "debug.actions.minimize")}
           >
             {isMinimized ? <Maximize2 className="h-5 w-5" /> : <Minimize2 className="h-5 w-5" />}
           </button>
           <button
             onClick={clearLogs}
-            className="hover:bg-zinc-700 rounded-full p-1.5"
+            className="hover:bg-zinc-700/80 hover:backdrop-blur-md rounded-full p-1.5"
             aria-label={t("debug.actions.clear")}
           >
             <X className="h-5 w-5" />
@@ -139,7 +139,7 @@ export function DebugInfo() {
       </div>
 
       {!isMinimized && showFilters && (
-        <div className="mb-4 p-3 bg-zinc-800 rounded-lg">
+        <div className="mb-4 p-3 bg-zinc-800/80 backdrop-blur-md rounded-lg">
           <div className="flex flex-wrap gap-2">
             {[
               { key: "all", label: "Toutes", icon: Calendar },

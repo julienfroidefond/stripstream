@@ -80,7 +80,7 @@ export function DeleteUserDialog({
           <AlertDialogAction
             onClick={handleDelete}
             disabled={isLoading}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            className="bg-destructive/90 backdrop-blur-md text-destructive-foreground hover:bg-destructive/80"
           >
             {isLoading ? "Suppression..." : "Supprimer"}
           </AlertDialogAction>

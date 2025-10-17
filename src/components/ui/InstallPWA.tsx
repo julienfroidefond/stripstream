@@ -102,7 +102,7 @@ export function InstallPWA() {
 
   return (
     <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 z-50">
-      <div className="bg-card border shadow-lg rounded-lg p-4 max-w-sm mx-auto sm:mx-0">
+      <div className="bg-card/80 backdrop-blur-md border shadow-lg rounded-lg p-4 max-w-sm mx-auto sm:mx-0">
         <div className="flex items-start gap-4">
           <Download className="h-6 w-6 flex-shrink-0 text-primary" />
           <div className="flex-1">
@@ -120,7 +120,7 @@ export function InstallPWA() {
             ) : (
               <button
                 onClick={handleInstallClick}
-                className="w-full bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
+                className="w-full bg-primary/90 backdrop-blur-md text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/80 transition-colors"
               >
                 Installer l'application
               </button>
@@ -128,7 +128,7 @@ export function InstallPWA() {
           </div>
           <button
             onClick={handleDismiss}
-            className="p-1 hover:bg-accent hover:text-accent-foreground rounded-md transition-colors"
+            className="p-1 hover:bg-accent/80 hover:backdrop-blur-md hover:text-accent-foreground rounded-md transition-colors"
             aria-label="Fermer"
           >
             <X className="h-4 w-4" />

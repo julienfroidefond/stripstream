@@ -95,7 +95,7 @@ export default function ClientLayout({ children, initialLibraries = [], initialF
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <DebugProvider>
-        <div className="relative min-h-screen h-full" style={backgroundStyle}>
+        <div className="relative min-h-screen bg-background" style={backgroundStyle}>
           {!isPublicRoute && <Header onToggleSidebar={handleToggleSidebar} />}
           {!isPublicRoute && (
             <Sidebar 

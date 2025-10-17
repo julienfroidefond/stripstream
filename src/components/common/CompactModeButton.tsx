@@ -19,7 +19,7 @@ export function CompactModeButton({ onToggle }: CompactModeButtonProps) {
   return (
     <button
       onClick={handleClick}
-      className="inline-flex items-center gap-2 px-2 py-1.5 text-sm font-medium rounded-lg hover:bg-accent hover:text-accent-foreground whitespace-nowrap"
+      className="inline-flex items-center gap-2 px-2 py-1.5 text-sm font-medium rounded-lg hover:bg-accent/80 hover:backdrop-blur-md hover:text-accent-foreground whitespace-nowrap"
       title={isCompact ? t("series.filters.normal") : t("series.filters.compact")}
     >
       {isCompact ? <LayoutTemplate className="h-4 w-4" /> : <LayoutGrid className="h-4 w-4" />}
