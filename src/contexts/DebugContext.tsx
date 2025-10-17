@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import type { RequestTiming } from "@/lib/services/debug.service";
+import type { RequestTiming } from "@/types/debug";
 import { usePreferences } from "./PreferencesContext";
 
 interface DebugContextType {

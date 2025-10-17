@@ -1,8 +1,1 @@
-export interface TTLConfig {
-  defaultTTL: number;
-  homeTTL: number;
-  librariesTTL: number;
-  seriesTTL: number;
-  booksTTL: number;
-  imagesTTL: number;
-}
+export type CacheType = "DEFAULT" | "HOME" | "LIBRARIES" | "SERIES" | "BOOKS" | "IMAGES";

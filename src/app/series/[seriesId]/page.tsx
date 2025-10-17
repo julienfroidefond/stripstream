@@ -3,8 +3,8 @@ import { ClientSeriesPage } from "./ClientSeriesPage";
 import type { UserPreferences } from "@/types/preferences";
 
 interface PageProps {
-  params: { seriesId: string };
-  searchParams: { page?: string; unread?: string; size?: string };
+  params: Promise<{ seriesId: string }>;
+  searchParams: Promise<{ page?: string; unread?: string; size?: string }>;
 }
 
 export default async function SeriesPage({ params, searchParams }: PageProps) {

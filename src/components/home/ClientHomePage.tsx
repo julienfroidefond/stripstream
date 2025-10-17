@@ -3,11 +3,10 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { HomeContent } from "./HomeContent";
-import { HomeService } from "@/lib/services/home.service";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { HomePageSkeleton } from "@/components/skeletons/OptimizedSkeletons";
 import { ERROR_CODES } from "@/constants/errorCodes";
-import type { HomeData } from "@/lib/services/home.service";
+import type { HomeData } from "@/types/home";
 
 export function ClientHomePage() {
   const router = useRouter();
@@ -51,8 +50,16 @@ export function ClientHomePage() {
 
   const handleRefresh = async () => {
     try {
-      await HomeService.invalidateHomeCache();
+      // Invalider le cache via l'API
+      const deleteResponse = await fetch("/api/komga/home", {
+        method: "DELETE",
+      });
 
+      if (!deleteResponse.ok) {
+        throw new Error("Erreur lors de l'invalidation du cache");
+      }
+
+      // Récupérer les nouvelles données
       const response = await fetch("/api/komga/home");
 
       if (!response.ok) {

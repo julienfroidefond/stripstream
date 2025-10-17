@@ -36,3 +36,34 @@ export async function GET() {
   }
 }
 
+export async function DELETE() {
+  try {
+    await HomeService.invalidateHomeCache();
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("API Home - Erreur lors de l'invalidation du cache:", error);
+    if (error instanceof AppError) {
+      return NextResponse.json(
+        {
+          error: {
+            code: error.code,
+            name: "Cache invalidation error",
+            message: getErrorMessage(error.code),
+          },
+        },
+        { status: 500 }
+      );
+    }
+    return NextResponse.json(
+      {
+        error: {
+          code: ERROR_CODES.CACHE.DELETE_ERROR,
+          name: "Cache invalidation error",
+          message: getErrorMessage(ERROR_CODES.CACHE.DELETE_ERROR),
+        },
+      },
+      { status: 500 }
+    );
+  }
+}
+

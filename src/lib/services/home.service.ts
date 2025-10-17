@@ -1,17 +1,12 @@
 import { BaseApiService } from "./base-api.service";
 import type { KomgaBook, KomgaSeries } from "@/types/komga";
 import type { LibraryResponse } from "@/types/library";
+import type { HomeData } from "@/types/home";
 import { getServerCacheService } from "./server-cache.service";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
 
-export interface HomeData {
-  ongoing: KomgaSeries[];
-  ongoingBooks: KomgaBook[];
-  recentlyRead: KomgaBook[];
-  onDeck: KomgaBook[];
-  latestSeries: KomgaSeries[];
-}
+export type { HomeData };
 
 export class HomeService extends BaseApiService {
   static async getHomeData(): Promise<HomeData> {

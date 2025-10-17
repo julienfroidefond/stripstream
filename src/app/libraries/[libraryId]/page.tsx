@@ -3,8 +3,8 @@ import { ClientLibraryPage } from "./ClientLibraryPage";
 import type { UserPreferences } from "@/types/preferences";
 
 interface PageProps {
-  params: { libraryId: string };
-  searchParams: { page?: string; unread?: string; search?: string; size?: string };
+  params: Promise<{ libraryId: string }>;
+  searchParams: Promise<{ page?: string; unread?: string; search?: string; size?: string }>;
 }
 
 export default async function LibraryPage({ params, searchParams }: PageProps) {

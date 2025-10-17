@@ -3,10 +3,10 @@ import { LoginContent } from "./LoginContent";
 import { withPageTiming } from "@/lib/hoc/withPageTiming";
 
 interface PageProps {
-  searchParams: {
+  searchParams: Promise<{
     from?: string;
     tab?: string;
-  };
+  }>;
 }
 export const metadata: Metadata = {
   title: "Connexion",

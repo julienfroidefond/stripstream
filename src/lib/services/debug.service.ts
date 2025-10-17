@@ -1,28 +1,12 @@
 import fs from "fs/promises";
 import path from "path";
-import type { CacheType } from "./base-api.service";
+import type { RequestTiming } from "@/types/debug";
 import { PreferencesService } from "./preferences.service";
 import { getCurrentUser } from "../auth-utils";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
 
-export interface RequestTiming {
-  url: string;
-  startTime: number;
-  endTime: number;
-  duration: number;
-  timestamp: string;
-  fromCache: boolean;
-  cacheType?: CacheType;
-  mongoAccess?: {
-    operation: string;
-    duration: number;
-  };
-  pageRender?: {
-    page: string;
-    duration: number;
-  };
-}
+export type { RequestTiming };
 
 export class DebugService {
   private static writeQueues = new Map<string, Promise<void>>();

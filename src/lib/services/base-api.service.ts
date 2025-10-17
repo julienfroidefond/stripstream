@@ -1,4 +1,5 @@
 import type { AuthConfig } from "@/types/auth";
+import type { CacheType } from "@/types/cache";
 import { getServerCacheService } from "./server-cache.service";
 import { ConfigDBService } from "./config-db.service";
 import { ERROR_CODES } from "../../constants/errorCodes";
@@ -8,8 +9,8 @@ import type { ServerCacheService } from "./server-cache.service";
 import { DebugService } from "./debug.service";
 import { RequestMonitorService } from "./request-monitor.service";
 import { RequestQueueService } from "./request-queue.service";
-// Types de cache disponibles
-export type CacheType = "DEFAULT" | "HOME" | "LIBRARIES" | "SERIES" | "BOOKS" | "IMAGES";
+
+export type { CacheType };
 
 interface KomgaRequestInit extends RequestInit {
   isImage?: boolean;
@@ -87,23 +88,9 @@ export abstract class BaseApiService {
   }
 
   protected static async resolveWithFallback(url: string): Promise<string> {
-    try {
-      // Essayer de résoudre le DNS d'abord
-      const urlObj = new URL(url);
-      const hostname = urlObj.hostname;
-      
-      // Si c'est un nom de domaine, essayer de le résoudre
-      if (!/^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
-        // Vérifier si le domaine peut être résolu
-        const { lookup } = await import('dns').then(dns => dns.promises);
-        await lookup(hostname);
-      }
-      
-      return url;
-    } catch (dnsError) {
-      console.warn(`DNS resolution failed for ${url}, using original URL:`, dnsError);
-      return url;
-    }
+    // DNS resolution is only needed server-side and causes build issues
+    // The fetch API will handle DNS resolution automatically
+    return url;
   }
 
   protected static async fetchFromApi<T>(

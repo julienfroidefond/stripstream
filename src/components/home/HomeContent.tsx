@@ -3,9 +3,9 @@
 import { HeroSection } from "./HeroSection";
 import { MediaRow } from "./MediaRow";
 import type { KomgaBook, KomgaSeries } from "@/types/komga";
+import type { HomeData } from "@/types/home";
 import { RefreshButton } from "@/components/library/RefreshButton";
 import { History, Sparkles, Clock, LibraryBig, BookOpen } from "lucide-react";
-import type { HomeData } from "@/lib/services/home.service";
 import { useTranslate } from "@/hooks/useTranslate";
 import { useEffect, useState } from "react";
 

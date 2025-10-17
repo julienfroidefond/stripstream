@@ -14,26 +14,9 @@ import {
   Filter,
   Calendar,
 } from "lucide-react";
-import type { CacheType } from "@/lib/services/base-api.service";
+import type { RequestTiming } from "@/types/debug";
 import { useTranslation } from "react-i18next";
 import { useDebug } from "@/contexts/DebugContext";
-
-interface RequestTiming {
-  url: string;
-  startTime: number;
-  endTime: number;
-  duration: number;
-  timestamp: string;
-  fromCache: boolean;
-  cacheType?: CacheType;
-  mongoAccess?: {
-    operation: string;
-    duration: number;
-  };
-  pageRender?: {
-    page: string;
-  };
-}
 
 function formatTime(timestamp: string) {
   const date = new Date(timestamp);
