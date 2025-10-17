@@ -29,6 +29,12 @@ export async function GET() {
     
     return NextResponse.json(validFavoriteIds);
   } catch (error) {
+    if (error instanceof AppError) {
+      // Si la config Komga n'existe pas, retourner un tableau vide au lieu d'une erreur
+      if (error.code === ERROR_CODES.KOMGA.MISSING_CONFIG) {
+        return NextResponse.json([]);
+      }
+    }
     console.error("Erreur lors de la récupération des favoris:", error);
     if (error instanceof AppError) {
       return NextResponse.json(

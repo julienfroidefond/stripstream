@@ -33,6 +33,9 @@ export abstract class BaseApiService {
         authHeader: config.authHeader,
       };
     } catch (error) {
+      if (error instanceof AppError && error.code === ERROR_CODES.KOMGA.MISSING_CONFIG) {
+        throw error;
+      }
       console.error("Erreur lors de la récupération de la configuration:", error);
       throw new AppError(ERROR_CODES.KOMGA.MISSING_CONFIG, {}, error);
     }

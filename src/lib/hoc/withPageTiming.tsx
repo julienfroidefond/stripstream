@@ -1,6 +1,7 @@
+import { ReactElement } from "react";
 import { DebugService } from "@/lib/services/debug.service";
 
-type PageComponent = (props: any) => Promise<JSX.Element> | JSX.Element;
+type PageComponent = (props: any) => Promise<ReactElement> | ReactElement;
 
 export function withPageTiming(pageName: string, Component: PageComponent) {
   return async function PageWithTiming(props: any) {

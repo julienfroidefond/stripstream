@@ -11,6 +11,12 @@ export async function GET() {
     const libraries: KomgaLibrary[] = await LibraryService.getLibraries();
     return NextResponse.json(libraries);
   } catch (error) {
+    if (error instanceof AppError) {
+      // Si la config Komga n'existe pas, retourner un tableau vide au lieu d'une erreur
+      if (error.code === ERROR_CODES.KOMGA.MISSING_CONFIG) {
+        return NextResponse.json([]);
+      }
+    }
     console.error("API Libraries - Erreur:", error);
     if (error instanceof AppError) {
       return NextResponse.json(
