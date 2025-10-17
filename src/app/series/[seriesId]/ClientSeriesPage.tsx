@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { PaginatedBookGrid } from "@/components/series/PaginatedBookGrid";
 import { SeriesHeader } from "@/components/series/SeriesHeader";
-import { SeriesService } from "@/lib/services/series.service";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { OptimizedSkeleton } from "@/components/skeletons/OptimizedSkeletons";
 import type { LibraryResponse } from "@/types/library";
@@ -70,8 +69,14 @@ export function ClientSeriesPage({
 
   const handleRefresh = async (seriesId: string) => {
     try {
-      await SeriesService.invalidateSeriesBooksCache(seriesId);
-      await SeriesService.invalidateSeriesCache(seriesId);
+      // Invalidate cache via API
+      const cacheResponse = await fetch(`/api/komga/series/${seriesId}/books`, {
+        method: 'DELETE',
+      });
+
+      if (!cacheResponse.ok) {
+        throw new Error("Erreur lors de l'invalidation du cache");
+      }
 
       // Recharger les données
       const params = new URLSearchParams({

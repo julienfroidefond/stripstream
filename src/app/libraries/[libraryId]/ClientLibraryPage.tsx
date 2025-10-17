@@ -6,7 +6,6 @@ import { RefreshButton } from "@/components/library/RefreshButton";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { useTranslate } from "@/hooks/useTranslate";
 import { OptimizedSkeleton } from "@/components/skeletons/OptimizedSkeletons";
-import { LibraryService } from "@/lib/services/library.service";
 import type { LibraryResponse } from "@/types/library";
 import type { KomgaSeries, KomgaLibrary } from "@/types/komga";
 import type { UserPreferences } from "@/types/preferences";
@@ -77,7 +76,14 @@ export function ClientLibraryPage({
 
   const handleRefresh = async (libraryId: string) => {
     try {
-      await LibraryService.invalidateLibrarySeriesCache(libraryId);
+      // Invalidate cache via API
+      const cacheResponse = await fetch(`/api/komga/libraries/${libraryId}/series`, {
+        method: 'DELETE',
+      });
+
+      if (!cacheResponse.ok) {
+        throw new Error("Error invalidating cache");
+      }
       
       // Recharger les données
       const params = new URLSearchParams({
