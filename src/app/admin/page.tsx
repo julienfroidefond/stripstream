@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { isAdmin } from "@/lib/auth-utils";
 import { AdminContent } from "@/components/admin/AdminContent";
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminPage() {
   try {
     const hasAdminAccess = await isAdmin();

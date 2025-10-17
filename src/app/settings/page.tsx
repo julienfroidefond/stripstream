@@ -3,6 +3,8 @@ import { ClientSettings } from "@/components/settings/ClientSettings";
 import type { Metadata } from "next";
 import type { KomgaConfig, TTLConfig } from "@/types/komga";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: "Préférences",
   description: "Configurez vos préférences StripStream",

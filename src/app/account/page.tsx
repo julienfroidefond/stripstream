@@ -3,6 +3,8 @@ import { ChangePasswordForm } from "@/components/account/ChangePasswordForm";
 import { UserService } from "@/lib/services/user.service";
 import { redirect } from "next/navigation";
 
+export const dynamic = 'force-dynamic';
+
 export default async function AccountPage() {
   try {
     const [profile, stats] = await Promise.all([
