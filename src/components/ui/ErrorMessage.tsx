@@ -1,15 +1,24 @@
 "use client";
 
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, RefreshCw } from "lucide-react";
 import { useTranslate } from "@/hooks/useTranslate";
+import { Button } from "@/components/ui/button";
 
 interface ErrorMessageProps {
   errorCode: string;
   error?: Error;
   variant?: "default" | "form";
+  onRetry?: () => void;
+  retryLabel?: string;
 }
 
-export const ErrorMessage = ({ errorCode, error, variant = "default" }: ErrorMessageProps) => {
+export const ErrorMessage = ({ 
+  errorCode, 
+  error, 
+  variant = "default",
+  onRetry,
+  retryLabel,
+}: ErrorMessageProps) => {
   const { t } = useTranslate();
   const message = t(`errors.${errorCode}`);
 
@@ -26,6 +35,16 @@ export const ErrorMessage = ({ errorCode, error, variant = "default" }: ErrorMes
       >
         <AlertCircle className="h-4 w-4" />
         <p>{message}</p>
+        {onRetry && (
+          <Button 
+            onClick={onRetry}
+            variant="ghost" 
+            size="sm"
+            className="ml-auto"
+          >
+            <RefreshCw className="h-3 w-3" />
+          </Button>
+        )}
       </div>
     );
   }
@@ -48,6 +67,18 @@ export const ErrorMessage = ({ errorCode, error, variant = "default" }: ErrorMes
             {t("errors.GENERIC_ERROR")}
           </h3>
           <p className="text-sm text-destructive/90 dark:text-red-300/90">{message}</p>
+          
+          {onRetry && (
+            <Button 
+              onClick={onRetry}
+              variant="outline" 
+              size="sm"
+              className="mt-4 border-destructive/30 hover:bg-destructive/10"
+            >
+              <RefreshCw className="mr-2 h-4 w-4" />
+              {retryLabel || t("common.retry")}
+            </Button>
+          )}
         </div>
       </div>
     </div>

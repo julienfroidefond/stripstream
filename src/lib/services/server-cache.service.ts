@@ -290,6 +290,40 @@ class ServerCacheService {
   }
 
   /**
+   * Récupère des données du cache même si elles sont expirées (stale)
+   * Retourne { data, isStale } ou null si pas de cache
+   */
+  private getStale(key: string): { data: any; isStale: boolean } | null {
+    if (this.config.mode === "memory") {
+      const cached = this.memoryCache.get(key);
+      if (!cached) return null;
+
+      return {
+        data: cached.data,
+        isStale: cached.expiry <= Date.now(),
+      };
+    }
+
+    const filePath = this.getCacheFilePath(key);
+    if (!fs.existsSync(filePath)) {
+      return null;
+    }
+
+    try {
+      const content = fs.readFileSync(filePath, "utf-8");
+      const cached = JSON.parse(content);
+
+      return {
+        data: cached.data,
+        isStale: cached.expiry <= Date.now(),
+      };
+    } catch (error) {
+      console.error(`Error reading cache file ${filePath}:`, error);
+      return null;
+    }
+  }
+
+  /**
    * Supprime une entrée du cache
    */
   async delete(key: string): Promise<void> {
@@ -383,6 +417,10 @@ class ServerCacheService {
 
   /**
    * Récupère des données du cache ou exécute la fonction si nécessaire
+   * Stratégie stale-while-revalidate:
+   * - Cache valide → retourne immédiatement
+   * - Cache expiré → retourne le cache expiré ET revalide en background
+   * - Pas de cache → fetch normalement
    */
   async getOrSet<T>(
     key: string,
@@ -396,28 +434,65 @@ class ServerCacheService {
     }
 
     const cacheKey = `${user.id}-${key}`;
-    const cached = this.get(cacheKey);
-    if (cached !== null) {
+    const cachedResult = this.getStale(cacheKey);
+    
+    if (cachedResult !== null) {
+      const { data, isStale } = cachedResult;
       const endTime = performance.now();
 
-      // Log la requête avec l'indication du cache (URL plus claire)
+      // Log la requête avec l'indication du cache
       await DebugService.logRequest({
-        url: `[CACHE] ${key}`,
+        url: `[CACHE${isStale ? '-STALE' : ''}] ${key}`,
         startTime,
         endTime,
         fromCache: true,
         cacheType: type,
       });
-      return cached as T;
+
+      // Si le cache est expiré, revalider en background sans bloquer la réponse
+      if (isStale) {
+        // Fire and forget - revalidate en background
+        this.revalidateInBackground(cacheKey, fetcher, type, key);
+      }
+
+      return data as T;
     }
 
+    // Pas de cache du tout, fetch normalement
     try {
       const data = await fetcher();
-
       this.set(cacheKey, data, type);
       return data;
     } catch (error) {
       throw error;
+    }
+  }
+
+  /**
+   * Revalide le cache en background
+   */
+  private async revalidateInBackground<T>(
+    cacheKey: string,
+    fetcher: () => Promise<T>,
+    type: keyof typeof ServerCacheService.DEFAULT_TTL,
+    debugKey: string
+  ): Promise<void> {
+    try {
+      const startTime = performance.now();
+      const data = await fetcher();
+      this.set(cacheKey, data, type);
+      
+      const endTime = performance.now();
+      await DebugService.logRequest({
+        url: `[REVALIDATE] ${debugKey}`,
+        startTime,
+        endTime,
+        fromCache: false,
+        cacheType: type,
+      });
+    } catch (error) {
+      console.error(`Background revalidation failed for ${debugKey}:`, error);
+      // Ne pas relancer l'erreur car c'est en background
     }
   }
 

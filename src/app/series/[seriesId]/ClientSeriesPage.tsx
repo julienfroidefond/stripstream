@@ -97,6 +97,35 @@ export function ClientSeriesPage({
     }
   };
 
+  const handleRetry = async () => {
+    setError(null);
+    setLoading(true);
+
+    try {
+      const params = new URLSearchParams({
+        page: String(currentPage - 1),
+        size: String(effectivePageSize),
+        unread: String(unreadOnly),
+      });
+
+      const response = await fetch(`/api/komga/series/${seriesId}/books?${params}`);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.code || ERROR_CODES.BOOK.PAGES_FETCH_ERROR);
+      }
+
+      const data = await response.json();
+      setSeries(data.series);
+      setBooks(data.books);
+    } catch (err) {
+      console.error("Error fetching series books:", err);
+      setError(err instanceof Error ? err.message : ERROR_CODES.BOOK.PAGES_FETCH_ERROR);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="container py-8 space-y-8">
@@ -117,7 +146,7 @@ export function ClientSeriesPage({
     return (
       <div className="container py-8 space-y-8">
         <h1 className="text-3xl font-bold">Série</h1>
-        <ErrorMessage errorCode={error} />
+        <ErrorMessage errorCode={error} onRetry={handleRetry} />
       </div>
     );
   }
@@ -126,7 +155,7 @@ export function ClientSeriesPage({
     return (
       <div className="container py-8 space-y-8">
         <h1 className="text-3xl font-bold">Série</h1>
-        <ErrorMessage errorCode={ERROR_CODES.SERIES.FETCH_ERROR} />
+        <ErrorMessage errorCode={ERROR_CODES.SERIES.FETCH_ERROR} onRetry={handleRetry} />
       </div>
     );
   }

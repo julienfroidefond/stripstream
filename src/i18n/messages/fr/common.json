@@ -414,6 +414,9 @@
     "scrollRight": "Défiler vers la droite",
     "volume": "Tome {number}"
   },
+  "common": {
+    "retry": "Réessayer"
+  },
   "debug": {
     "title": "DEBUG",
     "entries": "entrée",

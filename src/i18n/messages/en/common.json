@@ -412,6 +412,9 @@
     "scrollRight": "Scroll right",
     "volume": "Volume {number}"
   },
+  "common": {
+    "retry": "Retry"
+  },
   "debug": {
     "title": "DEBUG",
     "entries": "entry",

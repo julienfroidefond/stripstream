@@ -107,6 +107,39 @@ export function ClientLibraryPage({
     }
   };
 
+  const handleRetry = async () => {
+    setError(null);
+    setLoading(true);
+
+    try {
+      const params = new URLSearchParams({
+        page: String(currentPage - 1),
+        size: String(effectivePageSize),
+        unread: String(unreadOnly),
+      });
+      
+      if (search) {
+        params.append("search", search);
+      }
+
+      const response = await fetch(`/api/komga/libraries/${libraryId}/series?${params}`);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.code || "SERIES_FETCH_ERROR");
+      }
+
+      const data = await response.json();
+      setLibrary(data.library);
+      setSeries(data.series);
+    } catch (err) {
+      console.error("Error fetching library series:", err);
+      setError(err instanceof Error ? err.message : "SERIES_FETCH_ERROR");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="container py-8 space-y-8">
@@ -132,7 +165,7 @@ export function ClientLibraryPage({
           </h1>
           <RefreshButton libraryId={libraryId} refreshLibrary={handleRefresh} />
         </div>
-        <ErrorMessage errorCode={error} />
+        <ErrorMessage errorCode={error} onRetry={handleRetry} />
       </div>
     );
   }
@@ -140,7 +173,7 @@ export function ClientLibraryPage({
   if (!library || !series) {
     return (
       <div className="container py-8 space-y-8">
-        <ErrorMessage errorCode="SERIES_FETCH_ERROR" />
+        <ErrorMessage errorCode="SERIES_FETCH_ERROR" onRetry={handleRetry} />
       </div>
     );
   }
