@@ -15,12 +15,8 @@ export function ClientBookWrapper({ book, pages, nextBook }: ClientBookWrapperPr
   const router = useRouter();
 
   const handleCloseReader = (currentPage: number) => {
-    fetch(`/api/komga/cache/clear/${book.libraryId}/${book.seriesId}`, {
-      method: "POST",
-    });
     ClientOfflineBookService.setCurrentPage(book, currentPage);
     router.push(`/series/${book.seriesId}`);
-    //router.back();
   };
 
   return <PhotoswipeReader book={book} pages={pages} onClose={handleCloseReader} nextBook={nextBook} />;
