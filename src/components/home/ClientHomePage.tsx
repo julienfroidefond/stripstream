@@ -1,0 +1,94 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { HomeContent } from "./HomeContent";
+import { HomeService } from "@/lib/services/home.service";
+import { ErrorMessage } from "@/components/ui/ErrorMessage";
+import { HomePageSkeleton } from "@/components/skeletons/OptimizedSkeletons";
+import { ERROR_CODES } from "@/constants/errorCodes";
+import type { HomeData } from "@/lib/services/home.service";
+
+export function ClientHomePage() {
+  const router = useRouter();
+  const [data, setData] = useState<HomeData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetch("/api/komga/home");
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          const errorCode = errorData.error?.code || ERROR_CODES.KOMGA.SERVER_UNREACHABLE;
+          
+          // Si la config Komga est manquante, rediriger vers les settings
+          if (errorCode === ERROR_CODES.KOMGA.MISSING_CONFIG) {
+            router.push("/settings");
+            return;
+          }
+          
+          throw new Error(errorCode);
+        }
+
+        const homeData = await response.json();
+        setData(homeData);
+      } catch (err) {
+        console.error("Error fetching home data:", err);
+        setError(err instanceof Error ? err.message : ERROR_CODES.KOMGA.SERVER_UNREACHABLE);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [router]);
+
+  const handleRefresh = async () => {
+    try {
+      await HomeService.invalidateHomeCache();
+
+      const response = await fetch("/api/komga/home");
+
+      if (!response.ok) {
+        throw new Error("Erreur lors du rafraîchissement de la page d'accueil");
+      }
+
+      const homeData = await response.json();
+      setData(homeData);
+
+      return { success: true };
+    } catch (error) {
+      console.error("Erreur lors du rafraîchissement:", error);
+      return { success: false, error: "Erreur lors du rafraîchissement de la page d'accueil" };
+    }
+  };
+
+  if (loading) {
+    return <HomePageSkeleton />;
+  }
+
+  if (error) {
+    return (
+      <main className="container mx-auto px-4 py-8">
+        <ErrorMessage errorCode={error} />
+      </main>
+    );
+  }
+
+  if (!data) {
+    return (
+      <main className="container mx-auto px-4 py-8">
+        <ErrorMessage errorCode={ERROR_CODES.KOMGA.SERVER_UNREACHABLE} />
+      </main>
+    );
+  }
+
+  return <HomeContent data={data} refreshHome={handleRefresh} />;
+}
+
