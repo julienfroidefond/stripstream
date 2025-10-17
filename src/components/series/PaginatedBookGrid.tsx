@@ -4,8 +4,6 @@ import { BookGrid } from "./BookGrid";
 import { Pagination } from "@/components/ui/Pagination";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
-import { Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import type { KomgaBook } from "@/types/komga";
 import { useTranslate } from "@/hooks/useTranslate";
 import { useDisplayPreferences } from "@/hooks/useDisplayPreferences";
@@ -33,7 +31,6 @@ export function PaginatedBookGrid({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [isChangingPage, setIsChangingPage] = useState(false);
   const [showOnlyUnread, setShowOnlyUnread] = useState(initialShowOnlyUnread);
   const { isCompact, itemsPerPage } = useDisplayPreferences();
   const { t } = useTranslate();
@@ -42,7 +39,6 @@ export function PaginatedBookGrid({
     updates: Record<string, string | null>,
     replace: boolean = false
   ) => {
-    setIsChangingPage(true);
     const params = new URLSearchParams(searchParams.toString());
 
     Object.entries(updates).forEach(([key, value]) => {
@@ -59,11 +55,6 @@ export function PaginatedBookGrid({
       await router.push(`${pathname}?${params.toString()}`);
     }
   }, [router, pathname, searchParams]);
-
-  // Reset loading state when books change
-  useEffect(() => {
-    setIsChangingPage(false);
-  }, [books]);
 
   // Update local state when prop changes
   useEffect(() => {
@@ -133,27 +124,7 @@ export function PaginatedBookGrid({
         </div>
       </div>
 
-      <div className="relative">
-        {/* Loading indicator */}
-        {isChangingPage && (
-          <div className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-sm z-10">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-background/70 backdrop-blur-md border shadow-sm">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <span className="text-sm">{t("books.loading")}</span>
-            </div>
-          </div>
-        )}
-
-        {/* Grid with transition animation */}
-        <div
-          className={cn(
-            "transition-opacity duration-200",
-            isChangingPage ? "opacity-25" : "opacity-100"
-          )}
-        >
-          <BookGrid books={books} onBookClick={handleBookClick} isCompact={isCompact} />
-        </div>
-      </div>
+      <BookGrid books={books} onBookClick={handleBookClick} isCompact={isCompact} />
 
       <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
         <p className="text-sm text-muted-foreground order-2 sm:order-1">
