@@ -11,7 +11,6 @@ import { useDisplayPreferences } from "@/hooks/useDisplayPreferences";
 import { PageSizeSelect } from "@/components/common/PageSizeSelect";
 import { CompactModeButton } from "@/components/common/CompactModeButton";
 import { UnreadFilterButton } from "@/components/common/UnreadFilterButton";
-import { Container } from "@/components/ui/container";
 
 interface PaginatedSeriesGridProps {
   series: KomgaSeries[];
@@ -20,6 +19,7 @@ interface PaginatedSeriesGridProps {
   totalElements: number;
   defaultShowOnlyUnread: boolean;
   showOnlyUnread: boolean;
+  pageSize?: number;
 }
 
 export function PaginatedSeriesGrid({
@@ -29,12 +29,16 @@ export function PaginatedSeriesGrid({
   totalElements: _totalElements,
   defaultShowOnlyUnread,
   showOnlyUnread: initialShowOnlyUnread,
+  pageSize,
 }: PaginatedSeriesGridProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [showOnlyUnread, setShowOnlyUnread] = useState(initialShowOnlyUnread);
-  const { isCompact, itemsPerPage: _itemsPerPage } = useDisplayPreferences();
+  const { isCompact, itemsPerPage: displayItemsPerPage } = useDisplayPreferences();
+  
+  // Utiliser la taille de page effective (depuis l'URL ou les préférences)
+  const effectivePageSize = pageSize || displayItemsPerPage;
   const { t } = useTranslate();
 
   const updateUrlParams = useCallback(async (
@@ -97,9 +101,24 @@ export function PaginatedSeriesGrid({
     });
   };
 
+  // Calculate start and end indices for display
+  const startIndex = (currentPage - 1) * effectivePageSize + 1;
+  const endIndex = Math.min(currentPage * effectivePageSize, _totalElements);
+
+  const getShowingText = () => {
+    if (!_totalElements) return t("series.empty");
+
+    return t("books.display.showing", {
+      start: startIndex,
+      end: endIndex,
+      total: _totalElements,
+    });
+  };
+
   return (
-    <Container spacing="none" className="space-y-8">
+    <div className="space-y-8">
       <div className="flex flex-col gap-4">
+        <p className="text-sm text-muted-foreground text-right">{getShowingText()}</p>
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           <div className="w-full">
             <SearchInput placeholder={t("series.filters.search")} />
@@ -125,6 +144,6 @@ export function PaginatedSeriesGrid({
           className="order-1 sm:order-2"
         />
       </div>
-    </Container>
+    </div>
   );
 }

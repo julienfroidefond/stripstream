@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { PaginatedSeriesGrid } from "@/components/library/PaginatedSeriesGrid";
 import { RefreshButton } from "@/components/library/RefreshButton";
+import { LibraryHeader } from "@/components/library/LibraryHeader";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { useTranslate } from "@/hooks/useTranslate";
 import { OptimizedSkeleton } from "@/components/skeletons/OptimizedSkeletons";
@@ -156,45 +157,54 @@ export function ClientLibraryPage({
 
   if (loading) {
     return (
-      <Container>
-        {/* Section header avec titre + actions */}
-        <div className="space-y-4 mb-8">
-          <div className="flex items-center justify-between">
-            <OptimizedSkeleton className="h-8 w-64" />
-            <div className="flex items-center gap-2">
-              <OptimizedSkeleton className="h-5 w-48" />
-              <OptimizedSkeleton className="h-10 w-10 rounded-full" />
+      <>
+        {/* Header skeleton */}
+        <div className="relative min-h-[200px] md:h-[200px] w-screen -ml-[calc((100vw-100%)/2)] overflow-hidden mb-8">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/10 to-background" />
+          <div className="relative container mx-auto px-4 py-8 h-full">
+            <div className="flex flex-col md:flex-row gap-6 items-center md:items-start h-full">
+              <OptimizedSkeleton className="w-[120px] h-[120px] rounded-lg" />
+              <div className="flex-1 space-y-3">
+                <OptimizedSkeleton className="h-10 w-64" />
+                <div className="flex gap-4">
+                  <OptimizedSkeleton className="h-8 w-32" />
+                  <OptimizedSkeleton className="h-8 w-32" />
+                  <OptimizedSkeleton className="h-10 w-10 rounded-full" />
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="flex flex-col gap-4 mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-            <div className="w-full">
-              <OptimizedSkeleton className="h-10 w-full" />
-            </div>
-            <div className="flex items-center justify-end gap-2">
-              <OptimizedSkeleton className="h-10 w-24" />
-              <OptimizedSkeleton className="h-10 w-10 rounded" />
-              <OptimizedSkeleton className="h-10 w-10 rounded" />
+        <Container>
+          {/* Filters */}
+          <div className="flex flex-col gap-4 mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="w-full">
+                <OptimizedSkeleton className="h-10 w-full" />
+              </div>
+              <div className="flex items-center justify-end gap-2">
+                <OptimizedSkeleton className="h-10 w-24" />
+                <OptimizedSkeleton className="h-10 w-10 rounded" />
+                <OptimizedSkeleton className="h-10 w-10 rounded" />
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
-          {Array.from({ length: effectivePageSize }).map((_, i) => (
-            <OptimizedSkeleton key={i} className="aspect-[2/3] w-full rounded-lg" />
-          ))}
-        </div>
+          {/* Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+            {Array.from({ length: effectivePageSize }).map((_, i) => (
+              <OptimizedSkeleton key={i} className="aspect-[2/3] w-full rounded-lg" />
+            ))}
+          </div>
 
-        {/* Pagination */}
-        <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
-          <OptimizedSkeleton className="h-5 w-32 order-2 sm:order-1" />
-          <OptimizedSkeleton className="h-10 w-64 order-1 sm:order-2" />
-        </div>
-      </Container>
+          {/* Pagination */}
+          <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
+            <OptimizedSkeleton className="h-5 w-32 order-2 sm:order-1" />
+            <OptimizedSkeleton className="h-10 w-64 order-1 sm:order-2" />
+          </div>
+        </Container>
+      </>
     );
   }
 
@@ -219,32 +229,24 @@ export function ClientLibraryPage({
   }
 
   return (
-    <Container>
-      <Section
-        title={library.name}
-        actions={
-          <div className="flex items-center gap-2">
-            {series.totalElements > 0 && (
-              <p className="text-sm text-muted-foreground">
-                {t("series.display.showing", {
-                  start: ((currentPage - 1) * effectivePageSize) + 1,
-                  end: Math.min(currentPage * effectivePageSize, series.totalElements),
-                  total: series.totalElements,
-                })}
-              </p>
-            )}
-            <RefreshButton libraryId={libraryId} refreshLibrary={handleRefresh} />
-          </div>
-        }
-      />
-      <PaginatedSeriesGrid
+    <>
+      <LibraryHeader
+        library={library}
+        seriesCount={series.totalElements}
         series={series.content || []}
-        currentPage={currentPage}
-        totalPages={series.totalPages}
-        totalElements={series.totalElements}
-        defaultShowOnlyUnread={preferences.showOnlyUnread}
-        showOnlyUnread={unreadOnly}
+        refreshLibrary={handleRefresh}
       />
-    </Container>
+      <Container>
+        <PaginatedSeriesGrid
+          series={series.content || []}
+          currentPage={currentPage}
+          totalPages={series.totalPages}
+          totalElements={series.totalElements}
+          defaultShowOnlyUnread={preferences.showOnlyUnread}
+          showOnlyUnread={unreadOnly}
+          pageSize={effectivePageSize}
+        />
+      </Container>
+    </>
   );
 }

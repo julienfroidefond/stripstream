@@ -39,7 +39,7 @@ export const SearchInput = ({ placeholder }: SearchInputProps) => {
       <Input
         type={isPending ? "text" : "search"}
         placeholder={placeholder}
-        className="pl-9"
+        className="pl-3"
         defaultValue={searchParams.get("search") ?? ""}
         onChange={(e) => handleSearch(e.target.value)}
         aria-label={placeholder}

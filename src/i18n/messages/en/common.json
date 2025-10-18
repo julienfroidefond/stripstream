@@ -197,6 +197,14 @@
         "title": "Error",
         "description": "An error occurred"
       }
+    },
+    "header": {
+      "series": "{{count}} series",
+      "series_plural": "{{count}} series",
+      "books": "{{count}} book",
+      "books_plural": "{{count}} books",
+      "unavailable": "This library is currently unavailable",
+      "coverAlt": "Cover of {{name}}"
     }
   },
   "series": {
