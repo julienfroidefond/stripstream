@@ -3,11 +3,12 @@
 import { useState, useEffect } from "react";
 import { useTranslate } from "@/hooks/useTranslate";
 import { useToast } from "@/components/ui/use-toast";
-import { Trash2, Loader2, HardDrive } from "lucide-react";
+import { Trash2, Loader2, HardDrive, List, ChevronDown, ChevronUp } from "lucide-react";
 import { CacheModeSwitch } from "@/components/settings/CacheModeSwitch";
 import { Label } from "@/components/ui/label";
 import type { TTLConfigData } from "@/types/komga";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 interface CacheSettingsProps {
   initialTTLConfig: TTLConfigData | null;
@@ -18,6 +19,19 @@ interface CacheSizeInfo {
   itemCount: number;
 }
 
+interface CacheEntry {
+  key: string;
+  size: number;
+  expiry: number;
+  isExpired: boolean;
+}
+
+interface ServiceWorkerCacheEntry {
+  url: string;
+  size: number;
+  cacheName: string;
+}
+
 export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
   const { t } = useTranslate();
   const { toast } = useToast();
@@ -26,6 +40,13 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
   const [serverCacheSize, setServerCacheSize] = useState<CacheSizeInfo | null>(null);
   const [swCacheSize, setSwCacheSize] = useState<number | null>(null);
   const [isLoadingCacheSize, setIsLoadingCacheSize] = useState(true);
+  const [cacheEntries, setCacheEntries] = useState<CacheEntry[]>([]);
+  const [isLoadingEntries, setIsLoadingEntries] = useState(false);
+  const [showEntries, setShowEntries] = useState(false);
+  const [swCacheEntries, setSwCacheEntries] = useState<ServiceWorkerCacheEntry[]>([]);
+  const [isLoadingSwEntries, setIsLoadingSwEntries] = useState(false);
+  const [showSwEntries, setShowSwEntries] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const [ttlConfig, setTTLConfig] = useState<TTLConfigData>(
     initialTTLConfig || {
       defaultTTL: 5,
@@ -43,6 +64,35 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
     const sizes = ["B", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
+  };
+
+  const formatDate = (timestamp: number): string => {
+    return new Date(timestamp).toLocaleString();
+  };
+
+  const getTimeRemaining = (expiry: number): string => {
+    const now = Date.now();
+    const diff = expiry - now;
+
+    if (diff < 0) return t("settings.cache.entries.expired");
+
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (days > 0) return t("settings.cache.entries.daysRemaining", { count: days });
+    if (hours > 0) return t("settings.cache.entries.hoursRemaining", { count: hours });
+    if (minutes > 0) return t("settings.cache.entries.minutesRemaining", { count: minutes });
+    return t("settings.cache.entries.lessThanMinute");
+  };
+
+  const getCacheType = (key: string): string => {
+    if (key.includes("/home")) return "HOME";
+    if (key.includes("/libraries")) return "LIBRARIES";
+    if (key.includes("/series/")) return "SERIES";
+    if (key.includes("/books/")) return "BOOKS";
+    if (key.includes("/images/")) return "IMAGES";
+    return "DEFAULT";
   };
 
   const fetchCacheSize = async () => {
@@ -85,6 +135,114 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
     }
   };
 
+  const fetchCacheEntries = async () => {
+    setIsLoadingEntries(true);
+    try {
+      const response = await fetch("/api/komga/cache/entries");
+      if (response.ok) {
+        const data = await response.json();
+        setCacheEntries(data.entries);
+      }
+    } catch (error) {
+      console.error("Erreur lors de la récupération des entrées du cache:", error);
+    } finally {
+      setIsLoadingEntries(false);
+    }
+  };
+
+  const toggleShowEntries = () => {
+    if (!showEntries && cacheEntries.length === 0) {
+      fetchCacheEntries();
+    }
+    setShowEntries(!showEntries);
+  };
+
+  const fetchSwCacheEntries = async () => {
+    setIsLoadingSwEntries(true);
+    try {
+      if ("caches" in window) {
+        const entries: ServiceWorkerCacheEntry[] = [];
+        const cacheNames = await caches.keys();
+
+        for (const cacheName of cacheNames) {
+          const cache = await caches.open(cacheName);
+          const requests = await cache.keys();
+
+          for (const request of requests) {
+            const response = await cache.match(request);
+            if (response) {
+              const blob = await response.clone().blob();
+              entries.push({
+                url: request.url,
+                size: blob.size,
+                cacheName,
+              });
+            }
+          }
+        }
+
+        setSwCacheEntries(entries);
+      }
+    } catch (error) {
+      console.error("Erreur lors de la récupération des entrées du cache SW:", error);
+    } finally {
+      setIsLoadingSwEntries(false);
+    }
+  };
+
+  const toggleShowSwEntries = () => {
+    if (!showSwEntries && swCacheEntries.length === 0) {
+      fetchSwCacheEntries();
+    }
+    setShowSwEntries(!showSwEntries);
+  };
+
+  const getFirstPathSegment = (url: string): string => {
+    try {
+      const urlObj = new URL(url);
+      const path = urlObj.pathname;
+      const segments = path.split('/').filter(Boolean);
+      
+      if (segments.length === 0) return '/';
+      
+      return `/${segments[0]}`;
+    } catch {
+      return 'Autres';
+    }
+  };
+
+  const groupEntriesByPath = (entries: ServiceWorkerCacheEntry[]) => {
+    const grouped = entries.reduce(
+      (acc, entry) => {
+        const pathGroup = getFirstPathSegment(entry.url);
+        if (!acc[pathGroup]) {
+          acc[pathGroup] = [];
+        }
+        acc[pathGroup].push(entry);
+        return acc;
+      },
+      {} as Record<string, ServiceWorkerCacheEntry[]>
+    );
+
+    // Trier chaque groupe par taille décroissante
+    Object.keys(grouped).forEach((key) => {
+      grouped[key].sort((a, b) => b.size - a.size);
+    });
+
+    return grouped;
+  };
+
+  const getTotalSizeByType = (entries: ServiceWorkerCacheEntry[]): number => {
+    return entries.reduce((sum, entry) => sum + entry.size, 0);
+  };
+
+  const toggleGroup = (groupName: string) => {
+    setExpandedGroups((prev) => ({
+      ...prev,
+      [groupName]: !prev[groupName],
+    }));
+  };
+
   useEffect(() => {
     fetchCacheSize();
   }, []);
@@ -107,8 +265,14 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
         description: t("settings.cache.messages.cleared"),
       });
 
-      // Rafraîchir la taille du cache
+      // Rafraîchir la taille du cache et les entrées
       await fetchCacheSize();
+      if (showEntries) {
+        await fetchCacheEntries();
+      }
+      if (showSwEntries) {
+        await fetchSwCacheEntries();
+      }
     } catch (error) {
       console.error("Erreur:", error);
       toast({
@@ -132,8 +296,14 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
           description: t("settings.cache.messages.serviceWorkerCleared"),
         });
 
-        // Rafraîchir la taille du cache
+        // Rafraîchir la taille du cache et les entrées
         await fetchCacheSize();
+        if (showEntries) {
+          await fetchCacheEntries();
+        }
+        if (showSwEntries) {
+          await fetchSwCacheEntries();
+        }
       }
     } catch (error) {
       console.error("Erreur lors de la suppression des caches:", error);
@@ -238,6 +408,168 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
                   <div className="text-sm text-muted-foreground">{t("settings.cache.size.error")}</div>
                 )}
               </div>
+            </div>
+          )}
+        </div>
+
+        {/* Aperçu des entrées du cache serveur */}
+        <div className="space-y-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={toggleShowEntries}
+            className="w-full flex items-center justify-between"
+          >
+            <span className="flex items-center gap-2">
+              <List className="h-4 w-4" />
+              {t("settings.cache.entries.serverTitle")}
+            </span>
+            {showEntries ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+          </Button>
+
+          {showEntries && (
+            <div className="rounded-md border bg-muted/30 backdrop-blur-md">
+              {isLoadingEntries ? (
+                <div className="p-4 text-center text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin mx-auto mb-2" />
+                  {t("settings.cache.entries.loading")}
+                </div>
+              ) : cacheEntries.length === 0 ? (
+                <div className="p-4 text-center text-sm text-muted-foreground">
+                  {t("settings.cache.entries.empty")}
+                </div>
+              ) : (
+                <div className="max-h-96 overflow-y-auto">
+                  <div className="divide-y">
+                    {cacheEntries.map((entry, index) => (
+                      <div
+                        key={index}
+                        className={`p-3 space-y-1 ${entry.isExpired ? "opacity-50" : ""}`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="font-mono text-xs truncate" title={entry.key}>
+                              {entry.key}
+                            </div>
+                            <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                              <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium">
+                                {getCacheType(entry.key)}
+                              </span>
+                              <span>{formatBytes(entry.size)}</span>
+                            </div>
+                          </div>
+                          <div className="text-right text-xs">
+                            <div
+                              className={`font-medium ${entry.isExpired ? "text-destructive" : "text-muted-foreground"}`}
+                            >
+                              {getTimeRemaining(entry.expiry)}
+                            </div>
+                            <div className="text-muted-foreground/70" title={formatDate(entry.expiry)}>
+                              {new Date(entry.expiry).toLocaleDateString()}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Aperçu des entrées du cache service worker */}
+        <div className="space-y-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={toggleShowSwEntries}
+            className="w-full flex items-center justify-between"
+          >
+            <span className="flex items-center gap-2">
+              <List className="h-4 w-4" />
+              {t("settings.cache.entries.serviceWorkerTitle")}
+            </span>
+            {showSwEntries ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+          </Button>
+
+          {showSwEntries && (
+            <div className="rounded-md border bg-muted/30 backdrop-blur-md">
+              {isLoadingSwEntries ? (
+                <div className="p-4 text-center text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin mx-auto mb-2" />
+                  {t("settings.cache.entries.loading")}
+                </div>
+              ) : swCacheEntries.length === 0 ? (
+                <div className="p-4 text-center text-sm text-muted-foreground">
+                  {t("settings.cache.entries.empty")}
+                </div>
+              ) : (
+                <div className="max-h-96 overflow-y-auto">
+                  {(() => {
+                    const grouped = groupEntriesByPath(swCacheEntries);
+                    return (
+                      <div className="divide-y">
+                        {Object.entries(grouped).map(([pathGroup, entries]) => {
+                          const isExpanded = expandedGroups[pathGroup];
+                          return (
+                            <div key={pathGroup} className="p-3 space-y-2">
+                              <button
+                                type="button"
+                                onClick={() => toggleGroup(pathGroup)}
+                                className="w-full flex items-center justify-between hover:bg-muted/50 rounded p-1 -m-1 transition-colors"
+                              >
+                                <div className="font-medium text-sm flex items-center gap-2">
+                                  {isExpanded ? (
+                                    <ChevronDown className="h-3 w-3" />
+                                  ) : (
+                                    <ChevronUp className="h-3 w-3" />
+                                  )}
+                                  <span className="inline-flex items-center rounded-full bg-blue-500/10 px-2 py-0.5 text-xs font-medium font-mono">
+                                    {pathGroup}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground">
+                                    ({entries.length} {entries.length > 1 ? "éléments" : "élément"})
+                                  </span>
+                                </div>
+                                <div className="text-xs text-muted-foreground font-medium">
+                                  {formatBytes(getTotalSizeByType(entries))}
+                                </div>
+                              </button>
+                              {isExpanded && (
+                                <div className="space-y-1 pl-2">
+                                  {entries.map((entry, index) => (
+                                    <div key={index} className="py-1">
+                                      <div className="flex items-start justify-between gap-2">
+                                        <div className="flex-1 min-w-0">
+                                          <div className="font-mono text-xs truncate text-muted-foreground" title={entry.url}>
+                                            {entry.url.replace(/^https?:\/\/[^/]+/, "")}
+                                          </div>
+                                        </div>
+                                        <div className="text-xs text-muted-foreground whitespace-nowrap">
+                                          {formatBytes(entry.size)}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
             </div>
           )}
         </div>

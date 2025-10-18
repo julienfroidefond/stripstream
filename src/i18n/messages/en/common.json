@@ -164,6 +164,18 @@
         "message": "An error occurred while clearing the cache",
         "ttl": "Error saving TTL configuration",
         "serviceWorkerMessage": "An error occurred while clearing the service worker cache"
+      },
+      "entries": {
+        "title": "Cache content preview",
+        "serverTitle": "Server cache preview",
+        "serviceWorkerTitle": "Service worker cache preview",
+        "loading": "Loading entries...",
+        "empty": "No entries in cache",
+        "expired": "Expired",
+        "daysRemaining": "{count} day(s) remaining",
+        "hoursRemaining": "{count} hour(s) remaining",
+        "minutesRemaining": "{count} minute(s) remaining",
+        "lessThanMinute": "Less than a minute"
       }
     }
   },

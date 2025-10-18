@@ -593,6 +593,77 @@ class ServerCacheService {
 
     return { sizeInBytes, itemCount };
   }
+
+  /**
+   * Liste les entrées du cache avec leurs détails
+   */
+  async getCacheEntries(): Promise<
+    Array<{
+      key: string;
+      size: number;
+      expiry: number;
+      isExpired: boolean;
+    }>
+  > {
+    const entries: Array<{
+      key: string;
+      size: number;
+      expiry: number;
+      isExpired: boolean;
+    }> = [];
+
+    if (this.config.mode === "memory") {
+      this.memoryCache.forEach((value, key) => {
+        const size = this.calculateObjectSize(value.data) + 8;
+        entries.push({
+          key,
+          size,
+          expiry: value.expiry,
+          isExpired: value.expiry <= Date.now(),
+        });
+      });
+    } else {
+      const collectEntries = (dirPath: string): void => {
+        if (!fs.existsSync(dirPath)) return;
+
+        const items = fs.readdirSync(dirPath);
+
+        for (const item of items) {
+          const itemPath = path.join(dirPath, item);
+          try {
+            const stats = fs.statSync(itemPath);
+
+            if (stats.isDirectory()) {
+              collectEntries(itemPath);
+            } else if (stats.isFile() && item.endsWith(".json")) {
+              try {
+                const content = fs.readFileSync(itemPath, "utf-8");
+                const cached = JSON.parse(content);
+                const key = path.relative(this.cacheDir, itemPath).slice(0, -5);
+
+                entries.push({
+                  key,
+                  size: stats.size,
+                  expiry: cached.expiry,
+                  isExpired: cached.expiry <= Date.now(),
+                });
+              } catch (error) {
+                console.error(`Could not parse file ${itemPath}:`, error);
+              }
+            }
+          } catch (error) {
+            console.error(`Could not access ${itemPath}:`, error);
+          }
+        }
+      };
+
+      if (fs.existsSync(this.cacheDir)) {
+        collectEntries(this.cacheDir);
+      }
+    }
+
+    return entries.sort((a, b) => b.expiry - a.expiry);
+  }
 }
 
 // Créer une instance initialisée du service

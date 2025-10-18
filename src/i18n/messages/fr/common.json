@@ -164,6 +164,18 @@
         "message": "Une erreur est survenue lors de la suppression du cache",
         "ttl": "Erreur lors de la sauvegarde de la configuration TTL",
         "serviceWorkerMessage": "Une erreur est survenue lors de la suppression du cache du service worker"
+      },
+      "entries": {
+        "title": "Aperçu du contenu du cache",
+        "serverTitle": "Aperçu du cache serveur",
+        "serviceWorkerTitle": "Aperçu du cache service worker",
+        "loading": "Chargement des entrées...",
+        "empty": "Aucune entrée dans le cache",
+        "expired": "Expiré",
+        "daysRemaining": "{count} jour(s) restant(s)",
+        "hoursRemaining": "{count} heure(s) restante(s)",
+        "minutesRemaining": "{count} minute(s) restante(s)",
+        "lessThanMinute": "Moins d'une minute"
       }
     }
   },
