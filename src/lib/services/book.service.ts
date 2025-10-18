@@ -99,7 +99,7 @@ export class BookService extends BaseApiService {
       const arrayBuffer = response.buffer.buffer.slice(
         response.buffer.byteOffset,
         response.buffer.byteOffset + response.buffer.byteLength
-      );
+      ) as ArrayBuffer;
       
       return new Response(arrayBuffer, {
         headers: {

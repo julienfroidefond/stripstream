@@ -77,10 +77,6 @@
       "unreadFilter": {
         "label": "Filtre \"À lire\" par défaut",
         "description": "Afficher uniquement les séries non lues par défaut"
-      },
-      "debugMode": {
-        "label": "Mode debug",
-        "description": "Afficher les informations de debug dans l'interface"
       }
     },
     "background": {
@@ -386,10 +382,6 @@
     "MIDDLEWARE_INVALID_TOKEN": "Jeton d'authentification invalide",
     "MIDDLEWARE_INVALID_SESSION": "Session invalide",
 
-    "DEBUG_FETCH_ERROR": "Erreur lors de la récupération des logs de debug",
-    "DEBUG_SAVE_ERROR": "Erreur lors de la sauvegarde des logs de debug",
-    "DEBUG_CLEAR_ERROR": "Erreur lors de la suppression des logs de debug",
-
     "CLIENT_FETCH_ERROR": "Erreur lors de la récupération des données",
     "CLIENT_NETWORK_ERROR": "Erreur réseau",
     "CLIENT_REQUEST_FAILED": "La requête a échoué",
@@ -436,25 +428,5 @@
   },
   "common": {
     "retry": "Réessayer"
-  },
-  "debug": {
-    "title": "DEBUG",
-    "entries": "entrée",
-    "entries_plural": "entrées",
-    "noRequests": "Aucune requête enregistrée",
-    "actions": {
-      "refresh": "Rafraîchir les logs",
-      "maximize": "Agrandir",
-      "minimize": "Minimiser",
-      "clear": "Effacer les logs"
-    },
-    "tooltips": {
-      "cache": "Cache: {{type}}",
-      "mongodb": "MongoDB: {{operation}}",
-      "pageRender": "Page Render: {{page}}",
-      "apiCall": "API Call",
-      "logTime": "Heure du log",
-      "mongoAccess": "Temps d'accès MongoDB"
-    }
   }
 }

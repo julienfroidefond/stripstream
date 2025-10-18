@@ -65,7 +65,6 @@ model Preferences {
   showThumbnails Boolean  @default(true)
   cacheMode      String   @default("memory") // "memory" | "file"
   showOnlyUnread Boolean  @default(false)
-  debug          Boolean  @default(false)
   displayMode    Json     @default("{\"compact\": false, \"itemsPerPage\": 20}")
   background     Json     @default("{\"type\": \"default\"}")
   createdAt      DateTime @default(now())

@@ -121,6 +121,7 @@ export interface KomgaBook {
   media: BookMedia;
   metadata: BookMetadata;
   readProgress: ReadProgress | null;
+  deleted: boolean;
 }
 
 export interface BookMedia {

@@ -77,10 +77,6 @@
       "unreadFilter": {
         "label": "Default Unread Filter",
         "description": "Show only unread series by default"
-      },
-      "debugMode": {
-        "label": "Debug mode",
-        "description": "Show debug information in the interface"
       }
     },
     "background": {
@@ -388,10 +384,6 @@
     "MIDDLEWARE_INVALID_TOKEN": "Invalid authentication token",
     "MIDDLEWARE_INVALID_SESSION": "Invalid session",
 
-    "DEBUG_FETCH_ERROR": "Error fetching debug logs",
-    "DEBUG_SAVE_ERROR": "Error saving debug logs",
-    "DEBUG_CLEAR_ERROR": "Error clearing debug logs",
-
     "CLIENT_FETCH_ERROR": "Error fetching data",
     "CLIENT_NETWORK_ERROR": "Network error",
     "CLIENT_REQUEST_FAILED": "Request failed",
@@ -434,25 +426,5 @@
   },
   "common": {
     "retry": "Retry"
-  },
-  "debug": {
-    "title": "DEBUG",
-    "entries": "entry",
-    "entries_plural": "entries",
-    "noRequests": "No recorded requests",
-    "actions": {
-      "refresh": "Refresh logs",
-      "maximize": "Maximize",
-      "minimize": "Minimize",
-      "clear": "Clear logs"
-    },
-    "tooltips": {
-      "cache": "Cache: {{type}}",
-      "mongodb": "MongoDB: {{operation}}",
-      "pageRender": "Page Render: {{page}}",
-      "apiCall": "API Call",
-      "logTime": "Log time",
-      "mongoAccess": "MongoDB access time"
-    }
   }
 }

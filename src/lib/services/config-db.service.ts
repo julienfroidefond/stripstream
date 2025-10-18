@@ -1,5 +1,4 @@
 import prisma from "@/lib/prisma";
-import { DebugService } from "./debug.service";
 import { getCurrentUser } from "../auth-utils";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
@@ -50,12 +49,10 @@ export class ConfigDBService {
     try {
       const user: User | null = await this.getCurrentUser();
 
-      return DebugService.measureMongoOperation("getConfig", async () => {
-        const config = await prisma.komgaConfig.findUnique({
-          where: { userId: user.id },
-        });
-        return config as KomgaConfig | null;
+      const config = await prisma.komgaConfig.findUnique({
+        where: { userId: user.id },
       });
+      return config as KomgaConfig | null;
     } catch (error) {
       if (error instanceof AppError) {
         throw error;
@@ -68,12 +65,10 @@ export class ConfigDBService {
     try {
       const user: User | null = await this.getCurrentUser();
 
-      return DebugService.measureMongoOperation("getTTLConfig", async () => {
-        const config = await prisma.tTLConfig.findUnique({
-          where: { userId: user.id },
-        });
-        return config as TTLConfig | null;
+      const config = await prisma.tTLConfig.findUnique({
+        where: { userId: user.id },
       });
+      return config as TTLConfig | null;
     } catch (error) {
       if (error instanceof AppError) {
         throw error;
@@ -86,30 +81,28 @@ export class ConfigDBService {
     try {
       const user: User | null = await this.getCurrentUser();
 
-      return DebugService.measureMongoOperation("saveTTLConfig", async () => {
-        const config = await prisma.tTLConfig.upsert({
-          where: { userId: user.id },
-          update: {
-            defaultTTL: data.defaultTTL,
-            homeTTL: data.homeTTL,
-            librariesTTL: data.librariesTTL,
-            seriesTTL: data.seriesTTL,
-            booksTTL: data.booksTTL,
-            imagesTTL: data.imagesTTL,
-          },
-          create: {
-            userId: user.id,
-            defaultTTL: data.defaultTTL,
-            homeTTL: data.homeTTL,
-            librariesTTL: data.librariesTTL,
-            seriesTTL: data.seriesTTL,
-            booksTTL: data.booksTTL,
-            imagesTTL: data.imagesTTL,
-          },
-        });
-
-        return config as TTLConfig;
+      const config = await prisma.tTLConfig.upsert({
+        where: { userId: user.id },
+        update: {
+          defaultTTL: data.defaultTTL,
+          homeTTL: data.homeTTL,
+          librariesTTL: data.librariesTTL,
+          seriesTTL: data.seriesTTL,
+          booksTTL: data.booksTTL,
+          imagesTTL: data.imagesTTL,
+        },
+        create: {
+          userId: user.id,
+          defaultTTL: data.defaultTTL,
+          homeTTL: data.homeTTL,
+          librariesTTL: data.librariesTTL,
+          seriesTTL: data.seriesTTL,
+          booksTTL: data.booksTTL,
+          imagesTTL: data.imagesTTL,
+        },
       });
+
+      return config as TTLConfig;
     } catch (error) {
       if (error instanceof AppError) {
         throw error;

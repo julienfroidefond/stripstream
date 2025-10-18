@@ -1,5 +1,4 @@
 import prisma from "@/lib/prisma";
-import { DebugService } from "./debug.service";
 import { getCurrentUser } from "../auth-utils";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
@@ -30,15 +29,13 @@ export class FavoriteService {
     try {
       const user = await this.getCurrentUser();
 
-      return DebugService.measureMongoOperation("isFavorite", async () => {
-        const favorite = await prisma.favorite.findFirst({
-          where: {
-            userId: user.id,
-            seriesId: seriesId,
-          },
-        });
-        return !!favorite;
+      const favorite = await prisma.favorite.findFirst({
+        where: {
+          userId: user.id,
+          seriesId: seriesId,
+        },
       });
+      return !!favorite;
     } catch (error) {
       console.error("Erreur lors de la vérification du favori:", error);
       return false;
@@ -52,20 +49,18 @@ export class FavoriteService {
     try {
       const user = await this.getCurrentUser();
 
-      await DebugService.measureMongoOperation("addToFavorites", async () => {
-        await prisma.favorite.upsert({
-          where: {
-            userId_seriesId: {
-              userId: user.id,
-              seriesId,
-            },
-          },
-          update: {},
-          create: {
+      await prisma.favorite.upsert({
+        where: {
+          userId_seriesId: {
             userId: user.id,
             seriesId,
           },
-        });
+        },
+        update: {},
+        create: {
+          userId: user.id,
+          seriesId,
+        },
       });
 
       this.dispatchFavoritesChanged();
@@ -81,13 +76,11 @@ export class FavoriteService {
     try {
       const user = await this.getCurrentUser();
 
-      await DebugService.measureMongoOperation("removeFromFavorites", async () => {
-        await prisma.favorite.deleteMany({
-          where: {
-            userId: user.id,
-            seriesId,
-          },
-        });
+      await prisma.favorite.deleteMany({
+        where: {
+          userId: user.id,
+          seriesId,
+        },
       });
 
       this.dispatchFavoritesChanged();
@@ -102,47 +95,41 @@ export class FavoriteService {
   static async getAllFavoriteIds(): Promise<string[]> {
     const user = await this.getCurrentUser();
 
-    return DebugService.measureMongoOperation("getAllFavoriteIds", async () => {
-      const favorites = await prisma.favorite.findMany({
-        where: { userId: user.id },
-        select: { seriesId: true },
-      });
-      return favorites.map((favorite) => favorite.seriesId);
+    const favorites = await prisma.favorite.findMany({
+      where: { userId: user.id },
+      select: { seriesId: true },
     });
+    return favorites.map((favorite) => favorite.seriesId);
   }
 
   static async addFavorite(seriesId: string) {
     const user = await this.getCurrentUser();
 
-    return DebugService.measureMongoOperation("addFavorite", async () => {
-      const favorite = await prisma.favorite.upsert({
-        where: {
-          userId_seriesId: {
-            userId: user.id,
-            seriesId,
-          },
-        },
-        update: {},
-        create: {
+    const favorite = await prisma.favorite.upsert({
+      where: {
+        userId_seriesId: {
           userId: user.id,
           seriesId,
         },
-      });
-      return favorite;
+      },
+      update: {},
+      create: {
+        userId: user.id,
+        seriesId,
+      },
     });
+    return favorite;
   }
 
   static async removeFavorite(seriesId: string): Promise<boolean> {
     const user = await this.getCurrentUser();
 
-    return DebugService.measureMongoOperation("removeFavorite", async () => {
-      const result = await prisma.favorite.deleteMany({
-        where: {
-          userId: user.id,
-          seriesId,
-        },
-      });
-      return result.count > 0;
+    const result = await prisma.favorite.deleteMany({
+      where: {
+        userId: user.id,
+        seriesId,
+      },
     });
+    return result.count > 0;
   }
 }

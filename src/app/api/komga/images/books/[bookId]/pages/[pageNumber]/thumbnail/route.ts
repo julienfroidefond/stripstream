@@ -4,6 +4,7 @@ import { BookService } from "@/lib/services/book.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 import { getErrorMessage } from "@/utils/errors";
+import { findHttpStatus } from "@/utils/image-errors";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +33,27 @@ export async function GET(
     return response;
   } catch (error) {
     console.error("Erreur lors de la récupération de la miniature de la page:", error);
+    
+    // Chercher un status HTTP 404 dans la chaîne d'erreurs
+    const httpStatus = findHttpStatus(error);
+    
+    if (httpStatus === 404) {
+      const { bookId, pageNumber: pageNumberParam } = await params;
+      const pageNumber: number = parseInt(pageNumberParam);
+      // eslint-disable-next-line no-console
+      console.log(`📷 Page ${pageNumber} thumbnail not found for book: ${bookId}`);
+      return NextResponse.json(
+        {
+          error: {
+            code: ERROR_CODES.IMAGE.FETCH_ERROR,
+            name: "Image not found",
+            message: "Image not found",
+          },
+        },
+        { status: 404 }
+      );
+    }
+    
     if (error instanceof AppError) {
       return NextResponse.json(
         {

@@ -14,8 +14,10 @@ class RequestQueue {
   private activeCount = 0;
   private maxConcurrent: number;
 
-  constructor(maxConcurrent: number = 5) {
-    this.maxConcurrent = maxConcurrent;
+  constructor(maxConcurrent?: number) {
+    // Lire depuis env ou utiliser la valeur par défaut
+    const envValue = process.env.KOMGA_MAX_CONCURRENT_REQUESTS;
+    this.maxConcurrent = maxConcurrent ?? (envValue ? parseInt(envValue, 10) : 5);
   }
 
   async enqueue<T>(execute: () => Promise<T>): Promise<T> {
@@ -68,6 +70,10 @@ class RequestQueue {
   }
 }
 
-// Singleton instance - Limite à 2 requêtes simultanées vers Komga (réduit pour CPU)
-export const RequestQueueService = new RequestQueue(2);
+// Singleton instance - Par défaut limite à 2 requêtes simultanées (configurable via KOMGA_MAX_CONCURRENT_REQUESTS)
+export const RequestQueueService = new RequestQueue(
+  process.env.KOMGA_MAX_CONCURRENT_REQUESTS 
+    ? parseInt(process.env.KOMGA_MAX_CONCURRENT_REQUESTS, 10) 
+    : 2
+);
 

@@ -1,7 +1,6 @@
 import fs from "fs";
 import path from "path";
 import { PreferencesService } from "./preferences.service";
-import { DebugService } from "./debug.service";
 import { getCurrentUser } from "../auth-utils";
 
 export type CacheMode = "file" | "memory";
@@ -440,14 +439,13 @@ class ServerCacheService {
       const { data, isStale } = cachedResult;
       const endTime = performance.now();
 
-      // Log la requête avec l'indication du cache
-      await DebugService.logRequest({
-        url: `[CACHE${isStale ? '-STALE' : ''}] ${key}`,
-        startTime,
-        endTime,
-        fromCache: true,
-        cacheType: type,
-      });
+      // Debug logging
+      if (process.env.CACHE_DEBUG === 'true') {
+        const icon = isStale ? '⚠️' : '✅';
+        const status = isStale ? 'STALE' : 'HIT';
+        // eslint-disable-next-line no-console
+        console.log(`${icon} [CACHE ${status}] ${key} | ${type} | ${(endTime - startTime).toFixed(2)}ms`);
+      }
 
       // Si le cache est expiré, revalider en background sans bloquer la réponse
       if (isStale) {
@@ -459,9 +457,21 @@ class ServerCacheService {
     }
 
     // Pas de cache du tout, fetch normalement
+    if (process.env.CACHE_DEBUG === 'true') {
+      // eslint-disable-next-line no-console
+      console.log(`❌ [CACHE MISS] ${key} | ${type}`);
+    }
+
     try {
       const data = await fetcher();
       this.set(cacheKey, data, type);
+      
+      const endTime = performance.now();
+      if (process.env.CACHE_DEBUG === 'true') {
+        // eslint-disable-next-line no-console
+        console.log(`💾 [CACHE SET] ${key} | ${type} | ${(endTime - startTime).toFixed(2)}ms`);
+      }
+      
       return data;
     } catch (error) {
       throw error;
@@ -482,16 +492,13 @@ class ServerCacheService {
       const data = await fetcher();
       this.set(cacheKey, data, type);
       
-      const endTime = performance.now();
-      await DebugService.logRequest({
-        url: `[REVALIDATE] ${debugKey}`,
-        startTime,
-        endTime,
-        fromCache: false,
-        cacheType: type,
-      });
+      if (process.env.CACHE_DEBUG === 'true') {
+        const endTime = performance.now();
+        // eslint-disable-next-line no-console
+        console.log(`🔄 [CACHE REVALIDATE] ${debugKey} | ${type} | ${(endTime - startTime).toFixed(2)}ms`);
+      }
     } catch (error) {
-      console.error(`Background revalidation failed for ${debugKey}:`, error);
+      console.error(`🔴 [CACHE REVALIDATE ERROR] ${debugKey}:`, error);
       // Ne pas relancer l'erreur car c'est en background
     }
   }

@@ -31,7 +31,6 @@ export class PreferencesService {
         showThumbnails: preferences.showThumbnails,
         cacheMode: preferences.cacheMode as "memory" | "file",
         showOnlyUnread: preferences.showOnlyUnread,
-        debug: preferences.debug,
         displayMode: preferences.displayMode as UserPreferences["displayMode"],
         background: preferences.background as unknown as BackgroundPreferences,
       };
@@ -51,7 +50,6 @@ export class PreferencesService {
       if (preferences.showThumbnails !== undefined) updateData.showThumbnails = preferences.showThumbnails;
       if (preferences.cacheMode !== undefined) updateData.cacheMode = preferences.cacheMode;
       if (preferences.showOnlyUnread !== undefined) updateData.showOnlyUnread = preferences.showOnlyUnread;
-      if (preferences.debug !== undefined) updateData.debug = preferences.debug;
       if (preferences.displayMode !== undefined) updateData.displayMode = preferences.displayMode;
       if (preferences.background !== undefined) updateData.background = preferences.background;
 
@@ -63,7 +61,6 @@ export class PreferencesService {
           showThumbnails: preferences.showThumbnails ?? defaultPreferences.showThumbnails,
           cacheMode: preferences.cacheMode ?? defaultPreferences.cacheMode,
           showOnlyUnread: preferences.showOnlyUnread ?? defaultPreferences.showOnlyUnread,
-          debug: preferences.debug ?? defaultPreferences.debug,
           displayMode: preferences.displayMode ?? defaultPreferences.displayMode,
           background: (preferences.background ?? defaultPreferences.background) as unknown as Prisma.InputJsonValue,
         },
@@ -73,7 +70,6 @@ export class PreferencesService {
         showThumbnails: updatedPreferences.showThumbnails,
         cacheMode: updatedPreferences.cacheMode as "memory" | "file",
         showOnlyUnread: updatedPreferences.showOnlyUnread,
-        debug: updatedPreferences.debug,
         displayMode: updatedPreferences.displayMode as UserPreferences["displayMode"],
         background: updatedPreferences.background as unknown as BackgroundPreferences,
       };

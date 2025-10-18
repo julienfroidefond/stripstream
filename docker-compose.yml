@@ -20,6 +20,7 @@ services:
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
       - NEXTAUTH_URL=${NEXTAUTH_URL}
       - AUTH_TRUST_HOST=true
+      - KOMGA_MAX_CONCURRENT_REQUESTS=5
     depends_on:
       mongodb:
         condition: service_healthy

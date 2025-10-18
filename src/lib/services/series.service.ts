@@ -92,6 +92,9 @@ export class SeriesService extends BaseApiService {
       // Filtrer les livres
       let filteredBooks = allBooks;
 
+      // Filtrer les livres supprimés (fichiers manquants sur le filesystem)
+      filteredBooks = filteredBooks.filter((book: KomgaBook) => !book.deleted);
+
       if (unreadOnly) {
         filteredBooks = filteredBooks.filter(
           (book: KomgaBook) => !book.readProgress || !book.readProgress.completed

@@ -75,34 +75,6 @@ export function DisplaySettings() {
             }}
           />
         </div>
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
-            <Label htmlFor="debug-mode">{t("settings.display.debugMode.label")}</Label>
-            <p className="text-sm text-muted-foreground">
-              {t("settings.display.debugMode.description")}
-            </p>
-          </div>
-          <Switch
-            id="debug-mode"
-            checked={preferences.debug}
-            onCheckedChange={async (checked) => {
-              try {
-                await updatePreferences({ debug: checked });
-                toast({
-                  title: t("settings.title"),
-                  description: t("settings.komga.messages.configSaved"),
-                });
-              } catch (error) {
-                console.error("Erreur détaillée:", error);
-                toast({
-                  variant: "destructive",
-                  title: t("settings.error.title"),
-                  description: t("settings.error.message"),
-                });
-              }
-            }}
-          />
-        </div>
       </CardContent>
     </Card>
   );

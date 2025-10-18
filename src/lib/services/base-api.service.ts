@@ -6,7 +6,6 @@ import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
 import type { KomgaConfig } from "@/types/komga";
 import type { ServerCacheService } from "./server-cache.service";
-import { DebugService } from "./debug.service";
 import { RequestMonitorService } from "./request-monitor.service";
 import { RequestQueueService } from "./request-queue.service";
 
@@ -109,8 +108,6 @@ export abstract class BaseApiService {
       }
     }
 
-    const startTime = performance.now();
-    
     // Timeout de 60 secondes au lieu de 10 par défaut
     const timeoutMs = 60000;
     const controller = new AbortController();
@@ -149,19 +146,27 @@ export abstract class BaseApiService {
               family: 4,
             });
           }
+          
+          // Retry automatique sur timeout de connexion (cold start)
+          if (fetchError?.cause?.code === 'UND_ERR_CONNECT_TIMEOUT') {
+            // eslint-disable-next-line no-console
+            console.log(`⏱️  Connection timeout for ${url}. Retrying once (cold start)...`);
+            
+            return await fetch(url, { 
+              headers, 
+              ...options,
+              signal: controller.signal,
+              // @ts-ignore - undici-specific options
+              connectTimeout: timeoutMs,
+              bodyTimeout: timeoutMs,
+              headersTimeout: timeoutMs,
+            });
+          }
+          
           throw fetchError;
         }
       });
       clearTimeout(timeoutId);
-        const endTime = performance.now();
-
-      // Logger la requête côté serveur
-      await DebugService.logRequest({
-        url: url,
-        startTime,
-        endTime,
-        fromCache: false, // Côté serveur, on ne peut pas détecter le cache navigateur
-      });
 
       if (!response.ok) {
         throw new AppError(ERROR_CODES.KOMGA.HTTP_ERROR, {
@@ -172,16 +177,6 @@ export abstract class BaseApiService {
 
       return options.isImage ? (response as T) : response.json();
     } catch (error) {
-      const endTime = performance.now();
-      
-      // Logger l'erreur côté serveur
-      await DebugService.logRequest({
-        url: url,
-        startTime,
-        endTime,
-        fromCache: false,
-      });
-      
       throw error;
     } finally {
       clearTimeout(timeoutId);

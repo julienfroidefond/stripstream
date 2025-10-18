@@ -84,8 +84,12 @@ export class LibraryService extends BaseApiService {
     try {
       // Récupérer toutes les séries depuis le cache
       const allSeries = await this.getAllLibrarySeries(libraryId);
+      
       // Filtrer les séries
       let filteredSeries = allSeries;
+
+      // Filtrer les séries supprimées (fichiers manquants sur le filesystem)
+      filteredSeries = filteredSeries.filter((series) => !series.deleted);
 
       if (unreadOnly) {
         filteredSeries = filteredSeries.filter(
@@ -96,7 +100,8 @@ export class LibraryService extends BaseApiService {
       if (search) {
         const searchLower = search.toLowerCase();
         filteredSeries = filteredSeries.filter((series) =>
-          series.metadata.title.toLowerCase().includes(searchLower)
+          series.metadata.title.toLowerCase().includes(searchLower) ||
+          series.id.toLowerCase().includes(searchLower)
         );
       }
 
@@ -108,6 +113,7 @@ export class LibraryService extends BaseApiService {
       const totalPages = Math.ceil(totalElements / size);
       const startIndex = page * size;
       const endIndex = Math.min(startIndex + size, totalElements);
+      
       const paginatedSeries = filteredSeries.slice(startIndex, endIndex);
 
       // Construire la réponse

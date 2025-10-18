@@ -85,11 +85,6 @@ export const ERROR_MESSAGES: Record<string, string> = {
   [ERROR_CODES.CONFIG.TTL_SAVE_ERROR]: "⏱️ Error saving TTL configuration",
   [ERROR_CODES.CONFIG.TTL_FETCH_ERROR]: "⏱️ Error fetching TTL configuration",
 
-  // Debug
-  [ERROR_CODES.DEBUG.FETCH_ERROR]: "🔍 Error fetching logs",
-  [ERROR_CODES.DEBUG.SAVE_ERROR]: "💾 Error saving log",
-  [ERROR_CODES.DEBUG.CLEAR_ERROR]: "🧹 Error clearing logs",
-
   // Client
   [ERROR_CODES.CLIENT.FETCH_ERROR]: "🌐 Error during request",
   [ERROR_CODES.CLIENT.NETWORK_ERROR]: "📡 Network connection error",

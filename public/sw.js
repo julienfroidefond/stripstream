@@ -1,6 +1,5 @@
 const CACHE_NAME = "stripstream-cache-v1";
-const BOOKS_CACHE_NAME = "stripstream-books";
-const COVERS_CACHE_NAME = "stripstream-covers";
+const IMAGES_CACHE_NAME = "stripstream-images-v1";
 const OFFLINE_PAGE = "/offline.html";
 
 const STATIC_ASSETS = [
@@ -16,8 +15,7 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     Promise.all([
       caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS)),
-      caches.open(BOOKS_CACHE_NAME),
-      caches.open(COVERS_CACHE_NAME),
+      caches.open(IMAGES_CACHE_NAME),
     ])
   );
 });
@@ -28,9 +26,7 @@ self.addEventListener("activate", (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames
-          .filter(
-            (name) => name !== CACHE_NAME && name !== BOOKS_CACHE_NAME && name !== COVERS_CACHE_NAME
-          )
+          .filter((name) => name !== CACHE_NAME && name !== IMAGES_CACHE_NAME)
           .map((name) => caches.delete(name))
       );
     })
@@ -53,73 +49,53 @@ const isNextStaticResource = (url) => {
   return url.includes("/_next/static") && !isWebpackResource(url);
 };
 
-// Fonction pour vérifier si c'est une ressource de livre
-const isBookResource = (url) => {
-  return url.includes("/api/v1/books/") && (url.includes("/pages") || url.includes("/thumbnail"));
-};
-
-// Fonction pour vérifier si c'est une image de couverture
-const isCoverImage = (url) => {
-  const urlParams = new URLSearchParams(url.split("?")[1]);
-  const originalUrl = urlParams.get("url") || url;
-
+// Fonction pour vérifier si c'est une image (couvertures ou pages de livres)
+const isImageResource = (url) => {
   return (
-    originalUrl.includes("/api/komga/images/") &&
-    (originalUrl.includes("/series/") || originalUrl.includes("/books/")) &&
-    originalUrl.includes("/thumbnail")
+    (url.includes("/api/v1/books/") && (url.includes("/pages") || url.includes("/thumbnail") || url.includes("/cover"))) ||
+    (url.includes("/api/komga/images/") && (url.includes("/series/") || url.includes("/books/")) && url.includes("/thumbnail"))
   );
 };
 
-// Stratégie de cache pour les images de couverture
-const coverCacheStrategy = async (request) => {
-  const urlParams = new URLSearchParams(request.url.split("?")[1]);
-  const originalUrl = urlParams.get("url") || request.url;
-  const originalRequest = new Request(originalUrl, request);
-
-  const cache = await caches.open(COVERS_CACHE_NAME);
-  const cachedResponse = await cache.match(originalRequest);
+// Stratégie Cache-First pour les images
+const imageCacheStrategy = async (request) => {
+  const cache = await caches.open(IMAGES_CACHE_NAME);
+  const cachedResponse = await cache.match(request);
 
   if (cachedResponse) {
     return cachedResponse;
   }
 
   try {
-    const response = await fetch(originalRequest);
+    const response = await fetch(request);
     if (response.ok) {
-      await cache.put(originalRequest, response.clone());
+      await cache.put(request, response.clone());
       return response;
     }
-    throw new Error("Network response was not ok");
+    // Si 404, retourner une réponse vide sans throw (pas d'erreur console)
+    if (response.status === 404) {
+      return new Response("", {
+        status: 404,
+        statusText: "Not Found",
+        headers: {
+          "Content-Type": "text/plain",
+        },
+      });
+    }
+    // Pour les autres erreurs, throw
+    throw new Error(`Network response error: ${response.status}`);
   } catch (error) {
-    console.error("Error fetching cover image", error);
+    // Erreurs réseau (offline, timeout, etc.)
+    console.warn("Image fetch failed:", error);
     return new Response("", {
-      status: 404,
-      statusText: "Not Found",
+      status: 503,
+      statusText: "Service Unavailable",
       headers: {
         "Content-Type": "text/plain",
       },
     });
   }
 };
-
-// Écouteur pour les messages du client
-self.addEventListener("message", (event) => {
-  if (event.data && event.data.type === "CACHE_COVER") {
-    const { url } = event.data;
-    if (url && isCoverImage(url)) {
-      fetch(url)
-        .then(async (response) => {
-          if (response.ok) {
-            const cache = await caches.open(COVERS_CACHE_NAME);
-            await cache.put(url, response.clone());
-          }
-        })
-        .catch(() => {
-          // Ignorer les erreurs de mise en cache
-        });
-    }
-  }
-});
 
 self.addEventListener("fetch", (event) => {
   // Ignorer les requêtes non GET
@@ -128,54 +104,13 @@ self.addEventListener("fetch", (event) => {
   // Ignorer les ressources webpack
   if (isWebpackResource(event.request.url)) return;
 
-  // Gérer les requêtes d'images de couverture
-  if (event.request.url.includes("/api/v1/books/") && event.request.url.includes("/cover")) {
-    event.respondWith(
-      caches.match(event.request).then((response) => {
-        if (response) {
-          return response;
-        }
-
-        return fetch(event.request)
-          .then((response) => {
-            if (!response.ok) {
-              return new Response(null, { status: 404 });
-            }
-
-            const responseToCache = response.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseToCache);
-            });
-
-            return response;
-          })
-          .catch(() => {
-            return new Response(null, { status: 404 });
-          });
-      })
-    );
-  }
-
-  // Pour les images de couverture
-  if (isCoverImage(event.request.url)) {
-    event.respondWith(coverCacheStrategy(event.request));
+  // Gérer les images avec Cache-First
+  if (isImageResource(event.request.url)) {
+    event.respondWith(imageCacheStrategy(event.request));
     return;
   }
 
-  // Pour les ressources de livre
-  if (isBookResource(event.request.url)) {
-    event.respondWith(
-      caches.match(event.request).then((response) => {
-        if (response) {
-          return response;
-        }
-        return fetch(event.request);
-      })
-    );
-    return;
-  }
-
-  // Pour les ressources statiques de Next.js et les autres requêtes
+  // Pour les ressources statiques de Next.js et les autres requêtes : Network-First
   event.respondWith(
     fetch(event.request)
       .then((response) => {

@@ -9,8 +9,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { usePathname } from "next/navigation";
 import { registerServiceWorker } from "@/lib/registerSW";
 import { NetworkStatus } from "../ui/NetworkStatus";
-import { DebugWrapper } from "@/components/debug/DebugWrapper";
-import { DebugProvider } from "@/contexts/DebugContext";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import type { KomgaLibrary, KomgaSeries } from "@/types/komga";
 
@@ -94,25 +92,22 @@ export default function ClientLayout({ children, initialLibraries = [], initialF
 
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <DebugProvider>
-        <div className="relative min-h-screen bg-background" style={backgroundStyle}>
-          {!isPublicRoute && <Header onToggleSidebar={handleToggleSidebar} />}
-          {!isPublicRoute && (
-            <Sidebar 
-              isOpen={isSidebarOpen} 
-              onClose={handleCloseSidebar} 
-              initialLibraries={initialLibraries} 
-              initialFavorites={initialFavorites}
-              userIsAdmin={userIsAdmin}
-            />
-          )}
-          <main className={`${!isPublicRoute ? "container pt-safe" : ""}`}>{children}</main>
-          <InstallPWA />
-          <Toaster />
-          <NetworkStatus />
-          <DebugWrapper />
-        </div>
-      </DebugProvider>
+      <div className="relative min-h-screen bg-background" style={backgroundStyle}>
+        {!isPublicRoute && <Header onToggleSidebar={handleToggleSidebar} />}
+        {!isPublicRoute && (
+          <Sidebar 
+            isOpen={isSidebarOpen} 
+            onClose={handleCloseSidebar} 
+            initialLibraries={initialLibraries} 
+            initialFavorites={initialFavorites}
+            userIsAdmin={userIsAdmin}
+          />
+        )}
+        <main className={`${!isPublicRoute ? "container pt-safe" : ""}`}>{children}</main>
+        <InstallPWA />
+        <Toaster />
+        <NetworkStatus />
+      </div>
     </ThemeProvider>
   );
 }
