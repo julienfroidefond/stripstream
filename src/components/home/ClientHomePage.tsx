@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { HomeContent } from "./HomeContent";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { HomePageSkeleton } from "@/components/skeletons/OptimizedSkeletons";
+import { PullToRefreshIndicator } from "@/components/common/PullToRefreshIndicator";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import type { HomeData } from "@/types/home";
 
@@ -81,6 +83,13 @@ export function ClientHomePage() {
     }
   };
 
+  const pullToRefresh = usePullToRefresh({
+    onRefresh: async () => {
+      await handleRefresh();
+    },
+    enabled: !loading && !error && !!data,
+  });
+
   if (loading) {
     return <HomePageSkeleton />;
   }
@@ -105,6 +114,17 @@ export function ClientHomePage() {
     );
   }
 
-  return <HomeContent data={data} refreshHome={handleRefresh} />;
+  return (
+    <>
+      <PullToRefreshIndicator
+        isPulling={pullToRefresh.isPulling}
+        isRefreshing={pullToRefresh.isRefreshing}
+        progress={pullToRefresh.progress}
+        canRefresh={pullToRefresh.canRefresh}
+        isHiding={pullToRefresh.isHiding}
+      />
+      <HomeContent data={data} refreshHome={handleRefresh} />
+    </>
+  );
 }
 

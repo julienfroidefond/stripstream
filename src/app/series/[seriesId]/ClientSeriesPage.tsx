@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { PaginatedBookGrid } from "@/components/series/PaginatedBookGrid";
 import { SeriesHeader } from "@/components/series/SeriesHeader";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
+import { PullToRefreshIndicator } from "@/components/common/PullToRefreshIndicator";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { OptimizedSkeleton } from "@/components/skeletons/OptimizedSkeletons";
 import type { LibraryResponse } from "@/types/library";
 import type { KomgaBook, KomgaSeries } from "@/types/komga";
@@ -137,6 +139,13 @@ export function ClientSeriesPage({
     }
   };
 
+  const pullToRefresh = usePullToRefresh({
+    onRefresh: async () => {
+      await handleRefresh(seriesId);
+    },
+    enabled: !loading && !error && !!series && !!books,
+  });
+
   if (loading) {
     return (
       <div className="container py-8 space-y-8">
@@ -172,17 +181,26 @@ export function ClientSeriesPage({
   }
 
   return (
-    <div className="container">
-      <SeriesHeader series={series} refreshSeries={handleRefresh} />
-      <PaginatedBookGrid
-        books={books.content || []}
-        currentPage={currentPage}
-        totalPages={books.totalPages}
-        totalElements={books.totalElements}
-        defaultShowOnlyUnread={preferences.showOnlyUnread}
-        showOnlyUnread={unreadOnly}
+    <>
+      <PullToRefreshIndicator
+        isPulling={pullToRefresh.isPulling}
+        isRefreshing={pullToRefresh.isRefreshing}
+        progress={pullToRefresh.progress}
+        canRefresh={pullToRefresh.canRefresh}
+        isHiding={pullToRefresh.isHiding}
       />
-    </div>
+      <div className="container">
+        <SeriesHeader series={series} refreshSeries={handleRefresh} />
+        <PaginatedBookGrid
+          books={books.content || []}
+          currentPage={currentPage}
+          totalPages={books.totalPages}
+          totalElements={books.totalElements}
+          defaultShowOnlyUnread={preferences.showOnlyUnread}
+          showOnlyUnread={unreadOnly}
+        />
+      </div>
+    </>
   );
 }
 

@@ -5,6 +5,8 @@ import { PaginatedSeriesGrid } from "@/components/library/PaginatedSeriesGrid";
 import { RefreshButton } from "@/components/library/RefreshButton";
 import { LibraryHeader } from "@/components/library/LibraryHeader";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
+import { PullToRefreshIndicator } from "@/components/common/PullToRefreshIndicator";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { useTranslate } from "@/hooks/useTranslate";
 import { OptimizedSkeleton } from "@/components/skeletons/OptimizedSkeletons";
 import type { LibraryResponse } from "@/types/library";
@@ -155,6 +157,13 @@ export function ClientLibraryPage({
     }
   };
 
+  const pullToRefresh = usePullToRefresh({
+    onRefresh: async () => {
+      await handleRefresh(libraryId);
+    },
+    enabled: !loading && !error && !!library && !!series,
+  });
+
   if (loading) {
     return (
       <>
@@ -230,6 +239,13 @@ export function ClientLibraryPage({
 
   return (
     <>
+      <PullToRefreshIndicator
+        isPulling={pullToRefresh.isPulling}
+        isRefreshing={pullToRefresh.isRefreshing}
+        progress={pullToRefresh.progress}
+        canRefresh={pullToRefresh.canRefresh}
+        isHiding={pullToRefresh.isHiding}
+      />
       <LibraryHeader
         library={library}
         seriesCount={series.totalElements}

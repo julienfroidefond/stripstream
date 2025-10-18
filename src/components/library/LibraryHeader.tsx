@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { Library, BookOpen } from "lucide-react";
 import type { KomgaLibrary, KomgaSeries } from "@/types/komga";
 import { RefreshButton } from "./RefreshButton";
@@ -17,13 +18,18 @@ interface LibraryHeaderProps {
 export const LibraryHeader = ({ library, seriesCount, series, refreshLibrary }: LibraryHeaderProps) => {
   const { t } = useTranslate();
 
-  // Sélectionner une série aléatoire pour l'image centrale
-  const randomSeries = series.length > 0 ? series[Math.floor(Math.random() * series.length)] : null;
-  
-  // Sélectionner une autre série aléatoire pour le fond (différente de celle du centre)
-  const backgroundSeries = series.length > 1 
-    ? series.filter(s => s.id !== randomSeries?.id)[Math.floor(Math.random() * (series.length - 1))]
-    : randomSeries;
+  // Mémoriser la sélection des séries pour éviter les rerenders inutiles
+  const { randomSeries, backgroundSeries } = useMemo(() => {
+    // Sélectionner une série aléatoire pour l'image centrale
+    const random = series.length > 0 ? series[Math.floor(Math.random() * series.length)] : null;
+    
+    // Sélectionner une autre série aléatoire pour le fond (différente de celle du centre)
+    const background = series.length > 1 
+      ? series.filter(s => s.id !== random?.id)[Math.floor(Math.random() * (series.length - 1))]
+      : random;
+    
+    return { randomSeries: random, backgroundSeries: background };
+  }, [series]);
 
   return (
     <div className="relative min-h-[200px] md:h-[200px] w-screen -ml-[calc((100vw-100%)/2)] overflow-hidden">
