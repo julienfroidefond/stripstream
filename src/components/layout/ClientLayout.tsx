@@ -42,7 +42,7 @@ export default function ClientLayout({ children, initialLibraries = [], initialF
         backgroundImage: `url(${bg.imageUrl})`,
         backgroundSize: "cover" as const,
         backgroundPosition: "center" as const,
-        backgroundAttachment: "fixed" as const,
+        backgroundRepeat: "no-repeat" as const,
       };
     }
     
