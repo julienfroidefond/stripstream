@@ -45,7 +45,7 @@ export const ControlButtons = ({
       {/* Boutons de contrôle */}
       <div
         className={cn(
-          "absolute top-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 transition-all duration-300 p-2 rounded-full bg-background/70 backdrop-blur-md",
+          "absolute top-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 transition-all duration-300 p-1.5 rounded-full bg-background/70 backdrop-blur-md",
           showControls ? "opacity-100" : "opacity-0 pointer-events-none"
         )}
         onClick={(e) => {
@@ -66,8 +66,8 @@ export const ControlButtons = ({
               ? "reader.controls.doublePage.disable"
               : "reader.controls.doublePage.enable"
           )}
-          iconClassName="h-6 w-6"
-          className="rounded-full"
+          iconClassName="h-5 w-5"
+          className="rounded-full h-9 w-9"
         />
         <IconButton
           variant="ghost"
@@ -84,8 +84,8 @@ export const ControlButtons = ({
                 : "reader.controls.direction.rtl"
             ),
           })}
-          iconClassName="h-6 w-6"
-          className="rounded-full"
+          iconClassName="h-5 w-5"
+          className="rounded-full h-9 w-9"
         />
         <IconButton
           variant="ghost"
@@ -98,8 +98,8 @@ export const ControlButtons = ({
           tooltip={t(
             isFullscreen ? "reader.controls.fullscreen.exit" : "reader.controls.fullscreen.enter"
           )}
-          iconClassName="h-6 w-6"
-          className="rounded-full"
+          iconClassName="h-5 w-5"
+          className="rounded-full h-9 w-9"
         />
         <IconButton
           variant="ghost"
@@ -112,8 +112,8 @@ export const ControlButtons = ({
           tooltip={t(
             showThumbnails ? "reader.controls.thumbnails.hide" : "reader.controls.thumbnails.show"
           )}
-          iconClassName="h-6 w-6"
-          className={cn("rounded-full", showThumbnails && "ring-2 ring-primary")}
+          iconClassName="h-5 w-5"
+          className={cn("rounded-full h-9 w-9", showThumbnails && "ring-2 ring-primary")}
         />
         <IconButton
           variant="ghost"
@@ -124,8 +124,8 @@ export const ControlButtons = ({
             onZoom();
           }}
           tooltip={t("reader.controls.zoom")}
-          iconClassName="h-6 w-6"
-          className="rounded-full"
+          iconClassName="h-5 w-5"
+          className="rounded-full h-9 w-9"
         />
         <IconButton
           variant="ghost"
@@ -136,10 +136,10 @@ export const ControlButtons = ({
             onForceReload();
           }}
           tooltip={t("reader.controls.reload")}
-          iconClassName="h-6 w-6"
-          className="rounded-full"
+          iconClassName="h-5 w-5"
+          className="rounded-full h-9 w-9"
         />
-        <div className="p-2 rounded-full" onClick={(e) => e.stopPropagation()}>
+        <div className="px-1.5 rounded-full" onClick={(e) => e.stopPropagation()}>
           <PageInput
             currentPage={currentPage}
             totalPages={totalPages}
@@ -149,26 +149,21 @@ export const ControlButtons = ({
             }}
           />
         </div>
+        {onClose && (
+          <IconButton
+            variant="ghost"
+            size="icon"
+            icon={X}
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose(currentPage);
+            }}
+            tooltip={t("reader.controls.close")}
+            iconClassName="h-5 w-5"
+            className="rounded-full h-9 w-9"
+          />
+        )}
       </div>
-
-      {/* Bouton fermer */}
-      {onClose && (
-        <IconButton
-          variant="ghost"
-          size="icon"
-          icon={X}
-          onClick={(e) => {
-            e.stopPropagation();
-            onClose(currentPage);
-          }}
-          tooltip={t("reader.controls.close")}
-          iconClassName="h-6 w-6"
-          className={cn(
-            "absolute top-4 right-4 rounded-full bg-background/70 backdrop-blur-md hover:bg-background/80 transition-all duration-300 z-30",
-            showControls ? "opacity-100" : "opacity-0 pointer-events-none"
-          )}
-        />
-      )}
 
       {/* Bouton précédent */}
       {currentPage > 1 && (
