@@ -29,7 +29,7 @@ export const defaultPreferences: UserPreferences = {
   },
   background: {
     type: "default",
-    opacity: 100,
+    opacity: 10,
     blur: 0,
   },
 };

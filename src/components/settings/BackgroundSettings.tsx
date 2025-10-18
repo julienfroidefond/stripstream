@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { GRADIENT_PRESETS } from "@/types/preferences";
 import type { BackgroundType } from "@/types/preferences";
-import { Check } from "lucide-react";
+import { Check, Minus, Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 
@@ -121,6 +121,26 @@ export function BackgroundSettings() {
     }
   };
 
+  const adjustOpacity = async (delta: number) => {
+    try {
+      const currentOpacity = preferences.background.opacity || 10;
+      const newOpacity = Math.max(0, Math.min(100, currentOpacity + delta));
+      await handleOpacityChange([newOpacity]);
+    } catch (error) {
+      console.error("Erreur ajustement opacité:", error);
+    }
+  };
+
+  const adjustBlur = async (delta: number) => {
+    try {
+      const currentBlur = preferences.background.blur || 0;
+      const newBlur = Math.max(0, Math.min(20, currentBlur + delta));
+      await handleBlurChange([newBlur]);
+    } catch (error) {
+      console.error("Erreur ajustement flou:", error);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -218,16 +238,36 @@ export function BackgroundSettings() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <Label>Opacité du contenu</Label>
-                  <span className="text-sm text-muted-foreground">{preferences.background.opacity || 100}%</span>
+                  <span className="text-sm text-muted-foreground">{preferences.background.opacity || 10}%</span>
                 </div>
-                <Slider
-                  value={[preferences.background.opacity || 100]}
-                  onValueChange={handleOpacityChange}
-                  min={0}
-                  max={100}
-                  step={5}
-                  className="w-full"
-                />
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => adjustOpacity(-5)}
+                      className="h-10 w-10 p-0"
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <Slider
+                      value={[preferences.background.opacity || 10]}
+                      onValueChange={handleOpacityChange}
+                      min={0}
+                      max={100}
+                      step={5}
+                      className="flex-1"
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => adjustOpacity(5)}
+                      className="h-10 w-10 p-0"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
                 <p className="text-xs text-muted-foreground">
                   Contrôle la transparence du contenu par rapport au background
                 </p>
@@ -238,14 +278,34 @@ export function BackgroundSettings() {
                   <Label>Flou du background</Label>
                   <span className="text-sm text-muted-foreground">{preferences.background.blur || 0}px</span>
                 </div>
-                <Slider
-                  value={[preferences.background.blur || 0]}
-                  onValueChange={handleBlurChange}
-                  min={0}
-                  max={20}
-                  step={1}
-                  className="w-full"
-                />
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => adjustBlur(-1)}
+                      className="h-10 w-10 p-0"
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <Slider
+                      value={[preferences.background.blur || 0]}
+                      onValueChange={handleBlurChange}
+                      min={0}
+                      max={20}
+                      step={1}
+                      className="flex-1"
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => adjustBlur(1)}
+                      className="h-10 w-10 p-0"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
                 <p className="text-xs text-muted-foreground">
                   Applique un effet de flou au background
                 </p>
