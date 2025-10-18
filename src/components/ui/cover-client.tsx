@@ -20,10 +20,22 @@ export const CoverClient = ({
 }: CoverClientProps) => {
   const [imageError, setImageError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [retryCount, setRetryCount] = useState(0);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Reset état quand l'URL change
+  useEffect(() => {
+    setImageError(false);
+    setIsLoading(true);
+    setRetryCount(0);
+  }, [imageUrl]);
 
   // Timeout de sécurité : si l'image ne se charge pas en 30 secondes, on arrête le loading
   useEffect(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
     timeoutRef.current = setTimeout(() => {
       if (isLoading) {
         setIsLoading(false);
@@ -36,13 +48,27 @@ export const CoverClient = ({
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [imageUrl, isLoading]);
+  }, [imageUrl, isLoading, retryCount]);
+
+  // Si en erreur, réessayer automatiquement après 2 secondes
+  useEffect(() => {
+    if (imageError) {
+      const timer = setTimeout(() => {
+        setImageError(false);
+        setIsLoading(true);
+        setRetryCount(prev => prev + 1);
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [imageError]);
 
   const handleLoad = () => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
     setIsLoading(false);
+    setImageError(false);
   };
 
   const handleError = () => {
@@ -52,6 +78,11 @@ export const CoverClient = ({
     setImageError(true);
     setIsLoading(false);
   };
+
+  // Ajouter un timestamp pour forcer le rechargement en cas de retry
+  const imageUrlWithRetry = retryCount > 0 
+    ? `${imageUrl}${imageUrl.includes('?') ? '&' : '?'}retry=${retryCount}`
+    : imageUrl;
 
   if (imageError) {
     return (
@@ -66,7 +97,7 @@ export const CoverClient = ({
       <ImageLoader isLoading={isLoading} />
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={imageUrl}
+        src={imageUrlWithRetry}
         alt={alt}
         loading="lazy"
         className={cn(
