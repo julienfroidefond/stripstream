@@ -47,6 +47,7 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
   const [isLoadingSwEntries, setIsLoadingSwEntries] = useState(false);
   const [showSwEntries, setShowSwEntries] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
+  const [expandedVersions, setExpandedVersions] = useState<Record<string, boolean>>({});
   const [ttlConfig, setTTLConfig] = useState<TTLConfigData>(
     initialTTLConfig || {
       defaultTTL: 5,
@@ -197,7 +198,7 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
     setShowSwEntries(!showSwEntries);
   };
 
-  const getFirstPathSegment = (url: string): string => {
+  const getPathGroup = (url: string): string => {
     try {
       const urlObj = new URL(url);
       const path = urlObj.pathname;
@@ -205,16 +206,56 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
       
       if (segments.length === 0) return '/';
       
+      // Pour /api/komga/images, grouper par type (series/books)
+      if (segments[0] === 'api' && segments[1] === 'komga' && segments[2] === 'images' && segments[3]) {
+        return `/${segments[0]}/${segments[1]}/${segments[2]}/${segments[3]}`;
+      }
+      
+      // Pour les autres, garder juste le premier segment
       return `/${segments[0]}`;
     } catch {
       return 'Autres';
     }
   };
 
+  const getBaseUrl = (url: string): string => {
+    try {
+      const urlObj = new URL(url);
+      return urlObj.pathname;
+    } catch {
+      return url;
+    }
+  };
+
+  const groupVersions = (entries: ServiceWorkerCacheEntry[]) => {
+    const grouped = entries.reduce(
+      (acc, entry) => {
+        const baseUrl = getBaseUrl(entry.url);
+        if (!acc[baseUrl]) {
+          acc[baseUrl] = [];
+        }
+        acc[baseUrl].push(entry);
+        return acc;
+      },
+      {} as Record<string, ServiceWorkerCacheEntry[]>
+    );
+
+    // Trier par date (le plus récent en premier) basé sur le paramètre v
+    Object.keys(grouped).forEach((key) => {
+      grouped[key].sort((a, b) => {
+        const aVersion = new URL(a.url).searchParams.get('v') || '0';
+        const bVersion = new URL(b.url).searchParams.get('v') || '0';
+        return Number(bVersion) - Number(aVersion);
+      });
+    });
+
+    return grouped;
+  };
+
   const groupEntriesByPath = (entries: ServiceWorkerCacheEntry[]) => {
     const grouped = entries.reduce(
       (acc, entry) => {
-        const pathGroup = getFirstPathSegment(entry.url);
+        const pathGroup = getPathGroup(entry.url);
         if (!acc[pathGroup]) {
           acc[pathGroup] = [];
         }
@@ -229,7 +270,19 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
       grouped[key].sort((a, b) => b.size - a.size);
     });
 
-    return grouped;
+    // Trier les groupes par taille totale décroissante
+    const sortedGroups: Record<string, ServiceWorkerCacheEntry[]> = {};
+    Object.entries(grouped)
+      .sort((a, b) => {
+        const aSize = getTotalSizeByType(a[1]);
+        const bSize = getTotalSizeByType(b[1]);
+        return bSize - aSize;
+      })
+      .forEach(([key, value]) => {
+        sortedGroups[key] = value;
+      });
+
+    return sortedGroups;
   };
 
   const getTotalSizeByType = (entries: ServiceWorkerCacheEntry[]): number => {
@@ -240,6 +293,13 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
     setExpandedGroups((prev) => ({
       ...prev,
       [groupName]: !prev[groupName],
+    }));
+  };
+
+  const toggleVersions = (fileName: string) => {
+    setExpandedVersions((prev) => ({
+      ...prev,
+      [fileName]: !prev[fileName],
     }));
   };
 
@@ -291,6 +351,13 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
       if ("serviceWorker" in navigator && "caches" in window) {
         const cacheNames = await caches.keys();
         await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
+        
+        // Forcer la mise à jour du service worker
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (const registration of registrations) {
+          await registration.unregister();
+        }
+        
         toast({
           title: t("settings.cache.title"),
           description: t("settings.cache.messages.serviceWorkerCleared"),
@@ -304,6 +371,11 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
         if (showSwEntries) {
           await fetchSwCacheEntries();
         }
+        
+        // Recharger la page après 1 seconde pour réenregistrer le SW
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
       }
     } catch (error) {
       console.error("Erreur lors de la suppression des caches:", error);
@@ -546,20 +618,75 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
                               </button>
                               {isExpanded && (
                                 <div className="space-y-1 pl-2">
-                                  {entries.map((entry, index) => (
-                                    <div key={index} className="py-1">
-                                      <div className="flex items-start justify-between gap-2">
-                                        <div className="flex-1 min-w-0">
-                                          <div className="font-mono text-xs truncate text-muted-foreground" title={entry.url}>
-                                            {entry.url.replace(/^https?:\/\/[^/]+/, "")}
+                                  {(() => {
+                                    const versionGroups = groupVersions(entries);
+                                    return Object.entries(versionGroups).map(([baseUrl, versions]) => {
+                                      const hasMultipleVersions = versions.length > 1;
+                                      const isVersionExpanded = expandedVersions[baseUrl];
+                                      const totalSize = versions.reduce((sum, v) => sum + v.size, 0);
+
+                                      if (!hasMultipleVersions) {
+                                        const entry = versions[0];
+                                        return (
+                                          <div key={baseUrl} className="py-1">
+                                            <div className="flex items-start justify-between gap-2">
+                                              <div className="flex-1 min-w-0">
+                                                <div className="font-mono text-xs truncate text-muted-foreground" title={entry.url}>
+                                                  {entry.url.replace(/^https?:\/\/[^/]+/, "")}
+                                                </div>
+                                              </div>
+                                              <div className="text-xs text-muted-foreground whitespace-nowrap">
+                                                {formatBytes(entry.size)}
+                                              </div>
+                                            </div>
                                           </div>
+                                        );
+                                      }
+
+                                      return (
+                                        <div key={baseUrl} className="py-1">
+                                          <button
+                                            type="button"
+                                            onClick={() => toggleVersions(baseUrl)}
+                                            className="w-full flex items-start justify-between gap-2 hover:bg-muted/30 rounded p-1 -m-1 transition-colors"
+                                          >
+                                            <div className="flex-1 min-w-0 flex items-center gap-1">
+                                              {isVersionExpanded ? (
+                                                <ChevronDown className="h-3 w-3 flex-shrink-0" />
+                                              ) : (
+                                                <ChevronUp className="h-3 w-3 flex-shrink-0" />
+                                              )}
+                                              <div className="font-mono text-xs truncate text-muted-foreground" title={baseUrl}>
+                                                {baseUrl}
+                                              </div>
+                                              <span className="inline-flex items-center rounded-full bg-orange-500/10 px-1.5 py-0.5 text-xs font-medium text-orange-600 dark:text-orange-400 flex-shrink-0">
+                                                {versions.length} versions
+                                              </span>
+                                            </div>
+                                            <div className="text-xs text-muted-foreground whitespace-nowrap font-medium">
+                                              {formatBytes(totalSize)}
+                                            </div>
+                                          </button>
+                                          {isVersionExpanded && (
+                                            <div className="pl-4 mt-1 space-y-1">
+                                              {versions.map((version, vIdx) => (
+                                                <div key={vIdx} className="py-0.5 flex items-start justify-between gap-2">
+                                                  <div className="flex-1 min-w-0">
+                                                    <div className="font-mono text-xs truncate text-muted-foreground/70" title={version.url}>
+                                                      {new URL(version.url).search || "(no version)"}
+                                                    </div>
+                                                  </div>
+                                                  <div className="text-xs text-muted-foreground/70 whitespace-nowrap">
+                                                    {formatBytes(version.size)}
+                                                  </div>
+                                                </div>
+                                              ))}
+                                            </div>
+                                          )}
                                         </div>
-                                        <div className="text-xs text-muted-foreground whitespace-nowrap">
-                                          {formatBytes(entry.size)}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  ))}
+                                      );
+                                    });
+                                  })()}
                                 </div>
                               )}
                             </div>

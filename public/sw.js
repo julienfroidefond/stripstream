@@ -1,5 +1,5 @@
-const CACHE_NAME = "stripstream-cache-v1";
-const IMAGES_CACHE_NAME = "stripstream-images-v1";
+const CACHE_NAME = "stripstream-cache-v3";
+const IMAGES_CACHE_NAME = "stripstream-images-v3";
 const OFFLINE_PAGE = "/offline.html";
 
 const STATIC_ASSETS = [
@@ -9,6 +9,16 @@ const STATIC_ASSETS = [
   "/images/icons/icon-192x192.png",
   "/images/icons/icon-512x512.png",
 ];
+
+// Fonction pour obtenir l'URL de base sans les query params
+const getBaseUrl = (url) => {
+  try {
+    const urlObj = new URL(url);
+    return urlObj.origin + urlObj.pathname;
+  } catch {
+    return url;
+  }
+};
 
 // Installation du service worker
 self.addEventListener("install", (event) => {
@@ -20,16 +30,58 @@ self.addEventListener("install", (event) => {
   );
 });
 
+// Fonction pour nettoyer les doublons dans un cache
+const cleanDuplicatesInCache = async (cacheName) => {
+  const cache = await caches.open(cacheName);
+  const keys = await cache.keys();
+  
+  // Grouper par URL de base
+  const grouped = {};
+  for (const key of keys) {
+    const baseUrl = getBaseUrl(key.url);
+    if (!grouped[baseUrl]) {
+      grouped[baseUrl] = [];
+    }
+    grouped[baseUrl].push(key);
+  }
+  
+  // Pour chaque groupe, garder seulement la version la plus récente
+  const deletePromises = [];
+  for (const baseUrl in grouped) {
+    const versions = grouped[baseUrl];
+    if (versions.length > 1) {
+      // Trier par query params (version) décroissant
+      versions.sort((a, b) => {
+        const aVersion = new URL(a.url).searchParams.get('v') || '0';
+        const bVersion = new URL(b.url).searchParams.get('v') || '0';
+        return Number(bVersion) - Number(aVersion);
+      });
+      // Supprimer toutes sauf la première (plus récente)
+      for (let i = 1; i < versions.length; i++) {
+        deletePromises.push(cache.delete(versions[i]));
+      }
+    }
+  }
+  
+  await Promise.all(deletePromises);
+};
+
 // Activation et nettoyage des anciens caches
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames
-          .filter((name) => name !== CACHE_NAME && name !== IMAGES_CACHE_NAME)
-          .map((name) => caches.delete(name))
-      );
-    })
+    Promise.all([
+      // Supprimer les anciens caches
+      caches.keys().then((cacheNames) => {
+        return Promise.all(
+          cacheNames
+            .filter((name) => name !== CACHE_NAME && name !== IMAGES_CACHE_NAME)
+            .map((name) => caches.delete(name))
+        );
+      }),
+      // Nettoyer les doublons dans les caches actuels
+      cleanDuplicatesInCache(CACHE_NAME),
+      cleanDuplicatesInCache(IMAGES_CACHE_NAME),
+    ])
   );
 });
 
@@ -55,6 +107,22 @@ const isImageResource = (url) => {
     (url.includes("/api/v1/books/") && (url.includes("/pages") || url.includes("/thumbnail") || url.includes("/cover"))) ||
     (url.includes("/api/komga/images/") && (url.includes("/series/") || url.includes("/books/")) && url.includes("/thumbnail"))
   );
+};
+
+// Fonction pour nettoyer les anciennes versions d'un fichier
+const cleanOldVersions = async (cacheName, request) => {
+  const cache = await caches.open(cacheName);
+  const baseUrl = getBaseUrl(request.url);
+  
+  // Récupérer toutes les requêtes en cache
+  const keys = await cache.keys();
+  
+  // Supprimer toutes les requêtes qui ont la même URL de base
+  const deletePromises = keys
+    .filter(key => getBaseUrl(key.url) === baseUrl)
+    .map(key => cache.delete(key));
+  
+  await Promise.all(deletePromises);
 };
 
 // Stratégie Cache-First pour les images
@@ -113,16 +181,30 @@ self.addEventListener("fetch", (event) => {
   // Pour les ressources statiques de Next.js et les autres requêtes : Network-First
   event.respondWith(
     fetch(event.request)
-      .then((response) => {
+      .then(async (response) => {
         // Mettre en cache les ressources statiques de Next.js et les pages
         if (
           response.ok &&
           (isNextStaticResource(event.request.url) || event.request.mode === "navigate")
         ) {
           const responseToCache = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
-          });
+          const cache = await caches.open(CACHE_NAME);
+          
+          // Nettoyer les anciennes versions avant de mettre en cache la nouvelle
+          if (isNextStaticResource(event.request.url)) {
+            try {
+              await cleanOldVersions(CACHE_NAME, event.request);
+            } catch (error) {
+              console.warn("Error cleaning old versions:", error);
+            }
+          }
+          
+          // Mettre en cache la nouvelle version
+          try {
+            await cache.put(event.request, responseToCache);
+          } catch (error) {
+            console.warn("Error caching response:", error);
+          }
         }
         return response;
       })
