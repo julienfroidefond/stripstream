@@ -7,6 +7,12 @@ body {
   overscroll-behavior: none;
 }
 
+/* Bloque le zoom partout sauf reader */
+body.no-pinch-zoom,
+body.no-pinch-zoom * {
+  touch-action: pan-x pan-y;
+}
+
 /* Ajout des règles pour gérer le safe-area-inset sur iOS
 @supports (padding-top: env(safe-area-inset-top)) {
   body {
@@ -91,6 +97,13 @@ body {
   }
   body {
     @apply text-foreground;
+  }
+  
+  /* Empêche le zoom automatique iOS sur les inputs */
+  input,
+  textarea,
+  select {
+    font-size: 16px;
   }
 }
 

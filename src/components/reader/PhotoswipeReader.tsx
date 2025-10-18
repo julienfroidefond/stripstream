@@ -46,6 +46,15 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
     currentPageRef.current = currentPage;
   }, [currentPage]);
 
+  // Activer le zoom dans le reader en enlevant la classe no-pinch-zoom
+  useEffect(() => {
+    document.body.classList.remove('no-pinch-zoom');
+
+    return () => {
+      document.body.classList.add('no-pinch-zoom');
+    };
+  }, []);
+
   // Auto double page en paysage
   useEffect(() => {
     setIsDoublePage(isLandscape);
@@ -393,7 +402,7 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
   return (
     <div
       ref={readerRef}
-      className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50 overflow-hidden"
+      className="reader-zoom-enabled fixed inset-0 bg-background/95 backdrop-blur-sm z-50 overflow-hidden"
       onClick={() => setShowControls(!showControls)}
     >
       <div className="relative h-full flex flex-col items-center justify-center">

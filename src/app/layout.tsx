@@ -92,7 +92,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <head>
         <meta
           name="viewport"
-          content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover"
+          content="width=device-width, initial-scale=1, viewport-fit=cover"
         />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -145,7 +145,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         />
       </head>
       <body
-        className={cn("min-h-screen bg-background font-sans antialiased h-full", inter.className)}
+        className={cn("min-h-screen bg-background font-sans antialiased h-full no-pinch-zoom", inter.className)}
       >
         <AuthProvider>
           <I18nProvider locale={locale}>
