@@ -66,7 +66,7 @@ model Preferences {
   cacheMode      String   @default("memory") // "memory" | "file"
   showOnlyUnread Boolean  @default(false)
   displayMode    Json     @default("{\"compact\": false, \"itemsPerPage\": 20}")
-  background     Json     @default("{\"type\": \"default\"}")
+  background     Json     @default("{\"type\": \"default\", \"opacity\": 100, \"blur\": 0}")
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 

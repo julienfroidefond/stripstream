@@ -29,10 +29,12 @@ export default function ClientLayout({ children, initialLibraries = [], initialF
 
   const backgroundStyle = useMemo(() => {
     const bg = preferences.background;
+    const blur = bg.blur || 0;
     
     if (bg.type === "gradient" && bg.gradient) {
       return {
         backgroundImage: bg.gradient,
+        filter: blur > 0 ? `blur(${blur}px)` : undefined,
       };
     }
     
@@ -42,6 +44,7 @@ export default function ClientLayout({ children, initialLibraries = [], initialF
         backgroundSize: "cover" as const,
         backgroundPosition: "center" as const,
         backgroundRepeat: "no-repeat" as const,
+        filter: blur > 0 ? `blur(${blur}px)` : undefined,
       };
     }
     
@@ -90,6 +93,7 @@ export default function ClientLayout({ children, initialLibraries = [], initialF
   const isPublicRoute = publicRoutes.includes(pathname) || pathname.startsWith('/books/');
 
   const hasCustomBackground = preferences.background.type === "gradient" || preferences.background.type === "image";
+  const contentOpacity = (preferences.background.opacity || 100) / 100;
 
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
@@ -100,7 +104,10 @@ export default function ClientLayout({ children, initialLibraries = [], initialF
           style={backgroundStyle}
         />
       )}
-      <div className={`relative min-h-screen ${hasCustomBackground ? "bg-background/95" : "bg-background"}`}>
+      <div 
+        className={`relative min-h-screen ${hasCustomBackground ? "" : "bg-background"}`}
+        style={hasCustomBackground ? { backgroundColor: `rgba(var(--background-rgb, 255, 255, 255), ${contentOpacity})` } : undefined}
+      >
         {!isPublicRoute && <Header onToggleSidebar={handleToggleSidebar} />}
         {!isPublicRoute && (
           <Sidebar 

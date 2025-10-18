@@ -4,6 +4,8 @@ export interface BackgroundPreferences {
   type: BackgroundType;
   gradient?: string;
   imageUrl?: string;
+  opacity?: number; // 0-100
+  blur?: number; // 0-20 (px)
 }
 
 export interface UserPreferences {
@@ -27,6 +29,8 @@ export const defaultPreferences: UserPreferences = {
   },
   background: {
     type: "default",
+    opacity: 100,
+    blur: 0,
   },
 };
 

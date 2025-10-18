@@ -12,6 +12,7 @@ import { GRADIENT_PRESETS } from "@/types/preferences";
 import type { BackgroundType } from "@/types/preferences";
 import { Check } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Slider } from "@/components/ui/slider";
 
 export function BackgroundSettings() {
   const { t } = useTranslate();
@@ -91,6 +92,32 @@ export function BackgroundSettings() {
         title: t("settings.error.title"),
         description: t("settings.error.message"),
       });
+    }
+  };
+
+  const handleOpacityChange = async (value: number[]) => {
+    try {
+      await updatePreferences({
+        background: {
+          ...preferences.background,
+          opacity: value[0],
+        },
+      });
+    } catch (error) {
+      console.error("Erreur:", error);
+    }
+  };
+
+  const handleBlurChange = async (value: number[]) => {
+    try {
+      await updatePreferences({
+        background: {
+          ...preferences.background,
+          blur: value[0],
+        },
+      });
+    } catch (error) {
+      console.error("Erreur:", error);
     }
   };
 
@@ -183,6 +210,47 @@ export function BackgroundSettings() {
                 {t("settings.background.image.description")}
               </p>
             </div>
+          )}
+
+          {/* Contrôles d'opacité et de flou */}
+          {(preferences.background.type === "gradient" || preferences.background.type === "image") && (
+            <>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label>Opacité du contenu</Label>
+                  <span className="text-sm text-muted-foreground">{preferences.background.opacity || 100}%</span>
+                </div>
+                <Slider
+                  value={[preferences.background.opacity || 100]}
+                  onValueChange={handleOpacityChange}
+                  min={0}
+                  max={100}
+                  step={5}
+                  className="w-full"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Contrôle la transparence du contenu par rapport au background
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label>Flou du background</Label>
+                  <span className="text-sm text-muted-foreground">{preferences.background.blur || 0}px</span>
+                </div>
+                <Slider
+                  value={[preferences.background.blur || 0]}
+                  onValueChange={handleBlurChange}
+                  min={0}
+                  max={20}
+                  step={1}
+                  className="w-full"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Applique un effet de flou au background
+                </p>
+              </div>
+            </>
           )}
         </div>
       </CardContent>
