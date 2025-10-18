@@ -103,7 +103,7 @@ export default function ClientLayout({ children, initialLibraries = [], initialF
             userIsAdmin={userIsAdmin}
           />
         )}
-        <main className={`${!isPublicRoute ? "container pt-safe" : ""}`}>{children}</main>
+        <main className={!isPublicRoute ? "pt-safe" : ""}>{children}</main>
         <InstallPWA />
         <Toaster />
         <NetworkStatus />
