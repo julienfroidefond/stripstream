@@ -6,6 +6,7 @@ import { PreferencesService } from "./preferences.service";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
 import { SeriesService } from "./series.service";
+import type { Series } from "@/types/series";
 
 export class BookService extends BaseApiService {
   static async getBook(bookId: string): Promise<KomgaBookWithPages> {
@@ -161,5 +162,72 @@ export class BookService extends BaseApiService {
 
   static getCoverUrl(bookId: string): string {
     return `/api/komga/images/books/${bookId}/thumbnail`;
+  }
+
+  static async getRandomBookFromLibraries(libraryIds: string[]): Promise<string> {
+    try {
+      if (libraryIds.length === 0) {
+        throw new AppError(ERROR_CODES.LIBRARY.NOT_FOUND, { message: "Aucune bibliothèque sélectionnée" });
+      }
+
+      const { LibraryService } = await import("./library.service");
+
+      // Essayer d'abord d'utiliser le cache des bibliothèques
+      const allSeriesFromCache: Series[] = [];
+      
+      for (const libraryId of libraryIds) {
+        try {
+          // Essayer de récupérer les séries depuis le cache (rapide si en cache)
+          const series = await LibraryService.getAllLibrarySeries(libraryId);
+          allSeriesFromCache.push(...series);
+        } catch {
+          // Si erreur, on continue avec les autres bibliothèques
+        }
+      }
+
+      if (allSeriesFromCache.length > 0) {
+        // Choisir une série au hasard parmi toutes celles trouvées
+        const randomSeriesIndex = Math.floor(Math.random() * allSeriesFromCache.length);
+        const randomSeries = allSeriesFromCache[randomSeriesIndex];
+
+        // Récupérer les books de cette série
+        const books = await SeriesService.getAllSeriesBooks(randomSeries.id);
+
+        if (books.length > 0) {
+          const randomBookIndex = Math.floor(Math.random() * books.length);
+          return books[randomBookIndex].id;
+        }
+      }
+
+      // Si pas de cache, faire une requête légère : prendre une page de séries d'une bibliothèque au hasard
+      const randomLibraryIndex = Math.floor(Math.random() * libraryIds.length);
+      const randomLibraryId = libraryIds[randomLibraryIndex];
+      
+      // Récupérer juste une page de séries (pas toutes)
+      const seriesResponse = await LibraryService.getLibrarySeries(randomLibraryId, 0, 20);
+      
+      if (seriesResponse.content.length === 0) {
+        throw new AppError(ERROR_CODES.BOOK.NOT_FOUND, { message: "Aucune série trouvée dans les bibliothèques sélectionnées" });
+      }
+
+      // Choisir une série au hasard parmi celles récupérées
+      const randomSeriesIndex = Math.floor(Math.random() * seriesResponse.content.length);
+      const randomSeries = seriesResponse.content[randomSeriesIndex];
+
+      // Récupérer les books de cette série
+      const books = await SeriesService.getAllSeriesBooks(randomSeries.id);
+
+      if (books.length === 0) {
+        throw new AppError(ERROR_CODES.BOOK.NOT_FOUND, { message: "Aucun livre trouvé dans la série" });
+      }
+
+      const randomBookIndex = Math.floor(Math.random() * books.length);
+      return books[randomBookIndex].id;
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError(ERROR_CODES.SERIES.FETCH_ERROR, {}, error);
+    }
   }
 }

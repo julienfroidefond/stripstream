@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslate } from "@/hooks/useTranslate";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { Label } from "@/components/ui/label";
@@ -13,12 +13,37 @@ import type { BackgroundType } from "@/types/preferences";
 import { Check, Minus, Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
+import { Checkbox } from "@/components/ui/checkbox";
+import type { KomgaLibrary } from "@/types/komga";
 
 export function BackgroundSettings() {
   const { t } = useTranslate();
   const { toast } = useToast();
   const { preferences, updatePreferences } = usePreferences();
   const [customImageUrl, setCustomImageUrl] = useState(preferences.background.imageUrl || "");
+  const [komgaConfigValid, setKomgaConfigValid] = useState(false);
+  const [libraries, setLibraries] = useState<KomgaLibrary[]>([]);
+  const [selectedLibraries, setSelectedLibraries] = useState<string[]>(
+    preferences.background.komgaLibraries || []
+  );
+
+  // Vérifier la config Komga au chargement
+  useEffect(() => {
+    const checkKomgaConfig = async () => {
+      try {
+        const response = await fetch("/api/komga/libraries");
+        if (response.ok) {
+          const libs = await response.json();
+          setLibraries(libs);
+          setKomgaConfigValid(libs.length > 0);
+        }
+      } catch (error) {
+        console.error("Erreur lors de la vérification de la config Komga:", error);
+        setKomgaConfigValid(false);
+      }
+    };
+    checkKomgaConfig();
+  }, []);
 
   const handleBackgroundTypeChange = async (type: BackgroundType) => {
     try {
@@ -141,6 +166,25 @@ export function BackgroundSettings() {
     }
   };
 
+  const handleLibraryToggle = async (libraryId: string) => {
+    const newSelection = selectedLibraries.includes(libraryId)
+      ? selectedLibraries.filter((id) => id !== libraryId)
+      : [...selectedLibraries, libraryId];
+
+    setSelectedLibraries(newSelection);
+
+    try {
+      await updatePreferences({
+        background: {
+          ...preferences.background,
+          komgaLibraries: newSelection,
+        },
+      });
+    } catch (error) {
+      console.error("Erreur:", error);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -176,6 +220,14 @@ export function BackgroundSettings() {
                   {t("settings.background.type.image")}
                 </Label>
               </div>
+              {komgaConfigValid && (
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="komga-random" id="bg-komga-random" />
+                  <Label htmlFor="bg-komga-random" className="cursor-pointer font-normal">
+                    Cover Komga aléatoire
+                  </Label>
+                </div>
+              )}
             </RadioGroup>
           </div>
 
@@ -232,8 +284,37 @@ export function BackgroundSettings() {
             </div>
           )}
 
+          {/* Sélection des bibliothèques Komga */}
+          {preferences.background.type === "komga-random" && (
+            <div className="space-y-3">
+              <Label>Bibliothèques</Label>
+              <div className="space-y-2">
+                {libraries.map((library) => (
+                  <div key={library.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`lib-${library.id}`}
+                      checked={selectedLibraries.includes(library.id)}
+                      onCheckedChange={() => handleLibraryToggle(library.id)}
+                    />
+                    <Label
+                      htmlFor={`lib-${library.id}`}
+                      className="cursor-pointer font-normal text-sm"
+                    >
+                      {library.name} ({library.booksCount} livres)
+                    </Label>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Sélectionnez une ou plusieurs bibliothèques pour choisir une cover aléatoire
+              </p>
+            </div>
+          )}
+
           {/* Contrôles d'opacité et de flou */}
-          {(preferences.background.type === "gradient" || preferences.background.type === "image") && (
+          {(preferences.background.type === "gradient" ||
+            preferences.background.type === "image" ||
+            preferences.background.type === "komga-random") && (
             <>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">

@@ -1,19 +1,31 @@
-import { Menu, Moon, Sun } from "lucide-react";
+import { Menu, Moon, Sun, RefreshCw } from "lucide-react";
 import { useTheme } from "next-themes";
 import LanguageSelector from "@/components/LanguageSelector";
 import { useTranslation } from "react-i18next";
 import { IconButton } from "@/components/ui/icon-button";
+import { useState } from "react";
 
 interface HeaderProps {
   onToggleSidebar: () => void;
+  onRefreshBackground?: () => Promise<void>;
+  showRefreshBackground?: boolean;
 }
 
-export function Header({ onToggleSidebar }: HeaderProps) {
+export function Header({ onToggleSidebar, onRefreshBackground, showRefreshBackground = false }: HeaderProps) {
   const { theme, setTheme } = useTheme();
   const { t } = useTranslation();
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark");
+  };
+
+  const handleRefreshBackground = async () => {
+    if (onRefreshBackground && !isRefreshing) {
+      setIsRefreshing(true);
+      await onRefreshBackground();
+      setIsRefreshing(false);
+    }
   };
 
   return (
@@ -37,6 +49,17 @@ export function Header({ onToggleSidebar }: HeaderProps) {
 
         <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
           <nav className="flex items-center space-x-2">
+            {showRefreshBackground && (
+              <button
+                onClick={handleRefreshBackground}
+                disabled={isRefreshing}
+                className="px-2 py-1.5 hover:bg-accent hover:text-accent-foreground rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Rafraîchir l'image de fond"
+              >
+                <RefreshCw className={`h-[1.2rem] w-[1.2rem] ${isRefreshing ? 'animate-spin' : ''}`} />
+                <span className="sr-only">Rafraîchir l&apos;image de fond</span>
+              </button>
+            )}
             <LanguageSelector />
             <button
               onClick={toggleTheme}

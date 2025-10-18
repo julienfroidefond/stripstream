@@ -1,4 +1,4 @@
-export type BackgroundType = "default" | "gradient" | "image";
+export type BackgroundType = "default" | "gradient" | "image" | "komga-random";
 
 export interface BackgroundPreferences {
   type: BackgroundType;
@@ -6,6 +6,7 @@ export interface BackgroundPreferences {
   imageUrl?: string;
   opacity?: number; // 0-100
   blur?: number; // 0-20 (px)
+  komgaLibraries?: string[]; // IDs des bibliothèques Komga sélectionnées
 }
 
 export interface UserPreferences {
