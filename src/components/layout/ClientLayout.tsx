@@ -33,7 +33,6 @@ export default function ClientLayout({ children, initialLibraries = [], initialF
     if (bg.type === "gradient" && bg.gradient) {
       return {
         backgroundImage: bg.gradient,
-        backgroundAttachment: "fixed" as const,
       };
     }
     
@@ -90,9 +89,18 @@ export default function ClientLayout({ children, initialLibraries = [], initialF
   // Ne pas afficher le header et la sidebar sur les routes publiques et le reader
   const isPublicRoute = publicRoutes.includes(pathname) || pathname.startsWith('/books/');
 
+  const hasCustomBackground = preferences.background.type === "gradient" || preferences.background.type === "image";
+
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <div className="relative min-h-screen bg-background" style={backgroundStyle}>
+      {/* Background fixe pour les images et gradients */}
+      {hasCustomBackground && (
+        <div 
+          className="fixed inset-0 -z-10" 
+          style={backgroundStyle}
+        />
+      )}
+      <div className={`relative min-h-screen ${hasCustomBackground ? "bg-background/95" : "bg-background"}`}>
         {!isPublicRoute && <Header onToggleSidebar={handleToggleSidebar} />}
         {!isPublicRoute && (
           <Sidebar 
