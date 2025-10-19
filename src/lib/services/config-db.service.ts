@@ -90,6 +90,7 @@ export class ConfigDBService {
           seriesTTL: data.seriesTTL,
           booksTTL: data.booksTTL,
           imagesTTL: data.imagesTTL,
+          imageCacheMaxAge: data.imageCacheMaxAge,
         },
         create: {
           userId: user.id,
@@ -99,6 +100,7 @@ export class ConfigDBService {
           seriesTTL: data.seriesTTL,
           booksTTL: data.booksTTL,
           imagesTTL: data.imagesTTL,
+          imageCacheMaxAge: data.imageCacheMaxAge,
         },
       });
 

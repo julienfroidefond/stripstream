@@ -52,6 +52,7 @@ export async function POST(request: NextRequest) {
         seriesTTL: config.seriesTTL,
         booksTTL: config.booksTTL,
         imagesTTL: config.imagesTTL,
+        imageCacheMaxAge: config.imageCacheMaxAge,
       },
     });
   } catch (error) {

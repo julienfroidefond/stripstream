@@ -145,19 +145,33 @@
         "libraries": "Libraries TTL",
         "series": "Series TTL",
         "books": "Books TTL",
-        "images": "Images TTL"
+        "images": "Images TTL",
+        "imageCacheMaxAge": {
+          "label": "HTTP Image Cache Duration",
+          "description": "Duration for images to be cached in the browser",
+          "options": {
+            "noCache": "No cache (0s)",
+            "oneHour": "1 hour (3600s)",
+            "oneDay": "1 day (86400s)",
+            "oneWeek": "1 week (604800s)",
+            "oneMonth": "1 month (2592000s) - Recommended",
+            "oneYear": "1 year (31536000s)"
+          }
+        }
       },
       "buttons": {
         "saveTTL": "Save TTL",
         "clear": "Clear cache",
         "clearing": "Clearing...",
         "clearServiceWorker": "Clear service worker cache",
-        "clearingServiceWorker": "Clearing service worker cache..."
+        "clearingServiceWorker": "Clearing service worker cache...",
+        "flushImageCache": "Force reload images"
       },
       "messages": {
         "ttlSaved": "TTL configuration saved successfully",
         "cleared": "Server cache cleared successfully",
-        "serviceWorkerCleared": "Service worker cache cleared successfully"
+        "serviceWorkerCleared": "Service worker cache cleared successfully",
+        "imageCacheFlushed": "Images will be reloaded - refresh the page"
       },
       "error": {
         "title": "Error clearing cache",

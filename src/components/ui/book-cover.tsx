@@ -4,6 +4,7 @@ import { CoverClient } from "./cover-client";
 import { ProgressBar } from "./progress-bar";
 import type { BookCoverProps } from "./cover-utils";
 import { getImageUrl } from "./cover-utils";
+import { useImageUrl } from "@/hooks/useImageUrl";
 import { ClientOfflineBookService } from "@/lib/services/client-offlinebook.service";
 import { MarkAsReadButton } from "./mark-as-read-button";
 import { MarkAsUnreadButton } from "./mark-as-unread-button";
@@ -59,7 +60,8 @@ export function BookCover({
 }: BookCoverProps) {
   const { t } = useTranslate();
 
-  const imageUrl = getImageUrl("book", book.id);
+  const baseUrl = getImageUrl("book", book.id);
+  const imageUrl = useImageUrl(baseUrl);
   const isCompleted = book.readProgress?.completed || false;
 
   const currentPage = ClientOfflineBookService.getCurrentPage(book);

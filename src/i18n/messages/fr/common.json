@@ -145,19 +145,33 @@
         "libraries": "TTL bibliothèques",
         "series": "TTL séries",
         "books": "TTL tomes",
-        "images": "TTL images"
+        "images": "TTL images",
+        "imageCacheMaxAge": {
+          "label": "Durée du cache HTTP des images",
+          "description": "Durée de conservation des images dans le cache du navigateur",
+          "options": {
+            "noCache": "Aucun cache (0s)",
+            "oneHour": "1 heure (3600s)",
+            "oneDay": "1 jour (86400s)",
+            "oneWeek": "1 semaine (604800s)",
+            "oneMonth": "1 mois (2592000s) - Recommandé",
+            "oneYear": "1 an (31536000s)"
+          }
+        }
       },
       "buttons": {
         "saveTTL": "Sauvegarder les TTL",
         "clear": "Vider le cache",
         "clearing": "Suppression...",
         "clearServiceWorker": "Vider le cache du service worker",
-        "clearingServiceWorker": "Suppression du cache service worker..."
+        "clearingServiceWorker": "Suppression du cache service worker...",
+        "flushImageCache": "Forcer le rechargement des images"
       },
       "messages": {
         "ttlSaved": "La configuration des TTL a été sauvegardée avec succès",
         "cleared": "Cache serveur supprimé avec succès",
-        "serviceWorkerCleared": "Cache du service worker supprimé avec succès"
+        "serviceWorkerCleared": "Cache du service worker supprimé avec succès",
+        "imageCacheFlushed": "Les images seront rechargées - rafraîchissez la page"
       },
       "error": {
         "title": "Erreur lors de la suppression du cache",

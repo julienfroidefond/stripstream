@@ -22,6 +22,7 @@ export interface TTLConfigData {
   seriesTTL: number;
   booksTTL: number;
   imagesTTL: number;
+  imageCacheMaxAge: number; // en secondes
 }
 
 export interface TTLConfig extends TTLConfigData {

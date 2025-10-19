@@ -10,6 +10,7 @@ import { usePathname } from "next/navigation";
 import { registerServiceWorker } from "@/lib/registerSW";
 import { NetworkStatus } from "../ui/NetworkStatus";
 import { usePreferences } from "@/contexts/PreferencesContext";
+import { ImageCacheProvider } from "@/contexts/ImageCacheContext";
 import type { KomgaLibrary, KomgaSeries } from "@/types/komga";
 
 // Routes qui ne nécessitent pas d'authentification
@@ -135,38 +136,40 @@ export default function ClientLayout({ children, initialLibraries = [], initialF
 
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      {/* Background fixe pour les images et gradients */}
-      {hasCustomBackground && (
+      <ImageCacheProvider>
+        {/* Background fixe pour les images et gradients */}
+        {hasCustomBackground && (
+          <div 
+            className="fixed inset-0 -z-10" 
+            style={backgroundStyle}
+          />
+        )}
         <div 
-          className="fixed inset-0 -z-10" 
-          style={backgroundStyle}
-        />
-      )}
-      <div 
-        className={`relative min-h-screen ${hasCustomBackground ? "" : "bg-background"}`}
-        style={hasCustomBackground ? { backgroundColor: `rgba(var(--background-rgb, 255, 255, 255), ${contentOpacity})` } : undefined}
-      >
-        {!isPublicRoute && (
-          <Header 
-            onToggleSidebar={handleToggleSidebar}
-            onRefreshBackground={fetchRandomBook}
-            showRefreshBackground={preferences.background.type === "komga-random"}
-          />
-        )}
-        {!isPublicRoute && (
-          <Sidebar 
-            isOpen={isSidebarOpen} 
-            onClose={handleCloseSidebar} 
-            initialLibraries={initialLibraries} 
-            initialFavorites={initialFavorites}
-            userIsAdmin={userIsAdmin}
-          />
-        )}
-        <main className={!isPublicRoute ? "pt-safe" : ""}>{children}</main>
-        <InstallPWA />
-        <Toaster />
-        <NetworkStatus />
-      </div>
+          className={`relative min-h-screen ${hasCustomBackground ? "" : "bg-background"}`}
+          style={hasCustomBackground ? { backgroundColor: `rgba(var(--background-rgb, 255, 255, 255), ${contentOpacity})` } : undefined}
+        >
+          {!isPublicRoute && (
+            <Header 
+              onToggleSidebar={handleToggleSidebar}
+              onRefreshBackground={fetchRandomBook}
+              showRefreshBackground={preferences.background.type === "komga-random"}
+            />
+          )}
+          {!isPublicRoute && (
+            <Sidebar 
+              isOpen={isSidebarOpen} 
+              onClose={handleCloseSidebar} 
+              initialLibraries={initialLibraries} 
+              initialFavorites={initialFavorites}
+              userIsAdmin={userIsAdmin}
+            />
+          )}
+          <main className={!isPublicRoute ? "pt-safe" : ""}>{children}</main>
+          <InstallPWA />
+          <Toaster />
+          <NetworkStatus />
+        </div>
+      </ImageCacheProvider>
     </ThemeProvider>
   );
 }

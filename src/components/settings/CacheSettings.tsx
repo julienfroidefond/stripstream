@@ -3,12 +3,13 @@
 import { useState, useEffect } from "react";
 import { useTranslate } from "@/hooks/useTranslate";
 import { useToast } from "@/components/ui/use-toast";
-import { Trash2, Loader2, HardDrive, List, ChevronDown, ChevronUp } from "lucide-react";
+import { Trash2, Loader2, HardDrive, List, ChevronDown, ChevronUp, ImageOff } from "lucide-react";
 import { CacheModeSwitch } from "@/components/settings/CacheModeSwitch";
 import { Label } from "@/components/ui/label";
 import type { TTLConfigData } from "@/types/komga";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useImageCache } from "@/contexts/ImageCacheContext";
 
 interface CacheSettingsProps {
   initialTTLConfig: TTLConfigData | null;
@@ -35,6 +36,7 @@ interface ServiceWorkerCacheEntry {
 export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
   const { t } = useTranslate();
   const { toast } = useToast();
+  const { flushImageCache } = useImageCache();
   const [isCacheClearing, setIsCacheClearing] = useState(false);
   const [isServiceWorkerClearing, setIsServiceWorkerClearing] = useState(false);
   const [serverCacheSize, setServerCacheSize] = useState<CacheSizeInfo | null>(null);
@@ -56,6 +58,7 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
       seriesTTL: 5,
       booksTTL: 5,
       imagesTTL: 1440,
+      imageCacheMaxAge: 2592000,
     }
   );
 
@@ -389,7 +392,15 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
     }
   };
 
-  const handleTTLChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFlushImageCache = () => {
+    flushImageCache();
+    toast({
+      title: t("settings.cache.title"),
+      description: t("settings.cache.messages.imageCacheFlushed"),
+    });
+  };
+
+  const handleTTLChange = (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = event.target;
     setTTLConfig((prev) => ({
       ...prev,
@@ -788,6 +799,30 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
                 className="flex h-9 w-full rounded-md border border-input bg-background/70 backdrop-blur-md px-3 py-1 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               />
             </div>
+            <div className="space-y-2">
+              <div className="space-y-1">
+                <label htmlFor="imageCacheMaxAge" className="text-sm font-medium">
+                  {t("settings.cache.ttl.imageCacheMaxAge.label")}
+                </label>
+                <p className="text-xs text-muted-foreground">
+                  {t("settings.cache.ttl.imageCacheMaxAge.description")}
+                </p>
+              </div>
+              <select
+                id="imageCacheMaxAge"
+                name="imageCacheMaxAge"
+                value={ttlConfig.imageCacheMaxAge}
+                onChange={handleTTLChange}
+                className="flex h-9 w-full rounded-md border border-input bg-background/70 backdrop-blur-md px-3 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="0">{t("settings.cache.ttl.imageCacheMaxAge.options.noCache")}</option>
+                <option value="3600">{t("settings.cache.ttl.imageCacheMaxAge.options.oneHour")}</option>
+                <option value="86400">{t("settings.cache.ttl.imageCacheMaxAge.options.oneDay")}</option>
+                <option value="604800">{t("settings.cache.ttl.imageCacheMaxAge.options.oneWeek")}</option>
+                <option value="2592000">{t("settings.cache.ttl.imageCacheMaxAge.options.oneMonth")}</option>
+                <option value="31536000">{t("settings.cache.ttl.imageCacheMaxAge.options.oneYear")}</option>
+              </select>
+            </div>
           </div>
           <div className="flex gap-3">
             <button
@@ -827,6 +862,16 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
               ) : (
                 t("settings.cache.buttons.clearServiceWorker")
               )}
+            </button>
+          </div>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={handleFlushImageCache}
+              className="flex-1 inline-flex items-center justify-center rounded-md bg-orange-500/90 backdrop-blur-md px-3 py-2 text-sm font-medium text-white ring-offset-background transition-colors hover:bg-orange-500/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+            >
+              <ImageOff className="mr-2 h-4 w-4" />
+              {t("settings.cache.buttons.flushImageCache")}
             </button>
           </div>
         </form>

@@ -67,11 +67,16 @@ COPY --from=builder /app/next-env.d.ts ./
 COPY --from=builder /app/tailwind.config.ts ./
 COPY --from=builder /app/scripts ./scripts
 
+# Copy entrypoint script
+COPY docker-entrypoint.sh ./
+RUN chmod +x docker-entrypoint.sh
+
 # Add non-root user for security
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs && \
     mkdir -p /app/.cache && \
-    chown -R nextjs:nodejs /app /app/.cache
+    chown -R nextjs:nodejs /app /app/.cache && \
+    chown nextjs:nodejs docker-entrypoint.sh
 
 USER nextjs
 
@@ -86,5 +91,5 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=3s \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
 
-# Start the application (init DB then start)
-CMD ["pnpm", "start:prod"] 
+# Start the application (push schema, init DB, then start)
+CMD ["./docker-entrypoint.sh"] 
