@@ -13,6 +13,7 @@ export type { CacheType };
 
 interface KomgaRequestInit extends RequestInit {
   isImage?: boolean;
+  noJson?: boolean;
 }
 
 interface KomgaUrlBuilder {
@@ -175,7 +176,15 @@ export abstract class BaseApiService {
         });
       }
 
-      return options.isImage ? (response as T) : response.json();
+      if (options.isImage) {
+        return response as T;
+      }
+      
+      if (options.noJson) {
+        return undefined as T;
+      }
+      
+      return response.json();
     } catch (error) {
       throw error;
     } finally {

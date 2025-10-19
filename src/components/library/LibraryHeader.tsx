@@ -1,9 +1,10 @@
 "use client";
 
 import { useMemo } from "react";
-import { Library, BookOpen } from "lucide-react";
+import { Library } from "lucide-react";
 import type { KomgaLibrary, KomgaSeries } from "@/types/komga";
 import { RefreshButton } from "./RefreshButton";
+import { ScanButton } from "./ScanButton";
 import { useTranslate } from "@/hooks/useTranslate";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { SeriesCover } from "@/components/ui/series-cover";
@@ -84,14 +85,8 @@ export const LibraryHeader = ({ library, seriesCount, series, refreshLibrary }: 
                 }
               </StatusBadge>
               
-              <StatusBadge status="reading" icon={BookOpen}>
-                {library.booksCount === 1 
-                  ? t("library.header.books", { count: library.booksCount })
-                  : t("library.header.books_plural", { count: library.booksCount })
-                }
-              </StatusBadge>
-              
               <RefreshButton libraryId={library.id} refreshLibrary={refreshLibrary} />
+              <ScanButton libraryId={library.id} />
             </div>
 
             {library.unavailable && (

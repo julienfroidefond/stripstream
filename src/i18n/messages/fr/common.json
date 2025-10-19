@@ -198,6 +198,23 @@
         "description": "Une erreur est survenue"
       }
     },
+    "scan": {
+      "button": "Analyser la bibliothèque",
+      "buttonLabel": "Analyser",
+      "success": {
+        "title": "Analyse lancée",
+        "description": "La bibliothèque est en cours d'analyse"
+      },
+      "complete": {
+        "title": "Analyse terminée",
+        "description": "La bibliothèque a été analysée et mise à jour"
+      },
+      "error": {
+        "title": "Erreur",
+        "description": "Une erreur est survenue lors de l'analyse de la bibliothèque",
+        "refresh": "Une erreur est survenue lors de la mise à jour des données"
+      }
+    },
     "header": {
       "series": "{{count}} série",
       "series_plural": "{{count}} séries",
@@ -361,6 +378,7 @@
 
     "LIBRARY_NOT_FOUND": "Bibliothèque introuvable",
     "LIBRARY_FETCH_ERROR": "Erreur lors de la récupération de la bibliothèque",
+    "LIBRARY_SCAN_ERROR": "Erreur lors de l'analyse de la bibliothèque",
 
     "SERIES_FETCH_ERROR": "Erreur lors de la récupération des séries",
     "SERIES_NO_BOOKS_FOUND": "Aucun livre trouvé dans la série",

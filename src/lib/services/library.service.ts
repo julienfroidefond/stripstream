@@ -159,4 +159,15 @@ export class LibraryService extends BaseApiService {
       throw new AppError(ERROR_CODES.CACHE.DELETE_ERROR, {}, error);
     }
   }
+
+  static async scanLibrary(libraryId: string, deep: boolean = false): Promise<void> {
+    try {
+      await this.fetchFromApi({
+        path: `libraries/${libraryId}/scan`,
+        params: { deep: String(deep) }
+      }, {}, { method: "POST", noJson: true });
+    } catch (error) {
+      throw new AppError(ERROR_CODES.LIBRARY.SCAN_ERROR, { libraryId }, error);
+    }
+  }
 }

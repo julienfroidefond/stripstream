@@ -32,6 +32,7 @@ export const ERROR_MESSAGES: Record<string, string> = {
   // Library
   [ERROR_CODES.LIBRARY.NOT_FOUND]: "📚 Library {libraryId} not found",
   [ERROR_CODES.LIBRARY.FETCH_ERROR]: "📚 Error fetching libraries",
+  [ERROR_CODES.LIBRARY.SCAN_ERROR]: "🔍 Error scanning library",
 
   // Series
   [ERROR_CODES.SERIES.FETCH_ERROR]: "📖 Error fetching series",

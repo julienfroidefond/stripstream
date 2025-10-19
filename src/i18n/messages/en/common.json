@@ -198,6 +198,23 @@
         "description": "An error occurred"
       }
     },
+    "scan": {
+      "button": "Scan library",
+      "buttonLabel": "Scan",
+      "success": {
+        "title": "Library scan started",
+        "description": "The library is being scanned"
+      },
+      "complete": {
+        "title": "Scan complete",
+        "description": "The library has been scanned and updated"
+      },
+      "error": {
+        "title": "Error",
+        "description": "An error occurred while scanning the library",
+        "refresh": "An error occurred while updating the library data"
+      }
+    },
     "header": {
       "series": "{{count}} series",
       "series_plural": "{{count}} series",
@@ -363,6 +380,7 @@
 
     "LIBRARY_NOT_FOUND": "Library not found",
     "LIBRARY_FETCH_ERROR": "Error fetching library",
+    "LIBRARY_SCAN_ERROR": "Error scanning library",
 
     "SERIES_FETCH_ERROR": "Error fetching series",
     "SERIES_NO_BOOKS_FOUND": "No books found in series",
