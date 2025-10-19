@@ -5,11 +5,59 @@ import { BookCover } from "@/components/ui/book-cover";
 import { useState, useEffect } from "react";
 import { useTranslate } from "@/hooks/useTranslate";
 import { cn } from "@/lib/utils";
+import { useBookOfflineStatus } from "@/hooks/useBookOfflineStatus";
 
 interface BookGridProps {
   books: KomgaBook[];
   onBookClick: (book: KomgaBook) => void;
   isCompact?: boolean;
+}
+
+interface BookCardProps {
+  book: KomgaBook;
+  onBookClick: (book: KomgaBook) => void;
+  onSuccess: (book: KomgaBook, action: "read" | "unread") => void;
+  isCompact: boolean;
+}
+
+function BookCard({ book, onBookClick, onSuccess, isCompact }: BookCardProps) {
+  const { t } = useTranslate();
+  const { isAccessible } = useBookOfflineStatus(book.id);
+
+  const handleClick = () => {
+    // Ne pas permettre le clic si le livre n'est pas accessible
+    if (!isAccessible) return;
+    onBookClick(book);
+  };
+
+  return (
+    <div
+      className={cn(
+        "group relative aspect-[2/3] overflow-hidden rounded-lg bg-muted",
+        isCompact ? "hover:scale-105 transition-transform" : "",
+        !isAccessible ? "cursor-not-allowed" : ""
+      )}
+    >
+      <div
+        onClick={handleClick}
+        className={cn(
+          "w-full h-full hover:opacity-100 transition-all",
+          isAccessible ? "cursor-pointer" : "cursor-not-allowed"
+        )}
+      >
+        <BookCover
+          book={book}
+          alt={t("books.coverAlt", {
+            title: book.metadata.title || 
+              (book.metadata.number 
+                ? t("navigation.volume", { number: book.metadata.number })
+                : ""),
+          })}
+          onSuccess={(book, action) => onSuccess(book, action)}
+        />
+      </div>
+    </div>
+  );
 }
 
 export function BookGrid({ books, onBookClick, isCompact = false }: BookGridProps) {
@@ -69,33 +117,15 @@ export function BookGrid({ books, onBookClick, isCompact = false }: BookGridProp
           : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5"
       )}
     >
-      {localBooks.map((book) => {
-        return (
-          <div
-            key={book.id}
-            className={cn(
-              "group relative aspect-[2/3] overflow-hidden rounded-lg bg-muted",
-              isCompact ? "hover:scale-105 transition-transform" : ""
-            )}
-          >
-            <div
-              onClick={() => onBookClick(book)}
-              className="w-full h-full hover:opacity-100 transition-all cursor-pointer"
-            >
-              <BookCover
-                book={book}
-                alt={t("books.coverAlt", {
-                  title: book.metadata.title || 
-                    (book.metadata.number 
-                      ? t("navigation.volume", { number: book.metadata.number })
-                      : ""),
-                })}
-                onSuccess={(book, action) => handleOnSuccess(book, action)}
-              />
-            </div>
-          </div>
-        );
-      })}
+      {localBooks.map((book) => (
+        <BookCard
+          key={book.id}
+          book={book}
+          onBookClick={onBookClick}
+          onSuccess={handleOnSuccess}
+          isCompact={isCompact}
+        />
+      ))}
     </div>
   );
 }

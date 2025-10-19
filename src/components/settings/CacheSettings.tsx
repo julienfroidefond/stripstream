@@ -41,6 +41,7 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
   const [isServiceWorkerClearing, setIsServiceWorkerClearing] = useState(false);
   const [serverCacheSize, setServerCacheSize] = useState<CacheSizeInfo | null>(null);
   const [swCacheSize, setSwCacheSize] = useState<number | null>(null);
+  const [apiCacheSize, setApiCacheSize] = useState<number | null>(null);
   const [isLoadingCacheSize, setIsLoadingCacheSize] = useState(true);
   const [cacheEntries, setCacheEntries] = useState<CacheEntry[]>([]);
   const [isLoadingEntries, setIsLoadingEntries] = useState(false);
@@ -116,6 +117,7 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
       if ("caches" in window) {
         const cacheNames = await caches.keys();
         let totalSize = 0;
+        let apiSize = 0;
 
         for (const cacheName of cacheNames) {
           const cache = await caches.open(cacheName);
@@ -126,11 +128,17 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
             if (response) {
               const blob = await response.clone().blob();
               totalSize += blob.size;
+              
+              // Calculer la taille du cache API séparément
+              if (cacheName.includes("api")) {
+                apiSize += blob.size;
+              }
             }
           }
         }
 
         setSwCacheSize(totalSize);
+        setApiCacheSize(apiSize);
       }
     } catch (error) {
       console.error("Erreur lors de la récupération de la taille du cache:", error);
@@ -468,7 +476,7 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
           {isLoadingCacheSize ? (
             <div className="text-sm text-muted-foreground">{t("settings.cache.size.loading")}</div>
           ) : (
-            <div className="grid gap-2 sm:grid-cols-2">
+            <div className="grid gap-2 sm:grid-cols-3">
               <div className="space-y-1">
                 <div className="text-sm font-medium">{t("settings.cache.size.server")}</div>
                 {serverCacheSize ? (
@@ -487,6 +495,15 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
                 <div className="text-sm font-medium">{t("settings.cache.size.serviceWorker")}</div>
                 {swCacheSize !== null ? (
                   <div className="text-sm text-muted-foreground">{formatBytes(swCacheSize)}</div>
+                ) : (
+                  <div className="text-sm text-muted-foreground">{t("settings.cache.size.error")}</div>
+                )}
+              </div>
+
+              <div className="space-y-1">
+                <div className="text-sm font-medium">{t("settings.cache.size.api")}</div>
+                {apiCacheSize !== null ? (
+                  <div className="text-sm text-muted-foreground">{formatBytes(apiCacheSize)}</div>
                 ) : (
                   <div className="text-sm text-muted-foreground">{t("settings.cache.size.error")}</div>
                 )}

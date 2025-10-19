@@ -139,7 +139,8 @@
       "size": {
         "title": "Cache size",
         "server": "Server cache",
-        "serviceWorker": "Service worker cache",
+        "serviceWorker": "SW cache (total)",
+        "api": "API cache (data)",
         "items": "{count} item(s)",
         "loading": "Loading...",
         "error": "Error loading"
@@ -290,7 +291,8 @@
       "unread": "Unread",
       "read": "Read",
       "readDate": "Read on {{date}}",
-      "progress": "Page {{current}}/{{total}}"
+      "progress": "Page {{current}}/{{total}}",
+      "offline": "Unavailable offline"
     },
     "display": {
       "showing": "Showing books {start} to {end} of {total}",

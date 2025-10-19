@@ -139,7 +139,8 @@
       "size": {
         "title": "Taille du cache",
         "server": "Cache serveur",
-        "serviceWorker": "Cache service worker",
+        "serviceWorker": "Cache SW (total)",
+        "api": "Cache API (données)",
         "items": "{count} élément(s)",
         "loading": "Chargement...",
         "error": "Erreur lors du chargement"
@@ -288,7 +289,8 @@
       "unread": "Non lu",
       "read": "Lu",
       "readDate": "Lu le {{date}}",
-      "progress": "Page {{current}}/{{total}}"
+      "progress": "Page {{current}}/{{total}}",
+      "offline": "Indisponible hors ligne"
     },
     "display": {
       "showing": "Affichage des tomes {start} à {end} sur {total}",

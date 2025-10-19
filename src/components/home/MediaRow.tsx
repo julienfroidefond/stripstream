@@ -9,6 +9,8 @@ import { ScrollContainer } from "@/components/ui/scroll-container";
 import { Section } from "@/components/ui/section";
 import type { LucideIcon } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { useBookOfflineStatus } from "@/hooks/useBookOfflineStatus";
+import { cn } from "@/lib/utils";
 
 interface BaseItem {
   id: string;
@@ -76,6 +78,8 @@ interface MediaCardProps {
 function MediaCard({ item, onClick }: MediaCardProps) {
   const { t } = useTranslate();
   const isSeries = "booksCount" in item;
+  const { isAccessible } = useBookOfflineStatus(isSeries ? "" : item.id);
+  
   const title = isSeries
     ? item.metadata.title
     : item.metadata.title ||
@@ -83,10 +87,21 @@ function MediaCard({ item, onClick }: MediaCardProps) {
         ? t("navigation.volume", { number: item.metadata.number })
         : "");
 
+  const handleClick = () => {
+    // Pour les séries, toujours autoriser le clic
+    // Pour les livres, vérifier si accessible
+    if (isSeries || isAccessible) {
+      onClick?.();
+    }
+  };
+
   return (
     <Card
-      onClick={onClick}
-      className="flex-shrink-0 w-[200px] relative flex flex-col hover:bg-accent hover:text-accent-foreground transition-colors overflow-hidden cursor-pointer"
+      onClick={handleClick}
+      className={cn(
+        "flex-shrink-0 w-[200px] relative flex flex-col hover:bg-accent hover:text-accent-foreground transition-colors overflow-hidden",
+        (!isSeries && !isAccessible) ? "cursor-not-allowed" : "cursor-pointer"
+      )}
     >
       <div className="relative aspect-[2/3] bg-muted">
         {isSeries ? (

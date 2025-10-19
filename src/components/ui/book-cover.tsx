@@ -12,6 +12,8 @@ import { BookOfflineButton } from "./book-offline-button";
 import { useTranslate } from "@/hooks/useTranslate";
 import type { KomgaBook } from "@/types/komga";
 import { formatDate } from "@/lib/utils";
+import { useBookOfflineStatus } from "@/hooks/useBookOfflineStatus";
+import { WifiOff } from "lucide-react";
 
 // Fonction utilitaire pour obtenir les informations de statut de lecture
 const getReadingStatusInfo = (book: KomgaBook, t: (key: string, options?: any) => string) => {
@@ -59,6 +61,7 @@ export function BookCover({
   overlayVariant = "default",
 }: BookCoverProps) {
   const { t } = useTranslate();
+  const { isAccessible } = useBookOfflineStatus(book.id);
 
   const baseUrl = getImageUrl("book", book.id);
   const imageUrl = useImageUrl(baseUrl);
@@ -73,6 +76,9 @@ export function BookCover({
   const isRead = book.readProgress?.completed || false;
   const hasReadProgress = book.readProgress !== null || currentPage > 0;
 
+  // Détermine si le livre doit être grisé (non accessible hors ligne)
+  const isUnavailable = !isAccessible;
+
   const handleMarkAsRead = () => {
     onSuccess?.(book, "read");
   };
@@ -83,7 +89,7 @@ export function BookCover({
 
   return (
     <>
-      <div className="relative w-full h-full">
+      <div className={`relative w-full h-full ${isUnavailable ? "opacity-40 grayscale" : ""}`}>
         <CoverClient
           imageUrl={imageUrl}
           alt={alt || t("books.defaultCoverAlt")}
@@ -91,6 +97,15 @@ export function BookCover({
           isCompleted={isCompleted}
         />
         {showProgress && <ProgressBar progress={currentPage} total={totalPages} type="book" />}
+        {/* Badge hors ligne si non accessible */}
+        {isUnavailable && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="bg-destructive/90 backdrop-blur-md text-destructive-foreground px-3 py-1.5 rounded-full flex items-center gap-2 text-xs font-medium shadow-lg">
+              <WifiOff className="h-3 w-3" />
+              <span>{t("books.status.offline")}</span>
+            </div>
+          </div>
+        )}
       </div>
       {/* Overlay avec les contrôles */}
       {(showControls || showOverlay) && (
