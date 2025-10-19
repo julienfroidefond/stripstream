@@ -67,6 +67,11 @@
   },
   "settings": {
     "title": "Préférences",
+    "tabs": {
+      "display": "Affichage",
+      "connection": "Connexion",
+      "cache": "Cache"
+    },
     "display": {
       "title": "Préférences d'affichage",
       "description": "Personnalisez l'affichage de votre bibliothèque.",

@@ -67,6 +67,11 @@
   },
   "settings": {
     "title": "Preferences",
+    "tabs": {
+      "display": "Display",
+      "connection": "Connection",
+      "cache": "Cache"
+    },
     "display": {
       "title": "Display Preferences",
       "description": "Customize your library display.",
