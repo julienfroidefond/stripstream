@@ -40,6 +40,8 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
   const touchStartYRef = useRef<number | null>(null);
   const isPinchingRef = useRef(false);
   const currentPageRef = useRef(currentPage);
+  const lastClickTimeRef = useRef<number>(0);
+  const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Garder currentPage à jour dans la ref pour le cleanup
   useEffect(() => {
@@ -399,11 +401,43 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
     }
   }, [currentPage, imageBlobUrls, isDoublePage, shouldShowDoublePage, getPageUrl]);
 
+  const handleContainerClick = useCallback((e: React.MouseEvent) => {
+    // Vérifier si c'est un double-clic sur une image
+    const target = e.target as HTMLElement;
+    const now = Date.now();
+    const timeSinceLastClick = now - lastClickTimeRef.current;
+    
+    if (target.tagName === 'IMG' && timeSinceLastClick < 300) {
+      // Double-clic sur une image
+      if (clickTimeoutRef.current) {
+        clearTimeout(clickTimeoutRef.current);
+        clickTimeoutRef.current = null;
+      }
+      e.stopPropagation();
+      handleZoom();
+      lastClickTimeRef.current = 0;
+    } else if (target.tagName === 'IMG') {
+      // Premier clic sur une image - attendre pour voir si c'est un double-clic
+      lastClickTimeRef.current = now;
+      if (clickTimeoutRef.current) {
+        clearTimeout(clickTimeoutRef.current);
+      }
+      clickTimeoutRef.current = setTimeout(() => {
+        setShowControls(prev => !prev);
+        clickTimeoutRef.current = null;
+      }, 300);
+    } else {
+      // Clic ailleurs - toggle les contrôles immédiatement
+      setShowControls(!showControls);
+      lastClickTimeRef.current = 0;
+    }
+  }, [showControls, handleZoom]);
+
   return (
     <div
       ref={readerRef}
       className="reader-zoom-enabled fixed inset-0 bg-background/95 backdrop-blur-sm z-50 overflow-hidden"
-      onClick={() => setShowControls(!showControls)}
+      onClick={handleContainerClick}
     >
       <div className="relative h-full flex flex-col items-center justify-center">
         {showEndMessage && (
@@ -471,7 +505,7 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
                 src={imageBlobUrls[currentPage] || getPageUrl(currentPage)}
                 alt={`Page ${currentPage}`}
                 className={cn(
-                  "max-h-full max-w-full object-contain transition-opacity",
+                  "max-h-full max-w-full object-contain transition-opacity cursor-pointer",
                   isLoading ? "opacity-0" : "opacity-100"
                 )}
                 loading="eager"
@@ -510,7 +544,7 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
                   src={imageBlobUrls[currentPage + 1] || getPageUrl(currentPage + 1)}
                   alt={`Page ${currentPage + 1}`}
                   className={cn(
-                    "max-h-full max-w-full object-contain transition-opacity",
+                    "max-h-full max-w-full object-contain transition-opacity cursor-pointer",
                     secondPageLoading ? "opacity-0" : "opacity-100"
                   )}
                   loading="eager"
