@@ -154,20 +154,34 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
       return;
     }
     
-    isPinchingRef.current = false;
-    touchStartXRef.current = e.touches[0].clientX;
-    touchStartYRef.current = e.touches[0].clientY;
+    // Un seul doigt - seulement si on n'était pas en train de pinch
+    // On réinitialise isPinchingRef seulement ici, quand on commence un nouveau geste à 1 doigt
+    if (e.touches.length === 1) {
+      isPinchingRef.current = false;
+      touchStartXRef.current = e.touches[0].clientX;
+      touchStartYRef.current = e.touches[0].clientY;
+    }
+  }, []);
+
+  const handleTouchMove = useCallback((e: TouchEvent) => {
+    // Détecter le pinch pendant le mouvement
+    if (e.touches.length > 1) {
+      isPinchingRef.current = true;
+      touchStartXRef.current = null;
+      touchStartYRef.current = null;
+    }
   }, []);
 
   const handleTouchEnd = useCallback((e: TouchEvent) => {
-    // Ignorer si c'était un pinch
+    // Si on était en mode pinch, ne JAMAIS traiter le swipe
     if (isPinchingRef.current) {
-      isPinchingRef.current = false;
       touchStartXRef.current = null;
       touchStartYRef.current = null;
+      // Ne PAS réinitialiser isPinchingRef ici, on le fera au prochain touchstart
       return;
     }
     
+    // Vérifier qu'on a bien des coordonnées de départ
     if (touchStartXRef.current === null || touchStartYRef.current === null) return;
     if (pswpRef.current) return; // Ne pas gérer si Photoswipe est ouvert
 
@@ -183,8 +197,8 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
       return;
     }
 
-    // Seuil de 100px pour changer de page
-    if (Math.abs(deltaX) > 100) {
+    // Seuil de 50px pour changer de page
+    if (Math.abs(deltaX) > 50) {
       if (deltaX > 0) {
         // Swipe vers la droite
         if (isRTL) {
@@ -231,14 +245,16 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
 
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("touchstart", handleTouchStart);
+    window.addEventListener("touchmove", handleTouchMove);
     window.addEventListener("touchend", handleTouchEnd);
     
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchmove", handleTouchMove);
       window.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [handleNextPage, handlePreviousPage, handleTouchStart, handleTouchEnd, onClose, isRTL, currentPage]);
+  }, [handleNextPage, handlePreviousPage, handleTouchStart, handleTouchMove, handleTouchEnd, onClose, isRTL, currentPage]);
 
   // Cleanup - Sync final sans debounce
   useEffect(() => {
