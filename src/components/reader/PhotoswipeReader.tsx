@@ -100,7 +100,7 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
       if (syncTimeoutRef.current) {
         clearTimeout(syncTimeoutRef.current);
       }
-      syncTimeoutRef.current = setTimeout(() => syncReadProgress(page), 2000);
+      syncTimeoutRef.current = setTimeout(() => syncReadProgress(page), 500);
     },
     [syncReadProgress]
   );
