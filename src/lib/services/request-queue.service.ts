@@ -22,6 +22,12 @@ class RequestQueue {
 
   async enqueue<T>(execute: () => Promise<T>): Promise<T> {
     return new Promise<T>((resolve, reject) => {
+      // Limiter la taille de la queue pour éviter l'accumulation
+      if (this.queue.length >= 50) {
+        reject(new Error('Request queue is full - Komga may be overloaded'));
+        return;
+      }
+      
       this.queue.push({ execute, resolve, reject });
       this.processQueue();
     });
@@ -45,8 +51,9 @@ class RequestQueue {
     }
 
     try {
-      // Délai de 200ms entre chaque requête pour espacer la charge CPU sur Komga
-      await this.delay(200);
+      // Délai adaptatif : plus long si la queue est pleine
+      const delayMs = this.queue.length > 10 ? 500 : 200;
+      await this.delay(delayMs);
       const result = await request.execute();
       request.resolve(result);
     } catch (error) {

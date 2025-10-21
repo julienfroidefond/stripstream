@@ -8,6 +8,7 @@ import type { KomgaConfig } from "@/types/komga";
 import type { ServerCacheService } from "./server-cache.service";
 import { RequestMonitorService } from "./request-monitor.service";
 import { RequestQueueService } from "./request-queue.service";
+import { CircuitBreakerService } from "./circuit-breaker.service";
 
 export type { CacheType };
 
@@ -109,14 +110,16 @@ export abstract class BaseApiService {
       }
     }
 
-    // Timeout de 60 secondes au lieu de 10 par défaut
-    const timeoutMs = 60000;
+    // Timeout réduit à 15 secondes pour éviter les blocages longs
+    const timeoutMs = 15000;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
     
     try {
-      // Enqueue la requête pour limiter la concurrence
-      const response = await RequestQueueService.enqueue(async () => {
+      // Utiliser le circuit breaker pour éviter de surcharger Komga
+      const response = await CircuitBreakerService.execute(async () => {
+        // Enqueue la requête pour limiter la concurrence
+        return await RequestQueueService.enqueue(async () => {
         try {
           return await fetch(url, { 
             headers, 
@@ -166,6 +169,7 @@ export abstract class BaseApiService {
           
           throw fetchError;
         }
+        });
       });
       clearTimeout(timeoutId);
 
