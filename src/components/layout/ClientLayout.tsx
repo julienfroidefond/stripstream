@@ -78,7 +78,7 @@ export default function ClientLayout({ children, initialLibraries = [], initialF
       return {
         backgroundImage: `url(/api/komga/images/books/${randomBookId}/thumbnail)`,
         backgroundSize: "cover" as const,
-        backgroundPosition: "center" as const,
+        backgroundPosition: "top center" as const,
         backgroundRepeat: "no-repeat" as const,
         filter: blur > 0 ? `blur(${blur}px)` : undefined,
       };
