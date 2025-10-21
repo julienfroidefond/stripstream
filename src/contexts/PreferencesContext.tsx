@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { ERROR_CODES } from "../constants/errorCodes";
 import { AppError } from "../utils/errors";
 import type { UserPreferences } from "@/types/preferences";
@@ -21,6 +22,7 @@ export function PreferencesProvider({
   children: React.ReactNode;
   initialPreferences?: UserPreferences;
 }) {
+  const { status } = useSession();
   const [preferences, setPreferences] = useState<UserPreferences>(
     initialPreferences || defaultPreferences
   );
@@ -46,8 +48,14 @@ export function PreferencesProvider({
   };
 
   useEffect(() => {
-    fetchPreferences();
-  }, []);
+    // Recharger les préférences quand la session change (connexion/déconnexion)
+    if (status === "authenticated") {
+      fetchPreferences();
+    } else if (status === "unauthenticated") {
+      // Réinitialiser aux préférences par défaut quand l'utilisateur se déconnecte
+      setPreferences(defaultPreferences);
+    }
+  }, [status]);
 
   const updatePreferences = async (newPreferences: Partial<UserPreferences>) => {
     try {
