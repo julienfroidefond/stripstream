@@ -5,31 +5,147 @@ interface ImageDimensions {
   height: number;
 }
 
-export function useImageLoader(bookId: string, _pages: number[]) {
-  const [loadedImages, setLoadedImages] = useState<Record<number, ImageDimensions>>({});
-  const [imageBlobUrls, setImageBlobUrls] = useState<Record<number, string>>({});
-  const loadedImagesRef = useRef(loadedImages);
+type ImageKey = number | string; // Support both numeric pages and prefixed keys like "next-1"
 
-  // Keep ref in sync with state
+interface UseImageLoaderProps {
+  bookId: string;
+  pages: number[];
+  prefetchCount?: number; // Nombre de pages à précharger (défaut: 2)
+  nextBook?: { id: string; pages: number[] } | null; // Livre suivant pour prefetch
+}
+
+export function useImageLoader({ bookId, pages: _pages, prefetchCount = 2, nextBook }: UseImageLoaderProps) {
+  const [loadedImages, setLoadedImages] = useState<Record<ImageKey, ImageDimensions>>({});
+  const [imageBlobUrls, setImageBlobUrls] = useState<Record<ImageKey, string>>({});
+  const loadedImagesRef = useRef(loadedImages);
+  const imageBlobUrlsRef = useRef(imageBlobUrls);
+
+  // Keep refs in sync with state
   useEffect(() => {
     loadedImagesRef.current = loadedImages;
   }, [loadedImages]);
 
+  useEffect(() => {
+    imageBlobUrlsRef.current = imageBlobUrls;
+  }, [imageBlobUrls]);
+
   const getPageUrl = useCallback((pageNum: number) => `/api/komga/books/${bookId}/pages/${pageNum}`, [bookId]);
 
-  // Load image dimensions
-  const loadImageDimensions = useCallback((pageNum: number) => {
-    if (loadedImagesRef.current[pageNum]) return;
+  // Prefetch image and store dimensions
+  const prefetchImage = useCallback(async (pageNum: number) => {
+    // Check if we already have both dimensions and blob URL
+    const hasDimensions = loadedImagesRef.current[pageNum];
+    const hasBlobUrl = imageBlobUrlsRef.current[pageNum];
     
-    const img = new Image();
-    img.onload = () => {
-      setLoadedImages(prev => ({
-        ...prev,
-        [pageNum]: { width: img.naturalWidth, height: img.naturalHeight }
-      }));
-    };
-    img.src = getPageUrl(pageNum);
+    if (hasDimensions && hasBlobUrl) {
+      return;
+    }
+    
+    try {
+      const response = await fetch(getPageUrl(pageNum));
+      if (!response.ok) {
+        return;
+      }
+      
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      
+      // Create image to get dimensions
+      const img = new Image();
+      img.onload = () => {
+        setLoadedImages(prev => ({
+          ...prev,
+          [pageNum]: { width: img.naturalWidth, height: img.naturalHeight }
+        }));
+        
+        // Store the blob URL for immediate use
+        setImageBlobUrls(prev => ({
+          ...prev,
+          [pageNum]: blobUrl
+        }));
+      };
+      img.src = blobUrl;
+    } catch {
+      // Silently fail prefetch
+    }
   }, [getPageUrl]);
+
+  // Prefetch multiple pages starting from a given page
+  const prefetchPages = useCallback(async (startPage: number, count: number = prefetchCount) => {
+    const pagesToPrefetch = [];
+    
+    for (let i = 0; i < count; i++) {
+      const pageNum = startPage + i;
+      if (pageNum <= _pages.length) {
+        const hasDimensions = loadedImagesRef.current[pageNum];
+        const hasBlobUrl = imageBlobUrlsRef.current[pageNum];
+        
+        // Prefetch if we don't have both dimensions AND blob URL
+        if (!hasDimensions || !hasBlobUrl) {
+          pagesToPrefetch.push(pageNum);
+        }
+      }
+    }
+    
+    // Prefetch all pages in parallel
+    if (pagesToPrefetch.length > 0) {
+      await Promise.all(pagesToPrefetch.map(pageNum => prefetchImage(pageNum)));
+    }
+  }, [prefetchImage, prefetchCount, _pages.length]);
+
+  // Prefetch pages from next book
+  const prefetchNextBook = useCallback(async (count: number = prefetchCount) => {
+    if (!nextBook) {
+      return;
+    }
+
+    const pagesToPrefetch = [];
+    
+    for (let i = 0; i < count; i++) {
+      const pageNum = i + 1; // Pages du livre suivant commencent à 1
+      // Pour le livre suivant, on utilise une clé différente pour éviter les conflits
+      const nextBookPageKey = `next-${pageNum}`;
+      const hasDimensions = loadedImagesRef.current[nextBookPageKey];
+      const hasBlobUrl = imageBlobUrlsRef.current[nextBookPageKey];
+      
+      if (!hasDimensions || !hasBlobUrl) {
+        pagesToPrefetch.push({ pageNum, nextBookPageKey });
+      }
+    }
+    
+    // Prefetch all pages in parallel
+    if (pagesToPrefetch.length > 0) {
+      await Promise.all(pagesToPrefetch.map(async ({ pageNum, nextBookPageKey }) => {
+        try {
+          const response = await fetch(`/api/komga/books/${nextBook.id}/pages/${pageNum}`);
+          if (!response.ok) {
+            return;
+          }
+          
+          const blob = await response.blob();
+          const blobUrl = URL.createObjectURL(blob);
+          
+          // Create image to get dimensions
+          const img = new Image();
+          img.onload = () => {
+            setLoadedImages(prev => ({
+              ...prev,
+              [nextBookPageKey]: { width: img.naturalWidth, height: img.naturalHeight }
+            }));
+            
+            // Store the blob URL for immediate use
+            setImageBlobUrls(prev => ({
+              ...prev,
+              [nextBookPageKey]: blobUrl
+            }));
+          };
+          img.src = blobUrl;
+        } catch {
+          // Silently fail prefetch
+        }
+      }));
+    }
+  }, [nextBook, prefetchCount]);
 
   // Force reload handler
   const handleForceReload = useCallback(async (currentPage: number, isDoublePage: boolean, shouldShowDoublePage: (page: number) => boolean) => {
@@ -89,20 +205,23 @@ export function useImageLoader(bookId: string, _pages: number[]) {
     }
   }, [imageBlobUrls, getPageUrl]);
 
-  // Cleanup blob URLs on unmount
+  // Cleanup blob URLs on unmount only
   useEffect(() => {
     return () => {
-      Object.values(imageBlobUrls).forEach(url => {
+      Object.values(imageBlobUrlsRef.current).forEach(url => {
         if (url) URL.revokeObjectURL(url);
       });
     };
-  }, [imageBlobUrls]);
+  }, []); // Empty dependency array - only cleanup on unmount
 
   return {
     loadedImages,
     imageBlobUrls,
-    loadImageDimensions,
+    prefetchImage,
+    prefetchPages,
+    prefetchNextBook,
     handleForceReload,
     getPageUrl,
+    prefetchCount,
   };
 }

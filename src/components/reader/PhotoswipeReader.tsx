@@ -27,7 +27,12 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
   const { direction, toggleDirection, isRTL } = useReadingDirection();
   const { isFullscreen, toggleFullscreen } = useFullscreen();
   const { isDoublePage, shouldShowDoublePage, toggleDoublePage } = useDoublePageMode();
-  const { loadedImages, imageBlobUrls, loadImageDimensions, handleForceReload, getPageUrl } = useImageLoader(book.id, pages);
+  const { loadedImages, imageBlobUrls, prefetchPages, prefetchNextBook, handleForceReload, getPageUrl, prefetchCount } = useImageLoader({ 
+    bookId: book.id, 
+    pages, 
+    prefetchCount: 5,
+    nextBook: nextBook ? { id: nextBook.id, pages: [] } : null
+  });
   const { currentPage, showEndMessage, navigateToPage, handlePreviousPage, handleNextPage } = usePageNavigation({
     book,
     pages,
@@ -59,20 +64,22 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
   }, []);
 
 
-  // Preload current and next pages dimensions
+  // Prefetch current and next pages
   useEffect(() => {
-    loadImageDimensions(currentPage);
-    if (isDoublePage && shouldShowDoublePage(currentPage, pages.length)) {
-      loadImageDimensions(currentPage + 1);
+    // Prefetch pages starting from current page
+    prefetchPages(currentPage, prefetchCount);
+    
+    // If double page mode, also prefetch additional pages for smooth double page navigation
+    if (isDoublePage && shouldShowDoublePage(currentPage, pages.length) && currentPage + prefetchCount < pages.length) {
+      prefetchPages(currentPage + prefetchCount, 1);
     }
-    // Preload next
-    if (currentPage < pages.length) {
-      loadImageDimensions(currentPage + 1);
-      if (isDoublePage && currentPage + 1 < pages.length) {
-        loadImageDimensions(currentPage + 2);
-      }
+    
+    // If we're near the end of the book, prefetch the next book
+    const pagesFromEnd = pages.length - currentPage;
+    if (pagesFromEnd <= prefetchCount && nextBook) {
+      prefetchNextBook(prefetchCount);
     }
-  }, [currentPage, isDoublePage, shouldShowDoublePage, loadImageDimensions, pages.length]);
+  }, [currentPage, isDoublePage, shouldShowDoublePage, prefetchPages, prefetchNextBook, prefetchCount, pages.length, nextBook]);
 
   // Keyboard events
   useEffect(() => {
