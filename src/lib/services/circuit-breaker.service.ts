@@ -45,6 +45,7 @@ class CircuitBreaker {
     if (this.state.state === 'HALF_OPEN') {
       this.state.failureCount = 0;
       this.state.state = 'CLOSED';
+      // eslint-disable-next-line no-console
       console.log('[CIRCUIT-BREAKER] ✅ Circuit closed - Komga recovered');
     }
   }
@@ -71,6 +72,7 @@ class CircuitBreaker {
       lastFailureTime: 0,
       nextAttemptTime: 0,
     };
+    // eslint-disable-next-line no-console
     console.log('[CIRCUIT-BREAKER] 🔄 Circuit reset');
   }
 }
