@@ -19,8 +19,10 @@ export class PreferencesService {
   static async getPreferences(): Promise<UserPreferences> {
     try {
       const user = await this.getCurrentUser();
+      const userId = parseInt(user.id, 10);
+      
       const preferences = await prisma.preferences.findUnique({
-        where: { userId: user.id },
+        where: { userId },
       });
       
       if (!preferences) {
@@ -45,6 +47,7 @@ export class PreferencesService {
   static async updatePreferences(preferences: Partial<UserPreferences>): Promise<UserPreferences> {
     try {
       const user = await this.getCurrentUser();
+      const userId = parseInt(user.id, 10);
       
       const updateData: Record<string, any> = {};
       if (preferences.showThumbnails !== undefined) updateData.showThumbnails = preferences.showThumbnails;
@@ -54,15 +57,18 @@ export class PreferencesService {
       if (preferences.background !== undefined) updateData.background = preferences.background;
 
       const updatedPreferences = await prisma.preferences.upsert({
-        where: { userId: user.id },
+        where: { userId },
         update: updateData,
         create: {
-          userId: user.id,
+          userId,
           showThumbnails: preferences.showThumbnails ?? defaultPreferences.showThumbnails,
           cacheMode: preferences.cacheMode ?? defaultPreferences.cacheMode,
           showOnlyUnread: preferences.showOnlyUnread ?? defaultPreferences.showOnlyUnread,
           displayMode: preferences.displayMode ?? defaultPreferences.displayMode,
           background: (preferences.background ?? defaultPreferences.background) as unknown as Prisma.InputJsonValue,
+          circuitBreakerConfig: {},
+          komgaMaxConcurrentRequests: 2,
+          readerPrefetchCount: 5,
         },
       });
 

@@ -8,7 +8,7 @@ export const ERROR_MESSAGES: Record<string, string> = {
 
   // MongoDB
   [ERROR_CODES.MONGODB.MISSING_URI]:
-    "🔧 Please set MONGODB_URI environment variable in your .env file",
+    "🔧 Please set DATABASE_URL environment variable in your .env file",
   [ERROR_CODES.MONGODB.CONNECTION_FAILED]: "🔌 MongoDB connection failed",
 
   // Auth

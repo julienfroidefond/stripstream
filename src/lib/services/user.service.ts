@@ -21,9 +21,10 @@ export class UserService {
       if (!currentUser) {
         throw new AppError(ERROR_CODES.AUTH.UNAUTHENTICATED);
       }
+      const userId = parseInt(currentUser.id, 10);
 
       const user = await prisma.user.findUnique({
-        where: { id: currentUser.id },
+        where: { id: userId },
         select: {
           id: true,
           email: true,
@@ -37,7 +38,13 @@ export class UserService {
         throw new AppError(ERROR_CODES.AUTH.USER_NOT_FOUND);
       }
 
-      return user;
+      return {
+        id: user.id.toString(),
+        email: user.email,
+        roles: user.roles as string[],
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      };
     } catch (error) {
       if (error instanceof AppError) {
         throw error;
@@ -55,10 +62,11 @@ export class UserService {
       if (!currentUser) {
         throw new AppError(ERROR_CODES.AUTH.UNAUTHENTICATED);
       }
+      const userId = parseInt(currentUser.id, 10);
 
       // Récupérer l'utilisateur avec son mot de passe
       const user = await prisma.user.findUnique({
-        where: { id: currentUser.id },
+        where: { id: userId },
       });
 
       if (!user) {
@@ -76,7 +84,7 @@ export class UserService {
 
       // Mettre à jour le mot de passe
       await prisma.user.update({
-        where: { id: currentUser.id },
+        where: { id: userId },
         data: { password: hashedPassword },
       });
     } catch (error) {
@@ -93,16 +101,17 @@ export class UserService {
       if (!currentUser) {
         throw new AppError(ERROR_CODES.AUTH.UNAUTHENTICATED);
       }
+      const userId = parseInt(currentUser.id, 10);
 
       const [favoritesCount, preferences, komgaConfig] = await Promise.all([
         prisma.favorite.count({
-          where: { userId: currentUser.id },
+          where: { userId },
         }),
         prisma.preferences.findUnique({
-          where: { userId: currentUser.id },
+          where: { userId },
         }),
         prisma.komgaConfig.findUnique({
-          where: { userId: currentUser.id },
+          where: { userId },
         }),
       ]);
 

@@ -55,6 +55,8 @@ export class AdminService {
 
           return {
             ...user,
+            id: user.id.toString(),
+            roles: user.roles as string[],
             hasKomgaConfig: !!komgaConfig,
             hasPreferences: !!preferences,
           };
@@ -76,10 +78,11 @@ export class AdminService {
   static async updateUserRoles(userId: string, roles: string[]): Promise<void> {
     try {
       await requireAdmin();
+      const userIdInt = parseInt(userId, 10);
 
       // Vérifier que l'utilisateur existe
       const user = await prisma.user.findUnique({
-        where: { id: userId },
+        where: { id: userIdInt },
       });
 
       if (!user) {
@@ -88,7 +91,7 @@ export class AdminService {
 
       // Mettre à jour les rôles
       await prisma.user.update({
-        where: { id: userId },
+        where: { id: userIdInt },
         data: { roles },
       });
     } catch (error) {
@@ -105,6 +108,7 @@ export class AdminService {
   static async deleteUser(userId: string): Promise<void> {
     try {
       const admin = await requireAdmin();
+      const userIdInt = parseInt(userId, 10);
 
       // Empêcher la suppression de son propre compte
       if (admin.id === userId) {
@@ -113,7 +117,7 @@ export class AdminService {
 
       // Vérifier que l'utilisateur existe
       const user = await prisma.user.findUnique({
-        where: { id: userId },
+        where: { id: userIdInt },
       });
 
       if (!user) {
@@ -122,7 +126,7 @@ export class AdminService {
 
       // Supprimer l'utilisateur (cascade supprimera les relations)
       await prisma.user.delete({
-        where: { id: userId },
+        where: { id: userIdInt },
       });
     } catch (error) {
       if (error instanceof Error && error.message.includes("Forbidden")) {
@@ -138,6 +142,7 @@ export class AdminService {
   static async resetUserPassword(userId: string, newPassword: string): Promise<void> {
     try {
       const admin = await requireAdmin();
+      const userIdInt = parseInt(userId, 10);
 
       // Empêcher la modification de son propre mot de passe via cette méthode
       if (admin.id === userId) {
@@ -146,7 +151,7 @@ export class AdminService {
 
       // Vérifier que l'utilisateur existe
       const user = await prisma.user.findUnique({
-        where: { id: userId },
+        where: { id: userIdInt },
       });
 
       if (!user) {
@@ -159,7 +164,7 @@ export class AdminService {
 
       // Mettre à jour le mot de passe
       await prisma.user.update({
-        where: { id: userId },
+        where: { id: userIdInt },
         data: { password: hashedPassword },
       });
     } catch (error) {
@@ -177,19 +182,20 @@ export class AdminService {
     try {
       await requireAdmin();
 
-      const [totalUsers, totalAdmins, usersWithKomga, usersWithPreferences] =
+      const [totalUsers, usersWithKomga, usersWithPreferences] =
         await Promise.all([
           prisma.user.count(),
-          prisma.user.count({
-            where: {
-              roles: {
-                has: "ROLE_ADMIN",
-              },
-            },
-          }),
           prisma.komgaConfig.count(),
           prisma.preferences.count(),
         ]);
+
+      // Count admin users by fetching all users and filtering
+      const allUsers = await prisma.user.findMany({
+        select: { roles: true },
+      });
+      const totalAdmins = allUsers.filter(user => 
+        Array.isArray(user.roles) && user.roles.includes("ROLE_ADMIN")
+      ).length;
 
       return {
         totalUsers,

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Script d'initialisation de la base de données
+ * Script d'initialisation de la base de données SQLite
  * Exécuté au démarrage de l'application
  */
 
@@ -59,7 +59,7 @@ async function initializeAdminUser() {
 }
 
 async function main() {
-  console.log("🔧 Initializing database...");
+  console.log("🔧 Initializing SQLite database...");
   
   try {
     await initializeAdminUser();

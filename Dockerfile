@@ -1,10 +1,6 @@
 # Build stage
 FROM node:20-alpine AS builder
 
-# Declare MONGODB_URI as an argument for the builder stage
-ARG MONGODB_URI
-ENV MONGODB_URI=$MONGODB_URI
-
 # Set working directory
 WORKDIR /app
 
@@ -74,8 +70,8 @@ RUN chmod +x docker-entrypoint.sh
 # Add non-root user for security
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs && \
-    mkdir -p /app/.cache && \
-    chown -R nextjs:nodejs /app /app/.cache && \
+    mkdir -p /app/.cache /app/data && \
+    chown -R nextjs:nodejs /app /app/.cache /app/data && \
     chown nextjs:nodejs docker-entrypoint.sh
 
 USER nextjs

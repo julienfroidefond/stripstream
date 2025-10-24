@@ -12,7 +12,7 @@ export interface KomgaConfigData {
 }
 
 export interface KomgaConfig extends KomgaConfigData {
-  userId: string;
+  userId: number;
 }
 
 export interface TTLConfigData {
@@ -26,7 +26,7 @@ export interface TTLConfigData {
 }
 
 export interface TTLConfig extends TTLConfigData {
-  userId: string;
+  userId: number;
 }
 
 // Types liés à l'API Komga

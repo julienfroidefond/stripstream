@@ -7,25 +7,20 @@ services:
       dockerfile: Dockerfile
       args:
         - NODE_ENV=production
-        - MONGODB_URI=${MONGODB_URI}
     container_name: stripstream-app
     restart: unless-stopped
     ports:
       - "3020:3000"
     volumes:
       - stripstream_cache:/app/.cache
+      - ./prisma/data:/app/data
     environment:
       - NODE_ENV=production
-      - MONGODB_URI=${MONGODB_URI}
+      - DATABASE_URL=file:/app/data/stripstream.db
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
-      - NEXTAUTH_URL=${NEXTAUTH_URL}
+      - NEXTAUTH_URL=http://localhost:3020
       - AUTH_TRUST_HOST=true
       - KOMGA_MAX_CONCURRENT_REQUESTS=5
-    depends_on:
-      mongodb:
-        condition: service_healthy
-      mongodb-init:
-        condition: service_completed_successfully
     networks:
       - stripstream-network
     deploy:
@@ -42,53 +37,9 @@ services:
       timeout: 3s
       retries: 3
 
-  mongodb:
-    image: mongo:latest
-    container_name: stripstream-mongodb
-    restart: unless-stopped
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
-    volumes:
-      - stripstream_mongodb_data:/data/db
-      - ./mongo-keyfile:/data/keyfile:ro
-    networks:
-      - stripstream-network
-    deploy:
-      resources:
-        limits:
-          cpus: "0.5"
-          memory: 512M
-    ports:
-      - "27017:27017"
-    command: ["mongod", "--replSet", "rs0", "--bind_ip_all", "--keyFile", "/data/keyfile"]
-    healthcheck:
-      test: mongosh --host localhost:27017 -u ${MONGO_USER} -p ${MONGO_PASSWORD} --authenticationDatabase admin --eval "db.adminCommand('ping')" --quiet || exit 1
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-
-  mongodb-init:
-    image: mongo:latest
-    container_name: stripstream-mongodb-init
-    depends_on:
-      mongodb:
-        condition: service_healthy
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
-    volumes:
-      - ./mongo-init-rs.sh:/mongo-init-rs.sh:ro
-    networks:
-      - stripstream-network
-    entrypoint: ["/bin/bash", "/mongo-init-rs.sh"]
-    restart: "no"
-
 networks:
   stripstream-network:
     driver: bridge
 
 volumes:
-  stripstream_mongodb_data:
   stripstream_cache:

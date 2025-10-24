@@ -28,10 +28,11 @@ export class FavoriteService {
   static async isFavorite(seriesId: string): Promise<boolean> {
     try {
       const user = await this.getCurrentUser();
+      const userId = parseInt(user.id, 10);
 
       const favorite = await prisma.favorite.findFirst({
         where: {
-          userId: user.id,
+          userId,
           seriesId: seriesId,
         },
       });
@@ -48,17 +49,18 @@ export class FavoriteService {
   static async addToFavorites(seriesId: string): Promise<void> {
     try {
       const user = await this.getCurrentUser();
+      const userId = parseInt(user.id, 10);
 
       await prisma.favorite.upsert({
         where: {
           userId_seriesId: {
-            userId: user.id,
+            userId,
             seriesId,
           },
         },
         update: {},
         create: {
-          userId: user.id,
+          userId,
           seriesId,
         },
       });
@@ -75,10 +77,11 @@ export class FavoriteService {
   static async removeFromFavorites(seriesId: string): Promise<void> {
     try {
       const user = await this.getCurrentUser();
+      const userId = parseInt(user.id, 10);
 
       await prisma.favorite.deleteMany({
         where: {
-          userId: user.id,
+          userId,
           seriesId,
         },
       });
@@ -94,9 +97,10 @@ export class FavoriteService {
    */
   static async getAllFavoriteIds(): Promise<string[]> {
     const user = await this.getCurrentUser();
+    const userId = parseInt(user.id, 10);
 
     const favorites = await prisma.favorite.findMany({
-      where: { userId: user.id },
+      where: { userId },
       select: { seriesId: true },
     });
     return favorites.map((favorite) => favorite.seriesId);
@@ -104,17 +108,18 @@ export class FavoriteService {
 
   static async addFavorite(seriesId: string) {
     const user = await this.getCurrentUser();
+    const userId = parseInt(user.id, 10);
 
     const favorite = await prisma.favorite.upsert({
       where: {
         userId_seriesId: {
-          userId: user.id,
+          userId,
           seriesId,
         },
       },
       update: {},
       create: {
-        userId: user.id,
+        userId,
         seriesId,
       },
     });
@@ -123,10 +128,11 @@ export class FavoriteService {
 
   static async removeFavorite(seriesId: string): Promise<boolean> {
     const user = await this.getCurrentUser();
+    const userId = parseInt(user.id, 10);
 
     const result = await prisma.favorite.deleteMany({
       where: {
-        userId: user.id,
+        userId,
         seriesId,
       },
     });

@@ -42,9 +42,9 @@ export class AuthServerService {
     });
 
     const userData: UserData = {
-      id: user.id,
+      id: user.id.toString(),
       email: user.email,
-      roles: user.roles,
+      roles: user.roles as string[],
       authenticated: true,
     };
 
@@ -84,9 +84,9 @@ export class AuthServerService {
     }
 
     const userData: UserData = {
-      id: user.id,
+      id: user.id.toString(),
       email: user.email,
-      roles: user.roles,
+      roles: user.roles as string[],
       authenticated: true,
     };
 

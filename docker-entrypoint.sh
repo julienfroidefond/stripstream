@@ -1,6 +1,9 @@
 #!/bin/sh
 set -e
 
+echo "📁 Ensuring data directory exists..."
+mkdir -p /app/data
+
 echo "🔄 Pushing Prisma schema to database..."
 npx prisma db push --skip-generate --accept-data-loss
 

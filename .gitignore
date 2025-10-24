@@ -47,4 +47,10 @@ mongo-keyfile
 .env.local
 .env.development.local
 .env.test.local
-.env.production.local 
+.env.production.local
+
+# Database
+prisma/data/
+*.db
+*.sqlite
+*.sqlite3 
