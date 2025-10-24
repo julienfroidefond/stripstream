@@ -59,5 +59,5 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   secret: process.env.NEXTAUTH_SECRET,
   trustHost: true,
-  // useSecureCookies sera automatiquement détecté via NEXTAUTH_URL
+  useSecureCookies: false,
 });
