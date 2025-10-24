@@ -2,7 +2,7 @@ import prisma from "@/lib/prisma";
 import { getCurrentUser } from "../auth-utils";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
-import type { UserPreferences, BackgroundPreferences } from "@/types/preferences";
+import type { UserPreferences, BackgroundPreferences, CircuitBreakerConfig } from "@/types/preferences";
 import { defaultPreferences } from "@/types/preferences";
 import type { User } from "@/types/komga";
 import type { Prisma } from "@prisma/client";
@@ -35,6 +35,9 @@ export class PreferencesService {
         showOnlyUnread: preferences.showOnlyUnread,
         displayMode: preferences.displayMode as UserPreferences["displayMode"],
         background: preferences.background as unknown as BackgroundPreferences,
+        komgaMaxConcurrentRequests: preferences.komgaMaxConcurrentRequests,
+        readerPrefetchCount: preferences.readerPrefetchCount,
+        circuitBreakerConfig: preferences.circuitBreakerConfig as unknown as CircuitBreakerConfig,
       };
     } catch (error) {
       if (error instanceof AppError) {
@@ -55,6 +58,9 @@ export class PreferencesService {
       if (preferences.showOnlyUnread !== undefined) updateData.showOnlyUnread = preferences.showOnlyUnread;
       if (preferences.displayMode !== undefined) updateData.displayMode = preferences.displayMode;
       if (preferences.background !== undefined) updateData.background = preferences.background;
+      if (preferences.komgaMaxConcurrentRequests !== undefined) updateData.komgaMaxConcurrentRequests = preferences.komgaMaxConcurrentRequests;
+      if (preferences.readerPrefetchCount !== undefined) updateData.readerPrefetchCount = preferences.readerPrefetchCount;
+      if (preferences.circuitBreakerConfig !== undefined) updateData.circuitBreakerConfig = preferences.circuitBreakerConfig;
 
       const updatedPreferences = await prisma.preferences.upsert({
         where: { userId },
@@ -66,9 +72,9 @@ export class PreferencesService {
           showOnlyUnread: preferences.showOnlyUnread ?? defaultPreferences.showOnlyUnread,
           displayMode: preferences.displayMode ?? defaultPreferences.displayMode,
           background: (preferences.background ?? defaultPreferences.background) as unknown as Prisma.InputJsonValue,
-          circuitBreakerConfig: {},
-          komgaMaxConcurrentRequests: 2,
-          readerPrefetchCount: 5,
+          circuitBreakerConfig: (preferences.circuitBreakerConfig ?? defaultPreferences.circuitBreakerConfig) as unknown as Prisma.InputJsonValue,
+          komgaMaxConcurrentRequests: preferences.komgaMaxConcurrentRequests ?? 5,
+          readerPrefetchCount: preferences.readerPrefetchCount ?? 5,
         },
       });
 
@@ -78,6 +84,9 @@ export class PreferencesService {
         showOnlyUnread: updatedPreferences.showOnlyUnread,
         displayMode: updatedPreferences.displayMode as UserPreferences["displayMode"],
         background: updatedPreferences.background as unknown as BackgroundPreferences,
+        komgaMaxConcurrentRequests: updatedPreferences.komgaMaxConcurrentRequests,
+        readerPrefetchCount: updatedPreferences.readerPrefetchCount,
+        circuitBreakerConfig: updatedPreferences.circuitBreakerConfig as unknown as CircuitBreakerConfig,
       };
     } catch (error) {
       if (error instanceof AppError) {

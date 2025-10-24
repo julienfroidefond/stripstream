@@ -102,6 +102,37 @@
         "save": "Enregistrer"
       }
     },
+    "advanced": {
+      "title": "Paramètres avancés",
+      "description": "Configurez les paramètres avancés de performance et de fiabilité.",
+      "save": "Enregistrer les paramètres",
+      "maxConcurrentRequests": {
+        "label": "Requêtes simultanées max",
+        "description": "Nombre maximum de requêtes simultanées vers le serveur Komga (1-10)"
+      },
+      "prefetchCount": {
+        "label": "Préchargement du lecteur",
+        "description": "Nombre de pages à précharger dans le lecteur (0-20)"
+      },
+      "circuitBreaker": {
+        "title": "Disjoncteur",
+        "description": "Protection automatique contre la surcharge du serveur",
+        "threshold": {
+          "label": "Seuil d'échec",
+          "description": "Nombre d'échecs consécutifs avant ouverture du circuit (1-20)"
+        },
+        "timeout": {
+          "label": "Délai d'expiration",
+          "description": "Temps d'attente maximum pour une requête avant de la considérer comme échouée",
+          "unit": "millisecondes (1000ms = 1 seconde)"
+        },
+        "resetTimeout": {
+          "label": "Délai de réinitialisation",
+          "description": "Temps d'attente avant de tenter de fermer le circuit",
+          "unit": "millisecondes (1000ms = 1 seconde)"
+        }
+      }
+    },
     "error": {
       "title": "Erreur",
       "message": "Une erreur est survenue lors de la mise à jour des préférences"

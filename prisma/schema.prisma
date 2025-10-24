@@ -68,7 +68,7 @@ model Preferences {
   showOnlyUnread          Boolean  @default(false)
   displayMode             Json
   background              Json
-  komgaMaxConcurrentRequests Int   @default(2)
+  komgaMaxConcurrentRequests Int   @default(5)
   circuitBreakerConfig    Json
   readerPrefetchCount     Int      @default(5)
   createdAt               DateTime @default(now())

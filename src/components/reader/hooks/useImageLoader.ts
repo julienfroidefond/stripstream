@@ -10,11 +10,11 @@ type ImageKey = number | string; // Support both numeric pages and prefixed keys
 interface UseImageLoaderProps {
   bookId: string;
   pages: number[];
-  prefetchCount?: number; // Nombre de pages à précharger (défaut: 2)
+  prefetchCount?: number; // Nombre de pages à précharger (défaut: 5)
   nextBook?: { id: string; pages: number[] } | null; // Livre suivant pour prefetch
 }
 
-export function useImageLoader({ bookId, pages: _pages, prefetchCount = 2, nextBook }: UseImageLoaderProps) {
+export function useImageLoader({ bookId, pages: _pages, prefetchCount = 5, nextBook }: UseImageLoaderProps) {
   const [loadedImages, setLoadedImages] = useState<Record<ImageKey, ImageDimensions>>({});
   const [imageBlobUrls, setImageBlobUrls] = useState<Record<ImageKey, string>>({});
   const loadedImagesRef = useRef(loadedImages);

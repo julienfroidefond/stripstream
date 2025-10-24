@@ -2,6 +2,8 @@
  * Circuit Breaker pour éviter de surcharger Komga quand il est défaillant
  * Évite l'effet avalanche en coupant les requêtes vers un service défaillant
  */
+import type { CircuitBreakerConfig } from "@/types/preferences";
+
 interface CircuitBreakerState {
   state: 'CLOSED' | 'OPEN' | 'HALF_OPEN';
   failureCount: number;
@@ -17,13 +19,44 @@ class CircuitBreaker {
     nextAttemptTime: 0,
   };
 
-  private readonly config = {
+  private config = {
     failureThreshold: 5, // Nombre d'échecs avant ouverture
     recoveryTimeout: 30000, // 30s avant tentative de récupération
-    successThreshold: 3, // Nombre de succès pour fermer le circuit
+    resetTimeout: 60000, // Délai de reset après échec
   };
 
+  private getConfigFromPreferences: (() => Promise<CircuitBreakerConfig>) | null = null;
+
+  /**
+   * Configure une fonction pour récupérer dynamiquement la config depuis les préférences
+   */
+  setConfigGetter(getter: () => Promise<CircuitBreakerConfig>): void {
+    this.getConfigFromPreferences = getter;
+  }
+
+  /**
+   * Récupère la config actuelle, soit depuis les préférences, soit depuis les valeurs par défaut
+   */
+  private async getCurrentConfig(): Promise<typeof this.config> {
+    if (this.getConfigFromPreferences) {
+      try {
+        const prefConfig = await this.getConfigFromPreferences();
+        return {
+          failureThreshold: prefConfig.threshold ?? 5,
+          recoveryTimeout: prefConfig.timeout ?? 30000,
+          resetTimeout: prefConfig.resetTimeout ?? 60000,
+        };
+      } catch (error) {
+        console.error('Error getting circuit breaker config from preferences:', error);
+        return this.config;
+      }
+    }
+    return this.config;
+  }
+
   async execute<T>(operation: () => Promise<T>): Promise<T> {
+    const config = await this.getCurrentConfig();
+    
     if (this.state.state === 'OPEN') {
       if (Date.now() < this.state.nextAttemptTime) {
         throw new Error('Circuit breaker is OPEN - Komga service unavailable');
@@ -36,7 +69,7 @@ class CircuitBreaker {
       this.onSuccess();
       return result;
     } catch (error) {
-      this.onFailure();
+      await this.onFailure(config);
       throw error;
     }
   }
@@ -50,14 +83,14 @@ class CircuitBreaker {
     }
   }
 
-  private onFailure(): void {
+  private async onFailure(config: typeof this.config): Promise<void> {
     this.state.failureCount++;
     this.state.lastFailureTime = Date.now();
 
-    if (this.state.failureCount >= this.config.failureThreshold) {
+    if (this.state.failureCount >= config.failureThreshold) {
       this.state.state = 'OPEN';
-      this.state.nextAttemptTime = Date.now() + this.config.recoveryTimeout;
-      console.warn(`[CIRCUIT-BREAKER] 🔴 Circuit OPEN - Komga failing (${this.state.failureCount} failures)`);
+      this.state.nextAttemptTime = Date.now() + config.resetTimeout;
+      console.warn(`[CIRCUIT-BREAKER] 🔴 Circuit OPEN - Komga failing (${this.state.failureCount} failures, reset in ${config.resetTimeout}ms)`);
     }
   }
 

@@ -16,8 +16,10 @@ import { NavigationBar } from "./components/NavigationBar";
 import { EndOfSeriesModal } from "./components/EndOfSeriesModal";
 import { PageDisplay } from "./components/PageDisplay";
 import { ReaderContainer } from "./components/ReaderContainer";
+import { usePreferences } from "@/contexts/PreferencesContext";
 
 export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderProps) {
+  const { preferences } = usePreferences();
   const [showControls, setShowControls] = useState(false);
   const [showThumbnails, setShowThumbnails] = useState(false);
   const lastClickTimeRef = useRef<number>(0);
@@ -30,7 +32,7 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
   const { loadedImages, imageBlobUrls, prefetchPages, prefetchNextBook, handleForceReload, getPageUrl, prefetchCount } = useImageLoader({ 
     bookId: book.id, 
     pages, 
-    prefetchCount: 5,
+    prefetchCount: preferences.readerPrefetchCount,
     nextBook: nextBook ? { id: nextBook.id, pages: [] } : null
   });
   const { currentPage, showEndMessage, navigateToPage, handlePreviousPage, handleNextPage } = usePageNavigation({

@@ -9,6 +9,7 @@ import type { ServerCacheService } from "./server-cache.service";
 import { RequestMonitorService } from "./request-monitor.service";
 import { RequestQueueService } from "./request-queue.service";
 import { CircuitBreakerService } from "./circuit-breaker.service";
+import { PreferencesService } from "./preferences.service";
 
 export type { CacheType };
 
@@ -23,7 +24,71 @@ interface KomgaUrlBuilder {
 }
 
 export abstract class BaseApiService {
+  private static requestQueueInitialized = false;
+  private static circuitBreakerInitialized = false;
+
+  /**
+   * Initialise le RequestQueueService avec les préférences de l'utilisateur
+   */
+  private static async initializeRequestQueue(): Promise<void> {
+    if (this.requestQueueInitialized) {
+      return;
+    }
+
+    try {
+      // Configurer le getter qui récupère dynamiquement la valeur depuis les préférences
+      RequestQueueService.setMaxConcurrentGetter(async () => {
+        try {
+          const preferences = await PreferencesService.getPreferences();
+          return preferences.komgaMaxConcurrentRequests;
+        } catch (error) {
+          console.error('Failed to get preferences for request queue:', error);
+          return 5; // Valeur par défaut
+        }
+      });
+      
+      this.requestQueueInitialized = true;
+    } catch (error) {
+      console.error('Failed to initialize request queue:', error);
+    }
+  }
+
+  /**
+   * Initialise le CircuitBreakerService avec les préférences de l'utilisateur
+   */
+  private static async initializeCircuitBreaker(): Promise<void> {
+    if (this.circuitBreakerInitialized) {
+      return;
+    }
+
+    try {
+      // Configurer le getter qui récupère dynamiquement la config depuis les préférences
+      CircuitBreakerService.setConfigGetter(async () => {
+        try {
+          const preferences = await PreferencesService.getPreferences();
+          return preferences.circuitBreakerConfig;
+        } catch (error) {
+          console.error('Failed to get preferences for circuit breaker:', error);
+          return {
+            threshold: 5,
+            timeout: 30000,
+            resetTimeout: 60000,
+          };
+        }
+      });
+      
+      this.circuitBreakerInitialized = true;
+    } catch (error) {
+      console.error('Failed to initialize circuit breaker:', error);
+    }
+  }
+
   protected static async getKomgaConfig(): Promise<AuthConfig> {
+    // Initialiser les services si ce n'est pas déjà fait
+    await Promise.all([
+      this.initializeRequestQueue(),
+      this.initializeCircuitBreaker(),
+    ]);
     try {
       const config: KomgaConfig | null = await ConfigDBService.getConfig();
       if (!config) {

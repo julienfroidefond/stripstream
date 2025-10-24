@@ -102,6 +102,37 @@
         "save": "Save"
       }
     },
+    "advanced": {
+      "title": "Advanced Settings",
+      "description": "Configure advanced performance and reliability settings.",
+      "save": "Save settings",
+      "maxConcurrentRequests": {
+        "label": "Max Concurrent Requests",
+        "description": "Maximum number of simultaneous requests to Komga server (1-10)"
+      },
+      "prefetchCount": {
+        "label": "Reader Prefetch Count",
+        "description": "Number of pages to preload in the reader (0-20)"
+      },
+      "circuitBreaker": {
+        "title": "Circuit Breaker",
+        "description": "Automatic protection against server overload",
+        "threshold": {
+          "label": "Failure Threshold",
+          "description": "Number of consecutive failures before opening the circuit (1-20)"
+        },
+        "timeout": {
+          "label": "Request Timeout",
+          "description": "Maximum wait time for a request before considering it failed",
+          "unit": "milliseconds (1000ms = 1 second)"
+        },
+        "resetTimeout": {
+          "label": "Reset Timeout",
+          "description": "Time to wait before attempting to close the circuit",
+          "unit": "milliseconds (1000ms = 1 second)"
+        }
+      }
+    },
     "error": {
       "title": "Error",
       "message": "An error occurred while updating preferences"

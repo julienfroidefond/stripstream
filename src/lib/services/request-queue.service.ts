@@ -13,11 +13,33 @@ class RequestQueue {
   private queue: QueuedRequest<any>[] = [];
   private activeCount = 0;
   private maxConcurrent: number;
+  private getMaxConcurrent: (() => Promise<number>) | null = null;
 
   constructor(maxConcurrent?: number) {
-    // Lire depuis env ou utiliser la valeur par défaut
-    const envValue = process.env.KOMGA_MAX_CONCURRENT_REQUESTS;
-    this.maxConcurrent = maxConcurrent ?? (envValue ? parseInt(envValue, 10) : 5);
+    // Valeur par défaut
+    this.maxConcurrent = maxConcurrent ?? 5;
+  }
+
+  /**
+   * Configure une fonction pour récupérer dynamiquement le max concurrent depuis les préférences
+   */
+  setMaxConcurrentGetter(getter: () => Promise<number>): void {
+    this.getMaxConcurrent = getter;
+  }
+
+  /**
+   * Récupère la valeur de maxConcurrent, soit depuis les préférences, soit depuis la valeur fixe
+   */
+  private async getCurrentMaxConcurrent(): Promise<number> {
+    if (this.getMaxConcurrent) {
+      try {
+        return await this.getMaxConcurrent();
+      } catch (error) {
+        console.error('Error getting maxConcurrent from preferences, using default:', error);
+        return this.maxConcurrent;
+      }
+    }
+    return this.maxConcurrent;
   }
 
   async enqueue<T>(execute: () => Promise<T>): Promise<T> {
@@ -38,7 +60,8 @@ class RequestQueue {
   }
 
   private async processQueue(): Promise<void> {
-    if (this.activeCount >= this.maxConcurrent || this.queue.length === 0) {
+    const maxConcurrent = await this.getCurrentMaxConcurrent();
+    if (this.activeCount >= maxConcurrent || this.queue.length === 0) {
       return;
     }
 
@@ -77,10 +100,6 @@ class RequestQueue {
   }
 }
 
-// Singleton instance - Par défaut limite à 2 requêtes simultanées (configurable via KOMGA_MAX_CONCURRENT_REQUESTS)
-export const RequestQueueService = new RequestQueue(
-  process.env.KOMGA_MAX_CONCURRENT_REQUESTS 
-    ? parseInt(process.env.KOMGA_MAX_CONCURRENT_REQUESTS, 10) 
-    : 2
-);
+// Singleton instance - Par défaut limite à 5 requêtes simultanées
+export const RequestQueueService = new RequestQueue(5);
 

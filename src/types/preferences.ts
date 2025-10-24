@@ -9,6 +9,12 @@ export interface BackgroundPreferences {
   komgaLibraries?: string[]; // IDs des bibliothèques Komga sélectionnées
 }
 
+export interface CircuitBreakerConfig {
+  threshold?: number;
+  timeout?: number;
+  resetTimeout?: number;
+}
+
 export interface UserPreferences {
   showThumbnails: boolean;
   cacheMode: "memory" | "file";
@@ -18,6 +24,9 @@ export interface UserPreferences {
     itemsPerPage: number;
   };
   background: BackgroundPreferences;
+  komgaMaxConcurrentRequests: number;
+  readerPrefetchCount: number;
+  circuitBreakerConfig: CircuitBreakerConfig;
 }
 
 export const defaultPreferences: UserPreferences = {
@@ -32,6 +41,13 @@ export const defaultPreferences: UserPreferences = {
     type: "default",
     opacity: 10,
     blur: 0,
+  },
+  komgaMaxConcurrentRequests: 5,
+  readerPrefetchCount: 5,
+  circuitBreakerConfig: {
+    threshold: 5,
+    timeout: 30000,
+    resetTimeout: 60000,
   },
 };
 
