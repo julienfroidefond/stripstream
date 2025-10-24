@@ -29,11 +29,6 @@ export function PreferencesProvider({
   const [isLoading, setIsLoading] = useState(false);
   const [hasLoadedPrefs, setHasLoadedPrefs] = useState(!!initialPreferences);
 
-  // Debug: log state changes
-  useEffect(() => {
-    console.log('⚙️ [PreferencesContext] Update:', { status, hasLoadedPrefs, isLoading });
-  }, [status, hasLoadedPrefs, isLoading]);
-
   const fetchPreferences = async () => {
     try {
       const response = await fetch("/api/preferences");

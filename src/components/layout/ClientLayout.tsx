@@ -33,16 +33,6 @@ export default function ClientLayout({ children, initialLibraries = [], initialF
   const backgroundType = preferences.background.type;
   const komgaLibraries = preferences.background.komgaLibraries;
 
-  // Debug: log renders
-  useEffect(() => {
-    console.log('🎨 [ClientLayout] Render:', { 
-      pathname, 
-      backgroundType, 
-      hasLibraries: !!komgaLibraries?.length,
-      preferencesKeys: Object.keys(preferences)
-    });
-  });
-
   // Stabiliser libraryIds - ne change que si le contenu change vraiment
   const libraryIdsString = useMemo(() => {
     const newIds = komgaLibraries?.join(",") || "";
