@@ -6,7 +6,8 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        - NODE_ENV=production
+        - NODE_ENV=${NODE_ENV}
+        - ADMIN_DEFAULT_PASSWORD=${ADMIN_DEFAULT_PASSWORD}
     container_name: stripstream-app
     restart: unless-stopped
     ports:
@@ -15,12 +16,13 @@ services:
       - stripstream_cache:/app/.cache
       - ./prisma/data:/app/data
     environment:
-      - NODE_ENV=production
-      - DATABASE_URL=file:/app/data/stripstream.db
+      - NODE_ENV=${NODE_ENV}
+      - DATABASE_URL=${DATABASE_URL}
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
-      - NEXTAUTH_URL=http://localhost:3020
+      - NEXTAUTH_URL=${NEXTAUTH_URL}
       - AUTH_TRUST_HOST=true
       - KOMGA_MAX_CONCURRENT_REQUESTS=5
+      - ADMIN_DEFAULT_PASSWORD=${ADMIN_DEFAULT_PASSWORD}
     networks:
       - stripstream-network
     deploy:
