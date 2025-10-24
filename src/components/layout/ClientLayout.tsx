@@ -1,7 +1,7 @@
 "use client";
 
 import { ThemeProvider } from "next-themes";
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { InstallPWA } from "../ui/InstallPWA";
@@ -28,17 +28,35 @@ export default function ClientLayout({ children, initialLibraries = [], initialF
   const [randomBookId, setRandomBookId] = useState<string | null>(null);
   const pathname = usePathname();
   const { preferences } = usePreferences();
+  const prevLibraryIdsRef = useRef<string>("");
+
+  const backgroundType = preferences.background.type;
+  const komgaLibraries = preferences.background.komgaLibraries;
+
+  // Debug: log renders
+  useEffect(() => {
+    console.log('🎨 [ClientLayout] Render:', { 
+      pathname, 
+      backgroundType, 
+      hasLibraries: !!komgaLibraries?.length,
+      preferencesKeys: Object.keys(preferences)
+    });
+  });
+
+  // Stabiliser libraryIds - ne change que si le contenu change vraiment
+  const libraryIdsString = useMemo(() => {
+    const newIds = komgaLibraries?.join(",") || "";
+    if (newIds !== prevLibraryIdsRef.current) {
+      prevLibraryIdsRef.current = newIds;
+    }
+    return prevLibraryIdsRef.current;
+  }, [komgaLibraries]);
 
   // Récupérer un book aléatoire pour le background
   const fetchRandomBook = useCallback(async () => {
-    if (
-      preferences.background.type === "komga-random" &&
-      preferences.background.komgaLibraries &&
-      preferences.background.komgaLibraries.length > 0
-    ) {
+    if (backgroundType === "komga-random" && libraryIdsString) {
       try {
-        const libraryIds = preferences.background.komgaLibraries.join(",");
-        const response = await fetch(`/api/komga/random-book?libraryIds=${libraryIds}`);
+        const response = await fetch(`/api/komga/random-book?libraryIds=${libraryIdsString}`);
         if (response.ok) {
           const data = await response.json();
           setRandomBookId(data.bookId);
@@ -47,11 +65,13 @@ export default function ClientLayout({ children, initialLibraries = [], initialF
         console.error("Erreur lors de la récupération d'un book aléatoire:", error);
       }
     }
-  }, [preferences.background.type, preferences.background.komgaLibraries]);
+  }, [backgroundType, libraryIdsString]);
 
   useEffect(() => {
-    fetchRandomBook();
-  }, [fetchRandomBook]);
+    if (backgroundType === "komga-random" && libraryIdsString) {
+      fetchRandomBook();
+    }
+  }, [backgroundType, libraryIdsString, fetchRandomBook]);
 
   const backgroundStyle = useMemo(() => {
     const bg = preferences.background;

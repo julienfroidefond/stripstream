@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { ERROR_CODES } from "../constants/errorCodes";
 import { AppError } from "../utils/errors";
@@ -27,6 +27,12 @@ export function PreferencesProvider({
     initialPreferences || defaultPreferences
   );
   const [isLoading, setIsLoading] = useState(false);
+  const [hasLoadedPrefs, setHasLoadedPrefs] = useState(!!initialPreferences);
+
+  // Debug: log state changes
+  useEffect(() => {
+    console.log('⚙️ [PreferencesContext] Update:', { status, hasLoadedPrefs, isLoading });
+  }, [status, hasLoadedPrefs, isLoading]);
 
   const fetchPreferences = async () => {
     try {
@@ -39,6 +45,7 @@ export function PreferencesProvider({
         ...defaultPreferences,
         ...data,
       });
+      setHasLoadedPrefs(true);
     } catch (error) {
       console.error("Erreur lors de la récupération des préférences:", error);
       setPreferences(defaultPreferences);
@@ -49,15 +56,16 @@ export function PreferencesProvider({
 
   useEffect(() => {
     // Recharger les préférences quand la session change (connexion/déconnexion)
-    if (status === "authenticated") {
+    if (status === "authenticated" && !hasLoadedPrefs) {
       fetchPreferences();
     } else if (status === "unauthenticated") {
       // Réinitialiser aux préférences par défaut quand l'utilisateur se déconnecte
       setPreferences(defaultPreferences);
+      setHasLoadedPrefs(false);
     }
-  }, [status]);
+  }, [status, hasLoadedPrefs]);
 
-  const updatePreferences = async (newPreferences: Partial<UserPreferences>) => {
+  const updatePreferences = useCallback(async (newPreferences: Partial<UserPreferences>) => {
     try {
       const response = await fetch("/api/preferences", {
         method: "PUT",
@@ -78,17 +86,20 @@ export function PreferencesProvider({
         ...updatedPreferences,
       }));
 
-      await fetchPreferences();
-
       return updatedPreferences;
     } catch (error) {
       console.error("Erreur lors de la mise à jour des préférences:", error);
       throw error;
     }
-  };
+  }, []);
+
+  const contextValue = useMemo(
+    () => ({ preferences, updatePreferences, isLoading }),
+    [preferences, updatePreferences, isLoading]
+  );
 
   return (
-    <PreferencesContext.Provider value={{ preferences, updatePreferences, isLoading }}>
+    <PreferencesContext.Provider value={contextValue}>
       {children}
     </PreferencesContext.Provider>
   );

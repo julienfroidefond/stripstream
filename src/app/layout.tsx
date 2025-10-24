@@ -7,7 +7,6 @@ import { PreferencesService } from "@/lib/services/preferences.service";
 import { PreferencesProvider } from "@/contexts/PreferencesContext";
 import { I18nProvider } from "@/components/providers/I18nProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
-import "@/i18n/i18n"; // Import i18next configuration
 import { cookies } from "next/headers";
 import { defaultPreferences } from "@/types/preferences";
 import type { UserPreferences } from "@/types/preferences";
