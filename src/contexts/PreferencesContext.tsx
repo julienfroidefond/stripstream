@@ -28,9 +28,8 @@ export function PreferencesProvider({
     initialPreferences || defaultPreferences
   );
   const [isLoading, setIsLoading] = useState(false);
-  const [hasLoadedPrefs, setHasLoadedPrefs] = useState(!!initialPreferences);
 
-  const fetchPreferences = async () => {
+  const fetchPreferences = useCallback(async () => {
     try {
       const response = await fetch("/api/preferences");
       if (!response.ok) {
@@ -41,25 +40,25 @@ export function PreferencesProvider({
         ...defaultPreferences,
         ...data,
       });
-      setHasLoadedPrefs(true);
     } catch (error) {
       logger.error({ err: error }, "Erreur lors de la récupération des préférences");
       setPreferences(defaultPreferences);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     // Recharger les préférences quand la session change (connexion/déconnexion)
-    if (status === "authenticated" && !hasLoadedPrefs) {
+    if (status === "authenticated") {
+      // Toujours recharger depuis l'API pour avoir les dernières valeurs
+      // même si on a des initialPreferences (qui peuvent être en cache)
       fetchPreferences();
     } else if (status === "unauthenticated") {
       // Réinitialiser aux préférences par défaut quand l'utilisateur se déconnecte
       setPreferences(defaultPreferences);
-      setHasLoadedPrefs(false);
     }
-  }, [status, hasLoadedPrefs]);
+  }, [status, fetchPreferences]);
 
   const updatePreferences = useCallback(async (newPreferences: Partial<UserPreferences>) => {
     try {
