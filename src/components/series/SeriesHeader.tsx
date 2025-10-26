@@ -12,6 +12,7 @@ import { useTranslate } from "@/hooks/useTranslate";
 import { SeriesCover } from "@/components/ui/series-cover";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { IconButton } from "@/components/ui/icon-button";
+import logger from "@/lib/logger";
 
 interface SeriesHeaderProps {
   series: KomgaSeries;
@@ -33,7 +34,7 @@ export const SeriesHeader = ({ series, refreshSeries }: SeriesHeaderProps) => {
         const favoriteIds = await response.json();
         setIsFavorite(favoriteIds.includes(series.id));
       } catch (error) {
-        console.error("Erreur lors de la vérification des favoris:", error);
+        logger.error({ err: error }, "Erreur lors de la vérification des favoris:");
         toast({
           title: "Erreur",
           description:
@@ -75,7 +76,7 @@ export const SeriesHeader = ({ series, refreshSeries }: SeriesHeaderProps) => {
         );
       }
     } catch (error) {
-      console.error("Erreur lors de la modification des favoris:", error);
+      logger.error({ err: error }, "Erreur lors de la modification des favoris:");
       toast({
         title: "Erreur",
         description:

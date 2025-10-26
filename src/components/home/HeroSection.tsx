@@ -18,7 +18,7 @@ interface HeroSectionProps {
 export function HeroSection({ series }: HeroSectionProps) {
   const { t } = useTranslate();
 
-  // console.log("HeroSection - Séries reçues:", {
+  // logger.info("HeroSection - Séries reçues:", {
   //   count: series?.length || 0,
   //   firstSeries: series?.[0],
   // });

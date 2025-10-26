@@ -4,6 +4,7 @@ import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 import { getErrorMessage } from "@/utils/errors";
 import type { NextRequest } from "next/server";
+import logger from "@/lib/logger";
 
 export async function POST(
   request: NextRequest,
@@ -17,7 +18,7 @@ export async function POST(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("API Library Scan - Erreur:", error);
+    logger.error({ err: error }, "API Library Scan - Erreur");
     if (error instanceof AppError) {
       return NextResponse.json(
         {

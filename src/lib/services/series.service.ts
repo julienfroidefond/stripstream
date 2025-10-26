@@ -11,6 +11,7 @@ import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
 import type { UserPreferences } from "@/types/preferences";
 import type { ServerCacheService } from "./server-cache.service";
+import logger from "@/lib/logger";
 
 export class SeriesService extends BaseApiService {
   private static async getImageCacheMaxAge(): Promise<number> {
@@ -19,7 +20,7 @@ export class SeriesService extends BaseApiService {
       const maxAge = ttlConfig?.imageCacheMaxAge ?? 2592000;
       return maxAge;
     } catch (error) {
-      console.error('[ImageCache] Error fetching TTL config:', error);
+      logger.error({ err: error }, '[ImageCache] Error fetching TTL config');
       return 2592000; // 30 jours par défaut en cas d'erreur
     }
   }
@@ -181,7 +182,7 @@ export class SeriesService extends BaseApiService {
         "SERIES"
       );
     } catch (error) {
-      console.error("Erreur lors de la récupération du premier livre:", error);
+      logger.error({ err: error }, "Erreur lors de la récupération du premier livre");
       throw new AppError(ERROR_CODES.SERIES.FETCH_ERROR, {}, error);
     }
   }

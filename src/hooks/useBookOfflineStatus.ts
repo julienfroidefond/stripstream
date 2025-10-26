@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useNetworkStatus } from "./useNetworkStatus";
+import logger from "@/lib/logger";
 
 type BookStatus = "idle" | "downloading" | "available" | "error";
 
@@ -47,7 +48,7 @@ export function useBookOfflineStatus(bookId: string) {
       const bookPages = await cache.match(`/api/komga/images/books/${bookId}/pages`);
       setIsAvailableOffline(!!bookPages);
     } catch (error) {
-      console.error("Erreur lors de la vérification du cache:", error);
+      logger.error({ err: error, bookId }, "Erreur lors de la vérification du cache");
       setIsAvailableOffline(false);
     } finally {
       setIsChecking(false);

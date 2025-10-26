@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import logger from "@/lib/logger";
 
 export const useFullscreen = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -13,7 +14,7 @@ export const useFullscreen = () => {
     return () => {
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
       if (document.fullscreenElement) {
-        document.exitFullscreen().catch(console.error);
+        document.exitFullscreen().catch(err => logger.error({ err }, "Erreur lors de la sortie du mode plein écran"));
       }
     };
   }, []);
@@ -26,7 +27,7 @@ export const useFullscreen = () => {
         await element.requestFullscreen();
       }
     } catch (error) {
-      console.error("Erreur lors du changement de mode plein écran:", error);
+      logger.error({ err: error }, "Erreur lors du changement de mode plein écran:");
     }
   };
 

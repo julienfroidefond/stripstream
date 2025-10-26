@@ -3,6 +3,7 @@ import { HomeService } from "@/lib/services/home.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 import { getErrorMessage } from "@/utils/errors";
+import logger from "@/lib/logger";
 export const revalidate = 60;
 
 export async function GET() {
@@ -10,7 +11,7 @@ export async function GET() {
     const data = await HomeService.getHomeData();
     return NextResponse.json(data);
   } catch (error) {
-    console.error("API Home - Erreur:", error);
+    logger.error({ err: error }, "API Home - Erreur:");
     if (error instanceof AppError) {
       return NextResponse.json(
         {
@@ -41,7 +42,7 @@ export async function DELETE() {
     await HomeService.invalidateHomeCache();
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("API Home - Erreur lors de l'invalidation du cache:", error);
+    logger.error({ err: error }, "API Home - Erreur lors de l'invalidation du cache:");
     if (error instanceof AppError) {
       return NextResponse.json(
         {

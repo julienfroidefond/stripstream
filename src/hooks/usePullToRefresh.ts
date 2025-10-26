@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import logger from "@/lib/logger";
 
 interface UsePullToRefreshOptions {
   onRefresh: () => Promise<void>;
@@ -135,7 +136,7 @@ export function usePullToRefresh({
         try {
           await onRefresh();
         } catch (error) {
-          console.error("Pull to refresh error:", error);
+          logger.error({ err: error }, "Pull to refresh error");
         } finally {
           isRefreshingRef.current = false;
           // Activer l'animation de disparition

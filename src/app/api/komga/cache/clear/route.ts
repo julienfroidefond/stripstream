@@ -4,6 +4,7 @@ import { getServerCacheService } from "@/lib/services/server-cache.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { getErrorMessage } from "@/utils/errors";
 import { revalidatePath } from "next/cache";
+import logger from "@/lib/logger";
 
 export async function POST() {
   try {
@@ -18,7 +19,7 @@ export async function POST() {
     
     return NextResponse.json({ message: "🧹 Cache vidé avec succès" });
   } catch (error) {
-    console.error("Erreur lors de la suppression du cache:", error);
+    logger.error({ err: error }, "Erreur lors de la suppression du cache:");
     return NextResponse.json(
       {
         error: {

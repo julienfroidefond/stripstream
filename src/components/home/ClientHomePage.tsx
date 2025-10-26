@@ -9,6 +9,7 @@ import { PullToRefreshIndicator } from "@/components/common/PullToRefreshIndicat
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import type { HomeData } from "@/types/home";
+import logger from "@/lib/logger";
 
 export function ClientHomePage() {
   const router = useRouter();
@@ -41,7 +42,7 @@ export function ClientHomePage() {
       const homeData = await response.json();
       setData(homeData);
     } catch (err) {
-      console.error("Error fetching home data:", err);
+      logger.error({ err }, "Error fetching home data");
       setError(err instanceof Error ? err.message : ERROR_CODES.KOMGA.SERVER_UNREACHABLE);
     } finally {
       setLoading(false);
@@ -78,7 +79,7 @@ export function ClientHomePage() {
 
       return { success: true };
     } catch (error) {
-      console.error("Erreur lors du rafraîchissement:", error);
+      logger.error({ err: error }, "Erreur lors du rafraîchissement:");
       return { success: false, error: "Erreur lors du rafraîchissement de la page d'accueil" };
     }
   };

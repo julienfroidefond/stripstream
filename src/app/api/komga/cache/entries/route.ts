@@ -3,6 +3,7 @@ import type { ServerCacheService } from "@/lib/services/server-cache.service";
 import { getServerCacheService } from "@/lib/services/server-cache.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { getErrorMessage } from "@/utils/errors";
+import logger from "@/lib/logger";
 
 export async function GET() {
   try {
@@ -11,7 +12,7 @@ export async function GET() {
     
     return NextResponse.json({ entries });
   } catch (error) {
-    console.error("Erreur lors de la récupération des entrées du cache:", error);
+    logger.error({ err: error }, "Erreur lors de la récupération des entrées du cache");
     return NextResponse.json(
       {
         error: {

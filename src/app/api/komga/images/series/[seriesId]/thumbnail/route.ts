@@ -5,6 +5,7 @@ import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 import { getErrorMessage } from "@/utils/errors";
 import { findHttpStatus } from "@/utils/image-errors";
+import logger from "@/lib/logger";
 
 export async function GET(
   request: NextRequest,
@@ -15,15 +16,14 @@ export async function GET(
     const response = await SeriesService.getCover(seriesId);
     return response;
   } catch (error) {
-    console.error("Erreur lors de la récupération de la miniature de la série:", error);
+    logger.error({ err: error }, "Erreur lors de la récupération de la miniature de la série");
     
     // Chercher un status HTTP 404 dans la chaîne d'erreurs
     const httpStatus = findHttpStatus(error);
     
     if (httpStatus === 404) {
       const seriesId: string = (await params).seriesId;
-      // eslint-disable-next-line no-console
-      console.log(`📷 Image not found for series: ${seriesId}`);
+      logger.info(`📷 Image not found for series: ${seriesId}`);
       return NextResponse.json(
         {
           error: {

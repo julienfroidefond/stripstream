@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { AdminService } from "@/lib/services/admin.service";
 import { AppError } from "@/utils/errors";
 import { AuthServerService } from "@/lib/services/auth-server.service";
+import logger from "@/lib/logger";
 
 export async function PUT(
   request: NextRequest,
@@ -33,7 +34,7 @@ export async function PUT(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Erreur lors de la réinitialisation du mot de passe:", error);
+    logger.error({ err: error }, "Erreur lors de la réinitialisation du mot de passe:");
 
     if (error instanceof AppError) {
       return NextResponse.json(

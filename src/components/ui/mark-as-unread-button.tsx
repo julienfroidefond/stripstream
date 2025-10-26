@@ -6,6 +6,7 @@ import { useToast } from "./use-toast";
 import { ClientOfflineBookService } from "@/lib/services/client-offlinebook.service";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import logger from "@/lib/logger";
 
 interface MarkAsUnreadButtonProps {
   bookId: string;
@@ -39,7 +40,7 @@ export function MarkAsUnreadButton({ bookId, onSuccess, className }: MarkAsUnrea
       });
       onSuccess?.();
     } catch (error) {
-      console.error("Erreur lors de la mise à jour du progresseur de lecture:", error);
+      logger.error({ err: error }, "Erreur lors de la mise à jour du progresseur de lecture:");
       toast({
         title: t("books.actions.markAsUnread.error.title"),
         description: t("books.actions.markAsUnread.error.description"),

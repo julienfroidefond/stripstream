@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { UserService } from "@/lib/services/user.service";
 import { AppError } from "@/utils/errors";
+import logger from "@/lib/logger";
 
 export async function GET() {
   try {
@@ -11,7 +12,7 @@ export async function GET() {
 
     return NextResponse.json({ ...profile, stats });
   } catch (error) {
-    console.error("Erreur lors de la récupération du profil:", error);
+    logger.error({ err: error }, "Erreur lors de la récupération du profil:");
 
     if (error instanceof AppError) {
       return NextResponse.json(

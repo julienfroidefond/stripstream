@@ -14,6 +14,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useTranslate } from "@/hooks/useTranslate";
 import { NavButton } from "@/components/ui/nav-button";
 import { IconButton } from "@/components/ui/icon-button";
+import logger from "@/lib/logger";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -44,7 +45,7 @@ export function Sidebar({ isOpen, onClose, initialLibraries, initialFavorites, u
       const data = await response.json();
       setLibraries(data);
     } catch (error) {
-      console.error("Erreur de chargement des bibliothèques:", error);
+      logger.error({ err: error }, "Erreur de chargement des bibliothèques:");
       toast({
         title: "Erreur",
         description:
@@ -82,7 +83,7 @@ export function Sidebar({ isOpen, onClose, initialLibraries, initialFavorites, u
       const results = await Promise.all(promises);
       setFavorites(results.filter((series): series is KomgaSeries => series !== null));
     } catch (error) {
-      console.error("Erreur de chargement des favoris:", error);
+      logger.error({ err: error }, "Erreur de chargement des favoris:");
       toast({
         title: "Erreur",
         description:
@@ -126,7 +127,7 @@ export function Sidebar({ isOpen, onClose, initialLibraries, initialFavorites, u
       setFavorites([]);
       onClose();
     } catch (error) {
-      console.error("Erreur lors de la déconnexion:", error);
+      logger.error({ err: error }, "Erreur lors de la déconnexion:");
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de la déconnexion",

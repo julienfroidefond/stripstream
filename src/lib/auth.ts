@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { AuthServerService } from "@/lib/services/auth-server.service";
+import logger from "@/lib/logger";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
@@ -28,7 +29,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             roles: userData.roles,
           };
         } catch (error) {
-          console.error("Auth error:", error);
+          logger.error({ err: error }, "Auth error");
           return null;
         }
       },

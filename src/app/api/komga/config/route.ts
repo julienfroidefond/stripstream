@@ -4,6 +4,7 @@ import { ERROR_CODES } from "@/constants/errorCodes";
 import type { KomgaConfig, KomgaConfigData } from "@/types/komga";
 import { getErrorMessage } from "@/utils/errors";
 import type { NextRequest } from "next/server";
+import logger from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +18,7 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("Erreur lors de la sauvegarde de la configuration:", error);
+    logger.error({ err: error }, "Erreur lors de la sauvegarde de la configuration:");
     if (error instanceof Error && error.message === "Utilisateur non authentifié") {
       return NextResponse.json(
         {
@@ -49,7 +50,7 @@ export async function GET() {
 
     return NextResponse.json(mongoConfig, { status: 200 });
   } catch (error) {
-    console.error("Erreur lors de la récupération de la configuration:", error);
+    logger.error({ err: error }, "Erreur lors de la récupération de la configuration:");
     if (error instanceof Error) {
       if (error.message === "Utilisateur non authentifié") {
         return NextResponse.json(

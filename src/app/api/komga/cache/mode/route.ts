@@ -4,13 +4,14 @@ import { getServerCacheService } from "@/lib/services/server-cache.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { getErrorMessage } from "@/utils/errors";
 import type { NextRequest } from "next/server";
+import logger from "@/lib/logger";
 
 export async function GET() {
   try {
     const cacheService: ServerCacheService = await getServerCacheService();
     return NextResponse.json({ mode: cacheService.getCacheMode() });
   } catch (error) {
-    console.error("Erreur lors de la récupération du mode de cache:", error);
+    logger.error({ err: error }, "Erreur lors de la récupération du mode de cache:");
     return NextResponse.json(
       {
         error: {
@@ -44,7 +45,7 @@ export async function POST(request: NextRequest) {
     cacheService.setCacheMode(mode);
     return NextResponse.json({ mode: cacheService.getCacheMode() });
   } catch (error) {
-    console.error("Erreur lors de la mise à jour du mode de cache:", error);
+    logger.error({ err: error }, "Erreur lors de la mise à jour du mode de cache:");
     return NextResponse.json(
       {
         error: {

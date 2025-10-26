@@ -12,6 +12,7 @@ import { NetworkStatus } from "../ui/NetworkStatus";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { ImageCacheProvider } from "@/contexts/ImageCacheContext";
 import type { KomgaLibrary, KomgaSeries } from "@/types/komga";
+import logger from "@/lib/logger";
 
 // Routes qui ne nécessitent pas d'authentification
 const publicRoutes = ["/login", "/register"];
@@ -52,7 +53,7 @@ export default function ClientLayout({ children, initialLibraries = [], initialF
           setRandomBookId(data.bookId);
         }
       } catch (error) {
-        console.error("Erreur lors de la récupération d'un book aléatoire:", error);
+        logger.error({ err: error }, "Erreur lors de la récupération d'un book aléatoire:");
       }
     }
   }, [backgroundType, libraryIdsString]);

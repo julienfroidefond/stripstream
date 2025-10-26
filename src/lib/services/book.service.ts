@@ -8,6 +8,7 @@ import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
 import { SeriesService } from "./series.service";
 import type { Series } from "@/types/series";
+import logger from "@/lib/logger";
 
 export class BookService extends BaseApiService {
   private static async getImageCacheMaxAge(): Promise<number> {
@@ -16,7 +17,7 @@ export class BookService extends BaseApiService {
       const maxAge = ttlConfig?.imageCacheMaxAge ?? 2592000;
       return maxAge;
     } catch (error) {
-      console.error('[ImageCache] Error fetching TTL config:', error);
+      logger.error({ err: error }, '[ImageCache] Error fetching TTL config');
       return 2592000; // 30 jours par défaut en cas d'erreur
     }
   }

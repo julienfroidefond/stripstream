@@ -3,6 +3,7 @@ import { AuthServerService } from "@/lib/services/auth-server.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { ERROR_MESSAGES } from "@/constants/errorMessages";
 import { AppError } from "@/utils/errors";
+import logger from "@/lib/logger";
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,7 +26,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, user: userData });
   } catch (error) {
-    console.error("Registration error:", error);
+    logger.error({ err: error }, "Registration error:");
 
     if (error instanceof AppError) {
       return NextResponse.json(

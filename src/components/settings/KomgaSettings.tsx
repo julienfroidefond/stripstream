@@ -6,6 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Network, Loader2 } from "lucide-react";
 import type { KomgaConfig } from "@/types/komga";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import logger from "@/lib/logger";
 
 interface KomgaSettingsProps {
   initialConfig: KomgaConfig | null;
@@ -61,7 +62,7 @@ export function KomgaSettings({ initialConfig }: KomgaSettingsProps) {
         description: t("settings.komga.messages.connectionSuccess"),
       });
     } catch (error) {
-      console.error("Erreur:", error);
+      logger.error({ err: error }, "Erreur:");
       toast({
         variant: "destructive",
         title: t("settings.komga.error.title"),
@@ -125,7 +126,7 @@ export function KomgaSettings({ initialConfig }: KomgaSettingsProps) {
       // Forcer un rechargement complet de la page
       window.location.reload();
     } catch (error) {
-      console.error("Erreur lors de la sauvegarde:", error);
+      logger.error({ err: error }, "Erreur lors de la sauvegarde:");
       toast({
         variant: "destructive",
         title: t("settings.komga.error.title"),

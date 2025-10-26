@@ -7,6 +7,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { useRouter } from "next/navigation";
+import logger from "@/lib/logger";
 
 interface ScanButtonProps {
   libraryId: string;
@@ -51,7 +52,7 @@ export function ScanButton({ libraryId }: ScanButtonProps) {
             description: t("library.scan.complete.description"),
           });
         } catch (error) {
-          console.error("Error invalidating cache after scan:", error);
+          logger.error({ err: error }, "Error invalidating cache after scan:");
           toast({
             variant: "destructive",
             title: t("library.scan.error.title"),

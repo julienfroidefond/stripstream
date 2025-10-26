@@ -28,7 +28,7 @@ export function HomeContent({ data, refreshHome }: HomeContentProps) {
   }, [data.ongoing]);
 
   // Vérification des données pour le debug
-  // console.log("HomeContent - Données reçues:", {
+  // logger.info("HomeContent - Données reçues:", {
   //   ongoingCount: data.ongoing?.length || 0,
   //   recentlyReadCount: data.recentlyRead?.length || 0,
   //   onDeckCount: data.onDeck?.length || 0,

@@ -5,6 +5,7 @@ import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 import { getErrorMessage } from "@/utils/errors";
 import { findHttpStatus } from "@/utils/image-errors";
+import logger from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +19,7 @@ export async function GET(
     const response = await BookService.getPage(bookId, parseInt(pageNumber));
     return response;
   } catch (error) {
-    console.error("Erreur lors de la récupération de la page du livre:", error);
+    logger.error({ err: error }, "Erreur lors de la récupération de la page du livre:");
     
     // Chercher un status HTTP 404 dans la chaîne d'erreurs
     const httpStatus = findHttpStatus(error);
@@ -26,7 +27,7 @@ export async function GET(
     if (httpStatus === 404) {
       const { bookId, pageNumber } = await params;
       // eslint-disable-next-line no-console
-      console.log(`📷 Page ${pageNumber} not found for book: ${bookId}`);
+      logger.info(`📷 Page ${pageNumber} not found for book: ${bookId}`);
       return NextResponse.json(
         {
           error: {

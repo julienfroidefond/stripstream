@@ -8,7 +8,7 @@ const nextConfig = {
     return config;
   },
   // Configuration pour améliorer la résolution DNS
-  serverExternalPackages: ['dns'],
+  serverExternalPackages: ['dns', 'pino', 'pino-pretty'],
   // Optimisations pour Docker dev
   experimental: {
     turbo: {

@@ -2,6 +2,8 @@
  * Service de monitoring des requêtes concurrentes vers Komga
  * Permet de tracker le nombre de requêtes actives et d'alerter en cas de charge élevée
  */
+import logger from "@/lib/logger";
+
 class RequestMonitor {
   private activeRequests = 0;
   private readonly thresholds = {
@@ -29,12 +31,11 @@ class RequestMonitor {
     const count = this.activeRequests;
     
     if (count >= this.thresholds.critical) {
-      console.warn(`[REQUEST-MONITOR] 🔴 CRITICAL concurrency: ${count} active requests`);
+      logger.warn(`[REQUEST-MONITOR] 🔴 CRITICAL concurrency: ${count} active requests`);
     } else if (count >= this.thresholds.high) {
-      console.warn(`[REQUEST-MONITOR] ⚠️  HIGH concurrency: ${count} active requests`);
+      logger.warn(`[REQUEST-MONITOR] ⚠️  HIGH concurrency: ${count} active requests`);
     } else if (count >= this.thresholds.warning) {
-      // eslint-disable-next-line no-console
-      console.log(`[REQUEST-MONITOR] ⚡ Warning concurrency: ${count} active requests`);
+      logger.info(`[REQUEST-MONITOR] ⚡ Warning concurrency: ${count} active requests`);
     }
   }
 }

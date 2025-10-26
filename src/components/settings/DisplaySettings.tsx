@@ -4,6 +4,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import logger from "@/lib/logger";
 
 export function DisplaySettings() {
   const { t } = useTranslate();
@@ -18,7 +19,7 @@ export function DisplaySettings() {
         description: t("settings.komga.messages.configSaved"),
       });
     } catch (error) {
-      console.error("Erreur détaillée:", error);
+      logger.error({ err: error }, "Erreur détaillée:");
       toast({
         variant: "destructive",
         title: t("settings.error.title"),
@@ -65,7 +66,7 @@ export function DisplaySettings() {
                   description: t("settings.komga.messages.configSaved"),
                 });
               } catch (error) {
-                console.error("Erreur détaillée:", error);
+                logger.error({ err: error }, "Erreur détaillée:");
                 toast({
                   variant: "destructive",
                   title: t("settings.error.title"),

@@ -6,6 +6,7 @@ import { BookSkeleton } from "@/components/skeletons/BookSkeleton";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import type { KomgaBook } from "@/types/komga";
+import logger from "@/lib/logger";
 
 interface ClientBookPageProps {
   bookId: string;
@@ -35,7 +36,7 @@ export function ClientBookPage({ bookId }: ClientBookPageProps) {
       const bookData = await response.json();
       setData(bookData);
     } catch (err) {
-      console.error("Error fetching book:", err);
+      logger.error({ err }, "Error fetching book");
       setError(err instanceof Error ? err.message : ERROR_CODES.BOOK.PAGES_FETCH_ERROR);
     } finally {
       setLoading(false);

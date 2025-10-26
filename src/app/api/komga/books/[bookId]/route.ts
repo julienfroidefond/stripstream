@@ -5,6 +5,7 @@ import { getErrorMessage } from "@/utils/errors";
 import { AppError } from "@/utils/errors";
 import type { KomgaBookWithPages } from "@/types/komga";
 import type { NextRequest } from "next/server";
+import logger from "@/lib/logger";
 
 export async function GET(
   request: NextRequest,
@@ -18,7 +19,7 @@ export async function GET(
     
     return NextResponse.json({ ...data, nextBook });
   } catch (error) {
-    console.error("API Books - Erreur:", error);
+    logger.error({ err: error }, "API Books - Erreur:");
     if (error instanceof AppError) {
       return NextResponse.json(
         {

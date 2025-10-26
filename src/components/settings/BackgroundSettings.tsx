@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { KomgaLibrary } from "@/types/komga";
+import logger from "@/lib/logger";
 
 export function BackgroundSettings() {
   const { t } = useTranslate();
@@ -38,7 +39,7 @@ export function BackgroundSettings() {
           setKomgaConfigValid(libs.length > 0);
         }
       } catch (error) {
-        console.error("Erreur lors de la vérification de la config Komga:", error);
+        logger.error({ err: error }, "Erreur lors de la vérification de la config Komga:");
         setKomgaConfigValid(false);
       }
     };
@@ -58,7 +59,7 @@ export function BackgroundSettings() {
         description: t("settings.komga.messages.configSaved"),
       });
     } catch (error) {
-      console.error("Erreur:", error);
+      logger.error({ err: error }, "Erreur:");
       toast({
         variant: "destructive",
         title: t("settings.error.title"),
@@ -80,7 +81,7 @@ export function BackgroundSettings() {
         description: t("settings.komga.messages.configSaved"),
       });
     } catch (error) {
-      console.error("Erreur:", error);
+      logger.error({ err: error }, "Erreur:");
       toast({
         variant: "destructive",
         title: t("settings.error.title"),
@@ -111,7 +112,7 @@ export function BackgroundSettings() {
         description: t("settings.komga.messages.configSaved"),
       });
     } catch (error) {
-      console.error("Erreur:", error);
+      logger.error({ err: error }, "Erreur:");
       toast({
         variant: "destructive",
         title: t("settings.error.title"),
@@ -129,7 +130,7 @@ export function BackgroundSettings() {
         },
       });
     } catch (error) {
-      console.error("Erreur:", error);
+      logger.error({ err: error }, "Erreur:");
     }
   };
 
@@ -142,7 +143,7 @@ export function BackgroundSettings() {
         },
       });
     } catch (error) {
-      console.error("Erreur:", error);
+      logger.error({ err: error }, "Erreur:");
     }
   };
 
@@ -152,7 +153,7 @@ export function BackgroundSettings() {
       const newOpacity = Math.max(0, Math.min(100, currentOpacity + delta));
       await handleOpacityChange([newOpacity]);
     } catch (error) {
-      console.error("Erreur ajustement opacité:", error);
+      logger.error({ err: error }, "Erreur ajustement opacité:");
     }
   };
 
@@ -162,7 +163,7 @@ export function BackgroundSettings() {
       const newBlur = Math.max(0, Math.min(20, currentBlur + delta));
       await handleBlurChange([newBlur]);
     } catch (error) {
-      console.error("Erreur ajustement flou:", error);
+      logger.error({ err: error }, "Erreur ajustement flou:");
     }
   };
 
@@ -181,7 +182,7 @@ export function BackgroundSettings() {
         },
       });
     } catch (error) {
-      console.error("Erreur:", error);
+      logger.error({ err: error }, "Erreur:");
     }
   };
 

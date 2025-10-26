@@ -5,6 +5,7 @@ import { AppError } from "@/utils/errors";
 import type { KomgaSeries } from "@/types/komga";
 import { getErrorMessage } from "@/utils/errors";
 import type { NextRequest } from "next/server";
+import logger from "@/lib/logger";
 export const revalidate = 60;
 
 export async function GET(
@@ -21,7 +22,7 @@ export async function GET(
       }
     });
   } catch (error) {
-    console.error("API Series - Erreur:", error);
+    logger.error({ err: error }, "API Series - Erreur:");
     if (error instanceof AppError) {
       return NextResponse.json(
         {

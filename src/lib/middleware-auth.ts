@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
+import logger from "@/lib/logger";
 
 export async function getAuthSession(request: NextRequest) {
   try {
@@ -20,7 +21,7 @@ export async function getAuthSession(request: NextRequest) {
       }
     };
   } catch (error) {
-    console.error("Auth error in middleware:", error);
+    logger.error({ err: error }, "Auth error in middleware");
     return null;
   }
 }

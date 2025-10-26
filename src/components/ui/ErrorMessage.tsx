@@ -3,6 +3,7 @@
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { useTranslate } from "@/hooks/useTranslate";
 import { Button } from "@/components/ui/button";
+import logger from "@/lib/logger";
 
 interface ErrorMessageProps {
   errorCode: string;
@@ -23,7 +24,7 @@ export const ErrorMessage = ({
   const message = t(`errors.${errorCode}`);
 
   if (error) {
-    console.error(error);
+    logger.error(error);
   }
 
   if (variant === "form") {

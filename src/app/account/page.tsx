@@ -2,6 +2,7 @@ import { UserProfileCard } from "@/components/account/UserProfileCard";
 import { ChangePasswordForm } from "@/components/account/ChangePasswordForm";
 import { UserService } from "@/lib/services/user.service";
 import { redirect } from "next/navigation";
+import logger from "@/lib/logger";
 
 export const dynamic = 'force-dynamic';
 
@@ -30,7 +31,7 @@ export default async function AccountPage() {
       </div>
     );
   } catch (error) {
-    console.error("Erreur lors du chargement du compte:", error);
+    logger.error({ err: error }, "Erreur lors du chargement du compte:");
     redirect("/login");
   }
 }

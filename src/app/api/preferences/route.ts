@@ -5,13 +5,14 @@ import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 import type { UserPreferences } from "@/types/preferences";
 import { getErrorMessage } from "@/utils/errors";
+import logger from "@/lib/logger";
 
 export async function GET() {
   try {
     const preferences: UserPreferences = await PreferencesService.getPreferences();
     return NextResponse.json(preferences);
   } catch (error) {
-    console.error("Erreur lors de la récupération des préférences:", error);
+    logger.error({ err: error }, "Erreur lors de la récupération des préférences:");
     if (error instanceof AppError) {
       return NextResponse.json(
         {
@@ -45,7 +46,7 @@ export async function PUT(request: NextRequest) {
     );
     return NextResponse.json(updatedPreferences);
   } catch (error) {
-    console.error("Erreur lors de la mise à jour des préférences:", error);
+    logger.error({ err: error }, "Erreur lors de la mise à jour des préférences:");
     if (error instanceof AppError) {
       return NextResponse.json(
         {

@@ -3,6 +3,7 @@ import type { ServerCacheService } from "@/lib/services/server-cache.service";
 import { getServerCacheService } from "@/lib/services/server-cache.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { getErrorMessage } from "@/utils/errors";
+import logger from "@/lib/logger";
 
 export async function GET() {
   try {
@@ -15,7 +16,7 @@ export async function GET() {
       mode: cacheService.getCacheMode()
     });
   } catch (error) {
-    console.error("Erreur lors de la récupération de la taille du cache:", error);
+    logger.error({ err: error }, "Erreur lors de la récupération de la taille du cache:");
     return NextResponse.json(
       {
         error: {

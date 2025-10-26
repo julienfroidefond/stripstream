@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
 import { usePreferences } from "@/contexts/PreferencesContext";
+import logger from "@/lib/logger";
 
 export function CacheModeSwitch() {
   const [isLoading, setIsLoading] = useState(false);
@@ -33,7 +34,7 @@ export function CacheModeSwitch() {
         description: `Le cache est maintenant en mode ${checked ? "mémoire" : "fichier"}`,
       });
     } catch (error) {
-      console.error("Erreur lors de la modification du mode de cache:", error);
+      logger.error({ err: error }, "Erreur lors de la modification du mode de cache:");
       toast({
         variant: "destructive",
         title: "Erreur",

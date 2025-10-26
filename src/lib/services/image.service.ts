@@ -1,6 +1,7 @@
 import { BaseApiService } from "./base-api.service";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
+import logger from "@/lib/logger";
 
 export interface ImageResponse {
   buffer: Buffer;
@@ -23,7 +24,7 @@ export class ImageService extends BaseApiService {
         contentType,
       };
     } catch (error) {
-      console.error("Erreur lors de la récupération de l'image:", error);
+      logger.error({ err: error }, "Erreur lors de la récupération de l'image");
       throw new AppError(ERROR_CODES.IMAGE.FETCH_ERROR, {}, error);
     }
   }

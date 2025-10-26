@@ -6,6 +6,7 @@ import { ERROR_CODES } from "../constants/errorCodes";
 import { AppError } from "../utils/errors";
 import type { UserPreferences } from "@/types/preferences";
 import { defaultPreferences } from "@/types/preferences";
+import logger from "@/lib/logger";
 
 interface PreferencesContextType {
   preferences: UserPreferences;
@@ -42,7 +43,7 @@ export function PreferencesProvider({
       });
       setHasLoadedPrefs(true);
     } catch (error) {
-      console.error("Erreur lors de la récupération des préférences:", error);
+      logger.error({ err: error }, "Erreur lors de la récupération des préférences");
       setPreferences(defaultPreferences);
     } finally {
       setIsLoading(false);
@@ -83,7 +84,7 @@ export function PreferencesProvider({
 
       return updatedPreferences;
     } catch (error) {
-      console.error("Erreur lors de la mise à jour des préférences:", error);
+      logger.error({ err: error }, "Erreur lors de la mise à jour des préférences");
       throw error;
     }
   }, []);

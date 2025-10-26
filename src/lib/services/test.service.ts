@@ -3,6 +3,7 @@ import type { AuthConfig } from "@/types/auth";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
 import type { KomgaLibrary } from "@/types/komga";
+import logger from "@/lib/logger";
 
 export class TestService extends BaseApiService {
   static async testConnection(config: AuthConfig): Promise<{ libraries: KomgaLibrary[] }> {
@@ -20,7 +21,7 @@ export class TestService extends BaseApiService {
       const libraries = await response.json();
       return { libraries };
     } catch (error) {
-      console.error("Erreur lors du test de connexion:", error);
+      logger.error({ err: error }, "Erreur lors du test de connexion");
       if (error instanceof AppError) {
         throw error;
       }

@@ -12,6 +12,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { BookOfflineButton } from "@/components/ui/book-offline-button";
 import { useTranslate } from "@/hooks/useTranslate";
+import logger from "@/lib/logger";
 
 type BookStatus = "idle" | "downloading" | "available" | "error";
 
@@ -54,7 +55,7 @@ export function DownloadManager() {
                 status,
               });
             } catch (error) {
-              console.error(`Erreur lors de la récupération du livre ${bookId}:`, error);
+              logger.error({ err: error }, `Erreur lors de la récupération du livre ${bookId}:`);
               localStorage.removeItem(key);
             }
           }
@@ -62,7 +63,7 @@ export function DownloadManager() {
       }
       setDownloadedBooks(books);
     } catch (error) {
-      console.error("Erreur lors du chargement des livres:", error);
+      logger.error({ err: error }, "Erreur lors du chargement des livres:");
       toast({
         title: "Erreur",
         description: "Impossible de charger les livres téléchargés",
@@ -122,7 +123,7 @@ export function DownloadManager() {
         description: t("downloads.toast.deletedDesc"),
       });
     } catch (error) {
-      console.error("Erreur lors de la suppression du livre:", error);
+      logger.error({ err: error }, "Erreur lors de la suppression du livre:");
       toast({
         title: t("downloads.toast.error"),
         description: t("downloads.toast.errorDesc"),

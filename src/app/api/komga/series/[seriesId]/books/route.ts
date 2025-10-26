@@ -4,6 +4,7 @@ import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 import { getErrorMessage } from "@/utils/errors";
 import type { NextRequest } from "next/server";
+import logger from "@/lib/logger";
 export const revalidate = 60;
 
 const DEFAULT_PAGE_SIZE = 20;
@@ -34,7 +35,7 @@ export async function GET(
       }
     );
   } catch (error) {
-    console.error("API Series Books - Erreur:", error);
+    logger.error({ err: error }, "API Series Books - Erreur:");
     if (error instanceof AppError) {
       return NextResponse.json(
         {
@@ -74,7 +75,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("API Series Cache Invalidation - Erreur:", error);
+    logger.error({ err: error }, "API Series Cache Invalidation - Erreur:");
     if (error instanceof AppError) {
       return NextResponse.json(
         {

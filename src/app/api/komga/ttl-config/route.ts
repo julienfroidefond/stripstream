@@ -4,13 +4,14 @@ import { ERROR_CODES } from "@/constants/errorCodes";
 import type { TTLConfig } from "@/types/komga";
 import { getErrorMessage } from "@/utils/errors";
 import type { NextRequest } from "next/server";
+import logger from "@/lib/logger";
 
 export async function GET() {
   try {
     const config: TTLConfig | null = await ConfigDBService.getTTLConfig();
     return NextResponse.json(config);
   } catch (error) {
-    console.error("Erreur lors de la récupération de la configuration TTL:", error);
+    logger.error({ err: error }, "Erreur lors de la récupération de la configuration TTL");
     if (error instanceof Error) {
       if (error.message === getErrorMessage(ERROR_CODES.MIDDLEWARE.UNAUTHORIZED)) {
         return NextResponse.json(
@@ -56,7 +57,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Erreur lors de la sauvegarde de la configuration TTL:", error);
+    logger.error({ err: error }, "Erreur lors de la sauvegarde de la configuration TTL");
     if (
       error instanceof Error &&
       error.message === getErrorMessage(ERROR_CODES.MIDDLEWARE.UNAUTHORIZED)

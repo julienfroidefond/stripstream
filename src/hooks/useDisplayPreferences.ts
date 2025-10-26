@@ -1,4 +1,5 @@
 import { usePreferences } from "@/contexts/PreferencesContext";
+import logger from "@/lib/logger";
 
 export function useDisplayPreferences() {
   const { preferences, updatePreferences } = usePreferences();
@@ -12,7 +13,7 @@ export function useDisplayPreferences() {
         },
       });
     } catch (error) {
-      console.error("Erreur lors de la mise à jour du mode compact:", error);
+      logger.error({ err: error }, "Erreur lors de la mise à jour du mode compact");
     }
   };
 
@@ -25,7 +26,7 @@ export function useDisplayPreferences() {
         },
       });
     } catch (error) {
-      console.error("Erreur lors de la mise à jour de la taille de page:", error);
+      logger.error({ err: error }, "Erreur lors de la mise à jour de la taille de page");
     }
   };
 

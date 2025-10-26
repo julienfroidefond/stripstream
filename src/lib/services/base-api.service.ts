@@ -10,6 +10,7 @@ import { RequestMonitorService } from "./request-monitor.service";
 import { RequestQueueService } from "./request-queue.service";
 import { CircuitBreakerService } from "./circuit-breaker.service";
 import { PreferencesService } from "./preferences.service";
+import logger from "@/lib/logger";
 
 export type { CacheType };
 
@@ -42,14 +43,14 @@ export abstract class BaseApiService {
           const preferences = await PreferencesService.getPreferences();
           return preferences.komgaMaxConcurrentRequests;
         } catch (error) {
-          console.error('Failed to get preferences for request queue:', error);
+          logger.error({ err: error }, 'Failed to get preferences for request queue');
           return 5; // Valeur par défaut
         }
       });
       
       this.requestQueueInitialized = true;
     } catch (error) {
-      console.error('Failed to initialize request queue:', error);
+      logger.error({ err: error }, 'Failed to initialize request queue');
     }
   }
 
@@ -68,7 +69,7 @@ export abstract class BaseApiService {
           const preferences = await PreferencesService.getPreferences();
           return preferences.circuitBreakerConfig;
         } catch (error) {
-          console.error('Failed to get preferences for circuit breaker:', error);
+          logger.error({ err: error }, 'Failed to get preferences for circuit breaker');
           return {
             threshold: 5,
             timeout: 30000,
@@ -79,7 +80,7 @@ export abstract class BaseApiService {
       
       this.circuitBreakerInitialized = true;
     } catch (error) {
-      console.error('Failed to initialize circuit breaker:', error);
+      logger.error({ err: error }, 'Failed to initialize circuit breaker');
     }
   }
 
@@ -103,7 +104,7 @@ export abstract class BaseApiService {
       if (error instanceof AppError && error.code === ERROR_CODES.KOMGA.MISSING_CONFIG) {
         throw error;
       }
-      console.error("Erreur lors de la récupération de la configuration:", error);
+      logger.error({ err: error }, "Erreur lors de la récupération de la configuration");
       throw new AppError(ERROR_CODES.KOMGA.MISSING_CONFIG, {}, error);
     }
   }
@@ -199,7 +200,7 @@ export abstract class BaseApiService {
         } catch (fetchError: any) {
           // Gestion spécifique des erreurs DNS
           if (fetchError?.cause?.code === 'EAI_AGAIN' || fetchError?.code === 'EAI_AGAIN') {
-            console.error(`DNS resolution failed for ${url}. Retrying with different DNS settings...`);
+            logger.error(`DNS resolution failed for ${url}. Retrying with different DNS settings...`);
             
             // Retry avec des paramètres DNS différents
             return await fetch(url, { 
@@ -218,8 +219,7 @@ export abstract class BaseApiService {
           
           // Retry automatique sur timeout de connexion (cold start)
           if (fetchError?.cause?.code === 'UND_ERR_CONNECT_TIMEOUT') {
-            // eslint-disable-next-line no-console
-            console.log(`⏱️  Connection timeout for ${url}. Retrying once (cold start)...`);
+            logger.info(`⏱️  Connection timeout for ${url}. Retrying once (cold start)...`);
             
             return await fetch(url, { 
               headers, 

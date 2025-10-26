@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import { PreferencesService } from "./preferences.service";
 import { getCurrentUser } from "../auth-utils";
+import logger from "@/lib/logger";
 
 export type CacheMode = "file" | "memory";
 
@@ -52,7 +53,7 @@ class ServerCacheService {
       const preferences = await PreferencesService.getPreferences();
       this.setCacheMode(preferences.cacheMode);
     } catch (error) {
-      console.error("Error initializing cache mode from preferences:", error);
+      logger.error({ err: error }, "Error initializing cache mode from preferences");
       // Keep default memory mode if preferences can't be loaded
     }
   }
@@ -93,7 +94,7 @@ class ServerCacheService {
               try {
                 fs.rmdirSync(itemPath);
               } catch (error) {
-                console.error(`Could not remove directory ${itemPath}:`, error);
+                logger.error({ err: error, path: itemPath }, `Could not remove directory ${itemPath}`);
                 isEmpty = false;
               }
             } else {
@@ -109,12 +110,12 @@ class ServerCacheService {
                 isEmpty = false;
               }
             } catch (error) {
-              console.error(`Could not parse file ${itemPath}:`, error);
+              logger.error({ err: error, path: itemPath }, `Could not parse file ${itemPath}`);
               // Si le fichier est corrompu, on le supprime
               try {
                 fs.unlinkSync(itemPath);
               } catch (error) {
-                console.error(`Could not remove file ${itemPath}:`, error);
+                logger.error({ err: error, path: itemPath }, `Could not remove file ${itemPath}`);
                 isEmpty = false;
               }
             }
@@ -122,7 +123,7 @@ class ServerCacheService {
             isEmpty = false;
           }
         } catch (error) {
-          console.error(`Could not access ${itemPath}:`, error);
+          logger.error({ err: error, path: itemPath }, `Could not access ${itemPath}`);
           // En cas d'erreur sur le fichier/dossier, on continue
           isEmpty = false;
           continue;
@@ -197,12 +198,12 @@ class ServerCacheService {
                 this.memoryCache.set(key, cached);
               }
             } catch (error) {
-              console.error(`Could not parse file ${itemPath}:`, error);
+              logger.error({ err: error, path: itemPath }, `Could not parse file ${itemPath}`);
               // Ignore les fichiers corrompus
             }
           }
         } catch (error) {
-          console.error(`Could not access ${itemPath}:`, error);
+          logger.error({ err: error, path: itemPath }, `Could not access ${itemPath}`);
           // Ignore les erreurs d'accès
         }
       }
@@ -221,7 +222,7 @@ class ServerCacheService {
       }
       fs.writeFileSync(filePath, JSON.stringify(value), "utf-8");
     } catch (error) {
-      console.error(`Could not write cache file ${filePath}:`, error);
+      logger.error({ err: error, path: filePath }, `Could not write cache file ${filePath}`);
     }
   }
 
@@ -246,7 +247,7 @@ class ServerCacheService {
         }
         fs.writeFileSync(filePath, JSON.stringify(cacheData), "utf-8");
       } catch (error) {
-        console.error(`Error writing cache file ${filePath}:`, error);
+        logger.error({ err: error, path: filePath }, `Error writing cache file ${filePath}`);
       }
     }
   }
@@ -283,7 +284,7 @@ class ServerCacheService {
       fs.unlinkSync(filePath);
       return null;
     } catch (error) {
-      console.error(`Error reading cache file ${filePath}:`, error);
+      logger.error({ err: error, path: filePath }, `Error reading cache file ${filePath}`);
       return null;
     }
   }
@@ -317,7 +318,7 @@ class ServerCacheService {
         isStale: cached.expiry <= Date.now(),
       };
     } catch (error) {
-      console.error(`Error reading cache file ${filePath}:`, error);
+      logger.error({ err: error, path: filePath }, `Error reading cache file ${filePath}`);
       return null;
     }
   }
@@ -392,17 +393,17 @@ class ServerCacheService {
             try {
               fs.rmdirSync(itemPath);
             } catch (error) {
-              console.error(`Could not remove directory ${itemPath}:`, error);
+              logger.error({ err: error, path: itemPath }, `Could not remove directory ${itemPath}`);
             }
           } else {
             try {
               fs.unlinkSync(itemPath);
             } catch (error) {
-              console.error(`Could not remove file ${itemPath}:`, error);
+              logger.error({ err: error, path: itemPath }, `Could not remove file ${itemPath}`);
             }
           }
         } catch (error) {
-          console.error(`Error accessing ${itemPath}:`, error);
+          logger.error({ err: error, path: itemPath }, `Error accessing ${itemPath}`);
         }
       }
     };
@@ -410,7 +411,7 @@ class ServerCacheService {
     try {
       removeDirectory(this.cacheDir);
     } catch (error) {
-      console.error("Error clearing cache:", error);
+      logger.error({ err: error }, "Error clearing cache");
     }
   }
 
@@ -443,8 +444,7 @@ class ServerCacheService {
       if (process.env.CACHE_DEBUG === 'true') {
         const icon = isStale ? '⚠️' : '✅';
         const status = isStale ? 'STALE' : 'HIT';
-        // eslint-disable-next-line no-console
-        console.log(`${icon} [CACHE ${status}] ${key} | ${type} | ${(endTime - startTime).toFixed(2)}ms`);
+        logger.debug(`${icon} [CACHE ${status}] ${key} | ${type} | ${(endTime - startTime).toFixed(2)}ms`);
       }
 
       // Si le cache est expiré, revalider en background sans bloquer la réponse
@@ -458,8 +458,7 @@ class ServerCacheService {
 
     // Pas de cache du tout, fetch normalement
     if (process.env.CACHE_DEBUG === 'true') {
-      // eslint-disable-next-line no-console
-      console.log(`❌ [CACHE MISS] ${key} | ${type}`);
+      logger.debug(`❌ [CACHE MISS] ${key} | ${type}`);
     }
 
     try {
@@ -468,8 +467,7 @@ class ServerCacheService {
       
       const endTime = performance.now();
       if (process.env.CACHE_DEBUG === 'true') {
-        // eslint-disable-next-line no-console
-        console.log(`💾 [CACHE SET] ${key} | ${type} | ${(endTime - startTime).toFixed(2)}ms`);
+        logger.debug(`💾 [CACHE SET] ${key} | ${type} | ${(endTime - startTime).toFixed(2)}ms`);
       }
       
       return data;
@@ -494,11 +492,10 @@ class ServerCacheService {
       
       if (process.env.CACHE_DEBUG === 'true') {
         const endTime = performance.now();
-        // eslint-disable-next-line no-console
-        console.log(`🔄 [CACHE REVALIDATE] ${debugKey} | ${type} | ${(endTime - startTime).toFixed(2)}ms`);
+        logger.debug(`🔄 [CACHE REVALIDATE] ${debugKey} | ${type} | ${(endTime - startTime).toFixed(2)}ms`);
       }
     } catch (error) {
-      console.error(`🔴 [CACHE REVALIDATE ERROR] ${debugKey}:`, error);
+      logger.error({ err: error, key: debugKey }, `🔴 [CACHE REVALIDATE ERROR] ${debugKey}`);
       // Ne pas relancer l'erreur car c'est en background
     }
   }
@@ -582,7 +579,7 @@ class ServerCacheService {
             itemCount++;
           }
         } catch (error) {
-          console.error(`Could not access ${itemPath}:`, error);
+          logger.error({ err: error, path: itemPath }, `Could not access ${itemPath}`);
         }
       }
     };
@@ -648,11 +645,11 @@ class ServerCacheService {
                   isExpired: cached.expiry <= Date.now(),
                 });
               } catch (error) {
-                console.error(`Could not parse file ${itemPath}:`, error);
+                logger.error({ err: error, path: itemPath }, `Could not parse file ${itemPath}`);
               }
             }
           } catch (error) {
-            console.error(`Could not access ${itemPath}:`, error);
+            logger.error({ err: error, path: itemPath }, `Could not access ${itemPath}`);
           }
         }
       };

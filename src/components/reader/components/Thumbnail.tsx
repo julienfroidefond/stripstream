@@ -2,6 +2,7 @@ import type { ThumbnailProps } from "../types";
 import { ImageLoader } from "@/components/ui/image-loader";
 import { cn } from "@/lib/utils";
 import { forwardRef, useEffect, useState, useCallback, useRef, useImperativeHandle } from "react";
+import logger from "@/lib/logger";
 
 export const Thumbnail = forwardRef<HTMLButtonElement, ThumbnailProps>(
   (
@@ -73,7 +74,7 @@ export const Thumbnail = forwardRef<HTMLButtonElement, ThumbnailProps>(
           setIsLoading(false);
         }
       } catch (error) {
-        console.error(`Erreur lors du chargement de la miniature ${pageNumber}:`, error);
+        logger.error({ err: error }, `Erreur lors du chargement de la miniature ${pageNumber}:`);
         setHasError(true);
         setIsLoading(false);
       }
@@ -103,7 +104,7 @@ export const Thumbnail = forwardRef<HTMLButtonElement, ThumbnailProps>(
           });
         }, delay);
       } else {
-        console.error(
+        logger.error(
           `Échec du chargement de l'image pour la page ${pageNumber} après ${maxAttempts} tentatives`
         );
         setHasError(true);

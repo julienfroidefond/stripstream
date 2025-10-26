@@ -11,6 +11,7 @@ import type { LibraryResponse } from "@/types/library";
 import type { KomgaBook, KomgaSeries } from "@/types/komga";
 import type { UserPreferences } from "@/types/preferences";
 import { ERROR_CODES } from "@/constants/errorCodes";
+import logger from "@/lib/logger";
 
 interface ClientSeriesPageProps {
   seriesId: string;
@@ -61,7 +62,7 @@ export function ClientSeriesPage({
         setSeries(data.series);
         setBooks(data.books);
       } catch (err) {
-        console.error("Error fetching series books:", err);
+        logger.error({ err }, "Error fetching series books");
         setError(err instanceof Error ? err.message : ERROR_CODES.BOOK.PAGES_FETCH_ERROR);
       } finally {
         setLoading(false);
@@ -103,7 +104,7 @@ export function ClientSeriesPage({
 
       return { success: true };
     } catch (error) {
-      console.error("Erreur lors du rafraîchissement:", error);
+      logger.error({ err: error }, "Erreur lors du rafraîchissement:");
       return { success: false, error: "Erreur lors du rafraîchissement de la série" };
     }
   };
@@ -132,7 +133,7 @@ export function ClientSeriesPage({
       setSeries(data.series);
       setBooks(data.books);
     } catch (err) {
-      console.error("Error fetching series books:", err);
+      logger.error({ err }, "Error fetching series books");
       setError(err instanceof Error ? err.message : ERROR_CODES.BOOK.PAGES_FETCH_ERROR);
     } finally {
       setLoading(false);

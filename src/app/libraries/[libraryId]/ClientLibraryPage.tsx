@@ -14,6 +14,7 @@ import type { KomgaSeries, KomgaLibrary } from "@/types/komga";
 import type { UserPreferences } from "@/types/preferences";
 import { Container } from "@/components/ui/container";
 import { Section } from "@/components/ui/section";
+import logger from "@/lib/logger";
 
 interface ClientLibraryPageProps {
   currentPage: number;
@@ -71,7 +72,7 @@ export function ClientLibraryPage({
         setLibrary(data.library);
         setSeries(data.series);
       } catch (err) {
-        console.error("Error fetching library series:", err);
+        logger.error({ err }, "Error fetching library series");
         setError(err instanceof Error ? err.message : "SERIES_FETCH_ERROR");
       } finally {
         setLoading(false);
@@ -117,7 +118,7 @@ export function ClientLibraryPage({
       
       return { success: true };
     } catch (error) {
-      console.error("Error during refresh:", error);
+      logger.error({ err: error }, "Error during refresh:");
       return { success: false, error: "Error refreshing library" };
     }
   };
@@ -150,7 +151,7 @@ export function ClientLibraryPage({
       setLibrary(data.library);
       setSeries(data.series);
     } catch (err) {
-      console.error("Error fetching library series:", err);
+      logger.error({ err }, "Error fetching library series");
       setError(err instanceof Error ? err.message : "SERIES_FETCH_ERROR");
     } finally {
       setLoading(false);

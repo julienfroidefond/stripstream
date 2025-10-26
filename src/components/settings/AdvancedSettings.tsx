@@ -6,6 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Activity, ImageIcon, Shield, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import logger from "@/lib/logger";
 
 export function AdvancedSettings() {
   const { t } = useTranslate();
@@ -22,7 +23,7 @@ export function AdvancedSettings() {
         description: t("settings.komga.messages.configSaved"),
       });
     } catch (error) {
-      console.error("Erreur:", error);
+      logger.error({ err: error }, "Erreur:");
       toast({
         variant: "destructive",
         title: t("settings.error.title"),
@@ -41,7 +42,7 @@ export function AdvancedSettings() {
         description: t("settings.komga.messages.configSaved"),
       });
     } catch (error) {
-      console.error("Erreur:", error);
+      logger.error({ err: error }, "Erreur:");
       toast({
         variant: "destructive",
         title: t("settings.error.title"),
@@ -63,7 +64,7 @@ export function AdvancedSettings() {
         description: t("settings.komga.messages.configSaved"),
       });
     } catch (error) {
-      console.error("Erreur:", error);
+      logger.error({ err: error }, "Erreur:");
       toast({
         variant: "destructive",
         title: t("settings.error.title"),

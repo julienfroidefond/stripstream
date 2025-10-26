@@ -5,6 +5,7 @@ import { Download, Check, Loader2 } from "lucide-react";
 import { Button } from "./button";
 import { useToast } from "./use-toast";
 import type { KomgaBook } from "@/types/komga";
+import logger from "@/lib/logger";
 
 interface BookOfflineButtonProps {
   book: KomgaBook;
@@ -81,7 +82,7 @@ export function BookOfflineButton({ book, className }: BookOfflineButtonProps) {
                 retryCount++;
                 if (retryCount === maxRetries) {
                   failedPages++;
-                  console.error(
+                  logger.error(
                     `Échec du téléchargement de la page ${i} après ${maxRetries} tentatives`
                   );
                 }
@@ -97,7 +98,7 @@ export function BookOfflineButton({ book, className }: BookOfflineButtonProps) {
               retryCount++;
               if (retryCount === maxRetries) {
                 failedPages++;
-                console.error(`Erreur lors du téléchargement de la page ${i}:`, error);
+                logger.error({ err: error }, `Erreur lors du téléchargement de la page ${i}:`);
               }
               await new Promise((resolve) => setTimeout(resolve, 1000));
             }
@@ -143,7 +144,7 @@ export function BookOfflineButton({ book, className }: BookOfflineButtonProps) {
           });
         }
       } catch (error) {
-        console.error("Erreur lors du téléchargement:", error);
+        logger.error({ err: error }, "Erreur lors du téléchargement:");
         // Ne pas changer le statut si le téléchargement a été volontairement annulé
         if ((error as Error)?.message !== "Téléchargement annulé") {
           setBookStatus(book.id, { status: "error", progress: 0, timestamp: Date.now() });
@@ -191,7 +192,7 @@ export function BookOfflineButton({ book, className }: BookOfflineButtonProps) {
         timestamp: Date.now(),
       });
     } catch (error) {
-      console.error("Erreur lors de la vérification du cache:", error);
+      logger.error({ err: error }, "Erreur lors de la vérification du cache:");
       setBookStatus(book.id, { status: "error", progress: 0, timestamp: Date.now() });
     }
   }, [book.id, book.media.pagesCount, setBookStatus]);
@@ -255,7 +256,7 @@ export function BookOfflineButton({ book, className }: BookOfflineButtonProps) {
         await downloadBook();
       }
     } catch (error) {
-      console.error("Erreur lors de la gestion du cache:", error);
+      logger.error({ err: error }, "Erreur lors de la gestion du cache:");
       setBookStatus(book.id, { status: "error", progress: 0, timestamp: Date.now() });
       toast({
         title: "Erreur",

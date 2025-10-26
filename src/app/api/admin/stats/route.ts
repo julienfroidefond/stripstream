@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { AdminService } from "@/lib/services/admin.service";
 import { AppError } from "@/utils/errors";
+import logger from "@/lib/logger";
 
 export async function GET() {
   try {
     const stats = await AdminService.getUserStats();
     return NextResponse.json(stats);
   } catch (error) {
-    console.error("Erreur lors de la récupération des stats:", error);
+    logger.error({ err: error }, "Erreur lors de la récupération des stats:");
 
     if (error instanceof AppError) {
       return NextResponse.json(

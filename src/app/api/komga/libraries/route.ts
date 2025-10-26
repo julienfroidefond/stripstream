@@ -4,6 +4,7 @@ import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 import type { KomgaLibrary } from "@/types/komga";
 import { getErrorMessage } from "@/utils/errors";
+import logger from "@/lib/logger";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
@@ -17,7 +18,7 @@ export async function GET() {
         return NextResponse.json([]);
       }
     }
-    console.error("API Libraries - Erreur:", error);
+    logger.error({ err: error }, "API Libraries - Erreur:");
     if (error instanceof AppError) {
       return NextResponse.json(
         {

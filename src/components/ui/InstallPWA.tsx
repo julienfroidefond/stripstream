@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Download, X } from "lucide-react";
+import logger from "@/lib/logger";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -83,7 +84,7 @@ export function InstallPWA() {
         setIsInstallable(false);
       }
     } catch (error) {
-      console.error("Erreur lors de l'installation:", error);
+      logger.error({ err: error }, "Erreur lors de l'installation:");
     }
 
     setDeferredPrompt(null);

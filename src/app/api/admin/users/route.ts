@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { AdminService } from "@/lib/services/admin.service";
 import { AppError } from "@/utils/errors";
+import logger from "@/lib/logger";
 
 export async function GET() {
   try {
     const users = await AdminService.getAllUsers();
     return NextResponse.json(users);
   } catch (error) {
-    console.error("Erreur lors de la récupération des utilisateurs:", error);
+    logger.error({ err: error }, "Erreur lors de la récupération des utilisateurs:");
 
     if (error instanceof AppError) {
       return NextResponse.json(

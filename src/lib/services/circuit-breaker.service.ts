@@ -3,6 +3,7 @@
  * Évite l'effet avalanche en coupant les requêtes vers un service défaillant
  */
 import type { CircuitBreakerConfig } from "@/types/preferences";
+import logger from "@/lib/logger";
 
 interface CircuitBreakerState {
   state: 'CLOSED' | 'OPEN' | 'HALF_OPEN';
@@ -47,7 +48,7 @@ class CircuitBreaker {
           resetTimeout: prefConfig.resetTimeout ?? 60000,
         };
       } catch (error) {
-        console.error('Error getting circuit breaker config from preferences:', error);
+        logger.error({ err: error }, 'Error getting circuit breaker config from preferences');
         return this.config;
       }
     }
@@ -78,8 +79,7 @@ class CircuitBreaker {
     if (this.state.state === 'HALF_OPEN') {
       this.state.failureCount = 0;
       this.state.state = 'CLOSED';
-      // eslint-disable-next-line no-console
-      console.log('[CIRCUIT-BREAKER] ✅ Circuit closed - Komga recovered');
+      logger.info('[CIRCUIT-BREAKER] ✅ Circuit closed - Komga recovered');
     }
   }
 
@@ -90,7 +90,7 @@ class CircuitBreaker {
     if (this.state.failureCount >= config.failureThreshold) {
       this.state.state = 'OPEN';
       this.state.nextAttemptTime = Date.now() + config.resetTimeout;
-      console.warn(`[CIRCUIT-BREAKER] 🔴 Circuit OPEN - Komga failing (${this.state.failureCount} failures, reset in ${config.resetTimeout}ms)`);
+      logger.warn(`[CIRCUIT-BREAKER] 🔴 Circuit OPEN - Komga failing (${this.state.failureCount} failures, reset in ${config.resetTimeout}ms)`);
     }
   }
 
@@ -105,8 +105,7 @@ class CircuitBreaker {
       lastFailureTime: 0,
       nextAttemptTime: 0,
     };
-    // eslint-disable-next-line no-console
-    console.log('[CIRCUIT-BREAKER] 🔄 Circuit reset');
+    logger.info('[CIRCUIT-BREAKER] 🔄 Circuit reset');
   }
 }
 

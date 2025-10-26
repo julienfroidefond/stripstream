@@ -2,6 +2,7 @@ import { AdminService } from "@/lib/services/admin.service";
 import { redirect } from "next/navigation";
 import { isAdmin } from "@/lib/auth-utils";
 import { AdminContent } from "@/components/admin/AdminContent";
+import logger from "@/lib/logger";
 
 export const dynamic = 'force-dynamic';
 
@@ -20,7 +21,7 @@ export default async function AdminPage() {
 
     return <AdminContent initialUsers={users} initialStats={stats} />;
   } catch (error) {
-    console.error("Erreur lors du chargement de la page admin:", error);
+    logger.error({ err: error }, "Erreur lors du chargement de la page admin:");
     redirect("/");
   }
 }

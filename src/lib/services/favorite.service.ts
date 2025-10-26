@@ -3,6 +3,7 @@ import { getCurrentUser } from "../auth-utils";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
 import type { User } from "@/types/komga";
+import logger from "@/lib/logger";
 
 export class FavoriteService {
   private static readonly FAVORITES_CHANGE_EVENT = "favoritesChanged";
@@ -38,7 +39,7 @@ export class FavoriteService {
       });
       return !!favorite;
     } catch (error) {
-      console.error("Erreur lors de la vérification du favori:", error);
+      logger.error({ err: error, seriesId }, "Erreur lors de la vérification du favori");
       return false;
     }
   }

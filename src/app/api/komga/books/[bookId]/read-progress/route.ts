@@ -4,6 +4,7 @@ import { BookService } from "@/lib/services/book.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { getErrorMessage } from "@/utils/errors";
 import { AppError } from "@/utils/errors";
+import logger from "@/lib/logger";
 
 export async function PATCH(
   request: NextRequest,
@@ -29,7 +30,7 @@ export async function PATCH(
     await BookService.updateReadProgress(bookId, page, completed);
     return NextResponse.json({ message: "📖 Progression mise à jour avec succès" });
   } catch (error) {
-    console.error("Erreur lors de la mise à jour de la progression:", error);
+    logger.error({ err: error }, "Erreur lors de la mise à jour de la progression:");
     if (error instanceof AppError) {
       return NextResponse.json(
         {
@@ -65,7 +66,7 @@ export async function DELETE(
     await BookService.deleteReadProgress(bookId);
     return NextResponse.json({ message: "🗑️ Progression supprimée avec succès" });
   } catch (error) {
-    console.error("Erreur lors de la suppression de la progression:", error);
+    logger.error({ err: error }, "Erreur lors de la suppression de la progression:");
     if (error instanceof AppError) {
       return NextResponse.json(
         {

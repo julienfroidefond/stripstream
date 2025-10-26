@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { UserService } from "@/lib/services/user.service";
 import { AppError } from "@/utils/errors";
 import { AuthServerService } from "@/lib/services/auth-server.service";
+import logger from "@/lib/logger";
 
 export async function PUT(request: NextRequest) {
   try {
@@ -29,7 +30,7 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Erreur lors du changement de mot de passe:", error);
+    logger.error({ err: error }, "Erreur lors du changement de mot de passe:");
 
     if (error instanceof AppError) {
       return NextResponse.json(

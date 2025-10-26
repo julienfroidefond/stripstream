@@ -2,6 +2,7 @@
  * Service de gestion de queue pour limiter les requêtes concurrentes vers Komga
  * Évite de surcharger Komga avec trop de requêtes simultanées
  */
+import logger from "@/lib/logger";
 
 interface QueuedRequest<T> {
   execute: () => Promise<T>;
@@ -35,7 +36,7 @@ class RequestQueue {
       try {
         return await this.getMaxConcurrent();
       } catch (error) {
-        console.error('Error getting maxConcurrent from preferences, using default:', error);
+        logger.error({ err: error }, 'Error getting maxConcurrent from preferences, using default');
         return this.maxConcurrent;
       }
     }

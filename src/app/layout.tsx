@@ -10,6 +10,7 @@ import { AuthProvider } from "@/components/providers/AuthProvider";
 import { cookies } from "next/headers";
 import { defaultPreferences } from "@/types/preferences";
 import type { UserPreferences } from "@/types/preferences";
+import logger from "@/lib/logger";
 
 const inter = Inter({ subsets: ["latin"], display: "swap", adjustFontFallback: false, preload: false });
 
@@ -83,7 +84,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       userIsAdmin = isAdminCheck.value;
     }
   } catch (error) {
-    console.error("Erreur lors du chargement des préférences:", error);
+    logger.error({ err: error }, "Erreur lors du chargement des préférences:");
   }
 
   return (

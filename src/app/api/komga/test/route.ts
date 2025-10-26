@@ -4,6 +4,7 @@ import { ERROR_CODES } from "@/constants/errorCodes";
 import { getErrorMessage } from "@/utils/errors";
 import type { KomgaLibrary } from "@/types/komga";
 import type { NextRequest } from "next/server";
+import logger from "@/lib/logger";
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,7 +22,7 @@ export async function POST(request: NextRequest) {
       } trouvée${libraries.length > 1 ? "s" : ""}`,
     });
   } catch (error) {
-    console.error("Erreur lors du test de connexion:", error);
+    logger.error({ err: error }, "Erreur lors du test de connexion:");
     return NextResponse.json(
       {
         error: {

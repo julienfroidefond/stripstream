@@ -5,6 +5,7 @@ import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 import { getErrorMessage } from "@/utils/errors";
 import type { NextRequest } from "next/server";
+import logger from "@/lib/logger";
 
 export async function GET() {
   try {
@@ -35,7 +36,7 @@ export async function GET() {
         return NextResponse.json([]);
       }
     }
-    console.error("Erreur lors de la récupération des favoris:", error);
+    logger.error({ err: error }, "Erreur lors de la récupération des favoris:");
     if (error instanceof AppError) {
       return NextResponse.json(
         {
@@ -67,7 +68,7 @@ export async function POST(request: NextRequest) {
     await FavoriteService.addToFavorites(seriesId);
     return NextResponse.json({ message: "⭐️ Série ajoutée aux favoris" });
   } catch (error) {
-    console.error("Erreur lors de l'ajout du favori:", error);
+    logger.error({ err: error }, "Erreur lors de l'ajout du favori:");
     if (error instanceof AppError) {
       return NextResponse.json(
         {
@@ -99,7 +100,7 @@ export async function DELETE(request: NextRequest) {
     await FavoriteService.removeFromFavorites(seriesId);
     return NextResponse.json({ message: "💔 Série retirée des favoris" });
   } catch (error) {
-    console.error("Erreur lors de la suppression du favori:", error);
+    logger.error({ err: error }, "Erreur lors de la suppression du favori:");
     if (error instanceof AppError) {
       return NextResponse.json(
         {

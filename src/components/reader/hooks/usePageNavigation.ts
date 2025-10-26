@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ClientOfflineBookService } from "@/lib/services/client-offlinebook.service";
 import type { KomgaBook } from "@/types/komga";
+import logger from "@/lib/logger";
 
 interface UsePageNavigationProps {
   book: KomgaBook;
@@ -46,7 +47,7 @@ export function usePageNavigation({
           body: JSON.stringify({ page, completed }),
         });
       } catch (error) {
-        console.error("Sync error:", error);
+        logger.error({ err: error }, "Sync error:");
       }
     },
     [book, pages.length]

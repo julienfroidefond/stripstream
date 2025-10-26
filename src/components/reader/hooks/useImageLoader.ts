@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
+import logger from "@/lib/logger";
 
 interface ImageDimensions {
   width: number;
@@ -200,7 +201,7 @@ export function useImageLoader({ bookId, pages: _pages, prefetchCount = 5, nextB
       
       setImageBlobUrls(newUrls);
     } catch (error) {
-      console.error('Error reloading images:', error);
+      logger.error({ err: error }, 'Error reloading images:');
       throw error;
     }
   }, [imageBlobUrls, getPageUrl]);

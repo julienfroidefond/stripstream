@@ -4,6 +4,7 @@ import { BookService } from "@/lib/services/book.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { getErrorMessage } from "@/utils/errors";
 import { AppError } from "@/utils/errors";
+import logger from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -39,7 +40,7 @@ export async function GET(
       headers,
     });
   } catch (error) {
-    console.error("Erreur lors de la récupération de la page:", error);
+    logger.error({ err: error }, "Erreur lors de la récupération de la page:");
     if (error instanceof AppError) {
       return NextResponse.json(
         {

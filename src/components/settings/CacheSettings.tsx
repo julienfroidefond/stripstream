@@ -10,6 +10,7 @@ import type { TTLConfigData } from "@/types/komga";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useImageCache } from "@/contexts/ImageCacheContext";
+import logger from "@/lib/logger";
 
 interface CacheSettingsProps {
   initialTTLConfig: TTLConfigData | null;
@@ -141,7 +142,7 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
         setApiCacheSize(apiSize);
       }
     } catch (error) {
-      console.error("Erreur lors de la récupération de la taille du cache:", error);
+      logger.error({ err: error }, "Erreur lors de la récupération de la taille du cache:");
     } finally {
       setIsLoadingCacheSize(false);
     }
@@ -156,7 +157,7 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
         setCacheEntries(data.entries);
       }
     } catch (error) {
-      console.error("Erreur lors de la récupération des entrées du cache:", error);
+      logger.error({ err: error }, "Erreur lors de la récupération des entrées du cache:");
     } finally {
       setIsLoadingEntries(false);
     }
@@ -196,7 +197,7 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
         setSwCacheEntries(entries);
       }
     } catch (error) {
-      console.error("Erreur lors de la récupération des entrées du cache SW:", error);
+      logger.error({ err: error }, "Erreur lors de la récupération des entrées du cache SW:");
     } finally {
       setIsLoadingSwEntries(false);
     }
@@ -345,7 +346,7 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
         await fetchSwCacheEntries();
       }
     } catch (error) {
-      console.error("Erreur:", error);
+      logger.error({ err: error }, "Erreur:");
       toast({
         variant: "destructive",
         title: t("settings.cache.error.title"),
@@ -389,7 +390,7 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
         }, 1000);
       }
     } catch (error) {
-      console.error("Erreur lors de la suppression des caches:", error);
+      logger.error({ err: error }, "Erreur lors de la suppression des caches:");
       toast({
         variant: "destructive",
         title: t("settings.cache.error.title"),
@@ -438,7 +439,7 @@ export function CacheSettings({ initialTTLConfig }: CacheSettingsProps) {
         description: t("settings.cache.messages.ttlSaved"),
       });
     } catch (error) {
-      console.error("Erreur lors de la sauvegarde:", error);
+      logger.error({ err: error }, "Erreur lors de la sauvegarde:");
       toast({
         variant: "destructive",
         title: t("settings.cache.error.title"),

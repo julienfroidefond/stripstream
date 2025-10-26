@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AdminService } from "@/lib/services/admin.service";
 import { AppError } from "@/utils/errors";
+import logger from "@/lib/logger";
 
 export async function PATCH(
   request: NextRequest,
@@ -22,7 +23,7 @@ export async function PATCH(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Erreur lors de la mise à jour de l'utilisateur:", error);
+    logger.error({ err: error }, "Erreur lors de la mise à jour de l'utilisateur:");
 
     if (error instanceof AppError) {
       return NextResponse.json(
@@ -52,7 +53,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Erreur lors de la suppression de l'utilisateur:", error);
+    logger.error({ err: error }, "Erreur lors de la suppression de l'utilisateur:");
 
     if (error instanceof AppError) {
       return NextResponse.json(

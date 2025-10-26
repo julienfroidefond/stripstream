@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
+import logger from "@/lib/logger";
 
 interface ImageCacheContextType {
   cacheVersion: string;
@@ -29,8 +30,7 @@ export function ImageCacheProvider({ children }: { children: React.ReactNode }) 
     const newVersion = Date.now().toString();
     setCacheVersion(newVersion);
     localStorage.setItem("imageCacheVersion", newVersion);
-    // eslint-disable-next-line no-console
-    console.log("🗑️  Image cache flushed - new version:", newVersion);
+    logger.info(`🗑️  Image cache flushed - new version: ${newVersion}`);
   }, []);
 
   const getImageUrl = useCallback(
