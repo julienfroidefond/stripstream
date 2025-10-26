@@ -41,7 +41,7 @@ export const LibraryHeader = ({ library, seriesCount, series, refreshLibrary }: 
           <SeriesCover
             series={backgroundSeries}
             alt=""
-            className="w-full h-full object-cover scale-105 blur-sm opacity-30"
+            className="blur-sm scale-105 brightness-50"
             showProgressUi={false}
           />
         ) : (
