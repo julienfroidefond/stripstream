@@ -4,8 +4,21 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 const logger = pino({
   level: isProduction ? 'info' : 'debug',
+  // Format timestamp en ISO 8601 lisible en prod
+  timestamp: () => `,"time":"${new Date().toISOString()}"`,
   ...(isProduction
-    ? {}
+    ? {
+        // En prod, utiliser pino-pretty aussi pour des logs lisibles
+        transport: {
+          target: 'pino-pretty',
+          options: {
+            colorize: true,
+            translateTime: 'SYS:dd/mm/yyyy HH:MM:ss',
+            ignore: 'pid,hostname',
+            singleLine: false,
+          },
+        },
+      }
     : {
         transport: {
           target: 'pino-pretty',
