@@ -18,10 +18,11 @@ ADMIN_DEFAULT_PASSWORD=Admin@2025
 # Cache Debug (optional - logs cache operations)
 # CACHE_DEBUG=true
 
-# Komga Debug (optional - logs all requests to Komga)
+# Komga Debug (optional - logs all requests to Komga and disables artificial delays)
 # KOMGA_DEBUG=true
 
-# Komga Request Queue (optional - max concurrent requests to Komga, default: 2)
+# Komga Request Queue (optional - max concurrent requests to Komga, default: 5)
+# Augmenter à 10-20 pour du local avec des gros fichiers CBZ
 # KOMGA_MAX_CONCURRENT_REQUESTS=5
 
 # Node Environment

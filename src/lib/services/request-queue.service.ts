@@ -76,8 +76,12 @@ class RequestQueue {
 
     try {
       // Délai adaptatif : plus long si la queue est pleine
-      const delayMs = this.queue.length > 10 ? 500 : 200;
-      await this.delay(delayMs);
+      // Désactivé en mode debug pour ne pas ralentir les tests
+      const isDebug = process.env.KOMGA_DEBUG === 'true';
+      if (!isDebug) {
+        const delayMs = this.queue.length > 10 ? 500 : 200;
+        await this.delay(delayMs);
+      }
       const result = await request.execute();
       request.resolve(result);
     } catch (error) {

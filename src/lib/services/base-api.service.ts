@@ -180,12 +180,17 @@ export abstract class BaseApiService {
     const startTime = isDebug ? Date.now() : 0;
     
     if (isDebug) {
+      const queueStats = {
+        active: RequestQueueService.getActiveCount(),
+        queued: RequestQueueService.getQueueLength(),
+      };
       logger.info({
         url,
         method: options.method || 'GET',
         params,
         isImage: options.isImage,
         noJson: options.noJson,
+        queue: queueStats,
       }, '🔵 Komga Request');
     }
 
