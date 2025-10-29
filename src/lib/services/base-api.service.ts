@@ -176,6 +176,19 @@ export abstract class BaseApiService {
       }
     }
 
+    const isDebug = process.env.KOMGA_DEBUG === 'true';
+    const startTime = isDebug ? Date.now() : 0;
+    
+    if (isDebug) {
+      logger.info({
+        url,
+        method: options.method || 'GET',
+        params,
+        isImage: options.isImage,
+        noJson: options.noJson,
+      }, '🔵 Komga Request');
+    }
+
     // Timeout réduit à 15 secondes pour éviter les blocages longs
     const timeoutMs = 15000;
     const controller = new AbortController();
@@ -238,7 +251,24 @@ export abstract class BaseApiService {
       });
       clearTimeout(timeoutId);
 
+      if (isDebug) {
+        const duration = Date.now() - startTime;
+        logger.info({
+          url,
+          status: response.status,
+          duration: `${duration}ms`,
+          ok: response.ok,
+        }, '🟢 Komga Response');
+      }
+
       if (!response.ok) {
+        if (isDebug) {
+          logger.error({
+            url,
+            status: response.status,
+            statusText: response.statusText,
+          }, '🔴 Komga Error Response');
+        }
         throw new AppError(ERROR_CODES.KOMGA.HTTP_ERROR, {
           status: response.status,
           statusText: response.statusText,
@@ -255,6 +285,14 @@ export abstract class BaseApiService {
       
       return response.json();
     } catch (error) {
+      if (isDebug) {
+        const duration = Date.now() - startTime;
+        logger.error({
+          url,
+          error: error instanceof Error ? error.message : String(error),
+          duration: `${duration}ms`,
+        }, '🔴 Komga Request Failed');
+      }
       throw error;
     } finally {
       clearTimeout(timeoutId);

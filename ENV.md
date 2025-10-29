@@ -18,6 +18,9 @@ ADMIN_DEFAULT_PASSWORD=Admin@2025
 # Cache Debug (optional - logs cache operations)
 # CACHE_DEBUG=true
 
+# Komga Debug (optional - logs all requests to Komga)
+# KOMGA_DEBUG=true
+
 # Komga Request Queue (optional - max concurrent requests to Komga, default: 2)
 # KOMGA_MAX_CONCURRENT_REQUESTS=5
 
