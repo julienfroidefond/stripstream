@@ -29,19 +29,26 @@ export function usePageNavigation({
   const [showEndMessage, setShowEndMessage] = useState(false);
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const currentPageRef = useRef(currentPage);
+  const bookRef = useRef(book);
+  const pagesLengthRef = useRef(pages.length);
 
-  // Garder currentPage à jour dans la ref pour le cleanup
+  // Garder les refs à jour
   useEffect(() => {
     currentPageRef.current = currentPage;
   }, [currentPage]);
+
+  useEffect(() => {
+    bookRef.current = book;
+    pagesLengthRef.current = pages.length;
+  }, [book, pages.length]);
 
   // Sync progress
   const syncReadProgress = useCallback(
     async (page: number) => {
       try {
-        ClientOfflineBookService.setCurrentPage(book, page);
-        const completed = page === pages.length;
-        await fetch(`/api/komga/books/${book.id}/read-progress`, {
+        ClientOfflineBookService.setCurrentPage(bookRef.current, page);
+        const completed = page === pagesLengthRef.current;
+        await fetch(`/api/komga/books/${bookRef.current.id}/read-progress`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ page, completed }),
@@ -50,7 +57,7 @@ export function usePageNavigation({
         logger.error({ err: error }, "Sync error:");
       }
     },
-    [book, pages.length]
+    [] // Pas de dépendances car on utilise des refs
   );
 
   const debouncedSync = useCallback(
