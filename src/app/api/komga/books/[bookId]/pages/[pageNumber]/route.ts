@@ -32,17 +32,27 @@ export async function GET(
 
     // Utiliser la déduplication pour éviter les requêtes dupliquées vers Komga
     // Si plusieurs clients demandent la même page simultanément, une seule requête est faite
+    // On lit le buffer et les headers dans la déduplication pour pouvoir les partager
     const deduplicationKey = `book-page:${bookIdParam}:${pageNumber}`;
-    const response = await requestDeduplicationService.deduplicate(
+    const { buffer, contentType } = await requestDeduplicationService.deduplicate(
       deduplicationKey,
-      () => BookService.getPage(bookIdParam, pageNumber)
+      async () => {
+        const response = await BookService.getPage(bookIdParam, pageNumber);
+        const buffer = await response.arrayBuffer();
+        const contentType = response.headers.get("Content-Type") || "image/jpeg";
+        // Retourner le buffer et contentType pour que chaque requête puisse créer sa propre réponse
+        return { buffer, contentType };
+      }
     );
-    const buffer = await response.arrayBuffer();
+    
+    // Cloner le buffer pour cette requête pour éviter tout partage de référence
+    const clonedBuffer = buffer.slice(0);
+    
     const headers = new Headers();
-    headers.set("Content-Type", response.headers.get("Content-Type") || "image/jpeg");
+    headers.set("Content-Type", contentType);
     headers.set("Cache-Control", "public, max-age=31536000"); // Cache for 1 year
 
-    return new NextResponse(buffer, {
+    return new NextResponse(clonedBuffer, {
       status: 200,
       headers,
     });
