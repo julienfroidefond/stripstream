@@ -20,6 +20,8 @@ export function useImageLoader({ bookId, pages: _pages, prefetchCount = 5, nextB
   const [imageBlobUrls, setImageBlobUrls] = useState<Record<ImageKey, string>>({});
   const loadedImagesRef = useRef(loadedImages);
   const imageBlobUrlsRef = useRef(imageBlobUrls);
+  // Track ongoing fetch requests to prevent duplicates
+  const pendingFetchesRef = useRef<Set<ImageKey>>(new Set());
 
   // Keep refs in sync with state
   useEffect(() => {
@@ -42,8 +44,19 @@ export function useImageLoader({ bookId, pages: _pages, prefetchCount = 5, nextB
       return;
     }
     
+    // Check if this page is already being fetched
+    if (pendingFetchesRef.current.has(pageNum)) {
+      return;
+    }
+    
+    // Mark as pending
+    pendingFetchesRef.current.add(pageNum);
+    
     try {
-      const response = await fetch(getPageUrl(pageNum));
+      // Use browser cache if available - the server sets Cache-Control headers
+      const response = await fetch(getPageUrl(pageNum), {
+        cache: 'default', // Respect Cache-Control headers from server
+      });
       if (!response.ok) {
         return;
       }
@@ -68,10 +81,15 @@ export function useImageLoader({ bookId, pages: _pages, prefetchCount = 5, nextB
       img.src = blobUrl;
     } catch {
       // Silently fail prefetch
+    } finally {
+      // Remove from pending set
+      pendingFetchesRef.current.delete(pageNum);
     }
   }, [getPageUrl]);
 
   // Prefetch multiple pages starting from a given page
+  // The server-side queue (RequestQueueService) handles concurrency limits
+  // We only deduplicate to avoid redundant HTTP requests
   const prefetchPages = useCallback(async (startPage: number, count: number = prefetchCount) => {
     const pagesToPrefetch = [];
     
@@ -80,17 +98,22 @@ export function useImageLoader({ bookId, pages: _pages, prefetchCount = 5, nextB
       if (pageNum <= _pages.length) {
         const hasDimensions = loadedImagesRef.current[pageNum];
         const hasBlobUrl = imageBlobUrlsRef.current[pageNum];
+        const isPending = pendingFetchesRef.current.has(pageNum);
         
-        // Prefetch if we don't have both dimensions AND blob URL
-        if (!hasDimensions || !hasBlobUrl) {
+        // Prefetch if we don't have both dimensions AND blob URL AND it's not already pending
+        if ((!hasDimensions || !hasBlobUrl) && !isPending) {
           pagesToPrefetch.push(pageNum);
         }
       }
     }
     
-    // Prefetch all pages in parallel
+    // Let all prefetch requests run - the server queue will manage concurrency
+    // The browser cache and our deduplication prevent redundant requests
     if (pagesToPrefetch.length > 0) {
-      await Promise.all(pagesToPrefetch.map(pageNum => prefetchImage(pageNum)));
+      // Fire all requests in parallel - server queue handles throttling
+      Promise.all(pagesToPrefetch.map(pageNum => prefetchImage(pageNum))).catch(() => {
+        // Silently fail - prefetch is non-critical
+      });
     }
   }, [prefetchImage, prefetchCount, _pages.length]);
 
@@ -108,17 +131,23 @@ export function useImageLoader({ bookId, pages: _pages, prefetchCount = 5, nextB
       const nextBookPageKey = `next-${pageNum}`;
       const hasDimensions = loadedImagesRef.current[nextBookPageKey];
       const hasBlobUrl = imageBlobUrlsRef.current[nextBookPageKey];
+      const isPending = pendingFetchesRef.current.has(nextBookPageKey);
       
-      if (!hasDimensions || !hasBlobUrl) {
+      if ((!hasDimensions || !hasBlobUrl) && !isPending) {
         pagesToPrefetch.push({ pageNum, nextBookPageKey });
       }
     }
     
-    // Prefetch all pages in parallel
+    // Let all prefetch requests run - server queue handles concurrency
     if (pagesToPrefetch.length > 0) {
-      await Promise.all(pagesToPrefetch.map(async ({ pageNum, nextBookPageKey }) => {
+      Promise.all(pagesToPrefetch.map(async ({ pageNum, nextBookPageKey }) => {
+        // Mark as pending
+        pendingFetchesRef.current.add(nextBookPageKey);
+        
         try {
-          const response = await fetch(`/api/komga/books/${nextBook.id}/pages/${pageNum}`);
+          const response = await fetch(`/api/komga/books/${nextBook.id}/pages/${pageNum}`, {
+            cache: 'default', // Respect Cache-Control headers from server
+          });
           if (!response.ok) {
             return;
           }
@@ -143,8 +172,12 @@ export function useImageLoader({ bookId, pages: _pages, prefetchCount = 5, nextB
           img.src = blobUrl;
         } catch {
           // Silently fail prefetch
+        } finally {
+          pendingFetchesRef.current.delete(nextBookPageKey);
         }
-      }));
+      })).catch(() => {
+        // Silently fail - prefetch is non-critical
+      });
     }
   }, [nextBook, prefetchCount]);
 

@@ -5,6 +5,7 @@ import { ERROR_CODES } from "@/constants/errorCodes";
 import { getErrorMessage } from "@/utils/errors";
 import { AppError } from "@/utils/errors";
 import logger from "@/lib/logger";
+import { requestDeduplicationService } from "@/lib/services/request-deduplication.service";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +30,13 @@ export async function GET(
       );
     }
 
-    const response = await BookService.getPage(bookIdParam, pageNumber);
+    // Utiliser la déduplication pour éviter les requêtes dupliquées vers Komga
+    // Si plusieurs clients demandent la même page simultanément, une seule requête est faite
+    const deduplicationKey = `book-page:${bookIdParam}:${pageNumber}`;
+    const response = await requestDeduplicationService.deduplicate(
+      deduplicationKey,
+      () => BookService.getPage(bookIdParam, pageNumber)
+    );
     const buffer = await response.arrayBuffer();
     const headers = new Headers();
     headers.set("Content-Type", response.headers.get("Content-Type") || "image/jpeg");

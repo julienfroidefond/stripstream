@@ -67,6 +67,8 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
 
 
   // Prefetch current and next pages
+  // Deduplication in useImageLoader prevents redundant requests
+  // Server queue (RequestQueueService) handles concurrency limits
   useEffect(() => {
     // Prefetch pages starting from current page
     prefetchPages(currentPage, prefetchCount);
