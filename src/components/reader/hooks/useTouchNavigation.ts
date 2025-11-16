@@ -17,10 +17,24 @@ export function useTouchNavigation({
   const touchStartYRef = useRef<number | null>(null);
   const isPinchingRef = useRef(false);
 
+  // Helper pour vérifier si la page est zoomée (zoom natif du navigateur)
+  const isZoomed = useCallback(() => {
+    // Utiliser visualViewport.scale pour détecter le zoom natif
+    // Si scale > 1, la page est zoomée
+    if (window.visualViewport) {
+      return window.visualViewport.scale > 1;
+    }
+    // Fallback pour les navigateurs qui ne supportent pas visualViewport
+    // Comparer la taille de la fenêtre avec la taille réelle
+    return window.innerWidth !== window.screen.width;
+  }, []);
+
   // Touch handlers for swipe navigation
   const handleTouchStart = useCallback((e: TouchEvent) => {
     // Ne pas gérer si Photoswipe est ouvert
     if (pswpRef.current) return;
+    // Ne pas gérer si la page est zoomée (zoom natif)
+    if (isZoomed()) return;
     
     // Détecter si c'est un pinch (2+ doigts)
     if (e.touches.length > 1) {
@@ -37,7 +51,7 @@ export function useTouchNavigation({
       touchStartXRef.current = e.touches[0].clientX;
       touchStartYRef.current = e.touches[0].clientY;
     }
-  }, [pswpRef]);
+  }, [pswpRef, isZoomed]);
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
     // Détecter le pinch pendant le mouvement
@@ -59,7 +73,10 @@ export function useTouchNavigation({
     
     // Vérifier qu'on a bien des coordonnées de départ
     if (touchStartXRef.current === null || touchStartYRef.current === null) return;
-    if (pswpRef.current) return; // Ne pas gérer si Photoswipe est ouvert
+    // Ne pas gérer si Photoswipe est ouvert
+    if (pswpRef.current) return;
+    // Ne pas gérer si la page est zoomée (zoom natif)
+    if (isZoomed()) return;
 
     const touchEndX = e.changedTouches[0].clientX;
     const touchEndY = e.changedTouches[0].clientY;
@@ -94,7 +111,7 @@ export function useTouchNavigation({
 
     touchStartXRef.current = null;
     touchStartYRef.current = null;
-  }, [onNextPage, onPreviousPage, isRTL, pswpRef]);
+  }, [onNextPage, onPreviousPage, isRTL, pswpRef, isZoomed]);
 
   // Setup touch event listeners
   useEffect(() => {
