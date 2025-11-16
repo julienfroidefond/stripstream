@@ -17,15 +17,17 @@ import { BookOfflineButton } from "@/components/ui/book-offline-button";
 interface BookListProps {
   books: KomgaBook[];
   onBookClick: (book: KomgaBook) => void;
+  isCompact?: boolean;
 }
 
 interface BookListItemProps {
   book: KomgaBook;
   onBookClick: (book: KomgaBook) => void;
   onSuccess: (book: KomgaBook, action: "read" | "unread") => void;
+  isCompact?: boolean;
 }
 
-function BookListItem({ book, onBookClick, onSuccess }: BookListItemProps) {
+function BookListItem({ book, onBookClick, onSuccess, isCompact = false }: BookListItemProps) {
   const { t } = useTranslate();
   const { isAccessible } = useBookOfflineStatus(book.id);
 
@@ -77,6 +79,74 @@ function BookListItem({ book, onBookClick, onSuccess }: BookListItemProps) {
     (book.metadata.number 
       ? t("navigation.volume", { number: book.metadata.number })
       : book.name);
+
+  if (isCompact) {
+    return (
+      <div
+        className={cn(
+          "group relative flex gap-3 p-2 rounded-lg border bg-card hover:bg-accent/50 transition-colors",
+          !isAccessible && "opacity-60"
+        )}
+      >
+        {/* Couverture compacte */}
+        <div
+          className={cn(
+            "relative w-12 h-16 sm:w-14 sm:h-20 flex-shrink-0 rounded overflow-hidden bg-muted",
+            isAccessible && "cursor-pointer"
+          )}
+          onClick={handleClick}
+        >
+          <BookCover
+            book={book}
+            alt={t("books.coverAlt", { title })}
+            showControls={false}
+            showOverlay={false}
+            className="w-full h-full"
+          />
+        </div>
+
+        {/* Contenu compact */}
+        <div className="flex-1 min-w-0 flex flex-col gap-1 justify-center">
+          {/* Titre et statut */}
+          <div className="flex items-center justify-between gap-2">
+            <h3
+              className={cn(
+                "font-medium text-sm sm:text-base line-clamp-1 flex-1 min-w-0",
+                isAccessible && "cursor-pointer hover:text-primary transition-colors"
+              )}
+              onClick={handleClick}
+            >
+              {title}
+            </h3>
+            <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0", statusInfo.className)}>
+              {statusInfo.label}
+            </span>
+          </div>
+
+          {/* Métadonnées minimales */}
+          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            {book.metadata.number && (
+              <span>{t("navigation.volume", { number: book.metadata.number })}</span>
+            )}
+            <div className="flex items-center gap-1">
+              <FileText className="h-3 w-3" />
+              <span>
+                {totalPages} {totalPages > 1 ? t("books.pages_plural") : t("books.pages")}
+              </span>
+            </div>
+            {book.metadata.authors && book.metadata.authors.length > 0 && (
+              <div className="flex items-center gap-1 hidden sm:flex">
+                <User className="h-3 w-3" />
+                <span className="line-clamp-1">
+                  {book.metadata.authors[0].name}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -211,7 +281,7 @@ function BookListItem({ book, onBookClick, onSuccess }: BookListItemProps) {
   );
 }
 
-export function BookList({ books, onBookClick }: BookListProps) {
+export function BookList({ books, onBookClick, isCompact = false }: BookListProps) {
   const [localBooks, setLocalBooks] = useState(books);
   const { t } = useTranslate();
 
@@ -260,13 +330,14 @@ export function BookList({ books, onBookClick }: BookListProps) {
   };
 
   return (
-    <div className="space-y-2">
+    <div className={cn("space-y-2", isCompact && "space-y-1")}>
       {localBooks.map((book) => (
         <BookListItem
           key={book.id}
           book={book}
           onBookClick={onBookClick}
           onSuccess={handleOnSuccess}
+          isCompact={isCompact}
         />
       ))}
     </div>

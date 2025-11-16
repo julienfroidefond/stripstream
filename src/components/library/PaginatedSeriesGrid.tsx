@@ -122,7 +122,7 @@ export function PaginatedSeriesGrid({
           <div className="flex items-center justify-end gap-2">
             <PageSizeSelect onSizeChange={handlePageSizeChange} />
             <ViewModeButton />
-            {viewMode === "grid" && <CompactModeButton />}
+            <CompactModeButton />
             <UnreadFilterButton showOnlyUnread={showOnlyUnread} onToggle={handleUnreadFilter} />
           </div>
         </div>
@@ -131,7 +131,7 @@ export function PaginatedSeriesGrid({
       {viewMode === "grid" ? (
         <SeriesGrid series={series} isCompact={isCompact} />
       ) : (
-        <SeriesList series={series} />
+        <SeriesList series={series} isCompact={isCompact} />
       )}
 
       <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between">

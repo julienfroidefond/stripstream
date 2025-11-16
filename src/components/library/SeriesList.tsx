@@ -11,10 +11,12 @@ import { formatDate } from "@/lib/utils";
 
 interface SeriesListProps {
   series: KomgaSeries[];
+  isCompact?: boolean;
 }
 
 interface SeriesListItemProps {
   series: KomgaSeries;
+  isCompact?: boolean;
 }
 
 // Utility function to get reading status info
@@ -49,7 +51,7 @@ const getReadingStatusInfo = (series: KomgaSeries, t: (key: string, options?: an
   };
 };
 
-function SeriesListItem({ series }: SeriesListItemProps) {
+function SeriesListItem({ series, isCompact = false }: SeriesListItemProps) {
   const router = useRouter();
   const { t } = useTranslate();
 
@@ -63,6 +65,60 @@ function SeriesListItem({ series }: SeriesListItemProps) {
     : 0;
 
   const statusInfo = getReadingStatusInfo(series, t);
+
+  if (isCompact) {
+    return (
+      <div
+        className={cn(
+          "group relative flex gap-3 p-2 rounded-lg border bg-card hover:bg-accent/50 transition-colors cursor-pointer",
+          isCompleted && "opacity-75"
+        )}
+        onClick={handleClick}
+      >
+        {/* Couverture compacte */}
+        <div className="relative w-12 h-16 sm:w-14 sm:h-20 flex-shrink-0 rounded overflow-hidden bg-muted">
+          <SeriesCover
+            series={series}
+            alt={t("series.coverAlt", { title: series.metadata.title })}
+            className="w-full h-full"
+          />
+        </div>
+
+        {/* Contenu compact */}
+        <div className="flex-1 min-w-0 flex flex-col gap-1 justify-center">
+          {/* Titre et statut */}
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="font-medium text-sm sm:text-base line-clamp-1 hover:text-primary transition-colors flex-1 min-w-0">
+              {series.metadata.title}
+            </h3>
+            <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0", statusInfo.className)}>
+              {statusInfo.label}
+            </span>
+          </div>
+
+          {/* Métadonnées minimales */}
+          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <BookOpen className="h-3 w-3" />
+              <span>
+                {series.booksCount === 1 
+                  ? t("series.book", { count: 1 })
+                  : t("series.books", { count: series.booksCount })}
+              </span>
+            </div>
+            {series.booksMetadata?.authors && series.booksMetadata.authors.length > 0 && (
+              <div className="flex items-center gap-1 hidden sm:flex">
+                <User className="h-3 w-3" />
+                <span className="line-clamp-1">
+                  {series.booksMetadata.authors[0].name}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -171,7 +227,7 @@ function SeriesListItem({ series }: SeriesListItemProps) {
   );
 }
 
-export function SeriesList({ series }: SeriesListProps) {
+export function SeriesList({ series, isCompact = false }: SeriesListProps) {
   const { t } = useTranslate();
 
   if (!series.length) {
@@ -183,9 +239,9 @@ export function SeriesList({ series }: SeriesListProps) {
   }
 
   return (
-    <div className="space-y-2">
+    <div className={cn("space-y-2", isCompact && "space-y-1")}>
       {series.map((seriesItem) => (
-        <SeriesListItem key={seriesItem.id} series={seriesItem} />
+        <SeriesListItem key={seriesItem.id} series={seriesItem} isCompact={isCompact} />
       ))}
     </div>
   );

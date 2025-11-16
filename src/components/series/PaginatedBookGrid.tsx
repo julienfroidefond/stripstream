@@ -115,7 +115,7 @@ export function PaginatedBookGrid({
         <div className="flex items-center justify-end gap-2">
           <PageSizeSelect onSizeChange={handlePageSizeChange} />
           <ViewModeButton />
-          {viewMode === "grid" && <CompactModeButton />}
+          <CompactModeButton />
           <UnreadFilterButton showOnlyUnread={showOnlyUnread} onToggle={handleUnreadFilter} />
         </div>
       </div>
@@ -123,7 +123,7 @@ export function PaginatedBookGrid({
       {viewMode === "grid" ? (
         <BookGrid books={books} onBookClick={handleBookClick} isCompact={isCompact} />
       ) : (
-        <BookList books={books} onBookClick={handleBookClick} />
+        <BookList books={books} onBookClick={handleBookClick} isCompact={isCompact} />
       )}
 
       <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
