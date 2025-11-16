@@ -1,6 +1,7 @@
 "use client";
 
 import { SeriesGrid } from "./SeriesGrid";
+import { SeriesList } from "./SeriesList";
 import { Pagination } from "@/components/ui/Pagination";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
@@ -10,6 +11,7 @@ import { useTranslate } from "@/hooks/useTranslate";
 import { useDisplayPreferences } from "@/hooks/useDisplayPreferences";
 import { PageSizeSelect } from "@/components/common/PageSizeSelect";
 import { CompactModeButton } from "@/components/common/CompactModeButton";
+import { ViewModeButton } from "@/components/common/ViewModeButton";
 import { UnreadFilterButton } from "@/components/common/UnreadFilterButton";
 
 interface PaginatedSeriesGridProps {
@@ -35,7 +37,7 @@ export function PaginatedSeriesGrid({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [showOnlyUnread, setShowOnlyUnread] = useState(initialShowOnlyUnread);
-  const { isCompact, itemsPerPage: displayItemsPerPage } = useDisplayPreferences();
+  const { isCompact, itemsPerPage: displayItemsPerPage, viewMode } = useDisplayPreferences();
   
   // Utiliser la taille de page effective (depuis l'URL ou les préférences)
   const effectivePageSize = pageSize || displayItemsPerPage;
@@ -119,13 +121,18 @@ export function PaginatedSeriesGrid({
           </div>
           <div className="flex items-center justify-end gap-2">
             <PageSizeSelect onSizeChange={handlePageSizeChange} />
-            <CompactModeButton />
+            <ViewModeButton />
+            {viewMode === "grid" && <CompactModeButton />}
             <UnreadFilterButton showOnlyUnread={showOnlyUnread} onToggle={handleUnreadFilter} />
           </div>
         </div>
       </div>
 
-      <SeriesGrid series={series} isCompact={isCompact} />
+      {viewMode === "grid" ? (
+        <SeriesGrid series={series} isCompact={isCompact} />
+      ) : (
+        <SeriesList series={series} />
+      )}
 
       <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
         <p className="text-sm text-muted-foreground order-2 sm:order-1">

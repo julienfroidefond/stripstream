@@ -284,7 +284,10 @@
       "unread": "Non lu",
       "progress": "{read}/{total}"
     },
+    "book": "tome",
     "books": "{count} tomes",
+    "books_plural": "{count} tomes",
+    "completed": "complété",
     "filters": {
       "title": "Filtres",
       "showAll": "Afficher tout",

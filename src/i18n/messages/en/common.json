@@ -284,7 +284,10 @@
       "unread": "Unread",
       "progress": "{read}/{total}"
     },
+    "book": "book",
     "books": "{count} books",
+    "books_plural": "{count} books",
+    "completed": "completed",
     "filters": {
       "title": "Filters",
       "showAll": "Show all",
