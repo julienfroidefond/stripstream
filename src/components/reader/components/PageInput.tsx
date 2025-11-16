@@ -93,7 +93,7 @@ export const PageInput = ({ currentPage, totalPages, onPageChange }: PageInputPr
           tabIndex={0}
           aria-label="Cliquez pour naviguer vers une page spécifique"
         >
-          {currentPage}
+          {currentPage}/{totalPages}
         </button>
       )}
     </div>
