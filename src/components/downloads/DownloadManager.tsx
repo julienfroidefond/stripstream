@@ -13,6 +13,7 @@ import Link from "next/link";
 import { BookOfflineButton } from "@/components/ui/book-offline-button";
 import { useTranslate } from "@/hooks/useTranslate";
 import logger from "@/lib/logger";
+import { Container } from "@/components/ui/container";
 
 type BookStatus = "idle" | "downloading" | "available" | "error";
 
@@ -150,54 +151,55 @@ export function DownloadManager() {
   }
 
   return (
-    <>
-      <div className="container mx-auto px-4 py-8 space-y-12">
-        <h1 className="text-3xl font-bold tracking-tight">{t("downloads.page.title")}</h1>
-        {t("downloads.page.description") && (
-          <p className="text-lg text-muted-foreground">{t("downloads.page.description")}</p>
-        )}
-      </div>
-      <Tabs defaultValue="all" className="space-y-4">
-        <div className="flex items-center justify-between">
-          <TabsList>
-            <TabsTrigger value="all">
-              {t("downloads.tabs.all", { count: downloadedBooks.length })}
-            </TabsTrigger>
-            <TabsTrigger value="downloading">
-              {t("downloads.tabs.downloading", {
-                count: downloadedBooks.filter((b) => b.status.status === "downloading").length,
-              })}
-            </TabsTrigger>
-            <TabsTrigger value="available">
-              {t("downloads.tabs.available", {
-                count: downloadedBooks.filter((b) => b.status.status === "available").length,
-              })}
-            </TabsTrigger>
-            <TabsTrigger value="error">
-              {t("downloads.tabs.error", {
-                count: downloadedBooks.filter((b) => b.status.status === "error").length,
-              })}
-            </TabsTrigger>
-          </TabsList>
-          {downloadedBooks.some((b) => b.status.status === "error") && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                const errorBooks = downloadedBooks.filter((b) => b.status.status === "error");
-                errorBooks.forEach((book) => handleRetryDownload(book.book));
-                toast({
-                  title: t("downloads.toast.retryAll"),
-                  description: t("downloads.toast.retryAllDesc", { count: errorBooks.length }),
-                });
-              }}
-              className="gap-2"
-            >
-              <Download className="h-4 w-4" />
-              {t("downloads.actions.retryAll")}
-            </Button>
+    <Container>
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight">{t("downloads.page.title")}</h1>
+          {t("downloads.page.description") && (
+            <p className="text-lg text-muted-foreground">{t("downloads.page.description")}</p>
           )}
         </div>
+        <Tabs defaultValue="all" className="space-y-4">
+          <div className="flex items-center justify-between">
+            <TabsList>
+              <TabsTrigger value="all">
+                {t("downloads.tabs.all", { count: downloadedBooks.length })}
+              </TabsTrigger>
+              <TabsTrigger value="downloading">
+                {t("downloads.tabs.downloading", {
+                  count: downloadedBooks.filter((b) => b.status.status === "downloading").length,
+                })}
+              </TabsTrigger>
+              <TabsTrigger value="available">
+                {t("downloads.tabs.available", {
+                  count: downloadedBooks.filter((b) => b.status.status === "available").length,
+                })}
+              </TabsTrigger>
+              <TabsTrigger value="error">
+                {t("downloads.tabs.error", {
+                  count: downloadedBooks.filter((b) => b.status.status === "error").length,
+                })}
+              </TabsTrigger>
+            </TabsList>
+            {downloadedBooks.some((b) => b.status.status === "error") && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const errorBooks = downloadedBooks.filter((b) => b.status.status === "error");
+                  errorBooks.forEach((book) => handleRetryDownload(book.book));
+                  toast({
+                    title: t("downloads.toast.retryAll"),
+                    description: t("downloads.toast.retryAllDesc", { count: errorBooks.length }),
+                  });
+                }}
+                className="gap-2"
+              >
+                <Download className="h-4 w-4" />
+                {t("downloads.actions.retryAll")}
+              </Button>
+            )}
+          </div>
 
         <TabsContent value="all" className="space-y-4">
           {downloadedBooks.map(({ book, status }) => (
@@ -269,7 +271,8 @@ export function DownloadManager() {
           )}
         </TabsContent>
       </Tabs>
-    </>
+      </div>
+    </Container>
   );
 }
 
