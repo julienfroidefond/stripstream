@@ -87,12 +87,6 @@ export function PaginatedSeriesGrid({
     });
   };
 
-  const handleCompactToggle = async (newCompactState: boolean) => {
-    await updateUrlParams({
-      page: "1",
-      compact: newCompactState.toString(),
-    });
-  };
 
   const handlePageSizeChange = async (size: number) => {
     await updateUrlParams({
@@ -125,7 +119,7 @@ export function PaginatedSeriesGrid({
           </div>
           <div className="flex items-center justify-end gap-2">
             <PageSizeSelect onSizeChange={handlePageSizeChange} />
-            <CompactModeButton onToggle={handleCompactToggle} />
+            <CompactModeButton />
             <UnreadFilterButton showOnlyUnread={showOnlyUnread} onToggle={handleUnreadFilter} />
           </div>
         </div>

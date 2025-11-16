@@ -39,6 +39,11 @@ export function PreferencesProvider({
       setPreferences({
         ...defaultPreferences,
         ...data,
+        displayMode: {
+          ...defaultPreferences.displayMode,
+          ...(data.displayMode || {}),
+          viewMode: data.displayMode?.viewMode || defaultPreferences.displayMode.viewMode,
+        },
       });
     } catch (error) {
       logger.error({ err: error }, "Erreur lors de la récupération des préférences");

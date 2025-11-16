@@ -22,6 +22,7 @@ export interface UserPreferences {
   displayMode: {
     compact: boolean;
     itemsPerPage: number;
+    viewMode: "grid" | "list";
   };
   background: BackgroundPreferences;
   komgaMaxConcurrentRequests: number;
@@ -36,6 +37,7 @@ export const defaultPreferences: UserPreferences = {
   displayMode: {
     compact: false,
     itemsPerPage: 20,
+    viewMode: "grid",
   },
   background: {
     type: "default",

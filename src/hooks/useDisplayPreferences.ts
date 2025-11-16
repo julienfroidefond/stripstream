@@ -30,10 +30,25 @@ export function useDisplayPreferences() {
     }
   };
 
+  const handleViewModeToggle = async (viewMode: "grid" | "list") => {
+    try {
+      await updatePreferences({
+        displayMode: {
+          ...preferences.displayMode,
+          viewMode,
+        },
+      });
+    } catch (error) {
+      logger.error({ err: error }, "Erreur lors de la mise à jour du mode d'affichage");
+    }
+  };
+
   return {
     isCompact: preferences.displayMode.compact,
     itemsPerPage: preferences.displayMode.itemsPerPage,
+    viewMode: preferences.displayMode.viewMode || "grid",
     handleCompactToggle,
     handlePageSizeChange,
+    handleViewModeToggle,
   };
 }

@@ -325,9 +325,14 @@
       "progress": "Page {{current}}/{{total}}",
       "offline": "Unavailable offline"
     },
+    "pages": "page",
+    "pages_plural": "pages",
+    "completed": "completed",
     "display": {
       "showing": "Showing books {start} to {end} of {total}",
-      "page": "Page {current} of {total}"
+      "page": "Page {current} of {total}",
+      "grid": "Grid view",
+      "list": "List view"
     },
     "filters": {
       "showAll": "Show all",

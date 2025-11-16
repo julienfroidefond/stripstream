@@ -1,6 +1,7 @@
 "use client";
 
 import { BookGrid } from "./BookGrid";
+import { BookList } from "./BookList";
 import { Pagination } from "@/components/ui/Pagination";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
@@ -9,6 +10,7 @@ import { useTranslate } from "@/hooks/useTranslate";
 import { useDisplayPreferences } from "@/hooks/useDisplayPreferences";
 import { PageSizeSelect } from "@/components/common/PageSizeSelect";
 import { CompactModeButton } from "@/components/common/CompactModeButton";
+import { ViewModeButton } from "@/components/common/ViewModeButton";
 import { UnreadFilterButton } from "@/components/common/UnreadFilterButton";
 
 interface PaginatedBookGridProps {
@@ -32,7 +34,7 @@ export function PaginatedBookGrid({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [showOnlyUnread, setShowOnlyUnread] = useState(initialShowOnlyUnread);
-  const { isCompact, itemsPerPage } = useDisplayPreferences();
+  const { isCompact, itemsPerPage, viewMode } = useDisplayPreferences();
   const { t } = useTranslate();
 
   const updateUrlParams = useCallback(async (
@@ -81,13 +83,6 @@ export function PaginatedBookGrid({
     });
   };
 
-  const handleCompactToggle = async (newCompactState: boolean) => {
-    await updateUrlParams({
-      page: "1",
-      compact: newCompactState.toString(),
-    });
-  };
-
   const handlePageSizeChange = async (size: number) => {
     await updateUrlParams({
       page: "1",
@@ -119,12 +114,17 @@ export function PaginatedBookGrid({
         <p className="text-sm text-muted-foreground text-right">{getShowingText()}</p>
         <div className="flex items-center justify-end gap-2">
           <PageSizeSelect onSizeChange={handlePageSizeChange} />
-          <CompactModeButton onToggle={handleCompactToggle} />
+          <ViewModeButton />
+          {viewMode === "grid" && <CompactModeButton />}
           <UnreadFilterButton showOnlyUnread={showOnlyUnread} onToggle={handleUnreadFilter} />
         </div>
       </div>
 
-      <BookGrid books={books} onBookClick={handleBookClick} isCompact={isCompact} />
+      {viewMode === "grid" ? (
+        <BookGrid books={books} onBookClick={handleBookClick} isCompact={isCompact} />
+      ) : (
+        <BookList books={books} onBookClick={handleBookClick} />
+      )}
 
       <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
         <p className="text-sm text-muted-foreground order-2 sm:order-1">

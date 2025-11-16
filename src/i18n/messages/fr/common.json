@@ -323,9 +323,14 @@
       "progress": "Page {{current}}/{{total}}",
       "offline": "Indisponible hors ligne"
     },
+    "pages": "page",
+    "pages_plural": "pages",
+    "completed": "complété",
     "display": {
       "showing": "Affichage des tomes {start} à {end} sur {total}",
-      "page": "Page {current} sur {total}"
+      "page": "Page {current} sur {total}",
+      "grid": "Vue grille",
+      "list": "Vue liste"
     },
     "filters": {
       "showAll": "Afficher tout",

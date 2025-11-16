@@ -29,11 +29,17 @@ export class PreferencesService {
         return { ...defaultPreferences };
       }
 
+      const displayMode = preferences.displayMode as UserPreferences["displayMode"];
+      
       return {
         showThumbnails: preferences.showThumbnails,
         cacheMode: preferences.cacheMode as "memory" | "file",
         showOnlyUnread: preferences.showOnlyUnread,
-        displayMode: preferences.displayMode as UserPreferences["displayMode"],
+        displayMode: {
+          ...defaultPreferences.displayMode,
+          ...displayMode,
+          viewMode: displayMode?.viewMode || defaultPreferences.displayMode.viewMode,
+        },
         background: preferences.background as unknown as BackgroundPreferences,
         komgaMaxConcurrentRequests: preferences.komgaMaxConcurrentRequests,
         readerPrefetchCount: preferences.readerPrefetchCount,
