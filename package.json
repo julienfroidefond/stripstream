@@ -11,7 +11,8 @@
     "reset-admin-password": "node scripts/reset-admin-password.mjs",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "icons": "node scripts/generate-icons.js"
+    "icons": "node scripts/generate-icons.js",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^6.17.1",

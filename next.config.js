@@ -10,13 +10,11 @@ const nextConfig = {
   // Configuration pour améliorer la résolution DNS
   serverExternalPackages: ['dns', 'pino', 'pino-pretty'],
   // Optimisations pour Docker dev
-  experimental: {
-    turbo: {
-      rules: {
-        '*.svg': {
-          loaders: ['@svgr/webpack'],
-          as: '*.js',
-        },
+  turbopack: {
+    rules: {
+      '*.svg': {
+        loaders: ['@svgr/webpack'],
+        as: '*.js',
       },
     },
   },
