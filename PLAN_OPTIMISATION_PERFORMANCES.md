@@ -77,7 +77,7 @@ size: "1000"; // Récupère TOUS les livres d'un coup
 
 **Objectif : Passer de 3 couches de cache à 1 seule (ServerCacheService)**
 
-- [ ] **2.1 Désactiver le cache SW pour les données API**
+- [x] **2.1 Désactiver le cache SW pour les données API**
 
   - Modifier `sw.js` : retirer le cache des routes `/api/komga/*` (sauf images)
   - Garder uniquement le cache SW pour : images, static, navigation

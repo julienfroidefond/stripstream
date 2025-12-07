@@ -1,5 +1,6 @@
 // StripStream Service Worker - Version 1
-// Architecture: Cache-as-you-go with Stale-While-Revalidate for data
+// Architecture: Cache-as-you-go for images and static resources only
+// API data caching is handled by ServerCacheService on the server
 
 const VERSION = "v1";
 const STATIC_CACHE = `stripstream-static-${VERSION}`;
@@ -32,10 +33,8 @@ function isNextRSCRequest(request) {
   return url.searchParams.has("_rsc") || request.headers.get("RSC") === "1";
 }
 
-function shouldCacheApiData(url) {
-  // Exclude dynamic/auth endpoints that should always be fresh
-  return !url.includes("/api/auth/session") && !url.includes("/api/preferences");
-}
+// Removed: shouldCacheApiData - API data is no longer cached by SW
+// API data caching is handled by ServerCacheService on the server
 
 // ============================================================================
 // Cache Strategies
@@ -215,9 +214,12 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Route 3: API data → Stale-While-Revalidate (if cacheable)
-  if (isApiDataRequest(url.href) && shouldCacheApiData(url.href)) {
-    event.respondWith(staleWhileRevalidateStrategy(request, DATA_CACHE));
+  // Route 3: API data → Network only (no SW caching)
+  // API data caching is handled by ServerCacheService on the server
+  // This avoids double caching and simplifies cache invalidation
+  if (isApiDataRequest(url.href)) {
+    // Let the request pass through to the network
+    // ServerCacheService will handle caching server-side
     return;
   }
 
