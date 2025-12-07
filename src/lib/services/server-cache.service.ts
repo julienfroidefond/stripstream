@@ -369,10 +369,47 @@ class ServerCacheService {
         }
       });
     } else {
-      const cacheDir = path.join(this.cacheDir, prefixKey);
-      if (fs.existsSync(cacheDir)) {
-        fs.rmdirSync(cacheDir, { recursive: true });
-      }
+      // En mode fichier, parcourir récursivement tous les fichiers et supprimer ceux qui correspondent
+      if (!fs.existsSync(this.cacheDir)) return;
+
+      const deleteMatchingFiles = (dirPath: string): void => {
+        const items = fs.readdirSync(dirPath);
+
+        for (const item of items) {
+          const itemPath = path.join(dirPath, item);
+          try {
+            const stats = fs.statSync(itemPath);
+
+            if (stats.isDirectory()) {
+              deleteMatchingFiles(itemPath);
+              // Supprimer le répertoire s'il est vide après suppression des fichiers
+              try {
+                const remainingItems = fs.readdirSync(itemPath);
+                if (remainingItems.length === 0) {
+                  fs.rmdirSync(itemPath);
+                }
+              } catch {
+                // Ignore les erreurs de suppression de répertoire
+              }
+            } else if (stats.isFile() && item.endsWith(".json")) {
+              // Extraire la clé du chemin relatif (sans l'extension .json)
+              const relativePath = path.relative(this.cacheDir, itemPath);
+              const key = relativePath.slice(0, -5).replace(/\\/g, "/"); // Remove .json and normalize slashes
+
+              if (key.startsWith(prefixKey)) {
+                fs.unlinkSync(itemPath);
+                if (process.env.CACHE_DEBUG === "true") {
+                  logger.debug(`🗑️ [CACHE DELETE] ${key}`);
+                }
+              }
+            }
+          } catch (error) {
+            logger.error({ err: error, path: itemPath }, `Could not delete cache file ${itemPath}`);
+          }
+        }
+      };
+
+      deleteMatchingFiles(this.cacheDir);
     }
   }
 
