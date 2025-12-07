@@ -8,6 +8,7 @@ import { useState, useEffect, useCallback } from "react";
 import type { KomgaBook } from "@/types/komga";
 import { useTranslate } from "@/hooks/useTranslate";
 import { useDisplayPreferences } from "@/hooks/useDisplayPreferences";
+import { usePreferences } from "@/contexts/PreferencesContext";
 import { PageSizeSelect } from "@/components/common/PageSizeSelect";
 import { CompactModeButton } from "@/components/common/CompactModeButton";
 import { ViewModeButton } from "@/components/common/ViewModeButton";
@@ -35,6 +36,7 @@ export function PaginatedBookGrid({
   const searchParams = useSearchParams();
   const [showOnlyUnread, setShowOnlyUnread] = useState(initialShowOnlyUnread);
   const { isCompact, itemsPerPage, viewMode } = useDisplayPreferences();
+  const { updatePreferences } = usePreferences();
   const { t } = useTranslate();
 
   const updateUrlParams = useCallback(
@@ -81,6 +83,13 @@ export function PaginatedBookGrid({
       page: "1",
       unread: newUnreadState ? "true" : "false",
     });
+    // Sauvegarder la préférence dans la base de données
+    try {
+      await updatePreferences({ showOnlyUnread: newUnreadState });
+    } catch (error) {
+      // Log l'erreur mais ne bloque pas l'utilisateur
+      console.error("Erreur lors de la sauvegarde de la préférence:", error);
+    }
   };
 
   const handlePageSizeChange = async (size: number) => {
