@@ -10,7 +10,6 @@ import type {
 import { defaultPreferences } from "@/types/preferences";
 import type { User } from "@/types/komga";
 import type { Prisma } from "@prisma/client";
-import { getServerCacheService } from "./server-cache.service";
 
 export class PreferencesService {
   static async getCurrentUser(): Promise<User> {
@@ -21,11 +20,7 @@ export class PreferencesService {
     return user;
   }
 
-  /**
-   * Récupère les préférences depuis la DB (sans cache)
-   * Utilisé en interne par getCachedPreferences()
-   */
-  private static async getPreferencesFromDB(): Promise<UserPreferences> {
+  static async getPreferences(): Promise<UserPreferences> {
     try {
       const user = await this.getCurrentUser();
       const userId = parseInt(user.id, 10);
@@ -54,34 +49,6 @@ export class PreferencesService {
         readerPrefetchCount: preferences.readerPrefetchCount,
         circuitBreakerConfig: preferences.circuitBreakerConfig as unknown as CircuitBreakerConfig,
       };
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-      throw new AppError(ERROR_CODES.PREFERENCES.FETCH_ERROR, {}, error);
-    }
-  }
-
-  /**
-   * Récupère les préférences avec cache (TTL: 1 minute)
-   * Utilise ServerCacheService pour éviter les appels DB répétés
-   */
-  static async getPreferences(): Promise<UserPreferences> {
-    try {
-      const cacheService = await getServerCacheService();
-      const cacheKey = "preferences";
-
-      // Utiliser getOrSet avec un fetcher qui récupère depuis la DB
-      // Note: getOrSet ajoute automatiquement le user.id au cacheKey
-      // TTL par défaut (5 min) est acceptable pour les préférences
-      // Elles changent rarement et 5 min est un bon compromis
-      const preferences = await cacheService.getOrSet(
-        cacheKey,
-        async () => this.getPreferencesFromDB(),
-        "DEFAULT"
-      );
-
-      return preferences;
     } catch (error) {
       if (error instanceof AppError) {
         throw error;
@@ -128,7 +95,7 @@ export class PreferencesService {
         },
       });
 
-      const result: UserPreferences = {
+      return {
         showThumbnails: updatedPreferences.showThumbnails,
         cacheMode: updatedPreferences.cacheMode as "memory" | "file",
         showOnlyUnread: updatedPreferences.showOnlyUnread,
@@ -139,17 +106,6 @@ export class PreferencesService {
         circuitBreakerConfig:
           updatedPreferences.circuitBreakerConfig as unknown as CircuitBreakerConfig,
       };
-
-      // Invalider le cache des préférences après mise à jour
-      try {
-        const cacheService = await getServerCacheService();
-        await cacheService.delete("preferences");
-      } catch (cacheError) {
-        // Ne pas faire échouer la mise à jour si l'invalidation du cache échoue
-        // Les préférences seront rechargées au prochain appel
-      }
-
-      return result;
     } catch (error) {
       if (error instanceof AppError) {
         throw error;

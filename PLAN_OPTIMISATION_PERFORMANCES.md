@@ -110,11 +110,11 @@ size: "1000"; // Récupère TOUS les livres d'un coup
 
 ### Phase 3 : Optimisation des Préférences
 
-- [x] **3.1 Cacher les préférences utilisateur**
+- [ ] **3.1 Cacher les préférences utilisateur**
 
-  - Utiliser `ServerCacheService.getOrSet()` dans `getPreferences()`
-  - TTL : 5 minutes (via DEFAULT)
-  - Invalidation automatique lors des modifications dans `updatePreferences()`
+  - Créer `PreferencesService.getCachedPreferences()`
+  - TTL court (1 minute)
+  - Invalidation manuelle lors des modifications
 
 - [ ] **3.2 Réduire les appels DB**
   - Grouper les appels de config Komga + préférences
