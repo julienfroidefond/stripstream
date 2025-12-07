@@ -132,9 +132,19 @@ export function PaginatedBookGrid({
       </div>
 
       {viewMode === "grid" ? (
-        <BookGrid books={books} onBookClick={handleBookClick} isCompact={isCompact} onRefresh={onRefresh} />
+        <BookGrid
+          books={books}
+          onBookClick={handleBookClick}
+          isCompact={isCompact}
+          onRefresh={onRefresh}
+        />
       ) : (
-        <BookList books={books} onBookClick={handleBookClick} isCompact={isCompact} onRefresh={onRefresh} />
+        <BookList
+          books={books}
+          onBookClick={handleBookClick}
+          isCompact={isCompact}
+          onRefresh={onRefresh}
+        />
       )}
 
       <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
