@@ -6,7 +6,6 @@ import type { KomgaSeries } from "@/types/komga";
 import { getErrorMessage } from "@/utils/errors";
 import type { NextRequest } from "next/server";
 import logger from "@/lib/logger";
-export const revalidate = 60;
 
 export async function GET(
   request: NextRequest,
@@ -16,11 +15,7 @@ export async function GET(
     const seriesId: string = (await params).seriesId;
 
     const series: KomgaSeries = await SeriesService.getSeries(seriesId);
-    return NextResponse.json(series, {
-      headers: {
-        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
-      },
-    });
+    return NextResponse.json(series);
   } catch (error) {
     logger.error({ err: error }, "API Series - Erreur:");
     if (error instanceof AppError) {

@@ -83,12 +83,13 @@ size: "1000"; // Récupère TOUS les livres d'un coup
   - Garder uniquement le cache SW pour : images, static, navigation
   - Le cache serveur suffit pour les données
 
-- [ ] **2.2 Supprimer les headers HTTP Cache-Control**
+- [x] **2.2 Supprimer les headers HTTP Cache-Control**
 
   - Retirer `Cache-Control` des NextResponse dans les routes API
   - Évite les conflits avec le cache serveur
+  - Note: Conservé pour les images de pages de livres (max-age=31536000)
 
-- [ ] **2.3 Supprimer `revalidate` des routes dynamiques**
+- [x] **2.3 Supprimer `revalidate` des routes dynamiques**
 
   - Routes API = dynamiques, pas besoin d'ISR
   - Le cache serveur suffit

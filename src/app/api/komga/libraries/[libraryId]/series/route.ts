@@ -5,7 +5,6 @@ import { AppError } from "@/utils/errors";
 import { getErrorMessage } from "@/utils/errors";
 import type { NextRequest } from "next/server";
 import logger from "@/lib/logger";
-export const revalidate = 60;
 
 const DEFAULT_PAGE_SIZE = 20;
 
@@ -27,14 +26,7 @@ export async function GET(
       LibraryService.getLibrary(libraryId),
     ]);
 
-    return NextResponse.json(
-      { series, library },
-      {
-        headers: {
-          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
-        },
-      }
-    );
+    return NextResponse.json({ series, library });
   } catch (error) {
     logger.error({ err: error }, "API Library Series - Erreur:");
     if (error instanceof AppError) {

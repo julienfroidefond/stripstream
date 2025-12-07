@@ -4,7 +4,6 @@ import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 import { getErrorMessage } from "@/utils/errors";
 import logger from "@/lib/logger";
-export const revalidate = 60;
 
 export async function GET() {
   try {
