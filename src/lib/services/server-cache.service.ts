@@ -94,7 +94,10 @@ class ServerCacheService {
               try {
                 fs.rmdirSync(itemPath);
               } catch (error) {
-                logger.error({ err: error, path: itemPath }, `Could not remove directory ${itemPath}`);
+                logger.error(
+                  { err: error, path: itemPath },
+                  `Could not remove directory ${itemPath}`
+                );
                 isEmpty = false;
               }
             } else {
@@ -393,7 +396,10 @@ class ServerCacheService {
             try {
               fs.rmdirSync(itemPath);
             } catch (error) {
-              logger.error({ err: error, path: itemPath }, `Could not remove directory ${itemPath}`);
+              logger.error(
+                { err: error, path: itemPath },
+                `Could not remove directory ${itemPath}`
+              );
             }
           } else {
             try {
@@ -435,16 +441,18 @@ class ServerCacheService {
 
     const cacheKey = `${user.id}-${key}`;
     const cachedResult = this.getStale(cacheKey);
-    
+
     if (cachedResult !== null) {
       const { data, isStale } = cachedResult;
       const endTime = performance.now();
 
       // Debug logging
-      if (process.env.CACHE_DEBUG === 'true') {
-        const icon = isStale ? '⚠️' : '✅';
-        const status = isStale ? 'STALE' : 'HIT';
-        logger.debug(`${icon} [CACHE ${status}] ${key} | ${type} | ${(endTime - startTime).toFixed(2)}ms`);
+      if (process.env.CACHE_DEBUG === "true") {
+        const icon = isStale ? "⚠️" : "✅";
+        const status = isStale ? "STALE" : "HIT";
+        logger.debug(
+          `${icon} [CACHE ${status}] ${key} | ${type} | ${(endTime - startTime).toFixed(2)}ms`
+        );
       }
 
       // Si le cache est expiré, revalider en background sans bloquer la réponse
@@ -457,19 +465,19 @@ class ServerCacheService {
     }
 
     // Pas de cache du tout, fetch normalement
-    if (process.env.CACHE_DEBUG === 'true') {
+    if (process.env.CACHE_DEBUG === "true") {
       logger.debug(`❌ [CACHE MISS] ${key} | ${type}`);
     }
 
     try {
       const data = await fetcher();
       this.set(cacheKey, data, type);
-      
+
       const endTime = performance.now();
-      if (process.env.CACHE_DEBUG === 'true') {
+      if (process.env.CACHE_DEBUG === "true") {
         logger.debug(`💾 [CACHE SET] ${key} | ${type} | ${(endTime - startTime).toFixed(2)}ms`);
       }
-      
+
       return data;
     } catch (error) {
       throw error;
@@ -489,10 +497,12 @@ class ServerCacheService {
       const startTime = performance.now();
       const data = await fetcher();
       this.set(cacheKey, data, type);
-      
-      if (process.env.CACHE_DEBUG === 'true') {
+
+      if (process.env.CACHE_DEBUG === "true") {
         const endTime = performance.now();
-        logger.debug(`🔄 [CACHE REVALIDATE] ${debugKey} | ${type} | ${(endTime - startTime).toFixed(2)}ms`);
+        logger.debug(
+          `🔄 [CACHE REVALIDATE] ${debugKey} | ${type} | ${(endTime - startTime).toFixed(2)}ms`
+        );
       }
     } catch (error) {
       logger.error({ err: error, key: debugKey }, `🔴 [CACHE REVALIDATE ERROR] ${debugKey}`);

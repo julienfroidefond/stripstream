@@ -60,9 +60,8 @@ function SeriesListItem({ series, isCompact = false }: SeriesListItemProps) {
   };
 
   const isCompleted = series.booksCount === series.booksReadCount;
-  const progressPercentage = series.booksCount > 0 
-    ? (series.booksReadCount / series.booksCount) * 100 
-    : 0;
+  const progressPercentage =
+    series.booksCount > 0 ? (series.booksReadCount / series.booksCount) * 100 : 0;
 
   const statusInfo = getReadingStatusInfo(series, t);
 
@@ -91,7 +90,12 @@ function SeriesListItem({ series, isCompact = false }: SeriesListItemProps) {
             <h3 className="font-medium text-sm sm:text-base line-clamp-1 hover:text-primary transition-colors flex-1 min-w-0">
               {series.metadata.title}
             </h3>
-            <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0", statusInfo.className)}>
+            <span
+              className={cn(
+                "px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0",
+                statusInfo.className
+              )}
+            >
               {statusInfo.label}
             </span>
           </div>
@@ -101,7 +105,7 @@ function SeriesListItem({ series, isCompact = false }: SeriesListItemProps) {
             <div className="flex items-center gap-1">
               <BookOpen className="h-3 w-3" />
               <span>
-                {series.booksCount === 1 
+                {series.booksCount === 1
                   ? t("series.book", { count: 1 })
                   : t("series.books", { count: series.booksCount })}
               </span>
@@ -109,9 +113,7 @@ function SeriesListItem({ series, isCompact = false }: SeriesListItemProps) {
             {series.booksMetadata?.authors && series.booksMetadata.authors.length > 0 && (
               <div className="flex items-center gap-1 hidden sm:flex">
                 <User className="h-3 w-3" />
-                <span className="line-clamp-1">
-                  {series.booksMetadata.authors[0].name}
-                </span>
+                <span className="line-clamp-1">{series.booksMetadata.authors[0].name}</span>
               </div>
             )}
           </div>
@@ -146,9 +148,14 @@ function SeriesListItem({ series, isCompact = false }: SeriesListItemProps) {
               {series.metadata.title}
             </h3>
           </div>
-          
+
           {/* Badge de statut */}
-          <span className={cn("px-2 py-1 rounded-full text-xs font-medium flex-shrink-0", statusInfo.className)}>
+          <span
+            className={cn(
+              "px-2 py-1 rounded-full text-xs font-medium flex-shrink-0",
+              statusInfo.className
+            )}
+          >
             {statusInfo.label}
           </span>
         </div>
@@ -166,7 +173,7 @@ function SeriesListItem({ series, isCompact = false }: SeriesListItemProps) {
           <div className="flex items-center gap-1">
             <BookOpen className="h-3 w-3" />
             <span>
-              {series.booksCount === 1 
+              {series.booksCount === 1
                 ? t("series.book", { count: 1 })
                 : t("series.books", { count: series.booksCount })}
             </span>
@@ -177,7 +184,7 @@ function SeriesListItem({ series, isCompact = false }: SeriesListItemProps) {
             <div className="flex items-center gap-1">
               <User className="h-3 w-3" />
               <span className="line-clamp-1">
-                {series.booksMetadata.authors.map(a => a.name).join(", ")}
+                {series.booksMetadata.authors.map((a) => a.name).join(", ")}
               </span>
             </div>
           )}
@@ -246,4 +253,3 @@ export function SeriesList({ series, isCompact = false }: SeriesListProps) {
     </div>
   );
 }
-

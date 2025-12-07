@@ -14,17 +14,14 @@ export async function PUT(
     const { newPassword } = body;
 
     if (!newPassword) {
-      return NextResponse.json(
-        { error: "Nouveau mot de passe manquant" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Nouveau mot de passe manquant" }, { status: 400 });
     }
 
     // Vérifier que le mot de passe est fort
     if (!AuthServerService.isPasswordStrong(newPassword)) {
       return NextResponse.json(
-        { 
-          error: "Le mot de passe doit contenir au moins 8 caractères, une majuscule et un chiffre" 
+        {
+          error: "Le mot de passe doit contenir au moins 8 caractères, une majuscule et un chiffre",
         },
         { status: 400 }
       );
@@ -39,11 +36,17 @@ export async function PUT(
     if (error instanceof AppError) {
       return NextResponse.json(
         { error: error.message, code: error.code },
-        { 
-          status: error.code === "AUTH_FORBIDDEN" ? 403 : 
-                  error.code === "AUTH_UNAUTHENTICATED" ? 401 :
-                  error.code === "AUTH_USER_NOT_FOUND" ? 404 :
-                  error.code === "ADMIN_CANNOT_RESET_OWN_PASSWORD" ? 400 : 500 
+        {
+          status:
+            error.code === "AUTH_FORBIDDEN"
+              ? 403
+              : error.code === "AUTH_UNAUTHENTICATED"
+                ? 401
+                : error.code === "AUTH_USER_NOT_FOUND"
+                  ? 404
+                  : error.code === "ADMIN_CANNOT_RESET_OWN_PASSWORD"
+                    ? 400
+                    : 500,
         }
       );
     }
@@ -54,4 +57,3 @@ export async function PUT(
     );
   }
 }
-

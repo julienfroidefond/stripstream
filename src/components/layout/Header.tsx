@@ -11,7 +11,11 @@ interface HeaderProps {
   showRefreshBackground?: boolean;
 }
 
-export function Header({ onToggleSidebar, onRefreshBackground, showRefreshBackground = false }: HeaderProps) {
+export function Header({
+  onToggleSidebar,
+  onRefreshBackground,
+  showRefreshBackground = false,
+}: HeaderProps) {
   const { theme, setTheme } = useTheme();
   const { t } = useTranslation();
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -56,7 +60,9 @@ export function Header({ onToggleSidebar, onRefreshBackground, showRefreshBackgr
                 className="px-2 py-1.5 hover:bg-accent hover:text-accent-foreground rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label="Rafraîchir l'image de fond"
               >
-                <RefreshCw className={`h-[1.2rem] w-[1.2rem] ${isRefreshing ? 'animate-spin' : ''}`} />
+                <RefreshCw
+                  className={`h-[1.2rem] w-[1.2rem] ${isRefreshing ? "animate-spin" : ""}`}
+                />
                 <span className="sr-only">Rafraîchir l&apos;image de fond</span>
               </button>
             )}

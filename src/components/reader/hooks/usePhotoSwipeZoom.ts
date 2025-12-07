@@ -19,12 +19,14 @@ export function usePhotoSwipeZoom({
     const dims = loadedImages[currentPage];
     if (!dims) return;
 
-    const dataSource = [{
-      src: getPageUrl(currentPage),
-      width: dims.width,
-      height: dims.height,
-      alt: `Page ${currentPage}`
-    }];
+    const dataSource = [
+      {
+        src: getPageUrl(currentPage),
+        width: dims.width,
+        height: dims.height,
+        alt: `Page ${currentPage}`,
+      },
+    ];
 
     // Close any existing instance
     if (pswpRef.current) {
@@ -36,12 +38,12 @@ export function usePhotoSwipeZoom({
       dataSource,
       index: 0,
       bgOpacity: 0.9,
-      showHideAnimationType: 'fade',
+      showHideAnimationType: "fade",
       initialZoomLevel: 0.25,
       secondaryZoomLevel: 0.5, // Niveau de zoom au double-clic
       maxZoomLevel: 4,
       clickToCloseNonZoomable: true, // Ferme au clic simple
-      tapAction: 'zoom', // Ferme au tap
+      tapAction: "zoom", // Ferme au tap
       wheelToZoom: true,
       pinchToClose: false, // Pinch pour fermer
       closeOnVerticalDrag: true, // Swipe vertical pour fermer
@@ -53,7 +55,7 @@ export function usePhotoSwipeZoom({
     pswp.init();
 
     // Clean up on close
-    pswp.on('close', () => {
+    pswp.on("close", () => {
       pswpRef.current = null;
     });
   }, [loadedImages, currentPage, getPageUrl]);

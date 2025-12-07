@@ -98,7 +98,7 @@ body.no-pinch-zoom * {
   body {
     @apply text-foreground;
   }
-  
+
   /* Empêche le zoom automatique iOS sur les inputs */
   input,
   textarea,
@@ -126,7 +126,7 @@ body.no-pinch-zoom * {
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
   }
-  
+
   .glass-strong {
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);

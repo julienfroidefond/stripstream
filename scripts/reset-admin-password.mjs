@@ -2,8 +2,8 @@
 /**
  * Script de réinitialisation forcée du mot de passe admin
  * Force la mise à jour du mot de passe du compte admin
- * 
- * Usage: 
+ *
+ * Usage:
  *   pnpm reset-admin-password [nouveau-mot-de-passe]
  *   pnpm reset-admin-password [email] [nouveau-mot-de-passe]
  *   docker compose exec app pnpm reset-admin-password [nouveau-mot-de-passe]
@@ -71,7 +71,7 @@ async function resetAdminPassword() {
 
 async function main() {
   console.log("🔧 Starting admin password reset...");
-  
+
   try {
     await resetAdminPassword();
     console.log("✅ Admin password reset completed");
@@ -83,4 +83,3 @@ async function main() {
 }
 
 main();
-

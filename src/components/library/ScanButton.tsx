@@ -67,8 +67,7 @@ export function ScanButton({ libraryId }: ScanButtonProps) {
       toast({
         variant: "destructive",
         title: t("library.scan.error.title"),
-        description:
-          error instanceof Error ? error.message : t("library.scan.error.description"),
+        description: error instanceof Error ? error.message : t("library.scan.error.description"),
       });
     }
   };
@@ -86,4 +85,3 @@ export function ScanButton({ libraryId }: ScanButtonProps) {
     </Button>
   );
 }
-

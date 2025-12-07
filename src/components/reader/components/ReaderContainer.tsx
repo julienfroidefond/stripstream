@@ -8,9 +8,12 @@ interface ReaderContainerProps {
 export function ReaderContainer({ children, onContainerClick }: ReaderContainerProps) {
   const readerRef = useRef<HTMLDivElement>(null);
 
-  const handleContainerClick = useCallback((e: React.MouseEvent) => {
-    onContainerClick(e);
-  }, [onContainerClick]);
+  const handleContainerClick = useCallback(
+    (e: React.MouseEvent) => {
+      onContainerClick(e);
+    },
+    [onContainerClick]
+  );
 
   return (
     <div
@@ -18,9 +21,7 @@ export function ReaderContainer({ children, onContainerClick }: ReaderContainerP
       className="reader-zoom-enabled fixed inset-0 bg-background/95 backdrop-blur-sm z-50 overflow-hidden"
       onClick={handleContainerClick}
     >
-      <div className="relative h-full flex flex-col items-center justify-center">
-        {children}
-      </div>
+      <div className="relative h-full flex flex-col items-center justify-center">{children}</div>
     </div>
   );
 }

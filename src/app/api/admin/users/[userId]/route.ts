@@ -13,10 +13,7 @@ export async function PATCH(
     const { roles } = body;
 
     if (!roles || !Array.isArray(roles)) {
-      return NextResponse.json(
-        { error: "Rôles invalides" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Rôles invalides" }, { status: 400 });
     }
 
     await AdminService.updateUserRoles(userId, roles);
@@ -28,10 +25,15 @@ export async function PATCH(
     if (error instanceof AppError) {
       return NextResponse.json(
         { error: error.message, code: error.code },
-        { 
-          status: error.code === "AUTH_FORBIDDEN" ? 403 : 
-                  error.code === "AUTH_UNAUTHENTICATED" ? 401 :
-                  error.code === "AUTH_USER_NOT_FOUND" ? 404 : 500 
+        {
+          status:
+            error.code === "AUTH_FORBIDDEN"
+              ? 403
+              : error.code === "AUTH_UNAUTHENTICATED"
+                ? 401
+                : error.code === "AUTH_USER_NOT_FOUND"
+                  ? 404
+                  : 500,
         }
       );
     }
@@ -58,11 +60,17 @@ export async function DELETE(
     if (error instanceof AppError) {
       return NextResponse.json(
         { error: error.message, code: error.code },
-        { 
-          status: error.code === "AUTH_FORBIDDEN" ? 403 : 
-                  error.code === "AUTH_UNAUTHENTICATED" ? 401 :
-                  error.code === "AUTH_USER_NOT_FOUND" ? 404 :
-                  error.code === "ADMIN_CANNOT_DELETE_SELF" ? 400 : 500 
+        {
+          status:
+            error.code === "AUTH_FORBIDDEN"
+              ? 403
+              : error.code === "AUTH_UNAUTHENTICATED"
+                ? 401
+                : error.code === "AUTH_USER_NOT_FOUND"
+                  ? 404
+                  : error.code === "ADMIN_CANNOT_DELETE_SELF"
+                    ? 400
+                    : 500,
         }
       );
     }
@@ -73,4 +81,3 @@ export async function DELETE(
     );
   }
 }
-

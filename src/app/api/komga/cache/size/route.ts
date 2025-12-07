@@ -9,11 +9,11 @@ export async function GET() {
   try {
     const cacheService: ServerCacheService = await getServerCacheService();
     const { sizeInBytes, itemCount } = await cacheService.getCacheSize();
-    
-    return NextResponse.json({ 
-      sizeInBytes, 
+
+    return NextResponse.json({
+      sizeInBytes,
       itemCount,
-      mode: cacheService.getCacheMode()
+      mode: cacheService.getCacheMode(),
     });
   } catch (error) {
     logger.error({ err: error }, "Erreur lors de la récupération de la taille du cache:");
@@ -29,4 +29,3 @@ export async function GET() {
     );
   }
 }
-

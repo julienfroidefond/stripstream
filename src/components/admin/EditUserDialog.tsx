@@ -27,12 +27,7 @@ const AVAILABLE_ROLES = [
   { value: "ROLE_ADMIN", label: "Admin" },
 ];
 
-export function EditUserDialog({
-  user,
-  open,
-  onOpenChange,
-  onSuccess,
-}: EditUserDialogProps) {
+export function EditUserDialog({ user, open, onOpenChange, onSuccess }: EditUserDialogProps) {
   const [selectedRoles, setSelectedRoles] = useState<string[]>(user.roles);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -125,4 +120,3 @@ export function EditUserDialog({
     </Dialog>
   );
 }
-

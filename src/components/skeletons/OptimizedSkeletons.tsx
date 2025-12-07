@@ -8,16 +8,7 @@ interface OptimizedSkeletonProps {
 }
 
 export function OptimizedSkeleton({ className, children }: OptimizedSkeletonProps) {
-  return (
-    <div
-      className={cn(
-        "animate-pulse rounded-md bg-muted/50",
-        className
-      )}
-    >
-      {children}
-    </div>
-  );
+  return <div className={cn("animate-pulse rounded-md bg-muted/50", className)}>{children}</div>;
 }
 
 export function HomePageSkeleton() {

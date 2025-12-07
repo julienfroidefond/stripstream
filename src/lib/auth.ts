@@ -22,7 +22,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             credentials.email as string,
             credentials.password as string
           );
-          
+
           return {
             id: userData.id,
             email: userData.email,

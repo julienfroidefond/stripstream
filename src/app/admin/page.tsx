@@ -4,12 +4,12 @@ import { isAdmin } from "@/lib/auth-utils";
 import { AdminContent } from "@/components/admin/AdminContent";
 import logger from "@/lib/logger";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
   try {
     const hasAdminAccess = await isAdmin();
-    
+
     if (!hasAdminAccess) {
       redirect("/");
     }

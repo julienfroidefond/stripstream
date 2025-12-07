@@ -48,8 +48,9 @@ function BookCard({ book, onBookClick, onSuccess, isCompact }: BookCardProps) {
         <BookCover
           book={book}
           alt={t("books.coverAlt", {
-            title: book.metadata.title || 
-              (book.metadata.number 
+            title:
+              book.metadata.title ||
+              (book.metadata.number
                 ? t("navigation.volume", { number: book.metadata.number })
                 : ""),
           })}

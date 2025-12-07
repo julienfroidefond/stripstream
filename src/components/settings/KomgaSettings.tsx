@@ -155,7 +155,6 @@ export function KomgaSettings({ initialConfig }: KomgaSettingsProps) {
         <CardDescription>{t("settings.komga.description")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-
         {!shouldShowForm ? (
           <div className="space-y-4">
             <div className="space-y-3">

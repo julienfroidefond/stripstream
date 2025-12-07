@@ -38,31 +38,31 @@ export function PaginatedSeriesGrid({
   const searchParams = useSearchParams();
   const [showOnlyUnread, setShowOnlyUnread] = useState(initialShowOnlyUnread);
   const { isCompact, itemsPerPage: displayItemsPerPage, viewMode } = useDisplayPreferences();
-  
+
   // Utiliser la taille de page effective (depuis l'URL ou les préférences)
   const effectivePageSize = pageSize || displayItemsPerPage;
   const { t } = useTranslate();
 
-  const updateUrlParams = useCallback(async (
-    updates: Record<string, string | null>,
-    replace: boolean = false
-  ) => {
-    const params = new URLSearchParams(searchParams.toString());
+  const updateUrlParams = useCallback(
+    async (updates: Record<string, string | null>, replace: boolean = false) => {
+      const params = new URLSearchParams(searchParams.toString());
 
-    Object.entries(updates).forEach(([key, value]) => {
-      if (value === null) {
-        params.delete(key);
+      Object.entries(updates).forEach(([key, value]) => {
+        if (value === null) {
+          params.delete(key);
+        } else {
+          params.set(key, value);
+        }
+      });
+
+      if (replace) {
+        await router.replace(`${pathname}?${params.toString()}`);
       } else {
-        params.set(key, value);
+        await router.push(`${pathname}?${params.toString()}`);
       }
-    });
-
-    if (replace) {
-      await router.replace(`${pathname}?${params.toString()}`);
-    } else {
-      await router.push(`${pathname}?${params.toString()}`);
-    }
-  }, [router, pathname, searchParams]);
+    },
+    [router, pathname, searchParams]
+  );
 
   // Update local state when prop changes
   useEffect(() => {
@@ -88,7 +88,6 @@ export function PaginatedSeriesGrid({
       unread: newUnreadState ? "true" : "false",
     });
   };
-
 
   const handlePageSizeChange = async (size: number) => {
     await updateUrlParams({

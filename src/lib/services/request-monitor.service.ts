@@ -29,7 +29,7 @@ class RequestMonitor {
 
   private checkThresholds(): void {
     const count = this.activeRequests;
-    
+
     if (count >= this.thresholds.critical) {
       logger.warn(`[REQUEST-MONITOR] 🔴 CRITICAL concurrency: ${count} active requests`);
     } else if (count >= this.thresholds.high) {
@@ -42,5 +42,3 @@ class RequestMonitor {
 
 // Singleton instance
 export const RequestMonitorService = new RequestMonitor();
-
-

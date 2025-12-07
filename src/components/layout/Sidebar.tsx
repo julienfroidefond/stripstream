@@ -1,6 +1,16 @@
 "use client";
 
-import { Home, Library, Settings, LogOut, RefreshCw, Star, Download, User, Shield } from "lucide-react";
+import {
+  Home,
+  Library,
+  Settings,
+  LogOut,
+  RefreshCw,
+  Star,
+  Download,
+  User,
+  Shield,
+} from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
@@ -24,7 +34,13 @@ interface SidebarProps {
   userIsAdmin?: boolean;
 }
 
-export function Sidebar({ isOpen, onClose, initialLibraries, initialFavorites, userIsAdmin = false }: SidebarProps) {
+export function Sidebar({
+  isOpen,
+  onClose,
+  initialLibraries,
+  initialFavorites,
+  userIsAdmin = false,
+}: SidebarProps) {
   const { t } = useTranslate();
   const pathname = usePathname();
   const router = useRouter();

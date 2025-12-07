@@ -76,10 +76,7 @@ const ScrollContainer = React.forwardRef<HTMLDivElement, ScrollContainerProps>(
         <div
           ref={scrollContainerRef}
           onScroll={handleScroll}
-          className={cn(
-            "flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth pb-4",
-            className
-          )}
+          className={cn("flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth pb-4", className)}
           {...props}
         >
           {children}
@@ -102,4 +99,3 @@ const ScrollContainer = React.forwardRef<HTMLDivElement, ScrollContainerProps>(
 ScrollContainer.displayName = "ScrollContainer";
 
 export { ScrollContainer };
-

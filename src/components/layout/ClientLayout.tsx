@@ -24,7 +24,12 @@ interface ClientLayoutProps {
   userIsAdmin?: boolean;
 }
 
-export default function ClientLayout({ children, initialLibraries = [], initialFavorites = [], userIsAdmin = false }: ClientLayoutProps) {
+export default function ClientLayout({
+  children,
+  initialLibraries = [],
+  initialFavorites = [],
+  userIsAdmin = false,
+}: ClientLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [randomBookId, setRandomBookId] = useState<string | null>(null);
   const pathname = usePathname();
@@ -67,14 +72,14 @@ export default function ClientLayout({ children, initialLibraries = [], initialF
   const backgroundStyle = useMemo(() => {
     const bg = preferences.background;
     const blur = bg.blur || 0;
-    
+
     if (bg.type === "gradient" && bg.gradient) {
       return {
         backgroundImage: bg.gradient,
         filter: blur > 0 ? `blur(${blur}px)` : undefined,
       };
     }
-    
+
     if (bg.type === "image" && bg.imageUrl) {
       return {
         backgroundImage: `url(${bg.imageUrl})`,
@@ -94,7 +99,7 @@ export default function ClientLayout({ children, initialLibraries = [], initialF
         filter: blur > 0 ? `blur(${blur}px)` : undefined,
       };
     }
-    
+
     return {};
   }, [preferences.background, randomBookId]);
 
@@ -137,10 +142,10 @@ export default function ClientLayout({ children, initialLibraries = [], initialF
   }, []);
 
   // Ne pas afficher le header et la sidebar sur les routes publiques et le reader
-  const isPublicRoute = publicRoutes.includes(pathname) || pathname.startsWith('/books/');
+  const isPublicRoute = publicRoutes.includes(pathname) || pathname.startsWith("/books/");
 
-  const hasCustomBackground = 
-    preferences.background.type === "gradient" || 
+  const hasCustomBackground =
+    preferences.background.type === "gradient" ||
     preferences.background.type === "image" ||
     (preferences.background.type === "komga-random" && randomBookId);
   const contentOpacity = (preferences.background.opacity || 100) / 100;
@@ -149,28 +154,27 @@ export default function ClientLayout({ children, initialLibraries = [], initialF
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <ImageCacheProvider>
         {/* Background fixe pour les images et gradients */}
-        {hasCustomBackground && (
-          <div 
-            className="fixed inset-0 -z-10" 
-            style={backgroundStyle}
-          />
-        )}
-        <div 
+        {hasCustomBackground && <div className="fixed inset-0 -z-10" style={backgroundStyle} />}
+        <div
           className={`relative min-h-screen ${hasCustomBackground ? "" : "bg-background"}`}
-          style={hasCustomBackground ? { backgroundColor: `rgba(var(--background-rgb, 255, 255, 255), ${contentOpacity})` } : undefined}
+          style={
+            hasCustomBackground
+              ? { backgroundColor: `rgba(var(--background-rgb, 255, 255, 255), ${contentOpacity})` }
+              : undefined
+          }
         >
           {!isPublicRoute && (
-            <Header 
+            <Header
               onToggleSidebar={handleToggleSidebar}
               onRefreshBackground={fetchRandomBook}
               showRefreshBackground={preferences.background.type === "komga-random"}
             />
           )}
           {!isPublicRoute && (
-            <Sidebar 
-              isOpen={isSidebarOpen} 
-              onClose={handleCloseSidebar} 
-              initialLibraries={initialLibraries} 
+            <Sidebar
+              isOpen={isSidebarOpen}
+              onClose={handleCloseSidebar}
+              initialLibraries={initialLibraries}
               initialFavorites={initialFavorites}
               userIsAdmin={userIsAdmin}
             />

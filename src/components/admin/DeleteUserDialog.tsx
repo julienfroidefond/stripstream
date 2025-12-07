@@ -21,12 +21,7 @@ interface DeleteUserDialogProps {
   onSuccess: () => void;
 }
 
-export function DeleteUserDialog({
-  user,
-  open,
-  onOpenChange,
-  onSuccess,
-}: DeleteUserDialogProps) {
+export function DeleteUserDialog({ user, open, onOpenChange, onSuccess }: DeleteUserDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -89,4 +84,3 @@ export function DeleteUserDialog({
     </AlertDialog>
   );
 }
-

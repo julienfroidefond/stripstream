@@ -13,9 +13,13 @@ export async function GET() {
     if (error instanceof AppError) {
       return NextResponse.json(
         { error: error.message, code: error.code },
-        { 
-          status: error.code === "AUTH_FORBIDDEN" ? 403 : 
-                  error.code === "AUTH_UNAUTHENTICATED" ? 401 : 500 
+        {
+          status:
+            error.code === "AUTH_FORBIDDEN"
+              ? 403
+              : error.code === "AUTH_UNAUTHENTICATED"
+                ? 401
+                : 500,
         }
       );
     }
@@ -26,4 +30,3 @@ export async function GET() {
     );
   }
 }
-

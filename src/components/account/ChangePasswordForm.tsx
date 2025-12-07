@@ -75,7 +75,8 @@ export function ChangePasswordForm() {
       <CardHeader>
         <CardTitle>Changer le mot de passe</CardTitle>
         <CardDescription>
-          Assurez-vous d&apos;utiliser un mot de passe fort (8 caractères minimum, une majuscule et un chiffre)
+          Assurez-vous d&apos;utiliser un mot de passe fort (8 caractères minimum, une majuscule et
+          un chiffre)
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -136,4 +137,3 @@ export function ChangePasswordForm() {
     </Card>
   );
 }
-

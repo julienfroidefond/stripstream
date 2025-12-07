@@ -9,7 +9,7 @@ export async function GET() {
   try {
     const cacheService: ServerCacheService = await getServerCacheService();
     const entries = await cacheService.getCacheEntries();
-    
+
     return NextResponse.json({ entries });
   } catch (error) {
     logger.error({ err: error }, "Erreur lors de la récupération des entrées du cache");
@@ -25,4 +25,3 @@ export async function GET() {
     );
   }
 }
-

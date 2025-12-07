@@ -79,13 +79,11 @@ function MediaCard({ item, onClick }: MediaCardProps) {
   const { t } = useTranslate();
   const isSeries = "booksCount" in item;
   const { isAccessible } = useBookOfflineStatus(isSeries ? "" : item.id);
-  
+
   const title = isSeries
     ? item.metadata.title
     : item.metadata.title ||
-      (item.metadata.number
-        ? t("navigation.volume", { number: item.metadata.number })
-        : "");
+      (item.metadata.number ? t("navigation.volume", { number: item.metadata.number }) : "");
 
   const handleClick = () => {
     // Pour les séries, toujours autoriser le clic
@@ -100,7 +98,7 @@ function MediaCard({ item, onClick }: MediaCardProps) {
       onClick={handleClick}
       className={cn(
         "flex-shrink-0 w-[200px] relative flex flex-col hover:bg-accent hover:text-accent-foreground transition-colors overflow-hidden",
-        (!isSeries && !isAccessible) ? "cursor-not-allowed" : "cursor-pointer"
+        !isSeries && !isAccessible ? "cursor-not-allowed" : "cursor-pointer"
       )}
     >
       <div className="relative aspect-[2/3] bg-muted">

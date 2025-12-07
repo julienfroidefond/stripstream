@@ -10,17 +10,15 @@ export async function PUT(request: NextRequest) {
     const { currentPassword, newPassword } = body;
 
     if (!currentPassword || !newPassword) {
-      return NextResponse.json(
-        { error: "Mots de passe manquants" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Mots de passe manquants" }, { status: 400 });
     }
 
     // Vérifier que le nouveau mot de passe est fort
     if (!AuthServerService.isPasswordStrong(newPassword)) {
       return NextResponse.json(
-        { 
-          error: "Le nouveau mot de passe doit contenir au moins 8 caractères, une majuscule et un chiffre" 
+        {
+          error:
+            "Le nouveau mot de passe doit contenir au moins 8 caractères, une majuscule et un chiffre",
         },
         { status: 400 }
       );
@@ -35,9 +33,13 @@ export async function PUT(request: NextRequest) {
     if (error instanceof AppError) {
       return NextResponse.json(
         { error: error.message, code: error.code },
-        { 
-          status: error.code === "AUTH_INVALID_PASSWORD" ? 400 :
-                  error.code === "AUTH_UNAUTHENTICATED" ? 401 : 500 
+        {
+          status:
+            error.code === "AUTH_INVALID_PASSWORD"
+              ? 400
+              : error.code === "AUTH_UNAUTHENTICATED"
+                ? 401
+                : 500,
         }
       );
     }

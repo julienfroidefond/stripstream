@@ -23,19 +23,19 @@ export function ClientHomePage() {
 
     try {
       const response = await fetch("/api/komga/home", {
-        cache: 'default' // Utilise le cache HTTP du navigateur
+        cache: "default", // Utilise le cache HTTP du navigateur
       });
 
       if (!response.ok) {
         const errorData = await response.json();
         const errorCode = errorData.error?.code || ERROR_CODES.KOMGA.SERVER_UNREACHABLE;
-        
+
         // Si la config Komga est manquante, rediriger vers les settings
         if (errorCode === ERROR_CODES.KOMGA.MISSING_CONFIG) {
           router.push("/settings");
           return;
         }
-        
+
         throw new Error(errorCode);
       }
 
@@ -67,7 +67,7 @@ export function ClientHomePage() {
 
       // Récupérer les nouvelles données
       const response = await fetch("/api/komga/home", {
-        cache: 'reload' // Force un nouveau fetch après invalidation
+        cache: "reload", // Force un nouveau fetch après invalidation
       });
 
       if (!response.ok) {
@@ -128,4 +128,3 @@ export function ClientHomePage() {
     </>
   );
 }
-

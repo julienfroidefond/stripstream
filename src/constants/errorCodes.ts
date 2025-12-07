@@ -105,6 +105,10 @@ export const ERROR_CODES = {
 } as const;
 
 type Values<T> = T[keyof T];
-type ErrorCodeValues<T> = T extends { [key: string]: infer U } ? U extends { [key: string]: string } ? Values<U> : never : never;
+type ErrorCodeValues<T> = T extends { [key: string]: infer U }
+  ? U extends { [key: string]: string }
+    ? Values<U>
+    : never
+  : never;
 
 export type ErrorCode = ErrorCodeValues<typeof ERROR_CODES>;

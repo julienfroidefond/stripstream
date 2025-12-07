@@ -27,7 +27,7 @@ export function ClientBookPage({ bookId }: ClientBookPageProps) {
       setError(null);
 
       const response = await fetch(`/api/komga/books/${bookId}`);
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error?.code || ERROR_CODES.BOOK.PAGES_FETCH_ERROR);
@@ -74,4 +74,3 @@ export function ClientBookPage({ bookId }: ClientBookPageProps) {
 
   return <ClientBookWrapper book={data.book} pages={data.pages} nextBook={data.nextBook} />;
 }
-

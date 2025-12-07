@@ -22,7 +22,7 @@ async function initializeAdminUser() {
     if (existingAdmin) {
       // Vérifier si l'utilisateur a le rôle admin
       const hasAdminRole = existingAdmin.roles.includes("ROLE_ADMIN");
-      
+
       if (hasAdminRole) {
         console.log(`✅ Admin user ${ADMIN_EMAIL} already exists with admin role`);
       } else {
@@ -60,7 +60,7 @@ async function initializeAdminUser() {
 
 async function main() {
   console.log("🔧 Initializing SQLite database...");
-  
+
   try {
     await initializeAdminUser();
     console.log("✅ Database initialization completed");
@@ -72,4 +72,3 @@ async function main() {
 }
 
 main();
-

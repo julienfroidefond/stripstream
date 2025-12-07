@@ -15,12 +15,14 @@ CACHE_DEBUG=true
 ### Configuration
 
 #### Développement (docker-compose.dev.yml)
+
 ```yaml
 environment:
   - CACHE_DEBUG=true
 ```
 
 #### Production (.env)
+
 ```env
 CACHE_DEBUG=true
 ```
@@ -30,49 +32,61 @@ CACHE_DEBUG=true
 Les logs de cache apparaissent dans la console serveur avec le format suivant :
 
 ### Cache HIT (donnée valide)
+
 ```
 [CACHE HIT] home-ongoing | HOME | 0.45ms
 ```
+
 - ✅ Donnée trouvée en cache
 - ✅ Donnée encore valide (pas expirée)
 - ⚡ Retour immédiat (très rapide)
 
 ### Cache STALE (donnée expirée)
+
 ```
 [CACHE STALE] home-ongoing | HOME | 0.52ms
 ```
+
 - ✅ Donnée trouvée en cache
 - ⚠️ Donnée expirée mais toujours retournée
 - 🔄 Revalidation lancée en background
 
 ### Cache MISS (pas de donnée)
+
 ```
 [CACHE MISS] home-ongoing | HOME
 ```
+
 - ❌ Aucune donnée en cache
 - 🌐 Fetch normal depuis Komga
 - 💾 Mise en cache automatique
 
 ### Cache SET (mise en cache)
+
 ```
 [CACHE SET] home-ongoing | HOME | 324.18ms
 ```
+
 - 💾 Donnée mise en cache après fetch
 - 📊 Temps total incluant le fetch Komga
 - ✅ Prochaines requêtes seront rapides
 
 ### Cache REVALIDATE (revalidation background)
+
 ```
 [CACHE REVALIDATE] home-ongoing | HOME | 287.45ms
 ```
+
 - 🔄 Revalidation en background (après STALE)
 - 🌐 Nouvelle donnée fetched depuis Komga
 - 💾 Cache mis à jour pour les prochaines requêtes
 
 ### Erreur de revalidation
+
 ```
 [CACHE REVALIDATE ERROR] home-ongoing: Error: ...
 ```
+
 - ❌ Échec de la revalidation background
 - ⚠️ Cache ancien conservé
 - 🔄 Retry au prochain STALE
@@ -81,14 +95,14 @@ Les logs de cache apparaissent dans la console serveur avec le format suivant :
 
 Les logs affichent le type de TTL utilisé :
 
-| Type | TTL | Usage |
-|------|-----|-------|
-| `DEFAULT` | 5 min | Données génériques |
-| `HOME` | 10 min | Page d'accueil |
-| `LIBRARIES` | 24h | Bibliothèques |
-| `SERIES` | 5 min | Séries |
-| `BOOKS` | 5 min | Livres |
-| `IMAGES` | 7 jours | Images |
+| Type        | TTL     | Usage              |
+| ----------- | ------- | ------------------ |
+| `DEFAULT`   | 5 min   | Données génériques |
+| `HOME`      | 10 min  | Page d'accueil     |
+| `LIBRARIES` | 24h     | Bibliothèques      |
+| `SERIES`    | 5 min   | Séries             |
+| `BOOKS`     | 5 min   | Livres             |
+| `IMAGES`    | 7 jours | Images             |
 
 ## Exemple de session complète
 
@@ -113,22 +127,27 @@ Les logs affichent le type de TTL utilisé :
 ### 1. DevTools du navigateur
 
 #### Network Tab
+
 - Temps de réponse < 50ms = probablement du cache serveur
 - Headers `X-Cache` si configurés
 - Onglet "Timing" pour détails
 
 #### Application → Cache Storage
+
 Inspectez le cache du Service Worker :
+
 - `stripstream-cache-v1` : Ressources statiques
 - `stripstream-images-v1` : Images (covers + pages)
 
 Actions disponibles :
+
 - ✅ Voir le contenu de chaque cache
 - 🔍 Chercher une URL spécifique
 - 🗑️ Supprimer des entrées
 - 🧹 Vider complètement un cache
 
 #### Application → Service Workers
+
 - État du Service Worker
 - "Unregister" pour le désactiver
 - "Update" pour forcer une mise à jour
@@ -137,10 +156,13 @@ Actions disponibles :
 ### 2. API de monitoring
 
 #### Taille du cache
+
 ```bash
 curl http://localhost:3000/api/komga/cache/size
 ```
+
 Response :
+
 ```json
 {
   "sizeInBytes": 15728640,
@@ -149,10 +171,13 @@ Response :
 ```
 
 #### Mode actuel
+
 ```bash
 curl http://localhost:3000/api/komga/cache/mode
 ```
+
 Response :
+
 ```json
 {
   "mode": "memory"
@@ -160,11 +185,13 @@ Response :
 ```
 
 #### Vider le cache
+
 ```bash
 curl -X POST http://localhost:3000/api/komga/cache/clear
 ```
 
 #### Changer de mode
+
 ```bash
 curl -X POST http://localhost:3000/api/komga/cache/mode \
   -H "Content-Type: application/json" \
@@ -190,6 +217,7 @@ cat .cache/user-id/home-ongoing.json | jq
 ```
 
 Exemple de contenu :
+
 ```json
 {
   "data": {
@@ -206,6 +234,7 @@ Exemple de contenu :
 ### Identifier un problème de cache
 
 **Symptôme** : Les données ne se rafraîchissent pas
+
 ```bash
 # 1. Vérifier si STALE + REVALIDATE se produisent
 CACHE_DEBUG=true
@@ -222,6 +251,7 @@ CACHE_DEBUG=true
 ### Optimiser les performances
 
 **Objectif** : Identifier les requêtes lentes
+
 ```bash
 # Activer les logs
 CACHE_DEBUG=true
@@ -231,7 +261,8 @@ CACHE_DEBUG=true
 [CACHE SET] library-456-all-series | SERIES | 2847.32ms  # ⚠️ Très lent !
 ```
 
-**Solution** : 
+**Solution** :
+
 - Vérifier la taille des bibliothèques
 - Augmenter le TTL pour ces données
 - Considérer la pagination
@@ -251,29 +282,33 @@ En mode `file` : les caches survivent au redémarrage
 
 ### Temps de réponse normaux
 
-| Scénario | Temps attendu | Log |
-|----------|---------------|-----|
-| Cache HIT | < 1ms | `[CACHE HIT] ... \| 0.45ms` |
-| Cache STALE | < 1ms | `[CACHE STALE] ... \| 0.52ms` |
-| Cache MISS (petit) | 50-200ms | `[CACHE SET] ... \| 124.18ms` |
-| Cache MISS (gros) | 200-1000ms | `[CACHE SET] ... \| 847.32ms` |
-| Revalidate (background) | Variable | `[CACHE REVALIDATE] ... \| 287.45ms` |
+| Scénario                | Temps attendu | Log                                  |
+| ----------------------- | ------------- | ------------------------------------ |
+| Cache HIT               | < 1ms         | `[CACHE HIT] ... \| 0.45ms`          |
+| Cache STALE             | < 1ms         | `[CACHE STALE] ... \| 0.52ms`        |
+| Cache MISS (petit)      | 50-200ms      | `[CACHE SET] ... \| 124.18ms`        |
+| Cache MISS (gros)       | 200-1000ms    | `[CACHE SET] ... \| 847.32ms`        |
+| Revalidate (background) | Variable      | `[CACHE REVALIDATE] ... \| 287.45ms` |
 
 ### Signaux d'alerte
 
 ⚠️ **Cache HIT > 10ms**
+
 - Problème : Disque lent (mode file)
 - Solution : Vérifier les I/O, passer en mode memory
 
 ⚠️ **Cache MISS > 2000ms**
+
 - Problème : Komga très lent ou données énormes
 - Solution : Vérifier Komga, optimiser la requête
 
 ⚠️ **REVALIDATE ERROR fréquents**
+
 - Problème : Komga instable ou réseau
 - Solution : Augmenter les timeouts, vérifier la connectivité
 
 ⚠️ **Trop de MISS successifs**
+
 - Problème : Cache pas conservé ou TTL trop court
 - Solution : Vérifier le mode, augmenter les TTL
 
@@ -294,12 +329,14 @@ Les logs sont **automatiquement désactivés** si la variable n'est pas définie
 ## Logs et performance
 
 **Impact sur les performances** :
+
 - Overhead : < 0.1ms par opération
 - Pas d'écriture disque (juste console)
 - Pas d'accumulation en mémoire
 - Safe pour la production
 
 **Recommandations** :
+
 - ✅ Activé en développement
 - ✅ Activé temporairement en production pour diagnostics
 - ❌ Pas nécessaire en production normale
@@ -307,6 +344,7 @@ Les logs sont **automatiquement désactivés** si la variable n'est pas définie
 ## Conclusion
 
 Le système de logs de cache est conçu pour être :
+
 - 🎯 **Simple** : Format clair et concis
 - ⚡ **Rapide** : Impact négligeable sur les performances
 - 🔧 **Utile** : Informations essentielles pour le debug
@@ -314,4 +352,3 @@ Le système de logs de cache est conçu pour être :
 
 Pour la plupart des besoins de debug, les DevTools du navigateur suffisent.  
 Les logs serveur sont utiles pour comprendre le comportement du cache côté backend.
-

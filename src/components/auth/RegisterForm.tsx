@@ -52,11 +52,13 @@ export function RegisterForm({ from: _from }: RegisterFormProps) {
 
       if (!response.ok) {
         const data = await response.json();
-        setError(data.error || {
-          code: "AUTH_REGISTRATION_FAILED",
-          name: "Registration failed",
-          message: "Erreur lors de l'inscription",
-        });
+        setError(
+          data.error || {
+            code: "AUTH_REGISTRATION_FAILED",
+            name: "Registration failed",
+            message: "Erreur lors de l'inscription",
+          }
+        );
         return;
       }
 
@@ -96,13 +98,7 @@ export function RegisterForm({ from: _from }: RegisterFormProps) {
       </div>
       <div className="space-y-2">
         <Label htmlFor="password">{t("login.form.password")}</Label>
-        <Input
-          id="password"
-          name="password"
-          type="password"
-          autoComplete="new-password"
-          required
-        />
+        <Input id="password" name="password" type="password" autoComplete="new-password" required />
       </div>
       <div className="space-y-2">
         <Label htmlFor="confirmPassword">{t("login.form.confirmPassword")}</Label>

@@ -69,10 +69,7 @@ export function SliderControl({
           <Plus className="h-4 w-4" />
         </Button>
       </div>
-      {description && (
-        <p className="text-xs text-muted-foreground">{description}</p>
-      )}
+      {description && <p className="text-xs text-muted-foreground">{description}</p>}
     </div>
   );
 }
-

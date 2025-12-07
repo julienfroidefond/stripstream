@@ -36,7 +36,7 @@ class RequestQueue {
       try {
         return await this.getMaxConcurrent();
       } catch (error) {
-        logger.error({ err: error }, 'Error getting maxConcurrent from preferences, using default');
+        logger.error({ err: error }, "Error getting maxConcurrent from preferences, using default");
         return this.maxConcurrent;
       }
     }
@@ -47,17 +47,17 @@ class RequestQueue {
     return new Promise<T>((resolve, reject) => {
       // Limiter la taille de la queue pour éviter l'accumulation
       if (this.queue.length >= 50) {
-        reject(new Error('Request queue is full - Komga may be overloaded'));
+        reject(new Error("Request queue is full - Komga may be overloaded"));
         return;
       }
-      
+
       this.queue.push({ execute, resolve, reject });
       this.processQueue();
     });
   }
 
   private async delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   private async processQueue(): Promise<void> {
@@ -77,7 +77,7 @@ class RequestQueue {
     try {
       // Délai adaptatif : plus long si la queue est pleine
       // Désactivé en mode debug pour ne pas ralentir les tests
-      const isDebug = process.env.KOMGA_DEBUG === 'true';
+      const isDebug = process.env.KOMGA_DEBUG === "true";
       if (!isDebug) {
         const delayMs = this.queue.length > 10 ? 500 : 200;
         await this.delay(delayMs);
@@ -107,4 +107,3 @@ class RequestQueue {
 
 // Singleton instance - Par défaut limite à 5 requêtes simultanées
 export const RequestQueueService = new RequestQueue(5);
-

@@ -4,7 +4,7 @@ import { UserService } from "@/lib/services/user.service";
 import { redirect } from "next/navigation";
 import logger from "@/lib/logger";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export default async function AccountPage() {
   try {

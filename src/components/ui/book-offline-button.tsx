@@ -273,8 +273,8 @@ export function BookOfflineButton({ book, className }: BookOfflineButtonProps) {
   const buttonTitle = isLoading
     ? `Téléchargement en cours (${Math.round(downloadProgress)}%)`
     : isAvailableOffline
-    ? "Supprimer hors ligne"
-    : "Disponible hors ligne";
+      ? "Supprimer hors ligne"
+      : "Disponible hors ligne";
 
   return (
     <Button

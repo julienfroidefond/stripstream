@@ -21,19 +21,14 @@ const statusBadgeVariants = cva("flex items-center gap-1", {
 });
 
 export interface StatusBadgeProps
-  extends Omit<BadgeProps, "variant">,
-    VariantProps<typeof statusBadgeVariants> {
+  extends Omit<BadgeProps, "variant">, VariantProps<typeof statusBadgeVariants> {
   icon?: LucideIcon;
   children: React.ReactNode;
 }
 
 const StatusBadge = ({ status, icon: Icon, children, className, ...props }: StatusBadgeProps) => {
   return (
-    <Badge
-      variant="outline"
-      className={cn(statusBadgeVariants({ status }), className)}
-      {...props}
-    >
+    <Badge variant="outline" className={cn(statusBadgeVariants({ status }), className)} {...props}>
       {Icon && <Icon className="w-4 h-4" />}
       {children}
     </Badge>
@@ -41,4 +36,3 @@ const StatusBadge = ({ status, icon: Icon, children, className, ...props }: Stat
 };
 
 export { StatusBadge, statusBadgeVariants };
-

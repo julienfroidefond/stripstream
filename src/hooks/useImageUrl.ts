@@ -7,9 +7,8 @@ import { useMemo } from "react";
  */
 export function useImageUrl(baseUrl: string): string {
   const { getImageUrl } = useImageCache();
-  
+
   return useMemo(() => {
     return getImageUrl(baseUrl);
   }, [baseUrl, getImageUrl]);
 }
-

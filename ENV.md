@@ -1,6 +1,7 @@
 # Variables d'environnement requises
 
 ## Production (.env)
+
 ```env
 # Database Configuration (SQLite)
 DATABASE_URL=file:./data/stripstream.db
@@ -30,9 +31,11 @@ NODE_ENV=production
 ```
 
 ## Génération du secret NextAuth
+
 ```bash
 openssl rand -base64 32
 ```
 
 ## Développement
+
 Pour le développement, les variables sont définies directement dans `docker-compose.dev.yml`.

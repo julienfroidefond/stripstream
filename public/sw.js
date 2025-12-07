@@ -172,9 +172,7 @@ self.addEventListener("activate", (event) => {
       const cacheNames = await caches.keys();
       const cachesToDelete = cacheNames.filter(
         (name) =>
-          name.startsWith("stripstream-") &&
-          name !== BOOKS_CACHE &&
-          !name.endsWith(`-${VERSION}`)
+          name.startsWith("stripstream-") && name !== BOOKS_CACHE && !name.endsWith(`-${VERSION}`)
       );
 
       await Promise.all(cachesToDelete.map((name) => caches.delete(name)));

@@ -57,10 +57,7 @@ export function UsersTable({ users, onUserUpdated }: UsersTableProps) {
                   <TableCell>
                     <div className="flex gap-1">
                       {user.roles.map((role) => (
-                        <Badge
-                          key={role}
-                          variant={role === "ROLE_ADMIN" ? "default" : "secondary"}
-                        >
+                        <Badge key={role} variant={role === "ROLE_ADMIN" ? "default" : "secondary"}>
                           {role.replace("ROLE_", "")}
                         </Badge>
                       ))}
@@ -89,9 +86,7 @@ export function UsersTable({ users, onUserUpdated }: UsersTableProps) {
                     )}
                   </TableCell>
                   <TableCell>{user._count?.favorites || 0}</TableCell>
-                  <TableCell>
-                    {new Date(user.createdAt).toLocaleDateString("fr-FR")}
-                  </TableCell>
+                  <TableCell>{new Date(user.createdAt).toLocaleDateString("fr-FR")}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Button
@@ -164,4 +159,3 @@ export function UsersTable({ users, onUserUpdated }: UsersTableProps) {
     </>
   );
 }
-

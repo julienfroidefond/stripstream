@@ -36,10 +36,7 @@ export function AdminContent({ initialUsers, initialStats }: AdminContentProps) 
         throw new Error("Erreur lors du rafraîchissement");
       }
 
-      const [newUsers, newStats] = await Promise.all([
-        usersResponse.json(),
-        statsResponse.json(),
-      ]);
+      const [newUsers, newStats] = await Promise.all([usersResponse.json(), statsResponse.json()]);
 
       setUsers(newUsers);
       setStats(newStats);
@@ -65,9 +62,7 @@ export function AdminContent({ initialUsers, initialStats }: AdminContentProps) 
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Administration</h1>
-            <p className="text-muted-foreground mt-2">
-              Gérez les utilisateurs de la plateforme
-            </p>
+            <p className="text-muted-foreground mt-2">Gérez les utilisateurs de la plateforme</p>
           </div>
           <Button onClick={refreshData} disabled={isRefreshing}>
             <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
@@ -85,4 +80,3 @@ export function AdminContent({ initialUsers, initialStats }: AdminContentProps) 
     </div>
   );
 }
-

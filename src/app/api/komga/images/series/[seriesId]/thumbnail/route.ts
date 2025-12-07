@@ -17,10 +17,10 @@ export async function GET(
     return response;
   } catch (error) {
     logger.error({ err: error }, "Erreur lors de la récupération de la miniature de la série");
-    
+
     // Chercher un status HTTP 404 dans la chaîne d'erreurs
     const httpStatus = findHttpStatus(error);
-    
+
     if (httpStatus === 404) {
       const seriesId: string = (await params).seriesId;
       logger.info(`📷 Image not found for series: ${seriesId}`);
@@ -35,7 +35,7 @@ export async function GET(
         { status: 404 }
       );
     }
-    
+
     if (error instanceof AppError) {
       return NextResponse.json(
         {

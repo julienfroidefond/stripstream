@@ -1,4 +1,4 @@
-import type { NextRequest} from "next/server";
+import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { PreferencesService } from "@/lib/services/preferences.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
@@ -41,9 +41,8 @@ export async function GET() {
 export async function PUT(request: NextRequest) {
   try {
     const preferences: UserPreferences = await request.json();
-    const updatedPreferences: UserPreferences = await PreferencesService.updatePreferences(
-      preferences
-    );
+    const updatedPreferences: UserPreferences =
+      await PreferencesService.updatePreferences(preferences);
     return NextResponse.json(updatedPreferences);
   } catch (error) {
     logger.error({ err: error }, "Erreur lors de la mise à jour des préférences:");

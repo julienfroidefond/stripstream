@@ -157,17 +157,18 @@ export const SeriesHeader = ({ series, refreshSeries }: SeriesHeaderProps) => {
                 {statusInfo.label}
               </StatusBadge>
               <span className="text-sm text-white/80">
-                {series.booksCount === 1 
+                {series.booksCount === 1
                   ? t("series.header.books", { count: series.booksCount })
-                  : t("series.header.books_plural", { count: series.booksCount })
-                }
+                  : t("series.header.books_plural", { count: series.booksCount })}
               </span>
               <IconButton
                 variant="ghost"
                 size="icon"
                 icon={isFavorite ? Star : StarOff}
                 onClick={handleToggleFavorite}
-                tooltip={t(isFavorite ? "series.header.favorite.remove" : "series.header.favorite.add")}
+                tooltip={t(
+                  isFavorite ? "series.header.favorite.remove" : "series.header.favorite.add"
+                )}
                 className="text-white hover:text-white"
                 iconClassName={isFavorite ? "fill-yellow-400 text-yellow-400" : ""}
               />

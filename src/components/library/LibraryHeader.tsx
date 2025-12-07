@@ -16,19 +16,25 @@ interface LibraryHeaderProps {
   refreshLibrary: (libraryId: string) => Promise<{ success: boolean; error?: string }>;
 }
 
-export const LibraryHeader = ({ library, seriesCount, series, refreshLibrary }: LibraryHeaderProps) => {
+export const LibraryHeader = ({
+  library,
+  seriesCount,
+  series,
+  refreshLibrary,
+}: LibraryHeaderProps) => {
   const { t } = useTranslate();
 
   // Mémoriser la sélection des séries pour éviter les rerenders inutiles
   const { randomSeries, backgroundSeries } = useMemo(() => {
     // Sélectionner une série aléatoire pour l'image centrale
     const random = series.length > 0 ? series[Math.floor(Math.random() * series.length)] : null;
-    
+
     // Sélectionner une autre série aléatoire pour le fond (différente de celle du centre)
-    const background = series.length > 1 
-      ? series.filter(s => s.id !== random?.id)[Math.floor(Math.random() * (series.length - 1))]
-      : random;
-    
+    const background =
+      series.length > 1
+        ? series.filter((s) => s.id !== random?.id)[Math.floor(Math.random() * (series.length - 1))]
+        : random;
+
     return { randomSeries: random, backgroundSeries: background };
   }, [series]);
 
@@ -76,23 +82,20 @@ export const LibraryHeader = ({ library, seriesCount, series, refreshLibrary }: 
           {/* Informations */}
           <div className="flex-1 space-y-3 text-center md:text-left">
             <h1 className="text-3xl md:text-4xl font-bold text-foreground">{library.name}</h1>
-            
+
             <div className="flex items-center gap-4 justify-center md:justify-start flex-wrap">
               <StatusBadge status="unread" icon={Library}>
-                {seriesCount === 1 
+                {seriesCount === 1
                   ? t("library.header.series", { count: seriesCount })
-                  : t("library.header.series_plural", { count: seriesCount })
-                }
+                  : t("library.header.series_plural", { count: seriesCount })}
               </StatusBadge>
-              
+
               <RefreshButton libraryId={library.id} refreshLibrary={refreshLibrary} />
               <ScanButton libraryId={library.id} />
             </div>
 
             {library.unavailable && (
-              <p className="text-sm text-destructive mt-2">
-                {t("library.header.unavailable")}
-              </p>
+              <p className="text-sm text-destructive mt-2">{t("library.header.unavailable")}</p>
             )}
           </div>
         </div>
@@ -100,4 +103,3 @@ export const LibraryHeader = ({ library, seriesCount, series, refreshLibrary }: 
     </div>
   );
 };
-

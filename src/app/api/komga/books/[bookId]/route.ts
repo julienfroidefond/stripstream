@@ -16,7 +16,7 @@ export async function GET(
 
     const data: KomgaBookWithPages = await BookService.getBook(bookId);
     const nextBook = await BookService.getNextBook(bookId, data.book.seriesId);
-    
+
     return NextResponse.json({ ...data, nextBook });
   } catch (error) {
     logger.error({ err: error }, "API Books - Erreur:");

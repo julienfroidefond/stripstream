@@ -8,4 +8,3 @@ export function getImageUrl(type: "series" | "book", id: string) {
   }
   return `/api/komga/images/books/${id}/thumbnail`;
 }
-

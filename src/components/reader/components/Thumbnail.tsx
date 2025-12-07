@@ -97,9 +97,9 @@ export const Thumbnail = forwardRef<HTMLButtonElement, ThumbnailProps>(
           setImageUrl((prev) => {
             if (!prev) return null;
             // Utiliser & si l'URL contient déjà des query params
-            const separator = prev.includes('?') ? '&' : '?';
+            const separator = prev.includes("?") ? "&" : "?";
             // Supprimer l'ancien retry param si présent
-            const baseUrl = prev.replace(/[?&]retry=\d+/g, '');
+            const baseUrl = prev.replace(/[?&]retry=\d+/g, "");
             return `${baseUrl}${separator}retry=${loadAttempts.current}`;
           });
         }, delay);

@@ -138,8 +138,8 @@ export function BookCover({
           {showOverlay && overlayVariant === "default" && (
             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-4 space-y-2 translate-y-full group-hover:translate-y-0 transition-transform duration-200">
               <p className="text-sm font-medium text-white text-left line-clamp-2">
-                {book.metadata.title || 
-                  (book.metadata.number 
+                {book.metadata.title ||
+                  (book.metadata.number
                     ? t("navigation.volume", { number: book.metadata.number })
                     : "")}
               </p>
@@ -155,8 +155,8 @@ export function BookCover({
       {showOverlay && overlayVariant === "home" && (
         <div className="absolute inset-0 bg-black/60 opacity-0 hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3">
           <h3 className="font-medium text-sm text-white line-clamp-2">
-            {book.metadata.title || 
-              (book.metadata.number 
+            {book.metadata.title ||
+              (book.metadata.number
                 ? t("navigation.volume", { number: book.metadata.number })
                 : "")}
           </h3>

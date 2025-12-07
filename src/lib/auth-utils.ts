@@ -3,7 +3,7 @@ import type { UserData } from "@/lib/services/auth-server.service";
 
 export async function getCurrentUser(): Promise<UserData | null> {
   const session = await auth();
-  
+
   if (!session?.user) {
     return null;
   }
@@ -23,14 +23,14 @@ export async function isAdmin(): Promise<boolean> {
 
 export async function requireAdmin(): Promise<UserData> {
   const user = await getCurrentUser();
-  
+
   if (!user) {
     throw new Error("Unauthenticated");
   }
-  
+
   if (!user.roles.includes("ROLE_ADMIN")) {
     throw new Error("Forbidden: Admin access required");
   }
-  
+
   return user;
 }

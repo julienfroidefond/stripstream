@@ -50,7 +50,7 @@ export function ClientSeriesPage({
         });
 
         const response = await fetch(`/api/komga/series/${seriesId}/books?${params}`, {
-          cache: 'default' // Utilise le cache HTTP du navigateur
+          cache: "default", // Utilise le cache HTTP du navigateur
         });
 
         if (!response.ok) {
@@ -76,7 +76,7 @@ export function ClientSeriesPage({
     try {
       // Invalidate cache via API
       const cacheResponse = await fetch(`/api/komga/series/${seriesId}/books`, {
-        method: 'DELETE',
+        method: "DELETE",
       });
 
       if (!cacheResponse.ok) {
@@ -91,7 +91,7 @@ export function ClientSeriesPage({
       });
 
       const response = await fetch(`/api/komga/series/${seriesId}/books?${params}`, {
-        cache: 'reload' // Force un nouveau fetch après invalidation
+        cache: "reload", // Force un nouveau fetch après invalidation
       });
 
       if (!response.ok) {
@@ -121,7 +121,7 @@ export function ClientSeriesPage({
       });
 
       const response = await fetch(`/api/komga/series/${seriesId}/books?${params}`, {
-        cache: 'reload' // Force un nouveau fetch lors du retry
+        cache: "reload", // Force un nouveau fetch lors du retry
       });
 
       if (!response.ok) {
@@ -204,4 +204,3 @@ export function ClientSeriesPage({
     </>
   );
 }
-

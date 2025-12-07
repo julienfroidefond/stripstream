@@ -34,10 +34,10 @@ export async function GET(
     return response;
   } catch (error) {
     logger.error({ err: error }, "Erreur lors de la récupération de la miniature de la page:");
-    
+
     // Chercher un status HTTP 404 dans la chaîne d'erreurs
     const httpStatus = findHttpStatus(error);
-    
+
     if (httpStatus === 404) {
       const { bookId, pageNumber: pageNumberParam } = await params;
       const pageNumber: number = parseInt(pageNumberParam);
@@ -54,7 +54,7 @@ export async function GET(
         { status: 404 }
       );
     }
-    
+
     if (error instanceof AppError) {
       return NextResponse.json(
         {

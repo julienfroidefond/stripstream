@@ -43,14 +43,14 @@ export abstract class BaseApiService {
           const preferences = await PreferencesService.getPreferences();
           return preferences.komgaMaxConcurrentRequests;
         } catch (error) {
-          logger.error({ err: error }, 'Failed to get preferences for request queue');
+          logger.error({ err: error }, "Failed to get preferences for request queue");
           return 5; // Valeur par défaut
         }
       });
-      
+
       this.requestQueueInitialized = true;
     } catch (error) {
-      logger.error({ err: error }, 'Failed to initialize request queue');
+      logger.error({ err: error }, "Failed to initialize request queue");
     }
   }
 
@@ -69,7 +69,7 @@ export abstract class BaseApiService {
           const preferences = await PreferencesService.getPreferences();
           return preferences.circuitBreakerConfig;
         } catch (error) {
-          logger.error({ err: error }, 'Failed to get preferences for circuit breaker');
+          logger.error({ err: error }, "Failed to get preferences for circuit breaker");
           return {
             threshold: 5,
             timeout: 30000,
@@ -77,19 +77,16 @@ export abstract class BaseApiService {
           };
         }
       });
-      
+
       this.circuitBreakerInitialized = true;
     } catch (error) {
-      logger.error({ err: error }, 'Failed to initialize circuit breaker');
+      logger.error({ err: error }, "Failed to initialize circuit breaker");
     }
   }
 
   protected static async getKomgaConfig(): Promise<AuthConfig> {
     // Initialiser les services si ce n'est pas déjà fait
-    await Promise.all([
-      this.initializeRequestQueue(),
-      this.initializeCircuitBreaker(),
-    ]);
+    await Promise.all([this.initializeRequestQueue(), this.initializeCircuitBreaker()]);
     try {
       const config: KomgaConfig | null = await ConfigDBService.getConfig();
       if (!config) {
@@ -176,103 +173,114 @@ export abstract class BaseApiService {
       }
     }
 
-    const isDebug = process.env.KOMGA_DEBUG === 'true';
+    const isDebug = process.env.KOMGA_DEBUG === "true";
     const startTime = isDebug ? Date.now() : 0;
-    
+
     if (isDebug) {
       const queueStats = {
         active: RequestQueueService.getActiveCount(),
         queued: RequestQueueService.getQueueLength(),
       };
-      logger.info({
-        url,
-        method: options.method || 'GET',
-        params,
-        isImage: options.isImage,
-        noJson: options.noJson,
-        queue: queueStats,
-      }, '🔵 Komga Request');
+      logger.info(
+        {
+          url,
+          method: options.method || "GET",
+          params,
+          isImage: options.isImage,
+          noJson: options.noJson,
+          queue: queueStats,
+        },
+        "🔵 Komga Request"
+      );
     }
 
     // Timeout réduit à 15 secondes pour éviter les blocages longs
     const timeoutMs = 15000;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-    
+
     try {
       // Utiliser le circuit breaker pour éviter de surcharger Komga
       const response = await CircuitBreakerService.execute(async () => {
         // Enqueue la requête pour limiter la concurrence
         return await RequestQueueService.enqueue(async () => {
-        try {
-          return await fetch(url, { 
-            headers, 
-            ...options,
-            signal: controller.signal,
-            // Configure undici connection timeouts
-            // @ts-ignore - undici-specific options not in standard fetch types
-            connectTimeout: timeoutMs,
-            bodyTimeout: timeoutMs,
-            headersTimeout: timeoutMs,
-          });
-        } catch (fetchError: any) {
-          // Gestion spécifique des erreurs DNS
-          if (fetchError?.cause?.code === 'EAI_AGAIN' || fetchError?.code === 'EAI_AGAIN') {
-            logger.error(`DNS resolution failed for ${url}. Retrying with different DNS settings...`);
-            
-            // Retry avec des paramètres DNS différents
-            return await fetch(url, { 
-              headers, 
+          try {
+            return await fetch(url, {
+              headers,
               ...options,
               signal: controller.signal,
-              // @ts-ignore - undici-specific options
-              connectTimeout: timeoutMs,
-              bodyTimeout: timeoutMs,
-              headersTimeout: timeoutMs,
-              // Force IPv4 si IPv6 pose problème
-              // @ts-ignore
-              family: 4,
-            });
-          }
-          
-          // Retry automatique sur timeout de connexion (cold start)
-          if (fetchError?.cause?.code === 'UND_ERR_CONNECT_TIMEOUT') {
-            logger.info(`⏱️  Connection timeout for ${url}. Retrying once (cold start)...`);
-            
-            return await fetch(url, { 
-              headers, 
-              ...options,
-              signal: controller.signal,
-              // @ts-ignore - undici-specific options
+              // Configure undici connection timeouts
+              // @ts-ignore - undici-specific options not in standard fetch types
               connectTimeout: timeoutMs,
               bodyTimeout: timeoutMs,
               headersTimeout: timeoutMs,
             });
+          } catch (fetchError: any) {
+            // Gestion spécifique des erreurs DNS
+            if (fetchError?.cause?.code === "EAI_AGAIN" || fetchError?.code === "EAI_AGAIN") {
+              logger.error(
+                `DNS resolution failed for ${url}. Retrying with different DNS settings...`
+              );
+
+              // Retry avec des paramètres DNS différents
+              return await fetch(url, {
+                headers,
+                ...options,
+                signal: controller.signal,
+                // @ts-ignore - undici-specific options
+                connectTimeout: timeoutMs,
+                bodyTimeout: timeoutMs,
+                headersTimeout: timeoutMs,
+                // Force IPv4 si IPv6 pose problème
+                // @ts-ignore
+                family: 4,
+              });
+            }
+
+            // Retry automatique sur timeout de connexion (cold start)
+            if (fetchError?.cause?.code === "UND_ERR_CONNECT_TIMEOUT") {
+              logger.info(`⏱️  Connection timeout for ${url}. Retrying once (cold start)...`);
+
+              return await fetch(url, {
+                headers,
+                ...options,
+                signal: controller.signal,
+                // @ts-ignore - undici-specific options
+                connectTimeout: timeoutMs,
+                bodyTimeout: timeoutMs,
+                headersTimeout: timeoutMs,
+              });
+            }
+
+            throw fetchError;
           }
-          
-          throw fetchError;
-        }
         });
       });
       clearTimeout(timeoutId);
 
       if (isDebug) {
         const duration = Date.now() - startTime;
-        logger.info({
-          url,
-          status: response.status,
-          duration: `${duration}ms`,
-          ok: response.ok,
-        }, '🟢 Komga Response');
+        logger.info(
+          {
+            url,
+            status: response.status,
+            duration: `${duration}ms`,
+            ok: response.ok,
+          },
+          "🟢 Komga Response"
+        );
       }
 
       if (!response.ok) {
         if (isDebug) {
-          logger.error({
-            url,
-            status: response.status,
-            statusText: response.statusText,
-          }, '🔴 Komga Error Response');
+          logger.error(
+            {
+              url,
+              status: response.status,
+              statusText: response.statusText,
+            },
+            "🔴 Komga Error Response"
+          );
         }
         throw new AppError(ERROR_CODES.KOMGA.HTTP_ERROR, {
           status: response.status,
@@ -283,20 +291,23 @@ export abstract class BaseApiService {
       if (options.isImage) {
         return response as T;
       }
-      
+
       if (options.noJson) {
         return undefined as T;
       }
-      
+
       return response.json();
     } catch (error) {
       if (isDebug) {
         const duration = Date.now() - startTime;
-        logger.error({
-          url,
-          error: error instanceof Error ? error.message : String(error),
-          duration: `${duration}ms`,
-        }, '🔴 Komga Request Failed');
+        logger.error(
+          {
+            url,
+            error: error instanceof Error ? error.message : String(error),
+            duration: `${duration}ms`,
+          },
+          "🔴 Komga Request Failed"
+        );
       }
       throw error;
     } finally {

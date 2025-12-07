@@ -43,24 +43,24 @@ export function usePullToRefresh({
 
     const handleTouchStart = (e: TouchEvent) => {
       if (isRefreshingRef.current) return;
-      
+
       // Ignorer les touches sur les éléments interactifs (boutons, liens, menu, etc.)
       const target = e.target as HTMLElement;
       if (
-        target.closest('button') ||
-        target.closest('a') ||
+        target.closest("button") ||
+        target.closest("a") ||
         target.closest('[role="button"]') ||
-        target.closest('nav') ||
-        target.closest('header') ||
-        target.closest('[data-no-pull-refresh]')
+        target.closest("nav") ||
+        target.closest("header") ||
+        target.closest("[data-no-pull-refresh]")
       ) {
         isValidPull.current = false;
         return;
       }
-      
+
       const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
       startScrollTop.current = scrollTop;
-      
+
       // Ne démarrer que si on est vraiment en haut de la page
       if (scrollTop === 0) {
         startY.current = e.touches[0].clientY;
@@ -77,13 +77,13 @@ export function usePullToRefresh({
       const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
       currentY.current = e.touches[0].clientY;
       const deltaY = currentY.current - startY.current;
-      
+
       // Vérifier qu'on est toujours en haut ET qu'on tire vers le bas
       if (scrollTop === 0 && deltaY > 0) {
         const pullDistance = Math.min(deltaY * resistance, threshold * 1.5);
         const canRefresh = pullDistance >= threshold;
-        
-        setState(prev => ({
+
+        setState((prev) => ({
           ...prev,
           isPulling: true,
           pullDistance,
@@ -97,7 +97,7 @@ export function usePullToRefresh({
       } else if (scrollTop > 0 || deltaY < 0) {
         // Si on scrolle ou qu'on tire vers le haut, annuler
         isValidPull.current = false;
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
           isPulling: false,
           pullDistance: 0,
@@ -109,7 +109,7 @@ export function usePullToRefresh({
     const handleTouchEnd = async () => {
       if (!isValidPull.current || isRefreshingRef.current) {
         isValidPull.current = false;
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
           isPulling: false,
           pullDistance: 0,
@@ -119,15 +119,15 @@ export function usePullToRefresh({
       }
 
       const shouldRefresh = state.canRefresh;
-      
-      setState(prev => ({
+
+      setState((prev) => ({
         ...prev,
         isPulling: false,
       }));
 
       if (shouldRefresh) {
         isRefreshingRef.current = true;
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
           isRefreshing: true,
           pullDistance: 0,
@@ -140,14 +140,14 @@ export function usePullToRefresh({
         } finally {
           isRefreshingRef.current = false;
           // Activer l'animation de disparition
-          setState(prev => ({
+          setState((prev) => ({
             ...prev,
             isHiding: true,
           }));
-          
+
           // Attendre la fin de l'animation avant de masquer complètement
           setTimeout(() => {
-            setState(prev => ({
+            setState((prev) => ({
               ...prev,
               isRefreshing: false,
               isHiding: false,
@@ -156,13 +156,13 @@ export function usePullToRefresh({
         }
       } else {
         // Animation de retour
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
           pullDistance: 0,
           canRefresh: false,
         }));
       }
-      
+
       isValidPull.current = false;
     };
 

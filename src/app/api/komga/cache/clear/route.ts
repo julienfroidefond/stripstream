@@ -10,13 +10,13 @@ export async function POST() {
   try {
     const cacheService: ServerCacheService = await getServerCacheService();
     await cacheService.clear();
-    
+
     // Revalider toutes les pages importantes après le vidage du cache
     revalidatePath("/");
     revalidatePath("/libraries");
     revalidatePath("/series");
     revalidatePath("/books");
-    
+
     return NextResponse.json({ message: "🧹 Cache vidé avec succès" });
   } catch (error) {
     logger.error({ err: error }, "Erreur lors de la suppression du cache:");

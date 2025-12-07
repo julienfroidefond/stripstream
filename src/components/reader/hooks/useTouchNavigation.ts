@@ -30,28 +30,31 @@ export function useTouchNavigation({
   }, []);
 
   // Touch handlers for swipe navigation
-  const handleTouchStart = useCallback((e: TouchEvent) => {
-    // Ne pas gérer si Photoswipe est ouvert
-    if (pswpRef.current) return;
-    // Ne pas gérer si la page est zoomée (zoom natif)
-    if (isZoomed()) return;
-    
-    // Détecter si c'est un pinch (2+ doigts)
-    if (e.touches.length > 1) {
-      isPinchingRef.current = true;
-      touchStartXRef.current = null;
-      touchStartYRef.current = null;
-      return;
-    }
-    
-    // Un seul doigt - seulement si on n'était pas en train de pinch
-    // On réinitialise isPinchingRef seulement ici, quand on commence un nouveau geste à 1 doigt
-    if (e.touches.length === 1) {
-      isPinchingRef.current = false;
-      touchStartXRef.current = e.touches[0].clientX;
-      touchStartYRef.current = e.touches[0].clientY;
-    }
-  }, [pswpRef, isZoomed]);
+  const handleTouchStart = useCallback(
+    (e: TouchEvent) => {
+      // Ne pas gérer si Photoswipe est ouvert
+      if (pswpRef.current) return;
+      // Ne pas gérer si la page est zoomée (zoom natif)
+      if (isZoomed()) return;
+
+      // Détecter si c'est un pinch (2+ doigts)
+      if (e.touches.length > 1) {
+        isPinchingRef.current = true;
+        touchStartXRef.current = null;
+        touchStartYRef.current = null;
+        return;
+      }
+
+      // Un seul doigt - seulement si on n'était pas en train de pinch
+      // On réinitialise isPinchingRef seulement ici, quand on commence un nouveau geste à 1 doigt
+      if (e.touches.length === 1) {
+        isPinchingRef.current = false;
+        touchStartXRef.current = e.touches[0].clientX;
+        touchStartYRef.current = e.touches[0].clientY;
+      }
+    },
+    [pswpRef, isZoomed]
+  );
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
     // Détecter le pinch pendant le mouvement
@@ -62,63 +65,66 @@ export function useTouchNavigation({
     }
   }, []);
 
-  const handleTouchEnd = useCallback((e: TouchEvent) => {
-    // Si on était en mode pinch, ne JAMAIS traiter le swipe
-    if (isPinchingRef.current) {
-      touchStartXRef.current = null;
-      touchStartYRef.current = null;
-      // Ne PAS réinitialiser isPinchingRef ici, on le fera au prochain touchstart
-      return;
-    }
-    
-    // Vérifier qu'on a bien des coordonnées de départ
-    if (touchStartXRef.current === null || touchStartYRef.current === null) return;
-    // Ne pas gérer si Photoswipe est ouvert
-    if (pswpRef.current) return;
-    // Ne pas gérer si la page est zoomée (zoom natif)
-    if (isZoomed()) return;
+  const handleTouchEnd = useCallback(
+    (e: TouchEvent) => {
+      // Si on était en mode pinch, ne JAMAIS traiter le swipe
+      if (isPinchingRef.current) {
+        touchStartXRef.current = null;
+        touchStartYRef.current = null;
+        // Ne PAS réinitialiser isPinchingRef ici, on le fera au prochain touchstart
+        return;
+      }
 
-    const touchEndX = e.changedTouches[0].clientX;
-    const touchEndY = e.changedTouches[0].clientY;
-    const deltaX = touchEndX - touchStartXRef.current;
-    const deltaY = touchEndY - touchStartYRef.current;
+      // Vérifier qu'on a bien des coordonnées de départ
+      if (touchStartXRef.current === null || touchStartYRef.current === null) return;
+      // Ne pas gérer si Photoswipe est ouvert
+      if (pswpRef.current) return;
+      // Ne pas gérer si la page est zoomée (zoom natif)
+      if (isZoomed()) return;
 
-    // Si le déplacement vertical est plus important, on ignore (scroll)
-    if (Math.abs(deltaY) > Math.abs(deltaX)) {
-      touchStartXRef.current = null;
-      touchStartYRef.current = null;
-      return;
-    }
+      const touchEndX = e.changedTouches[0].clientX;
+      const touchEndY = e.changedTouches[0].clientY;
+      const deltaX = touchEndX - touchStartXRef.current;
+      const deltaY = touchEndY - touchStartYRef.current;
 
-    // Seuil de 50px pour changer de page
-    if (Math.abs(deltaX) > 50) {
-      if (deltaX > 0) {
-        // Swipe vers la droite
-        if (isRTL) {
-          onNextPage();
+      // Si le déplacement vertical est plus important, on ignore (scroll)
+      if (Math.abs(deltaY) > Math.abs(deltaX)) {
+        touchStartXRef.current = null;
+        touchStartYRef.current = null;
+        return;
+      }
+
+      // Seuil de 50px pour changer de page
+      if (Math.abs(deltaX) > 50) {
+        if (deltaX > 0) {
+          // Swipe vers la droite
+          if (isRTL) {
+            onNextPage();
+          } else {
+            onPreviousPage();
+          }
         } else {
-          onPreviousPage();
-        }
-      } else {
-        // Swipe vers la gauche
-        if (isRTL) {
-          onPreviousPage();
-        } else {
-          onNextPage();
+          // Swipe vers la gauche
+          if (isRTL) {
+            onPreviousPage();
+          } else {
+            onNextPage();
+          }
         }
       }
-    }
 
-    touchStartXRef.current = null;
-    touchStartYRef.current = null;
-  }, [onNextPage, onPreviousPage, isRTL, pswpRef, isZoomed]);
+      touchStartXRef.current = null;
+      touchStartYRef.current = null;
+    },
+    [onNextPage, onPreviousPage, isRTL, pswpRef, isZoomed]
+  );
 
   // Setup touch event listeners
   useEffect(() => {
     window.addEventListener("touchstart", handleTouchStart);
     window.addEventListener("touchmove", handleTouchMove);
     window.addEventListener("touchend", handleTouchEnd);
-    
+
     return () => {
       window.removeEventListener("touchstart", handleTouchStart);
       window.removeEventListener("touchmove", handleTouchMove);

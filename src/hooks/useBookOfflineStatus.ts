@@ -84,4 +84,3 @@ export function useBookOfflineStatus(bookId: string) {
     isAccessible: isAvailableOffline || isOnline,
   };
 }
-

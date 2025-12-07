@@ -16,7 +16,7 @@ export async function GET(
   try {
     const libraryId: string = (await params).libraryId;
     const searchParams = request.nextUrl.searchParams;
-    
+
     const page = parseInt(searchParams.get("page") || "0");
     const size = parseInt(searchParams.get("size") || String(DEFAULT_PAGE_SIZE));
     const unreadOnly = searchParams.get("unread") === "true";
@@ -24,15 +24,15 @@ export async function GET(
 
     const [series, library] = await Promise.all([
       LibraryService.getLibrarySeries(libraryId, page, size, unreadOnly, search),
-      LibraryService.getLibrary(libraryId)
+      LibraryService.getLibrary(libraryId),
     ]);
 
     return NextResponse.json(
       { series, library },
       {
         headers: {
-          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120'
-        }
+          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
+        },
       }
     );
   } catch (error) {
@@ -68,7 +68,7 @@ export async function DELETE(
 ) {
   try {
     const libraryId: string = (await params).libraryId;
-    
+
     await LibraryService.invalidateLibrarySeriesCache(libraryId);
 
     return NextResponse.json({ success: true });
@@ -98,4 +98,3 @@ export async function DELETE(
     );
   }
 }
-

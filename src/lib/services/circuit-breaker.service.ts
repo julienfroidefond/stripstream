@@ -6,7 +6,7 @@ import type { CircuitBreakerConfig } from "@/types/preferences";
 import logger from "@/lib/logger";
 
 interface CircuitBreakerState {
-  state: 'CLOSED' | 'OPEN' | 'HALF_OPEN';
+  state: "CLOSED" | "OPEN" | "HALF_OPEN";
   failureCount: number;
   lastFailureTime: number;
   nextAttemptTime: number;
@@ -14,7 +14,7 @@ interface CircuitBreakerState {
 
 class CircuitBreaker {
   private state: CircuitBreakerState = {
-    state: 'CLOSED',
+    state: "CLOSED",
     failureCount: 0,
     lastFailureTime: 0,
     nextAttemptTime: 0,
@@ -48,7 +48,7 @@ class CircuitBreaker {
           resetTimeout: prefConfig.resetTimeout ?? 60000,
         };
       } catch (error) {
-        logger.error({ err: error }, 'Error getting circuit breaker config from preferences');
+        logger.error({ err: error }, "Error getting circuit breaker config from preferences");
         return this.config;
       }
     }
@@ -57,12 +57,12 @@ class CircuitBreaker {
 
   async execute<T>(operation: () => Promise<T>): Promise<T> {
     const config = await this.getCurrentConfig();
-    
-    if (this.state.state === 'OPEN') {
+
+    if (this.state.state === "OPEN") {
       if (Date.now() < this.state.nextAttemptTime) {
-        throw new Error('Circuit breaker is OPEN - Komga service unavailable');
+        throw new Error("Circuit breaker is OPEN - Komga service unavailable");
       }
-      this.state.state = 'HALF_OPEN';
+      this.state.state = "HALF_OPEN";
     }
 
     try {
@@ -76,10 +76,10 @@ class CircuitBreaker {
   }
 
   private onSuccess(): void {
-    if (this.state.state === 'HALF_OPEN') {
+    if (this.state.state === "HALF_OPEN") {
       this.state.failureCount = 0;
-      this.state.state = 'CLOSED';
-      logger.info('[CIRCUIT-BREAKER] ✅ Circuit closed - Komga recovered');
+      this.state.state = "CLOSED";
+      logger.info("[CIRCUIT-BREAKER] ✅ Circuit closed - Komga recovered");
     }
   }
 
@@ -88,9 +88,11 @@ class CircuitBreaker {
     this.state.lastFailureTime = Date.now();
 
     if (this.state.failureCount >= config.failureThreshold) {
-      this.state.state = 'OPEN';
+      this.state.state = "OPEN";
       this.state.nextAttemptTime = Date.now() + config.resetTimeout;
-      logger.warn(`[CIRCUIT-BREAKER] 🔴 Circuit OPEN - Komga failing (${this.state.failureCount} failures, reset in ${config.resetTimeout}ms)`);
+      logger.warn(
+        `[CIRCUIT-BREAKER] 🔴 Circuit OPEN - Komga failing (${this.state.failureCount} failures, reset in ${config.resetTimeout}ms)`
+      );
     }
   }
 
@@ -100,12 +102,12 @@ class CircuitBreaker {
 
   reset(): void {
     this.state = {
-      state: 'CLOSED',
+      state: "CLOSED",
       failureCount: 0,
       lastFailureTime: 0,
       nextAttemptTime: 0,
     };
-    logger.info('[CIRCUIT-BREAKER] 🔄 Circuit reset');
+    logger.info("[CIRCUIT-BREAKER] 🔄 Circuit reset");
   }
 }
 

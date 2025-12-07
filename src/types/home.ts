@@ -7,4 +7,3 @@ export interface HomeData {
   onDeck: KomgaBook[];
   latestSeries: KomgaSeries[];
 }
-

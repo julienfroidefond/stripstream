@@ -20,10 +20,10 @@ export function HomeContent({ data, refreshHome }: HomeContentProps) {
 
   // Vérifier si la HeroSection a déjà été affichée
   useEffect(() => {
-    const heroShown = localStorage.getItem('heroSectionShown');
+    const heroShown = localStorage.getItem("heroSectionShown");
     if (!heroShown && data.ongoing && data.ongoing.length > 0) {
       setShowHero(true);
-      localStorage.setItem('heroSectionShown', 'true');
+      localStorage.setItem("heroSectionShown", "true");
     }
   }, [data.ongoing]);
 

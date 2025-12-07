@@ -6,7 +6,9 @@ import { Mail, Calendar, Shield, Heart } from "lucide-react";
 import type { UserProfile } from "@/lib/services/user.service";
 
 interface UserProfileCardProps {
-  profile: UserProfile & { stats: { favoritesCount: number; hasPreferences: boolean; hasKomgaConfig: boolean } };
+  profile: UserProfile & {
+    stats: { favoritesCount: number; hasPreferences: boolean; hasKomgaConfig: boolean };
+  };
 }
 
 export function UserProfileCard({ profile }: UserProfileCardProps) {
@@ -65,12 +67,10 @@ export function UserProfileCard({ profile }: UserProfileCardProps) {
 
         <div className="pt-4 border-t">
           <p className="text-xs text-muted-foreground">
-            Dernière mise à jour:{" "}
-            {new Date(profile.updatedAt).toLocaleDateString("fr-FR")}
+            Dernière mise à jour: {new Date(profile.updatedAt).toLocaleDateString("fr-FR")}
           </p>
         </div>
       </CardContent>
     </Card>
   );
 }
-

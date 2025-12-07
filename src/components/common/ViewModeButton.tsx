@@ -33,4 +33,3 @@ export function ViewModeButton({ onToggle }: ViewModeButtonProps) {
     </Button>
   );
 }
-

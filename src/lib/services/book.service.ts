@@ -17,7 +17,7 @@ export class BookService extends BaseApiService {
       const maxAge = ttlConfig?.imageCacheMaxAge ?? 2592000;
       return maxAge;
     } catch (error) {
-      logger.error({ err: error }, '[ImageCache] Error fetching TTL config');
+      logger.error({ err: error }, "[ImageCache] Error fetching TTL config");
       return 2592000; // 30 jours par défaut en cas d'erreur
     }
   }
@@ -29,7 +29,7 @@ export class BookService extends BaseApiService {
           // Récupération parallèle des détails du tome et des pages
           const [book, pages] = await Promise.all([
             this.fetchFromApi<KomgaBook>({ path: `books/${bookId}` }),
-            this.fetchFromApi<{ number: number }[]>({ path: `books/${bookId}/pages` })
+            this.fetchFromApi<{ number: number }[]>({ path: `books/${bookId}/pages` }),
           ]);
 
           return {
@@ -107,15 +107,15 @@ export class BookService extends BaseApiService {
       const response: ImageResponse = await ImageService.getImage(
         `books/${bookId}/pages/${adjustedPageNumber}?zero_based=true`
       );
-      
+
       // Convertir le Buffer Node.js en ArrayBuffer proprement
       const arrayBuffer = response.buffer.buffer.slice(
         response.buffer.byteOffset,
         response.buffer.byteOffset + response.buffer.byteLength
       ) as ArrayBuffer;
-      
+
       const maxAge = await this.getImageCacheMaxAge();
-      
+
       return new Response(arrayBuffer, {
         headers: {
           "Content-Type": response.contentType || "image/jpeg",
@@ -165,7 +165,7 @@ export class BookService extends BaseApiService {
         `books/${bookId}/pages/${pageNumber}/thumbnail?zero_based=true`
       );
       const maxAge = await this.getImageCacheMaxAge();
-      
+
       return new Response(response.buffer.buffer as ArrayBuffer, {
         headers: {
           "Content-Type": response.contentType || "image/jpeg",
@@ -184,14 +184,16 @@ export class BookService extends BaseApiService {
   static async getRandomBookFromLibraries(libraryIds: string[]): Promise<string> {
     try {
       if (libraryIds.length === 0) {
-        throw new AppError(ERROR_CODES.LIBRARY.NOT_FOUND, { message: "Aucune bibliothèque sélectionnée" });
+        throw new AppError(ERROR_CODES.LIBRARY.NOT_FOUND, {
+          message: "Aucune bibliothèque sélectionnée",
+        });
       }
 
       const { LibraryService } = await import("./library.service");
 
       // Essayer d'abord d'utiliser le cache des bibliothèques
       const allSeriesFromCache: Series[] = [];
-      
+
       for (const libraryId of libraryIds) {
         try {
           // Essayer de récupérer les séries depuis le cache (rapide si en cache)
@@ -219,12 +221,14 @@ export class BookService extends BaseApiService {
       // Si pas de cache, faire une requête légère : prendre une page de séries d'une bibliothèque au hasard
       const randomLibraryIndex = Math.floor(Math.random() * libraryIds.length);
       const randomLibraryId = libraryIds[randomLibraryIndex];
-      
+
       // Récupérer juste une page de séries (pas toutes)
       const seriesResponse = await LibraryService.getLibrarySeries(randomLibraryId, 0, 20);
-      
+
       if (seriesResponse.content.length === 0) {
-        throw new AppError(ERROR_CODES.BOOK.NOT_FOUND, { message: "Aucune série trouvée dans les bibliothèques sélectionnées" });
+        throw new AppError(ERROR_CODES.BOOK.NOT_FOUND, {
+          message: "Aucune série trouvée dans les bibliothèques sélectionnées",
+        });
       }
 
       // Choisir une série au hasard parmi celles récupérées
@@ -235,7 +239,9 @@ export class BookService extends BaseApiService {
       const books = await SeriesService.getAllSeriesBooks(randomSeries.id);
 
       if (books.length === 0) {
-        throw new AppError(ERROR_CODES.BOOK.NOT_FOUND, { message: "Aucun livre trouvé dans la série" });
+        throw new AppError(ERROR_CODES.BOOK.NOT_FOUND, {
+          message: "Aucun livre trouvé dans la série",
+        });
       }
 
       const randomBookIndex = Math.floor(Math.random() * books.length);

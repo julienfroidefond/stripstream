@@ -201,25 +201,8 @@ export function DownloadManager() {
             )}
           </div>
 
-        <TabsContent value="all" className="space-y-4">
-          {downloadedBooks.map(({ book, status }) => (
-            <BookDownloadCard
-              key={book.id}
-              book={book}
-              status={status}
-              onDelete={() => handleDeleteBook(book)}
-              onRetry={() => handleRetryDownload(book)}
-            />
-          ))}
-          {downloadedBooks.length === 0 && (
-            <p className="text-center text-muted-foreground p-8">{t("downloads.empty.all")}</p>
-          )}
-        </TabsContent>
-
-        <TabsContent value="downloading" className="space-y-4">
-          {downloadedBooks
-            .filter((b) => b.status.status === "downloading")
-            .map(({ book, status }) => (
+          <TabsContent value="all" className="space-y-4">
+            {downloadedBooks.map(({ book, status }) => (
               <BookDownloadCard
                 key={book.id}
                 book={book}
@@ -228,49 +211,66 @@ export function DownloadManager() {
                 onRetry={() => handleRetryDownload(book)}
               />
             ))}
-          {downloadedBooks.filter((b) => b.status.status === "downloading").length === 0 && (
-            <p className="text-center text-muted-foreground p-8">
-              {t("downloads.empty.downloading")}
-            </p>
-          )}
-        </TabsContent>
+            {downloadedBooks.length === 0 && (
+              <p className="text-center text-muted-foreground p-8">{t("downloads.empty.all")}</p>
+            )}
+          </TabsContent>
 
-        <TabsContent value="available" className="space-y-4">
-          {downloadedBooks
-            .filter((b) => b.status.status === "available")
-            .map(({ book, status }) => (
-              <BookDownloadCard
-                key={book.id}
-                book={book}
-                status={status}
-                onDelete={() => handleDeleteBook(book)}
-                onRetry={() => handleRetryDownload(book)}
-              />
-            ))}
-          {downloadedBooks.filter((b) => b.status.status === "available").length === 0 && (
-            <p className="text-center text-muted-foreground p-8">
-              {t("downloads.empty.available")}
-            </p>
-          )}
-        </TabsContent>
+          <TabsContent value="downloading" className="space-y-4">
+            {downloadedBooks
+              .filter((b) => b.status.status === "downloading")
+              .map(({ book, status }) => (
+                <BookDownloadCard
+                  key={book.id}
+                  book={book}
+                  status={status}
+                  onDelete={() => handleDeleteBook(book)}
+                  onRetry={() => handleRetryDownload(book)}
+                />
+              ))}
+            {downloadedBooks.filter((b) => b.status.status === "downloading").length === 0 && (
+              <p className="text-center text-muted-foreground p-8">
+                {t("downloads.empty.downloading")}
+              </p>
+            )}
+          </TabsContent>
 
-        <TabsContent value="error" className="space-y-4">
-          {downloadedBooks
-            .filter((b) => b.status.status === "error")
-            .map(({ book, status }) => (
-              <BookDownloadCard
-                key={book.id}
-                book={book}
-                status={status}
-                onDelete={() => handleDeleteBook(book)}
-                onRetry={() => handleRetryDownload(book)}
-              />
-            ))}
-          {downloadedBooks.filter((b) => b.status.status === "error").length === 0 && (
-            <p className="text-center text-muted-foreground p-8">{t("downloads.empty.error")}</p>
-          )}
-        </TabsContent>
-      </Tabs>
+          <TabsContent value="available" className="space-y-4">
+            {downloadedBooks
+              .filter((b) => b.status.status === "available")
+              .map(({ book, status }) => (
+                <BookDownloadCard
+                  key={book.id}
+                  book={book}
+                  status={status}
+                  onDelete={() => handleDeleteBook(book)}
+                  onRetry={() => handleRetryDownload(book)}
+                />
+              ))}
+            {downloadedBooks.filter((b) => b.status.status === "available").length === 0 && (
+              <p className="text-center text-muted-foreground p-8">
+                {t("downloads.empty.available")}
+              </p>
+            )}
+          </TabsContent>
+
+          <TabsContent value="error" className="space-y-4">
+            {downloadedBooks
+              .filter((b) => b.status.status === "error")
+              .map(({ book, status }) => (
+                <BookDownloadCard
+                  key={book.id}
+                  book={book}
+                  status={status}
+                  onDelete={() => handleDeleteBook(book)}
+                  onRetry={() => handleRetryDownload(book)}
+                />
+              ))}
+            {downloadedBooks.filter((b) => b.status.status === "error").length === 0 && (
+              <p className="text-center text-muted-foreground p-8">{t("downloads.empty.error")}</p>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
     </Container>
   );

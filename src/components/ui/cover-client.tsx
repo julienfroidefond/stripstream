@@ -56,7 +56,7 @@ export const CoverClient = ({
       const timer = setTimeout(() => {
         setImageError(false);
         setIsLoading(true);
-        setRetryCount(prev => prev + 1);
+        setRetryCount((prev) => prev + 1);
       }, 2000);
 
       return () => clearTimeout(timer);
@@ -80,9 +80,10 @@ export const CoverClient = ({
   };
 
   // Ajouter un timestamp pour forcer le rechargement en cas de retry
-  const imageUrlWithRetry = retryCount > 0 
-    ? `${imageUrl}${imageUrl.includes('?') ? '&' : '?'}retry=${retryCount}`
-    : imageUrl;
+  const imageUrlWithRetry =
+    retryCount > 0
+      ? `${imageUrl}${imageUrl.includes("?") ? "&" : "?"}retry=${retryCount}`
+      : imageUrl;
 
   if (imageError) {
     return (

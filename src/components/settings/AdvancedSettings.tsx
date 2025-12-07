@@ -116,9 +116,7 @@ export function AdvancedSettings() {
             <Shield className="h-5 w-5 text-primary" />
             <CardTitle className="text-lg">{t("settings.advanced.circuitBreaker.title")}</CardTitle>
           </div>
-          <CardDescription>
-            {t("settings.advanced.circuitBreaker.description")}
-          </CardDescription>
+          <CardDescription>{t("settings.advanced.circuitBreaker.description")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <SliderControl

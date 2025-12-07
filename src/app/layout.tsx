@@ -12,7 +12,12 @@ import { defaultPreferences } from "@/types/preferences";
 import type { UserPreferences } from "@/types/preferences";
 import logger from "@/lib/logger";
 
-const inter = Inter({ subsets: ["latin"], display: "swap", adjustFontFallback: false, preload: false });
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+  adjustFontFallback: false,
+  preload: false,
+});
 
 export const metadata: Metadata = {
   title: {
@@ -90,10 +95,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang={locale} suppressHydrationWarning className="h-full">
       <head>
-        <meta
-          name="viewport"
-          content="width=device-width, initial-scale=1, viewport-fit=cover"
-        />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-touch-fullscreen" content="yes" />
@@ -145,16 +147,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         />
       </head>
       <body
-        className={cn("min-h-screen bg-background font-sans antialiased h-full no-pinch-zoom", inter.className)}
+        className={cn(
+          "min-h-screen bg-background font-sans antialiased h-full no-pinch-zoom",
+          inter.className
+        )}
       >
         <AuthProvider>
           <I18nProvider locale={locale}>
             <PreferencesProvider initialPreferences={preferences}>
-              <ClientLayout 
-                initialLibraries={[]} 
-                initialFavorites={[]}
-                userIsAdmin={userIsAdmin}
-              >
+              <ClientLayout initialLibraries={[]} initialFavorites={[]} userIsAdmin={userIsAdmin}>
                 {children}
               </ClientLayout>
             </PreferencesProvider>

@@ -22,7 +22,7 @@ export function useDoublePageMode() {
   );
 
   const toggleDoublePage = useCallback(() => {
-    setIsDoublePage(prev => !prev);
+    setIsDoublePage((prev) => !prev);
   }, []);
 
   return {

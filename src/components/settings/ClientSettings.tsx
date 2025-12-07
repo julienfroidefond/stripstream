@@ -21,7 +21,7 @@ export function ClientSettings({ initialConfig, initialTTLConfig }: ClientSettin
   return (
     <div className="container mx-auto px-4 py-8 space-y-6">
       <h1 className="text-3xl font-bold">{t("settings.title")}</h1>
-      
+
       <Tabs defaultValue="display" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="display" className="flex items-center gap-2">

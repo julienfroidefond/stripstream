@@ -98,11 +98,7 @@ export function PreferencesProvider({
     [preferences, updatePreferences, isLoading]
   );
 
-  return (
-    <PreferencesContext.Provider value={contextValue}>
-      {children}
-    </PreferencesContext.Provider>
-  );
+  return <PreferencesContext.Provider value={contextValue}>{children}</PreferencesContext.Provider>;
 }
 
 export function usePreferences() {

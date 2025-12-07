@@ -152,11 +152,7 @@ export function ResetPasswordDialog({
         </div>
 
         <DialogFooter>
-          <Button 
-            variant="outline" 
-            onClick={() => handleOpenChange(false)} 
-            disabled={isLoading}
-          >
+          <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={isLoading}>
             Annuler
           </Button>
           <Button onClick={handleSubmit} disabled={isLoading}>
@@ -167,4 +163,3 @@ export function ResetPasswordDialog({
     </Dialog>
   );
 }
-

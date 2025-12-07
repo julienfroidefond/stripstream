@@ -47,22 +47,22 @@ export function ClientLibraryPage({
     const fetchData = async () => {
       setLoading(true);
       setError(null);
-      
+
       try {
         const params = new URLSearchParams({
           page: String(currentPage - 1),
           size: String(effectivePageSize),
           unread: String(unreadOnly),
         });
-        
+
         if (search) {
           params.append("search", search);
         }
 
         const response = await fetch(`/api/komga/libraries/${libraryId}/series?${params}`, {
-          cache: 'default' // Utilise le cache HTTP du navigateur
+          cache: "default", // Utilise le cache HTTP du navigateur
         });
-        
+
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.error?.code || "SERIES_FETCH_ERROR");
@@ -86,28 +86,28 @@ export function ClientLibraryPage({
     try {
       // Invalidate cache via API
       const cacheResponse = await fetch(`/api/komga/libraries/${libraryId}/series`, {
-        method: 'DELETE',
+        method: "DELETE",
       });
 
       if (!cacheResponse.ok) {
         throw new Error("Error invalidating cache");
       }
-      
+
       // Recharger les données
       const params = new URLSearchParams({
         page: String(currentPage - 1),
         size: String(effectivePageSize),
         unread: String(unreadOnly),
       });
-      
+
       if (search) {
         params.append("search", search);
       }
 
       const response = await fetch(`/api/komga/libraries/${libraryId}/series?${params}`, {
-        cache: 'reload' // Force un nouveau fetch après invalidation
+        cache: "reload", // Force un nouveau fetch après invalidation
       });
-      
+
       if (!response.ok) {
         throw new Error("Error refreshing library");
       }
@@ -115,7 +115,7 @@ export function ClientLibraryPage({
       const data = await response.json();
       setLibrary(data.library);
       setSeries(data.series);
-      
+
       return { success: true };
     } catch (error) {
       logger.error({ err: error }, "Error during refresh:");
@@ -133,15 +133,15 @@ export function ClientLibraryPage({
         size: String(effectivePageSize),
         unread: String(unreadOnly),
       });
-      
+
       if (search) {
         params.append("search", search);
       }
 
       const response = await fetch(`/api/komga/libraries/${libraryId}/series?${params}`, {
-        cache: 'reload' // Force un nouveau fetch lors du retry
+        cache: "reload", // Force un nouveau fetch lors du retry
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error?.code || "SERIES_FETCH_ERROR");

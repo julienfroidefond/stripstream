@@ -75,10 +75,9 @@ function BookListItem({ book, onBookClick, onSuccess, isCompact = false }: BookL
   };
 
   const statusInfo = getStatusInfo();
-  const title = book.metadata.title || 
-    (book.metadata.number 
-      ? t("navigation.volume", { number: book.metadata.number })
-      : book.name);
+  const title =
+    book.metadata.title ||
+    (book.metadata.number ? t("navigation.volume", { number: book.metadata.number }) : book.name);
 
   if (isCompact) {
     return (
@@ -118,7 +117,12 @@ function BookListItem({ book, onBookClick, onSuccess, isCompact = false }: BookL
             >
               {title}
             </h3>
-            <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0", statusInfo.className)}>
+            <span
+              className={cn(
+                "px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0",
+                statusInfo.className
+              )}
+            >
               {statusInfo.label}
             </span>
           </div>
@@ -137,9 +141,7 @@ function BookListItem({ book, onBookClick, onSuccess, isCompact = false }: BookL
             {book.metadata.authors && book.metadata.authors.length > 0 && (
               <div className="flex items-center gap-1 hidden sm:flex">
                 <User className="h-3 w-3" />
-                <span className="line-clamp-1">
-                  {book.metadata.authors[0].name}
-                </span>
+                <span className="line-clamp-1">{book.metadata.authors[0].name}</span>
               </div>
             )}
           </div>
@@ -192,9 +194,14 @@ function BookListItem({ book, onBookClick, onSuccess, isCompact = false }: BookL
               </p>
             )}
           </div>
-          
+
           {/* Badge de statut */}
-          <span className={cn("px-2 py-1 rounded-full text-xs font-medium flex-shrink-0", statusInfo.className)}>
+          <span
+            className={cn(
+              "px-2 py-1 rounded-full text-xs font-medium flex-shrink-0",
+              statusInfo.className
+            )}
+          >
             {statusInfo.label}
           </span>
         </div>
@@ -221,7 +228,7 @@ function BookListItem({ book, onBookClick, onSuccess, isCompact = false }: BookL
             <div className="flex items-center gap-1">
               <User className="h-3 w-3" />
               <span className="line-clamp-1">
-                {book.metadata.authors.map(a => a.name).join(", ")}
+                {book.metadata.authors.map((a) => a.name).join(", ")}
               </span>
             </div>
           )}
@@ -343,4 +350,3 @@ export function BookList({ books, onBookClick, isCompact = false }: BookListProp
     </div>
   );
 }
-

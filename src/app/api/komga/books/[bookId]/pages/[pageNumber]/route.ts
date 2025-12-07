@@ -44,10 +44,10 @@ export async function GET(
         return { buffer, contentType };
       }
     );
-    
+
     // Cloner le buffer pour cette requête pour éviter tout partage de référence
     const clonedBuffer = buffer.slice(0);
-    
+
     const headers = new Headers();
     headers.set("Content-Type", contentType);
     headers.set("Cache-Control", "public, max-age=31536000"); // Cache for 1 year

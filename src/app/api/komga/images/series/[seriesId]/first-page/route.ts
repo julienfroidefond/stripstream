@@ -20,10 +20,10 @@ export async function GET(
     return response;
   } catch (error) {
     logger.error({ err: error }, "Erreur lors de la récupération de la couverture de la série:");
-    
+
     // Chercher un status HTTP 404 dans la chaîne d'erreurs
     const httpStatus = findHttpStatus(error);
-    
+
     if (httpStatus === 404) {
       const seriesId: string = (await params).seriesId;
       // eslint-disable-next-line no-console
@@ -39,7 +39,7 @@ export async function GET(
         { status: 404 }
       );
     }
-    
+
     if (error instanceof AppError) {
       return NextResponse.json(
         {

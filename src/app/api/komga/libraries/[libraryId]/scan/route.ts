@@ -12,7 +12,7 @@ export async function POST(
 ) {
   try {
     const libraryId: string = (await params).libraryId;
-    
+
     // Scan library with deep=false
     await LibraryService.scanLibrary(libraryId, false);
 
@@ -43,4 +43,3 @@ export async function POST(
     );
   }
 }
-

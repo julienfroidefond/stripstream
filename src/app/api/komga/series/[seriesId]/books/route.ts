@@ -16,22 +16,22 @@ export async function GET(
   try {
     const seriesId: string = (await params).seriesId;
     const searchParams = request.nextUrl.searchParams;
-    
+
     const page = parseInt(searchParams.get("page") || "0");
     const size = parseInt(searchParams.get("size") || String(DEFAULT_PAGE_SIZE));
     const unreadOnly = searchParams.get("unread") === "true";
 
     const [books, series] = await Promise.all([
       SeriesService.getSeriesBooks(seriesId, page, size, unreadOnly),
-      SeriesService.getSeries(seriesId)
+      SeriesService.getSeries(seriesId),
     ]);
 
     return NextResponse.json(
       { books, series },
       {
         headers: {
-          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120'
-        }
+          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
+        },
       }
     );
   } catch (error) {
@@ -67,10 +67,10 @@ export async function DELETE(
 ) {
   try {
     const seriesId: string = (await params).seriesId;
-    
+
     await Promise.all([
       SeriesService.invalidateSeriesBooksCache(seriesId),
-      SeriesService.invalidateSeriesCache(seriesId)
+      SeriesService.invalidateSeriesCache(seriesId),
     ]);
 
     return NextResponse.json({ success: true });
@@ -100,4 +100,3 @@ export async function DELETE(
     );
   }
 }
-

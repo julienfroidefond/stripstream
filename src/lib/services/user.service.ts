@@ -53,10 +53,7 @@ export class UserService {
     }
   }
 
-  static async changePassword(
-    currentPassword: string,
-    newPassword: string
-  ): Promise<void> {
+  static async changePassword(currentPassword: string, newPassword: string): Promise<void> {
     try {
       const currentUser = await getCurrentUser();
       if (!currentUser) {
@@ -128,4 +125,3 @@ export class UserService {
     }
   }
 }
-

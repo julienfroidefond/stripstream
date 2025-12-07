@@ -10,10 +10,10 @@ import logger from "@/lib/logger";
 export async function GET() {
   try {
     const favoriteIds: string[] = await FavoriteService.getAllFavoriteIds();
-    
+
     // Valider que chaque série existe encore dans Komga
     const validFavoriteIds: string[] = [];
-    
+
     for (const seriesId of favoriteIds) {
       try {
         await SeriesService.getSeries(seriesId);
@@ -27,7 +27,7 @@ export async function GET() {
         }
       }
     }
-    
+
     return NextResponse.json(validFavoriteIds);
   } catch (error) {
     if (error instanceof AppError) {

@@ -20,7 +20,7 @@ export class SeriesService extends BaseApiService {
       const maxAge = ttlConfig?.imageCacheMaxAge ?? 2592000;
       return maxAge;
     } catch (error) {
-      logger.error({ err: error }, '[ImageCache] Error fetching TTL config');
+      logger.error({ err: error }, "[ImageCache] Error fetching TTL config");
       return 2592000; // 30 jours par défaut en cas d'erreur
     }
   }

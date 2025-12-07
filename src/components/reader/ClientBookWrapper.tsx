@@ -19,5 +19,7 @@ export function ClientBookWrapper({ book, pages, nextBook }: ClientBookWrapperPr
     router.push(`/series/${book.seriesId}`);
   };
 
-  return <PhotoswipeReader book={book} pages={pages} onClose={handleCloseReader} nextBook={nextBook} />;
+  return (
+    <PhotoswipeReader book={book} pages={pages} onClose={handleCloseReader} nextBook={nextBook} />
+  );
 }

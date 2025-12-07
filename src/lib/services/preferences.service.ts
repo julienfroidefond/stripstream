@@ -2,7 +2,11 @@ import prisma from "@/lib/prisma";
 import { getCurrentUser } from "../auth-utils";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
-import type { UserPreferences, BackgroundPreferences, CircuitBreakerConfig } from "@/types/preferences";
+import type {
+  UserPreferences,
+  BackgroundPreferences,
+  CircuitBreakerConfig,
+} from "@/types/preferences";
 import { defaultPreferences } from "@/types/preferences";
 import type { User } from "@/types/komga";
 import type { Prisma } from "@prisma/client";
@@ -20,17 +24,17 @@ export class PreferencesService {
     try {
       const user = await this.getCurrentUser();
       const userId = parseInt(user.id, 10);
-      
+
       const preferences = await prisma.preferences.findUnique({
         where: { userId },
       });
-      
+
       if (!preferences) {
         return { ...defaultPreferences };
       }
 
       const displayMode = preferences.displayMode as UserPreferences["displayMode"];
-      
+
       return {
         showThumbnails: preferences.showThumbnails,
         cacheMode: preferences.cacheMode as "memory" | "file",
@@ -57,16 +61,21 @@ export class PreferencesService {
     try {
       const user = await this.getCurrentUser();
       const userId = parseInt(user.id, 10);
-      
+
       const updateData: Record<string, any> = {};
-      if (preferences.showThumbnails !== undefined) updateData.showThumbnails = preferences.showThumbnails;
+      if (preferences.showThumbnails !== undefined)
+        updateData.showThumbnails = preferences.showThumbnails;
       if (preferences.cacheMode !== undefined) updateData.cacheMode = preferences.cacheMode;
-      if (preferences.showOnlyUnread !== undefined) updateData.showOnlyUnread = preferences.showOnlyUnread;
+      if (preferences.showOnlyUnread !== undefined)
+        updateData.showOnlyUnread = preferences.showOnlyUnread;
       if (preferences.displayMode !== undefined) updateData.displayMode = preferences.displayMode;
       if (preferences.background !== undefined) updateData.background = preferences.background;
-      if (preferences.komgaMaxConcurrentRequests !== undefined) updateData.komgaMaxConcurrentRequests = preferences.komgaMaxConcurrentRequests;
-      if (preferences.readerPrefetchCount !== undefined) updateData.readerPrefetchCount = preferences.readerPrefetchCount;
-      if (preferences.circuitBreakerConfig !== undefined) updateData.circuitBreakerConfig = preferences.circuitBreakerConfig;
+      if (preferences.komgaMaxConcurrentRequests !== undefined)
+        updateData.komgaMaxConcurrentRequests = preferences.komgaMaxConcurrentRequests;
+      if (preferences.readerPrefetchCount !== undefined)
+        updateData.readerPrefetchCount = preferences.readerPrefetchCount;
+      if (preferences.circuitBreakerConfig !== undefined)
+        updateData.circuitBreakerConfig = preferences.circuitBreakerConfig;
 
       const updatedPreferences = await prisma.preferences.upsert({
         where: { userId },
@@ -77,8 +86,10 @@ export class PreferencesService {
           cacheMode: preferences.cacheMode ?? defaultPreferences.cacheMode,
           showOnlyUnread: preferences.showOnlyUnread ?? defaultPreferences.showOnlyUnread,
           displayMode: preferences.displayMode ?? defaultPreferences.displayMode,
-          background: (preferences.background ?? defaultPreferences.background) as unknown as Prisma.InputJsonValue,
-          circuitBreakerConfig: (preferences.circuitBreakerConfig ?? defaultPreferences.circuitBreakerConfig) as unknown as Prisma.InputJsonValue,
+          background: (preferences.background ??
+            defaultPreferences.background) as unknown as Prisma.InputJsonValue,
+          circuitBreakerConfig: (preferences.circuitBreakerConfig ??
+            defaultPreferences.circuitBreakerConfig) as unknown as Prisma.InputJsonValue,
           komgaMaxConcurrentRequests: preferences.komgaMaxConcurrentRequests ?? 5,
           readerPrefetchCount: preferences.readerPrefetchCount ?? 5,
         },
@@ -92,7 +103,8 @@ export class PreferencesService {
         background: updatedPreferences.background as unknown as BackgroundPreferences,
         komgaMaxConcurrentRequests: updatedPreferences.komgaMaxConcurrentRequests,
         readerPrefetchCount: updatedPreferences.readerPrefetchCount,
-        circuitBreakerConfig: updatedPreferences.circuitBreakerConfig as unknown as CircuitBreakerConfig,
+        circuitBreakerConfig:
+          updatedPreferences.circuitBreakerConfig as unknown as CircuitBreakerConfig,
       };
     } catch (error) {
       if (error instanceof AppError) {

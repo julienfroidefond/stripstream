@@ -25,9 +25,7 @@ const NavButton = React.forwardRef<HTMLButtonElement, NavButtonProps>(
           <Icon className="mr-2 h-4 w-4" />
           <span className="truncate">{label}</span>
         </div>
-        {count !== undefined && (
-          <span className="text-xs text-muted-foreground">{count}</span>
-        )}
+        {count !== undefined && <span className="text-xs text-muted-foreground">{count}</span>}
       </button>
     );
   }
@@ -36,4 +34,3 @@ const NavButton = React.forwardRef<HTMLButtonElement, NavButtonProps>(
 NavButton.displayName = "NavButton";
 
 export { NavButton };
-

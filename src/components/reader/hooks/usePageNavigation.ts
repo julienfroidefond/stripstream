@@ -100,7 +100,15 @@ export function usePageNavigation({
     }
     const step = isDoublePage && shouldShowDoublePage(currentPage) ? 2 : 1;
     navigateToPage(Math.min(pages.length, currentPage + step));
-  }, [currentPage, pages.length, isDoublePage, shouldShowDoublePage, navigateToPage, nextBook, router]);
+  }, [
+    currentPage,
+    pages.length,
+    isDoublePage,
+    shouldShowDoublePage,
+    navigateToPage,
+    nextBook,
+    router,
+  ]);
 
   // Cleanup - Sync final sans debounce
   useEffect(() => {

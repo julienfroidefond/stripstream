@@ -29,20 +29,29 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
   const { direction, toggleDirection, isRTL } = useReadingDirection();
   const { isFullscreen, toggleFullscreen } = useFullscreen();
   const { isDoublePage, shouldShowDoublePage, toggleDoublePage } = useDoublePageMode();
-  const { loadedImages, imageBlobUrls, prefetchPages, prefetchNextBook, handleForceReload, getPageUrl, prefetchCount } = useImageLoader({ 
-    bookId: book.id, 
-    pages, 
-    prefetchCount: preferences.readerPrefetchCount,
-    nextBook: nextBook ? { id: nextBook.id, pages: [] } : null
-  });
-  const { currentPage, showEndMessage, navigateToPage, handlePreviousPage, handleNextPage } = usePageNavigation({
-    book,
+  const {
+    loadedImages,
+    imageBlobUrls,
+    prefetchPages,
+    prefetchNextBook,
+    handleForceReload,
+    getPageUrl,
+    prefetchCount,
+  } = useImageLoader({
+    bookId: book.id,
     pages,
-    isDoublePage,
-    shouldShowDoublePage: (page) => shouldShowDoublePage(page, pages.length),
-    onClose,
-    nextBook,
+    prefetchCount: preferences.readerPrefetchCount,
+    nextBook: nextBook ? { id: nextBook.id, pages: [] } : null,
   });
+  const { currentPage, showEndMessage, navigateToPage, handlePreviousPage, handleNextPage } =
+    usePageNavigation({
+      book,
+      pages,
+      isDoublePage,
+      shouldShowDoublePage: (page) => shouldShowDoublePage(page, pages.length),
+      onClose,
+      nextBook,
+    });
   const { pswpRef, handleZoom } = usePhotoSwipeZoom({
     loadedImages,
     currentPage,
@@ -58,13 +67,12 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
 
   // Activer le zoom dans le reader en enlevant la classe no-pinch-zoom
   useEffect(() => {
-    document.body.classList.remove('no-pinch-zoom');
+    document.body.classList.remove("no-pinch-zoom");
 
     return () => {
-      document.body.classList.add('no-pinch-zoom');
+      document.body.classList.add("no-pinch-zoom");
     };
   }, []);
-
 
   // Prefetch current and next pages
   // Deduplication in useImageLoader prevents redundant requests
@@ -72,18 +80,31 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
   useEffect(() => {
     // Prefetch pages starting from current page
     prefetchPages(currentPage, prefetchCount);
-    
+
     // If double page mode, also prefetch additional pages for smooth double page navigation
-    if (isDoublePage && shouldShowDoublePage(currentPage, pages.length) && currentPage + prefetchCount < pages.length) {
+    if (
+      isDoublePage &&
+      shouldShowDoublePage(currentPage, pages.length) &&
+      currentPage + prefetchCount < pages.length
+    ) {
       prefetchPages(currentPage + prefetchCount, 1);
     }
-    
+
     // If we're near the end of the book, prefetch the next book
     const pagesFromEnd = pages.length - currentPage;
     if (pagesFromEnd <= prefetchCount && nextBook) {
       prefetchNextBook(prefetchCount);
     }
-  }, [currentPage, isDoublePage, shouldShowDoublePage, prefetchPages, prefetchNextBook, prefetchCount, pages.length, nextBook]);
+  }, [
+    currentPage,
+    isDoublePage,
+    shouldShowDoublePage,
+    prefetchPages,
+    prefetchNextBook,
+    prefetchCount,
+    pages.length,
+    nextBook,
+  ]);
 
   // Keyboard events
   useEffect(() => {
@@ -109,43 +130,46 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
     };
 
     window.addEventListener("keydown", handleKeyDown);
-    
+
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [handleNextPage, handlePreviousPage, onClose, isRTL, currentPage]);
 
-  const handleContainerClick = useCallback((e: React.MouseEvent) => {
-    // Vérifier si c'est un double-clic sur une image
-    const target = e.target as HTMLElement;
-    const now = Date.now();
-    const timeSinceLastClick = now - lastClickTimeRef.current;
-    
-    if (target.tagName === 'IMG' && timeSinceLastClick < 300) {
-      // Double-clic sur une image
-      if (clickTimeoutRef.current) {
-        clearTimeout(clickTimeoutRef.current);
-        clickTimeoutRef.current = null;
+  const handleContainerClick = useCallback(
+    (e: React.MouseEvent) => {
+      // Vérifier si c'est un double-clic sur une image
+      const target = e.target as HTMLElement;
+      const now = Date.now();
+      const timeSinceLastClick = now - lastClickTimeRef.current;
+
+      if (target.tagName === "IMG" && timeSinceLastClick < 300) {
+        // Double-clic sur une image
+        if (clickTimeoutRef.current) {
+          clearTimeout(clickTimeoutRef.current);
+          clickTimeoutRef.current = null;
+        }
+        e.stopPropagation();
+        handleZoom();
+        lastClickTimeRef.current = 0;
+      } else if (target.tagName === "IMG") {
+        // Premier clic sur une image - attendre pour voir si c'est un double-clic
+        lastClickTimeRef.current = now;
+        if (clickTimeoutRef.current) {
+          clearTimeout(clickTimeoutRef.current);
+        }
+        clickTimeoutRef.current = setTimeout(() => {
+          setShowControls((prev) => !prev);
+          clickTimeoutRef.current = null;
+        }, 300);
+      } else {
+        // Clic ailleurs - toggle les contrôles immédiatement
+        setShowControls(!showControls);
+        lastClickTimeRef.current = 0;
       }
-      e.stopPropagation();
-      handleZoom();
-      lastClickTimeRef.current = 0;
-    } else if (target.tagName === 'IMG') {
-      // Premier clic sur une image - attendre pour voir si c'est un double-clic
-      lastClickTimeRef.current = now;
-      if (clickTimeoutRef.current) {
-        clearTimeout(clickTimeoutRef.current);
-      }
-      clickTimeoutRef.current = setTimeout(() => {
-        setShowControls(prev => !prev);
-        clickTimeoutRef.current = null;
-      }, 300);
-    } else {
-      // Clic ailleurs - toggle les contrôles immédiatement
-      setShowControls(!showControls);
-      lastClickTimeRef.current = 0;
-    }
-  }, [showControls, handleZoom]);
+    },
+    [showControls, handleZoom]
+  );
 
   return (
     <ReaderContainer onContainerClick={handleContainerClick}>
@@ -173,7 +197,11 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
         showThumbnails={showThumbnails}
         onToggleThumbnails={() => setShowThumbnails(!showThumbnails)}
         onZoom={handleZoom}
-        onForceReload={() => handleForceReload(currentPage, isDoublePage, (page) => shouldShowDoublePage(page, pages.length))}
+        onForceReload={() =>
+          handleForceReload(currentPage, isDoublePage, (page) =>
+            shouldShowDoublePage(page, pages.length)
+          )
+        }
       />
 
       <PageDisplay
@@ -196,4 +224,3 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
     </ReaderContainer>
   );
 }
-

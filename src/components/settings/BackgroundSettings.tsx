@@ -147,7 +147,6 @@ export function BackgroundSettings() {
     }
   };
 
-
   const handleLibraryToggle = async (libraryId: string) => {
     const newSelection = selectedLibraries.includes(libraryId)
       ? selectedLibraries.filter((id) => id !== libraryId)
@@ -174,7 +173,6 @@ export function BackgroundSettings() {
         <CardDescription>{t("settings.background.description")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-
         <div className="space-y-6">
           {/* Type de background */}
           <div className="space-y-3">
@@ -258,7 +256,9 @@ export function BackgroundSettings() {
                   onChange={(e) => setCustomImageUrl(e.target.value)}
                   className="flex-1"
                 />
-                <Button onClick={handleCustomImageSave}>{t("settings.background.image.save")}</Button>
+                <Button onClick={handleCustomImageSave}>
+                  {t("settings.background.image.save")}
+                </Button>
               </div>
               <p className="text-xs text-muted-foreground">
                 {t("settings.background.image.description")}
@@ -326,4 +326,3 @@ export function BackgroundSettings() {
     </Card>
   );
 }
-

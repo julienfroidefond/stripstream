@@ -182,19 +182,18 @@ export class AdminService {
     try {
       await requireAdmin();
 
-      const [totalUsers, usersWithKomga, usersWithPreferences] =
-        await Promise.all([
-          prisma.user.count(),
-          prisma.komgaConfig.count(),
-          prisma.preferences.count(),
-        ]);
+      const [totalUsers, usersWithKomga, usersWithPreferences] = await Promise.all([
+        prisma.user.count(),
+        prisma.komgaConfig.count(),
+        prisma.preferences.count(),
+      ]);
 
       // Count admin users by fetching all users and filtering
       const allUsers = await prisma.user.findMany({
         select: { roles: true },
       });
-      const totalAdmins = allUsers.filter(user => 
-        Array.isArray(user.roles) && user.roles.includes("ROLE_ADMIN")
+      const totalAdmins = allUsers.filter(
+        (user) => Array.isArray(user.roles) && user.roles.includes("ROLE_ADMIN")
       ).length;
 
       return {
@@ -211,4 +210,3 @@ export class AdminService {
     }
   }
 }
-

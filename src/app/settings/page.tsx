@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import type { KomgaConfig, TTLConfig } from "@/types/komga";
 import logger from "@/lib/logger";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Préférences",

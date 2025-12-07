@@ -44,26 +44,28 @@ export function PageDisplay({
         <div
           className={cn(
             "relative h-full flex items-center",
-            isDoublePage && shouldShowDoublePage(currentPage)
-              ? "w-1/2"
-              : "w-full justify-center",
-            isDoublePage && shouldShowDoublePage(currentPage) && {
-              "order-2 justify-start": isRTL,
-              "order-1 justify-end": !isRTL,
-            }
+            isDoublePage && shouldShowDoublePage(currentPage) ? "w-1/2" : "w-full justify-center",
+            isDoublePage &&
+              shouldShowDoublePage(currentPage) && {
+                "order-2 justify-start": isRTL,
+                "order-1 justify-end": !isRTL,
+              }
           )}
         >
           {isLoading && (
             <div className="absolute inset-0 flex items-center justify-center z-10 opacity-0 animate-fade-in">
               <div className="relative">
                 <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary/20"></div>
-                <div className="absolute inset-0 animate-spin rounded-full h-16 w-16 border-4 border-transparent border-t-primary" style={{ animationDuration: '0.8s' }}></div>
+                <div
+                  className="absolute inset-0 animate-spin rounded-full h-16 w-16 border-4 border-transparent border-t-primary"
+                  style={{ animationDuration: "0.8s" }}
+                ></div>
               </div>
             </div>
           )}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            key={`page-${currentPage}-${imageBlobUrls[currentPage] || ''}`}
+            key={`page-${currentPage}-${imageBlobUrls[currentPage] || ""}`}
             src={imageBlobUrls[currentPage] || getPageUrl(currentPage)}
             alt={`Page ${currentPage}`}
             className={cn(
@@ -85,25 +87,25 @@ export function PageDisplay({
         {/* Page 2 (double page) */}
         {isDoublePage && shouldShowDoublePage(currentPage) && (
           <div
-            className={cn(
-              "relative h-full w-1/2 flex items-center",
-              {
-                "order-1 justify-end": isRTL,
-                "order-2 justify-start": !isRTL,
-              }
-            )}
+            className={cn("relative h-full w-1/2 flex items-center", {
+              "order-1 justify-end": isRTL,
+              "order-2 justify-start": !isRTL,
+            })}
           >
             {secondPageLoading && (
               <div className="absolute inset-0 flex items-center justify-center z-10 opacity-0 animate-fade-in">
                 <div className="relative">
                   <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary/20"></div>
-                  <div className="absolute inset-0 animate-spin rounded-full h-16 w-16 border-4 border-transparent border-t-primary" style={{ animationDuration: '0.8s' }}></div>
+                  <div
+                    className="absolute inset-0 animate-spin rounded-full h-16 w-16 border-4 border-transparent border-t-primary"
+                    style={{ animationDuration: "0.8s" }}
+                  ></div>
                 </div>
               </div>
             )}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              key={`page-${currentPage + 1}-${imageBlobUrls[currentPage + 1] || ''}`}
+              key={`page-${currentPage + 1}-${imageBlobUrls[currentPage + 1] || ""}`}
               src={imageBlobUrls[currentPage + 1] || getPageUrl(currentPage + 1)}
               alt={`Page ${currentPage + 1}`}
               className={cn(

@@ -14,7 +14,9 @@ export const useFullscreen = () => {
     return () => {
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
       if (document.fullscreenElement) {
-        document.exitFullscreen().catch(err => logger.error({ err }, "Erreur lors de la sortie du mode plein écran"));
+        document
+          .exitFullscreen()
+          .catch((err) => logger.error({ err }, "Erreur lors de la sortie du mode plein écran"));
       }
     };
   }, []);
