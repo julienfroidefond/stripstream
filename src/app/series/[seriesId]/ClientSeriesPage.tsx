@@ -19,6 +19,8 @@ interface ClientSeriesPageProps {
   preferences: UserPreferences;
   unreadOnly: boolean;
   pageSize?: number;
+  initialSeries: KomgaSeries;
+  initialBooks: LibraryResponse<KomgaBook>;
 }
 
 const DEFAULT_PAGE_SIZE = 20;
@@ -29,48 +31,21 @@ export function ClientSeriesPage({
   preferences,
   unreadOnly,
   pageSize,
+  initialSeries,
+  initialBooks,
 }: ClientSeriesPageProps) {
-  const [series, setSeries] = useState<KomgaSeries | null>(null);
-  const [books, setBooks] = useState<LibraryResponse<KomgaBook> | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [series, setSeries] = useState<KomgaSeries | null>(initialSeries);
+  const [books, setBooks] = useState<LibraryResponse<KomgaBook> | null>(initialBooks);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const effectivePageSize = pageSize || preferences.displayMode?.itemsPerPage || DEFAULT_PAGE_SIZE;
 
+  // Sync avec les props initiales quand elles changent (navigation via URL)
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const params = new URLSearchParams({
-          page: String(currentPage - 1),
-          size: String(effectivePageSize),
-          unread: String(unreadOnly),
-        });
-
-        const response = await fetch(`/api/komga/series/${seriesId}/books?${params}`, {
-          cache: "default", // Utilise le cache HTTP du navigateur
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error?.code || ERROR_CODES.BOOK.PAGES_FETCH_ERROR);
-        }
-
-        const data = await response.json();
-        setSeries(data.series);
-        setBooks(data.books);
-      } catch (err) {
-        logger.error({ err }, "Error fetching series books");
-        setError(err instanceof Error ? err.message : ERROR_CODES.BOOK.PAGES_FETCH_ERROR);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [seriesId, currentPage, unreadOnly, effectivePageSize]);
+    setSeries(initialSeries);
+    setBooks(initialBooks);
+  }, [initialSeries, initialBooks]);
 
   const handleRefresh = async (seriesId: string) => {
     try {

@@ -66,7 +66,7 @@ export class SeriesService extends BaseApiService {
             {
               path: "books/list",
               params: {
-                size: "1000", // On récupère un maximum de livres
+                size: "5000", // On récupère un maximum de livres
               },
             },
             headers,
