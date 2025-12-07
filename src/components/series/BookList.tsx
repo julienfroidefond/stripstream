@@ -2,7 +2,7 @@
 
 import type { KomgaBook } from "@/types/komga";
 import { BookCover } from "@/components/ui/book-cover";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslate } from "@/hooks/useTranslate";
 import { cn } from "@/lib/utils";
 import { useBookOfflineStatus } from "@/hooks/useBookOfflineStatus";
@@ -18,6 +18,7 @@ interface BookListProps {
   books: KomgaBook[];
   onBookClick: (book: KomgaBook) => void;
   isCompact?: boolean;
+  onRefresh?: () => void;
 }
 
 interface BookListItemProps {
@@ -288,12 +289,18 @@ function BookListItem({ book, onBookClick, onSuccess, isCompact = false }: BookL
   );
 }
 
-export function BookList({ books, onBookClick, isCompact = false }: BookListProps) {
+export function BookList({ books, onBookClick, isCompact = false, onRefresh }: BookListProps) {
   const [localBooks, setLocalBooks] = useState(books);
   const { t } = useTranslate();
+  const previousBookIdsRef = useRef<string>(books.map((b) => b.id).join(","));
 
   useEffect(() => {
-    setLocalBooks(books);
+    // Ne réinitialiser que si les IDs des livres ont changé (nouvelle page, nouveau filtre, etc.)
+    const newIds = books.map((b) => b.id).join(",");
+    if (previousBookIdsRef.current !== newIds) {
+      setLocalBooks(books);
+      previousBookIdsRef.current = newIds;
+    }
   }, [books]);
 
   if (!localBooks.length) {
@@ -334,6 +341,8 @@ export function BookList({ books, onBookClick, isCompact = false }: BookListProp
         )
       );
     }
+    // Rafraîchir les données après avoir marqué comme lu/non lu
+    onRefresh?.();
   };
 
   return (

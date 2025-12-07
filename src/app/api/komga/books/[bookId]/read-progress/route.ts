@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { BookService } from "@/lib/services/book.service";
+import { SeriesService } from "@/lib/services/series.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { getErrorMessage } from "@/utils/errors";
 import { AppError } from "@/utils/errors";
@@ -28,6 +29,17 @@ export async function PATCH(
     }
 
     await BookService.updateReadProgress(bookId, page, completed);
+
+    // Invalider le cache de la série après avoir mis à jour la progression
+    try {
+      const seriesId = await BookService.getBookSeriesId(bookId);
+      await SeriesService.invalidateSeriesBooksCache(seriesId);
+      await SeriesService.invalidateSeriesCache(seriesId);
+    } catch (cacheError) {
+      // Ne pas faire échouer la requête si l'invalidation du cache échoue
+      logger.error({ err: cacheError }, "Erreur lors de l'invalidation du cache de la série:");
+    }
+
     return NextResponse.json({ message: "📖 Progression mise à jour avec succès" });
   } catch (error) {
     logger.error({ err: error }, "Erreur lors de la mise à jour de la progression:");
@@ -64,6 +76,17 @@ export async function DELETE(
     const bookId: string = (await params).bookId;
 
     await BookService.deleteReadProgress(bookId);
+
+    // Invalider le cache de la série après avoir supprimé la progression
+    try {
+      const seriesId = await BookService.getBookSeriesId(bookId);
+      await SeriesService.invalidateSeriesBooksCache(seriesId);
+      await SeriesService.invalidateSeriesCache(seriesId);
+    } catch (cacheError) {
+      // Ne pas faire échouer la requête si l'invalidation du cache échoue
+      logger.error({ err: cacheError }, "Erreur lors de l'invalidation du cache de la série:");
+    }
+
     return NextResponse.json({ message: "🗑️ Progression supprimée avec succès" });
   } catch (error) {
     logger.error({ err: error }, "Erreur lors de la suppression de la progression:");

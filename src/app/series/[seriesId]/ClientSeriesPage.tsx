@@ -199,6 +199,7 @@ export function ClientSeriesPage({
           totalElements={books.totalElements}
           defaultShowOnlyUnread={preferences.showOnlyUnread}
           showOnlyUnread={unreadOnly}
+          onRefresh={() => handleRefresh(seriesId)}
         />
       </div>
     </>

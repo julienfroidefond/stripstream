@@ -61,6 +61,16 @@ export class BookService extends BaseApiService {
     }
   }
 
+  static async getBookSeriesId(bookId: string): Promise<string> {
+    try {
+      // Récupérer le livre sans cache pour éviter les données obsolètes
+      const book = await this.fetchFromApi<KomgaBook>({ path: `books/${bookId}` });
+      return book.seriesId;
+    } catch (error) {
+      throw new AppError(ERROR_CODES.BOOK.NOT_FOUND, {}, error);
+    }
+  }
+
   static async updateReadProgress(
     bookId: string,
     page: number,

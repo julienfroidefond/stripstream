@@ -21,6 +21,7 @@ interface PaginatedBookGridProps {
   totalElements: number;
   defaultShowOnlyUnread: boolean;
   showOnlyUnread: boolean;
+  onRefresh?: () => void;
 }
 
 export function PaginatedBookGrid({
@@ -30,6 +31,7 @@ export function PaginatedBookGrid({
   totalElements,
   defaultShowOnlyUnread,
   showOnlyUnread: initialShowOnlyUnread,
+  onRefresh,
 }: PaginatedBookGridProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -130,9 +132,9 @@ export function PaginatedBookGrid({
       </div>
 
       {viewMode === "grid" ? (
-        <BookGrid books={books} onBookClick={handleBookClick} isCompact={isCompact} />
+        <BookGrid books={books} onBookClick={handleBookClick} isCompact={isCompact} onRefresh={onRefresh} />
       ) : (
-        <BookList books={books} onBookClick={handleBookClick} isCompact={isCompact} />
+        <BookList books={books} onBookClick={handleBookClick} isCompact={isCompact} onRefresh={onRefresh} />
       )}
 
       <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
