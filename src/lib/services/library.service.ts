@@ -85,18 +85,36 @@ export class LibraryService extends BaseApiService {
       const headers = { "Content-Type": "application/json" };
 
       // Construction du body de recherche pour Komga
-      const condition: Record<string, any> = {
-        libraryId: {
-          operator: "is",
-          value: libraryId,
-        },
-      };
+      let condition: any;
+
+      if (unreadOnly) {
+        // Utiliser allOf pour combiner les conditions
+        condition = {
+          allOf: [
+            {
+              libraryId: {
+                operator: "is",
+                value: libraryId,
+              },
+            },
+            {
+              readStatus: {
+                operator: "is",
+                value: "UNREAD",
+              },
+            },
+          ],
+        };
+      } else {
+        condition = {
+          libraryId: {
+            operator: "is",
+            value: libraryId,
+          },
+        };
+      }
 
       const searchBody = { condition };
-
-      // Pour le filtre unread, on récupère plus d'éléments car on filtre côté client
-      // Estimation : ~50% des séries sont unread, donc on récupère 2x pour être sûr
-      const fetchSize = unreadOnly ? size * 2 : size;
 
       // Clé de cache incluant tous les paramètres
       const cacheKey = `library-${libraryId}-series-p${page}-s${size}-u${unreadOnly}-q${
@@ -106,9 +124,9 @@ export class LibraryService extends BaseApiService {
       const response = await this.fetchWithCache<LibraryResponse<Series>>(
         cacheKey,
         async () => {
-          const params: Record<string, string> = {
+          const params: Record<string, string | string[]> = {
             page: String(page),
-            size: String(fetchSize),
+            size: String(size),
             sort: "metadata.titleSort,asc",
           };
 
@@ -129,27 +147,13 @@ export class LibraryService extends BaseApiService {
         "SERIES"
       );
 
-      // Filtrer les séries supprimées côté client (léger)
-      let filteredContent = response.content.filter((series) => !series.deleted);
+      // Filtrer uniquement les séries supprimées côté client (léger)
+      const filteredContent = response.content.filter((series) => !series.deleted);
 
-      // Filtre unread côté client (Komga n'a pas de filtre natif pour booksReadCount < booksCount)
-      if (unreadOnly) {
-        filteredContent = filteredContent.filter(
-          (series) => series.booksReadCount < series.booksCount
-        );
-        // Prendre uniquement les `size` premiers après filtrage
-        filteredContent = filteredContent.slice(0, size);
-      }
-
-      // Note: Les totaux (totalElements, totalPages) restent ceux de Komga
-      // Ils sont approximatifs après filtrage côté client mais fonctionnels pour la pagination
-      // Le filtrage côté client est léger (seulement deleted + unread)
       return {
         ...response,
         content: filteredContent,
         numberOfElements: filteredContent.length,
-        // Garder totalElements et totalPages de Komga pour la pagination
-        // Ils seront légèrement inexacts mais fonctionnels
       };
     } catch (error) {
       throw new AppError(ERROR_CODES.SERIES.FETCH_ERROR, {}, error);

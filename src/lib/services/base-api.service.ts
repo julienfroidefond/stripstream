@@ -21,7 +21,7 @@ interface KomgaRequestInit extends RequestInit {
 
 interface KomgaUrlBuilder {
   path: string;
-  params?: Record<string, string>;
+  params?: Record<string, string | string[]>;
 }
 
 export abstract class BaseApiService {
@@ -136,14 +136,22 @@ export abstract class BaseApiService {
   protected static buildUrl(
     config: AuthConfig,
     path: string,
-    params?: Record<string, string>
+    params?: Record<string, string | string[]>
   ): string {
     const url = new URL(`${config.serverUrl}/api/v1/${path}`);
 
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
         if (value !== undefined) {
-          url.searchParams.append(key, value);
+          if (Array.isArray(value)) {
+            value.forEach((v) => {
+              if (v !== undefined) {
+                url.searchParams.append(key, v);
+              }
+            });
+          } else {
+            url.searchParams.append(key, value);
+          }
         }
       });
     }
