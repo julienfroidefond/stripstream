@@ -56,7 +56,7 @@ export class LibraryService extends BaseApiService {
             {
               path: "series/list",
               params: {
-                size: "1000", // On récupère un maximum de livres
+                size: "5000", // On récupère un maximum de livres
               },
             },
             headers,
@@ -84,7 +84,7 @@ export class LibraryService extends BaseApiService {
     try {
       // Récupérer toutes les séries depuis le cache
       const allSeries = await this.getAllLibrarySeries(libraryId);
-      
+
       // Filtrer les séries
       let filteredSeries = allSeries;
 
@@ -99,9 +99,10 @@ export class LibraryService extends BaseApiService {
 
       if (search) {
         const searchLower = search.toLowerCase();
-        filteredSeries = filteredSeries.filter((series) =>
-          series.metadata.title.toLowerCase().includes(searchLower) ||
-          series.id.toLowerCase().includes(searchLower)
+        filteredSeries = filteredSeries.filter(
+          (series) =>
+            series.metadata.title.toLowerCase().includes(searchLower) ||
+            series.id.toLowerCase().includes(searchLower)
         );
       }
 
@@ -113,7 +114,7 @@ export class LibraryService extends BaseApiService {
       const totalPages = Math.ceil(totalElements / size);
       const startIndex = page * size;
       const endIndex = Math.min(startIndex + size, totalElements);
-      
+
       const paginatedSeries = filteredSeries.slice(startIndex, endIndex);
 
       // Construire la réponse
@@ -162,10 +163,14 @@ export class LibraryService extends BaseApiService {
 
   static async scanLibrary(libraryId: string, deep: boolean = false): Promise<void> {
     try {
-      await this.fetchFromApi({
-        path: `libraries/${libraryId}/scan`,
-        params: { deep: String(deep) }
-      }, {}, { method: "POST", noJson: true });
+      await this.fetchFromApi(
+        {
+          path: `libraries/${libraryId}/scan`,
+          params: { deep: String(deep) },
+        },
+        {},
+        { method: "POST", noJson: true }
+      );
     } catch (error) {
       throw new AppError(ERROR_CODES.LIBRARY.SCAN_ERROR, { libraryId }, error);
     }
