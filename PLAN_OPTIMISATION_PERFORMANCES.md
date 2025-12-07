@@ -94,10 +94,10 @@ size: "1000"; // Récupère TOUS les livres d'un coup
   - Routes API = dynamiques, pas besoin d'ISR
   - Le cache serveur suffit
 
-- [ ] **2.4 Optimiser les TTL ServerCacheService**
-  - Réduire TTL des listes paginées (1-2 min)
-  - Garder TTL court pour les données avec progression (5 min)
-  - Garder TTL long pour les images (7 jours)
+- [x] **2.4 Optimiser les TTL ServerCacheService**
+  - Réduire TTL des listes paginées (2 min) ✅
+  - Garder TTL court pour les données avec progression (2 min) ✅
+  - Garder TTL long pour les images (7 jours) ✅
 
 **Résultat final :**
 

@@ -19,20 +19,26 @@ class ServerCacheService {
   };
 
   // Configuration des temps de cache en millisecondes
+  private static readonly oneMinute = 1 * 60 * 1000;
+  private static readonly twoMinutes = 2 * 60 * 1000;
   private static readonly fiveMinutes = 5 * 60 * 1000;
   private static readonly tenMinutes = 10 * 60 * 1000;
   private static readonly twentyFourHours = 24 * 60 * 60 * 1000;
-  private static readonly oneMinute = 1 * 60 * 1000;
   private static readonly oneWeek = 7 * 24 * 60 * 60 * 1000;
   private static readonly noCache = 0;
 
   // Configuration des temps de cache
+  // Optimisé pour la pagination native Komga :
+  // - Listes paginées (SERIES, BOOKS) : TTL court (2 min) car données fraîches + progression utilisateur
+  // - Données agrégées (HOME) : TTL moyen (10 min) car plusieurs sources
+  // - Données statiques (LIBRARIES) : TTL long (24h) car changent rarement
+  // - Images : TTL très long (7 jours) car immuables
   private static readonly DEFAULT_TTL = {
     DEFAULT: ServerCacheService.fiveMinutes,
     HOME: ServerCacheService.tenMinutes,
     LIBRARIES: ServerCacheService.twentyFourHours,
-    SERIES: ServerCacheService.fiveMinutes,
-    BOOKS: ServerCacheService.fiveMinutes,
+    SERIES: ServerCacheService.twoMinutes, // Listes paginées avec progression
+    BOOKS: ServerCacheService.twoMinutes, // Listes paginées avec progression
     IMAGES: ServerCacheService.oneWeek,
   };
 
