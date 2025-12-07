@@ -4,10 +4,9 @@ import type { ImageResponse } from "./image.service";
 import { ImageService } from "./image.service";
 import { PreferencesService } from "./preferences.service";
 import { ConfigDBService } from "./config-db.service";
+import { SeriesService } from "./series.service";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
-import { SeriesService } from "./series.service";
-import type { Series } from "@/types/series";
 import logger from "@/lib/logger";
 
 export class BookService extends BaseApiService {
@@ -43,10 +42,23 @@ export class BookService extends BaseApiService {
       throw new AppError(ERROR_CODES.BOOK.NOT_FOUND, {}, error);
     }
   }
-  public static async getNextBook(bookId: string, seriesId: string): Promise<KomgaBook | null> {
-    const books = await SeriesService.getAllSeriesBooks(seriesId);
-    const currentIndex = books.findIndex((book) => book.id === bookId);
-    return books[currentIndex + 1] || null;
+  public static async getNextBook(bookId: string, _seriesId: string): Promise<KomgaBook | null> {
+    try {
+      // Utiliser l'endpoint natif Komga pour obtenir le livre suivant
+      return await this.fetchFromApi<KomgaBook>({ path: `books/${bookId}/next` });
+    } catch (error) {
+      // Si le livre suivant n'existe pas, Komga retourne 404
+      // On retourne null dans ce cas
+      if (
+        error instanceof AppError &&
+        error.code === ERROR_CODES.KOMGA.HTTP_ERROR &&
+        (error as any).context?.status === 404
+      ) {
+        return null;
+      }
+      // Pour les autres erreurs, on les propage
+      throw error;
+    }
   }
 
   static async updateReadProgress(
@@ -191,34 +203,7 @@ export class BookService extends BaseApiService {
 
       const { LibraryService } = await import("./library.service");
 
-      // Essayer d'abord d'utiliser le cache des bibliothèques
-      const allSeriesFromCache: Series[] = [];
-
-      for (const libraryId of libraryIds) {
-        try {
-          // Essayer de récupérer les séries depuis le cache (rapide si en cache)
-          const series = await LibraryService.getAllLibrarySeries(libraryId);
-          allSeriesFromCache.push(...series);
-        } catch {
-          // Si erreur, on continue avec les autres bibliothèques
-        }
-      }
-
-      if (allSeriesFromCache.length > 0) {
-        // Choisir une série au hasard parmi toutes celles trouvées
-        const randomSeriesIndex = Math.floor(Math.random() * allSeriesFromCache.length);
-        const randomSeries = allSeriesFromCache[randomSeriesIndex];
-
-        // Récupérer les books de cette série
-        const books = await SeriesService.getAllSeriesBooks(randomSeries.id);
-
-        if (books.length > 0) {
-          const randomBookIndex = Math.floor(Math.random() * books.length);
-          return books[randomBookIndex].id;
-        }
-      }
-
-      // Si pas de cache, faire une requête légère : prendre une page de séries d'une bibliothèque au hasard
+      // Faire une requête légère : prendre une page de séries d'une bibliothèque au hasard
       const randomLibraryIndex = Math.floor(Math.random() * libraryIds.length);
       const randomLibraryId = libraryIds[randomLibraryIndex];
 
@@ -235,17 +220,17 @@ export class BookService extends BaseApiService {
       const randomSeriesIndex = Math.floor(Math.random() * seriesResponse.content.length);
       const randomSeries = seriesResponse.content[randomSeriesIndex];
 
-      // Récupérer les books de cette série
-      const books = await SeriesService.getAllSeriesBooks(randomSeries.id);
+      // Récupérer les books de cette série avec pagination
+      const booksResponse = await SeriesService.getSeriesBooks(randomSeries.id, 0, 100);
 
-      if (books.length === 0) {
+      if (booksResponse.content.length === 0) {
         throw new AppError(ERROR_CODES.BOOK.NOT_FOUND, {
           message: "Aucun livre trouvé dans la série",
         });
       }
 
-      const randomBookIndex = Math.floor(Math.random() * books.length);
-      return books[randomBookIndex].id;
+      const randomBookIndex = Math.floor(Math.random() * booksResponse.content.length);
+      return booksResponse.content[randomBookIndex].id;
     } catch (error) {
       if (error instanceof AppError) {
         throw error;

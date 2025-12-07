@@ -45,52 +45,6 @@ export class SeriesService extends BaseApiService {
     }
   }
 
-  static async getAllSeriesBooks(seriesId: string): Promise<KomgaBook[]> {
-    try {
-      const headers = { "Content-Type": "application/json" };
-
-      const searchBody = {
-        condition: {
-          seriesId: {
-            operator: "is",
-            value: seriesId,
-          },
-        },
-      };
-
-      const cacheKey = `series-${seriesId}-all-books`;
-      const response = await this.fetchWithCache<LibraryResponse<KomgaBook>>(
-        cacheKey,
-        async () =>
-          this.fetchFromApi<LibraryResponse<KomgaBook>>(
-            {
-              path: "books/list",
-              params: {
-                size: "1000", // On récupère un maximum de livres
-              },
-            },
-            headers,
-            {
-              method: "POST",
-              body: JSON.stringify(searchBody),
-            }
-          ),
-        "BOOKS"
-      );
-
-      if (!response.content.length) {
-        throw new AppError(ERROR_CODES.SERIES.NO_BOOKS_FOUND);
-      }
-
-      return response.content;
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
-      }
-      throw new AppError(ERROR_CODES.SERIES.FETCH_ERROR, {}, error);
-    }
-  }
-
   static async getSeriesBooks(
     seriesId: string,
     page: number = 0,
@@ -104,7 +58,7 @@ export class SeriesService extends BaseApiService {
       let condition: any;
 
       if (unreadOnly) {
-        // Utiliser allOf pour combiner les conditions
+        // Utiliser allOf pour combiner seriesId avec anyOf pour UNREAD ou IN_PROGRESS
         condition = {
           allOf: [
             {
@@ -114,10 +68,20 @@ export class SeriesService extends BaseApiService {
               },
             },
             {
-              readStatus: {
-                operator: "is",
-                value: "UNREAD",
-              },
+              anyOf: [
+                {
+                  readStatus: {
+                    operator: "is",
+                    value: "UNREAD",
+                  },
+                },
+                {
+                  readStatus: {
+                    operator: "is",
+                    value: "IN_PROGRESS",
+                  },
+                },
+              ],
             },
           ],
         };
@@ -175,8 +139,6 @@ export class SeriesService extends BaseApiService {
       // Invalider toutes les clés de cache pour cette série
       // Format: series-{id}-books-p{page}-s{size}-u{unread}
       await cacheService.deleteAll(`series-${seriesId}-books-`);
-      // Invalider aussi l'ancienne clé pour compatibilité
-      await cacheService.delete(`series-${seriesId}-all-books`);
     } catch (error) {
       throw new AppError(ERROR_CODES.CACHE.DELETE_ERROR, {}, error);
     }

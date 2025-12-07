@@ -35,45 +35,6 @@ export class LibraryService extends BaseApiService {
     }
   }
 
-  static async getAllLibrarySeries(libraryId: string): Promise<Series[]> {
-    try {
-      const headers = { "Content-Type": "application/json" };
-
-      const searchBody = {
-        condition: {
-          libraryId: {
-            operator: "is",
-            value: libraryId,
-          },
-        },
-      };
-
-      const cacheKey = `library-${libraryId}-all-series`;
-      const response = await this.fetchWithCache<LibraryResponse<Series>>(
-        cacheKey,
-        async () =>
-          this.fetchFromApi<LibraryResponse<Series>>(
-            {
-              path: "series/list",
-              params: {
-                size: "5000", // On récupère un maximum de livres
-              },
-            },
-            headers,
-            {
-              method: "POST",
-              body: JSON.stringify(searchBody),
-            }
-          ),
-        "SERIES"
-      );
-
-      return response.content;
-    } catch (error) {
-      throw new AppError(ERROR_CODES.SERIES.FETCH_ERROR, {}, error);
-    }
-  }
-
   static async getLibrarySeries(
     libraryId: string,
     page: number = 0,
@@ -88,7 +49,7 @@ export class LibraryService extends BaseApiService {
       let condition: any;
 
       if (unreadOnly) {
-        // Utiliser allOf pour combiner les conditions
+        // Utiliser allOf pour combiner libraryId avec anyOf pour UNREAD ou IN_PROGRESS
         condition = {
           allOf: [
             {
@@ -98,10 +59,20 @@ export class LibraryService extends BaseApiService {
               },
             },
             {
-              readStatus: {
-                operator: "is",
-                value: "UNREAD",
-              },
+              anyOf: [
+                {
+                  readStatus: {
+                    operator: "is",
+                    value: "UNREAD",
+                  },
+                },
+                {
+                  readStatus: {
+                    operator: "is",
+                    value: "IN_PROGRESS",
+                  },
+                },
+              ],
             },
           ],
         };
@@ -166,8 +137,6 @@ export class LibraryService extends BaseApiService {
       // Invalider toutes les clés de cache pour cette bibliothèque
       // Format: library-{id}-series-p{page}-s{size}-u{unread}-q{search}
       await cacheService.deleteAll(`library-${libraryId}-series-`);
-      // Invalider aussi l'ancienne clé pour compatibilité
-      await cacheService.delete(`library-${libraryId}-all-series`);
     } catch (error) {
       throw new AppError(ERROR_CODES.CACHE.DELETE_ERROR, {}, error);
     }
