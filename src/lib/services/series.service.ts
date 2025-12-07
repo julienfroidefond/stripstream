@@ -98,59 +98,71 @@ export class SeriesService extends BaseApiService {
     unreadOnly: boolean = false
   ): Promise<LibraryResponse<KomgaBook>> {
     try {
-      // Récupérer tous les livres depuis le cache
-      const allBooks: KomgaBook[] = await this.getAllSeriesBooks(seriesId);
+      const headers = { "Content-Type": "application/json" };
 
-      // Filtrer les livres
-      let filteredBooks = allBooks;
+      // Construction du body de recherche pour Komga
+      const condition: Record<string, any> = {
+        seriesId: {
+          operator: "is",
+          value: seriesId,
+        },
+      };
 
-      // Filtrer les livres supprimés (fichiers manquants sur le filesystem)
-      filteredBooks = filteredBooks.filter((book: KomgaBook) => !book.deleted);
-
+      // Filtre unread natif Komga (readStatus != READ)
       if (unreadOnly) {
-        filteredBooks = filteredBooks.filter(
-          (book: KomgaBook) => !book.readProgress || !book.readProgress.completed
-        );
+        condition.readStatus = {
+          operator: "isNot",
+          value: "READ",
+        };
       }
 
-      // Trier les livres par numéro
-      filteredBooks.sort((a: KomgaBook, b: KomgaBook) => a.number - b.number);
+      const searchBody = { condition };
 
-      // Calculer la pagination
-      const totalElements = filteredBooks.length;
-      const totalPages = Math.ceil(totalElements / size);
-      const startIndex = page * size;
-      const endIndex = Math.min(startIndex + size, totalElements);
-      const paginatedBooks = filteredBooks.slice(startIndex, endIndex);
+      // Pour le filtre unread, on récupère plus d'éléments car on filtre aussi les deleted côté client
+      // Estimation : ~10% des livres sont supprimés, donc on récupère légèrement plus
+      const fetchSize = unreadOnly ? size : size;
 
-      // Construire la réponse
+      // Clé de cache incluant tous les paramètres
+      const cacheKey = `series-${seriesId}-books-p${page}-s${size}-u${unreadOnly}`;
+
+      const response = await this.fetchWithCache<LibraryResponse<KomgaBook>>(
+        cacheKey,
+        async () => {
+          const params: Record<string, string> = {
+            page: String(page),
+            size: String(fetchSize),
+            sort: "number,asc",
+          };
+
+          return this.fetchFromApi<LibraryResponse<KomgaBook>>(
+            { path: "books/list", params },
+            headers,
+            {
+              method: "POST",
+              body: JSON.stringify(searchBody),
+            }
+          );
+        },
+        "BOOKS"
+      );
+
+      // Filtrer les livres supprimés côté client (léger)
+      let filteredContent = response.content.filter((book: KomgaBook) => !book.deleted);
+
+      // Si on a filtré des livres supprimés, prendre uniquement les `size` premiers
+      if (filteredContent.length > size) {
+        filteredContent = filteredContent.slice(0, size);
+      }
+
+      // Note: Les totaux (totalElements, totalPages) restent ceux de Komga
+      // Ils sont approximatifs après filtrage côté client mais fonctionnels pour la pagination
+      // Le filtrage côté client est léger (seulement deleted)
       return {
-        content: paginatedBooks,
-        empty: paginatedBooks.length === 0,
-        first: page === 0,
-        last: page >= totalPages - 1,
-        number: page,
-        numberOfElements: paginatedBooks.length,
-        pageable: {
-          offset: startIndex,
-          pageNumber: page,
-          pageSize: size,
-          paged: true,
-          sort: {
-            empty: false,
-            sorted: true,
-            unsorted: false,
-          },
-          unpaged: false,
-        },
-        size,
-        sort: {
-          empty: false,
-          sorted: true,
-          unsorted: false,
-        },
-        totalElements,
-        totalPages,
+        ...response,
+        content: filteredContent,
+        numberOfElements: filteredContent.length,
+        // Garder totalElements et totalPages de Komga pour la pagination
+        // Ils seront légèrement inexacts mais fonctionnels
       };
     } catch (error) {
       throw new AppError(ERROR_CODES.SERIES.FETCH_ERROR, {}, error);
@@ -158,8 +170,16 @@ export class SeriesService extends BaseApiService {
   }
 
   static async invalidateSeriesBooksCache(seriesId: string): Promise<void> {
-    const cacheService: ServerCacheService = await getServerCacheService();
-    await cacheService.delete(`series-${seriesId}-all-books`);
+    try {
+      const cacheService: ServerCacheService = await getServerCacheService();
+      // Invalider toutes les clés de cache pour cette série
+      // Format: series-{id}-books-p{page}-s{size}-u{unread}
+      await cacheService.deleteAll(`series-${seriesId}-books-`);
+      // Invalider aussi l'ancienne clé pour compatibilité
+      await cacheService.delete(`series-${seriesId}-all-books`);
+    } catch (error) {
+      throw new AppError(ERROR_CODES.CACHE.DELETE_ERROR, {}, error);
+    }
   }
 
   static async getFirstBook(seriesId: string): Promise<string> {

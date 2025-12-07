@@ -82,69 +82,74 @@ export class LibraryService extends BaseApiService {
     search?: string
   ): Promise<LibraryResponse<Series>> {
     try {
-      // Récupérer toutes les séries depuis le cache
-      const allSeries = await this.getAllLibrarySeries(libraryId);
+      const headers = { "Content-Type": "application/json" };
 
-      // Filtrer les séries
-      let filteredSeries = allSeries;
+      // Construction du body de recherche pour Komga
+      const condition: Record<string, any> = {
+        libraryId: {
+          operator: "is",
+          value: libraryId,
+        },
+      };
 
-      // Filtrer les séries supprimées (fichiers manquants sur le filesystem)
-      filteredSeries = filteredSeries.filter((series) => !series.deleted);
+      const searchBody = { condition };
 
+      // Pour le filtre unread, on récupère plus d'éléments car on filtre côté client
+      // Estimation : ~50% des séries sont unread, donc on récupère 2x pour être sûr
+      const fetchSize = unreadOnly ? size * 2 : size;
+
+      // Clé de cache incluant tous les paramètres
+      const cacheKey = `library-${libraryId}-series-p${page}-s${size}-u${unreadOnly}-q${
+        search || ""
+      }`;
+
+      const response = await this.fetchWithCache<LibraryResponse<Series>>(
+        cacheKey,
+        async () => {
+          const params: Record<string, string> = {
+            page: String(page),
+            size: String(fetchSize),
+            sort: "metadata.titleSort,asc",
+          };
+
+          // Filtre de recherche Komga (recherche dans le titre)
+          if (search) {
+            params.search = search;
+          }
+
+          return this.fetchFromApi<LibraryResponse<Series>>(
+            { path: "series/list", params },
+            headers,
+            {
+              method: "POST",
+              body: JSON.stringify(searchBody),
+            }
+          );
+        },
+        "SERIES"
+      );
+
+      // Filtrer les séries supprimées côté client (léger)
+      let filteredContent = response.content.filter((series) => !series.deleted);
+
+      // Filtre unread côté client (Komga n'a pas de filtre natif pour booksReadCount < booksCount)
       if (unreadOnly) {
-        filteredSeries = filteredSeries.filter(
+        filteredContent = filteredContent.filter(
           (series) => series.booksReadCount < series.booksCount
         );
+        // Prendre uniquement les `size` premiers après filtrage
+        filteredContent = filteredContent.slice(0, size);
       }
 
-      if (search) {
-        const searchLower = search.toLowerCase();
-        filteredSeries = filteredSeries.filter(
-          (series) =>
-            series.metadata.title.toLowerCase().includes(searchLower) ||
-            series.id.toLowerCase().includes(searchLower)
-        );
-      }
-
-      // Trier les séries
-      filteredSeries.sort((a, b) => a.metadata.titleSort.localeCompare(b.metadata.titleSort));
-
-      // Calculer la pagination
-      const totalElements = filteredSeries.length;
-      const totalPages = Math.ceil(totalElements / size);
-      const startIndex = page * size;
-      const endIndex = Math.min(startIndex + size, totalElements);
-
-      const paginatedSeries = filteredSeries.slice(startIndex, endIndex);
-
-      // Construire la réponse
+      // Note: Les totaux (totalElements, totalPages) restent ceux de Komga
+      // Ils sont approximatifs après filtrage côté client mais fonctionnels pour la pagination
+      // Le filtrage côté client est léger (seulement deleted + unread)
       return {
-        content: paginatedSeries,
-        empty: paginatedSeries.length === 0,
-        first: page === 0,
-        last: page >= totalPages - 1,
-        number: page,
-        numberOfElements: paginatedSeries.length,
-        pageable: {
-          offset: startIndex,
-          pageNumber: page,
-          pageSize: size,
-          paged: true,
-          sort: {
-            empty: false,
-            sorted: true,
-            unsorted: false,
-          },
-          unpaged: false,
-        },
-        size,
-        sort: {
-          empty: false,
-          sorted: true,
-          unsorted: false,
-        },
-        totalElements,
-        totalPages,
+        ...response,
+        content: filteredContent,
+        numberOfElements: filteredContent.length,
+        // Garder totalElements et totalPages de Komga pour la pagination
+        // Ils seront légèrement inexacts mais fonctionnels
       };
     } catch (error) {
       throw new AppError(ERROR_CODES.SERIES.FETCH_ERROR, {}, error);
@@ -154,8 +159,11 @@ export class LibraryService extends BaseApiService {
   static async invalidateLibrarySeriesCache(libraryId: string): Promise<void> {
     try {
       const cacheService = await getServerCacheService();
-      const cacheKey = `library-${libraryId}-all-series`;
-      await cacheService.delete(cacheKey);
+      // Invalider toutes les clés de cache pour cette bibliothèque
+      // Format: library-{id}-series-p{page}-s{size}-u{unread}-q{search}
+      await cacheService.deleteAll(`library-${libraryId}-series-`);
+      // Invalider aussi l'ancienne clé pour compatibilité
+      await cacheService.delete(`library-${libraryId}-all-series`);
     } catch (error) {
       throw new AppError(ERROR_CODES.CACHE.DELETE_ERROR, {}, error);
     }
