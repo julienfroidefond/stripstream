@@ -14,7 +14,7 @@ services:
       - "3020:3000"
     volumes:
       - stripstream_cache:/app/.cache
-      - ${PRISMA_DATA_PATH:-./Users/julienfroidefond/Documents/stripstream/prisma/data}:/app/data
+      - ${PRISMA_DATA_PATH:-/Users/julienfroidefond/Documents/stripstream/prisma/data}:/app/data
     environment:
       - NODE_ENV=${NODE_ENV}
       - DATABASE_URL=file:./data/stripstream.db
