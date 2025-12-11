@@ -20,6 +20,7 @@ jobs:
           NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }}
           ADMIN_DEFAULT_PASSWORD: ${{ secrets.ADMIN_DEFAULT_PASSWORD }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          PRISMA_DATA_PATH: ${{ vars.PRISMA_DATA_PATH }}
           NODE_ENV: production
         run: |
           docker compose up -d --build
