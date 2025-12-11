@@ -6,6 +6,10 @@
 # Database Configuration (SQLite)
 DATABASE_URL=file:./data/stripstream.db
 
+# Prisma Data Path (optional - default: ./prisma/data)
+# Chemin sur l'hôte où seront stockées les données Prisma (base de données SQLite)
+# PRISMA_DATA_PATH=./prisma/data
+
 # NextAuth Configuration
 NEXTAUTH_SECRET=your-secret-key-here-generate-with-openssl-rand-base64-32
 # Si derrière un reverse proxy HTTPS, utiliser l'URL HTTPS publique :

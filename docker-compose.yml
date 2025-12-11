@@ -1,7 +1,7 @@
 version: "3.8"
 
 services:
-  app:
+  stripstream-app:
     build:
       context: .
       dockerfile: Dockerfile
@@ -14,15 +14,16 @@ services:
       - "3020:3000"
     volumes:
       - stripstream_cache:/app/.cache
-      - ./prisma/data:/app/data
+      - ${PRISMA_DATA_PATH:-./prisma/data}:/app/data
     environment:
       - NODE_ENV=${NODE_ENV}
-      - DATABASE_URL=${DATABASE_URL}
+      - DATABASE_URL=file:./data/stripstream.db
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
       - NEXTAUTH_URL=${NEXTAUTH_URL}
       - AUTH_TRUST_HOST=true
       - KOMGA_MAX_CONCURRENT_REQUESTS=5
       - ADMIN_DEFAULT_PASSWORD=${ADMIN_DEFAULT_PASSWORD}
+      - PRISMA_DATA_PATH=${PRISMA_DATA_PATH:-./prisma/data}
     networks:
       - stripstream-network
     deploy:
