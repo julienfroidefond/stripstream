@@ -4,9 +4,6 @@ FROM node:20-alpine AS builder
 # Set working directory
 WORKDIR /app
 
-# Configure pnpm store location
-ENV PNPM_HOME="/app/.pnpm-store"
-
 # Install dependencies for node-gyp
 RUN apk add --no-cache python3 make g++
 
@@ -23,8 +20,8 @@ COPY prisma ./prisma
 COPY tsconfig.json .eslintrc.json ./
 COPY tailwind.config.ts postcss.config.js ./
 
-# Install dependencies with pnpm
-RUN pnpm config set store-dir /app/.pnpm-store && \
+# Install dependencies with pnpm using cache mount for store
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm install --frozen-lockfile
 
 # Generate Prisma Client
