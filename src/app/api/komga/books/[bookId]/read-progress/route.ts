@@ -11,8 +11,39 @@ export async function PATCH(
   { params }: { params: Promise<{ bookId: string }> }
 ) {
   try {
-    const { page, completed } = await request.json();
     const bookId: string = (await params).bookId;
+
+    // Handle empty or invalid body (can happen when request is aborted during navigation)
+    let body: { page?: unknown; completed?: boolean };
+    try {
+      const text = await request.text();
+      if (!text) {
+        return NextResponse.json(
+          {
+            error: {
+              code: ERROR_CODES.BOOK.PROGRESS_UPDATE_ERROR,
+              name: "Progress update error",
+              message: "Empty request body",
+            },
+          },
+          { status: 400 }
+        );
+      }
+      body = JSON.parse(text);
+    } catch {
+      return NextResponse.json(
+        {
+          error: {
+            code: ERROR_CODES.BOOK.PROGRESS_UPDATE_ERROR,
+            name: "Progress update error",
+            message: "Invalid JSON body",
+          },
+        },
+        { status: 400 }
+      );
+    }
+
+    const { page, completed } = body;
 
     if (typeof page !== "number") {
       return NextResponse.json(
