@@ -54,3 +54,5 @@ prisma/data/
 *.db
 *.sqlite
 *.sqlite3 
+
+temp/

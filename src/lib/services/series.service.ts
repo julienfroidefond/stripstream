@@ -2,16 +2,12 @@ import { BaseApiService } from "./base-api.service";
 import type { LibraryResponse } from "@/types/library";
 import type { KomgaBook, KomgaSeries } from "@/types/komga";
 import { BookService } from "./book.service";
-import type { ImageResponse } from "./image.service";
 import { ImageService } from "./image.service";
 import { PreferencesService } from "./preferences.service";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
 import type { UserPreferences } from "@/types/preferences";
 import logger from "@/lib/logger";
-
-// Cache HTTP navigateur : 30 jours (immutable car les images ne changent pas)
-const IMAGE_CACHE_MAX_AGE = 2592000;
 
 export class SeriesService extends BaseApiService {
   static async getSeries(seriesId: string): Promise<KomgaSeries> {
@@ -123,21 +119,14 @@ export class SeriesService extends BaseApiService {
       // Récupérer les préférences de l'utilisateur
       const preferences: UserPreferences = await PreferencesService.getPreferences();
 
-      // Si l'utilisateur préfère les vignettes, utiliser la miniature
+      // Si l'utilisateur préfère les vignettes, utiliser la miniature (streaming)
       if (preferences.showThumbnails) {
-        const response: ImageResponse = await ImageService.getImage(`series/${seriesId}/thumbnail`);
-        return new Response(response.buffer.buffer as ArrayBuffer, {
-          headers: {
-            "Content-Type": response.contentType || "image/jpeg",
-            "Cache-Control": `public, max-age=${IMAGE_CACHE_MAX_AGE}, immutable`,
-          },
-        });
+        return ImageService.streamImage(`series/${seriesId}/thumbnail`);
       }
 
-      // Sinon, récupérer la première page
+      // Sinon, récupérer la première page (streaming)
       const firstBookId = await this.getFirstBook(seriesId);
-      const response = await BookService.getPage(firstBookId, 1);
-      return response;
+      return BookService.getPage(firstBookId, 1);
     } catch (error) {
       throw new AppError(ERROR_CODES.SERIES.FETCH_ERROR, {}, error);
     }

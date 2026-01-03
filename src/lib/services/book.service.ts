@@ -1,13 +1,9 @@
 import { BaseApiService } from "./base-api.service";
 import type { KomgaBook, KomgaBookWithPages } from "@/types/komga";
-import type { ImageResponse } from "./image.service";
 import { ImageService } from "./image.service";
 import { PreferencesService } from "./preferences.service";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
-
-// Cache HTTP navigateur : 30 jours (immutable car les images ne changent pas)
-const IMAGE_CACHE_MAX_AGE = 2592000;
 
 export class BookService extends BaseApiService {
   static async getBook(bookId: string): Promise<KomgaBookWithPages> {
@@ -110,22 +106,10 @@ export class BookService extends BaseApiService {
     try {
       // Ajuster le numéro de page pour l'API Komga (zero-based)
       const adjustedPageNumber = pageNumber - 1;
-      const response: ImageResponse = await ImageService.getImage(
+      // Stream directement sans buffer en mémoire
+      return ImageService.streamImage(
         `books/${bookId}/pages/${adjustedPageNumber}?zero_based=true`
       );
-
-      // Convertir le Buffer Node.js en ArrayBuffer proprement
-      const arrayBuffer = response.buffer.buffer.slice(
-        response.buffer.byteOffset,
-        response.buffer.byteOffset + response.buffer.byteLength
-      ) as ArrayBuffer;
-
-      return new Response(arrayBuffer, {
-        headers: {
-          "Content-Type": response.contentType || "image/jpeg",
-          "Cache-Control": `public, max-age=${IMAGE_CACHE_MAX_AGE}, immutable`,
-        },
-      });
     } catch (error) {
       throw new AppError(ERROR_CODES.BOOK.PAGES_FETCH_ERROR, {}, error);
     }
@@ -136,18 +120,12 @@ export class BookService extends BaseApiService {
       // Récupérer les préférences de l'utilisateur
       const preferences = await PreferencesService.getPreferences();
 
-      // Si l'utilisateur préfère les vignettes, utiliser la miniature
+      // Si l'utilisateur préfère les vignettes, utiliser la miniature (streaming)
       if (preferences.showThumbnails) {
-        const response: ImageResponse = await ImageService.getImage(`books/${bookId}/thumbnail`);
-        return new Response(response.buffer.buffer as ArrayBuffer, {
-          headers: {
-            "Content-Type": response.contentType || "image/jpeg",
-            "Cache-Control": `public, max-age=${IMAGE_CACHE_MAX_AGE}, immutable`,
-          },
-        });
+        return ImageService.streamImage(`books/${bookId}/thumbnail`);
       }
 
-      // Sinon, récupérer la première page
+      // Sinon, récupérer la première page (streaming)
       return this.getPage(bookId, 1);
     } catch (error) {
       throw new AppError(ERROR_CODES.BOOK.PAGES_FETCH_ERROR, {}, error);
@@ -164,16 +142,10 @@ export class BookService extends BaseApiService {
 
   static async getPageThumbnail(bookId: string, pageNumber: number): Promise<Response> {
     try {
-      const response: ImageResponse = await ImageService.getImage(
+      // Stream directement sans buffer en mémoire
+      return ImageService.streamImage(
         `books/${bookId}/pages/${pageNumber}/thumbnail?zero_based=true`
       );
-
-      return new Response(response.buffer.buffer as ArrayBuffer, {
-        headers: {
-          "Content-Type": response.contentType || "image/jpeg",
-          "Cache-Control": `public, max-age=${IMAGE_CACHE_MAX_AGE}, immutable`,
-        },
-      });
     } catch (error) {
       throw new AppError(ERROR_CODES.BOOK.PAGES_FETCH_ERROR, {}, error);
     }
@@ -207,8 +179,14 @@ export class BookService extends BaseApiService {
         },
       };
 
-      const booksResponse = await this.fetchFromApi<{ content: KomgaBook[]; totalElements: number }>(
-        { path: "books/list", params: { page: String(randomPage), size: "20", sort: "number,asc" } },
+      const booksResponse = await this.fetchFromApi<{
+        content: KomgaBook[];
+        totalElements: number;
+      }>(
+        {
+          path: "books/list",
+          params: { page: String(randomPage), size: "20", sort: "number,asc" },
+        },
         { "Content-Type": "application/json" },
         { method: "POST", body: JSON.stringify(searchBody) }
       );
