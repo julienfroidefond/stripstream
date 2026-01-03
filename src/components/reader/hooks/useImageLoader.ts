@@ -99,8 +99,6 @@ export function useImageLoader({
   );
 
   // Prefetch multiple pages starting from a given page
-  // The server-side queue (RequestQueueService) handles concurrency limits
-  // We only deduplicate to avoid redundant HTTP requests
   const prefetchPages = useCallback(
     async (startPage: number, count: number = prefetchCount) => {
       const pagesToPrefetch = [];

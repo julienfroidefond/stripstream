@@ -1,7 +1,7 @@
 import { ConfigDBService } from "@/lib/services/config-db.service";
 import { ClientSettings } from "@/components/settings/ClientSettings";
 import type { Metadata } from "next";
-import type { KomgaConfig, TTLConfig } from "@/types/komga";
+import type { KomgaConfig } from "@/types/komga";
 import logger from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +13,6 @@ export const metadata: Metadata = {
 
 export default async function SettingsPage() {
   let config: KomgaConfig | null = null;
-  let ttlConfig: TTLConfig | null = null;
 
   try {
     // Récupérer la configuration Komga
@@ -27,13 +26,10 @@ export default async function SettingsPage() {
         password: null,
       };
     }
-
-    // Récupérer la configuration TTL
-    ttlConfig = await ConfigDBService.getTTLConfig();
   } catch (error) {
     logger.error({ err: error }, "Erreur lors de la récupération de la configuration:");
     // On ne fait rien si la config n'existe pas, on laissera le composant client gérer l'état initial
   }
 
-  return <ClientSettings initialConfig={config} initialTTLConfig={ttlConfig} />;
+  return <ClientSettings initialConfig={config} />;
 }

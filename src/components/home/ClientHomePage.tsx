@@ -22,9 +22,7 @@ export function ClientHomePage() {
     setError(null);
 
     try {
-      const response = await fetch("/api/komga/home", {
-        cache: "default", // Utilise le cache HTTP du navigateur
-      });
+      const response = await fetch("/api/komga/home");
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -56,18 +54,8 @@ export function ClientHomePage() {
 
   const handleRefresh = async () => {
     try {
-      // Invalider le cache via l'API
-      const deleteResponse = await fetch("/api/komga/home", {
-        method: "DELETE",
-      });
-
-      if (!deleteResponse.ok) {
-        throw new Error("Erreur lors de l'invalidation du cache");
-      }
-
-      // Récupérer les nouvelles données
       const response = await fetch("/api/komga/home", {
-        cache: "reload", // Force un nouveau fetch après invalidation
+        cache: "reload",
       });
 
       if (!response.ok) {

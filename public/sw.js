@@ -1,11 +1,8 @@
 // StripStream Service Worker - Version 1
-// Architecture: Cache-as-you-go for images and static resources only
-// API data caching is handled by ServerCacheService on the server
+// Architecture: Cache-as-you-go for static resources only
 
 const VERSION = "v1";
 const STATIC_CACHE = `stripstream-static-${VERSION}`;
-const IMAGES_CACHE = `stripstream-images-${VERSION}`;
-const DATA_CACHE = `stripstream-data-${VERSION}`;
 const RSC_CACHE = `stripstream-rsc-${VERSION}`;
 const BOOKS_CACHE = "stripstream-books"; // Never version this - managed by DownloadManager
 
@@ -20,21 +17,10 @@ function isNextStaticResource(url) {
   return url.includes("/_next/static/");
 }
 
-function isImageRequest(url) {
-  return url.includes("/api/komga/images/");
-}
-
-function isApiDataRequest(url) {
-  return url.includes("/api/komga/") && !isImageRequest(url);
-}
-
 function isNextRSCRequest(request) {
   const url = new URL(request.url);
   return url.searchParams.has("_rsc") || request.headers.get("RSC") === "1";
 }
-
-// Removed: shouldCacheApiData - API data is no longer cached by SW
-// API data caching is handled by ServerCacheService on the server
 
 // ============================================================================
 // Cache Strategies
@@ -42,7 +28,7 @@ function isNextRSCRequest(request) {
 
 /**
  * Cache-First: Serve from cache, fallback to network
- * Used for: Images, Next.js static resources
+ * Used for: Next.js static resources
  */
 async function cacheFirstStrategy(request, cacheName, options = {}) {
   const cache = await caches.open(cacheName);
@@ -70,7 +56,7 @@ async function cacheFirstStrategy(request, cacheName, options = {}) {
 
 /**
  * Stale-While-Revalidate: Serve from cache immediately, update in background
- * Used for: API data, RSC payloads
+ * Used for: RSC payloads
  */
 async function staleWhileRevalidateStrategy(request, cacheName) {
   const cache = await caches.open(cacheName);
@@ -202,39 +188,24 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Route 1: Images → Cache-First with ignoreSearch
-  if (isImageRequest(url.href)) {
-    event.respondWith(cacheFirstStrategy(request, IMAGES_CACHE, { ignoreSearch: true }));
-    return;
-  }
-
-  // Route 2: Next.js RSC payloads → Stale-While-Revalidate
+  // Route 1: Next.js RSC payloads → Stale-While-Revalidate
   if (isNextRSCRequest(request)) {
     event.respondWith(staleWhileRevalidateStrategy(request, RSC_CACHE));
     return;
   }
 
-  // Route 3: API data → Network only (no SW caching)
-  // API data caching is handled by ServerCacheService on the server
-  // This avoids double caching and simplifies cache invalidation
-  if (isApiDataRequest(url.href)) {
-    // Let the request pass through to the network
-    // ServerCacheService will handle caching server-side
-    return;
-  }
-
-  // Route 4: Next.js static resources → Cache-First with ignoreSearch
+  // Route 2: Next.js static resources → Cache-First with ignoreSearch
   if (isNextStaticResource(url.href)) {
     event.respondWith(cacheFirstStrategy(request, STATIC_CACHE, { ignoreSearch: true }));
     return;
   }
 
-  // Route 5: Navigation → Network-First with SPA fallback
+  // Route 3: Navigation → Network-First with SPA fallback
   if (request.mode === "navigate") {
     event.respondWith(navigationStrategy(request));
     return;
   }
 
-  // Route 6: Everything else → Network only (no caching)
-  // This includes: API auth, preferences, and other dynamic content
+  // Route 4: Everything else → Network only (no caching)
+  // This includes: API calls, images, and other dynamic content
 });

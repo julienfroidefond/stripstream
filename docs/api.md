@@ -27,22 +27,6 @@
 - **Body** : `{ url: string, username: string, password: string }`
 - **Réponse** : `{ message: string, config: Config }`
 
-### GET /api/komga/ttl-config
-
-- **Description** : Récupération de la configuration TTL du cache
-- **Réponse** : `{ defaultTTL: number, homeTTL: number, ... }`
-
-### POST /api/komga/ttl-config
-
-- **Description** : Sauvegarde de la configuration TTL
-- **Body** : `{ defaultTTL: number, homeTTL: number, ... }`
-- **Réponse** : `{ message: string, config: TTLConfig }`
-
-### GET /api/komga/cache/mode
-
-- **Description** : Récupération du mode de cache actuel
-- **Réponse** : `{ mode: string }`
-
 ## 📚 Bibliothèques
 
 ### GET /api/komga/libraries
@@ -123,13 +107,13 @@
 ### GET /api/preferences
 
 - **Description** : Récupération des préférences utilisateur
-- **Réponse** : `{ showThumbnails: boolean, cacheMode: "memory" | "file", showOnlyUnread: boolean, debug: boolean }`
+- **Réponse** : `{ showThumbnails: boolean, showOnlyUnread: boolean, displayMode: object, background: object, readerPrefetchCount: number }`
 
 ### PUT /api/preferences
 
 - **Description** : Mise à jour des préférences utilisateur
-- **Body** : `{ showThumbnails?: boolean, cacheMode?: "memory" | "file", showOnlyUnread?: boolean, debug?: boolean }`
-- **Réponse** : `{ showThumbnails: boolean, cacheMode: "memory" | "file", showOnlyUnread: boolean, debug: boolean }`
+- **Body** : `{ showThumbnails?: boolean, showOnlyUnread?: boolean, displayMode?: object, background?: object, readerPrefetchCount?: number }`
+- **Réponse** : `{ showThumbnails: boolean, showOnlyUnread: boolean, displayMode: object, background: object, readerPrefetchCount: number }`
 
 ## 🧪 Test
 

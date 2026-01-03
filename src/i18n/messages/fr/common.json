@@ -69,8 +69,7 @@
     "title": "Préférences",
     "tabs": {
       "display": "Affichage",
-      "connection": "Connexion",
-      "cache": "Cache"
+      "connection": "Connexion"
     },
     "display": {
       "title": "Préférences d'affichage",
@@ -106,31 +105,9 @@
       "title": "Paramètres avancés",
       "description": "Configurez les paramètres avancés de performance et de fiabilité.",
       "save": "Enregistrer les paramètres",
-      "maxConcurrentRequests": {
-        "label": "Requêtes simultanées max",
-        "description": "Nombre maximum de requêtes simultanées vers le serveur Komga (1-10)"
-      },
       "prefetchCount": {
         "label": "Préchargement du lecteur",
         "description": "Nombre de pages à précharger dans le lecteur (0-20)"
-      },
-      "circuitBreaker": {
-        "title": "Disjoncteur",
-        "description": "Protection automatique contre la surcharge du serveur",
-        "threshold": {
-          "label": "Seuil d'échec",
-          "description": "Nombre d'échecs consécutifs avant ouverture du circuit (1-20)"
-        },
-        "timeout": {
-          "label": "Délai d'expiration",
-          "description": "Temps d'attente maximum pour une requête avant de la considérer comme échouée",
-          "unit": "millisecondes (1000ms = 1 seconde)"
-        },
-        "resetTimeout": {
-          "label": "Délai de réinitialisation",
-          "description": "Temps d'attente avant de tenter de fermer le circuit",
-          "unit": "millisecondes (1000ms = 1 seconde)"
-        }
       }
     },
     "error": {
@@ -158,75 +135,6 @@
       "error": {
         "title": "Erreur lors de la sauvegarde de la configuration",
         "message": "Une erreur est survenue lors de la sauvegarde de la configuration"
-      }
-    },
-    "cache": {
-      "title": "Configuration du Cache",
-      "description": "Gérez les paramètres de mise en cache des données.",
-      "mode": {
-        "label": "Mode de cache",
-        "description": "Le cache en mémoire est plus rapide mais ne persiste pas entre les redémarrages"
-      },
-      "size": {
-        "title": "Taille du cache",
-        "server": "Cache serveur",
-        "serviceWorker": "Cache SW (total)",
-        "api": "Cache API (données)",
-        "items": "{count} élément(s)",
-        "loading": "Chargement...",
-        "error": "Erreur lors du chargement"
-      },
-      "ttl": {
-        "default": "TTL par défaut (minutes)",
-        "home": "TTL page d'accueil",
-        "libraries": "TTL bibliothèques",
-        "series": "TTL séries",
-        "books": "TTL tomes",
-        "images": "TTL images",
-        "imageCacheMaxAge": {
-          "label": "Durée du cache HTTP des images",
-          "description": "Durée de conservation des images dans le cache du navigateur",
-          "options": {
-            "noCache": "Aucun cache (0s)",
-            "oneHour": "1 heure (3600s)",
-            "oneDay": "1 jour (86400s)",
-            "oneWeek": "1 semaine (604800s)",
-            "oneMonth": "1 mois (2592000s) - Recommandé",
-            "oneYear": "1 an (31536000s)"
-          }
-        }
-      },
-      "buttons": {
-        "saveTTL": "Sauvegarder les TTL",
-        "clear": "Vider le cache",
-        "clearing": "Suppression...",
-        "clearServiceWorker": "Vider le cache du service worker",
-        "clearingServiceWorker": "Suppression du cache service worker...",
-        "flushImageCache": "Forcer le rechargement des images"
-      },
-      "messages": {
-        "ttlSaved": "La configuration des TTL a été sauvegardée avec succès",
-        "cleared": "Cache serveur supprimé avec succès",
-        "serviceWorkerCleared": "Cache du service worker supprimé avec succès",
-        "imageCacheFlushed": "Les images seront rechargées - rafraîchissez la page"
-      },
-      "error": {
-        "title": "Erreur lors de la suppression du cache",
-        "message": "Une erreur est survenue lors de la suppression du cache",
-        "ttl": "Erreur lors de la sauvegarde de la configuration TTL",
-        "serviceWorkerMessage": "Une erreur est survenue lors de la suppression du cache du service worker"
-      },
-      "entries": {
-        "title": "Aperçu du contenu du cache",
-        "serverTitle": "Aperçu du cache serveur",
-        "serviceWorkerTitle": "Aperçu du cache service worker",
-        "loading": "Chargement des entrées...",
-        "empty": "Aucune entrée dans le cache",
-        "expired": "Expiré",
-        "daysRemaining": "{count} jour(s) restant(s)",
-        "hoursRemaining": "{count} heure(s) restante(s)",
-        "minutesRemaining": "{count} minute(s) restante(s)",
-        "lessThanMinute": "Moins d'une minute"
       }
     }
   },
@@ -460,14 +368,6 @@
     "PREFERENCES_FETCH_ERROR": "Erreur lors de la récupération des préférences",
     "PREFERENCES_UPDATE_ERROR": "Erreur lors de la mise à jour des préférences",
     "PREFERENCES_CONTEXT_ERROR": "Erreur de contexte des préférences",
-
-    "CACHE_DELETE_ERROR": "Erreur lors de la suppression du cache",
-    "CACHE_SAVE_ERROR": "Erreur lors de la sauvegarde du cache",
-    "CACHE_LOAD_ERROR": "Erreur lors du chargement du cache",
-    "CACHE_CLEAR_ERROR": "Erreur lors de la suppression du cache",
-    "CACHE_MODE_FETCH_ERROR": "Erreur lors de la récupération du mode de cache",
-    "CACHE_MODE_UPDATE_ERROR": "Erreur lors de la mise à jour du mode de cache",
-    "CACHE_INVALID_MODE": "Mode de cache invalide",
 
     "UI_TABS_TRIGGER_ERROR": "Erreur lors du déclenchement des onglets",
     "UI_TABS_CONTENT_ERROR": "Erreur lors du chargement du contenu des onglets",

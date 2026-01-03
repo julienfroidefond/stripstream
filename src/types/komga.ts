@@ -15,20 +15,6 @@ export interface KomgaConfig extends KomgaConfigData {
   userId: number;
 }
 
-export interface TTLConfigData {
-  defaultTTL: number;
-  homeTTL: number;
-  librariesTTL: number;
-  seriesTTL: number;
-  booksTTL: number;
-  imagesTTL: number;
-  imageCacheMaxAge: number; // en secondes
-}
-
-export interface TTLConfig extends TTLConfigData {
-  userId: number;
-}
-
 // Types liés à l'API Komga
 export interface KomgaUser {
   id: string;

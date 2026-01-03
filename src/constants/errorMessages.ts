@@ -60,16 +60,6 @@ export const ERROR_MESSAGES: Record<string, string> = {
   [ERROR_CODES.PREFERENCES.CONTEXT_ERROR]:
     "🔄 usePreferences must be used within a PreferencesProvider",
 
-  // Cache
-  [ERROR_CODES.CACHE.DELETE_ERROR]: "🗑️ Error deleting cache",
-  [ERROR_CODES.CACHE.SAVE_ERROR]: "💾 Error saving to cache",
-  [ERROR_CODES.CACHE.LOAD_ERROR]: "📂 Error loading from cache",
-  [ERROR_CODES.CACHE.CLEAR_ERROR]: "🧹 Error clearing cache completely",
-  [ERROR_CODES.CACHE.MODE_FETCH_ERROR]: "⚙️ Error fetching cache mode",
-  [ERROR_CODES.CACHE.MODE_UPDATE_ERROR]: "⚙️ Error updating cache mode",
-  [ERROR_CODES.CACHE.INVALID_MODE]: "⚠️ Invalid cache mode. Must be 'file' or 'memory'",
-  [ERROR_CODES.CACHE.SIZE_FETCH_ERROR]: "📊 Error fetching cache size",
-
   // UI
   [ERROR_CODES.UI.TABS_TRIGGER_ERROR]: "🔄 TabsTrigger must be used within a Tabs component",
   [ERROR_CODES.UI.TABS_CONTENT_ERROR]: "🔄 TabsContent must be used within a Tabs component",

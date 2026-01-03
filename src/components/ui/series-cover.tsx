@@ -4,7 +4,6 @@ import { CoverClient } from "./cover-client";
 import { ProgressBar } from "./progress-bar";
 import type { SeriesCoverProps } from "./cover-utils";
 import { getImageUrl } from "@/lib/utils/image-url";
-import { useImageUrl } from "@/hooks/useImageUrl";
 
 export function SeriesCover({
   series,
@@ -12,8 +11,7 @@ export function SeriesCover({
   className,
   showProgressUi = true,
 }: SeriesCoverProps) {
-  const baseUrl = getImageUrl("series", series.id);
-  const imageUrl = useImageUrl(baseUrl);
+  const imageUrl = getImageUrl("series", series.id);
   const isCompleted = series.booksCount === series.booksReadCount;
 
   const readBooks = series.booksReadCount;

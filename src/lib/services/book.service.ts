@@ -1,47 +1,33 @@
 import { BaseApiService } from "./base-api.service";
-import type { KomgaBook, KomgaBookWithPages, TTLConfig } from "@/types/komga";
+import type { KomgaBook, KomgaBookWithPages } from "@/types/komga";
 import type { ImageResponse } from "./image.service";
 import { ImageService } from "./image.service";
 import { PreferencesService } from "./preferences.service";
-import { ConfigDBService } from "./config-db.service";
 import { SeriesService } from "./series.service";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
-import logger from "@/lib/logger";
+
+// Cache HTTP navigateur : 30 jours (immutable car les images ne changent pas)
+const IMAGE_CACHE_MAX_AGE = 2592000;
 
 export class BookService extends BaseApiService {
-  private static async getImageCacheMaxAge(): Promise<number> {
-    try {
-      const ttlConfig: TTLConfig | null = await ConfigDBService.getTTLConfig();
-      const maxAge = ttlConfig?.imageCacheMaxAge ?? 2592000;
-      return maxAge;
-    } catch (error) {
-      logger.error({ err: error }, "[ImageCache] Error fetching TTL config");
-      return 2592000; // 30 jours par défaut en cas d'erreur
-    }
-  }
   static async getBook(bookId: string): Promise<KomgaBookWithPages> {
     try {
-      return this.fetchWithCache<KomgaBookWithPages>(
-        `book-${bookId}`,
-        async () => {
-          // Récupération parallèle des détails du tome et des pages
-          const [book, pages] = await Promise.all([
-            this.fetchFromApi<KomgaBook>({ path: `books/${bookId}` }),
-            this.fetchFromApi<{ number: number }[]>({ path: `books/${bookId}/pages` }),
-          ]);
+      // Récupération parallèle des détails du tome et des pages
+      const [book, pages] = await Promise.all([
+        this.fetchFromApi<KomgaBook>({ path: `books/${bookId}` }),
+        this.fetchFromApi<{ number: number }[]>({ path: `books/${bookId}/pages` }),
+      ]);
 
-          return {
-            book,
-            pages: pages.map((page: any) => page.number),
-          };
-        },
-        "BOOKS"
-      );
+      return {
+        book,
+        pages: pages.map((page: any) => page.number),
+      };
     } catch (error) {
       throw new AppError(ERROR_CODES.BOOK.NOT_FOUND, {}, error);
     }
   }
+
   public static async getNextBook(bookId: string, _seriesId: string): Promise<KomgaBook | null> {
     try {
       // Utiliser l'endpoint natif Komga pour obtenir le livre suivant
@@ -63,7 +49,6 @@ export class BookService extends BaseApiService {
 
   static async getBookSeriesId(bookId: string): Promise<string> {
     try {
-      // Récupérer le livre sans cache pour éviter les données obsolètes
       const book = await this.fetchFromApi<KomgaBook>({ path: `books/${bookId}` });
       return book.seriesId;
     } catch (error) {
@@ -136,12 +121,10 @@ export class BookService extends BaseApiService {
         response.buffer.byteOffset + response.buffer.byteLength
       ) as ArrayBuffer;
 
-      const maxAge = await this.getImageCacheMaxAge();
-
       return new Response(arrayBuffer, {
         headers: {
           "Content-Type": response.contentType || "image/jpeg",
-          "Cache-Control": `public, max-age=${maxAge}, immutable`,
+          "Cache-Control": `public, max-age=${IMAGE_CACHE_MAX_AGE}, immutable`,
         },
       });
     } catch (error) {
@@ -153,7 +136,6 @@ export class BookService extends BaseApiService {
     try {
       // Récupérer les préférences de l'utilisateur
       const preferences = await PreferencesService.getPreferences();
-      const maxAge = await this.getImageCacheMaxAge();
 
       // Si l'utilisateur préfère les vignettes, utiliser la miniature
       if (preferences.showThumbnails) {
@@ -161,7 +143,7 @@ export class BookService extends BaseApiService {
         return new Response(response.buffer.buffer as ArrayBuffer, {
           headers: {
             "Content-Type": response.contentType || "image/jpeg",
-            "Cache-Control": `public, max-age=${maxAge}, immutable`,
+            "Cache-Control": `public, max-age=${IMAGE_CACHE_MAX_AGE}, immutable`,
           },
         });
       }
@@ -186,12 +168,11 @@ export class BookService extends BaseApiService {
       const response: ImageResponse = await ImageService.getImage(
         `books/${bookId}/pages/${pageNumber}/thumbnail?zero_based=true`
       );
-      const maxAge = await this.getImageCacheMaxAge();
 
       return new Response(response.buffer.buffer as ArrayBuffer, {
         headers: {
           "Content-Type": response.contentType || "image/jpeg",
-          "Cache-Control": `public, max-age=${maxAge}, immutable`,
+          "Cache-Control": `public, max-age=${IMAGE_CACHE_MAX_AGE}, immutable`,
         },
       });
     } catch (error) {

@@ -1,6 +1,5 @@
 /**
- * Génère l'URL de base pour une image (sans cache version)
- * Utilisez useImageUrl() dans les composants pour obtenir l'URL avec cache busting
+ * Génère l'URL pour une image (thumbnail de série ou de livre)
  */
 export function getImageUrl(type: "series" | "book", id: string) {
   if (type === "series") {

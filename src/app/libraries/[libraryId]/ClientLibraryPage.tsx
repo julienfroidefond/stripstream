@@ -59,9 +59,7 @@ export function ClientLibraryPage({
           params.append("search", search);
         }
 
-        const response = await fetch(`/api/komga/libraries/${libraryId}/series?${params}`, {
-          cache: "default", // Utilise le cache HTTP du navigateur
-        });
+        const response = await fetch(`/api/komga/libraries/${libraryId}/series?${params}`);
 
         if (!response.ok) {
           const errorData = await response.json();
@@ -84,16 +82,6 @@ export function ClientLibraryPage({
 
   const handleRefresh = async (libraryId: string) => {
     try {
-      // Invalidate cache via API
-      const cacheResponse = await fetch(`/api/komga/libraries/${libraryId}/series`, {
-        method: "DELETE",
-      });
-
-      if (!cacheResponse.ok) {
-        throw new Error("Error invalidating cache");
-      }
-
-      // Recharger les données
       const params = new URLSearchParams({
         page: String(currentPage - 1),
         size: String(effectivePageSize),
@@ -105,7 +93,7 @@ export function ClientLibraryPage({
       }
 
       const response = await fetch(`/api/komga/libraries/${libraryId}/series?${params}`, {
-        cache: "reload", // Force un nouveau fetch après invalidation
+        cache: "reload",
       });
 
       if (!response.ok) {
@@ -139,7 +127,7 @@ export function ClientLibraryPage({
       }
 
       const response = await fetch(`/api/komga/libraries/${libraryId}/series?${params}`, {
-        cache: "reload", // Force un nouveau fetch lors du retry
+        cache: "reload",
       });
 
       if (!response.ok) {

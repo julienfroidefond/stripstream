@@ -1,7 +1,6 @@
 import { BaseApiService } from "./base-api.service";
 import type { LibraryResponse } from "@/types/library";
 import type { Series } from "@/types/series";
-import { getServerCacheService } from "./server-cache.service";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
 import type { KomgaLibrary } from "@/types/komga";
@@ -9,11 +8,7 @@ import type { KomgaLibrary } from "@/types/komga";
 export class LibraryService extends BaseApiService {
   static async getLibraries(): Promise<KomgaLibrary[]> {
     try {
-      return this.fetchWithCache<KomgaLibrary[]>(
-        "libraries",
-        async () => this.fetchFromApi<KomgaLibrary[]>({ path: "libraries" }),
-        "LIBRARIES"
-      );
+      return this.fetchFromApi<KomgaLibrary[]>({ path: "libraries" });
     } catch (error) {
       throw new AppError(ERROR_CODES.LIBRARY.FETCH_ERROR, {}, error);
     }
@@ -87,35 +82,24 @@ export class LibraryService extends BaseApiService {
 
       const searchBody = { condition };
 
-      // Clé de cache incluant tous les paramètres
-      const cacheKey = `library-${libraryId}-series-p${page}-s${size}-u${unreadOnly}-q${
-        search || ""
-      }`;
+      const params: Record<string, string | string[]> = {
+        page: String(page),
+        size: String(size),
+        sort: "metadata.titleSort,asc",
+      };
 
-      const response = await this.fetchWithCache<LibraryResponse<Series>>(
-        cacheKey,
-        async () => {
-          const params: Record<string, string | string[]> = {
-            page: String(page),
-            size: String(size),
-            sort: "metadata.titleSort,asc",
-          };
+      // Filtre de recherche Komga (recherche dans le titre)
+      if (search) {
+        params.search = search;
+      }
 
-          // Filtre de recherche Komga (recherche dans le titre)
-          if (search) {
-            params.search = search;
-          }
-
-          return this.fetchFromApi<LibraryResponse<Series>>(
-            { path: "series/list", params },
-            headers,
-            {
-              method: "POST",
-              body: JSON.stringify(searchBody),
-            }
-          );
-        },
-        "SERIES"
+      const response = await this.fetchFromApi<LibraryResponse<Series>>(
+        { path: "series/list", params },
+        headers,
+        {
+          method: "POST",
+          body: JSON.stringify(searchBody),
+        }
       );
 
       // Filtrer uniquement les séries supprimées côté client (léger)
@@ -128,17 +112,6 @@ export class LibraryService extends BaseApiService {
       };
     } catch (error) {
       throw new AppError(ERROR_CODES.SERIES.FETCH_ERROR, {}, error);
-    }
-  }
-
-  static async invalidateLibrarySeriesCache(libraryId: string): Promise<void> {
-    try {
-      const cacheService = await getServerCacheService();
-      // Invalider toutes les clés de cache pour cette bibliothèque
-      // Format: library-{id}-series-p{page}-s{size}-u{unread}-q{search}
-      await cacheService.deleteAll(`library-${libraryId}-series-`);
-    } catch (error) {
-      throw new AppError(ERROR_CODES.CACHE.DELETE_ERROR, {}, error);
     }
   }
 

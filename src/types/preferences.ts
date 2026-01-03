@@ -9,15 +9,8 @@ export interface BackgroundPreferences {
   komgaLibraries?: string[]; // IDs des bibliothèques Komga sélectionnées
 }
 
-export interface CircuitBreakerConfig {
-  threshold?: number;
-  timeout?: number;
-  resetTimeout?: number;
-}
-
 export interface UserPreferences {
   showThumbnails: boolean;
-  cacheMode: "memory" | "file";
   showOnlyUnread: boolean;
   displayMode: {
     compact: boolean;
@@ -25,14 +18,11 @@ export interface UserPreferences {
     viewMode: "grid" | "list";
   };
   background: BackgroundPreferences;
-  komgaMaxConcurrentRequests: number;
   readerPrefetchCount: number;
-  circuitBreakerConfig: CircuitBreakerConfig;
 }
 
 export const defaultPreferences: UserPreferences = {
   showThumbnails: true,
-  cacheMode: "memory",
   showOnlyUnread: false,
   displayMode: {
     compact: false,
@@ -44,13 +34,7 @@ export const defaultPreferences: UserPreferences = {
     opacity: 10,
     blur: 0,
   },
-  komgaMaxConcurrentRequests: 5,
   readerPrefetchCount: 5,
-  circuitBreakerConfig: {
-    threshold: 5,
-    timeout: 30000,
-    resetTimeout: 60000,
-  },
 };
 
 // Dégradés prédéfinis
