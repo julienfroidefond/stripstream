@@ -16,12 +16,7 @@ export class LibraryService extends BaseApiService {
 
   static async getLibrary(libraryId: string): Promise<KomgaLibrary> {
     try {
-      const libraries = await this.getLibraries();
-      const library = libraries.find((library) => library.id === libraryId);
-      if (!library) {
-        throw new AppError(ERROR_CODES.LIBRARY.NOT_FOUND, { libraryId });
-      }
-      return library;
+      return this.fetchFromApi<KomgaLibrary>({ path: `libraries/${libraryId}` });
     } catch (error) {
       if (error instanceof AppError) {
         throw error;

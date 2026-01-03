@@ -16,6 +16,10 @@ interface PreferencesContextType {
 
 const PreferencesContext = createContext<PreferencesContextType | undefined>(undefined);
 
+// Module-level flag to prevent duplicate fetches (survives StrictMode remounts)
+let preferencesFetchInProgress = false;
+let preferencesFetched = false;
+
 export function PreferencesProvider({
   children,
   initialPreferences,
@@ -29,7 +33,17 @@ export function PreferencesProvider({
   );
   const [isLoading, setIsLoading] = useState(false);
 
+  // Check if we have valid initial preferences from server
+  const hasValidInitialPreferences =
+    initialPreferences && Object.keys(initialPreferences).length > 0;
+
   const fetchPreferences = useCallback(async () => {
+    // Prevent concurrent fetches
+    if (preferencesFetchInProgress || preferencesFetched) {
+      return;
+    }
+    preferencesFetchInProgress = true;
+
     try {
       const response = await fetch("/api/preferences");
       if (!response.ok) {
@@ -45,25 +59,30 @@ export function PreferencesProvider({
           viewMode: data.displayMode?.viewMode || defaultPreferences.displayMode.viewMode,
         },
       });
+      preferencesFetched = true;
     } catch (error) {
       logger.error({ err: error }, "Erreur lors de la récupération des préférences");
       setPreferences(defaultPreferences);
     } finally {
       setIsLoading(false);
+      preferencesFetchInProgress = false;
     }
   }, []);
 
   useEffect(() => {
-    // Recharger les préférences quand la session change (connexion/déconnexion)
     if (status === "authenticated") {
-      // Toujours recharger depuis l'API pour avoir les dernières valeurs
-      // même si on a des initialPreferences (qui peuvent être en cache)
+      // Skip refetch if we already have valid initial preferences from server
+      if (hasValidInitialPreferences) {
+        preferencesFetched = true; // Mark as fetched since we have server data
+        return;
+      }
       fetchPreferences();
     } else if (status === "unauthenticated") {
-      // Réinitialiser aux préférences par défaut quand l'utilisateur se déconnecte
+      // Reset to defaults when user logs out
       setPreferences(defaultPreferences);
+      preferencesFetched = false; // Allow refetch on next login
     }
-  }, [status, fetchPreferences]);
+  }, [status, fetchPreferences, hasValidInitialPreferences]);
 
   const updatePreferences = useCallback(async (newPreferences: Partial<UserPreferences>) => {
     try {

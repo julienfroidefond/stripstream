@@ -44,6 +44,8 @@ export function ClientLibraryPage({
   const effectivePageSize = pageSize || preferences.displayMode?.itemsPerPage || DEFAULT_PAGE_SIZE;
 
   useEffect(() => {
+    const abortController = new AbortController();
+
     const fetchData = async () => {
       setLoading(true);
       setError(null);
@@ -59,7 +61,9 @@ export function ClientLibraryPage({
           params.append("search", search);
         }
 
-        const response = await fetch(`/api/komga/libraries/${libraryId}/series?${params}`);
+        const response = await fetch(`/api/komga/libraries/${libraryId}/series?${params}`, {
+          signal: abortController.signal,
+        });
 
         if (!response.ok) {
           const errorData = await response.json();
@@ -70,14 +74,24 @@ export function ClientLibraryPage({
         setLibrary(data.library);
         setSeries(data.series);
       } catch (err) {
+        // Ignore abort errors (caused by StrictMode cleanup)
+        if (err instanceof Error && err.name === "AbortError") {
+          return;
+        }
         logger.error({ err }, "Error fetching library series");
         setError(err instanceof Error ? err.message : "SERIES_FETCH_ERROR");
       } finally {
-        setLoading(false);
+        if (!abortController.signal.aborted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchData();
+
+    return () => {
+      abortController.abort();
+    };
   }, [libraryId, currentPage, unreadOnly, search, effectivePageSize]);
 
   const handleRefresh = async (libraryId: string) => {

@@ -38,6 +38,8 @@ export function ClientSeriesPage({
   const effectivePageSize = pageSize || preferences.displayMode?.itemsPerPage || DEFAULT_PAGE_SIZE;
 
   useEffect(() => {
+    const abortController = new AbortController();
+
     const fetchData = async () => {
       setLoading(true);
       setError(null);
@@ -49,7 +51,9 @@ export function ClientSeriesPage({
           unread: String(unreadOnly),
         });
 
-        const response = await fetch(`/api/komga/series/${seriesId}/books?${params}`);
+        const response = await fetch(`/api/komga/series/${seriesId}/books?${params}`, {
+          signal: abortController.signal,
+        });
 
         if (!response.ok) {
           const errorData = await response.json();
@@ -60,14 +64,24 @@ export function ClientSeriesPage({
         setSeries(data.series);
         setBooks(data.books);
       } catch (err) {
+        // Ignore abort errors (caused by StrictMode cleanup)
+        if (err instanceof Error && err.name === "AbortError") {
+          return;
+        }
         logger.error({ err }, "Error fetching series books");
         setError(err instanceof Error ? err.message : ERROR_CODES.BOOK.PAGES_FETCH_ERROR);
       } finally {
-        setLoading(false);
+        if (!abortController.signal.aborted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchData();
+
+    return () => {
+      abortController.abort();
+    };
   }, [seriesId, currentPage, unreadOnly, effectivePageSize]);
 
   const handleRefresh = async (seriesId: string) => {

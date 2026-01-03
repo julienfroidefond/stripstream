@@ -3,7 +3,6 @@ import type { KomgaBook, KomgaBookWithPages } from "@/types/komga";
 import type { ImageResponse } from "./image.service";
 import { ImageService } from "./image.service";
 import { PreferencesService } from "./preferences.service";
-import { SeriesService } from "./series.service";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
 
@@ -192,32 +191,47 @@ export class BookService extends BaseApiService {
         });
       }
 
-      const { LibraryService } = await import("./library.service");
-
-      // Faire une requête légère : prendre une page de séries d'une bibliothèque au hasard
+      // Use books/list directly with library filter to avoid extra series/list call
       const randomLibraryIndex = Math.floor(Math.random() * libraryIds.length);
       const randomLibraryId = libraryIds[randomLibraryIndex];
 
-      // Récupérer juste une page de séries (pas toutes)
-      const seriesResponse = await LibraryService.getLibrarySeries(randomLibraryId, 0, 20);
+      // Random page offset for variety (assuming most libraries have at least 100 books)
+      const randomPage = Math.floor(Math.random() * 5); // Pages 0-4
 
-      if (seriesResponse.content.length === 0) {
-        throw new AppError(ERROR_CODES.BOOK.NOT_FOUND, {
-          message: "Aucune série trouvée dans les bibliothèques sélectionnées",
-        });
-      }
+      const searchBody = {
+        condition: {
+          libraryId: {
+            operator: "is",
+            value: randomLibraryId,
+          },
+        },
+      };
 
-      // Choisir une série au hasard parmi celles récupérées
-      const randomSeriesIndex = Math.floor(Math.random() * seriesResponse.content.length);
-      const randomSeries = seriesResponse.content[randomSeriesIndex];
-
-      // Récupérer les books de cette série avec pagination
-      const booksResponse = await SeriesService.getSeriesBooks(randomSeries.id, 0, 100);
+      const booksResponse = await this.fetchFromApi<{ content: KomgaBook[]; totalElements: number }>(
+        { path: "books/list", params: { page: String(randomPage), size: "20", sort: "number,asc" } },
+        { "Content-Type": "application/json" },
+        { method: "POST", body: JSON.stringify(searchBody) }
+      );
 
       if (booksResponse.content.length === 0) {
-        throw new AppError(ERROR_CODES.BOOK.NOT_FOUND, {
-          message: "Aucun livre trouvé dans la série",
-        });
+        // Fallback to page 0 if random page was empty
+        const fallbackResponse = await this.fetchFromApi<{
+          content: KomgaBook[];
+          totalElements: number;
+        }>(
+          { path: "books/list", params: { page: "0", size: "20", sort: "number,asc" } },
+          { "Content-Type": "application/json" },
+          { method: "POST", body: JSON.stringify(searchBody) }
+        );
+
+        if (fallbackResponse.content.length === 0) {
+          throw new AppError(ERROR_CODES.BOOK.NOT_FOUND, {
+            message: "Aucun livre trouvé dans les bibliothèques sélectionnées",
+          });
+        }
+
+        const randomBookIndex = Math.floor(Math.random() * fallbackResponse.content.length);
+        return fallbackResponse.content[randomBookIndex].id;
       }
 
       const randomBookIndex = Math.floor(Math.random() * booksResponse.content.length);

@@ -17,40 +17,53 @@ export function ClientHomePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchData = async () => {
-    setLoading(true);
-    setError(null);
+  useEffect(() => {
+    const abortController = new AbortController();
 
-    try {
-      const response = await fetch("/api/komga/home");
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        const errorCode = errorData.error?.code || ERROR_CODES.KOMGA.SERVER_UNREACHABLE;
+      try {
+        const response = await fetch("/api/komga/home", {
+          signal: abortController.signal,
+        });
 
-        // Si la config Komga est manquante, rediriger vers les settings
-        if (errorCode === ERROR_CODES.KOMGA.MISSING_CONFIG) {
-          router.push("/settings");
-          return;
+        if (!response.ok) {
+          const errorData = await response.json();
+          const errorCode = errorData.error?.code || ERROR_CODES.KOMGA.SERVER_UNREACHABLE;
+
+          // Si la config Komga est manquante, rediriger vers les settings
+          if (errorCode === ERROR_CODES.KOMGA.MISSING_CONFIG) {
+            router.push("/settings");
+            return;
+          }
+
+          throw new Error(errorCode);
         }
 
-        throw new Error(errorCode);
+        const homeData = await response.json();
+        setData(homeData);
+      } catch (err) {
+        // Ignore abort errors (caused by StrictMode cleanup)
+        if (err instanceof Error && err.name === "AbortError") {
+          return;
+        }
+        logger.error({ err }, "Error fetching home data");
+        setError(err instanceof Error ? err.message : ERROR_CODES.KOMGA.SERVER_UNREACHABLE);
+      } finally {
+        if (!abortController.signal.aborted) {
+          setLoading(false);
+        }
       }
+    };
 
-      const homeData = await response.json();
-      setData(homeData);
-    } catch (err) {
-      logger.error({ err }, "Error fetching home data");
-      setError(err instanceof Error ? err.message : ERROR_CODES.KOMGA.SERVER_UNREACHABLE);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
     fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+
+    return () => {
+      abortController.abort();
+    };
+  }, [router]);
 
   const handleRefresh = async () => {
     try {
@@ -79,13 +92,38 @@ export function ClientHomePage() {
     enabled: !loading && !error && !!data,
   });
 
+  const handleRetry = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/komga/home");
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        const errorCode = errorData.error?.code || ERROR_CODES.KOMGA.SERVER_UNREACHABLE;
+
+        if (errorCode === ERROR_CODES.KOMGA.MISSING_CONFIG) {
+          router.push("/settings");
+          return;
+        }
+
+        throw new Error(errorCode);
+      }
+
+      const homeData = await response.json();
+      setData(homeData);
+    } catch (err) {
+      logger.error({ err }, "Error fetching home data");
+      setError(err instanceof Error ? err.message : ERROR_CODES.KOMGA.SERVER_UNREACHABLE);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading) {
     return <HomePageSkeleton />;
   }
-
-  const handleRetry = () => {
-    fetchData();
-  };
 
   if (error) {
     return (

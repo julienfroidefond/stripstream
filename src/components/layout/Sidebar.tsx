@@ -26,6 +26,10 @@ import { NavButton } from "@/components/ui/nav-button";
 import { IconButton } from "@/components/ui/icon-button";
 import logger from "@/lib/logger";
 
+// Module-level flags to prevent duplicate fetches (survives StrictMode remounts)
+let sidebarInitialFetchDone = false;
+let sidebarFetchInProgress = false;
+
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
@@ -112,9 +116,18 @@ export function Sidebar({
   }, [toast]);
 
   useEffect(() => {
-    if (Object.keys(preferences).length > 0) {
-      refreshLibraries();
-      refreshFavorites();
+    // Only load once when preferences become available (module-level flag survives StrictMode)
+    if (
+      !sidebarInitialFetchDone &&
+      !sidebarFetchInProgress &&
+      Object.keys(preferences).length > 0
+    ) {
+      sidebarFetchInProgress = true;
+      sidebarInitialFetchDone = true;
+
+      Promise.all([refreshLibraries(), refreshFavorites()]).finally(() => {
+        sidebarFetchInProgress = false;
+      });
     }
   }, [preferences, refreshLibraries, refreshFavorites]);
 
@@ -138,6 +151,10 @@ export function Sidebar({
 
   const handleLogout = async () => {
     try {
+      // Reset module-level flags to allow refetch on next login
+      sidebarInitialFetchDone = false;
+      sidebarFetchInProgress = false;
+
       await signOut({ callbackUrl: "/login" });
       setLibraries([]);
       setFavorites([]);
