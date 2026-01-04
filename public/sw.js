@@ -1,11 +1,11 @@
 // StripStream Service Worker - Version 2
 // Architecture: SWR (Stale-While-Revalidate) for all resources
 
-const VERSION = "v2";
+const VERSION = "v2.4";
 const STATIC_CACHE = `stripstream-static-${VERSION}`;
+const PAGES_CACHE = `stripstream-pages-${VERSION}`; // Navigation + RSC (client-side navigation)
 const API_CACHE = `stripstream-api-${VERSION}`;
 const IMAGES_CACHE = `stripstream-images-${VERSION}`;
-const RSC_CACHE = `stripstream-rsc-${VERSION}`;
 const BOOKS_CACHE = "stripstream-books"; // Never version this - managed by DownloadManager
 
 const OFFLINE_PAGE = "/offline.html";
@@ -195,39 +195,50 @@ async function staleWhileRevalidateStrategy(request, cacheName, options = {}) {
 }
 
 /**
- * Network-First: Try network, fallback to cache
+ * Navigation SWR: Serve from cache immediately, update in background
+ * Falls back to offline page if nothing cached
  * Used for: Page navigations
  */
-async function networkFirstStrategy(request, cacheName) {
+async function navigationSWRStrategy(request, cacheName) {
   const cache = await caches.open(cacheName);
+  const cached = await cache.match(request);
 
-  try {
-    const response = await fetch(request);
-    if (response.ok) {
-      cache.put(request, response.clone());
-    }
-    return response;
-  } catch (error) {
-    // Network failed - try cache
-    const cached = await cache.match(request);
-    if (cached) {
-      return cached;
-    }
+  // Start network request in background
+  const fetchPromise = fetch(request)
+    .then(async (response) => {
+      if (response.ok) {
+        await cache.put(request, response.clone());
+      }
+      return response;
+    })
+    .catch(() => null);
 
-    // Try to serve root page for SPA client-side routing
-    const rootPage = await cache.match("/");
-    if (rootPage) {
-      return rootPage;
-    }
-
-    // Last resort: offline page
-    const offlinePage = await cache.match(OFFLINE_PAGE);
-    if (offlinePage) {
-      return offlinePage;
-    }
-
-    throw error;
+  // Return cached version immediately if available
+  if (cached) {
+    return cached;
   }
+
+  // No cache - wait for network
+  const response = await fetchPromise;
+  if (response) {
+    return response;
+  }
+
+  // Network failed and no cache - try fallbacks
+  // Try to serve root page for SPA client-side routing
+  const rootPage = await cache.match("/");
+  if (rootPage) {
+    return rootPage;
+  }
+
+  // Last resort: offline page (in static cache)
+  const staticCache = await caches.open(STATIC_CACHE);
+  const offlinePage = await staticCache.match(OFFLINE_PAGE);
+  if (offlinePage) {
+    return offlinePage;
+  }
+
+  throw new Error("Offline and no cached page available");
 }
 
 // ============================================================================
@@ -262,7 +273,7 @@ self.addEventListener("activate", (event) => {
     (async () => {
       // Clean up old caches, but preserve BOOKS_CACHE
       const cacheNames = await caches.keys();
-      const currentCaches = [STATIC_CACHE, API_CACHE, IMAGES_CACHE, RSC_CACHE, BOOKS_CACHE];
+      const currentCaches = [STATIC_CACHE, PAGES_CACHE, API_CACHE, IMAGES_CACHE, BOOKS_CACHE];
 
       const cachesToDelete = cacheNames.filter(
         (name) => name.startsWith("stripstream-") && !currentCaches.includes(name)
@@ -295,20 +306,23 @@ self.addEventListener("message", async (event) => {
   switch (type) {
     case "GET_CACHE_STATS": {
       try {
-        const [staticSize, apiSize, imagesSize, booksSize] = await Promise.all([
+        const [staticSize, pagesSize, apiSize, imagesSize, booksSize] = await Promise.all([
           getCacheSize(STATIC_CACHE),
+          getCacheSize(PAGES_CACHE),
           getCacheSize(API_CACHE),
           getCacheSize(IMAGES_CACHE),
           getCacheSize(BOOKS_CACHE),
         ]);
 
         const staticCache = await caches.open(STATIC_CACHE);
+        const pagesCache = await caches.open(PAGES_CACHE);
         const apiCache = await caches.open(API_CACHE);
         const imagesCache = await caches.open(IMAGES_CACHE);
         const booksCache = await caches.open(BOOKS_CACHE);
 
-        const [staticKeys, apiKeys, imagesKeys, booksKeys] = await Promise.all([
+        const [staticKeys, pagesKeys, apiKeys, imagesKeys, booksKeys] = await Promise.all([
           staticCache.keys(),
+          pagesCache.keys(),
           apiCache.keys(),
           imagesCache.keys(),
           booksCache.keys(),
@@ -318,10 +332,11 @@ self.addEventListener("message", async (event) => {
           type: "CACHE_STATS",
           payload: {
             static: { size: staticSize, entries: staticKeys.length },
+            pages: { size: pagesSize, entries: pagesKeys.length },
             api: { size: apiSize, entries: apiKeys.length },
             images: { size: imagesSize, entries: imagesKeys.length },
             books: { size: booksSize, entries: booksKeys.length },
-            total: staticSize + apiSize + imagesSize + booksSize,
+            total: staticSize + pagesSize + apiSize + imagesSize + booksSize,
           },
         });
       } catch (error) {
@@ -341,14 +356,14 @@ self.addEventListener("message", async (event) => {
         if (cacheType === "all" || cacheType === "static") {
           cachesToClear.push(STATIC_CACHE);
         }
+        if (cacheType === "all" || cacheType === "pages") {
+          cachesToClear.push(PAGES_CACHE);
+        }
         if (cacheType === "all" || cacheType === "api") {
           cachesToClear.push(API_CACHE);
         }
         if (cacheType === "all" || cacheType === "images") {
           cachesToClear.push(IMAGES_CACHE);
-        }
-        if (cacheType === "all" || cacheType === "rsc") {
-          cachesToClear.push(RSC_CACHE);
         }
         // Note: BOOKS_CACHE is not cleared by default, only explicitly
 
@@ -394,6 +409,9 @@ self.addEventListener("message", async (event) => {
         switch (cacheType) {
           case "static":
             cacheName = STATIC_CACHE;
+            break;
+          case "pages":
+            cacheName = PAGES_CACHE;
             break;
           case "api":
             cacheName = API_CACHE;
@@ -477,10 +495,10 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Route 2: Next.js RSC payloads → Stale-While-Revalidate
+  // Route 2: Next.js RSC payloads (client-side navigation) → SWR in PAGES_CACHE
   if (isNextRSCRequest(request)) {
     event.respondWith(
-      staleWhileRevalidateStrategy(request, RSC_CACHE, {
+      staleWhileRevalidateStrategy(request, PAGES_CACHE, {
         notifyOnChange: false,
       })
     );
@@ -515,9 +533,9 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Route 6: Navigation → Network-First with SPA fallback
+  // Route 6: Navigation → SWR (cache first, revalidate in background)
   if (request.mode === "navigate") {
-    event.respondWith(networkFirstStrategy(request, STATIC_CACHE));
+    event.respondWith(navigationSWRStrategy(request, PAGES_CACHE));
     return;
   }
 

@@ -2,11 +2,12 @@
 
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import type { ReactNode } from "react";
-import { registerServiceWorker } from "@/lib/registerSW";
+import { registerServiceWorker, unregisterServiceWorker } from "@/lib/registerSW";
 import logger from "@/lib/logger";
 
 interface CacheStats {
   static: { size: number; entries: number };
+  pages: { size: number; entries: number };
   api: { size: number; entries: number };
   images: { size: number; entries: number };
   books: { size: number; entries: number };
@@ -23,7 +24,7 @@ interface CacheUpdate {
   timestamp: number;
 }
 
-type CacheType = "all" | "static" | "api" | "images" | "rsc" | "books";
+type CacheType = "all" | "static" | "pages" | "api" | "images" | "books";
 
 interface ServiceWorkerContextValue {
   isSupported: boolean;
@@ -38,6 +39,7 @@ interface ServiceWorkerContextValue {
   clearCache: (cacheType?: CacheType) => Promise<boolean>;
   skipWaiting: () => void;
   reloadForUpdate: () => void;
+  reinstallServiceWorker: () => Promise<boolean>;
 }
 
 const ServiceWorkerContext = createContext<ServiceWorkerContextValue | null>(null);
@@ -53,76 +55,113 @@ export function ServiceWorkerProvider({ children }: { children: ReactNode }) {
 
   // Handle messages from service worker
   const handleMessage = useCallback((event: MessageEvent) => {
-    const { type, payload } = event.data || {};
+    try {
+      // Ignore messages without proper data structure
+      if (!event.data || typeof event.data !== "object") return;
 
-    switch (type) {
-      case "SW_ACTIVATED":
-        setIsReady(true);
-        setVersion(payload?.version || null);
-        break;
+      // Only handle messages from our service worker (check for known message types)
+      const knownTypes = [
+        "SW_ACTIVATED",
+        "SW_VERSION",
+        "CACHE_UPDATED",
+        "CACHE_STATS",
+        "CACHE_STATS_ERROR",
+        "CACHE_CLEARED",
+        "CACHE_CLEAR_ERROR",
+        "CACHE_ENTRIES",
+        "CACHE_ENTRIES_ERROR",
+      ];
 
-      case "SW_VERSION":
-        setVersion(payload?.version || null);
-        break;
+      const type = event.data.type;
+      if (typeof type !== "string" || !knownTypes.includes(type)) return;
 
-      case "CACHE_UPDATED":
-        setCacheUpdates((prev) => {
-          // Avoid duplicates for the same URL within 1 second
-          const existing = prev.find(
-            (u) => u.url === payload.url && Date.now() - u.timestamp < 1000
-          );
-          if (existing) return prev;
-          return [...prev, { url: payload.url, timestamp: payload.timestamp }];
-        });
-        break;
+      const payload = event.data.payload;
 
-      case "CACHE_STATS":
-        const statsResolver = pendingRequests.current.get("CACHE_STATS");
-        if (statsResolver) {
-          statsResolver(payload);
-          pendingRequests.current.delete("CACHE_STATS");
+      switch (type) {
+        case "SW_ACTIVATED":
+          setIsReady(true);
+          setVersion(payload?.version || null);
+          break;
+
+        case "SW_VERSION":
+          setVersion(payload?.version || null);
+          break;
+
+        case "CACHE_UPDATED": {
+          const url = typeof payload?.url === "string" ? payload.url : null;
+          const timestamp = typeof payload?.timestamp === "number" ? payload.timestamp : Date.now();
+          if (url) {
+            setCacheUpdates((prev) => {
+              // Avoid duplicates for the same URL within 1 second
+              const existing = prev.find((u) => u.url === url && Date.now() - u.timestamp < 1000);
+              if (existing) return prev;
+              return [...prev, { url, timestamp }];
+            });
+          }
+          break;
         }
-        break;
 
-      case "CACHE_STATS_ERROR":
-        const statsErrorResolver = pendingRequests.current.get("CACHE_STATS");
-        if (statsErrorResolver) {
-          statsErrorResolver(null);
-          pendingRequests.current.delete("CACHE_STATS");
-        }
-        break;
+        case "CACHE_STATS":
+          const statsResolver = pendingRequests.current.get("CACHE_STATS");
+          if (statsResolver) {
+            statsResolver(payload);
+            pendingRequests.current.delete("CACHE_STATS");
+          }
+          break;
 
-      case "CACHE_CLEARED":
-        const clearResolver = pendingRequests.current.get("CACHE_CLEARED");
-        if (clearResolver) {
-          clearResolver(true);
-          pendingRequests.current.delete("CACHE_CLEARED");
-        }
-        break;
+        case "CACHE_STATS_ERROR":
+          const statsErrorResolver = pendingRequests.current.get("CACHE_STATS");
+          if (statsErrorResolver) {
+            statsErrorResolver(null);
+            pendingRequests.current.delete("CACHE_STATS");
+          }
+          break;
 
-      case "CACHE_CLEAR_ERROR":
-        const clearErrorResolver = pendingRequests.current.get("CACHE_CLEARED");
-        if (clearErrorResolver) {
-          clearErrorResolver(false);
-          pendingRequests.current.delete("CACHE_CLEARED");
-        }
-        break;
+        case "CACHE_CLEARED":
+          const clearResolver = pendingRequests.current.get("CACHE_CLEARED");
+          if (clearResolver) {
+            clearResolver(true);
+            pendingRequests.current.delete("CACHE_CLEARED");
+          }
+          break;
 
-      case "CACHE_ENTRIES":
-        const entriesResolver = pendingRequests.current.get("CACHE_ENTRIES");
-        if (entriesResolver) {
-          entriesResolver(payload.entries);
-          pendingRequests.current.delete("CACHE_ENTRIES");
-        }
-        break;
+        case "CACHE_CLEAR_ERROR":
+          const clearErrorResolver = pendingRequests.current.get("CACHE_CLEARED");
+          if (clearErrorResolver) {
+            clearErrorResolver(false);
+            pendingRequests.current.delete("CACHE_CLEARED");
+          }
+          break;
 
-      case "CACHE_ENTRIES_ERROR":
-        const entriesErrorResolver = pendingRequests.current.get("CACHE_ENTRIES");
-        if (entriesErrorResolver) {
-          entriesErrorResolver(null);
-          pendingRequests.current.delete("CACHE_ENTRIES");
+        case "CACHE_ENTRIES": {
+          const entriesResolver = pendingRequests.current.get("CACHE_ENTRIES");
+          if (entriesResolver) {
+            entriesResolver(payload?.entries || null);
+            pendingRequests.current.delete("CACHE_ENTRIES");
+          }
+          break;
         }
-        break;
+
+        case "CACHE_ENTRIES_ERROR": {
+          const entriesErrorResolver = pendingRequests.current.get("CACHE_ENTRIES");
+          if (entriesErrorResolver) {
+            entriesErrorResolver(null);
+            pendingRequests.current.delete("CACHE_ENTRIES");
+          }
+          break;
+        }
+
+        default:
+          // Ignore unknown message types
+          break;
+      }
+    } catch (error) {
+      // Silently ignore message handling errors to prevent app crashes
+      // This can happen with malformed messages or during SW reinstall
+      if (process.env.NODE_ENV === "development") {
+        // eslint-disable-next-line no-console
+        console.warn("[SW Context] Error handling message:", error, event.data);
+      }
     }
   }, []);
 
@@ -263,6 +302,40 @@ export function ServiceWorkerProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const reinstallServiceWorker = useCallback(async (): Promise<boolean> => {
+    try {
+      // Unregister all service workers
+      await unregisterServiceWorker();
+      setIsReady(false);
+      setVersion(null);
+
+      // Re-register
+      const registration = await registerServiceWorker({
+        onSuccess: () => {
+          setIsReady(true);
+          if (navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({ type: "GET_VERSION" });
+          }
+        },
+        onError: (error) => {
+          logger.error({ err: error }, "Service worker re-registration failed");
+        },
+      });
+
+      if (registration) {
+        // Force update check
+        await registration.update();
+        // Reload page to ensure new SW takes control
+        window.location.reload();
+        return true;
+      }
+      return false;
+    } catch (error) {
+      logger.error({ err: error }, "Failed to reinstall service worker");
+      return false;
+    }
+  }, []);
+
   return (
     <ServiceWorkerContext.Provider
       value={{
@@ -278,6 +351,7 @@ export function ServiceWorkerProvider({ children }: { children: ReactNode }) {
         clearCache,
         skipWaiting,
         reloadForUpdate,
+        reinstallServiceWorker,
       }}
     >
       {children}

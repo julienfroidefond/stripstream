@@ -8,11 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Database,
@@ -27,10 +23,13 @@ import {
   Loader2,
   ChevronDown,
   ChevronRight,
+  LayoutGrid,
+  RotateCcw,
 } from "lucide-react";
 
 interface CacheStats {
   static: { size: number; entries: number };
+  pages: { size: number; entries: number };
   api: { size: number; entries: number };
   images: { size: number; entries: number };
   books: { size: number; entries: number };
@@ -42,7 +41,7 @@ interface CacheEntry {
   size: number;
 }
 
-type CacheType = "static" | "api" | "images" | "books";
+type CacheType = "static" | "pages" | "api" | "images" | "books";
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return "0 B";
@@ -195,12 +194,20 @@ function CacheItem({
 export function CacheSettings() {
   const { t } = useTranslate();
   const { toast } = useToast();
-  const { isSupported, isReady, version, getCacheStats, getCacheEntries, clearCache } =
-    useServiceWorker();
+  const {
+    isSupported,
+    isReady,
+    version,
+    getCacheStats,
+    getCacheEntries,
+    clearCache,
+    reinstallServiceWorker,
+  } = useServiceWorker();
 
   const [stats, setStats] = useState<CacheStats | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [clearingCache, setClearingCache] = useState<string | null>(null);
+  const [isReinstalling, setIsReinstalling] = useState(false);
 
   const loadStats = useCallback(async () => {
     if (!isReady) return;
@@ -218,7 +225,7 @@ export function CacheSettings() {
     loadStats();
   }, [loadStats]);
 
-  const handleClearCache = async (cacheType: "all" | "static" | "api" | "images") => {
+  const handleClearCache = async (cacheType: "all" | "static" | "pages" | "api" | "images") => {
     setClearingCache(cacheType);
     try {
       const success = await clearCache(cacheType);
@@ -246,6 +253,28 @@ export function CacheSettings() {
     },
     [getCacheEntries]
   );
+
+  const handleReinstall = async () => {
+    setIsReinstalling(true);
+    try {
+      const success = await reinstallServiceWorker();
+      if (!success) {
+        toast({
+          variant: "destructive",
+          title: t("settings.error.title"),
+          description: t("settings.cache.reinstallError"),
+        });
+      }
+      // If success, the page will reload automatically
+    } catch {
+      toast({
+        variant: "destructive",
+        title: t("settings.error.title"),
+        description: t("settings.cache.reinstallError"),
+      });
+      setIsReinstalling(false);
+    }
+  };
 
   // Calculer le pourcentage du cache utilisé (basé sur 100MB limite images)
   const maxCacheSize = 100 * 1024 * 1024; // 100MB
@@ -329,6 +358,17 @@ export function CacheSettings() {
                 onLoadEntries={handleLoadEntries}
               />
               <CacheItem
+                icon={<LayoutGrid className="h-4 w-4" />}
+                label={t("settings.cache.pages")}
+                size={stats.pages.size}
+                entries={stats.pages.entries}
+                cacheType="pages"
+                description={t("settings.cache.pagesDesc")}
+                onClear={() => handleClearCache("pages")}
+                isClearing={clearingCache === "pages"}
+                onLoadEntries={handleLoadEntries}
+              />
+              <CacheItem
                 icon={<FileJson className="h-4 w-4" />}
                 label={t("settings.cache.api")}
                 size={stats.api.size}
@@ -365,27 +405,55 @@ export function CacheSettings() {
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : (
-            <p className="text-center text-muted-foreground py-8">
-              {t("settings.cache.unavailable")}
-            </p>
+            <div className="text-center py-8 space-y-4">
+              <p className="text-muted-foreground">{t("settings.cache.unavailable")}</p>
+              <Button
+                variant="outline"
+                onClick={handleReinstall}
+                disabled={isReinstalling}
+                className="gap-2"
+              >
+                {isReinstalling ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RotateCcw className="h-4 w-4" />
+                )}
+                {t("settings.cache.reinstall")}
+              </Button>
+            </div>
           )}
         </div>
 
         {/* Bouton vider tout */}
         {stats && stats.total > 0 && (
-          <Button
-            variant="destructive"
-            className="w-full gap-2"
-            onClick={() => handleClearCache("all")}
-            disabled={clearingCache !== null}
-          >
-            {clearingCache === "all" ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Trash2 className="h-4 w-4" />
-            )}
-            {t("settings.cache.clearAll")}
-          </Button>
+          <div className="space-y-2">
+            <Button
+              variant="destructive"
+              className="w-full gap-2"
+              onClick={() => handleClearCache("all")}
+              disabled={clearingCache !== null}
+            >
+              {clearingCache === "all" ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4" />
+              )}
+              {t("settings.cache.clearAll")}
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full gap-2"
+              onClick={handleReinstall}
+              disabled={isReinstalling}
+            >
+              {isReinstalling ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <RotateCcw className="h-4 w-4" />
+              )}
+              {t("settings.cache.reinstall")}
+            </Button>
+          </div>
         )}
       </CardContent>
     </Card>
