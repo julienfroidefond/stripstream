@@ -5,10 +5,47 @@ import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
 import type { KomgaLibrary } from "@/types/komga";
 
+// Raw library type from Komga API (without booksCount)
+interface KomgaLibraryRaw {
+  id: string;
+  name: string;
+  root: string;
+  unavailable: boolean;
+}
+
 export class LibraryService extends BaseApiService {
   static async getLibraries(): Promise<KomgaLibrary[]> {
     try {
-      return this.fetchFromApi<KomgaLibrary[]>({ path: "libraries" });
+      const libraries = await this.fetchFromApi<KomgaLibraryRaw[]>({ path: "libraries" });
+
+      // Enrich each library with book counts
+      const enrichedLibraries = await Promise.all(
+        libraries.map(async (library) => {
+          try {
+            const booksResponse = await this.fetchFromApi<{ totalElements: number }>({
+              path: "books",
+              params: { library_id: library.id, size: "0" },
+            });
+            return {
+              ...library,
+              importLastModified: "",
+              lastModified: "",
+              booksCount: booksResponse.totalElements,
+              booksReadCount: 0,
+            } as KomgaLibrary;
+          } catch {
+            return {
+              ...library,
+              importLastModified: "",
+              lastModified: "",
+              booksCount: 0,
+              booksReadCount: 0,
+            } as KomgaLibrary;
+          }
+        })
+      );
+
+      return enrichedLibraries;
     } catch (error) {
       throw new AppError(ERROR_CODES.LIBRARY.FETCH_ERROR, {}, error);
     }
