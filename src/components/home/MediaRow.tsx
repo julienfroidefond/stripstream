@@ -7,7 +7,7 @@ import { SeriesCover } from "../ui/series-cover";
 import { useTranslate } from "@/hooks/useTranslate";
 import { ScrollContainer } from "@/components/ui/scroll-container";
 import { Section } from "@/components/ui/section";
-import type { LucideIcon } from "lucide-react";
+import { History, Sparkles, Clock, LibraryBig, BookOpen } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { useBookOfflineStatus } from "@/hooks/useBookOfflineStatus";
 import { cn } from "@/lib/utils";
@@ -38,14 +38,23 @@ interface OptimizedBook extends BaseItem {
 }
 
 interface MediaRowProps {
-  title: string;
+  titleKey: string;
   items: (OptimizedSeries | OptimizedBook)[];
-  icon?: LucideIcon;
+  iconName?: string;
 }
 
-export function MediaRow({ title, items, icon }: MediaRowProps) {
+const iconMap = {
+  LibraryBig,
+  BookOpen,
+  Clock,
+  Sparkles,
+  History,
+};
+
+export function MediaRow({ titleKey, items, iconName }: MediaRowProps) {
   const router = useRouter();
   const { t } = useTranslate();
+  const icon = iconName ? iconMap[iconName as keyof typeof iconMap] : undefined;
 
   const onItemClick = (item: OptimizedSeries | OptimizedBook) => {
     const path = "booksCount" in item ? `/series/${item.id}` : `/books/${item.id}`;
@@ -55,7 +64,7 @@ export function MediaRow({ title, items, icon }: MediaRowProps) {
   if (!items.length) return null;
 
   return (
-    <Section title={title} icon={icon}>
+    <Section title={t(titleKey)} icon={icon}>
       <ScrollContainer
         showArrows={true}
         scrollAmount={400}

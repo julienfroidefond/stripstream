@@ -16,7 +16,6 @@ import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
 import { useEffect, useState, useCallback } from "react";
 import type { KomgaLibrary, KomgaSeries } from "@/types/komga";
-import { usePreferences } from "@/contexts/PreferencesContext";
 import { AppError } from "@/utils/errors";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { getErrorMessage } from "@/utils/errors";
@@ -25,10 +24,6 @@ import { useTranslate } from "@/hooks/useTranslate";
 import { NavButton } from "@/components/ui/nav-button";
 import { IconButton } from "@/components/ui/icon-button";
 import logger from "@/lib/logger";
-
-// Module-level flags to prevent duplicate fetches (survives StrictMode remounts)
-let sidebarInitialFetchDone = false;
-let sidebarFetchInProgress = false;
 
 interface SidebarProps {
   isOpen: boolean;
@@ -48,36 +43,11 @@ export function Sidebar({
   const { t } = useTranslate();
   const pathname = usePathname();
   const router = useRouter();
-  const { preferences } = usePreferences();
   const [libraries, setLibraries] = useState<KomgaLibrary[]>(initialLibraries || []);
   const [favorites, setFavorites] = useState<KomgaSeries[]>(initialFavorites || []);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const { toast } = useToast();
-
-  const refreshLibraries = useCallback(async () => {
-    setIsRefreshing(true);
-    try {
-      const response = await fetch("/api/komga/libraries");
-      if (!response.ok) {
-        throw new AppError(ERROR_CODES.LIBRARY.FETCH_ERROR);
-      }
-      const data = await response.json();
-      setLibraries(data);
-    } catch (error) {
-      logger.error({ err: error }, "Erreur de chargement des bibliothèques:");
-      toast({
-        title: "Erreur",
-        description:
-          error instanceof AppError
-            ? error.message
-            : getErrorMessage(ERROR_CODES.LIBRARY.FETCH_ERROR),
-        variant: "destructive",
-      });
-    } finally {
-      setIsRefreshing(false);
-    }
-  }, [toast]);
 
   const refreshFavorites = useCallback(async () => {
     try {
@@ -115,22 +85,6 @@ export function Sidebar({
     }
   }, [toast]);
 
-  useEffect(() => {
-    // Only load once when preferences become available (module-level flag survives StrictMode)
-    if (
-      !sidebarInitialFetchDone &&
-      !sidebarFetchInProgress &&
-      Object.keys(preferences).length > 0
-    ) {
-      sidebarFetchInProgress = true;
-      sidebarInitialFetchDone = true;
-
-      Promise.all([refreshLibraries(), refreshFavorites()]).finally(() => {
-        sidebarFetchInProgress = false;
-      });
-    }
-  }, [preferences, refreshLibraries, refreshFavorites]);
-
   // Mettre à jour les favoris quand ils changent
   useEffect(() => {
     const handleFavoritesChange = () => {
@@ -146,15 +100,14 @@ export function Sidebar({
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await Promise.all([refreshLibraries(), refreshFavorites()]);
+    // Revalider côté serveur via router.refresh()
+    router.refresh();
+    // Petit délai pour laisser le temps au serveur
+    setTimeout(() => setIsRefreshing(false), 500);
   };
 
   const handleLogout = async () => {
     try {
-      // Reset module-level flags to allow refetch on next login
-      sidebarInitialFetchDone = false;
-      sidebarFetchInProgress = false;
-
       await signOut({ callbackUrl: "/login" });
       setLibraries([]);
       setFavorites([]);

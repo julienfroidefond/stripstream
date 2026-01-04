@@ -71,14 +71,17 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const cookieStore = await cookies();
   const locale = cookieStore.get("NEXT_LOCALE")?.value || "fr";
 
-  // Les libraries et favorites sont chargés côté client par la Sidebar
   let preferences: UserPreferences = defaultPreferences;
   let userIsAdmin = false;
+  let libraries: any[] = [];
+  let favorites: any[] = [];
 
   try {
-    const [preferencesData, isAdminCheck] = await Promise.allSettled([
+    const [preferencesData, isAdminCheck, librariesData, favoritesData] = await Promise.allSettled([
       PreferencesService.getPreferences(),
       import("@/lib/auth-utils").then((m) => m.isAdmin()),
+      import("@/lib/services/library.service").then((m) => m.LibraryService.getLibraries()),
+      import("@/lib/services/favorites.service").then((m) => m.FavoritesService.getFavorites()),
     ]);
 
     if (preferencesData.status === "fulfilled") {
@@ -88,8 +91,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     if (isAdminCheck.status === "fulfilled") {
       userIsAdmin = isAdminCheck.value;
     }
+
+    if (librariesData.status === "fulfilled") {
+      libraries = librariesData.value;
+    }
+
+    if (favoritesData.status === "fulfilled") {
+      favorites = favoritesData.value;
+    }
   } catch (error) {
-    logger.error({ err: error }, "Erreur lors du chargement des préférences:");
+    logger.error({ err: error }, "Erreur lors du chargement des données initiales:");
   }
 
   return (
@@ -155,7 +166,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <AuthProvider>
           <I18nProvider locale={locale}>
             <PreferencesProvider initialPreferences={preferences}>
-              <ClientLayout initialLibraries={[]} initialFavorites={[]} userIsAdmin={userIsAdmin}>
+              <ClientLayout initialLibraries={libraries} initialFavorites={favorites} userIsAdmin={userIsAdmin}>
                 {children}
               </ClientLayout>
             </PreferencesProvider>
