@@ -6,7 +6,6 @@ import { Button } from "./button";
 import { useToast } from "./use-toast";
 import type { KomgaBook } from "@/types/komga";
 import logger from "@/lib/logger";
-import { unzip } from "fflate";
 
 interface BookOfflineButtonProps {
   book: KomgaBook;
@@ -58,101 +57,92 @@ export function BookOfflineButton({ book, className }: BookOfflineButtonProps) {
         // Marque le début du téléchargement
         setBookStatus(book.id, {
           status: "downloading",
-          progress: 0,
+          progress: ((startFromPage - 1) / book.media.pagesCount) * 100,
           timestamp: Date.now(),
-          lastDownloadedPage: 0,
+          lastDownloadedPage: startFromPage - 1,
         });
 
-        // Télécharger le fichier complet
-        setDownloadProgress(5);
-        const fileResponse = await fetch(`/api/komga/books/${book.id}/file`);
-        if (!fileResponse.ok) throw new Error("Erreur lors du téléchargement du fichier");
-
-        setDownloadProgress(20);
-        const arrayBuffer = await fileResponse.arrayBuffer();
-
-        setDownloadProgress(30);
-        setBookStatus(book.id, {
-          status: "downloading",
-          progress: 30,
-          timestamp: Date.now(),
-        });
-
-        // Décompresser le fichier
-        const files = await new Promise<Record<string, Uint8Array>>((resolve, reject) => {
-          unzip(new Uint8Array(arrayBuffer), (err, data) => {
-            if (err) reject(err);
-            else resolve(data);
-          });
-        });
-
-        setDownloadProgress(50);
-
-        // Filtrer et trier les images
-        const imageExtensions = /\.(jpg|jpeg|png|webp|gif)$/i;
-        const imageFiles = Object.entries(files)
-          .filter(([name]) => imageExtensions.test(name))
-          .sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true }));
-
-        if (imageFiles.length === 0) {
-          throw new Error("Aucune image trouvée dans le fichier");
+        // Ajoute le livre au cache si on commence depuis le début
+        if (startFromPage === 1) {
+          const pagesResponse = await fetch(`/api/komga/images/books/${book.id}/pages/1`);
+          if (!pagesResponse.ok) throw new Error("Erreur lors de la récupération des pages");
+          await cache.put(`/api/komga/images/books/${book.id}/pages`, pagesResponse.clone());
         }
 
-        // Cache chaque image
-        for (let i = 0; i < imageFiles.length; i++) {
-          const [fileName, data] = imageFiles[i];
-          const pageNumber = i + 1;
+        // Cache chaque page avec retry
+        let failedPages = 0;
+        for (let i = startFromPage; i <= book.media.pagesCount; i++) {
+          let retryCount = 0;
+          const maxRetries = 3;
 
-          // Déterminer le type MIME
-          const ext = fileName.toLowerCase().split(".").pop();
-          const mimeType =
-            ext === "png"
-              ? "image/png"
-              : ext === "webp"
-                ? "image/webp"
-                : ext === "gif"
-                  ? "image/gif"
-                  : "image/jpeg";
-
-          const blob = new Blob([data], { type: mimeType });
-          const fakeResponse = new Response(blob, {
-            headers: {
-              "Content-Type": mimeType,
-              "Content-Length": String(data.length),
-            },
-          });
-
-          await cache.put(`/api/komga/images/books/${book.id}/pages/${pageNumber}`, fakeResponse);
+          while (retryCount < maxRetries) {
+            try {
+              const pageResponse = await fetch(`/api/komga/images/books/${book.id}/pages/${i}`);
+              if (!pageResponse.ok) {
+                retryCount++;
+                if (retryCount === maxRetries) {
+                  failedPages++;
+                  logger.error(
+                    `Échec du téléchargement de la page ${i} après ${maxRetries} tentatives`
+                  );
+                }
+                await new Promise((resolve) => setTimeout(resolve, 1000)); // Attendre 1s avant de réessayer
+                continue;
+              }
+              await cache.put(
+                `/api/komga/images/books/${book.id}/pages/${i}`,
+                pageResponse.clone()
+              );
+              break; // Sortir de la boucle si réussi
+            } catch (error) {
+              retryCount++;
+              if (retryCount === maxRetries) {
+                failedPages++;
+                logger.error({ err: error }, `Erreur lors du téléchargement de la page ${i}:`);
+              }
+              await new Promise((resolve) => setTimeout(resolve, 1000));
+            }
+          }
 
           // Mise à jour du statut
-          const progress = 50 + ((i + 1) / imageFiles.length) * 50;
+          const progress = (i / book.media.pagesCount) * 100;
           setDownloadProgress(progress);
           setBookStatus(book.id, {
             status: "downloading",
             progress,
             timestamp: Date.now(),
-            lastDownloadedPage: pageNumber,
+            lastDownloadedPage: i,
           });
 
           // Vérifier si le statut a changé pendant le téléchargement
           const currentStatus = getBookStatus(book.id);
           if (currentStatus.status === "idle") {
+            // Le téléchargement a été annulé
             throw new Error("Téléchargement annulé");
           }
         }
 
-        // Marquer comme disponible
-        const pagesMetaResponse = new Response(JSON.stringify({ count: imageFiles.length }), {
-          headers: { "Content-Type": "application/json" },
-        });
-        await cache.put(`/api/komga/images/books/${book.id}/pages`, pagesMetaResponse);
-
-        setIsAvailableOffline(true);
-        setBookStatus(book.id, { status: "available", progress: 100, timestamp: Date.now() });
-        toast({
-          title: "Livre téléchargé",
-          description: `${imageFiles.length} pages disponibles hors ligne`,
-        });
+        if (failedPages > 0) {
+          // Si des pages ont échoué, on supprime tout le cache pour ce livre
+          await cache.delete(`/api/komga/images/books/${book.id}/pages`);
+          for (let i = 1; i <= book.media.pagesCount; i++) {
+            await cache.delete(`/api/komga/images/books/${book.id}/pages/${i}`);
+          }
+          setIsAvailableOffline(false);
+          setBookStatus(book.id, { status: "error", progress: 0, timestamp: Date.now() });
+          toast({
+            title: "Erreur",
+            description: `${failedPages} page(s) n'ont pas pu être téléchargées. Le livre ne sera pas disponible hors ligne.`,
+            variant: "destructive",
+          });
+        } else {
+          setIsAvailableOffline(true);
+          setBookStatus(book.id, { status: "available", progress: 100, timestamp: Date.now() });
+          toast({
+            title: "Livre téléchargé",
+            description: "Le livre est maintenant disponible hors ligne",
+          });
+        }
       } catch (error) {
         logger.error({ err: error }, "Erreur lors du téléchargement:");
         // Ne pas changer le statut si le téléchargement a été volontairement annulé
@@ -169,7 +159,7 @@ export function BookOfflineButton({ book, className }: BookOfflineButtonProps) {
         setDownloadProgress(0);
       }
     },
-    [book.id, getBookStatus, setBookStatus, toast]
+    [book.id, book.media.pagesCount, getBookStatus, setBookStatus, toast]
   );
 
   const checkOfflineAvailability = useCallback(async () => {

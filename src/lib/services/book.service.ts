@@ -115,27 +115,6 @@ export class BookService extends BaseApiService {
     }
   }
 
-  static async getFile(bookId: string): Promise<Response> {
-    try {
-      const config = await this.getKomgaConfig();
-      const url = this.buildUrl(config, `books/${bookId}/file`);
-      const headers = this.getAuthHeaders(config);
-
-      const response = await fetch(url, {
-        method: "GET",
-        headers,
-      });
-
-      if (!response.ok) {
-        throw new AppError(ERROR_CODES.BOOK.NOT_FOUND);
-      }
-
-      return response;
-    } catch (error) {
-      throw new AppError(ERROR_CODES.BOOK.NOT_FOUND, {}, error);
-    }
-  }
-
   static async getCover(bookId: string): Promise<Response> {
     try {
       // Récupérer les préférences de l'utilisateur
