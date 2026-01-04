@@ -17,21 +17,45 @@ interface LibraryClientWrapperProps {
   preferences: UserPreferences;
 }
 
-export function LibraryClientWrapper({ children }: LibraryClientWrapperProps) {
+export function LibraryClientWrapper({
+  children,
+  libraryId,
+  currentPage,
+  unreadOnly,
+  search,
+  pageSize,
+}: LibraryClientWrapperProps) {
   const router = useRouter();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleRefresh = async () => {
     try {
       setIsRefreshing(true);
-      // Revalider la page côté serveur
+
+      // Fetch fresh data from network with cache bypass
+      const params = new URLSearchParams({
+        page: String(currentPage),
+        size: String(pageSize),
+        ...(unreadOnly && { unreadOnly: "true" }),
+        ...(search && { search }),
+      });
+
+      const response = await fetch(`/api/komga/libraries/${libraryId}/series?${params}`, {
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache" },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to refresh library");
+      }
+
+      // Trigger Next.js revalidation to update the UI
       router.refresh();
       return { success: true };
     } catch {
       return { success: false, error: "Error refreshing library" };
     } finally {
-      // Petit délai pour laisser le temps au serveur de revalider
-      setTimeout(() => setIsRefreshing(false), 500);
+      setIsRefreshing(false);
     }
   };
 

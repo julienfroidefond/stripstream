@@ -1,7 +1,7 @@
 // StripStream Service Worker - Version 2
 // Architecture: SWR (Stale-While-Revalidate) for all resources
 
-const VERSION = "v2.4";
+const VERSION = "v2.5";
 const STATIC_CACHE = `stripstream-static-${VERSION}`;
 const PAGES_CACHE = `stripstream-pages-${VERSION}`; // Navigation + RSC (client-side navigation)
 const API_CACHE = `stripstream-api-${VERSION}`;
@@ -129,10 +129,23 @@ async function cacheFirstStrategy(request, cacheName, options = {}) {
 /**
  * Stale-While-Revalidate: Serve from cache immediately, update in background
  * Used for: API calls, images
+ * Respects Cache-Control: no-cache to force network-first (for refresh buttons)
  */
 async function staleWhileRevalidateStrategy(request, cacheName, options = {}) {
   const cache = await caches.open(cacheName);
-  const cached = await cache.match(request);
+
+  // Check if client requested no-cache (refresh button, router.refresh(), etc.)
+  // 1. Check Cache-Control header
+  const cacheControl = request.headers.get("Cache-Control");
+  const noCacheHeader =
+    cacheControl && (cacheControl.includes("no-cache") || cacheControl.includes("no-store"));
+  // 2. Check request.cache mode (used by Next.js router.refresh())
+  const noCacheMode =
+    request.cache === "no-cache" || request.cache === "no-store" || request.cache === "reload";
+  const noCache = noCacheHeader || noCacheMode;
+
+  // If no-cache, skip cached response and go network-first
+  const cached = noCache ? null : await cache.match(request);
 
   // Start network request (don't await)
   const fetchPromise = fetch(request)

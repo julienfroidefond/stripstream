@@ -18,6 +18,10 @@ interface SeriesClientWrapperProps {
 
 export function SeriesClientWrapper({
   children,
+  seriesId,
+  currentPage,
+  unreadOnly,
+  pageSize,
 }: SeriesClientWrapperProps) {
   const router = useRouter();
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -25,14 +29,30 @@ export function SeriesClientWrapper({
   const handleRefresh = async () => {
     try {
       setIsRefreshing(true);
-      // Revalider la page côté serveur
+
+      // Fetch fresh data from network with cache bypass
+      const params = new URLSearchParams({
+        page: String(currentPage),
+        size: String(pageSize),
+        ...(unreadOnly && { unreadOnly: "true" }),
+      });
+
+      const response = await fetch(`/api/komga/series/${seriesId}/books?${params}`, {
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache" },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to refresh series");
+      }
+
+      // Trigger Next.js revalidation to update the UI
       router.refresh();
       return { success: true };
     } catch {
       return { success: false, error: "Error refreshing series" };
     } finally {
-      // Petit délai pour laisser le temps au serveur de revalider
-      setTimeout(() => setIsRefreshing(false), 500);
+      setIsRefreshing(false);
     }
   };
 
@@ -52,10 +72,7 @@ export function SeriesClientWrapper({
         canRefresh={pullToRefresh.canRefresh}
         isHiding={pullToRefresh.isHiding}
       />
-      <RefreshProvider refreshSeries={handleRefresh}>
-        {children}
-      </RefreshProvider>
+      <RefreshProvider refreshSeries={handleRefresh}>{children}</RefreshProvider>
     </>
   );
 }
-
