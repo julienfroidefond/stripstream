@@ -19,7 +19,7 @@ import {
   Trash2,
   RefreshCw,
   HardDrive,
-  Image,
+  Image as ImageIcon,
   FileJson,
   BookOpen,
   CheckCircle2,
@@ -340,7 +340,7 @@ export function CacheSettings() {
                 onLoadEntries={handleLoadEntries}
               />
               <CacheItem
-                icon={<Image className="h-4 w-4" />}
+                icon={<ImageIcon className="h-4 w-4" />}
                 label={t("settings.cache.images")}
                 size={stats.images.size}
                 entries={stats.images.entries}
