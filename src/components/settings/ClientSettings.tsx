@@ -6,6 +6,7 @@ import { DisplaySettings } from "./DisplaySettings";
 import { KomgaSettings } from "./KomgaSettings";
 import { BackgroundSettings } from "./BackgroundSettings";
 import { AdvancedSettings } from "./AdvancedSettings";
+import { CacheSettings } from "./CacheSettings";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Monitor, Network } from "lucide-react";
 
@@ -40,6 +41,7 @@ export function ClientSettings({ initialConfig }: ClientSettingsProps) {
         <TabsContent value="connection" className="mt-6 space-y-6">
           <KomgaSettings initialConfig={initialConfig} />
           <AdvancedSettings />
+          <CacheSettings />
         </TabsContent>
       </Tabs>
     </div>

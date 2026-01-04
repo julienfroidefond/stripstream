@@ -136,6 +136,32 @@
         "title": "Error saving configuration",
         "message": "An error occurred while saving the configuration"
       }
+    },
+    "cache": {
+      "title": "Cache & Storage",
+      "description": "Manage local cache for optimal offline experience.",
+      "notSupported": "Offline cache is not supported by your browser.",
+      "initializing": "Initializing...",
+      "totalStorage": "Total storage",
+      "imagesQuota": "{used}% of images quota used",
+      "static": "Static resources",
+      "staticDesc": "Next.js scripts, styles and assets",
+      "api": "API data",
+      "apiDesc": "Series, books and library metadata",
+      "images": "Images",
+      "imagesDesc": "Covers and thumbnails (100 MB limit)",
+      "books": "Offline books",
+      "booksDesc": "Manually downloaded pages",
+      "clearAll": "Clear all cache",
+      "cleared": "Cache cleared",
+      "clearedDesc": "Cache has been cleared successfully",
+      "clearError": "Error clearing cache",
+      "unavailable": "Cache statistics unavailable",
+      "entry": "entry",
+      "entries": "entries",
+      "loadingEntries": "Loading entries...",
+      "noEntries": "No entries in this cache",
+      "loadError": "Error loading entries"
     }
   },
   "library": {
