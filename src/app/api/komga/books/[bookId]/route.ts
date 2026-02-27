@@ -21,6 +21,9 @@ export async function GET(
   } catch (error) {
     logger.error({ err: error }, "API Books - Erreur:");
     if (error instanceof AppError) {
+      const isNotFound =
+        error.code === ERROR_CODES.BOOK.NOT_FOUND ||
+        (error.code === ERROR_CODES.KOMGA.HTTP_ERROR && (error as any).params?.status === 404);
       return NextResponse.json(
         {
           error: {
@@ -29,7 +32,7 @@ export async function GET(
             message: getErrorMessage(error.code),
           } as AppError,
         },
-        { status: 500 }
+        { status: isNotFound ? 404 : 500 }
       );
     }
     return NextResponse.json(

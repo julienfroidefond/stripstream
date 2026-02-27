@@ -33,7 +33,7 @@ export class BookService extends BaseApiService {
       if (
         error instanceof AppError &&
         error.code === ERROR_CODES.KOMGA.HTTP_ERROR &&
-        (error as any).context?.status === 404
+        (error as any).params?.status === 404
       ) {
         return null;
       }
