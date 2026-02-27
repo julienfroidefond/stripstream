@@ -51,10 +51,4 @@ const logger = pino({
       }),
 });
 
-// Prevent memory leaks in development (Node.js runtime only)
-if (!isProduction && typeof process.stdout !== "undefined") {
-  process.stdout.setMaxListeners?.(20);
-  process.stderr.setMaxListeners?.(20);
-}
-
 export default logger;
