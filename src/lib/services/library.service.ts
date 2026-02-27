@@ -112,7 +112,7 @@ export class LibraryService extends BaseApiService {
         };
       }
 
-      const searchBody = { condition };
+      const searchBody: { condition: any; fullTextSearch?: string } = { condition };
 
       const params: Record<string, string | string[]> = {
         page: String(page),
@@ -120,9 +120,8 @@ export class LibraryService extends BaseApiService {
         sort: "metadata.titleSort,asc",
       };
 
-      // Filtre de recherche Komga (recherche dans le titre)
       if (search) {
-        params.search = search;
+        searchBody.fullTextSearch = search;
       }
 
       const response = await this.fetchFromApi<LibraryResponse<Series>>(
