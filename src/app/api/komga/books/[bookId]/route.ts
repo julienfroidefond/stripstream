@@ -7,6 +7,8 @@ import type { KomgaBookWithPages } from "@/types/komga";
 import type { NextRequest } from "next/server";
 import logger from "@/lib/logger";
 
+// Cache handled in service via fetchFromApi options
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ bookId: string }> }

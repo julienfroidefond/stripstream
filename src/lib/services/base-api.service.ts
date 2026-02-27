@@ -8,6 +8,8 @@ import logger from "@/lib/logger";
 interface KomgaRequestInit extends RequestInit {
   isImage?: boolean;
   noJson?: boolean;
+  /** Next.js cache duration in seconds. Use false to disable cache, number for TTL */
+  revalidate?: number | false;
 }
 
 interface KomgaUrlBuilder {
@@ -90,7 +92,8 @@ export abstract class BaseApiService {
     }
 
     const isDebug = process.env.KOMGA_DEBUG === "true";
-    const startTime = isDebug ? Date.now() : 0;
+    const isCacheDebug = process.env.CACHE_DEBUG === "true";
+    const startTime = isDebug || isCacheDebug ? Date.now() : 0;
 
     if (isDebug) {
       logger.info(
@@ -100,8 +103,20 @@ export abstract class BaseApiService {
           params,
           isImage: options.isImage,
           noJson: options.noJson,
+          revalidate: options.revalidate,
         },
         "🔵 Komga Request"
+      );
+    }
+
+    if (isCacheDebug && options.revalidate) {
+      logger.info(
+        {
+          url,
+          cache: "enabled",
+          ttl: options.revalidate,
+        },
+        "💾 Cache enabled"
       );
     }
 
@@ -122,6 +137,10 @@ export abstract class BaseApiService {
           connectTimeout: timeoutMs,
           bodyTimeout: timeoutMs,
           headersTimeout: timeoutMs,
+          // Next.js cache
+          next: options.revalidate !== undefined 
+            ? { revalidate: options.revalidate } 
+            : undefined,
         });
       } catch (fetchError: any) {
         // Gestion spécifique des erreurs DNS
@@ -139,6 +158,10 @@ export abstract class BaseApiService {
             // Force IPv4 si IPv6 pose problème
             // @ts-ignore
             family: 4,
+            // Next.js cache
+            next: options.revalidate !== undefined 
+              ? { revalidate: options.revalidate } 
+              : undefined,
           });
         } else if (fetchError?.cause?.code === "UND_ERR_CONNECT_TIMEOUT") {
           // Retry automatique sur timeout de connexion (cold start)
@@ -152,6 +175,10 @@ export abstract class BaseApiService {
             connectTimeout: timeoutMs,
             bodyTimeout: timeoutMs,
             headersTimeout: timeoutMs,
+            // Next.js cache
+            next: options.revalidate !== undefined 
+              ? { revalidate: options.revalidate } 
+              : undefined,
           });
         } else {
           throw fetchError;
@@ -160,8 +187,9 @@ export abstract class BaseApiService {
 
       clearTimeout(timeoutId);
 
+      const duration = Date.now() - startTime;
+
       if (isDebug) {
-        const duration = Date.now() - startTime;
         logger.info(
           {
             url,
@@ -171,6 +199,16 @@ export abstract class BaseApiService {
           },
           "🟢 Komga Response"
         );
+      }
+
+      // Log potential cache hit/miss based on response time
+      if (isCacheDebug && options.revalidate) {
+        // Fast response (< 50ms) is likely a cache hit
+        if (duration < 50) {
+          logger.info({ url, duration: `${duration}ms` }, "⚡ Cache HIT (fast response)");
+        } else {
+          logger.info({ url, duration: `${duration}ms` }, "🔄 Cache MISS (slow response)");
+        }
       }
 
       if (!response.ok) {

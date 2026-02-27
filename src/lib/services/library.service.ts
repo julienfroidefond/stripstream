@@ -14,18 +14,28 @@ interface KomgaLibraryRaw {
 }
 
 export class LibraryService extends BaseApiService {
+  private static readonly CACHE_TTL = 300; // 5 minutes
+
   static async getLibraries(): Promise<KomgaLibrary[]> {
     try {
-      const libraries = await this.fetchFromApi<KomgaLibraryRaw[]>({ path: "libraries" });
+      const libraries = await this.fetchFromApi<KomgaLibraryRaw[]>(
+        { path: "libraries" },
+        {},
+        { revalidate: this.CACHE_TTL }
+      );
 
-      // Enrich each library with book counts
+      // Enrich each library with book counts (parallel requests)
       const enrichedLibraries = await Promise.all(
         libraries.map(async (library) => {
           try {
-            const booksResponse = await this.fetchFromApi<{ totalElements: number }>({
-              path: "books",
-              params: { library_id: library.id, size: "0" },
-            });
+            const booksResponse = await this.fetchFromApi<{ totalElements: number }>(
+              {
+                path: "books",
+                params: { library_id: library.id, size: "0" },
+              },
+              {},
+              { revalidate: this.CACHE_TTL }
+            );
             return {
               ...library,
               importLastModified: "",
@@ -76,40 +86,19 @@ export class LibraryService extends BaseApiService {
       let condition: any;
 
       if (unreadOnly) {
-        // Utiliser allOf pour combiner libraryId avec anyOf pour UNREAD ou IN_PROGRESS
         condition = {
           allOf: [
-            {
-              libraryId: {
-                operator: "is",
-                value: libraryId,
-              },
-            },
+            { libraryId: { operator: "is", value: libraryId } },
             {
               anyOf: [
-                {
-                  readStatus: {
-                    operator: "is",
-                    value: "UNREAD",
-                  },
-                },
-                {
-                  readStatus: {
-                    operator: "is",
-                    value: "IN_PROGRESS",
-                  },
-                },
+                { readStatus: { operator: "is", value: "UNREAD" } },
+                { readStatus: { operator: "is", value: "IN_PROGRESS" } },
               ],
             },
           ],
         };
       } else {
-        condition = {
-          libraryId: {
-            operator: "is",
-            value: libraryId,
-          },
-        };
+        condition = { libraryId: { operator: "is", value: libraryId } };
       }
 
       const searchBody: { condition: any; fullTextSearch?: string } = { condition };
@@ -127,13 +116,10 @@ export class LibraryService extends BaseApiService {
       const response = await this.fetchFromApi<LibraryResponse<Series>>(
         { path: "series/list", params },
         headers,
-        {
-          method: "POST",
-          body: JSON.stringify(searchBody),
-        }
+        { method: "POST", body: JSON.stringify(searchBody), revalidate: this.CACHE_TTL }
       );
 
-      // Filtrer uniquement les séries supprimées côté client (léger)
+      // Filtrer uniquement les séries supprimées
       const filteredContent = response.content.filter((series) => !series.deleted);
 
       return {
@@ -149,12 +135,9 @@ export class LibraryService extends BaseApiService {
   static async scanLibrary(libraryId: string, deep: boolean = false): Promise<void> {
     try {
       await this.fetchFromApi(
-        {
-          path: `libraries/${libraryId}/scan`,
-          params: { deep: String(deep) },
-        },
+        { path: `libraries/${libraryId}/scan`, params: { deep: String(deep) } },
         {},
-        { method: "POST", noJson: true }
+        { method: "POST", noJson: true, revalidate: 0 } // bypass cache on mutations
       );
     } catch (error) {
       throw new AppError(ERROR_CODES.LIBRARY.SCAN_ERROR, { libraryId }, error);

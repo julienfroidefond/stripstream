@@ -6,12 +6,22 @@ import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
 
 export class BookService extends BaseApiService {
+  private static readonly CACHE_TTL = 60; // 1 minute
+
   static async getBook(bookId: string): Promise<KomgaBookWithPages> {
     try {
       // Récupération parallèle des détails du tome et des pages
       const [book, pages] = await Promise.all([
-        this.fetchFromApi<KomgaBook>({ path: `books/${bookId}` }),
-        this.fetchFromApi<{ number: number }[]>({ path: `books/${bookId}/pages` }),
+        this.fetchFromApi<KomgaBook>(
+          { path: `books/${bookId}` },
+          {},
+          { revalidate: this.CACHE_TTL }
+        ),
+        this.fetchFromApi<{ number: number }[]>(
+          { path: `books/${bookId}/pages` },
+          {},
+          { revalidate: this.CACHE_TTL }
+        ),
       ]);
 
       return {
@@ -44,7 +54,11 @@ export class BookService extends BaseApiService {
 
   static async getBookSeriesId(bookId: string): Promise<string> {
     try {
-      const book = await this.fetchFromApi<KomgaBook>({ path: `books/${bookId}` });
+      const book = await this.fetchFromApi<KomgaBook>(
+        { path: `books/${bookId}` },
+        {},
+        { revalidate: this.CACHE_TTL }
+      );
       return book.seriesId;
     } catch (error) {
       throw new AppError(ERROR_CODES.BOOK.NOT_FOUND, {}, error);

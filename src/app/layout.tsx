@@ -93,7 +93,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     }
 
     if (librariesData.status === "fulfilled") {
-      libraries = librariesData.value;
+      libraries = librariesData.value || [];
     }
 
     if (favoritesData.status === "fulfilled") {

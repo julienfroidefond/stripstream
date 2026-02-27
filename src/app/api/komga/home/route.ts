@@ -5,6 +5,8 @@ import { AppError } from "@/utils/errors";
 import { getErrorMessage } from "@/utils/errors";
 import logger from "@/lib/logger";
 
+// Cache handled in service via fetchFromApi options
+
 export async function GET() {
   try {
     const data = await HomeService.getHomeData();

@@ -5,7 +5,8 @@ import { AppError } from "@/utils/errors";
 import type { KomgaLibrary } from "@/types/komga";
 import { getErrorMessage } from "@/utils/errors";
 import logger from "@/lib/logger";
-export const dynamic = "force-dynamic";
+
+// Cache handled in service via fetchFromApi options
 
 export async function GET() {
   try {

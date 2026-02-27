@@ -10,9 +10,15 @@ import type { UserPreferences } from "@/types/preferences";
 import logger from "@/lib/logger";
 
 export class SeriesService extends BaseApiService {
+  private static readonly CACHE_TTL = 120; // 2 minutes
+
   static async getSeries(seriesId: string): Promise<KomgaSeries> {
     try {
-      return this.fetchFromApi<KomgaSeries>({ path: `series/${seriesId}` });
+      return this.fetchFromApi<KomgaSeries>(
+        { path: `series/${seriesId}` },
+        {},
+        { revalidate: this.CACHE_TTL }
+      );
     } catch (error) {
       throw new AppError(ERROR_CODES.SERIES.FETCH_ERROR, {}, error);
     }
@@ -81,6 +87,7 @@ export class SeriesService extends BaseApiService {
         {
           method: "POST",
           body: JSON.stringify(searchBody),
+          revalidate: this.CACHE_TTL,
         }
       );
 

@@ -6,6 +6,8 @@ import { getErrorMessage } from "@/utils/errors";
 import type { NextRequest } from "next/server";
 import logger from "@/lib/logger";
 
+// Cache handled in service via fetchFromApi options
+
 const DEFAULT_PAGE_SIZE = 20;
 
 export async function GET(
