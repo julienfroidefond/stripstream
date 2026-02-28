@@ -61,7 +61,11 @@ export const SeriesHeader = ({ series, refreshSeries }: SeriesHeaderProps) => {
 
       if (response.ok) {
         setIsFavorite(!isFavorite);
-        window.dispatchEvent(new Event("favoritesChanged"));
+        // Dispatcher l'événement avec le seriesId pour mise à jour optimiste de la sidebar
+        const event = new CustomEvent("favoritesChanged", {
+          detail: { seriesId: series.id, action: isFavorite ? "remove" : "add" },
+        });
+        window.dispatchEvent(event);
         toast({
           title: t(isFavorite ? "series.header.favorite.remove" : "series.header.favorite.add"),
           description: series.metadata.title,

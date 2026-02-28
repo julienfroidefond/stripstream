@@ -85,10 +85,38 @@ export function Sidebar({
     }
   }, [toast]);
 
-  // Mettre à jour les favoris quand ils changent
+  // Mettre à jour les favoris quand ils changent (mise à jour optimiste)
   useEffect(() => {
-    const handleFavoritesChange = () => {
-      refreshFavorites();
+    const handleFavoritesChange = async (event: Event) => {
+      const customEvent = event as CustomEvent<{ seriesId: string; action: "add" | "remove" }>;
+
+      // Si on a les détails de l'action, faire une mise à jour optimiste locale
+      if (customEvent.detail?.seriesId) {
+        const { seriesId, action } = customEvent.detail;
+
+        if (action === "add") {
+          // Fetch les détails de la série ajoutée et l'ajouter au state
+          try {
+            const response = await fetch(`/api/komga/series/${seriesId}`);
+            if (response.ok) {
+              const seriesData = await response.json();
+              setFavorites((prev) => {
+                // Éviter les doublons
+                if (prev.some((s) => s.id === seriesId)) return prev;
+                return [...prev, seriesData];
+              });
+            }
+          } catch (error) {
+            logger.error({ err: error }, "Erreur lors de l'ajout optimiste du favori:");
+          }
+        } else if (action === "remove") {
+          // Retirer la série du state directement
+          setFavorites((prev) => prev.filter((s) => s.id !== seriesId));
+        }
+      } else {
+        // Fallback: refetch complet si pas de détails (ex: événement externe)
+        refreshFavorites();
+      }
     };
 
     window.addEventListener("favoritesChanged", handleFavoritesChange);
