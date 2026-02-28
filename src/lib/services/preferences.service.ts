@@ -55,13 +55,15 @@ export class PreferencesService {
       const user = await this.getCurrentUser();
       const userId = parseInt(user.id, 10);
 
-      const updateData: Record<string, any> = {};
+      const updateData: Prisma.PreferencesUpdateInput = {};
       if (preferences.showThumbnails !== undefined)
         updateData.showThumbnails = preferences.showThumbnails;
       if (preferences.showOnlyUnread !== undefined)
         updateData.showOnlyUnread = preferences.showOnlyUnread;
       if (preferences.displayMode !== undefined) updateData.displayMode = preferences.displayMode;
-      if (preferences.background !== undefined) updateData.background = preferences.background;
+      if (preferences.background !== undefined) {
+        updateData.background = preferences.background as unknown as Prisma.InputJsonValue;
+      }
       if (preferences.readerPrefetchCount !== undefined)
         updateData.readerPrefetchCount = preferences.readerPrefetchCount;
 

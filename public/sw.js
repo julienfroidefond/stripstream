@@ -12,7 +12,6 @@ const OFFLINE_PAGE = "/offline.html";
 const PRECACHE_ASSETS = [OFFLINE_PAGE, "/manifest.json"];
 
 // Cache size limits
-const IMAGES_CACHE_MAX_SIZE = 100 * 1024 * 1024; // 100MB
 const IMAGES_CACHE_MAX_ENTRIES = 500;
 
 // ============================================================================
@@ -43,11 +42,6 @@ function isBookPageRequest(url) {
     (url.includes("/api/komga/images/books/") || url.includes("/api/komga/books/")) &&
     url.includes("/pages/")
   );
-}
-
-function isBooksManualCache(url) {
-  // Check if this is a request that should be handled by the books manual cache
-  return url.includes("/api/komga/images/books/") && url.includes("/pages");
 }
 
 // ============================================================================
@@ -270,7 +264,7 @@ self.addEventListener("install", (event) => {
         // eslint-disable-next-line no-console
         console.log("[SW] Precached assets");
       } catch (error) {
-        // eslint-disable-next-line no-console
+         
         console.error("[SW] Precache failed:", error);
       }
       await self.skipWaiting();

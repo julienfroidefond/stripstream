@@ -15,7 +15,10 @@ import { useBookOfflineStatus } from "@/hooks/useBookOfflineStatus";
 import { WifiOff } from "lucide-react";
 
 // Fonction utilitaire pour obtenir les informations de statut de lecture
-const getReadingStatusInfo = (book: KomgaBook, t: (key: string, options?: any) => string) => {
+const getReadingStatusInfo = (
+  book: KomgaBook,
+  t: (key: string, options?: { [key: string]: string | number }) => string
+) => {
   if (!book.readProgress) {
     return {
       label: t("books.status.unread"),

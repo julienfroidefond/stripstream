@@ -13,6 +13,8 @@ interface KomgaLibraryRaw {
   unavailable: boolean;
 }
 
+type KomgaCondition = Record<string, unknown>;
+
 export class LibraryService extends BaseApiService {
   private static readonly CACHE_TTL = 300; // 5 minutes
 
@@ -83,7 +85,7 @@ export class LibraryService extends BaseApiService {
       const headers = { "Content-Type": "application/json" };
 
       // Construction du body de recherche pour Komga
-      let condition: any;
+      let condition: KomgaCondition;
 
       if (unreadOnly) {
         condition = {
@@ -101,7 +103,7 @@ export class LibraryService extends BaseApiService {
         condition = { libraryId: { operator: "is", value: libraryId } };
       }
 
-      const searchBody: { condition: any; fullTextSearch?: string } = { condition };
+      const searchBody: { condition: KomgaCondition; fullTextSearch?: string } = { condition };
 
       const params: Record<string, string | string[]> = {
         page: String(page),

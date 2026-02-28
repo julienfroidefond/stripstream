@@ -159,7 +159,7 @@ export function ServiceWorkerProvider({ children }: { children: ReactNode }) {
       // Silently ignore message handling errors to prevent app crashes
       // This can happen with malformed messages or during SW reinstall
       if (process.env.NODE_ENV === "development") {
-        // eslint-disable-next-line no-console
+         
         console.warn("[SW Context] Error handling message:", error, event.data);
       }
     }

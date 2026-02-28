@@ -20,7 +20,10 @@ interface SeriesListItemProps {
 }
 
 // Utility function to get reading status info
-const getReadingStatusInfo = (series: KomgaSeries, t: (key: string, options?: any) => string) => {
+const getReadingStatusInfo = (
+  series: KomgaSeries,
+  t: (key: string, options?: { [key: string]: string | number }) => string
+) => {
   if (series.booksCount === 0) {
     return {
       label: t("series.status.noBooks"),

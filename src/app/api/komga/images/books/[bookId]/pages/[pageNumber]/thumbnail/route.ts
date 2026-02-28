@@ -41,7 +41,7 @@ export async function GET(
     if (httpStatus === 404) {
       const { bookId, pageNumber: pageNumberParam } = await params;
       const pageNumber: number = parseInt(pageNumberParam);
-      // eslint-disable-next-line no-console
+       
       logger.info(`📷 Page ${pageNumber} thumbnail not found for book: ${bookId}`);
       return NextResponse.json(
         {

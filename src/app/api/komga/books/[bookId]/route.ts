@@ -7,6 +7,8 @@ import type { KomgaBookWithPages } from "@/types/komga";
 import type { NextRequest } from "next/server";
 import logger from "@/lib/logger";
 
+type ErrorWithStatusParams = AppError & { params?: { status?: number } };
+
 // Cache handled in service via fetchFromApi options
 
 export async function GET(
@@ -25,7 +27,8 @@ export async function GET(
     if (error instanceof AppError) {
       const isNotFound =
         error.code === ERROR_CODES.BOOK.NOT_FOUND ||
-        (error.code === ERROR_CODES.KOMGA.HTTP_ERROR && (error as any).params?.status === 404);
+        (error.code === ERROR_CODES.KOMGA.HTTP_ERROR &&
+          (error as ErrorWithStatusParams).params?.status === 404);
       return NextResponse.json(
         {
           error: {

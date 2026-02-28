@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { ConfigDBService } from "@/lib/services/config-db.service";
 import { TestService } from "@/lib/services/test.service";
-import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 import type { KomgaConfig, KomgaConfigData, KomgaLibrary } from "@/types/komga";
 

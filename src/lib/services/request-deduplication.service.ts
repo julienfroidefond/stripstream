@@ -6,7 +6,7 @@ type PendingRequest<T> = Promise<T>;
 
 class RequestDeduplicationService {
   // Map pour tracker les requêtes en cours par clé unique
-  private pendingRequests = new Map<string, PendingRequest<any>>();
+  private pendingRequests = new Map<string, PendingRequest<unknown>>();
 
   /**
    * Exécute une requête de manière dédupliquée

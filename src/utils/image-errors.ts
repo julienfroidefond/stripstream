@@ -10,7 +10,8 @@ export function findHttpStatus(error: unknown): number | null {
 
   // Si c'est une erreur HTTP, récupérer le status
   if (error.code === ERROR_CODES.KOMGA.HTTP_ERROR) {
-    return (error.params as any)?.status || null;
+    const params = error.params as { status?: number } | undefined;
+    return params?.status || null;
   }
 
   // Sinon, chercher récursivement dans originalError

@@ -1,7 +1,6 @@
 "use server";
 
 import { FavoriteService } from "@/lib/services/favorite.service";
-import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 
 /**

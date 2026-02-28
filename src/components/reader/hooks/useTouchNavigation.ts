@@ -4,7 +4,7 @@ import { useReadingDirection } from "./useReadingDirection";
 interface UseTouchNavigationProps {
   onPreviousPage: () => void;
   onNextPage: () => void;
-  pswpRef: React.MutableRefObject<any>;
+  pswpRef: React.MutableRefObject<unknown>;
 }
 
 export function useTouchNavigation({

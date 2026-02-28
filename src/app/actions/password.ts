@@ -2,7 +2,6 @@
 
 import { UserService } from "@/lib/services/user.service";
 import { AuthServerService } from "@/lib/services/auth-server.service";
-import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 
 /**

@@ -10,6 +10,7 @@ import { AuthProvider } from "@/components/providers/AuthProvider";
 import { cookies } from "next/headers";
 import { defaultPreferences } from "@/types/preferences";
 import type { UserPreferences } from "@/types/preferences";
+import type { KomgaLibrary, KomgaSeries } from "@/types/komga";
 import logger from "@/lib/logger";
 
 const inter = Inter({
@@ -73,8 +74,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   let preferences: UserPreferences = defaultPreferences;
   let userIsAdmin = false;
-  let libraries: any[] = [];
-  let favorites: any[] = [];
+  let libraries: KomgaLibrary[] = [];
+  let favorites: KomgaSeries[] = [];
 
   try {
     const [preferencesData, isAdminCheck, librariesData, favoritesData] = await Promise.allSettled([

@@ -24,7 +24,7 @@ export async function GET(
 
     if (httpStatus === 404) {
       const bookId: string = (await params).bookId;
-      // eslint-disable-next-line no-console
+       
       logger.info(`📷 Thumbnail not found for book: ${bookId}`);
       return NextResponse.json(
         {

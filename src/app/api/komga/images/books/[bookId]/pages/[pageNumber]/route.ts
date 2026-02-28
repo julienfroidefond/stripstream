@@ -26,7 +26,7 @@ export async function GET(
 
     if (httpStatus === 404) {
       const { bookId, pageNumber } = await params;
-      // eslint-disable-next-line no-console
+       
       logger.info(`📷 Page ${pageNumber} not found for book: ${bookId}`);
       return NextResponse.json(
         {

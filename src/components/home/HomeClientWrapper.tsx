@@ -6,7 +6,6 @@ import { RefreshButton } from "@/components/library/RefreshButton";
 import { PullToRefreshIndicator } from "@/components/common/PullToRefreshIndicator";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { useTranslate } from "@/hooks/useTranslate";
-import logger from "@/lib/logger";
 
 interface HomeClientWrapperProps {
   children: ReactNode;
@@ -20,22 +19,10 @@ export function HomeClientWrapper({ children }: HomeClientWrapperProps) {
   const handleRefresh = async () => {
     try {
       setIsRefreshing(true);
-
-      // Fetch fresh data from network with cache bypass
-      const response = await fetch("/api/komga/home", {
-        cache: "no-store",
-        headers: { "Cache-Control": "no-cache" },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to refresh home");
-      }
-
-      // Trigger Next.js revalidation to update the UI
+      // Re-fetch server-side data
       router.refresh();
       return { success: true };
-    } catch (error) {
-      logger.error({ err: error }, "Erreur lors du rafraîchissement:");
+    } catch (_error) {
       return { success: false, error: "Erreur lors du rafraîchissement de la page d'accueil" };
     } finally {
       setIsRefreshing(false);

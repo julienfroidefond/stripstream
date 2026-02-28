@@ -9,6 +9,8 @@ import { AppError } from "../../utils/errors";
 import type { UserPreferences } from "@/types/preferences";
 import logger from "@/lib/logger";
 
+type KomgaCondition = Record<string, unknown>;
+
 export class SeriesService extends BaseApiService {
   private static readonly CACHE_TTL = 120; // 2 minutes
 
@@ -34,7 +36,7 @@ export class SeriesService extends BaseApiService {
       const headers = { "Content-Type": "application/json" };
 
       // Construction du body de recherche pour Komga
-      let condition: any;
+      let condition: KomgaCondition;
 
       if (unreadOnly) {
         // Utiliser allOf pour combiner seriesId avec anyOf pour UNREAD ou IN_PROGRESS

@@ -19,6 +19,13 @@ interface KomgaUrlBuilder {
   params?: Record<string, string | string[]>;
 }
 
+interface FetchErrorLike {
+  code?: string;
+  cause?: {
+    code?: string;
+  };
+}
+
 export abstract class BaseApiService {
   protected static async getKomgaConfig(): Promise<AuthConfig> {
     try {
@@ -146,9 +153,10 @@ export abstract class BaseApiService {
               ? { revalidate: options.revalidate } 
               : undefined,
         });
-      } catch (fetchError: any) {
+      } catch (fetchError: unknown) {
+        const normalizedError = fetchError as FetchErrorLike;
         // Gestion spécifique des erreurs DNS
-        if (fetchError?.cause?.code === "EAI_AGAIN" || fetchError?.code === "EAI_AGAIN") {
+        if (normalizedError.cause?.code === "EAI_AGAIN" || normalizedError.code === "EAI_AGAIN") {
           logger.error(`DNS resolution failed for ${url}. Retrying with different DNS settings...`);
 
           response = await fetch(url, {
@@ -168,7 +176,7 @@ export abstract class BaseApiService {
                 ? { revalidate: options.revalidate } 
                 : undefined,
           });
-        } else if (fetchError?.cause?.code === "UND_ERR_CONNECT_TIMEOUT") {
+        } else if (normalizedError.cause?.code === "UND_ERR_CONNECT_TIMEOUT") {
           // Retry automatique sur timeout de connexion (cold start)
           logger.info(`⏱️  Connection timeout for ${url}. Retrying once (cold start)...`);
 

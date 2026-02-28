@@ -5,6 +5,8 @@ import { PreferencesService } from "./preferences.service";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
 
+type ErrorWithStatusParams = AppError & { params?: { status?: number } };
+
 export class BookService extends BaseApiService {
   private static readonly CACHE_TTL = 60; // 1 minute
 
@@ -26,7 +28,7 @@ export class BookService extends BaseApiService {
 
       return {
         book,
-        pages: pages.map((page: any) => page.number),
+        pages: pages.map((page) => page.number),
       };
     } catch (error) {
       throw new AppError(ERROR_CODES.BOOK.NOT_FOUND, {}, error);
@@ -43,7 +45,7 @@ export class BookService extends BaseApiService {
       if (
         error instanceof AppError &&
         error.code === ERROR_CODES.KOMGA.HTTP_ERROR &&
-        (error as any).params?.status === 404
+        (error as ErrorWithStatusParams).params?.status === 404
       ) {
         return null;
       }

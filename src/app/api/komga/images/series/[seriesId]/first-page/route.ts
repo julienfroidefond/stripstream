@@ -26,7 +26,7 @@ export async function GET(
 
     if (httpStatus === 404) {
       const seriesId: string = (await params).seriesId;
-      // eslint-disable-next-line no-console
+       
       logger.info(`📷 First page image not found for series: ${seriesId}`);
       return NextResponse.json(
         {

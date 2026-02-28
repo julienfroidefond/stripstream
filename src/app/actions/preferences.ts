@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { PreferencesService } from "@/lib/services/preferences.service";
-import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 import type { UserPreferences } from "@/types/preferences";
 

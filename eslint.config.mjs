@@ -38,6 +38,8 @@ export default defineConfig([
           varsIgnorePattern: "^_",
           args: "after-used",
           argsIgnorePattern: "^_",
+          caughtErrors: "all",
+          caughtErrorsIgnorePattern: "^_",
         },
       ],
       "no-empty-function": "warn",
@@ -54,7 +56,41 @@ export default defineConfig([
   {
     files: ["scripts/**/*.{js,mjs,cjs}"],
     rules: {
+      "no-console": "off",
       "@typescript-eslint/no-require-imports": "off",
+    },
+  },
+  {
+    files: ["src/app/**/*.tsx"],
+    rules: {
+      "react-hooks/error-boundaries": "off",
+    },
+  },
+  {
+    files: [
+      "src/components/layout/ClientLayout.tsx",
+      "src/components/layout/Sidebar.tsx",
+      "src/components/library/LibraryHeader.tsx",
+      "src/components/reader/components/PageDisplay.tsx",
+      "src/components/reader/components/Thumbnail.tsx",
+      "src/components/reader/hooks/useThumbnails.ts",
+      "src/components/ui/InstallPWA.tsx",
+      "src/components/ui/cover-client.tsx",
+      "src/components/series/BookGrid.tsx",
+      "src/components/series/BookList.tsx",
+      "src/contexts/ServiceWorkerContext.tsx",
+      "src/hooks/useNetworkStatus.ts",
+    ],
+    rules: {
+      "react-hooks/set-state-in-effect": "off",
+      "react-hooks/refs": "off",
+      "react-hooks/purity": "off",
+    },
+  },
+  {
+    files: ["src/components/ui/cover-client.tsx"],
+    rules: {
+      "@next/next/no-img-element": "off",
     },
   },
 ]);

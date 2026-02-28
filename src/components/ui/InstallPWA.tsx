@@ -9,6 +9,10 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
+interface NavigatorStandalone extends Navigator {
+  standalone?: boolean;
+}
+
 const DISMISS_KEY = "pwa-install-dismissed";
 const DISMISS_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 jours en millisecondes
 
@@ -24,7 +28,7 @@ export function InstallPWA() {
     const checkStandalone = () => {
       return (
         window.matchMedia("(display-mode: standalone)").matches ||
-        (window.navigator as any).standalone ||
+        (window.navigator as NavigatorStandalone).standalone ||
         document.referrer.includes("android-app://")
       );
     };
