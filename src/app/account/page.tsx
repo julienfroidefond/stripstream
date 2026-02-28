@@ -25,7 +25,7 @@ export default async function AccountPage() {
 
           <div className="grid gap-6 md:grid-cols-2">
             <UserProfileCard profile={{ ...profile, stats }} />
-            <ChangePasswordForm />
+            <ChangePasswordForm username={profile.email} />
           </div>
         </div>
       </div>

@@ -20,32 +20,34 @@ export function ClientSettings({ initialConfig, initialLibraries }: ClientSettin
   const { t } = useTranslate();
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-6">
-      <h1 className="text-3xl font-bold">{t("settings.title")}</h1>
+    <div className="container mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto space-y-8">
+        <h1 className="text-3xl font-bold">{t("settings.title")}</h1>
 
-      <Tabs defaultValue="display" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="display" className="flex items-center gap-2">
-            <Monitor className="h-4 w-4" />
-            {t("settings.tabs.display")}
-          </TabsTrigger>
-          <TabsTrigger value="connection" className="flex items-center gap-2">
-            <Network className="h-4 w-4" />
-            {t("settings.tabs.connection")}
-          </TabsTrigger>
-        </TabsList>
+        <Tabs defaultValue="display" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="display" className="flex items-center gap-2">
+              <Monitor className="h-4 w-4" />
+              {t("settings.tabs.display")}
+            </TabsTrigger>
+            <TabsTrigger value="connection" className="flex items-center gap-2">
+              <Network className="h-4 w-4" />
+              {t("settings.tabs.connection")}
+            </TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="display" className="mt-6 space-y-6">
-          <DisplaySettings />
-          <BackgroundSettings initialLibraries={initialLibraries} />
-        </TabsContent>
+          <TabsContent value="display" className="mt-6 space-y-6">
+            <DisplaySettings />
+            <BackgroundSettings initialLibraries={initialLibraries} />
+          </TabsContent>
 
-        <TabsContent value="connection" className="mt-6 space-y-6">
-          <KomgaSettings initialConfig={initialConfig} />
-          <AdvancedSettings />
-          <CacheSettings />
-        </TabsContent>
-      </Tabs>
+          <TabsContent value="connection" className="mt-6 space-y-6">
+            <KomgaSettings initialConfig={initialConfig} />
+            <AdvancedSettings />
+            <CacheSettings />
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }

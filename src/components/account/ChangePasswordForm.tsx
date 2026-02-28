@@ -9,7 +9,11 @@ import { useToast } from "@/components/ui/use-toast";
 import { Lock } from "lucide-react";
 import { changePassword } from "@/app/actions/password";
 
-export function ChangePasswordForm() {
+interface ChangePasswordFormProps {
+  username?: string;
+}
+
+export function ChangePasswordForm({ username }: ChangePasswordFormProps) {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -77,13 +81,26 @@ export function ChangePasswordForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <Input
+            type="text"
+            name="username"
+            autoComplete="username"
+            value={username || ""}
+            readOnly
+            tabIndex={-1}
+            aria-hidden="true"
+            className="sr-only"
+          />
+
           <div className="space-y-2">
             <Label htmlFor="currentPassword">Mot de passe actuel</Label>
             <div className="relative">
               <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
                 id="currentPassword"
+                name="currentPassword"
                 type="password"
+                autoComplete="current-password"
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 className="pl-9"
@@ -99,7 +116,9 @@ export function ChangePasswordForm() {
               <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
                 id="newPassword"
+                name="newPassword"
                 type="password"
+                autoComplete="new-password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 className="pl-9"
@@ -115,7 +134,9 @@ export function ChangePasswordForm() {
               <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
                 id="confirmPassword"
+                name="confirmPassword"
                 type="password"
+                autoComplete="new-password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className="pl-9"
