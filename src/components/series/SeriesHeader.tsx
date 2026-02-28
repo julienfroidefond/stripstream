@@ -13,6 +13,7 @@ import { SeriesCover } from "@/components/ui/series-cover";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { IconButton } from "@/components/ui/icon-button";
 import logger from "@/lib/logger";
+import { addToFavorites, removeFromFavorites } from "@/app/actions/favorites";
 
 interface SeriesHeaderProps {
   series: KomgaSeries;
@@ -51,15 +52,10 @@ export const SeriesHeader = ({ series, refreshSeries }: SeriesHeaderProps) => {
 
   const handleToggleFavorite = async () => {
     try {
-      const response = await fetch(`/api/komga/favorites`, {
-        method: isFavorite ? "DELETE" : "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ seriesId: series.id }),
-      });
+      const action = isFavorite ? removeFromFavorites : addToFavorites;
+      const result = await action(series.id);
 
-      if (response.ok) {
+      if (result.success) {
         setIsFavorite(!isFavorite);
         // Dispatcher l'événement avec le seriesId pour mise à jour optimiste de la sidebar
         const event = new CustomEvent("favoritesChanged", {
@@ -70,10 +66,6 @@ export const SeriesHeader = ({ series, refreshSeries }: SeriesHeaderProps) => {
           title: t(isFavorite ? "series.header.favorite.remove" : "series.header.favorite.add"),
           description: series.metadata.title,
         });
-      } else if (response.status === 500) {
-        throw new AppError(ERROR_CODES.FAVORITE.SERVER_ERROR);
-      } else if (response.status === 404) {
-        throw new AppError(ERROR_CODES.FAVORITE.UPDATE_ERROR);
       } else {
         throw new AppError(
           isFavorite ? ERROR_CODES.FAVORITE.DELETE_ERROR : ERROR_CODES.FAVORITE.ADD_ERROR
