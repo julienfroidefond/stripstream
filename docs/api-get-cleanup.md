@@ -24,13 +24,18 @@ Routes GET actuellement présentes :
 
 | Route | Utilisation actuelle | Pourquoi garder maintenant | Piste de simplification |
 |-------|----------------------|----------------------------|-------------------------|
-| `GET /api/komga/libraries/[libraryId]/series` | `src/app/libraries/[libraryId]/LibraryClientWrapper.tsx` (pagination/filtre/recherche) | Navigation dynamique pilotée par query params côté client | Évaluer migration partielle vers navigation server (`searchParams`) |
-| `GET /api/komga/series/[seriesId]/books` | `src/app/series/[seriesId]/SeriesClientWrapper.tsx` (pagination/filtre) | Même contrainte de pagination dynamique | Même stratégie: server-first puis interactions ciblées |
 | `GET /api/komga/random-book` | `src/components/layout/ClientLayout.tsx` | Action utilisateur ponctuelle (random) | Option: server action dédiée plutôt qu'API GET |
 | `GET /api/komga/books/[bookId]` | fallback dans `ClientBookPage.tsx`, usage `DownloadManager.tsx` | fallback utile hors flux page SSR | Limiter au fallback strict, éviter le double-fetch |
 | `GET /api/komga/series/[seriesId]` | utilisé via Sidebar pour enrichir les favoris | enrichissement client en cascade | Charger les métadonnées nécessaires en amont côté server |
 | `GET /api/user/profile` | pas d'appel client direct trouvé | route utile pour consommation API interne/outils | Vérifier si remplaçable par service server direct |
 | `GET /api/komga/home` | endpoint de données agrégées | peut rester tant que la page consomme un service centralisé | privilégier appel server direct depuis page/home |
+
+### B2. Migrees en Lot 2 (pagination server-first)
+
+| Route | Utilisation client actuelle | Cible | Action |
+|-------|-----------------------------|-------|--------|
+| `GET /api/komga/libraries/[libraryId]/series` | `src/app/libraries/[libraryId]/LibraryClientWrapper.tsx` | Chargement via `searchParams` dans page server | ✅ Supprimée |
+| `GET /api/komga/series/[seriesId]/books` | `src/app/series/[seriesId]/SeriesClientWrapper.tsx` | Chargement via `searchParams` dans page server | ✅ Supprimée |
 
 ### C. A conserver (API de transport / framework)
 

@@ -36,13 +36,7 @@ export default async function SeriesPage({ params, searchParams }: PageProps) {
     ]);
 
     return (
-      <SeriesClientWrapper
-        seriesId={seriesId}
-        currentPage={currentPage}
-        unreadOnly={unreadOnly}
-        pageSize={effectivePageSize}
-        preferences={preferences}
-      >
+      <SeriesClientWrapper>
         <SeriesContent
           series={series}
           books={books}
