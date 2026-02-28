@@ -9,7 +9,7 @@
     "start:prod": "node scripts/init-db.mjs && pnpm start",
     "init-db": "node scripts/init-db.mjs",
     "reset-admin-password": "node scripts/reset-admin-password.mjs",
-    "lint": "next lint",
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "icons": "node scripts/generate-icons.js",
     "postinstall": "prisma generate"

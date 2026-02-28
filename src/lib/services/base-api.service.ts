@@ -135,7 +135,7 @@ export abstract class BaseApiService {
           headers,
           ...options,
           signal: controller.signal,
-          // @ts-ignore - undici-specific options not in standard fetch types
+          // @ts-expect-error - undici-specific options not in standard fetch types
           connectTimeout: timeoutMs,
           bodyTimeout: timeoutMs,
           headersTimeout: timeoutMs,
@@ -155,12 +155,11 @@ export abstract class BaseApiService {
             headers,
             ...options,
             signal: controller.signal,
-            // @ts-ignore - undici-specific options
+            // @ts-expect-error - undici-specific options
             connectTimeout: timeoutMs,
             bodyTimeout: timeoutMs,
             headersTimeout: timeoutMs,
             // Force IPv4 si IPv6 pose problème
-            // @ts-ignore
             family: 4,
             // Next.js cache with tags support
             next: options.tags 
@@ -177,7 +176,7 @@ export abstract class BaseApiService {
             headers,
             ...options,
             signal: controller.signal,
-            // @ts-ignore - undici-specific options
+            // @ts-expect-error - undici-specific options
             connectTimeout: timeoutMs,
             bodyTimeout: timeoutMs,
             headersTimeout: timeoutMs,
