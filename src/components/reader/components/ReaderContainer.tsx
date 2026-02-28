@@ -18,7 +18,7 @@ export function ReaderContainer({ children, onContainerClick }: ReaderContainerP
   return (
     <div
       ref={readerRef}
-      className="reader-zoom-enabled fixed inset-0 bg-background/95 backdrop-blur-sm z-50 overflow-hidden"
+      className="reader-zoom-enabled fixed inset-0 z-50 overflow-hidden bg-[radial-gradient(90%_70%_at_50%_8%,hsl(var(--primary)/0.1),transparent_50%),linear-gradient(to_bottom,hsl(var(--background)/0.97),hsl(var(--background)/0.93)_40%,hsl(var(--background)))] backdrop-blur-sm"
       onClick={handleContainerClick}
     >
       <div className="relative h-full flex flex-col items-center justify-center">{children}</div>

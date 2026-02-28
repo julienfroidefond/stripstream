@@ -55,7 +55,7 @@ export const NavigationBar = ({
   return (
     <div
       className={cn(
-        "absolute bottom-0 left-0 right-0 bg-background/70 backdrop-blur-md border-t border-border/40 transition-all duration-300 ease-in-out z-30",
+        "absolute bottom-0 left-0 right-0 z-30 border-t border-border/60 bg-background/60 backdrop-blur-xl transition-all duration-300 ease-in-out",
         showThumbnails ? "h-52 opacity-100" : "h-0 opacity-0"
       )}
     >
@@ -63,7 +63,7 @@ export const NavigationBar = ({
         <>
           <div
             id="thumbnails-container"
-            className="h-full overflow-x-auto flex items-center gap-2 px-4 scroll-smooth snap-x snap-mandatory"
+            className="flex h-full snap-x snap-mandatory items-center gap-2 overflow-x-auto px-4 scroll-smooth"
             onTouchStart={(e) => e.stopPropagation()}
             onTouchMove={(e) => e.stopPropagation()}
             onTouchEnd={(e) => e.stopPropagation()}
@@ -89,8 +89,8 @@ export const NavigationBar = ({
             <div className="w-[calc(50vw-18rem)] flex-shrink-0" />
           </div>
 
-          {showControls && (
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full px-4 py-2 rounded-full bg-background/70 backdrop-blur-md text-sm">
+            {showControls && (
+            <div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-full rounded-full border border-border/60 bg-background/60 px-4 py-2 text-sm shadow-[0_8px_24px_-16px_rgba(0,0,0,0.75)] backdrop-blur-xl">
               Page {currentPage} / {pages.length}
             </div>
           )}

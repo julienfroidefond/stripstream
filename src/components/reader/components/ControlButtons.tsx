@@ -45,7 +45,7 @@ export const ControlButtons = ({
       {/* Boutons de contrôle */}
       <div
         className={cn(
-          "absolute top-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 transition-all duration-300 p-1.5 rounded-full bg-background/70 backdrop-blur-md",
+          "absolute left-1/2 top-4 z-30 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-border/60 bg-background/55 p-1.5 shadow-[0_8px_28px_-18px_rgba(0,0,0,0.75)] backdrop-blur-xl transition-all duration-300",
           showControls ? "opacity-100" : "opacity-0 pointer-events-none"
         )}
         onClick={(e) => {
@@ -178,7 +178,7 @@ export const ControlButtons = ({
           tooltip={t("reader.controls.previousPage")}
           iconClassName="h-8 w-8"
           className={cn(
-            "absolute top-1/2 -translate-y-1/2 rounded-full bg-background/70 backdrop-blur-md hover:bg-background/80 transition-all duration-300 z-20",
+            "absolute top-1/2 z-20 -translate-y-1/2 rounded-full border border-border/60 bg-background/55 shadow-[0_8px_24px_-16px_rgba(0,0,0,0.75)] backdrop-blur-xl transition-all duration-300 hover:bg-background/70",
             direction === "rtl" ? "right-4" : "left-4",
             showControls ? "opacity-100" : "opacity-0 pointer-events-none"
           )}
@@ -198,7 +198,7 @@ export const ControlButtons = ({
           tooltip={t("reader.controls.nextPage")}
           iconClassName="h-8 w-8"
           className={cn(
-            "absolute top-1/2 -translate-y-1/2 rounded-full bg-background/70 backdrop-blur-md hover:bg-background/80 transition-all duration-300 z-20",
+            "absolute top-1/2 z-20 -translate-y-1/2 rounded-full border border-border/60 bg-background/55 shadow-[0_8px_24px_-16px_rgba(0,0,0,0.75)] backdrop-blur-xl transition-all duration-300 hover:bg-background/70",
             direction === "rtl" ? "left-4" : "right-4",
             showControls ? "opacity-100" : "opacity-0 pointer-events-none"
           )}

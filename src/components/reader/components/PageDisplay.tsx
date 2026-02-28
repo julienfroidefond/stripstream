@@ -38,8 +38,8 @@ export function PageDisplay({
   }, [currentPage, isDoublePage]);
 
   return (
-    <div className="relative flex-1 flex items-center justify-center overflow-hidden w-full">
-      <div className="relative w-full h-[calc(100vh-2rem)] flex items-center justify-center gap-1">
+    <div className="relative flex w-full flex-1 items-center justify-center overflow-hidden">
+      <div className="relative flex h-[calc(100vh-2.5rem)] w-full items-center justify-center gap-1 px-2 sm:px-4">
         {/* Page 1 */}
         <div
           className={cn(
@@ -69,7 +69,7 @@ export function PageDisplay({
             src={imageBlobUrls[currentPage] || getPageUrl(currentPage)}
             alt={`Page ${currentPage}`}
             className={cn(
-              "max-h-full max-w-full object-contain transition-opacity cursor-pointer",
+              "max-h-full max-w-full cursor-pointer rounded-md object-contain transition-opacity",
               isLoading ? "opacity-0" : "opacity-100"
             )}
             loading="eager"
@@ -109,7 +109,7 @@ export function PageDisplay({
               src={imageBlobUrls[currentPage + 1] || getPageUrl(currentPage + 1)}
               alt={`Page ${currentPage + 1}`}
               className={cn(
-                "max-h-full max-w-full object-contain transition-opacity cursor-pointer",
+                "max-h-full max-w-full cursor-pointer rounded-md object-contain transition-opacity",
                 secondPageLoading ? "opacity-0" : "opacity-100"
               )}
               loading="eager"
