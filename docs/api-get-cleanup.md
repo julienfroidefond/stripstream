@@ -25,7 +25,6 @@ Routes GET actuellement présentes :
 | Route | Utilisation actuelle | Pourquoi garder maintenant | Piste de simplification |
 |-------|----------------------|----------------------------|-------------------------|
 | `GET /api/komga/books/[bookId]` | fallback dans `ClientBookPage.tsx`, usage `DownloadManager.tsx` | fallback utile hors flux page SSR | Limiter au fallback strict, éviter le double-fetch |
-| `GET /api/komga/series/[seriesId]` | utilisé via Sidebar pour enrichir les favoris | enrichissement client en cascade | Charger les métadonnées nécessaires en amont côté server |
 
 ### B2. Migrees en Lot 2 (pagination server-first)
 
@@ -36,6 +35,7 @@ Routes GET actuellement présentes :
 | `GET /api/komga/random-book` | `src/components/layout/ClientLayout.tsx` | Action utilisateur via server action | ✅ Supprimée |
 | `GET /api/komga/home` | `src/app/page.tsx` consomme déjà `HomeService` côté server | Données agrégées directement via service server | ✅ Supprimée |
 | `GET /api/user/profile` | aucun consommateur client trouvé, page compte déjà server-first | Profil/statistiques via `UserService` en Server Component | ✅ Supprimée |
+| `GET /api/komga/series/[seriesId]` | plus de consommateur `fetch('/api/...')` (chargement via `SeriesService`) | Détail série chargé en Server Component | ✅ Supprimée |
 
 ### C. A conserver (API de transport / framework)
 
