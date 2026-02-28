@@ -15,6 +15,9 @@
 | `POST /api/komga/config` | `saveKomgaConfig()` | ✅ Done |
 | `PUT /api/user/password` | `changePassword()` | ✅ Done |
 | `POST /api/auth/register` | `registerUser()` | ✅ Done |
+| `PATCH /api/admin/users/[userId]` | `updateUserRoles()` | ✅ Done |
+| `DELETE /api/admin/users/[userId]` | `deleteUser()` | ✅ Done |
+| `PUT /api/admin/users/[userId]/password` | `resetUserPassword()` | ✅ Done |
 
 ---
 

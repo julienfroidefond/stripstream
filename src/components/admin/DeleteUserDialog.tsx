@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/components/ui/use-toast";
 import type { AdminUserData } from "@/lib/services/admin.service";
+import { deleteUser } from "@/app/actions/admin";
 
 interface DeleteUserDialogProps {
   user: AdminUserData;
@@ -29,13 +30,10 @@ export function DeleteUserDialog({ user, open, onOpenChange, onSuccess }: Delete
     setIsLoading(true);
 
     try {
-      const response = await fetch(`/api/admin/users/${user.id}`, {
-        method: "DELETE",
-      });
+      const result = await deleteUser(user.id);
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Erreur lors de la suppression");
+      if (!result.success) {
+        throw new Error(result.message);
       }
 
       toast({

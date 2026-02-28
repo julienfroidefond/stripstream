@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Lock } from "lucide-react";
 import type { AdminUserData } from "@/lib/services/admin.service";
+import { resetUserPassword } from "@/app/actions/admin";
 
 interface ResetPasswordDialogProps {
   user: AdminUserData;
@@ -65,15 +66,10 @@ export function ResetPasswordDialog({
     setIsLoading(true);
 
     try {
-      const response = await fetch(`/api/admin/users/${user.id}/password`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ newPassword }),
-      });
+      const result = await resetUserPassword(user.id, newPassword);
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Erreur lors de la réinitialisation");
+      if (!result.success) {
+        throw new Error(result.message);
       }
 
       toast({

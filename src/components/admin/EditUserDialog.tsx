@@ -14,6 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import type { AdminUserData } from "@/lib/services/admin.service";
+import { updateUserRoles } from "@/app/actions/admin";
 
 interface EditUserDialogProps {
   user: AdminUserData;
@@ -51,15 +52,10 @@ export function EditUserDialog({ user, open, onOpenChange, onSuccess }: EditUser
     setIsLoading(true);
 
     try {
-      const response = await fetch(`/api/admin/users/${user.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roles: selectedRoles }),
-      });
+      const result = await updateUserRoles(user.id, selectedRoles);
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Erreur lors de la mise à jour");
+      if (!result.success) {
+        throw new Error(result.message);
       }
 
       toast({
