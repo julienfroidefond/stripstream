@@ -7,6 +7,7 @@ import { Network, Loader2 } from "lucide-react";
 import type { KomgaConfig } from "@/types/komga";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import logger from "@/lib/logger";
+import { saveKomgaConfig } from "@/app/actions/config";
 
 interface KomgaSettingsProps {
   initialConfig: KomgaConfig | null;
@@ -90,31 +91,22 @@ export function KomgaSettings({ initialConfig }: KomgaSettingsProps) {
     };
 
     try {
-      const response = await fetch("/api/komga/config", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          url: newConfig.serverUrl,
-          username: newConfig.username,
-          password: newConfig.password,
-        }),
+      const result = await saveKomgaConfig({
+        url: newConfig.serverUrl,
+        username: newConfig.username,
+        password: newConfig.password,
       });
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || t("settings.komga.error.message"));
+      if (!result.success) {
+        throw new Error(result.message);
       }
-
-      const savedConfig = await response.json();
 
       setConfig(newConfig);
       setLocalInitialConfig({
         url: newConfig.serverUrl,
         username: newConfig.username,
-        userId: savedConfig.userId,
-        authHeader: savedConfig.authHeader,
+        userId: result.data?.userId || 0,
+        authHeader: result.data?.authHeader || "",
       });
       setIsEditingConfig(false);
 

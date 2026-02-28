@@ -1,49 +1,13 @@
 import { NextResponse } from "next/server";
 import { ConfigDBService } from "@/lib/services/config-db.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
-import type { KomgaConfig, KomgaConfigData } from "@/types/komga";
+import type { KomgaConfig } from "@/types/komga";
 import { getErrorMessage } from "@/utils/errors";
-import type { NextRequest } from "next/server";
 import logger from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
-export async function POST(request: NextRequest) {
-  try {
-    const data: KomgaConfigData = await request.json();
-    const mongoConfig: KomgaConfig = await ConfigDBService.saveConfig(data);
-
-    return NextResponse.json(
-      { message: "⚙️ Configuration sauvegardée avec succès", mongoConfig },
-      { status: 200 }
-    );
-  } catch (error) {
-    logger.error({ err: error }, "Erreur lors de la sauvegarde de la configuration:");
-    if (error instanceof Error && error.message === "Utilisateur non authentifié") {
-      return NextResponse.json(
-        {
-          error: {
-            code: ERROR_CODES.MIDDLEWARE.UNAUTHORIZED,
-            name: "Unauthorized",
-            message: getErrorMessage(ERROR_CODES.MIDDLEWARE.UNAUTHORIZED),
-          },
-        },
-        { status: 401 }
-      );
-    }
-    return NextResponse.json(
-      {
-        error: {
-          code: ERROR_CODES.CONFIG.SAVE_ERROR,
-          name: "Config save error",
-          message: getErrorMessage(ERROR_CODES.CONFIG.SAVE_ERROR),
-        },
-      },
-      { status: 500 }
-    );
-  }
-}
-
+// GET reste utilisé pour récupérer la config
 export async function GET() {
   try {
     const mongoConfig: KomgaConfig | null = await ConfigDBService.getConfig();
