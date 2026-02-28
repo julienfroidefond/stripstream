@@ -7,8 +7,12 @@ import { AppError } from "../../utils/errors";
 
 export type { HomeData };
 
+// Cache tag pour invalidation ciblée
+const HOME_CACHE_TAG = "home-data";
+
 export class HomeService extends BaseApiService {
-  private static readonly CACHE_TTL = 120; // 2 minutes
+  private static readonly CACHE_TTL = 120; // 2 minutes fallback
+  private static readonly CACHE_TAG = HOME_CACHE_TAG;
 
   static async getHomeData(): Promise<HomeData> {
     try {
@@ -25,7 +29,7 @@ export class HomeService extends BaseApiService {
             },
           },
           {},
-          { revalidate: this.CACHE_TTL }
+          { revalidate: this.CACHE_TTL, tags: [this.CACHE_TAG] }
         ),
         this.fetchFromApi<LibraryResponse<KomgaBook>>(
           {
@@ -39,7 +43,7 @@ export class HomeService extends BaseApiService {
             },
           },
           {},
-          { revalidate: this.CACHE_TTL }
+          { revalidate: this.CACHE_TTL, tags: [this.CACHE_TAG] }
         ),
         this.fetchFromApi<LibraryResponse<KomgaBook>>(
           {
@@ -51,7 +55,7 @@ export class HomeService extends BaseApiService {
             },
           },
           {},
-          { revalidate: this.CACHE_TTL }
+          { revalidate: this.CACHE_TTL, tags: [this.CACHE_TAG] }
         ),
         this.fetchFromApi<LibraryResponse<KomgaBook>>(
           {
@@ -63,7 +67,7 @@ export class HomeService extends BaseApiService {
             },
           },
           {},
-          { revalidate: this.CACHE_TTL }
+          { revalidate: this.CACHE_TTL, tags: [this.CACHE_TAG] }
         ),
         this.fetchFromApi<LibraryResponse<KomgaSeries>>(
           {
@@ -75,7 +79,7 @@ export class HomeService extends BaseApiService {
             },
           },
           {},
-          { revalidate: this.CACHE_TTL }
+          { revalidate: this.CACHE_TTL, tags: [this.CACHE_TAG] }
         ),
       ]);
 

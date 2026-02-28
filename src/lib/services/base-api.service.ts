@@ -10,6 +10,8 @@ interface KomgaRequestInit extends RequestInit {
   noJson?: boolean;
   /** Next.js cache duration in seconds. Use false to disable cache, number for TTL */
   revalidate?: number | false;
+  /** Cache tags for targeted invalidation */
+  tags?: string[];
 }
 
 interface KomgaUrlBuilder {
@@ -137,10 +139,12 @@ export abstract class BaseApiService {
           connectTimeout: timeoutMs,
           bodyTimeout: timeoutMs,
           headersTimeout: timeoutMs,
-          // Next.js cache
-          next: options.revalidate !== undefined 
-            ? { revalidate: options.revalidate } 
-            : undefined,
+          // Next.js cache with tags support
+          next: options.tags 
+            ? { tags: options.tags }
+            : options.revalidate !== undefined 
+              ? { revalidate: options.revalidate } 
+              : undefined,
         });
       } catch (fetchError: any) {
         // Gestion spécifique des erreurs DNS
@@ -158,10 +162,12 @@ export abstract class BaseApiService {
             // Force IPv4 si IPv6 pose problème
             // @ts-ignore
             family: 4,
-            // Next.js cache
-            next: options.revalidate !== undefined 
-              ? { revalidate: options.revalidate } 
-              : undefined,
+            // Next.js cache with tags support
+            next: options.tags 
+              ? { tags: options.tags }
+              : options.revalidate !== undefined 
+                ? { revalidate: options.revalidate } 
+                : undefined,
           });
         } else if (fetchError?.cause?.code === "UND_ERR_CONNECT_TIMEOUT") {
           // Retry automatique sur timeout de connexion (cold start)
@@ -175,10 +181,12 @@ export abstract class BaseApiService {
             connectTimeout: timeoutMs,
             bodyTimeout: timeoutMs,
             headersTimeout: timeoutMs,
-            // Next.js cache
-            next: options.revalidate !== undefined 
-              ? { revalidate: options.revalidate } 
-              : undefined,
+            // Next.js cache with tags support
+            next: options.tags 
+              ? { tags: options.tags }
+              : options.revalidate !== undefined 
+                ? { revalidate: options.revalidate } 
+                : undefined,
           });
         } else {
           throw fetchError;

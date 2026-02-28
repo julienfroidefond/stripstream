@@ -1,10 +1,13 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { BookService } from "@/lib/services/book.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { getErrorMessage } from "@/utils/errors";
 import { AppError } from "@/utils/errors";
 import logger from "@/lib/logger";
+
+const HOME_CACHE_TAG = "home-data";
 
 export async function PATCH(
   request: NextRequest,
@@ -60,6 +63,9 @@ export async function PATCH(
 
     await BookService.updateReadProgress(bookId, page, completed);
 
+    // Invalider le cache de la home via le tag
+    revalidateTag(HOME_CACHE_TAG, "max");
+
     return NextResponse.json({ message: "📖 Progression mise à jour avec succès" });
   } catch (error) {
     logger.error({ err: error }, "Erreur lors de la mise à jour de la progression:");
@@ -96,6 +102,9 @@ export async function DELETE(
     const bookId: string = (await params).bookId;
 
     await BookService.deleteReadProgress(bookId);
+
+    // Invalider le cache de la home via le tag
+    revalidateTag(HOME_CACHE_TAG, "max");
 
     return NextResponse.json({ message: "🗑️ Progression supprimée avec succès" });
   } catch (error) {
