@@ -15,8 +15,8 @@ const NavButton = React.forwardRef<HTMLButtonElement, NavButtonProps>(
       <button
         ref={ref}
         className={cn(
-          "w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors",
-          active && "bg-accent",
+          "w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 hover:bg-accent hover:text-accent-foreground",
+          active && "bg-accent text-accent-foreground shadow-sm",
           className
         )}
         {...props}

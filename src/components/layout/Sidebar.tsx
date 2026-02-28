@@ -149,17 +149,19 @@ export function Sidebar({
     <aside
       suppressHydrationWarning
       className={cn(
-        "fixed left-0 top-14 z-30 h-[calc(100vh-3.5rem)] w-64 border-r border-border/40",
-        "bg-background/70 backdrop-blur-md supports-[backdrop-filter]:bg-background/50",
+        "fixed left-0 top-[calc(4rem+env(safe-area-inset-top,0px))] z-30 h-[calc(100vh-4rem-env(safe-area-inset-top,0px))] w-72 border-r border-primary/30",
+        "bg-background/70 shadow-sm backdrop-blur-xl supports-[backdrop-filter]:bg-background/65",
         "transition-transform duration-300 ease-in-out flex flex-col",
         isOpen ? "translate-x-0" : "-translate-x-full"
       )}
       id="sidebar"
     >
-      <div className="flex-1 space-y-4 py-4 overflow-y-auto">
-        <div className="px-3 py-2">
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(160deg,hsl(var(--primary)/0.12)_0%,hsl(192_85%_55%/0.08)_32%,transparent_58%),linear-gradient(332deg,hsl(338_82%_62%/0.06)_0%,transparent_42%),repeating-linear-gradient(135deg,hsl(var(--foreground)/0.02)_0_1px,transparent_1px_11px)]" />
+
+      <div className="relative flex-1 space-y-4 overflow-y-auto px-3 py-4">
+        <div className="rounded-xl border border-border/50 bg-background/30 p-2">
           <div className="space-y-1">
-            <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
+            <h2 className="mb-2 px-3 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
               {t("sidebar.navigation")}
             </h2>
             {mainNavItems.map((item) => (
@@ -174,10 +176,10 @@ export function Sidebar({
           </div>
         </div>
 
-        <div className="px-3 py-2">
+        <div className="rounded-xl border border-border/50 bg-background/30 p-2">
           <div className="space-y-1">
-            <div className="mb-2 px-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold tracking-tight">
+            <div className="mb-2 flex items-center justify-between px-3">
+              <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
                 {t("sidebar.favorites.title")}
               </h2>
               <span className="text-xs text-muted-foreground">{favorites.length}</span>
@@ -205,10 +207,10 @@ export function Sidebar({
           </div>
         </div>
 
-        <div className="px-3 py-2">
+        <div className="rounded-xl border border-border/50 bg-background/30 p-2">
           <div className="space-y-1">
-            <div className="mb-2 px-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold tracking-tight">
+            <div className="mb-2 flex items-center justify-between px-3">
+              <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
                 {t("sidebar.libraries.title")}
               </h2>
               <IconButton
@@ -244,9 +246,9 @@ export function Sidebar({
           </div>
         </div>
 
-        <div className="px-3 py-2">
+        <div className="rounded-xl border border-border/50 bg-background/30 p-2">
           <div className="space-y-1">
-            <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
+            <h2 className="mb-2 px-3 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
               {t("sidebar.settings.title")}
             </h2>
             <NavButton
@@ -273,7 +275,7 @@ export function Sidebar({
         </div>
       </div>
 
-      <div className="p-3 border-t border-border/40">
+      <div className="relative border-t border-border/50 bg-background/30 p-3">
         <NavButton
           icon={LogOut}
           label={t("sidebar.logout")}

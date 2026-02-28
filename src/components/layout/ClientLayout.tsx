@@ -176,6 +176,14 @@ export default function ClientLayout({
               userIsAdmin={userIsAdmin}
             />
           )}
+          {!isPublicRoute && isSidebarOpen && (
+            <button
+              type="button"
+              aria-label="Fermer la navigation"
+              className="fixed inset-0 top-[calc(4rem+env(safe-area-inset-top,0px))] z-20 bg-black/35 backdrop-blur-[1px] transition-opacity lg:hidden"
+              onClick={handleCloseSidebar}
+            />
+          )}
           <main className={!isPublicRoute ? "pt-safe" : ""}>{children}</main>
           <InstallPWA />
           <Toaster />
