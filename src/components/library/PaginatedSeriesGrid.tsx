@@ -171,19 +171,41 @@ export function PaginatedSeriesGrid({
 
   return (
     <div className="space-y-8">
-      <div className="rounded-xl border border-border/60 bg-background/35 p-4 shadow-sm backdrop-blur-sm">
-        <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center">
-          <div className="w-full">
-            <SearchInput placeholder={t("series.filters.search")} />
+      <div className="rounded-2xl border border-border/60 bg-[linear-gradient(140deg,hsl(var(--background)/0.6),hsl(var(--background)/0.38))] p-4 shadow-sm backdrop-blur-sm sm:p-5">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div className="space-y-1">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+              Explorer
+            </p>
+            <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">Séries</h2>
           </div>
-          <div className="flex items-center justify-end gap-2 rounded-full border border-border/50 bg-background/40 px-2 py-1">
-            <PageSizeSelect pageSize={effectivePageSize} onSizeChange={handlePageSizeChange} />
-            <ViewModeButton viewMode={viewMode} onToggle={handleViewModeToggle} />
-            <CompactModeButton isCompact={isCompact} onToggle={handleCompactModeToggle} />
-            <UnreadFilterButton showOnlyUnread={showOnlyUnread} onToggle={handleUnreadFilter} />
+          <p className="text-sm text-muted-foreground">{getShowingText()}</p>
+        </div>
+
+        <div className="space-y-3">
+          <SearchInput placeholder={t("series.filters.search")} />
+
+          <div className="pb-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <UnreadFilterButton
+                showOnlyUnread={showOnlyUnread}
+                onToggle={handleUnreadFilter}
+              />
+              <ViewModeButton
+                viewMode={viewMode}
+                onToggle={handleViewModeToggle}
+              />
+              <CompactModeButton
+                isCompact={isCompact}
+                onToggle={handleCompactModeToggle}
+              />
+              <PageSizeSelect
+                pageSize={effectivePageSize}
+                onSizeChange={handlePageSizeChange}
+              />
+            </div>
           </div>
         </div>
-        <p className="text-right text-sm text-muted-foreground">{getShowingText()}</p>
       </div>
 
       {viewMode === "grid" ? (
