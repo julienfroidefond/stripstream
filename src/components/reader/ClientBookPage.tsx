@@ -7,6 +7,7 @@ import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import type { KomgaBook } from "@/types/komga";
 import logger from "@/lib/logger";
+import { getBookData } from "@/app/actions/books";
 
 interface ClientBookPageProps {
   bookId: string;
@@ -48,15 +49,12 @@ export function ClientBookPage({ bookId, initialData, initialError }: ClientBook
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`/api/komga/books/${bookId}`);
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error?.code || ERROR_CODES.BOOK.PAGES_FETCH_ERROR);
+      const result = await getBookData(bookId);
+      if (!result.success || !result.data) {
+        throw new Error(result.message || ERROR_CODES.BOOK.PAGES_FETCH_ERROR);
       }
 
-      const bookData = await response.json();
-      setData(bookData);
+      setData(result.data);
     } catch (err) {
       logger.error({ err }, "Error fetching book");
       setError(err instanceof Error ? err.message : ERROR_CODES.BOOK.PAGES_FETCH_ERROR);

@@ -14,6 +14,7 @@ import { BookOfflineButton } from "@/components/ui/book-offline-button";
 import { useTranslate } from "@/hooks/useTranslate";
 import logger from "@/lib/logger";
 import { Container } from "@/components/ui/container";
+import { getBookData } from "@/app/actions/books";
 
 type BookStatus = "idle" | "downloading" | "available" | "error";
 
@@ -45,17 +46,18 @@ export function DownloadManager() {
         const key = localStorage.key(i);
         if (key?.startsWith("book-status-")) {
           const bookId = key.replace("book-status-", "");
-          const status = JSON.parse(localStorage.getItem(key) || "");
-          if (status.status !== "idle") {
-            try {
-              const response = await fetch(`/api/komga/books/${bookId}`);
-              if (!response.ok) throw new Error("Livre non trouvé");
-              const bookData = await response.json();
-              books.push({
-                book: bookData.book,
-                status,
-              });
-            } catch (error) {
+            const status = JSON.parse(localStorage.getItem(key) || "");
+            if (status.status !== "idle") {
+              try {
+                const result = await getBookData(bookId);
+                if (!result.success || !result.data) {
+                  throw new Error("Livre non trouvé");
+                }
+                books.push({
+                  book: result.data.book,
+                  status,
+                });
+              } catch (error) {
               logger.error({ err: error }, `Erreur lors de la récupération du livre ${bookId}:`);
               localStorage.removeItem(key);
             }
