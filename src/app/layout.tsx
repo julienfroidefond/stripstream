@@ -7,7 +7,7 @@ import { PreferencesService } from "@/lib/services/preferences.service";
 import { PreferencesProvider } from "@/contexts/PreferencesContext";
 import { I18nProvider } from "@/components/providers/I18nProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { defaultPreferences } from "@/types/preferences";
 import type { UserPreferences } from "@/types/preferences";
 import type { KomgaLibrary, KomgaSeries } from "@/types/komga";
@@ -70,7 +70,10 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies();
+  const requestHeaders = await headers();
   const locale = cookieStore.get("NEXT_LOCALE")?.value || "fr";
+  const requestPath = requestHeaders.get("x-request-path") || "unknown";
+  const requestPathname = requestHeaders.get("x-request-pathname") || "unknown";
 
   let preferences: UserPreferences = defaultPreferences;
   let userIsAdmin = false;
@@ -78,30 +81,36 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   let favorites: KomgaSeries[] = [];
 
   try {
-    const [preferencesData, isAdminCheck, librariesData, favoritesData] = await Promise.allSettled([
-      PreferencesService.getPreferences(),
-      import("@/lib/auth-utils").then((m) => m.isAdmin()),
-      import("@/lib/services/library.service").then((m) => m.LibraryService.getLibraries()),
-      import("@/lib/services/favorites.service").then((m) => m.FavoritesService.getFavorites()),
-    ]);
+    const currentUser = await import("@/lib/auth-utils").then((m) => m.getCurrentUser());
 
-    if (preferencesData.status === "fulfilled") {
-      preferences = preferencesData.value;
-    }
+    if (currentUser) {
+      const [preferencesData, librariesData, favoritesData] = await Promise.allSettled([
+        PreferencesService.getPreferences(),
+        import("@/lib/services/library.service").then((m) => m.LibraryService.getLibraries()),
+        import("@/lib/services/favorites.service").then((m) =>
+          m.FavoritesService.getFavorites({ requestPath, requestPathname })
+        ),
+      ]);
 
-    if (isAdminCheck.status === "fulfilled") {
-      userIsAdmin = isAdminCheck.value;
-    }
+      userIsAdmin = currentUser.roles.includes("ROLE_ADMIN");
 
-    if (librariesData.status === "fulfilled") {
-      libraries = librariesData.value || [];
-    }
+      if (preferencesData.status === "fulfilled") {
+        preferences = preferencesData.value;
+      }
 
-    if (favoritesData.status === "fulfilled") {
-      favorites = favoritesData.value;
+      if (librariesData.status === "fulfilled") {
+        libraries = librariesData.value || [];
+      }
+
+      if (favoritesData.status === "fulfilled") {
+        favorites = favoritesData.value;
+      }
     }
   } catch (error) {
-    logger.error({ err: error }, "Erreur lors du chargement des données initiales:");
+    logger.error(
+      { err: error, requestPath, requestPathname },
+      "Erreur lors du chargement des données initiales:"
+    );
   }
 
   return (

@@ -13,6 +13,11 @@ const defaultLocale = "fr";
 
 export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const requestPath = `${pathname}${request.nextUrl.search}`;
+  const forwardedHeaders = new Headers(request.headers);
+  forwardedHeaders.set("x-request-pathname", pathname);
+  forwardedHeaders.set("x-request-path", requestPath);
+  const createNextResponse = () => NextResponse.next({ request: { headers: forwardedHeaders } });
 
   // Gestion de la langue
   let locale = request.headers.get("cookie")?.match(/NEXT_LOCALE=([^;]+)/)?.[1];
@@ -34,7 +39,7 @@ export default async function middleware(request: NextRequest) {
     pathname === "/favicon.svg" ||
     pathname === "/favicon.ico"
   ) {
-    return NextResponse.next();
+    return createNextResponse();
   }
 
   // Vérifier l'authentification avec NextAuth v5
@@ -59,7 +64,7 @@ export default async function middleware(request: NextRequest) {
   }
 
   // Définir le cookie de langue si nécessaire
-  const response = NextResponse.next();
+  const response = createNextResponse();
   if (!request.headers.get("cookie")?.includes("NEXT_LOCALE") && locale) {
     response.cookies.set("NEXT_LOCALE", locale, {
       path: "/",
