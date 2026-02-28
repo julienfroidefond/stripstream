@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { useRouter } from "next/navigation";
 import logger from "@/lib/logger";
+import { scanLibrary } from "@/app/actions/library";
 
 interface ScanButtonProps {
   libraryId: string;
@@ -22,12 +23,10 @@ export function ScanButton({ libraryId }: ScanButtonProps) {
   const handleScan = async () => {
     setIsScanning(true);
     try {
-      const response = await fetch(`/api/komga/libraries/${libraryId}/scan`, {
-        method: "POST",
-      });
+      const result = await scanLibrary(libraryId);
 
-      if (!response.ok) {
-        throw new Error("Failed to scan library");
+      if (!result.success) {
+        throw new Error(result.message);
       }
 
       toast({
@@ -35,14 +34,9 @@ export function ScanButton({ libraryId }: ScanButtonProps) {
         description: t("library.scan.success.description"),
       });
 
-      // Attendre 5 secondes pour que le scan se termine, puis invalider le cache et rafraîchir
+      // Attendre 5 secondes pour que le scan se termine, puis rafraîchir
       setTimeout(async () => {
         try {
-          // Invalider le cache
-          await fetch(`/api/komga/libraries/${libraryId}/series`, {
-            method: "DELETE",
-          });
-
           // Rafraîchir la page pour voir les changements
           router.refresh();
 
@@ -52,7 +46,7 @@ export function ScanButton({ libraryId }: ScanButtonProps) {
             description: t("library.scan.complete.description"),
           });
         } catch (error) {
-          logger.error({ err: error }, "Error invalidating cache after scan:");
+          logger.error({ err: error }, "Error refreshing after scan:");
           toast({
             variant: "destructive",
             title: t("library.scan.error.title"),

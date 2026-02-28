@@ -11,6 +11,7 @@
 | `POST /api/komga/favorites` | `addToFavorites()` | ✅ Done |
 | `DELETE /api/komga/favorites` | `removeFromFavorites()` | ✅ Done |
 | `PUT /api/preferences` | `updatePreferences()` | ✅ Done |
+| `POST /api/komga/libraries/[libraryId]/scan` | `scanLibrary()` | ✅ Done |
 
 ---
 
