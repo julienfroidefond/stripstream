@@ -14,6 +14,7 @@
 | `POST /api/komga/libraries/[libraryId]/scan` | `scanLibrary()` | ✅ Done |
 | `POST /api/komga/config` | `saveKomgaConfig()` | ✅ Done |
 | `PUT /api/user/password` | `changePassword()` | ✅ Done |
+| `POST /api/auth/register` | `registerUser()` | ✅ Done |
 
 ---
 

@@ -9,6 +9,7 @@ import type { AppErrorType } from "@/types/global";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { registerUser } from "@/app/actions/auth";
 
 interface RegisterFormProps {
   from?: string;
@@ -41,24 +42,15 @@ export function RegisterForm({ from: _from }: RegisterFormProps) {
     }
 
     try {
-      // Étape 1: Inscription via l'API
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
+      // Étape 1: Inscription via Server Action
+      const result = await registerUser(email, password);
 
-      if (!response.ok) {
-        const data = await response.json();
-        setError(
-          data.error || {
-            code: "AUTH_REGISTRATION_FAILED",
-            name: "Registration failed",
-            message: "Erreur lors de l'inscription",
-          }
-        );
+      if (!result.success) {
+        setError({
+          code: "AUTH_REGISTRATION_FAILED",
+          name: "Registration failed",
+          message: result.message,
+        });
         return;
       }
 
