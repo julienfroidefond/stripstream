@@ -66,6 +66,7 @@ export function BackgroundSettings({ initialLibraries }: BackgroundSettingsProps
     try {
       await updatePreferences({
         background: {
+          ...preferences.background,
           type: "gradient",
           gradient,
         },
@@ -97,6 +98,7 @@ export function BackgroundSettings({ initialLibraries }: BackgroundSettingsProps
     try {
       await updatePreferences({
         background: {
+          ...preferences.background,
           type: "image",
           imageUrl: customImageUrl,
         },

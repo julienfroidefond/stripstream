@@ -39,7 +39,10 @@ export class PreferencesService {
           ...displayMode,
           viewMode: displayMode?.viewMode || defaultPreferences.displayMode.viewMode,
         },
-        background: preferences.background as unknown as BackgroundPreferences,
+        background: {
+          ...defaultPreferences.background,
+          ...(preferences.background as unknown as BackgroundPreferences),
+        },
         readerPrefetchCount: preferences.readerPrefetchCount,
       };
     } catch (error) {
@@ -62,7 +65,10 @@ export class PreferencesService {
         updateData.showOnlyUnread = preferences.showOnlyUnread;
       if (preferences.displayMode !== undefined) updateData.displayMode = preferences.displayMode;
       if (preferences.background !== undefined) {
-        updateData.background = preferences.background as unknown as Prisma.InputJsonValue;
+        updateData.background = {
+          ...defaultPreferences.background,
+          ...(preferences.background as unknown as BackgroundPreferences),
+        } as unknown as Prisma.InputJsonValue;
       }
       if (preferences.readerPrefetchCount !== undefined)
         updateData.readerPrefetchCount = preferences.readerPrefetchCount;
@@ -85,7 +91,10 @@ export class PreferencesService {
         showThumbnails: updatedPreferences.showThumbnails,
         showOnlyUnread: updatedPreferences.showOnlyUnread,
         displayMode: updatedPreferences.displayMode as UserPreferences["displayMode"],
-        background: updatedPreferences.background as unknown as BackgroundPreferences,
+        background: {
+          ...defaultPreferences.background,
+          ...(updatedPreferences.background as unknown as BackgroundPreferences),
+        },
         readerPrefetchCount: updatedPreferences.readerPrefetchCount,
       };
     } catch (error) {

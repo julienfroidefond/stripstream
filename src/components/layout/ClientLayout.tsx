@@ -11,6 +11,7 @@ import { NetworkStatus } from "../ui/NetworkStatus";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { ServiceWorkerProvider } from "@/contexts/ServiceWorkerContext";
 import type { KomgaLibrary, KomgaSeries } from "@/types/komga";
+import { defaultPreferences } from "@/types/preferences";
 import logger from "@/lib/logger";
 import { getRandomBookFromLibraries } from "@/app/actions/library";
 
@@ -141,11 +142,9 @@ export default function ClientLayout({
   // Ne pas afficher le header et la sidebar sur les routes publiques et le reader
   const isPublicRoute = publicRoutes.includes(pathname) || pathname.startsWith("/books/");
 
-  const hasCustomBackground =
-    preferences.background.type === "gradient" ||
-    preferences.background.type === "image" ||
-    (preferences.background.type === "komga-random" && randomBookId);
-  const contentOpacity = (preferences.background.opacity || 100) / 100;
+  const hasCustomBackground = Object.keys(backgroundStyle).length > 0;
+  const contentOpacity =
+    (preferences.background.opacity ?? defaultPreferences.background.opacity ?? 10) / 100;
 
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
