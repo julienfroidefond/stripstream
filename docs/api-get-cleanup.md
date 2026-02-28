@@ -27,7 +27,6 @@ Routes GET actuellement présentes :
 | `GET /api/komga/books/[bookId]` | fallback dans `ClientBookPage.tsx`, usage `DownloadManager.tsx` | fallback utile hors flux page SSR | Limiter au fallback strict, éviter le double-fetch |
 | `GET /api/komga/series/[seriesId]` | utilisé via Sidebar pour enrichir les favoris | enrichissement client en cascade | Charger les métadonnées nécessaires en amont côté server |
 | `GET /api/user/profile` | pas d'appel client direct trouvé | route utile pour consommation API interne/outils | Vérifier si remplaçable par service server direct |
-| `GET /api/komga/home` | endpoint de données agrégées | peut rester tant que la page consomme un service centralisé | privilégier appel server direct depuis page/home |
 
 ### B2. Migrees en Lot 2 (pagination server-first)
 
@@ -36,6 +35,7 @@ Routes GET actuellement présentes :
 | `GET /api/komga/libraries/[libraryId]/series` | `src/app/libraries/[libraryId]/LibraryClientWrapper.tsx` | Chargement via `searchParams` dans page server | ✅ Supprimée |
 | `GET /api/komga/series/[seriesId]/books` | `src/app/series/[seriesId]/SeriesClientWrapper.tsx` | Chargement via `searchParams` dans page server | ✅ Supprimée |
 | `GET /api/komga/random-book` | `src/components/layout/ClientLayout.tsx` | Action utilisateur via server action | ✅ Supprimée |
+| `GET /api/komga/home` | `src/app/page.tsx` consomme déjà `HomeService` côté server | Données agrégées directement via service server | ✅ Supprimée |
 
 ### C. A conserver (API de transport / framework)
 
