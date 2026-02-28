@@ -17,34 +17,28 @@ import { SliderControl } from "@/components/ui/slider-control";
 import type { KomgaLibrary } from "@/types/komga";
 import logger from "@/lib/logger";
 
-export function BackgroundSettings() {
+interface BackgroundSettingsProps {
+  initialLibraries: KomgaLibrary[];
+}
+
+export function BackgroundSettings({ initialLibraries }: BackgroundSettingsProps) {
   const { t } = useTranslate();
   const { toast } = useToast();
   const { preferences, updatePreferences } = usePreferences();
   const [customImageUrl, setCustomImageUrl] = useState(preferences.background.imageUrl || "");
   const [komgaConfigValid, setKomgaConfigValid] = useState(false);
-  const [libraries, setLibraries] = useState<KomgaLibrary[]>([]);
+  const [libraries, setLibraries] = useState<KomgaLibrary[]>(initialLibraries || []);
   const [selectedLibraries, setSelectedLibraries] = useState<string[]>(
     preferences.background.komgaLibraries || []
   );
 
-  // Vérifier la config Komga au chargement
   useEffect(() => {
-    const checkKomgaConfig = async () => {
-      try {
-        const response = await fetch("/api/komga/libraries");
-        if (response.ok) {
-          const libs = await response.json();
-          setLibraries(libs);
-          setKomgaConfigValid(libs.length > 0);
-        }
-      } catch (error) {
-        logger.error({ err: error }, "Erreur lors de la vérification de la config Komga:");
-        setKomgaConfigValid(false);
-      }
-    };
-    checkKomgaConfig();
-  }, []);
+    setLibraries(initialLibraries || []);
+  }, [initialLibraries]);
+
+  useEffect(() => {
+    setKomgaConfigValid(libraries.length > 0);
+  }, [libraries]);
 
   const handleBackgroundTypeChange = async (type: BackgroundType) => {
     try {

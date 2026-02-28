@@ -1,6 +1,7 @@
 "use client";
 
 import type { KomgaConfig } from "@/types/komga";
+import type { KomgaLibrary } from "@/types/komga";
 import { useTranslate } from "@/hooks/useTranslate";
 import { DisplaySettings } from "./DisplaySettings";
 import { KomgaSettings } from "./KomgaSettings";
@@ -12,9 +13,10 @@ import { Monitor, Network } from "lucide-react";
 
 interface ClientSettingsProps {
   initialConfig: KomgaConfig | null;
+  initialLibraries: KomgaLibrary[];
 }
 
-export function ClientSettings({ initialConfig }: ClientSettingsProps) {
+export function ClientSettings({ initialConfig, initialLibraries }: ClientSettingsProps) {
   const { t } = useTranslate();
 
   return (
@@ -35,7 +37,7 @@ export function ClientSettings({ initialConfig }: ClientSettingsProps) {
 
         <TabsContent value="display" className="mt-6 space-y-6">
           <DisplaySettings />
-          <BackgroundSettings />
+          <BackgroundSettings initialLibraries={initialLibraries} />
         </TabsContent>
 
         <TabsContent value="connection" className="mt-6 space-y-6">

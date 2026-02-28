@@ -15,6 +15,7 @@ interface SeriesContentProps {
   preferences: UserPreferences;
   unreadOnly: boolean;
   pageSize: number;
+  initialIsFavorite: boolean;
 }
 
 export function SeriesContent({
@@ -23,6 +24,7 @@ export function SeriesContent({
   currentPage,
   preferences,
   unreadOnly,
+  initialIsFavorite,
 }: SeriesContentProps) {
   const { refreshSeries } = useRefresh();
 
@@ -31,6 +33,7 @@ export function SeriesContent({
       <SeriesHeader
         series={series}
         refreshSeries={refreshSeries || (async () => ({ success: false }))}
+        initialIsFavorite={initialIsFavorite}
       />
       <Container>
         <PaginatedBookGrid
@@ -45,4 +48,3 @@ export function SeriesContent({
     </>
   );
 }
-

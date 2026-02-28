@@ -18,37 +18,17 @@ import { addToFavorites, removeFromFavorites } from "@/app/actions/favorites";
 interface SeriesHeaderProps {
   series: KomgaSeries;
   refreshSeries: (seriesId: string) => Promise<{ success: boolean; error?: string }>;
+  initialIsFavorite: boolean;
 }
 
-export const SeriesHeader = ({ series, refreshSeries }: SeriesHeaderProps) => {
+export const SeriesHeader = ({ series, refreshSeries, initialIsFavorite }: SeriesHeaderProps) => {
   const { toast } = useToast();
-  const [isFavorite, setIsFavorite] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(initialIsFavorite);
   const { t } = useTranslate();
 
   useEffect(() => {
-    const checkFavorite = async () => {
-      try {
-        const response = await fetch("/api/komga/favorites");
-        if (!response.ok) {
-          throw new AppError(ERROR_CODES.FAVORITE.STATUS_CHECK_ERROR);
-        }
-        const favoriteIds = await response.json();
-        setIsFavorite(favoriteIds.includes(series.id));
-      } catch (error) {
-        logger.error({ err: error }, "Erreur lors de la vérification des favoris:");
-        toast({
-          title: "Erreur",
-          description:
-            error instanceof AppError
-              ? error.message
-              : getErrorMessage(ERROR_CODES.FAVORITE.NETWORK_ERROR),
-          variant: "destructive",
-        });
-      }
-    };
-
-    checkFavorite();
-  }, [series.id, toast]);
+    setIsFavorite(initialIsFavorite);
+  }, [series.id, initialIsFavorite]);
 
   const handleToggleFavorite = async () => {
     try {
@@ -59,7 +39,11 @@ export const SeriesHeader = ({ series, refreshSeries }: SeriesHeaderProps) => {
         setIsFavorite(!isFavorite);
         // Dispatcher l'événement avec le seriesId pour mise à jour optimiste de la sidebar
         const event = new CustomEvent("favoritesChanged", {
-          detail: { seriesId: series.id, action: isFavorite ? "remove" : "add" },
+          detail: {
+            seriesId: series.id,
+            action: isFavorite ? "remove" : "add",
+            series: isFavorite ? undefined : series,
+          },
         });
         window.dispatchEvent(event);
         toast({

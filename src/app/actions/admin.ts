@@ -1,9 +1,35 @@
 "use server";
 
 import { AdminService } from "@/lib/services/admin.service";
-import { ERROR_CODES } from "@/constants/errorCodes";
+import type { AdminUserData } from "@/lib/services/admin.service";
 import { AppError } from "@/utils/errors";
 import { AuthServerService } from "@/lib/services/auth-server.service";
+
+export interface AdminStatsData {
+  totalUsers: number;
+  totalAdmins: number;
+  usersWithKomga: number;
+  usersWithPreferences: number;
+}
+
+export async function getAdminDashboardData(): Promise<{
+  success: boolean;
+  users?: AdminUserData[];
+  stats?: AdminStatsData;
+  message?: string;
+}> {
+  try {
+    const [users, stats] = await Promise.all([AdminService.getAllUsers(), AdminService.getUserStats()]);
+
+    return { success: true, users, stats };
+  } catch (error) {
+    if (error instanceof AppError) {
+      return { success: false, message: error.message };
+    }
+
+    return { success: false, message: "Erreur lors de la récupération des données admin" };
+  }
+}
 
 /**
  * Met à jour les rôles d'un utilisateur

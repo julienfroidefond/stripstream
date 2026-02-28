@@ -1,21 +1,17 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import type { AdminUserData } from "@/lib/services/admin.service";
 import { StatsCards } from "./StatsCards";
 import { UsersTable } from "./UsersTable";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { getAdminDashboardData, type AdminStatsData } from "@/app/actions/admin";
 
 interface AdminContentProps {
   initialUsers: AdminUserData[];
-  initialStats: {
-    totalUsers: number;
-    totalAdmins: number;
-    usersWithKomga: number;
-    usersWithPreferences: number;
-  };
+  initialStats: AdminStatsData;
 }
 
 export function AdminContent({ initialUsers, initialStats }: AdminContentProps) {
@@ -24,22 +20,25 @@ export function AdminContent({ initialUsers, initialStats }: AdminContentProps) 
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { toast } = useToast();
 
+  useEffect(() => {
+    setUsers(initialUsers);
+  }, [initialUsers]);
+
+  useEffect(() => {
+    setStats(initialStats);
+  }, [initialStats]);
+
   const refreshData = useCallback(async () => {
     setIsRefreshing(true);
     try {
-      const [usersResponse, statsResponse] = await Promise.all([
-        fetch("/api/admin/users"),
-        fetch("/api/admin/stats"),
-      ]);
+      const result = await getAdminDashboardData();
 
-      if (!usersResponse.ok || !statsResponse.ok) {
+      if (!result.success || !result.users || !result.stats) {
         throw new Error("Erreur lors du rafraîchissement");
       }
 
-      const [newUsers, newStats] = await Promise.all([usersResponse.json(), statsResponse.json()]);
-
-      setUsers(newUsers);
-      setStats(newStats);
+      setUsers(result.users);
+      setStats(result.stats);
 
       toast({
         title: "Données rafraîchies",

@@ -16,9 +16,6 @@ import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
 import { useEffect, useState, useCallback } from "react";
 import type { KomgaLibrary, KomgaSeries } from "@/types/komga";
-import { AppError } from "@/utils/errors";
-import { ERROR_CODES } from "@/constants/errorCodes";
-import { getErrorMessage } from "@/utils/errors";
 import { useToast } from "@/components/ui/use-toast";
 import { useTranslate } from "@/hooks/useTranslate";
 import { NavButton } from "@/components/ui/nav-button";
@@ -49,73 +46,42 @@ export function Sidebar({
 
   const { toast } = useToast();
 
-  const refreshFavorites = useCallback(async () => {
-    try {
-      const favoritesResponse = await fetch("/api/komga/favorites");
-      if (!favoritesResponse.ok) {
-        throw new AppError(ERROR_CODES.FAVORITE.FETCH_ERROR);
-      }
-      const favoriteIds = await favoritesResponse.json();
+  useEffect(() => {
+    setLibraries(initialLibraries || []);
+  }, [initialLibraries]);
 
-      if (favoriteIds.length === 0) {
-        setFavorites([]);
-        return;
-      }
-
-      const promises = favoriteIds.map(async (id: string) => {
-        const response = await fetch(`/api/komga/series/${id}`);
-        if (!response.ok) {
-          throw new AppError(ERROR_CODES.SERIES.FETCH_ERROR);
-        }
-        return response.json();
-      });
-
-      const results = await Promise.all(promises);
-      setFavorites(results.filter((series): series is KomgaSeries => series !== null));
-    } catch (error) {
-      logger.error({ err: error }, "Erreur de chargement des favoris:");
-      toast({
-        title: "Erreur",
-        description:
-          error instanceof AppError
-            ? error.message
-            : getErrorMessage(ERROR_CODES.FAVORITE.FETCH_ERROR),
-        variant: "destructive",
-      });
-    }
-  }, [toast]);
+  useEffect(() => {
+    setFavorites(initialFavorites || []);
+  }, [initialFavorites]);
 
   // Mettre à jour les favoris quand ils changent (mise à jour optimiste)
   useEffect(() => {
-    const handleFavoritesChange = async (event: Event) => {
-      const customEvent = event as CustomEvent<{ seriesId: string; action: "add" | "remove" }>;
+    const handleFavoritesChange = (event: Event) => {
+      const customEvent = event as CustomEvent<{
+        seriesId?: string;
+        action?: "add" | "remove";
+        series?: KomgaSeries;
+      }>;
 
       // Si on a les détails de l'action, faire une mise à jour optimiste locale
       if (customEvent.detail?.seriesId) {
-        const { seriesId, action } = customEvent.detail;
+        const { seriesId, action, series } = customEvent.detail;
 
-        if (action === "add") {
-          // Fetch les détails de la série ajoutée et l'ajouter au state
-          try {
-            const response = await fetch(`/api/komga/series/${seriesId}`);
-            if (response.ok) {
-              const seriesData = await response.json();
-              setFavorites((prev) => {
-                // Éviter les doublons
-                if (prev.some((s) => s.id === seriesId)) return prev;
-                return [...prev, seriesData];
-              });
+        if (action === "add" && series) {
+          setFavorites((prev) => {
+            if (prev.some((s) => s.id === series.id)) {
+              return prev;
             }
-          } catch (error) {
-            logger.error({ err: error }, "Erreur lors de l'ajout optimiste du favori:");
-          }
+
+            return [...prev, series];
+          });
         } else if (action === "remove") {
-          // Retirer la série du state directement
           setFavorites((prev) => prev.filter((s) => s.id !== seriesId));
+        } else {
+          router.refresh();
         }
       } else {
-        // Fallback: refetch complet si pas de détails (ex: événement externe)
-        refreshFavorites();
+        router.refresh();
       }
     };
 
@@ -124,7 +90,7 @@ export function Sidebar({
     return () => {
       window.removeEventListener("favoritesChanged", handleFavoritesChange);
     };
-  }, [refreshFavorites]);
+  }, [router]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);

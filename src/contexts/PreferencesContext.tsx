@@ -17,10 +17,6 @@ interface PreferencesContextType {
 
 const PreferencesContext = createContext<PreferencesContextType | undefined>(undefined);
 
-// Module-level flag to prevent duplicate fetches (survives StrictMode remounts)
-let preferencesFetchInProgress = false;
-let preferencesFetched = false;
-
 export function PreferencesProvider({
   children,
   initialPreferences,
@@ -32,58 +28,23 @@ export function PreferencesProvider({
   const [preferences, setPreferences] = useState<UserPreferences>(
     initialPreferences || defaultPreferences
   );
-  const [isLoading, setIsLoading] = useState(false);
+  const isLoading = false;
 
   // Check if we have valid initial preferences from server
   const hasValidInitialPreferences =
     initialPreferences && Object.keys(initialPreferences).length > 0;
 
-  const fetchPreferences = useCallback(async () => {
-    // Prevent concurrent fetches
-    if (preferencesFetchInProgress || preferencesFetched) {
+  useEffect(() => {
+    if (status === "authenticated" && hasValidInitialPreferences) {
+      setPreferences(initialPreferences);
       return;
     }
-    preferencesFetchInProgress = true;
 
-    try {
-      const response = await fetch("/api/preferences");
-      if (!response.ok) {
-        throw new AppError(ERROR_CODES.PREFERENCES.FETCH_ERROR);
-      }
-      const data = await response.json();
-      setPreferences({
-        ...defaultPreferences,
-        ...data,
-        displayMode: {
-          ...defaultPreferences.displayMode,
-          ...(data.displayMode || {}),
-          viewMode: data.displayMode?.viewMode || defaultPreferences.displayMode.viewMode,
-        },
-      });
-      preferencesFetched = true;
-    } catch (error) {
-      logger.error({ err: error }, "Erreur lors de la récupération des préférences");
-      setPreferences(defaultPreferences);
-    } finally {
-      setIsLoading(false);
-      preferencesFetchInProgress = false;
-    }
-  }, []);
-
-  useEffect(() => {
-    if (status === "authenticated") {
-      // Skip refetch if we already have valid initial preferences from server
-      if (hasValidInitialPreferences) {
-        preferencesFetched = true; // Mark as fetched since we have server data
-        return;
-      }
-      fetchPreferences();
-    } else if (status === "unauthenticated") {
+    if (status === "unauthenticated") {
       // Reset to defaults when user logs out
       setPreferences(defaultPreferences);
-      preferencesFetched = false; // Allow refetch on next login
     }
-  }, [status, fetchPreferences, hasValidInitialPreferences]);
+  }, [status, hasValidInitialPreferences, initialPreferences]);
 
   const updatePreferences = useCallback(async (newPreferences: Partial<UserPreferences>): Promise<UserPreferences | undefined> => {
     try {

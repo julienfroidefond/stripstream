@@ -1,5 +1,6 @@
 import { PreferencesService } from "@/lib/services/preferences.service";
 import { SeriesService } from "@/lib/services/series.service";
+import { FavoriteService } from "@/lib/services/favorite.service";
 import { SeriesClientWrapper } from "./SeriesClientWrapper";
 import { SeriesContent } from "./SeriesContent";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
@@ -28,9 +29,10 @@ export default async function SeriesPage({ params, searchParams }: PageProps) {
   const effectivePageSize = size ? parseInt(size) : preferences.displayMode?.itemsPerPage || DEFAULT_PAGE_SIZE;
 
   try {
-    const [books, series] = await Promise.all([
+    const [books, series, isFavorite] = await Promise.all([
       SeriesService.getSeriesBooks(seriesId, currentPage - 1, effectivePageSize, unreadOnly),
       SeriesService.getSeries(seriesId),
+      FavoriteService.isFavorite(seriesId),
     ]);
 
     return (
@@ -48,6 +50,7 @@ export default async function SeriesPage({ params, searchParams }: PageProps) {
           preferences={preferences}
           unreadOnly={unreadOnly}
           pageSize={effectivePageSize}
+          initialIsFavorite={isFavorite}
         />
       </SeriesClientWrapper>
     );

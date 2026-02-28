@@ -1,63 +1,67 @@
-# Plan - Suppression des routes API GET restantes
-
-## État actuel
-
-Routes GET encore présentes mais peu/n'utilisées :
-
-| Route | Utilisation actuelle | Action |
-|-------|---------------------|--------|
-| `GET /api/komga/config` | ❌ Non utilisée | 🔴 Supprimer |
-| `GET /api/komga/favorites` | Sidebar, SeriesHeader (client) | 🟡 Optimiser |
-| `GET /api/preferences` | PreferencesContext (client) | 🟡 Optimiser |
-| `GET /api/komga/books/[bookId]` | ClientBookPage, DownloadManager | 🟡 Supprimer (données déjà en props) |
-| `GET /api/user/profile` | ? | 🔍 Vérifier |
-
-## Actions proposées
-
-### 1. Supprimer `GET /api/komga/config`
-
-La config est déjà appelée directement dans `settings/page.tsx` via `ConfigDBService.getConfig()`.
-
-**Action** : Supprimer la route API.
-
+---
+status: reviewed
+reviewed_at: 2026-02-28
+review_file: thoughts/reviews/api-get-cleanup-review.md
 ---
 
-### 2. Optimiser les préférences
+# Plan - Cleanup des routes API GET (focus RSC)
 
-Les préférences sont déjà passées depuis `layout.tsx` via `PreferencesService.getPreferences()`. 
-Le `PreferencesContext` refetch en client - c'est redondant.
+## État réel (scan `src/app/api`)
 
-**Action** : Le contexte utilise déjà les `initialPreferences`. Le fetch client n'est nécessaire que si on n'a pas les données initiales.
+Routes GET actuellement présentes :
 
----
+### A. Migrees en Lot 1 (RSC, routes supprimees)
 
-### 3. Supprimer `GET /api/komga/books/[bookId]`
+| Route | Utilisation client actuelle | Cible | Action |
+|-------|-----------------------------|-------|--------|
+| `GET /api/preferences` | `src/contexts/PreferencesContext.tsx` | Préférences fournies par layout/page server | ✅ Supprimée |
+| `GET /api/komga/favorites` | `src/components/layout/Sidebar.tsx`, `src/components/series/SeriesHeader.tsx` | Favoris passés depuis parent Server Component | ✅ Supprimée |
+| `GET /api/admin/users` | `src/components/admin/AdminContent.tsx` | Page admin en RSC + props | ✅ Supprimée |
+| `GET /api/admin/stats` | `src/components/admin/AdminContent.tsx` | Page admin en RSC + props | ✅ Supprimée |
+| `GET /api/komga/libraries` | `src/components/settings/BackgroundSettings.tsx` | Données passées depuis page/settings server | ✅ Supprimée |
 
-Regardons ce que fait `ClientBookPage` :
+### B. A garder temporairement (interaction client forte)
 
-```tsx
-// Server Component (page.tsx) fetch les données
-const data = await BookService.getBook(bookId);
+| Route | Utilisation actuelle | Pourquoi garder maintenant | Piste de simplification |
+|-------|----------------------|----------------------------|-------------------------|
+| `GET /api/komga/libraries/[libraryId]/series` | `src/app/libraries/[libraryId]/LibraryClientWrapper.tsx` (pagination/filtre/recherche) | Navigation dynamique pilotée par query params côté client | Évaluer migration partielle vers navigation server (`searchParams`) |
+| `GET /api/komga/series/[seriesId]/books` | `src/app/series/[seriesId]/SeriesClientWrapper.tsx` (pagination/filtre) | Même contrainte de pagination dynamique | Même stratégie: server-first puis interactions ciblées |
+| `GET /api/komga/random-book` | `src/components/layout/ClientLayout.tsx` | Action utilisateur ponctuelle (random) | Option: server action dédiée plutôt qu'API GET |
+| `GET /api/komga/books/[bookId]` | fallback dans `ClientBookPage.tsx`, usage `DownloadManager.tsx` | fallback utile hors flux page SSR | Limiter au fallback strict, éviter le double-fetch |
+| `GET /api/komga/series/[seriesId]` | utilisé via Sidebar pour enrichir les favoris | enrichissement client en cascade | Charger les métadonnées nécessaires en amont côté server |
+| `GET /api/user/profile` | pas d'appel client direct trouvé | route utile pour consommation API interne/outils | Vérifier si remplaçable par service server direct |
+| `GET /api/komga/home` | endpoint de données agrégées | peut rester tant que la page consomme un service centralisé | privilégier appel server direct depuis page/home |
 
-// Passe à ClientBookPage
-<ClientBookPage bookId={bookId} initialData={{ ...data, nextBook }} />
+### C. A conserver (API de transport / framework)
 
-// ClientClientBookPage refetch en client si pas de initialData
-useEffect(() => {
-  if (!initialData) fetchBookData(); // Only if SSR failed
-}, [bookId, initialData]);
-```
+| Route | Raison |
+|-------|--------|
+| `GET /api/komga/images/**` | streaming/binaire image, adapté à une route API |
+| `GET /api/komga/books/[bookId]/pages/[pageNumber]` | endpoint image avec déduplication/cache |
+| `GET /api/auth/[...nextauth]` | handler NextAuth, à conserver |
 
-**Action** : Supprimer le fetch client - les données sont déjà en props.
+## Points importants
 
----
+- `GET /api/komga/config` n'existe plus dans `src/app/api` (déjà retirée).
+- Le gain principal vient des écrans qui refetchent des données déjà disponibles côté server (layout/page).
+- Objectif: réduire les GET API utilisés comme couche interne entre composants React et services serveur.
 
-### 4. Garder pour l'instant
+## Plan d'exécution recommandé
 
-Ces routes nécessitent plus de refactoring :
+1. **Lot 1 (quick wins)**
+   - Migrer `preferences`, `favorites`, `admin/users`, `admin/stats`, `komga/libraries` vers un chargement server-first.
+   - Garder les routes GET le temps de la transition, puis supprimer les appels client.
 
-- `GET /api/komga/favorites` - Utilisé dans des composants clients (Sidebar)
-- `GET /api/admin/users` - AdminContent
-- `GET /api/admin/stats` - AdminContent
+2. **Lot 2 (pages paginées)**
+   - Repenser `libraries/[libraryId]/series` et `series/[seriesId]/books` pour un flux `searchParams` server-first.
+   - Conserver seulement les interactions client réellement nécessaires.
 
-Ces cas pourraient être résolus en passant les données depuis des Server Components parents.
+3. **Lot 3 (stabilisation)**
+   - Vérifier `user/profile` et `komga/home` (route API vs appel direct service).
+   - Supprimer les routes GET devenues sans consommateurs.
+
+## Check de validation
+
+- Plus de `fetch("/api/...")` GET dans les composants server-capables.
+- Pas de régression UX sur pagination/filtres et random book.
+- Journal clair des routes supprimées et des routes conservées avec justification.
