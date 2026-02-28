@@ -24,7 +24,6 @@ Routes GET actuellement présentes :
 
 | Route | Utilisation actuelle | Pourquoi garder maintenant | Piste de simplification |
 |-------|----------------------|----------------------------|-------------------------|
-| `GET /api/komga/random-book` | `src/components/layout/ClientLayout.tsx` | Action utilisateur ponctuelle (random) | Option: server action dédiée plutôt qu'API GET |
 | `GET /api/komga/books/[bookId]` | fallback dans `ClientBookPage.tsx`, usage `DownloadManager.tsx` | fallback utile hors flux page SSR | Limiter au fallback strict, éviter le double-fetch |
 | `GET /api/komga/series/[seriesId]` | utilisé via Sidebar pour enrichir les favoris | enrichissement client en cascade | Charger les métadonnées nécessaires en amont côté server |
 | `GET /api/user/profile` | pas d'appel client direct trouvé | route utile pour consommation API interne/outils | Vérifier si remplaçable par service server direct |
@@ -36,6 +35,7 @@ Routes GET actuellement présentes :
 |-------|-----------------------------|-------|--------|
 | `GET /api/komga/libraries/[libraryId]/series` | `src/app/libraries/[libraryId]/LibraryClientWrapper.tsx` | Chargement via `searchParams` dans page server | ✅ Supprimée |
 | `GET /api/komga/series/[seriesId]/books` | `src/app/series/[seriesId]/SeriesClientWrapper.tsx` | Chargement via `searchParams` dans page server | ✅ Supprimée |
+| `GET /api/komga/random-book` | `src/components/layout/ClientLayout.tsx` | Action utilisateur via server action | ✅ Supprimée |
 
 ### C. A conserver (API de transport / framework)
 

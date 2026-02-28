@@ -12,6 +12,7 @@ import { usePreferences } from "@/contexts/PreferencesContext";
 import { ServiceWorkerProvider } from "@/contexts/ServiceWorkerContext";
 import type { KomgaLibrary, KomgaSeries } from "@/types/komga";
 import logger from "@/lib/logger";
+import { getRandomBookFromLibraries } from "@/app/actions/library";
 
 // Routes qui ne nécessitent pas d'authentification
 const publicRoutes = ["/login", "/register"];
@@ -51,10 +52,11 @@ export default function ClientLayout({
   const fetchRandomBook = useCallback(async () => {
     if (backgroundType === "komga-random" && libraryIdsString) {
       try {
-        const response = await fetch(`/api/komga/random-book?libraryIds=${libraryIdsString}`);
-        if (response.ok) {
-          const data = await response.json();
-          setRandomBookId(data.bookId);
+        const libraryIds = libraryIdsString.split(",").filter(Boolean);
+        const result = await getRandomBookFromLibraries(libraryIds);
+
+        if (result.success && result.bookId) {
+          setRandomBookId(result.bookId);
         }
       } catch (error) {
         logger.error({ err: error }, "Erreur lors de la récupération d'un book aléatoire:");
