@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
+import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { useTranslate } from "@/hooks/useTranslate";
+import type { AppErrorType } from "@/types/global";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -16,8 +18,16 @@ interface LoginFormProps {
 export function LoginForm({ from }: LoginFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<AppErrorType | null>(null);
   const { t } = useTranslate();
+
+  const getSafeRedirectPath = (path?: string) => {
+    if (!path || !path.startsWith("/") || path.startsWith("//")) {
+      return "/";
+    }
+
+    return path;
+  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -37,14 +47,24 @@ export function LoginForm({ from }: LoginFormProps) {
         redirect: false,
       });
 
-      if (result?.error) {
-        setError("Email ou mot de passe incorrect");
-      } else {
-        router.push(from || "/");
-        router.refresh();
+      if (!result || result.error || !result.ok) {
+        setError({
+          code: "AUTH_INVALID_CREDENTIALS",
+          name: "Login failed",
+          message: "Email ou mot de passe incorrect",
+        });
+        return;
       }
-    } catch (_error) {
-      setError("Une erreur est survenue lors de la connexion : " + _error);
+
+      const redirectPath = getSafeRedirectPath(from);
+      window.location.assign(redirectPath);
+      router.refresh();
+    } catch {
+      setError({
+        code: "AUTH_FETCH_ERROR",
+        name: "Login error",
+        message: "Une erreur est survenue lors de la connexion",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -80,7 +100,7 @@ export function LoginForm({ from }: LoginFormProps) {
           {t("login.form.remember")}
         </Label>
       </div>
-      {error && <div className="text-sm text-destructive">{error}</div>}
+      {error && <ErrorMessage errorCode={error.code} variant="form" />}
       <Button type="submit" disabled={isLoading} className="w-full">
         {isLoading ? t("login.form.submit.loading.login") : t("login.form.submit.login")}
       </Button>

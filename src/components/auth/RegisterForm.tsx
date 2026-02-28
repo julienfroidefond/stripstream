@@ -15,11 +15,19 @@ interface RegisterFormProps {
   from?: string;
 }
 
-export function RegisterForm({ from: _from }: RegisterFormProps) {
+export function RegisterForm({ from }: RegisterFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<AppErrorType | null>(null);
   const { t } = useTranslate();
+
+  const getSafeRedirectPath = (path?: string) => {
+    if (!path || !path.startsWith("/") || path.startsWith("//")) {
+      return "/";
+    }
+
+    return path;
+  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -61,14 +69,15 @@ export function RegisterForm({ from: _from }: RegisterFormProps) {
         redirect: false,
       });
 
-      if (signInResult?.error) {
+      if (!signInResult || signInResult.error || !signInResult.ok) {
         setError({
           code: "AUTH_INVALID_CREDENTIALS",
           name: "Login failed",
           message: "Inscription réussie mais erreur lors de la connexion automatique",
         });
       } else {
-        router.push("/");
+        const redirectPath = getSafeRedirectPath(from);
+        window.location.assign(redirectPath);
         router.refresh();
       }
     } catch {
