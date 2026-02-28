@@ -7,6 +7,7 @@ import { ClientOfflineBookService } from "@/lib/services/client-offlinebook.serv
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import logger from "@/lib/logger";
+import { deleteReadProgress } from "@/app/actions/read-progress";
 
 interface MarkAsUnreadButtonProps {
   bookId: string;
@@ -23,12 +24,10 @@ export function MarkAsUnreadButton({ bookId, onSuccess, className }: MarkAsUnrea
     e.stopPropagation(); // Empêcher la propagation au parent
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/komga/books/${bookId}/read-progress`, {
-        method: "DELETE",
-      });
+      const result = await deleteReadProgress(bookId);
 
-      if (!response.ok) {
-        throw new Error(t("books.actions.markAsUnread.error.update"));
+      if (!result.success) {
+        throw new Error(result.message);
       }
 
       // On supprime la page courante du localStorage seulement après que l'API a répondu

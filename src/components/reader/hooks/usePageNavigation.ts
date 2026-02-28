@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import { ClientOfflineBookService } from "@/lib/services/client-offlinebook.service";
 import type { KomgaBook } from "@/types/komga";
 import logger from "@/lib/logger";
+import { updateReadProgress } from "@/app/actions/read-progress";
 
 interface UsePageNavigationProps {
   book: KomgaBook;
@@ -48,11 +49,7 @@ export function usePageNavigation({
       try {
         ClientOfflineBookService.setCurrentPage(bookRef.current, page);
         const completed = page === pagesLengthRef.current;
-        await fetch(`/api/komga/books/${bookRef.current.id}/read-progress`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ page, completed }),
-        });
+        await updateReadProgress(bookRef.current.id, page, completed);
       } catch (error) {
         logger.error({ err: error }, "Sync error:");
       }

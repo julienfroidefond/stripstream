@@ -7,6 +7,7 @@ import { ClientOfflineBookService } from "@/lib/services/client-offlinebook.serv
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import logger from "@/lib/logger";
+import { updateReadProgress } from "@/app/actions/read-progress";
 
 interface MarkAsReadButtonProps {
   bookId: string;
@@ -32,16 +33,11 @@ export function MarkAsReadButton({
     setIsLoading(true);
     try {
       ClientOfflineBookService.removeCurrentPageById(bookId);
-      const response = await fetch(`/api/komga/books/${bookId}/read-progress`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ page: pagesCount, completed: true }),
-      });
+      
+      const result = await updateReadProgress(bookId, pagesCount, true);
 
-      if (!response.ok) {
-        throw new Error(t("books.actions.markAsRead.error.update"));
+      if (!result.success) {
+        throw new Error(result.message);
       }
 
       toast({
