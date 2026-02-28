@@ -7,7 +7,7 @@ import { Network, Loader2 } from "lucide-react";
 import type { KomgaConfig } from "@/types/komga";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import logger from "@/lib/logger";
-import { saveKomgaConfig } from "@/app/actions/config";
+import { saveKomgaConfig, testKomgaConnection } from "@/app/actions/config";
 
 interface KomgaSettingsProps {
   initialConfig: KomgaConfig | null;
@@ -41,21 +41,10 @@ export function KomgaSettings({ initialConfig }: KomgaSettingsProps) {
     const password = formData.get("password") as string;
 
     try {
-      const response = await fetch("/api/komga/test", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          serverUrl: serverUrl.trim(),
-          username,
-          password: password || config.password,
-        }),
-      });
+      const result = await testKomgaConnection(serverUrl.trim(), username, password || config.password);
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || t("settings.komga.error.message"));
+      if (!result.success) {
+        throw new Error(result.message);
       }
 
       toast({

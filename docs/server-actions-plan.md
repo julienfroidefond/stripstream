@@ -13,6 +13,7 @@
 | `PUT /api/preferences` | `updatePreferences()` | ✅ Done |
 | `POST /api/komga/libraries/[libraryId]/scan` | `scanLibrary()` | ✅ Done |
 | `POST /api/komga/config` | `saveKomgaConfig()` | ✅ Done |
+| `POST /api/komga/test` | `testKomgaConnection()` | ✅ Done |
 | `PUT /api/user/password` | `changePassword()` | ✅ Done |
 | `POST /api/auth/register` | `registerUser()` | ✅ Done |
 | `PATCH /api/admin/users/[userId]` | `updateUserRoles()` | ✅ Done |

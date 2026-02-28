@@ -2,15 +2,44 @@
 
 import { revalidatePath } from "next/cache";
 import { ConfigDBService } from "@/lib/services/config-db.service";
+import { TestService } from "@/lib/services/test.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
-import type { KomgaConfig, KomgaConfigData } from "@/types/komga";
+import type { KomgaConfig, KomgaConfigData, KomgaLibrary } from "@/types/komga";
 
 interface SaveConfigInput {
   url: string;
   username: string;
   password?: string;
   authHeader?: string;
+}
+
+/**
+ * Teste la connexion à Komga
+ */
+export async function testKomgaConnection(
+  serverUrl: string,
+  username: string,
+  password: string
+): Promise<{ success: boolean; message: string }> {
+  try {
+    const authHeader = Buffer.from(`${username}:${password}`).toString("base64");
+
+    const { libraries }: { libraries: KomgaLibrary[] } = await TestService.testConnection({
+      serverUrl,
+      authHeader,
+    });
+
+    return {
+      success: true,
+      message: `Connexion réussie ! ${libraries.length} bibliothèque${libraries.length > 1 ? "s" : ""} trouvée${libraries.length > 1 ? "s" : ""}`,
+    };
+  } catch (error) {
+    if (error instanceof AppError) {
+      return { success: false, message: error.message };
+    }
+    return { success: false, message: "Erreur lors de la connexion" };
+  }
 }
 
 /**
