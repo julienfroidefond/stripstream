@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Lock } from "lucide-react";
+import { changePassword } from "@/app/actions/password";
 
 export function ChangePasswordForm() {
   const [currentPassword, setCurrentPassword] = useState("");
@@ -39,15 +40,10 @@ export function ChangePasswordForm() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/user/password", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ currentPassword, newPassword }),
-      });
+      const result = await changePassword(currentPassword, newPassword);
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Erreur lors du changement de mot de passe");
+      if (!result.success) {
+        throw new Error(result.message);
       }
 
       toast({
