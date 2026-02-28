@@ -36,14 +36,14 @@ export function LibraryHeader({
   const seriesLabel = `${seriesCount} ${seriesCount > 1 ? "series" : "serie"}`;
 
   return (
-    <div className="relative min-h-[200px] md:h-[200px] w-screen -ml-[calc((100vw-100%)/2)] overflow-hidden">
+    <div className="relative min-h-[220px] md:h-[220px] w-screen -ml-[calc((100vw-100%)/2)] overflow-hidden border-y border-border/60">
       <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-black/40" />
+        <div className="absolute inset-0 bg-gradient-to-r from-background/85 via-background/65 to-background/85" />
         {background ? (
           <SeriesCover
             series={background}
             alt=""
-            className="blur-sm scale-105 brightness-50"
+            className="scale-105 blur-sm brightness-50"
             showProgressUi={false}
           />
         ) : (
@@ -51,9 +51,9 @@ export function LibraryHeader({
         )}
       </div>
 
-      <div className="relative container mx-auto px-4 py-8 h-full">
-        <div className="flex flex-col md:flex-row gap-6 items-center md:items-start h-full">
-          <div className="relative w-[120px] h-[120px] rounded-lg overflow-hidden shadow-lg flex-shrink-0">
+      <div className="relative container mx-auto h-full px-4 py-8">
+        <div className="flex h-full flex-col items-center gap-6 md:flex-row md:items-start">
+          <div className="relative h-[120px] w-[120px] flex-shrink-0 overflow-hidden rounded-xl border border-border/60 shadow-lg">
             {featured ? (
               <div className="relative w-full h-full">
                 <SeriesCover
@@ -73,10 +73,10 @@ export function LibraryHeader({
             )}
           </div>
 
-          <div className="flex-1 space-y-3 text-center md:text-left">
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground">{library.name}</h1>
+          <div className="flex-1 space-y-4 text-center md:text-left">
+            <h1 className="text-3xl font-bold text-foreground md:text-4xl">{library.name}</h1>
 
-            <div className="flex items-center gap-4 justify-center md:justify-start flex-wrap">
+            <div className="flex flex-wrap items-center justify-center gap-3 rounded-xl border border-border/60 bg-background/45 p-2 backdrop-blur-sm md:justify-start">
               <StatusBadge status="unread" icon={Library}>
                 {seriesLabel}
               </StatusBadge>

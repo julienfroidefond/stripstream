@@ -64,7 +64,12 @@ export function MediaRow({ titleKey, items, iconName }: MediaRowProps) {
   if (!items.length) return null;
 
   return (
-    <Section title={t(titleKey)} icon={icon}>
+    <Section
+      title={t(titleKey)}
+      icon={icon}
+      className="space-y-5"
+      headerClassName="border-b border-border/50 pb-2"
+    >
       <ScrollContainer
         showArrows={true}
         scrollAmount={400}
@@ -106,7 +111,7 @@ function MediaCard({ item, onClick }: MediaCardProps) {
     <Card
       onClick={handleClick}
       className={cn(
-        "flex-shrink-0 w-[200px] relative flex flex-col hover:bg-accent hover:text-accent-foreground transition-colors overflow-hidden",
+        "relative flex w-[188px] flex-shrink-0 flex-col overflow-hidden rounded-xl border border-border/60 bg-card/85 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-card hover:shadow-md sm:w-[200px]",
         !isSeries && !isAccessible ? "cursor-not-allowed" : "cursor-pointer"
       )}
     >
@@ -114,11 +119,11 @@ function MediaCard({ item, onClick }: MediaCardProps) {
         {isSeries ? (
           <>
             <SeriesCover series={item as KomgaSeries} alt={`Couverture de ${title}`} />
-            <div className="absolute inset-0 bg-black/60 opacity-0 hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3">
-              <h3 className="font-medium text-sm text-white line-clamp-2">{title}</h3>
-              <p className="text-xs text-white/80 mt-1">
-                {t("series.books", { count: item.booksCount })}
-              </p>
+              <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/75 via-black/30 to-transparent p-3 opacity-0 transition-opacity duration-200 hover:opacity-100">
+                <h3 className="font-medium text-sm text-white line-clamp-2">{title}</h3>
+                <p className="text-xs text-white/80 mt-1">
+                  {t("series.books", { count: item.booksCount })}
+                </p>
             </div>
           </>
         ) : (

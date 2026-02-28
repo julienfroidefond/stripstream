@@ -29,20 +29,22 @@ const optimizeBookData = (books: KomgaBook[]) => {
 
 export function HomeContent({ data }: HomeContentProps) {
   return (
-    <div className="space-y-12">
+    <div className="space-y-10 pb-2">
+      {data.ongoingBooks && data.ongoingBooks.length > 0 && (
+        <div className="rounded-2xl border border-primary/20 bg-[linear-gradient(145deg,hsl(var(--primary)/0.12),hsl(var(--background)/0.1)_45%)] p-4 sm:p-5">
+          <MediaRow
+            titleKey="home.sections.continue_reading"
+            items={optimizeBookData(data.ongoingBooks)}
+            iconName="BookOpen"
+          />
+        </div>
+      )}
+
       {data.ongoing && data.ongoing.length > 0 && (
         <MediaRow
           titleKey="home.sections.continue_series"
           items={optimizeSeriesData(data.ongoing)}
           iconName="LibraryBig"
-        />
-      )}
-
-      {data.ongoingBooks && data.ongoingBooks.length > 0 && (
-        <MediaRow
-          titleKey="home.sections.continue_reading"
-          items={optimizeBookData(data.ongoingBooks)}
-          iconName="BookOpen"
         />
       )}
 

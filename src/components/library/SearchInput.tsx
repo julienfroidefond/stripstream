@@ -34,12 +34,12 @@ export const SearchInput = ({ placeholder }: SearchInputProps) => {
   }, 300);
 
   return (
-    <div className="relative w-full max-w-md">
-      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+    <div className="relative w-full max-w-md rounded-full border border-border/60 bg-background/45 shadow-sm backdrop-blur-sm transition-colors focus-within:border-primary/40 focus-within:ring-2 focus-within:ring-ring/30">
+      <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
       <Input
         type={isPending ? "text" : "search"}
         placeholder={placeholder}
-        className="pl-3"
+        className="h-11 rounded-full border-0 bg-transparent pl-10 pr-10 shadow-none focus-visible:border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
         defaultValue={searchParams.get("search") ?? ""}
         onChange={(e) => handleSearch(e.target.value)}
         aria-label={placeholder}

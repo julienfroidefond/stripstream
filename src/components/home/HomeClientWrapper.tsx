@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { RefreshButton } from "@/components/library/RefreshButton";
 import { PullToRefreshIndicator } from "@/components/common/PullToRefreshIndicator";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
-import { useTranslate } from "@/hooks/useTranslate";
 
 interface HomeClientWrapperProps {
   children: ReactNode;
@@ -13,7 +12,6 @@ interface HomeClientWrapperProps {
 
 export function HomeClientWrapper({ children }: HomeClientWrapperProps) {
   const router = useRouter();
-  const { t } = useTranslate();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleRefresh = async () => {
@@ -45,12 +43,16 @@ export function HomeClientWrapper({ children }: HomeClientWrapperProps) {
         canRefresh={pullToRefresh.canRefresh}
         isHiding={pullToRefresh.isHiding}
       />
-      <main className="container mx-auto px-4 py-8 space-y-12">
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold">{t("home.title")}</h1>
-          <RefreshButton libraryId="home" refreshLibrary={handleRefresh} />
+      <main className="relative isolate overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(180deg,hsl(var(--background)/0.99)_0%,hsl(var(--background)/0.95)_28%,hsl(var(--background))_100%)]" />
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(128deg,hsl(var(--primary)/0.14)_0%,transparent_36%),linear-gradient(235deg,hsl(185_82%_54%/0.1)_4%,transparent_34%),linear-gradient(320deg,hsl(332_82%_63%/0.08)_8%,transparent_32%)]" />
+
+        <div className="container mx-auto space-y-12 px-4 py-8">
+          <div className="flex justify-end">
+            <RefreshButton libraryId="home" refreshLibrary={handleRefresh} />
+          </div>
+          {children}
         </div>
-        {children}
       </main>
     </>
   );

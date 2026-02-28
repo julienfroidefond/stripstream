@@ -171,19 +171,19 @@ export function PaginatedSeriesGrid({
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col gap-4">
-        <p className="text-sm text-muted-foreground text-right">{getShowingText()}</p>
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+      <div className="rounded-xl border border-border/60 bg-background/35 p-4 shadow-sm backdrop-blur-sm">
+        <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center">
           <div className="w-full">
             <SearchInput placeholder={t("series.filters.search")} />
           </div>
-          <div className="flex items-center justify-end gap-2">
+          <div className="flex items-center justify-end gap-2 rounded-full border border-border/50 bg-background/40 px-2 py-1">
             <PageSizeSelect pageSize={effectivePageSize} onSizeChange={handlePageSizeChange} />
             <ViewModeButton viewMode={viewMode} onToggle={handleViewModeToggle} />
             <CompactModeButton isCompact={isCompact} onToggle={handleCompactModeToggle} />
             <UnreadFilterButton showOnlyUnread={showOnlyUnread} onToggle={handleUnreadFilter} />
           </div>
         </div>
+        <p className="text-right text-sm text-muted-foreground">{getShowingText()}</p>
       </div>
 
       {viewMode === "grid" ? (

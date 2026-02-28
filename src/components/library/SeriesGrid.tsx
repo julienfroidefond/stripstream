@@ -36,7 +36,7 @@ const getReadingStatusInfo = (
         read: series.booksReadCount,
         total: series.booksCount,
       }),
-      className: "bg-blue-500/10 text-blue-500",
+      className: "bg-primary/15 text-primary",
     };
   }
 
@@ -61,7 +61,7 @@ export function SeriesGrid({ series, isCompact = false }: SeriesGridProps) {
   return (
     <div
       className={cn(
-        "grid gap-4",
+        "grid gap-4 md:gap-5",
         isCompact
           ? "grid-cols-3 sm:grid-cols-4 lg:grid-cols-6"
           : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5"
@@ -72,7 +72,7 @@ export function SeriesGrid({ series, isCompact = false }: SeriesGridProps) {
           key={series.id}
           onClick={() => router.push(`/series/${series.id}`)}
           className={cn(
-            "group relative aspect-[2/3] overflow-hidden rounded-lg bg-muted",
+            "group relative aspect-[2/3] overflow-hidden rounded-xl border border-border/60 bg-card/80 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
             series.booksCount === series.booksReadCount && "opacity-50",
             isCompact && "aspect-[3/4]"
           )}
@@ -81,7 +81,7 @@ export function SeriesGrid({ series, isCompact = false }: SeriesGridProps) {
             series={series as KomgaSeries}
             alt={t("series.coverAlt", { title: series.metadata.title })}
           />
-          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-4 space-y-2 translate-y-full group-hover:translate-y-0 transition-transform duration-200">
+          <div className="absolute inset-x-0 bottom-0 translate-y-full space-y-2 bg-gradient-to-t from-black/75 via-black/25 to-transparent p-4 transition-transform duration-200 group-hover:translate-y-0">
             <h3 className="font-medium text-sm text-white line-clamp-2">{series.metadata.title}</h3>
             <div className="flex items-center gap-2">
               <span

@@ -44,7 +44,7 @@ const getReadingStatusInfo = (
         read: series.booksReadCount,
         total: series.booksCount,
       }),
-      className: "bg-blue-500/10 text-blue-500",
+      className: "bg-primary/15 text-primary",
     };
   }
 
@@ -72,7 +72,7 @@ function SeriesListItem({ series, isCompact = false }: SeriesListItemProps) {
     return (
       <div
         className={cn(
-          "group relative flex gap-3 p-2 rounded-lg border bg-card hover:bg-accent/50 transition-colors cursor-pointer",
+          "group relative flex cursor-pointer gap-3 rounded-lg border border-border/60 bg-background/35 p-2 transition-colors hover:bg-accent/35",
           isCompleted && "opacity-75"
         )}
         onClick={handleClick}
@@ -128,7 +128,7 @@ function SeriesListItem({ series, isCompact = false }: SeriesListItemProps) {
   return (
     <div
       className={cn(
-        "group relative flex gap-4 p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors cursor-pointer",
+        "group relative flex cursor-pointer gap-4 rounded-xl border border-border/60 bg-background/35 p-4 transition-all duration-200 hover:bg-accent/35 hover:shadow-sm",
         isCompleted && "opacity-75"
       )}
       onClick={handleClick}
