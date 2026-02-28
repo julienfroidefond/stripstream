@@ -10,9 +10,15 @@ import logger from "@/lib/logger";
 
 interface ClientBookPageProps {
   bookId: string;
+  initialData?: {
+    book: KomgaBook;
+    pages: number[];
+    nextBook: KomgaBook | null;
+  };
+  initialError?: string;
 }
 
-export function ClientBookPage({ bookId }: ClientBookPageProps) {
+export function ClientBookPage({ bookId, initialData, initialError }: ClientBookPageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<{
@@ -20,6 +26,22 @@ export function ClientBookPage({ bookId }: ClientBookPageProps) {
     pages: number[];
     nextBook: KomgaBook | null;
   } | null>(null);
+
+  // Use SSR data if available
+  useEffect(() => {
+    if (initialData) {
+      setData(initialData);
+      setLoading(false);
+      return;
+    }
+    if (initialError) {
+      setError(initialError);
+      setLoading(false);
+      return;
+    }
+    fetchBookData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bookId, initialData, initialError]);
 
   const fetchBookData = async () => {
     try {
@@ -42,11 +64,6 @@ export function ClientBookPage({ bookId }: ClientBookPageProps) {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchBookData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bookId]);
 
   const handleRetry = () => {
     fetchBookData();
