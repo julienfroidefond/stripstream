@@ -7,10 +7,11 @@ import { AppError } from "../utils/errors";
 import type { UserPreferences } from "@/types/preferences";
 import { defaultPreferences } from "@/types/preferences";
 import logger from "@/lib/logger";
+import { updatePreferences as updatePreferencesAction } from "@/app/actions/preferences";
 
 interface PreferencesContextType {
   preferences: UserPreferences;
-  updatePreferences: (newPreferences: Partial<UserPreferences>) => Promise<void>;
+  updatePreferences: (newPreferences: Partial<UserPreferences>) => Promise<UserPreferences | undefined>;
   isLoading: boolean;
 }
 
@@ -84,28 +85,22 @@ export function PreferencesProvider({
     }
   }, [status, fetchPreferences, hasValidInitialPreferences]);
 
-  const updatePreferences = useCallback(async (newPreferences: Partial<UserPreferences>) => {
+  const updatePreferences = useCallback(async (newPreferences: Partial<UserPreferences>): Promise<UserPreferences | undefined> => {
     try {
-      const response = await fetch("/api/preferences", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newPreferences),
-      });
+      const result = await updatePreferencesAction(newPreferences);
 
-      if (!response.ok) {
+      if (!result.success) {
         throw new AppError(ERROR_CODES.PREFERENCES.UPDATE_ERROR);
       }
 
-      const updatedPreferences = await response.json();
+      if (result.data) {
+        setPreferences((prev) => ({
+          ...prev,
+          ...result.data,
+        }));
+      }
 
-      setPreferences((prev) => ({
-        ...prev,
-        ...updatedPreferences,
-      }));
-
-      return updatedPreferences;
+      return result.data;
     } catch (error) {
       logger.error({ err: error }, "Erreur lors de la mise à jour des préférences");
       throw error;

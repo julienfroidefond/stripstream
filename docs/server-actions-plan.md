@@ -8,42 +8,15 @@
 |----------------|---------------|--------|
 | `PATCH /api/komga/books/[bookId]/read-progress` | `updateReadProgress()` | ✅ Done |
 | `DELETE /api/komga/books/[bookId]/read-progress` | `deleteReadProgress()` | ✅ Done |
+| `POST /api/komga/favorites` | `addToFavorites()` | ✅ Done |
+| `DELETE /api/komga/favorites` | `removeFromFavorites()` | ✅ Done |
+| `PUT /api/preferences` | `updatePreferences()` | ✅ Done |
 
 ---
 
 ## À convertir (priorité haute)
 
-### 1. Favoris
-
-**Route actuelle** : `api/komga/favorites/route.ts`
-
-```typescript
-// Action à créer : src/app/actions/favorites.ts
-export async function addToFavorites(seriesId: string)
-export async function removeFromFavorites(seriesId: string)
-```
-
-**Appelants à migrer** :
-- `components/series/SeriesHeader.tsx` (POST/DELETE fetch)
-
----
-
-### 2. Préférences
-
-**Route actuelle** : `api/preferences/route.ts`
-
-```typescript
-// Action à créer : src/app/actions/preferences.ts
-export async function updatePreferences(preferences: UserPreferences)
-```
-
-**Appelants à migrer** :
-- `components/settings/PreferencesForm.tsx` (PUT fetch)
-- `hooks/usePreferences.ts` (PUT fetch)
-
----
-
-### 3. Scan de bibliothèque
+### 1. Scan de bibliothèque
 
 **Route actuelle** : `api/komga/libraries/[libraryId]/scan/route.ts`
 
@@ -59,7 +32,7 @@ export async function scanLibrary(libraryId: string)
 
 ## À convertir (priorité moyenne)
 
-### 4. Configuration Komga
+### 2. Configuration Komga
 
 **Route actuelle** : `api/komga/config/route.ts`
 
@@ -71,7 +44,7 @@ export async function getKomgaConfig()
 
 ---
 
-### 5. Mot de passe utilisateur
+### 3. Mot de passe utilisateur
 
 **Route actuelle** : `api/user/password/route.ts`
 
@@ -82,7 +55,7 @@ export async function changePassword(currentPassword: string, newPassword: strin
 
 ---
 
-### 6. Inscription
+### 4. Inscription
 
 **Route actuelle** : `api/auth/register/route.ts`
 
@@ -95,7 +68,7 @@ export async function registerUser(email: string, password: string)
 
 ## À convertir (priorité basse - admin)
 
-### 7. Gestion des utilisateurs (admin)
+### 5. Gestion des utilisateurs (admin)
 
 **Routes** :
 - `api/admin/users/[userId]/route.ts` (PATCH, DELETE)
