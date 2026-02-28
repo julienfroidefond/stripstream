@@ -4,7 +4,6 @@ import { useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { PullToRefreshIndicator } from "@/components/common/PullToRefreshIndicator";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
-import { RefreshProvider } from "@/contexts/RefreshContext";
 
 interface LibraryClientWrapperProps {
   children: ReactNode;
@@ -42,7 +41,7 @@ export function LibraryClientWrapper({ children }: LibraryClientWrapperProps) {
         canRefresh={pullToRefresh.canRefresh}
         isHiding={pullToRefresh.isHiding}
       />
-      <RefreshProvider refreshLibrary={handleRefresh}>{children}</RefreshProvider>
+      {children}
     </>
   );
 }

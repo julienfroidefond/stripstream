@@ -1,6 +1,5 @@
 "use client";
 
-import { CoverClient } from "./cover-client";
 import { ProgressBar } from "./progress-bar";
 import type { BookCoverProps } from "./cover-utils";
 import { getImageUrl } from "@/lib/utils/image-url";
@@ -70,8 +69,7 @@ export function BookCover({
 
   const currentPage = ClientOfflineBookService.getCurrentPage(book);
   const totalPages = book.media.pagesCount;
-  const showProgress =
-    showProgressUi && currentPage && totalPages && currentPage > 0 && !isCompleted;
+  const showProgress = Boolean(showProgressUi && totalPages > 0 && currentPage > 0 && !isCompleted);
 
   const statusInfo = getReadingStatusInfo(book, t);
   const isRead = book.readProgress?.completed || false;
@@ -91,11 +89,17 @@ export function BookCover({
   return (
     <>
       <div className={`relative w-full h-full ${isUnavailable ? "opacity-40 grayscale" : ""}`}>
-        <CoverClient
-          imageUrl={imageUrl}
+        <img
+          src={imageUrl.trim()}
           alt={alt || t("books.defaultCoverAlt")}
-          className={className}
-          isCompleted={isCompleted}
+          loading="lazy"
+          className={[
+            "absolute inset-0 w-full h-full object-cover rounded-lg",
+            isCompleted ? "opacity-50" : "",
+            className || "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
         />
         {showProgress && <ProgressBar progress={currentPage} total={totalPages} type="book" />}
         {/* Badge hors ligne si non accessible */}

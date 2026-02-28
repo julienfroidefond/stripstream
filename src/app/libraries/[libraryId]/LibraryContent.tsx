@@ -1,9 +1,6 @@
-"use client";
-
 import { LibraryHeader } from "@/components/library/LibraryHeader";
 import { PaginatedSeriesGrid } from "@/components/library/PaginatedSeriesGrid";
 import { Container } from "@/components/ui/container";
-import { useRefresh } from "@/contexts/RefreshContext";
 import type { KomgaLibrary } from "@/types/komga";
 import type { LibraryResponse } from "@/types/library";
 import type { Series } from "@/types/series";
@@ -27,15 +24,12 @@ export function LibraryContent({
   unreadOnly,
   pageSize,
 }: LibraryContentProps) {
-  const { refreshLibrary } = useRefresh();
-
   return (
     <>
       <LibraryHeader
         library={library}
         seriesCount={series.totalElements}
         series={series.content || []}
-        refreshLibrary={refreshLibrary || (async () => ({ success: false }))}
       />
       <Container>
         <PaginatedSeriesGrid
@@ -46,6 +40,8 @@ export function LibraryContent({
           defaultShowOnlyUnread={preferences.showOnlyUnread}
           showOnlyUnread={unreadOnly}
           pageSize={pageSize}
+          initialCompact={preferences.displayMode.compact}
+          initialViewMode={preferences.displayMode.viewMode || "grid"}
         />
       </Container>
     </>

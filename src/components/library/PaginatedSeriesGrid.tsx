@@ -8,12 +8,11 @@ import { useState, useEffect, useCallback } from "react";
 import type { KomgaSeries } from "@/types/komga";
 import { SearchInput } from "./SearchInput";
 import { useTranslate } from "@/hooks/useTranslate";
-import { useDisplayPreferences } from "@/hooks/useDisplayPreferences";
-import { usePreferences } from "@/contexts/PreferencesContext";
 import { PageSizeSelect } from "@/components/common/PageSizeSelect";
 import { CompactModeButton } from "@/components/common/CompactModeButton";
 import { ViewModeButton } from "@/components/common/ViewModeButton";
 import { UnreadFilterButton } from "@/components/common/UnreadFilterButton";
+import { updatePreferences as updatePreferencesAction } from "@/app/actions/preferences";
 
 interface PaginatedSeriesGridProps {
   series: KomgaSeries[];
@@ -23,6 +22,8 @@ interface PaginatedSeriesGridProps {
   defaultShowOnlyUnread: boolean;
   showOnlyUnread: boolean;
   pageSize?: number;
+  initialCompact: boolean;
+  initialViewMode: "grid" | "list";
 }
 
 export function PaginatedSeriesGrid({
@@ -33,17 +34,27 @@ export function PaginatedSeriesGrid({
   defaultShowOnlyUnread,
   showOnlyUnread: initialShowOnlyUnread,
   pageSize,
+  initialCompact,
+  initialViewMode,
 }: PaginatedSeriesGridProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [showOnlyUnread, setShowOnlyUnread] = useState(initialShowOnlyUnread);
-  const { isCompact, itemsPerPage: displayItemsPerPage, viewMode } = useDisplayPreferences();
-  const { updatePreferences } = usePreferences();
+  const [isCompact, setIsCompact] = useState(initialCompact);
+  const [viewMode, setViewMode] = useState<"grid" | "list">(initialViewMode);
+  const [currentPageSize, setCurrentPageSize] = useState(pageSize || 20);
 
-  // Utiliser la taille de page effective (depuis l'URL ou les préférences)
-  const effectivePageSize = pageSize || displayItemsPerPage;
+  const effectivePageSize = pageSize || currentPageSize;
   const { t } = useTranslate();
+
+  const persistPreferences = useCallback(async (payload: Parameters<typeof updatePreferencesAction>[0]) => {
+    try {
+      await updatePreferencesAction(payload);
+    } catch (error) {
+      console.error("Erreur lors de la sauvegarde des préférences:", error);
+    }
+  }, []);
 
   const updateUrlParams = useCallback(
     async (updates: Record<string, string | null>, replace: boolean = false) => {
@@ -71,6 +82,18 @@ export function PaginatedSeriesGrid({
     setShowOnlyUnread(initialShowOnlyUnread);
   }, [initialShowOnlyUnread]);
 
+  useEffect(() => {
+    setIsCompact(initialCompact);
+  }, [initialCompact]);
+
+  useEffect(() => {
+    setViewMode(initialViewMode);
+  }, [initialViewMode]);
+
+  useEffect(() => {
+    setCurrentPageSize(pageSize || 20);
+  }, [pageSize]);
+
   // Apply default filter on initial load
   useEffect(() => {
     if (defaultShowOnlyUnread && !searchParams.has("unread")) {
@@ -89,19 +112,46 @@ export function PaginatedSeriesGrid({
       page: "1",
       unread: newUnreadState ? "true" : "false",
     });
-    // Sauvegarder la préférence dans la base de données
-    try {
-      await updatePreferences({ showOnlyUnread: newUnreadState });
-    } catch (error) {
-      // Log l'erreur mais ne bloque pas l'utilisateur
-      console.error("Erreur lors de la sauvegarde de la préférence:", error);
-    }
+    await persistPreferences({ showOnlyUnread: newUnreadState });
   };
 
   const handlePageSizeChange = async (size: number) => {
+    setCurrentPageSize(size);
     await updateUrlParams({
       page: "1",
       size: size.toString(),
+    });
+
+    await persistPreferences({
+      displayMode: {
+        compact: isCompact,
+        itemsPerPage: size,
+        viewMode,
+      },
+    });
+  };
+
+  const handleCompactModeToggle = async (nextCompactMode: boolean) => {
+    setIsCompact(nextCompactMode);
+
+    await persistPreferences({
+      displayMode: {
+        compact: nextCompactMode,
+        itemsPerPage: effectivePageSize,
+        viewMode,
+      },
+    });
+  };
+
+  const handleViewModeToggle = async (nextViewMode: "grid" | "list") => {
+    setViewMode(nextViewMode);
+
+    await persistPreferences({
+      displayMode: {
+        compact: isCompact,
+        itemsPerPage: effectivePageSize,
+        viewMode: nextViewMode,
+      },
     });
   };
 
@@ -128,9 +178,9 @@ export function PaginatedSeriesGrid({
             <SearchInput placeholder={t("series.filters.search")} />
           </div>
           <div className="flex items-center justify-end gap-2">
-            <PageSizeSelect onSizeChange={handlePageSizeChange} />
-            <ViewModeButton />
-            <CompactModeButton />
+            <PageSizeSelect pageSize={effectivePageSize} onSizeChange={handlePageSizeChange} />
+            <ViewModeButton viewMode={viewMode} onToggle={handleViewModeToggle} />
+            <CompactModeButton isCompact={isCompact} onToggle={handleCompactModeToggle} />
             <UnreadFilterButton showOnlyUnread={showOnlyUnread} onToggle={handleUnreadFilter} />
           </div>
         </div>

@@ -10,19 +10,23 @@ import {
 
 interface PageSizeSelectProps {
   onSizeChange?: (size: number) => void;
+  pageSize?: number;
 }
 
-export function PageSizeSelect({ onSizeChange }: PageSizeSelectProps) {
-  const { itemsPerPage, handlePageSizeChange } = useDisplayPreferences();
-
-  const handleChange = async (value: string) => {
-    const size = parseInt(value);
-    await handlePageSizeChange(size);
-    onSizeChange?.(size);
+function PageSizeSelectBase({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (size: number) => Promise<void> | void;
+}) {
+  const handleChange = async (rawValue: string) => {
+    const size = parseInt(rawValue);
+    await onChange(size);
   };
 
   return (
-    <Select value={itemsPerPage.toString()} onValueChange={handleChange}>
+    <Select value={value.toString()} onValueChange={handleChange}>
       <SelectTrigger className="w-[80px]">
         <LayoutList className="h-4 w-4" />
         <SelectValue className="ml-2" />
@@ -34,4 +38,25 @@ export function PageSizeSelect({ onSizeChange }: PageSizeSelectProps) {
       </SelectContent>
     </Select>
   );
+}
+
+function PageSizeSelectUncontrolled({ onSizeChange }: Pick<PageSizeSelectProps, "onSizeChange">) {
+  const { itemsPerPage, handlePageSizeChange } = useDisplayPreferences();
+
+  const onChange = async (size: number) => {
+    await handlePageSizeChange(size);
+    onSizeChange?.(size);
+  };
+
+  return <PageSizeSelectBase value={itemsPerPage} onChange={onChange} />;
+}
+
+export function PageSizeSelect({ onSizeChange, pageSize }: PageSizeSelectProps) {
+  const isControlled = typeof pageSize === "number" && typeof onSizeChange === "function";
+
+  if (isControlled) {
+    return <PageSizeSelectBase value={pageSize} onChange={onSizeChange} />;
+  }
+
+  return <PageSizeSelectUncontrolled onSizeChange={onSizeChange} />;
 }

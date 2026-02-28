@@ -5,16 +5,21 @@ import { Button } from "@/components/ui/button";
 
 interface ViewModeButtonProps {
   onToggle?: (viewMode: "grid" | "list") => void;
+  viewMode?: "grid" | "list";
 }
 
-export function ViewModeButton({ onToggle }: ViewModeButtonProps) {
-  const { viewMode, handleViewModeToggle } = useDisplayPreferences();
+function ViewModeButtonBase({
+  viewMode,
+  onToggle,
+}: {
+  viewMode: "grid" | "list";
+  onToggle: (viewMode: "grid" | "list") => Promise<void> | void;
+}) {
   const { t } = useTranslate();
 
   const handleClick = async () => {
     const newViewMode = viewMode === "grid" ? "list" : "grid";
-    await handleViewModeToggle(newViewMode);
-    onToggle?.(newViewMode);
+    await onToggle(newViewMode);
   };
 
   const Icon = viewMode === "grid" ? List : LayoutGrid;
@@ -32,4 +37,25 @@ export function ViewModeButton({ onToggle }: ViewModeButtonProps) {
       <span className="hidden sm:inline ml-2">{label}</span>
     </Button>
   );
+}
+
+function ViewModeButtonUncontrolled({ onToggle }: Pick<ViewModeButtonProps, "onToggle">) {
+  const { viewMode, handleViewModeToggle } = useDisplayPreferences();
+
+  const handleToggle = async (nextViewMode: "grid" | "list") => {
+    await handleViewModeToggle(nextViewMode);
+    onToggle?.(nextViewMode);
+  };
+
+  return <ViewModeButtonBase viewMode={viewMode} onToggle={handleToggle} />;
+}
+
+export function ViewModeButton({ onToggle, viewMode }: ViewModeButtonProps) {
+  const isControlled = typeof viewMode === "string" && typeof onToggle === "function";
+
+  if (isControlled) {
+    return <ViewModeButtonBase viewMode={viewMode} onToggle={onToggle} />;
+  }
+
+  return <ViewModeButtonUncontrolled onToggle={onToggle} />;
 }

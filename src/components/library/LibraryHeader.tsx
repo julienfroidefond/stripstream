@@ -1,11 +1,7 @@
-"use client";
-
-import { useMemo } from "react";
 import { Library } from "lucide-react";
 import type { KomgaLibrary, KomgaSeries } from "@/types/komga";
 import { RefreshButton } from "./RefreshButton";
 import { ScanButton } from "./ScanButton";
-import { useTranslate } from "@/hooks/useTranslate";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { SeriesCover } from "@/components/ui/series-cover";
 
@@ -13,39 +9,39 @@ interface LibraryHeaderProps {
   library: KomgaLibrary;
   seriesCount: number;
   series: KomgaSeries[];
-  refreshLibrary: (libraryId: string) => Promise<{ success: boolean; error?: string }>;
 }
 
-export const LibraryHeader = ({
+const getHeaderSeries = (series: KomgaSeries[]) => {
+  if (series.length === 0) {
+    return { featured: null, background: null };
+  }
+
+  const featured = series[0] ?? null;
+
+  if (!featured) {
+    return { featured: null, background: null };
+  }
+
+  const background = series[1] ?? featured;
+
+  return { featured, background };
+};
+
+export function LibraryHeader({
   library,
   seriesCount,
   series,
-  refreshLibrary,
-}: LibraryHeaderProps) => {
-  const { t } = useTranslate();
-
-  // Mémoriser la sélection des séries pour éviter les rerenders inutiles
-  const { randomSeries, backgroundSeries } = useMemo(() => {
-    // Sélectionner une série aléatoire pour l'image centrale
-    const random = series.length > 0 ? series[Math.floor(Math.random() * series.length)] : null;
-
-    // Sélectionner une autre série aléatoire pour le fond (différente de celle du centre)
-    const background =
-      series.length > 1
-        ? series.filter((s) => s.id !== random?.id)[Math.floor(Math.random() * (series.length - 1))]
-        : random;
-
-    return { randomSeries: random, backgroundSeries: background };
-  }, [series]);
+}: LibraryHeaderProps) {
+  const { featured, background } = getHeaderSeries(series);
+  const seriesLabel = `${seriesCount} ${seriesCount > 1 ? "series" : "serie"}`;
 
   return (
     <div className="relative min-h-[200px] md:h-[200px] w-screen -ml-[calc((100vw-100%)/2)] overflow-hidden">
-      {/* Image de fond avec une série aléatoire */}
       <div className="absolute inset-0">
         <div className="absolute inset-0 bg-black/40" />
-        {backgroundSeries ? (
+        {background ? (
           <SeriesCover
-            series={backgroundSeries}
+            series={background}
             alt=""
             className="blur-sm scale-105 brightness-50"
             showProgressUi={false}
@@ -55,16 +51,14 @@ export const LibraryHeader = ({
         )}
       </div>
 
-      {/* Contenu */}
       <div className="relative container mx-auto px-4 py-8 h-full">
         <div className="flex flex-col md:flex-row gap-6 items-center md:items-start h-full">
-          {/* Cover centrale avec icône overlay */}
           <div className="relative w-[120px] h-[120px] rounded-lg overflow-hidden shadow-lg flex-shrink-0">
-            {randomSeries ? (
+            {featured ? (
               <div className="relative w-full h-full">
                 <SeriesCover
-                  series={randomSeries}
-                  alt={t("library.header.coverAlt", { name: library.name })}
+                  series={featured}
+                  alt={`Couverture de ${library.name}`}
                   className="w-full h-full object-cover"
                   showProgressUi={false}
                 />
@@ -79,27 +73,22 @@ export const LibraryHeader = ({
             )}
           </div>
 
-          {/* Informations */}
           <div className="flex-1 space-y-3 text-center md:text-left">
             <h1 className="text-3xl md:text-4xl font-bold text-foreground">{library.name}</h1>
 
             <div className="flex items-center gap-4 justify-center md:justify-start flex-wrap">
               <StatusBadge status="unread" icon={Library}>
-                {seriesCount === 1
-                  ? t("library.header.series", { count: seriesCount })
-                  : t("library.header.series_plural", { count: seriesCount })}
+                {seriesLabel}
               </StatusBadge>
 
-              <RefreshButton libraryId={library.id} refreshLibrary={refreshLibrary} />
+              <RefreshButton libraryId={library.id} />
               <ScanButton libraryId={library.id} />
             </div>
 
-            {library.unavailable && (
-              <p className="text-sm text-destructive mt-2">{t("library.header.unavailable")}</p>
-            )}
+            {library.unavailable && <p className="text-sm text-destructive mt-2">Bibliotheque indisponible</p>}
           </div>
         </div>
       </div>
     </div>
   );
-};
+}

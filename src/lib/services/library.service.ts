@@ -15,6 +15,22 @@ interface KomgaLibraryRaw {
 
 type KomgaCondition = Record<string, unknown>;
 
+const sortSeriesDeterministically = <T extends { id: string; metadata?: { titleSort?: string } }>(
+  items: T[]
+): T[] => {
+  return [...items].sort((a, b) => {
+    const titleA = a.metadata?.titleSort ?? "";
+    const titleB = b.metadata?.titleSort ?? "";
+    const titleComparison = titleA.localeCompare(titleB);
+
+    if (titleComparison !== 0) {
+      return titleComparison;
+    }
+
+    return a.id.localeCompare(b.id);
+  });
+};
+
 export class LibraryService extends BaseApiService {
   private static readonly CACHE_TTL = 300; // 5 minutes
 
@@ -121,13 +137,13 @@ export class LibraryService extends BaseApiService {
         { method: "POST", body: JSON.stringify(searchBody), revalidate: this.CACHE_TTL }
       );
 
-      // Filtrer uniquement les séries supprimées
       const filteredContent = response.content.filter((series) => !series.deleted);
+      const sortedContent = sortSeriesDeterministically(filteredContent);
 
       return {
         ...response,
-        content: filteredContent,
-        numberOfElements: filteredContent.length,
+        content: sortedContent,
+        numberOfElements: sortedContent.length,
       };
     } catch (error) {
       throw new AppError(ERROR_CODES.SERIES.FETCH_ERROR, {}, error);

@@ -5,16 +5,21 @@ import { Button } from "@/components/ui/button";
 
 interface CompactModeButtonProps {
   onToggle?: (isCompact: boolean) => void;
+  isCompact?: boolean;
 }
 
-export function CompactModeButton({ onToggle }: CompactModeButtonProps) {
-  const { isCompact, handleCompactToggle } = useDisplayPreferences();
+function CompactModeButtonBase({
+  isCompact,
+  onToggle,
+}: {
+  isCompact: boolean;
+  onToggle: (isCompact: boolean) => Promise<void> | void;
+}) {
   const { t } = useTranslate();
 
   const handleClick = async () => {
     const newCompactState = !isCompact;
-    await handleCompactToggle(newCompactState);
-    onToggle?.(newCompactState);
+    await onToggle(newCompactState);
   };
 
   const Icon = isCompact ? LayoutTemplate : LayoutGrid;
@@ -32,4 +37,25 @@ export function CompactModeButton({ onToggle }: CompactModeButtonProps) {
       <span className="hidden sm:inline ml-2">{label}</span>
     </Button>
   );
+}
+
+function CompactModeButtonUncontrolled({ onToggle }: Pick<CompactModeButtonProps, "onToggle">) {
+  const { isCompact, handleCompactToggle } = useDisplayPreferences();
+
+  const handleToggle = async (nextCompactMode: boolean) => {
+    await handleCompactToggle(nextCompactMode);
+    onToggle?.(nextCompactMode);
+  };
+
+  return <CompactModeButtonBase isCompact={isCompact} onToggle={handleToggle} />;
+}
+
+export function CompactModeButton({ onToggle, isCompact }: CompactModeButtonProps) {
+  const isControlled = typeof isCompact === "boolean" && typeof onToggle === "function";
+
+  if (isControlled) {
+    return <CompactModeButtonBase isCompact={isCompact} onToggle={onToggle} />;
+  }
+
+  return <CompactModeButtonUncontrolled onToggle={onToggle} />;
 }

@@ -19,7 +19,7 @@ export async function updateReadProgress(
     await BookService.updateReadProgress(bookId, page, completed);
 
     // Invalider le cache de la home (sans refresh auto)
-    revalidateTag(HOME_CACHE_TAG, "min");
+    revalidateTag(HOME_CACHE_TAG, "max");
 
     return { success: true, message: "Progression mise à jour" };
   } catch (error) {
@@ -40,7 +40,7 @@ export async function deleteReadProgress(
     await BookService.deleteReadProgress(bookId);
 
     // Invalider le cache de la home (sans refresh auto)
-    revalidateTag(HOME_CACHE_TAG, "min");
+    revalidateTag(HOME_CACHE_TAG, "max");
 
     return { success: true, message: "Progression supprimée" };
   } catch (error) {

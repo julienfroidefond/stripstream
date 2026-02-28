@@ -172,6 +172,18 @@ export function ServiceWorkerProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    if (process.env.NODE_ENV === "development") {
+      setIsSupported(false);
+      setIsReady(false);
+      setVersion(null);
+
+      unregisterServiceWorker().catch(() => {
+        // Ignore cleanup failures in development
+      });
+
+      return;
+    }
+
     setIsSupported(true);
 
     // Register service worker
