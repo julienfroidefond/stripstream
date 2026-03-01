@@ -34,6 +34,7 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
     imageBlobUrls,
     prefetchPages,
     prefetchNextBook,
+    cancelAllPrefetches,
     handleForceReload,
     getPageUrl,
     prefetchCount,
@@ -105,6 +106,14 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
   ]);
 
   // Keyboard events
+  const handleCloseReader = useCallback(
+    (page: number) => {
+      cancelAllPrefetches();
+      onClose?.(page);
+    },
+    [cancelAllPrefetches, onClose]
+  );
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "ArrowLeft") {
@@ -123,7 +132,7 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
         }
       } else if (e.key === "Escape" && onClose) {
         e.preventDefault();
-        onClose(currentPage);
+        handleCloseReader(currentPage);
       }
     };
 
@@ -132,7 +141,7 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [handleNextPage, handlePreviousPage, onClose, isRTL, currentPage]);
+  }, [handleNextPage, handlePreviousPage, onClose, isRTL, currentPage, handleCloseReader]);
 
   const handleContainerClick = useCallback(
     (e: React.MouseEvent) => {
@@ -173,7 +182,7 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
     <ReaderContainer onContainerClick={handleContainerClick}>
       <EndOfSeriesModal
         show={showEndMessage}
-        onClose={onClose || (() => undefined)}
+        onClose={handleCloseReader}
         currentPage={currentPage}
       />
 
@@ -183,7 +192,7 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
         onPreviousPage={handlePreviousPage}
         onNextPage={handleNextPage}
         onPageChange={navigateToPage}
-        onClose={onClose}
+        onClose={handleCloseReader}
         currentPage={currentPage}
         totalPages={pages.length}
         isDoublePage={isDoublePage}

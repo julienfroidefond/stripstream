@@ -53,9 +53,18 @@ export function useImageLoader({
     };
   }, []);
 
+  const cancelAllPrefetches = useCallback(() => {
+    abortControllersRef.current.forEach((controller) => controller.abort());
+    abortControllersRef.current.clear();
+    pendingFetchesRef.current.clear();
+  }, []);
+
   const runWithConcurrency = useCallback(
     async <T,>(items: T[], worker: (item: T) => Promise<void>, concurrency = PREFETCH_CONCURRENCY) => {
       for (let i = 0; i < items.length; i += concurrency) {
+        if (!isMountedRef.current) {
+          return;
+        }
         const batch = items.slice(i, i + concurrency);
         await Promise.all(batch.map((item) => worker(item)));
       }
@@ -71,6 +80,10 @@ export function useImageLoader({
   // Prefetch image and store dimensions
   const prefetchImage = useCallback(
     async (pageNum: number) => {
+      if (!isMountedRef.current) {
+        return;
+      }
+
       // Check if we already have both dimensions and blob URL
       const hasDimensions = loadedImagesRef.current[pageNum];
       const hasBlobUrl = imageBlobUrlsRef.current[pageNum];
@@ -193,6 +206,10 @@ export function useImageLoader({
       // Let all prefetch requests run - server queue handles concurrency
       if (pagesToPrefetch.length > 0) {
         runWithConcurrency(pagesToPrefetch, async ({ pageNum, nextBookPageKey }) => {
+          if (!isMountedRef.current) {
+            return;
+          }
+
           // Mark as pending
           pendingFetchesRef.current.add(nextBookPageKey);
           const controller = new AbortController();
@@ -329,6 +346,7 @@ export function useImageLoader({
     prefetchImage,
     prefetchPages,
     prefetchNextBook,
+    cancelAllPrefetches,
     handleForceReload,
     getPageUrl,
     prefetchCount,
