@@ -44,7 +44,7 @@ export function HomeClientWrapper({ children }: HomeClientWrapperProps) {
         isHiding={pullToRefresh.isHiding}
       />
       <main className="relative isolate overflow-hidden">
-        <div className="container mx-auto space-y-12 px-4 py-8">
+        <div className="container mx-auto space-y-6 px-4 pb-8 pt-3">
           <div className="flex justify-end">
             <RefreshButton libraryId="home" refreshLibrary={handleRefresh} />
           </div>
