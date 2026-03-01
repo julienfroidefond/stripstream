@@ -17,6 +17,7 @@ interface CacheStats {
   images: { size: number; entries: number };
   books: { size: number; entries: number };
   total: number;
+  visitablePages: number;
 }
 
 interface CacheEntry {
@@ -112,7 +113,12 @@ export function ServiceWorkerProvider({ children }: { children: ReactNode }) {
         case "CACHE_STATS":
           const statsResolver = pendingRequests.current.get("CACHE_STATS");
           if (statsResolver) {
-            statsResolver(payload);
+            const normalizedPayload = {
+              ...payload,
+              visitablePages:
+                typeof payload?.visitablePages === "number" ? payload.visitablePages : 0,
+            };
+            statsResolver(normalizedPayload);
             pendingRequests.current.delete("CACHE_STATS");
           }
           break;

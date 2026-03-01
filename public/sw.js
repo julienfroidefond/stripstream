@@ -1,15 +1,15 @@
 // StripStream Service Worker - Version 2
-// Architecture: SWR (Stale-While-Revalidate) for all resources
+// Architecture: static + image caching, resilient offline navigation fallback
 
-const VERSION = "v2.5";
+const VERSION = "v2.16";
 const STATIC_CACHE = `stripstream-static-${VERSION}`;
-const PAGES_CACHE = `stripstream-pages-${VERSION}`; // Navigation + RSC (client-side navigation)
+const PAGES_CACHE = `stripstream-pages-${VERSION}`; // Navigation documents + RSC payloads
 const API_CACHE = `stripstream-api-${VERSION}`;
 const IMAGES_CACHE = `stripstream-images-${VERSION}`;
 const BOOKS_CACHE = "stripstream-books"; // Never version this - managed by DownloadManager
 
 const OFFLINE_PAGE = "/offline.html";
-const PRECACHE_ASSETS = [OFFLINE_PAGE, "/manifest.json"];
+const OPTIONAL_PRECACHE_ASSETS = ["/manifest.json"];
 
 // Cache size limits
 const IMAGES_CACHE_MAX_ENTRIES = 500;
@@ -27,10 +27,6 @@ function isNextRSCRequest(request) {
   return url.searchParams.has("_rsc") || request.headers.get("RSC") === "1";
 }
 
-function isApiRequest(url) {
-  return url.includes("/api/komga/") && !url.includes("/api/komga/images/");
-}
-
 function isImageRequest(url) {
   return url.includes("/api/komga/images/");
 }
@@ -44,28 +40,99 @@ function isBookPageRequest(url) {
   );
 }
 
-function shouldCacheResponse(response) {
+function shouldCacheResponse(response, options = {}) {
   if (!response || !response.ok) return false;
+
+  if (options.allowPrivateNoStore) {
+    return true;
+  }
+
   const cacheControl = response.headers.get("Cache-Control") || "";
   return !/no-store|private/i.test(cacheControl);
 }
 
 async function getOfflineFallbackResponse() {
-  // Try root page first for app-shell style recovery
-  const pagesCache = await caches.open(PAGES_CACHE);
-  const rootPage = await pagesCache.match("/");
-  if (rootPage) {
-    return rootPage;
-  }
-
-  // Last resort: static offline page
+  // Prefer dedicated offline page to avoid route mismatches
   const staticCache = await caches.open(STATIC_CACHE);
   const offlinePage = await staticCache.match(OFFLINE_PAGE);
   if (offlinePage) {
     return offlinePage;
   }
 
-  return null;
+  // If offline page is unavailable, fallback to root app shell
+  const pagesCache = await caches.open(PAGES_CACHE);
+  const rootPage = await pagesCache.match("/");
+  if (rootPage && isHtmlResponse(rootPage)) {
+    return rootPage;
+  }
+
+  // Fallback to any cached HTML app shell page before static offline page
+  const keys = await pagesCache.keys();
+  const pageKey = [...keys].reverse().find((request) => {
+    const key = getVisitablePageKey(request.url);
+    return key !== null;
+  });
+
+  if (pageKey) {
+    const appShellPage = await pagesCache.match(pageKey);
+    if (appShellPage && isHtmlResponse(appShellPage)) {
+      return appShellPage;
+    }
+  }
+
+  return createInlineOfflineResponse();
+}
+
+function getVisitablePageKey(rawUrl) {
+  try {
+    const url = new URL(rawUrl);
+
+    if (url.origin !== self.location.origin) {
+      return null;
+    }
+
+    if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/_next/")) {
+      return null;
+    }
+
+    url.searchParams.delete("_rsc");
+    url.searchParams.delete("__sw_rsc");
+    const search = url.searchParams.toString();
+    return `${url.pathname}${search ? `?${search}` : ""}`;
+  } catch {
+    return null;
+  }
+}
+
+function isHtmlResponse(response) {
+  if (!response) return false;
+  const contentType = response.headers.get("content-type") || "";
+  return contentType.includes("text/html");
+}
+
+function createInlineOfflineResponse() {
+  return new Response(
+    `<!doctype html><html lang="fr"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>Hors ligne - StripStream</title><style>:root{--bg:#060b16;--panel:rgba(15,23,42,.72);--panel-strong:rgba(15,23,42,.9);--line:rgba(99,102,241,.28);--text:#e2e8f0;--muted:#94a3b8;--primary:#4f46e5;--primary-2:#06b6d4}*{box-sizing:border-box}body{margin:0;padding:0;font-family:"Segoe UI","SF Pro Text",-apple-system,BlinkMacSystemFont,sans-serif;background:radial-gradient(78% 45% at 0% 0%,rgba(79,70,229,.28),transparent 60%),radial-gradient(52% 35% at 100% 8%,rgba(6,182,212,.22),transparent 65%),radial-gradient(40% 26% at 54% 100%,rgba(236,72,153,.17),transparent 72%),var(--bg);color:var(--text);min-height:100vh}.header{position:sticky;top:0;z-index:20;height:64px;border-bottom:1px solid var(--line);background:rgba(6,11,22,.75);backdrop-filter:blur(10px)}.header-inner{height:100%;display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:0 1rem}.brand{display:flex;align-items:center;gap:.75rem}.menu-btn{width:2.25rem;height:2.25rem;border-radius:999px;border:1px solid rgba(148,163,184,.35);background:rgba(15,23,42,.6);color:var(--text);font-size:1rem}.brand-title{font-size:1.05rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;background:linear-gradient(90deg,var(--primary),var(--primary-2),#d946ef);-webkit-background-clip:text;background-clip:text;color:transparent}.brand-subtitle{font-size:.6rem;text-transform:uppercase;letter-spacing:.25em;color:rgba(226,232,240,.75);margin-top:.2rem}.pill{display:inline-flex;align-items:center;border-radius:999px;border:1px solid rgba(148,163,184,.35);background:rgba(15,23,42,.62);color:var(--muted);padding:.45rem .7rem;font-size:.78rem}.layout{display:grid;grid-template-columns:280px minmax(0,1fr);min-height:calc(100vh - 64px)}.sidebar{border-right:1px solid var(--line);background:var(--panel);backdrop-filter:blur(10px);padding:1rem}.section{border:1px solid rgba(148,163,184,.25);background:rgba(15,23,42,.4);border-radius:.9rem;padding:.7rem;margin-bottom:.8rem}.section h2{margin:.25rem .45rem .6rem;font-size:.67rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(148,163,184,.95)}.nav-link{appearance:none;width:100%;border:1px solid transparent;border-radius:.65rem;background:transparent;color:var(--text);text-align:left;padding:.62rem .78rem;margin:.14rem 0;font-size:.93rem}.nav-link.active{border-color:rgba(79,70,229,.45);background:rgba(79,70,229,.16)}.main{display:flex;align-items:center;justify-content:center;padding:1.5rem}.card{width:min(720px,100%);border:1px solid rgba(148,163,184,.3);border-radius:1.2rem;background:var(--panel-strong);box-shadow:0 25px 60px -35px rgba(2,6,23,.92);padding:1.5rem}.status{display:inline-flex;align-items:center;gap:.45rem;color:#fecaca;background:rgba(127,29,29,.3);border:1px solid rgba(248,113,113,.35);border-radius:999px;padding:.35rem .7rem;font-size:.82rem;margin-bottom:1rem}h1{margin:0 0 .7rem;font-size:clamp(1.35rem,2.4vw,1.95rem);line-height:1.24}p{margin:0;color:var(--muted);line-height:1.6}.actions{display:flex;gap:.7rem;margin-top:1.35rem}.btn{appearance:none;border:1px solid transparent;border-radius:.65rem;padding:.7rem 1rem;font-size:.9rem;cursor:pointer}.btn-primary{background:var(--primary);color:#fff}.btn-secondary{background:rgba(15,23,42,.45);border-color:rgba(148,163,184,.35);color:var(--text)}.hint{margin-top:1rem;font-size:.82rem;color:rgba(148,163,184,.95)}@media (max-width:900px){.layout{grid-template-columns:1fr}.sidebar{display:none}.main{min-height:calc(100vh - 64px);padding:1rem}.actions{flex-direction:column}}</style></head><body><header class="header"><div class="header-inner"><div class="brand"><button class="menu-btn" type="button" aria-label="Menu">☰</button><div><div class="brand-title">STRIPSTREAM</div><div class="brand-subtitle">comic reader</div></div></div><span class="pill">Mode hors ligne</span></div></header><div class="layout"><aside class="sidebar"><div class="section"><h2>Navigation</h2><button class="nav-link active" type="button">Accueil</button><button class="nav-link" type="button">Telechargements</button></div><div class="section"><h2>Compte</h2><button class="nav-link" type="button">Mon compte</button><button class="nav-link" type="button">Preferences</button></div></aside><main class="main"><div class="card"><div class="status">● Hors ligne</div><h1>Cette page n'est pas encore disponible hors ligne.</h1><p>Tu peux continuer a naviguer sur les pages deja consultees. Cette route sera disponible hors ligne apres une visite en ligne.</p><div class="actions"><button class="btn btn-secondary" onclick="window.history.back()">Retour</button><button class="btn btn-primary" onclick="window.location.reload()">Reessayer</button></div><div class="hint">Astuce: visite d'abord Accueil, Bibliotheques, Series et pages de lecture quand tu es en ligne.</div></div></main></div><script>window.addEventListener("online",()=>{window.location.reload()})</script></body></html>`,
+    {
+      headers: {
+        "Content-Type": "text/html; charset=utf-8",
+        "Cache-Control": "no-store",
+      },
+    }
+  );
+}
+
+function countVisitablePages(requests) {
+  const uniquePages = new Set();
+
+  requests.forEach((request) => {
+    const key = getVisitablePageKey(request.url);
+    if (key) {
+      uniquePages.add(key);
+    }
+  });
+
+  return uniquePages.size;
 }
 
 // ============================================================================
@@ -130,7 +197,7 @@ async function cacheFirstStrategy(request, cacheName, options = {}) {
 
   try {
     const response = await fetch(request);
-    if (shouldCacheResponse(response)) {
+    if (shouldCacheResponse(response, options)) {
       cache.put(request, response.clone());
     }
     return response;
@@ -146,11 +213,12 @@ async function cacheFirstStrategy(request, cacheName, options = {}) {
 
 /**
  * Stale-While-Revalidate: Serve from cache immediately, update in background
- * Used for: API calls, images
+ * Used for: RSC payloads, images
  * Respects Cache-Control: no-cache to force network-first (for refresh buttons)
  */
 async function staleWhileRevalidateStrategy(request, cacheName, options = {}) {
   const cache = await caches.open(cacheName);
+  const cacheKey = options.cacheKey ? options.cacheKey(request) : request;
 
   // Check if client requested no-cache (refresh button, router.refresh(), etc.)
   // 1. Check Cache-Control header
@@ -163,19 +231,19 @@ async function staleWhileRevalidateStrategy(request, cacheName, options = {}) {
   const noCache = noCacheHeader || noCacheMode;
 
   // If no-cache, skip cached response and go network-first
-  const cached = noCache ? null : await cache.match(request);
+  const cached = noCache ? null : await cache.match(cacheKey);
 
   // Start network request (don't await)
   const fetchPromise = fetch(request)
     .then(async (response) => {
-      if (shouldCacheResponse(response)) {
+      if (shouldCacheResponse(response, options)) {
         // Clone response for cache
         const responseToCache = response.clone();
 
         // Check if content changed (for notification)
         if (cached && options.notifyOnChange) {
           try {
-            const cachedResponse = await cache.match(request);
+            const cachedResponse = await cache.match(cacheKey);
             if (cachedResponse) {
               // For JSON APIs, compare content
               if (options.isJson) {
@@ -196,7 +264,7 @@ async function staleWhileRevalidateStrategy(request, cacheName, options = {}) {
         }
 
         // Update cache
-        await cache.put(request, responseToCache);
+        await cache.put(cacheKey, responseToCache);
 
         // Trim cache if needed (for images)
         if (options.maxEntries) {
@@ -234,42 +302,32 @@ async function staleWhileRevalidateStrategy(request, cacheName, options = {}) {
 }
 
 /**
- * Navigation SWR: Serve from cache immediately, update in background
- * Falls back to offline page if nothing cached
+ * Navigation Network-First: prefer fresh content from network
+ * Falls back to cached page, then offline fallback when network fails
  * Used for: Page navigations
  */
-async function navigationSWRStrategy(request, cacheName) {
+async function navigationNetworkFirstStrategy(request, cacheName) {
   const cache = await caches.open(cacheName);
-  const cached = await cache.match(request);
 
-  // Start network request in background
-  const fetchPromise = fetch(request)
-    .then(async (response) => {
-      if (shouldCacheResponse(response)) {
-        await cache.put(request, response.clone());
-      }
-      return response;
-    })
-    .catch(() => null);
+  try {
+    const networkResponse = await fetch(request);
+    if (shouldCacheResponse(networkResponse, { allowPrivateNoStore: true })) {
+      await cache.put(request, networkResponse.clone());
+    }
+    return networkResponse;
+  } catch {
+    const cached = await cache.match(request);
+    if (cached && isHtmlResponse(cached)) {
+      return cached;
+    }
 
-  // Return cached version immediately if available
-  if (cached) {
-    return cached;
+    const fallbackResponse = await getOfflineFallbackResponse();
+    if (fallbackResponse) {
+      return fallbackResponse;
+    }
+
+    throw new Error("Offline and no cached page available");
   }
-
-  // No cache - wait for network
-  const response = await fetchPromise;
-  if (response) {
-    return response;
-  }
-
-  // Network failed and no cache - try shared fallbacks
-  const fallbackResponse = await getOfflineFallbackResponse();
-  if (fallbackResponse) {
-    return fallbackResponse;
-  }
-
-  throw new Error("Offline and no cached page available");
 }
 
 // ============================================================================
@@ -284,7 +342,8 @@ self.addEventListener("install", (event) => {
     (async () => {
       const cache = await caches.open(STATIC_CACHE);
       try {
-        await cache.addAll(PRECACHE_ASSETS);
+        await cache.add(OFFLINE_PAGE);
+        await Promise.allSettled(OPTIONAL_PRECACHE_ASSETS.map((asset) => cache.add(asset)));
         // eslint-disable-next-line no-console
         console.log("[SW] Precached assets");
       } catch (error) {
@@ -358,6 +417,8 @@ self.addEventListener("message", async (event) => {
           booksCache.keys(),
         ]);
 
+        const visitablePages = countVisitablePages(pagesKeys);
+
         event.source.postMessage({
           type: "CACHE_STATS",
           payload: {
@@ -367,6 +428,7 @@ self.addEventListener("message", async (event) => {
             images: { size: imagesSize, entries: imagesKeys.length },
             books: { size: booksSize, entries: booksKeys.length },
             total: staticSize + pagesSize + apiSize + imagesSize + booksSize,
+            visitablePages,
           },
         });
       } catch (error) {
@@ -506,6 +568,15 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Only handle same-origin HTTP(S) requests
+  if (url.origin !== self.location.origin) {
+    return;
+  }
+
+  if (url.protocol !== "http:" && url.protocol !== "https:") {
+    return;
+  }
+
   // Route 1: Book pages (handled by DownloadManager) - Check manual cache only, no SWR
   if (isBookPageRequest(url.href)) {
     event.respondWith(
@@ -525,12 +596,17 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Route 2: Next.js RSC payloads (client-side navigation) → SWR in PAGES_CACHE
+  // Route 2: Next.js RSC payloads → SWR in PAGES_CACHE
   if (isNextRSCRequest(request)) {
     event.respondWith(
       staleWhileRevalidateStrategy(request, PAGES_CACHE, {
-        notifyOnChange: false,
-        fallbackToOffline: true,
+        allowPrivateNoStore: true,
+        cacheKey: (incomingRequest) => {
+          const normalized = new URL(incomingRequest.url);
+          normalized.searchParams.delete("_rsc");
+          normalized.searchParams.set("__sw_rsc", "1");
+          return normalized.toString();
+        },
       })
     );
     return;
@@ -538,22 +614,16 @@ self.addEventListener("fetch", (event) => {
 
   // Route 3: Next.js static resources → Cache-First with ignoreSearch
   if (isNextStaticResource(url.href)) {
-    event.respondWith(cacheFirstStrategy(request, STATIC_CACHE, { ignoreSearch: true }));
-    return;
-  }
-
-  // Route 4: API requests (JSON) → SWR with notification
-  if (isApiRequest(url.href)) {
     event.respondWith(
-      staleWhileRevalidateStrategy(request, API_CACHE, {
-        notifyOnChange: true,
-        isJson: true,
+      cacheFirstStrategy(request, STATIC_CACHE, {
+        ignoreSearch: true,
+        allowPrivateNoStore: true,
       })
     );
     return;
   }
 
-  // Route 5: Image requests (thumbnails, covers) → SWR with cache size management
+  // Route 4: Image requests (thumbnails, covers) → SWR with cache size management
   // Note: Book pages are excluded (Route 1) and only use manual download cache
   if (isImageRequest(url.href)) {
     event.respondWith(
@@ -564,11 +634,11 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Route 6: Navigation → SWR (cache first, revalidate in background)
+  // Route 5: Navigation → Network-First with cache/offline fallback
   if (request.mode === "navigate") {
-    event.respondWith(navigationSWRStrategy(request, PAGES_CACHE));
+    event.respondWith(navigationNetworkFirstStrategy(request, PAGES_CACHE));
     return;
   }
 
-  // Route 7: Everything else → Network only (no caching)
+  // Route 6: Everything else → Network only (no caching)
 });

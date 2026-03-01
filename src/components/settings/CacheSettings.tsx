@@ -36,6 +36,7 @@ interface CacheStats {
   images: { size: number; entries: number };
   books: { size: number; entries: number };
   total: number;
+  visitablePages: number;
 }
 
 interface CacheEntry {
@@ -375,6 +376,9 @@ export function CacheSettings() {
             <Progress value={usagePercent} className="h-2" />
             <p className="text-xs text-muted-foreground text-right">
               {t("settings.cache.imagesQuota", { used: Math.round(usagePercent) })}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {t("settings.cache.visitablePages", { count: stats.visitablePages })}
             </p>
           </div>
         )}
