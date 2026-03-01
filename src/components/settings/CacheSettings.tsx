@@ -207,7 +207,6 @@ export function CacheSettings() {
     reinstallServiceWorker,
     setDevModeEnabled,
   } = useServiceWorker();
-  const isDevelopment = process.env.NODE_ENV === "development";
 
   const [stats, setStats] = useState<CacheStats | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -352,21 +351,19 @@ export function CacheSettings() {
         <CardDescription>{t("settings.cache.description")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {isDevelopment && (
-          <div className="flex items-center justify-between rounded-lg border p-3">
-            <div className="space-y-0.5">
-              <Label htmlFor="dev-sw-toggle">{t("settings.cache.devServiceWorker.label")}</Label>
-              <p className="text-sm text-muted-foreground">
-                {t("settings.cache.devServiceWorker.description")}
-              </p>
-            </div>
-            <Switch
-              id="dev-sw-toggle"
-              checked={isDevModeEnabled}
-              onCheckedChange={handleServiceWorkerDevToggle}
-            />
+        <div className="flex items-center justify-between rounded-lg border p-3">
+          <div className="space-y-0.5">
+            <Label htmlFor="dev-sw-toggle">{t("settings.cache.devServiceWorker.label")}</Label>
+            <p className="text-sm text-muted-foreground">
+              {t("settings.cache.devServiceWorker.description")}
+            </p>
           </div>
-        )}
+          <Switch
+            id="dev-sw-toggle"
+            checked={isDevModeEnabled}
+            onCheckedChange={handleServiceWorkerDevToggle}
+          />
+        </div>
 
         {/* Barre de progression globale */}
         {stats && (
