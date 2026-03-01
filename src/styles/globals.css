@@ -164,4 +164,17 @@ body.no-pinch-zoom * {
   .animate-fade-in {
     animation: fade-in 0.3s ease-in forwards;
   }
+
+  @keyframes loader-slide {
+    0% {
+      transform: translateX(-120%);
+    }
+    100% {
+      transform: translateX(320%);
+    }
+  }
+
+  .animate-loader-slide {
+    animation: loader-slide 1.25s ease-in-out infinite;
+  }
 }

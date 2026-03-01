@@ -8,11 +8,24 @@ export interface SectionProps extends React.HTMLAttributes<HTMLElement> {
   description?: string;
   actions?: React.ReactNode;
   headerClassName?: string;
+  titleClassName?: string;
+  iconClassName?: string;
 }
 
 const Section = React.forwardRef<HTMLElement, SectionProps>(
   (
-    { title, icon: Icon, description, actions, children, className, headerClassName, ...props },
+    {
+      title,
+      icon: Icon,
+      description,
+      actions,
+      children,
+      className,
+      headerClassName,
+      titleClassName,
+      iconClassName,
+      ...props
+    },
     ref
   ) => {
     return (
@@ -21,9 +34,9 @@ const Section = React.forwardRef<HTMLElement, SectionProps>(
           <div className={cn("flex items-center justify-between", headerClassName)}>
             {title && (
               <div className="flex items-center gap-2">
-                {Icon && <Icon className="h-5 w-5 text-muted-foreground" />}
+                {Icon && <Icon className={cn("h-5 w-5 text-muted-foreground", iconClassName)} />}
                 <div>
-                  <h2 className="text-2xl font-bold tracking-tight">{title}</h2>
+                  <h2 className={cn("text-2xl font-bold tracking-tight", titleClassName)}>{title}</h2>
                   {description && (
                     <p className="text-sm text-muted-foreground mt-1">{description}</p>
                   )}

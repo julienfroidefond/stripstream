@@ -41,6 +41,7 @@ interface MediaRowProps {
   titleKey: string;
   items: (OptimizedSeries | OptimizedBook)[];
   iconName?: string;
+  featuredHeader?: boolean;
 }
 
 const iconMap = {
@@ -51,7 +52,7 @@ const iconMap = {
   History,
 };
 
-export function MediaRow({ titleKey, items, iconName }: MediaRowProps) {
+export function MediaRow({ titleKey, items, iconName, featuredHeader = false }: MediaRowProps) {
   const router = useRouter();
   const { t } = useTranslate();
   const icon = iconName ? iconMap[iconName as keyof typeof iconMap] : undefined;
@@ -68,7 +69,13 @@ export function MediaRow({ titleKey, items, iconName }: MediaRowProps) {
       title={t(titleKey)}
       icon={icon}
       className="space-y-5"
-      headerClassName="border-b border-border/50 pb-2"
+      headerClassName={cn("border-b border-border/50 pb-2", featuredHeader && "border-primary/25")}
+      titleClassName={
+        featuredHeader
+          ? "bg-gradient-to-r from-primary via-cyan-500 to-fuchsia-500 bg-clip-text text-transparent"
+          : undefined
+      }
+      iconClassName={featuredHeader ? "text-primary" : undefined}
     >
       <ScrollContainer
         showArrows={true}
