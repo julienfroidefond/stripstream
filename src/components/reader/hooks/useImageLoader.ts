@@ -21,12 +21,15 @@ export function useImageLoader({
   prefetchCount = 5,
   nextBook,
 }: UseImageLoaderProps) {
+  const PREFETCH_CONCURRENCY = 4;
   const [loadedImages, setLoadedImages] = useState<Record<ImageKey, ImageDimensions>>({});
   const [imageBlobUrls, setImageBlobUrls] = useState<Record<ImageKey, string>>({});
   const loadedImagesRef = useRef(loadedImages);
   const imageBlobUrlsRef = useRef(imageBlobUrls);
+  const isMountedRef = useRef(true);
   // Track ongoing fetch requests to prevent duplicates
   const pendingFetchesRef = useRef<Set<ImageKey>>(new Set());
+  const abortControllersRef = useRef<Map<ImageKey, AbortController>>(new Map());
 
   // Keep refs in sync with state
   useEffect(() => {
@@ -36,6 +39,29 @@ export function useImageLoader({
   useEffect(() => {
     imageBlobUrlsRef.current = imageBlobUrls;
   }, [imageBlobUrls]);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    const abortControllers = abortControllersRef.current;
+    const pendingFetches = pendingFetchesRef.current;
+
+    return () => {
+      isMountedRef.current = false;
+      abortControllers.forEach((controller) => controller.abort());
+      abortControllers.clear();
+      pendingFetches.clear();
+    };
+  }, []);
+
+  const runWithConcurrency = useCallback(
+    async <T,>(items: T[], worker: (item: T) => Promise<void>, concurrency = PREFETCH_CONCURRENCY) => {
+      for (let i = 0; i < items.length; i += concurrency) {
+        const batch = items.slice(i, i + concurrency);
+        await Promise.all(batch.map((item) => worker(item)));
+      }
+    },
+    [PREFETCH_CONCURRENCY]
+  );
 
   const getPageUrl = useCallback(
     (pageNum: number) => `/api/komga/books/${bookId}/pages/${pageNum}`,
@@ -60,11 +86,14 @@ export function useImageLoader({
 
       // Mark as pending
       pendingFetchesRef.current.add(pageNum);
+      const controller = new AbortController();
+      abortControllersRef.current.set(pageNum, controller);
 
       try {
         // Use browser cache if available - the server sets Cache-Control headers
         const response = await fetch(getPageUrl(pageNum), {
           cache: "default", // Respect Cache-Control headers from server
+          signal: controller.signal,
         });
         if (!response.ok) {
           return;
@@ -76,6 +105,11 @@ export function useImageLoader({
         // Create image to get dimensions
         const img = new Image();
         img.onload = () => {
+          if (!isMountedRef.current || controller.signal.aborted) {
+            URL.revokeObjectURL(blobUrl);
+            return;
+          }
+
           setLoadedImages((prev) => ({
             ...prev,
             [pageNum]: { width: img.naturalWidth, height: img.naturalHeight },
@@ -87,12 +121,18 @@ export function useImageLoader({
             [pageNum]: blobUrl,
           }));
         };
+
+        img.onerror = () => {
+          URL.revokeObjectURL(blobUrl);
+        };
+
         img.src = blobUrl;
       } catch {
         // Silently fail prefetch
       } finally {
         // Remove from pending set
         pendingFetchesRef.current.delete(pageNum);
+        abortControllersRef.current.delete(pageNum);
       }
     },
     [getPageUrl]
@@ -120,13 +160,12 @@ export function useImageLoader({
       // Let all prefetch requests run - the server queue will manage concurrency
       // The browser cache and our deduplication prevent redundant requests
       if (pagesToPrefetch.length > 0) {
-        // Fire all requests in parallel - server queue handles throttling
-        Promise.all(pagesToPrefetch.map((pageNum) => prefetchImage(pageNum))).catch(() => {
+        runWithConcurrency(pagesToPrefetch, prefetchImage).catch(() => {
           // Silently fail - prefetch is non-critical
         });
       }
     },
-    [prefetchImage, prefetchCount, _pages.length]
+    [prefetchImage, prefetchCount, _pages.length, runWithConcurrency]
   );
 
   // Prefetch pages from next book
@@ -153,49 +192,61 @@ export function useImageLoader({
 
       // Let all prefetch requests run - server queue handles concurrency
       if (pagesToPrefetch.length > 0) {
-        Promise.all(
-          pagesToPrefetch.map(async ({ pageNum, nextBookPageKey }) => {
-            // Mark as pending
-            pendingFetchesRef.current.add(nextBookPageKey);
+        runWithConcurrency(pagesToPrefetch, async ({ pageNum, nextBookPageKey }) => {
+          // Mark as pending
+          pendingFetchesRef.current.add(nextBookPageKey);
+          const controller = new AbortController();
+          abortControllersRef.current.set(nextBookPageKey, controller);
 
-            try {
-              const response = await fetch(`/api/komga/books/${nextBook.id}/pages/${pageNum}`, {
-                cache: "default", // Respect Cache-Control headers from server
-              });
-              if (!response.ok) {
+          try {
+            const response = await fetch(`/api/komga/books/${nextBook.id}/pages/${pageNum}`, {
+              cache: "default", // Respect Cache-Control headers from server
+              signal: controller.signal,
+            });
+            if (!response.ok) {
+              return;
+            }
+
+            const blob = await response.blob();
+            const blobUrl = URL.createObjectURL(blob);
+
+            // Create image to get dimensions
+            const img = new Image();
+            img.onload = () => {
+              if (!isMountedRef.current || controller.signal.aborted) {
+                URL.revokeObjectURL(blobUrl);
                 return;
               }
 
-              const blob = await response.blob();
-              const blobUrl = URL.createObjectURL(blob);
+              setLoadedImages((prev) => ({
+                ...prev,
+                [nextBookPageKey]: { width: img.naturalWidth, height: img.naturalHeight },
+              }));
 
-              // Create image to get dimensions
-              const img = new Image();
-              img.onload = () => {
-                setLoadedImages((prev) => ({
-                  ...prev,
-                  [nextBookPageKey]: { width: img.naturalWidth, height: img.naturalHeight },
-                }));
+              // Store the blob URL for immediate use
+              setImageBlobUrls((prev) => ({
+                ...prev,
+                [nextBookPageKey]: blobUrl,
+              }));
+            };
 
-                // Store the blob URL for immediate use
-                setImageBlobUrls((prev) => ({
-                  ...prev,
-                  [nextBookPageKey]: blobUrl,
-                }));
-              };
-              img.src = blobUrl;
-            } catch {
-              // Silently fail prefetch
-            } finally {
-              pendingFetchesRef.current.delete(nextBookPageKey);
-            }
-          })
-        ).catch(() => {
+            img.onerror = () => {
+              URL.revokeObjectURL(blobUrl);
+            };
+
+            img.src = blobUrl;
+          } catch {
+            // Silently fail prefetch
+          } finally {
+            pendingFetchesRef.current.delete(nextBookPageKey);
+            abortControllersRef.current.delete(nextBookPageKey);
+          }
+        }).catch(() => {
           // Silently fail - prefetch is non-critical
         });
       }
     },
-    [nextBook, prefetchCount]
+    [nextBook, prefetchCount, runWithConcurrency]
   );
 
   // Force reload handler
