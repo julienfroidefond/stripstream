@@ -44,6 +44,30 @@ function isBookPageRequest(url) {
   );
 }
 
+function shouldCacheResponse(response) {
+  if (!response || !response.ok) return false;
+  const cacheControl = response.headers.get("Cache-Control") || "";
+  return !/no-store|private/i.test(cacheControl);
+}
+
+async function getOfflineFallbackResponse() {
+  // Try root page first for app-shell style recovery
+  const pagesCache = await caches.open(PAGES_CACHE);
+  const rootPage = await pagesCache.match("/");
+  if (rootPage) {
+    return rootPage;
+  }
+
+  // Last resort: static offline page
+  const staticCache = await caches.open(STATIC_CACHE);
+  const offlinePage = await staticCache.match(OFFLINE_PAGE);
+  if (offlinePage) {
+    return offlinePage;
+  }
+
+  return null;
+}
+
 // ============================================================================
 // Client Communication
 // ============================================================================
@@ -106,7 +130,7 @@ async function cacheFirstStrategy(request, cacheName, options = {}) {
 
   try {
     const response = await fetch(request);
-    if (response.ok) {
+    if (shouldCacheResponse(response)) {
       cache.put(request, response.clone());
     }
     return response;
@@ -144,7 +168,7 @@ async function staleWhileRevalidateStrategy(request, cacheName, options = {}) {
   // Start network request (don't await)
   const fetchPromise = fetch(request)
     .then(async (response) => {
-      if (response.ok) {
+      if (shouldCacheResponse(response)) {
         // Clone response for cache
         const responseToCache = response.clone();
 
@@ -198,6 +222,14 @@ async function staleWhileRevalidateStrategy(request, cacheName, options = {}) {
     return response;
   }
 
+  if (options.fallbackToOffline) {
+    // For RSC/data requests, return an HTML fallback to avoid hard failures offline
+    const fallbackResponse = await getOfflineFallbackResponse();
+    if (fallbackResponse) {
+      return fallbackResponse;
+    }
+  }
+
   throw new Error("Network failed and no cache available");
 }
 
@@ -213,7 +245,7 @@ async function navigationSWRStrategy(request, cacheName) {
   // Start network request in background
   const fetchPromise = fetch(request)
     .then(async (response) => {
-      if (response.ok) {
+      if (shouldCacheResponse(response)) {
         await cache.put(request, response.clone());
       }
       return response;
@@ -231,18 +263,10 @@ async function navigationSWRStrategy(request, cacheName) {
     return response;
   }
 
-  // Network failed and no cache - try fallbacks
-  // Try to serve root page for SPA client-side routing
-  const rootPage = await cache.match("/");
-  if (rootPage) {
-    return rootPage;
-  }
-
-  // Last resort: offline page (in static cache)
-  const staticCache = await caches.open(STATIC_CACHE);
-  const offlinePage = await staticCache.match(OFFLINE_PAGE);
-  if (offlinePage) {
-    return offlinePage;
+  // Network failed and no cache - try shared fallbacks
+  const fallbackResponse = await getOfflineFallbackResponse();
+  if (fallbackResponse) {
+    return fallbackResponse;
   }
 
   throw new Error("Offline and no cached page available");
@@ -264,7 +288,6 @@ self.addEventListener("install", (event) => {
         // eslint-disable-next-line no-console
         console.log("[SW] Precached assets");
       } catch (error) {
-         
         console.error("[SW] Precache failed:", error);
       }
       await self.skipWaiting();
@@ -507,6 +530,7 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       staleWhileRevalidateStrategy(request, PAGES_CACHE, {
         notifyOnChange: false,
+        fallbackToOffline: true,
       })
     );
     return;

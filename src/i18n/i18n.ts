@@ -41,6 +41,10 @@ if (!i18n.isInitialized) {
         transKeepBasicHtmlNodesFor: ["br", "strong", "i", "p", "span"], // Liste des balises autorisées
       },
     });
+} else {
+  // Keep translation resources in sync during HMR/dev without full re-init.
+  i18n.addResourceBundle("fr", "common", frCommon, true, true);
+  i18n.addResourceBundle("en", "common", enCommon, true, true);
 }
 
 export default i18n;

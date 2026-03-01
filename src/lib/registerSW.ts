@@ -6,6 +6,19 @@ interface ServiceWorkerRegistrationOptions {
   onError?: (error: Error) => void;
 }
 
+const DEV_SW_ENABLED_STORAGE_KEY = "stripstream:sw-dev-enabled";
+
+export const isServiceWorkerEnabledInDev = (): boolean => {
+  if (typeof window === "undefined") return false;
+  if (process.env.NODE_ENV !== "development") return true;
+  return window.localStorage.getItem(DEV_SW_ENABLED_STORAGE_KEY) === "true";
+};
+
+export const setServiceWorkerEnabledInDev = (enabled: boolean): void => {
+  if (typeof window === "undefined" || process.env.NODE_ENV !== "development") return;
+  window.localStorage.setItem(DEV_SW_ENABLED_STORAGE_KEY, enabled ? "true" : "false");
+};
+
 /**
  * Register the service worker with optional callbacks for update and success events
  */

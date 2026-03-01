@@ -161,6 +161,12 @@
       "unavailable": "Cache statistics unavailable",
       "reinstall": "Reinstall Service Worker",
       "reinstallError": "Error reinstalling Service Worker",
+      "devServiceWorker": {
+        "label": "Service Worker in development",
+        "description": "Enable Service Worker in dev mode to test cache/offline behavior. A reload is applied.",
+        "saved": "Dev Service Worker preference updated",
+        "error": "Failed to update dev Service Worker preference"
+      },
       "entry": "entry",
       "entries": "entries",
       "loadingEntries": "Loading entries...",

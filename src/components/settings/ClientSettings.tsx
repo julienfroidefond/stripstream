@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import type { KomgaConfig } from "@/types/komga";
 import type { KomgaLibrary } from "@/types/komga";
 import { useTranslate } from "@/hooks/useTranslate";
@@ -16,15 +17,35 @@ interface ClientSettingsProps {
   initialLibraries: KomgaLibrary[];
 }
 
+const SETTINGS_TAB_STORAGE_KEY = "stripstream:settings-active-tab";
+
 export function ClientSettings({ initialConfig, initialLibraries }: ClientSettingsProps) {
   const { t } = useTranslate();
+  const [activeTab, setActiveTab] = useState<"display" | "connection">("display");
+
+  useEffect(() => {
+    const savedTab = window.sessionStorage.getItem(SETTINGS_TAB_STORAGE_KEY);
+    if (savedTab === "display" || savedTab === "connection") {
+      const rafId = window.requestAnimationFrame(() => {
+        setActiveTab(savedTab);
+      });
+      return () => window.cancelAnimationFrame(rafId);
+    }
+  }, []);
+
+  const handleTabChange = (tab: string) => {
+    if (tab === "display" || tab === "connection") {
+      setActiveTab(tab);
+      window.sessionStorage.setItem(SETTINGS_TAB_STORAGE_KEY, tab);
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto space-y-8">
         <h1 className="text-3xl font-bold">{t("settings.title")}</h1>
 
-        <Tabs defaultValue="display" className="w-full">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="display" className="flex items-center gap-2">
               <Monitor className="h-4 w-4" />

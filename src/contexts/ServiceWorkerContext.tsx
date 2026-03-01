@@ -2,7 +2,12 @@
 
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import type { ReactNode } from "react";
-import { registerServiceWorker, unregisterServiceWorker } from "@/lib/registerSW";
+import {
+  registerServiceWorker,
+  unregisterServiceWorker,
+  isServiceWorkerEnabledInDev,
+  setServiceWorkerEnabledInDev,
+} from "@/lib/registerSW";
 import logger from "@/lib/logger";
 
 interface CacheStats {
@@ -29,6 +34,7 @@ type CacheType = "all" | "static" | "pages" | "api" | "images" | "books";
 interface ServiceWorkerContextValue {
   isSupported: boolean;
   isReady: boolean;
+  isDevModeEnabled: boolean;
   version: string | null;
   hasNewVersion: boolean;
   cacheUpdates: CacheUpdate[];
@@ -40,6 +46,7 @@ interface ServiceWorkerContextValue {
   skipWaiting: () => void;
   reloadForUpdate: () => void;
   reinstallServiceWorker: () => Promise<boolean>;
+  setDevModeEnabled: (enabled: boolean) => Promise<boolean>;
 }
 
 const ServiceWorkerContext = createContext<ServiceWorkerContextValue | null>(null);
@@ -47,6 +54,7 @@ const ServiceWorkerContext = createContext<ServiceWorkerContextValue | null>(nul
 export function ServiceWorkerProvider({ children }: { children: ReactNode }) {
   const [isSupported, setIsSupported] = useState(false);
   const [isReady, setIsReady] = useState(false);
+  const [isDevModeEnabled, setIsDevModeEnabled] = useState(process.env.NODE_ENV !== "development");
   const [version, setVersion] = useState<string | null>(null);
   const [hasNewVersion, setHasNewVersion] = useState(false);
   const [cacheUpdates, setCacheUpdates] = useState<CacheUpdate[]>([]);
@@ -159,7 +167,6 @@ export function ServiceWorkerProvider({ children }: { children: ReactNode }) {
       // Silently ignore message handling errors to prevent app crashes
       // This can happen with malformed messages or during SW reinstall
       if (process.env.NODE_ENV === "development") {
-         
         console.warn("[SW Context] Error handling message:", error, event.data);
       }
     }
@@ -172,8 +179,10 @@ export function ServiceWorkerProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (process.env.NODE_ENV === "development") {
-      setIsSupported(false);
+    if (process.env.NODE_ENV === "development" && !isServiceWorkerEnabledInDev()) {
+      setIsDevModeEnabled(false);
+      // Browser still supports SW, it is only disabled by preference in dev
+      setIsSupported(true);
       setIsReady(false);
       setVersion(null);
 
@@ -182,6 +191,10 @@ export function ServiceWorkerProvider({ children }: { children: ReactNode }) {
       });
 
       return;
+    }
+
+    if (process.env.NODE_ENV === "development") {
+      setIsDevModeEnabled(true);
     }
 
     setIsSupported(true);
@@ -348,11 +361,37 @@ export function ServiceWorkerProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const setDevModeEnabled = useCallback(async (enabled: boolean): Promise<boolean> => {
+    if (process.env.NODE_ENV !== "development") {
+      return true;
+    }
+
+    try {
+      setServiceWorkerEnabledInDev(enabled);
+      setIsDevModeEnabled(enabled);
+
+      if (!enabled) {
+        await unregisterServiceWorker();
+        setIsSupported("serviceWorker" in navigator);
+        setIsReady(false);
+        setVersion(null);
+        setHasNewVersion(false);
+      }
+
+      window.location.reload();
+      return true;
+    } catch (error) {
+      logger.error({ err: error }, "Failed to toggle service worker in development");
+      return false;
+    }
+  }, []);
+
   return (
     <ServiceWorkerContext.Provider
       value={{
         isSupported,
         isReady,
+        isDevModeEnabled,
         version,
         hasNewVersion,
         cacheUpdates,
@@ -364,6 +403,7 @@ export function ServiceWorkerProvider({ children }: { children: ReactNode }) {
         skipWaiting,
         reloadForUpdate,
         reinstallServiceWorker,
+        setDevModeEnabled,
       }}
     >
       {children}

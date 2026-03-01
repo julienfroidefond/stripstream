@@ -161,6 +161,12 @@
       "unavailable": "Statistiques du cache non disponibles",
       "reinstall": "Réinstaller le Service Worker",
       "reinstallError": "Erreur lors de la réinstallation du Service Worker",
+      "devServiceWorker": {
+        "label": "Service Worker en développement",
+        "description": "Active le Service Worker en mode dev pour tester le cache/hors-ligne. Un rechargement est appliqué.",
+        "saved": "Préférence Service Worker dev mise à jour",
+        "error": "Impossible de mettre à jour la préférence Service Worker dev"
+      },
       "entry": "entrée",
       "entries": "entrées",
       "loadingEntries": "Chargement des entrées...",

@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -197,12 +199,15 @@ export function CacheSettings() {
   const {
     isSupported,
     isReady,
+    isDevModeEnabled,
     version,
     getCacheStats,
     getCacheEntries,
     clearCache,
     reinstallServiceWorker,
+    setDevModeEnabled,
   } = useServiceWorker();
+  const isDevelopment = process.env.NODE_ENV === "development";
 
   const [stats, setStats] = useState<CacheStats | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -276,6 +281,25 @@ export function CacheSettings() {
     }
   };
 
+  const handleServiceWorkerDevToggle = async (checked: boolean) => {
+    try {
+      const success = await setDevModeEnabled(checked);
+      if (!success) {
+        throw new Error("Failed to toggle service worker in development");
+      }
+      toast({
+        title: t("settings.title"),
+        description: t("settings.cache.devServiceWorker.saved"),
+      });
+    } catch {
+      toast({
+        variant: "destructive",
+        title: t("settings.error.title"),
+        description: t("settings.cache.devServiceWorker.error"),
+      });
+    }
+  };
+
   // Calculer le pourcentage du cache utilisé (basé sur 100MB limite images)
   const maxCacheSize = 100 * 1024 * 1024; // 100MB
   const usagePercent = stats ? Math.min((stats.images.size / maxCacheSize) * 100, 100) : 0;
@@ -328,6 +352,22 @@ export function CacheSettings() {
         <CardDescription>{t("settings.cache.description")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {isDevelopment && (
+          <div className="flex items-center justify-between rounded-lg border p-3">
+            <div className="space-y-0.5">
+              <Label htmlFor="dev-sw-toggle">{t("settings.cache.devServiceWorker.label")}</Label>
+              <p className="text-sm text-muted-foreground">
+                {t("settings.cache.devServiceWorker.description")}
+              </p>
+            </div>
+            <Switch
+              id="dev-sw-toggle"
+              checked={isDevModeEnabled}
+              onCheckedChange={handleServiceWorkerDevToggle}
+            />
+          </div>
+        )}
+
         {/* Barre de progression globale */}
         {stats && (
           <div className="space-y-2">
