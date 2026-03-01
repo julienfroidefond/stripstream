@@ -285,7 +285,7 @@ export function CacheSettings() {
     try {
       const success = await setDevModeEnabled(checked);
       if (!success) {
-        throw new Error("Failed to toggle service worker in development");
+        throw new Error("Failed to toggle service worker");
       }
       toast({
         title: t("settings.title"),

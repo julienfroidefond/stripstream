@@ -6,17 +6,27 @@ interface ServiceWorkerRegistrationOptions {
   onError?: (error: Error) => void;
 }
 
-const DEV_SW_ENABLED_STORAGE_KEY = "stripstream:sw-dev-enabled";
+const SW_ENABLED_STORAGE_KEY = "stripstream:sw-enabled";
+const LEGACY_DEV_SW_ENABLED_STORAGE_KEY = "stripstream:sw-dev-enabled";
 
 export const isServiceWorkerEnabledInDev = (): boolean => {
   if (typeof window === "undefined") return false;
-  if (process.env.NODE_ENV !== "development") return true;
-  return window.localStorage.getItem(DEV_SW_ENABLED_STORAGE_KEY) === "true";
+
+  const storedValue = window.localStorage.getItem(SW_ENABLED_STORAGE_KEY);
+  if (storedValue === "true") return true;
+  if (storedValue === "false") return false;
+
+  const legacyValue = window.localStorage.getItem(LEGACY_DEV_SW_ENABLED_STORAGE_KEY);
+  if (legacyValue === "true") return true;
+  if (legacyValue === "false") return false;
+
+  return process.env.NODE_ENV !== "development";
 };
 
 export const setServiceWorkerEnabledInDev = (enabled: boolean): void => {
-  if (typeof window === "undefined" || process.env.NODE_ENV !== "development") return;
-  window.localStorage.setItem(DEV_SW_ENABLED_STORAGE_KEY, enabled ? "true" : "false");
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(SW_ENABLED_STORAGE_KEY, enabled ? "true" : "false");
+  window.localStorage.removeItem(LEGACY_DEV_SW_ENABLED_STORAGE_KEY);
 };
 
 /**

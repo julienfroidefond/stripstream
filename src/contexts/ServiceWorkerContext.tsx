@@ -55,7 +55,7 @@ const ServiceWorkerContext = createContext<ServiceWorkerContextValue | null>(nul
 export function ServiceWorkerProvider({ children }: { children: ReactNode }) {
   const [isSupported, setIsSupported] = useState(false);
   const [isReady, setIsReady] = useState(false);
-  const [isDevModeEnabled, setIsDevModeEnabled] = useState(process.env.NODE_ENV !== "development");
+  const [isDevModeEnabled, setIsDevModeEnabled] = useState(() => isServiceWorkerEnabledInDev());
   const [version, setVersion] = useState<string | null>(null);
   const [hasNewVersion, setHasNewVersion] = useState(false);
   const [cacheUpdates, setCacheUpdates] = useState<CacheUpdate[]>([]);
@@ -185,9 +185,9 @@ export function ServiceWorkerProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (process.env.NODE_ENV === "development" && !isServiceWorkerEnabledInDev()) {
+    if (!isServiceWorkerEnabledInDev()) {
       setIsDevModeEnabled(false);
-      // Browser still supports SW, it is only disabled by preference in dev
+      // Browser still supports SW, it is only disabled by preference
       setIsSupported(true);
       setIsReady(false);
       setVersion(null);
@@ -199,9 +199,7 @@ export function ServiceWorkerProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (process.env.NODE_ENV === "development") {
-      setIsDevModeEnabled(true);
-    }
+    setIsDevModeEnabled(true);
 
     setIsSupported(true);
 
@@ -368,10 +366,6 @@ export function ServiceWorkerProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setDevModeEnabled = useCallback(async (enabled: boolean): Promise<boolean> => {
-    if (process.env.NODE_ENV !== "development") {
-      return true;
-    }
-
     try {
       setServiceWorkerEnabledInDev(enabled);
       setIsDevModeEnabled(enabled);
@@ -387,7 +381,7 @@ export function ServiceWorkerProvider({ children }: { children: ReactNode }) {
       window.location.reload();
       return true;
     } catch (error) {
-      logger.error({ err: error }, "Failed to toggle service worker in development");
+      logger.error({ err: error }, "Failed to toggle service worker");
       return false;
     }
   }, []);
