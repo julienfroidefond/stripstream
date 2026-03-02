@@ -7,17 +7,20 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { useRefresh } from "@/contexts/RefreshContext";
 
 interface RefreshButtonProps {
   libraryId: string;
   refreshLibrary?: (libraryId: string) => Promise<{ success: boolean; error?: string }>;
 }
 
-export function RefreshButton({ libraryId, refreshLibrary }: RefreshButtonProps) {
+export function RefreshButton({ libraryId, refreshLibrary: refreshLibraryProp }: RefreshButtonProps) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
   const { t } = useTranslation();
+  const { refreshLibrary: refreshLibraryFromContext } = useRefresh();
+  const refreshLibrary = refreshLibraryProp ?? refreshLibraryFromContext;
 
   const handleRefresh = async () => {
     setIsRefreshing(true);

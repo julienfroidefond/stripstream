@@ -43,7 +43,7 @@ export default async function LibraryPage({ params, searchParams }: PageProps) {
     ]);
 
     return (
-      <LibraryClientWrapper>
+      <LibraryClientWrapper libraryId={libraryId}>
         <LibraryContent
           library={library}
           series={series}

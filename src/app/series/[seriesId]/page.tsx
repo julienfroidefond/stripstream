@@ -36,7 +36,7 @@ export default async function SeriesPage({ params, searchParams }: PageProps) {
     ]);
 
     return (
-      <SeriesClientWrapper>
+      <SeriesClientWrapper seriesId={seriesId}>
         <SeriesContent
           series={series}
           books={books}

@@ -20,8 +20,8 @@ export async function updateReadProgress(
     await BookService.updateReadProgress(bookId, page, completed);
 
     // Invalider le cache home et libraries (statut de lecture des séries)
-    revalidateTag(HOME_CACHE_TAG);
-    revalidateTag(LIBRARY_SERIES_CACHE_TAG);
+    revalidateTag(HOME_CACHE_TAG, "max");
+    revalidateTag(LIBRARY_SERIES_CACHE_TAG, "max");
 
     return { success: true, message: "Progression mise à jour" };
   } catch (error) {
@@ -42,8 +42,8 @@ export async function deleteReadProgress(
     await BookService.deleteReadProgress(bookId);
 
     // Invalider le cache home et libraries (statut de lecture des séries)
-    revalidateTag(HOME_CACHE_TAG);
-    revalidateTag(LIBRARY_SERIES_CACHE_TAG);
+    revalidateTag(HOME_CACHE_TAG, "max");
+    revalidateTag(LIBRARY_SERIES_CACHE_TAG, "max");
 
     return { success: true, message: "Progression supprimée" };
   } catch (error) {
