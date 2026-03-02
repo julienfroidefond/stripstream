@@ -4,6 +4,7 @@ import nextTypescript from "eslint-config-next/typescript";
 import unusedImports from "eslint-plugin-unused-imports";
 
 export default defineConfig([
+  { ignores: ["temp/**", ".next/**", "node_modules/**"] },
   ...nextCoreWebVitals,
   ...nextTypescript,
   {

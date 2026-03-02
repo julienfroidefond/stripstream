@@ -31,6 +31,8 @@ const sortSeriesDeterministically = <T extends { id: string; metadata?: { titleS
   });
 };
 
+export const LIBRARY_SERIES_CACHE_TAG = "library-series";
+
 export class LibraryService extends BaseApiService {
   private static readonly CACHE_TTL = 300; // 5 minutes
 
@@ -134,7 +136,12 @@ export class LibraryService extends BaseApiService {
       const response = await this.fetchFromApi<LibraryResponse<Series>>(
         { path: "series/list", params },
         headers,
-        { method: "POST", body: JSON.stringify(searchBody), revalidate: this.CACHE_TTL }
+        {
+          method: "POST",
+          body: JSON.stringify(searchBody),
+          revalidate: this.CACHE_TTL,
+          tags: [LIBRARY_SERIES_CACHE_TAG],
+        }
       );
 
       const filteredContent = response.content.filter((series) => !series.deleted);

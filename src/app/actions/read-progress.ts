@@ -2,6 +2,7 @@
 
 import { revalidateTag } from "next/cache";
 import { BookService } from "@/lib/services/book.service";
+import { LIBRARY_SERIES_CACHE_TAG } from "@/lib/services/library.service";
 import { AppError } from "@/utils/errors";
 
 const HOME_CACHE_TAG = "home-data";
@@ -18,8 +19,9 @@ export async function updateReadProgress(
   try {
     await BookService.updateReadProgress(bookId, page, completed);
 
-    // Invalider le cache de la home (sans refresh auto)
-    revalidateTag(HOME_CACHE_TAG, "max");
+    // Invalider le cache home et libraries (statut de lecture des séries)
+    revalidateTag(HOME_CACHE_TAG);
+    revalidateTag(LIBRARY_SERIES_CACHE_TAG);
 
     return { success: true, message: "Progression mise à jour" };
   } catch (error) {
@@ -39,8 +41,9 @@ export async function deleteReadProgress(
   try {
     await BookService.deleteReadProgress(bookId);
 
-    // Invalider le cache de la home (sans refresh auto)
-    revalidateTag(HOME_CACHE_TAG, "max");
+    // Invalider le cache home et libraries (statut de lecture des séries)
+    revalidateTag(HOME_CACHE_TAG);
+    revalidateTag(LIBRARY_SERIES_CACHE_TAG);
 
     return { success: true, message: "Progression supprimée" };
   } catch (error) {
