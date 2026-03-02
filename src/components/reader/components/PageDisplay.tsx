@@ -20,21 +20,35 @@ export function PageDisplay({
   getPageUrl,
 }: PageDisplayProps) {
   const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
   const [secondPageLoading, setSecondPageLoading] = useState(true);
+  const [secondPageHasError, setSecondPageHasError] = useState(false);
   const { isRTL } = useReadingDirection();
 
   const handleImageLoad = useCallback(() => {
     setIsLoading(false);
   }, []);
 
+  const handleImageError = useCallback(() => {
+    setIsLoading(false);
+    setHasError(true);
+  }, []);
+
   const handleSecondImageLoad = useCallback(() => {
     setSecondPageLoading(false);
+  }, []);
+
+  const handleSecondImageError = useCallback(() => {
+    setSecondPageLoading(false);
+    setSecondPageHasError(true);
   }, []);
 
   // Reset loading when page changes
   useEffect(() => {
     setIsLoading(true);
+    setHasError(false);
     setSecondPageLoading(true);
+    setSecondPageHasError(false);
   }, [currentPage, isDoublePage]);
 
   return (
@@ -47,8 +61,8 @@ export function PageDisplay({
             isDoublePage && shouldShowDoublePage(currentPage) ? "w-1/2" : "w-full justify-center",
             isDoublePage &&
               shouldShowDoublePage(currentPage) && {
-                "order-2 justify-start": isRTL,
-                "order-1 justify-end": !isRTL,
+                "order-2 justify-center": isRTL,
+                "order-1 justify-center": !isRTL,
               }
           )}
         >
@@ -63,33 +77,46 @@ export function PageDisplay({
               </div>
             </div>
           )}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            key={`page-${currentPage}-${imageBlobUrls[currentPage] || ""}`}
-            src={imageBlobUrls[currentPage] || getPageUrl(currentPage)}
-            alt={`Page ${currentPage}`}
-            className={cn(
-              "max-h-full max-w-full cursor-pointer rounded-md object-contain transition-opacity",
-              isLoading ? "opacity-0" : "opacity-100"
-            )}
-            loading="eager"
-            onLoad={handleImageLoad}
-            onError={handleImageLoad}
-            ref={(img) => {
-              // Si l'image est déjà en cache, onLoad ne sera pas appelé
-              if (img?.complete && img?.naturalHeight !== 0) {
-                handleImageLoad();
-              }
-            }}
-          />
+          {hasError ? (
+            <div className="flex flex-col items-center justify-center gap-3 text-muted-foreground">
+              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-40">
+                <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
+                <circle cx="9" cy="9" r="2"/>
+                <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+              </svg>
+              <span className="text-sm opacity-60">Image non disponible</span>
+            </div>
+          ) : (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                key={`page-${currentPage}-${imageBlobUrls[currentPage] || ""}`}
+                src={imageBlobUrls[currentPage] || getPageUrl(currentPage)}
+                alt={`Page ${currentPage}`}
+                className={cn(
+                  "max-h-full max-w-full cursor-pointer rounded-md object-contain transition-opacity",
+                  isLoading ? "opacity-0" : "opacity-100"
+                )}
+                loading="eager"
+                onLoad={handleImageLoad}
+                onError={handleImageError}
+                ref={(img) => {
+                  // Si l'image est déjà en cache, onLoad ne sera pas appelé
+                  if (img?.complete && img?.naturalHeight !== 0) {
+                    handleImageLoad();
+                  }
+                }}
+              />
+            </>
+          )}
         </div>
 
         {/* Page 2 (double page) */}
         {isDoublePage && shouldShowDoublePage(currentPage) && (
           <div
-            className={cn("relative h-full w-1/2 flex items-center", {
-              "order-1 justify-end": isRTL,
-              "order-2 justify-start": !isRTL,
+            className={cn("relative h-full w-1/2 flex items-center justify-center", {
+              "order-1": isRTL,
+              "order-2": !isRTL,
             })}
           >
             {secondPageLoading && (
@@ -103,25 +130,38 @@ export function PageDisplay({
                 </div>
               </div>
             )}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              key={`page-${currentPage + 1}-${imageBlobUrls[currentPage + 1] || ""}`}
-              src={imageBlobUrls[currentPage + 1] || getPageUrl(currentPage + 1)}
-              alt={`Page ${currentPage + 1}`}
-              className={cn(
-                "max-h-full max-w-full cursor-pointer rounded-md object-contain transition-opacity",
-                secondPageLoading ? "opacity-0" : "opacity-100"
-              )}
-              loading="eager"
-              onLoad={handleSecondImageLoad}
-              onError={handleSecondImageLoad}
-              ref={(img) => {
-                // Si l'image est déjà en cache, onLoad ne sera pas appelé
-                if (img?.complete && img?.naturalHeight !== 0) {
-                  handleSecondImageLoad();
-                }
-              }}
-            />
+            {secondPageHasError ? (
+              <div className="flex flex-col items-center justify-center gap-3 text-muted-foreground">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-40">
+                  <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
+                  <circle cx="9" cy="9" r="2"/>
+                  <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+                </svg>
+                <span className="text-sm opacity-60">Image non disponible</span>
+              </div>
+            ) : (
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  key={`page-${currentPage + 1}-${imageBlobUrls[currentPage + 1] || ""}`}
+                  src={imageBlobUrls[currentPage + 1] || getPageUrl(currentPage + 1)}
+                  alt={`Page ${currentPage + 1}`}
+                  className={cn(
+                    "max-h-full max-w-full cursor-pointer rounded-md object-contain transition-opacity",
+                    secondPageLoading ? "opacity-0" : "opacity-100"
+                  )}
+                  loading="eager"
+                  onLoad={handleSecondImageLoad}
+                  onError={handleSecondImageError}
+                  ref={(img) => {
+                    // Si l'image est déjà en cache, onLoad ne sera pas appelé
+                    if (img?.complete && img?.naturalHeight !== 0) {
+                      handleSecondImageLoad();
+                    }
+                  }}
+                />
+              </>
+            )}
           </div>
         )}
       </div>
