@@ -164,7 +164,7 @@
       "reinstallError": "Erreur lors de la réinstallation du Service Worker",
       "devServiceWorker": {
         "label": "Service Worker",
-        "description": "Active ou désactive le Service Worker. Par défaut : désactivé en dev, activé en prod. Un rechargement est appliqué.",
+        "description": "Active ou désactive le Service Worker. Par défaut : désactivé en dev et en prod. Un rechargement est appliqué.",
         "saved": "Préférence Service Worker mise à jour",
         "error": "Impossible de mettre à jour la préférence Service Worker"
       },

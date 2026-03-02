@@ -164,7 +164,7 @@
       "reinstallError": "Error reinstalling Service Worker",
       "devServiceWorker": {
         "label": "Service Worker",
-        "description": "Enable or disable the Service Worker. Defaults: disabled in dev, enabled in prod. A reload is applied.",
+        "description": "Enable or disable the Service Worker. Defaults: disabled in dev and prod. A reload is applied.",
         "saved": "Service Worker preference updated",
         "error": "Failed to update Service Worker preference"
       },

@@ -20,7 +20,8 @@ export const isServiceWorkerEnabledInDev = (): boolean => {
   if (legacyValue === "true") return true;
   if (legacyValue === "false") return false;
 
-  return process.env.NODE_ENV !== "development";
+  // Disabled by default in all environments; user preference can override.
+  return false;
 };
 
 export const setServiceWorkerEnabledInDev = (enabled: boolean): void => {
