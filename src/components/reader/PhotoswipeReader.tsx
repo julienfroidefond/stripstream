@@ -1,4 +1,3 @@
- 
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
@@ -218,6 +217,7 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
         shouldShowDoublePage={(page) => shouldShowDoublePage(page, pages.length)}
         imageBlobUrls={imageBlobUrls}
         getPageUrl={getPageUrl}
+        isRTL={isRTL}
       />
 
       <NavigationBar

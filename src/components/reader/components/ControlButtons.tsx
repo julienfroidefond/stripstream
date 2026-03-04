@@ -179,7 +179,7 @@ export const ControlButtons = ({
           iconClassName="h-8 w-8"
           className={cn(
             "absolute top-1/2 z-20 -translate-y-1/2 rounded-full border border-border/60 bg-background/55 shadow-[0_8px_24px_-16px_rgba(0,0,0,0.75)] backdrop-blur-xl transition-all duration-300 hover:bg-background/70",
-            direction === "rtl" ? "right-4" : "left-4",
+            "left-4",
             showControls ? "opacity-100" : "opacity-0 pointer-events-none"
           )}
         />
@@ -199,7 +199,7 @@ export const ControlButtons = ({
           iconClassName="h-8 w-8"
           className={cn(
             "absolute top-1/2 z-20 -translate-y-1/2 rounded-full border border-border/60 bg-background/55 shadow-[0_8px_24px_-16px_rgba(0,0,0,0.75)] backdrop-blur-xl transition-all duration-300 hover:bg-background/70",
-            direction === "rtl" ? "left-4" : "right-4",
+            "right-4",
             showControls ? "opacity-100" : "opacity-0 pointer-events-none"
           )}
         />
