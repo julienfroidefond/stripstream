@@ -454,7 +454,15 @@
   },
   "header": {
     "toggleSidebar": "Afficher/masquer le menu latéral",
-    "toggleTheme": "Changer le thème"
+    "toggleTheme": "Changer le thème",
+    "search": {
+      "placeholder": "Rechercher séries et tomes...",
+      "empty": "Aucun résultat",
+      "series": "Séries",
+      "books": "Tomes",
+      "openSeries": "Ouvrir la série {{title}}",
+      "openBook": "Ouvrir le tome {{title}}"
+    }
   },
   "navigation": {
     "scrollLeft": "Défiler vers la gauche",
