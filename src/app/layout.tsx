@@ -133,8 +133,18 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         />
         <link
           rel="apple-touch-startup-image"
+          href="/images/splash/splash-2732x2048.png"
+          media="(device-width: 1366px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+        />
+        <link
+          rel="apple-touch-startup-image"
           href="/images/splash/splash-1668x2388.png"
           media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+        />
+        <link
+          rel="apple-touch-startup-image"
+          href="/images/splash/splash-2388x1668.png"
+          media="(device-width: 1194px) and (device-height: 834px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
         />
         <link
           rel="apple-touch-startup-image"
@@ -143,8 +153,18 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         />
         <link
           rel="apple-touch-startup-image"
+          href="/images/splash/splash-2048x1536.png"
+          media="(device-width: 1024px) and (device-height: 768px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+        />
+        <link
+          rel="apple-touch-startup-image"
           href="/images/splash/splash-1125x2436.png"
           media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+        />
+        <link
+          rel="apple-touch-startup-image"
+          href="/images/splash/splash-2436x1125.png"
+          media="(device-width: 812px) and (device-height: 375px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
         />
         <link
           rel="apple-touch-startup-image"
@@ -153,8 +173,18 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         />
         <link
           rel="apple-touch-startup-image"
+          href="/images/splash/splash-2688x1242.png"
+          media="(device-width: 896px) and (device-height: 414px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
+        />
+        <link
+          rel="apple-touch-startup-image"
           href="/images/splash/splash-828x1792.png"
           media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+        />
+        <link
+          rel="apple-touch-startup-image"
+          href="/images/splash/splash-1792x828.png"
+          media="(device-width: 896px) and (device-height: 414px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
         />
         <link
           rel="apple-touch-startup-image"
@@ -163,8 +193,58 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         />
         <link
           rel="apple-touch-startup-image"
+          href="/images/splash/splash-1334x750.png"
+          media="(device-width: 667px) and (device-height: 375px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+        />
+        <link
+          rel="apple-touch-startup-image"
           href="/images/splash/splash-1242x2208.png"
           media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+        />
+        <link
+          rel="apple-touch-startup-image"
+          href="/images/splash/splash-2208x1242.png"
+          media="(device-width: 736px) and (device-height: 414px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
+        />
+        <link
+          rel="apple-touch-startup-image"
+          href="/images/splash/splash-1170x2532.png"
+          media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+        />
+        <link
+          rel="apple-touch-startup-image"
+          href="/images/splash/splash-2532x1170.png"
+          media="(device-width: 844px) and (device-height: 390px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
+        />
+        <link
+          rel="apple-touch-startup-image"
+          href="/images/splash/splash-1284x2778.png"
+          media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+        />
+        <link
+          rel="apple-touch-startup-image"
+          href="/images/splash/splash-2778x1284.png"
+          media="(device-width: 926px) and (device-height: 428px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
+        />
+        <link
+          rel="apple-touch-startup-image"
+          href="/images/splash/splash-1179x2556.png"
+          media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+        />
+        <link
+          rel="apple-touch-startup-image"
+          href="/images/splash/splash-2556x1179.png"
+          media="(device-width: 852px) and (device-height: 393px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
+        />
+        <link
+          rel="apple-touch-startup-image"
+          href="/images/splash/splash-1290x2796.png"
+          media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+        />
+        <link
+          rel="apple-touch-startup-image"
+          href="/images/splash/splash-2796x1290.png"
+          media="(device-width: 932px) and (device-height: 430px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
         />
       </head>
       <body
