@@ -15,7 +15,7 @@ export default async function AccountPage() {
 
     return (
       <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto space-y-8">
+        <div className="mx-auto max-w-4xl space-y-8">
           <div>
             <h1 className="text-3xl font-bold">Mon compte</h1>
             <p className="text-muted-foreground mt-2">

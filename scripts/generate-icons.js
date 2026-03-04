@@ -3,11 +3,11 @@ const fs = require("fs").promises;
 const path = require("path");
 
 const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
-const inputSvg = path.join(__dirname, "../public/favicon.svg");
-const inputAppleSvg = path.join(__dirname, "../public/apple-icon.svg");
+const sourceLogo = path.join(__dirname, "../public/images/logostripstream.png");
 const outputDir = path.join(__dirname, "../public/images/icons");
 const screenshotsDir = path.join(__dirname, "../public/images/screenshots");
 const splashDir = path.join(__dirname, "../public/images/splash");
+const faviconPath = path.join(__dirname, "../public/favicon.png");
 
 // Configuration des splashscreens pour différents appareils
 const splashScreens = [
@@ -24,35 +24,23 @@ const splashScreens = [
 async function generateSplashScreens() {
   await fs.mkdir(splashDir, { recursive: true });
 
-  // Créer le SVG de base pour la splashscreen avec le même style que le favicon
-  const splashSvg = `
-    <svg width="100%" height="100%" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-      <rect width="100" height="100" fill="#4F46E5"/>
-      <g transform="translate(25, 20) scale(1.5)">
-        <!-- Lettre S stylisée -->
-        <path 
-          d="M21 12C21 10.3431 19.6569 9 18 9H14C12.3431 9 11 10.3431 11 12V12.5C11 14.1569 12.3431 15.5 14 15.5H18C19.6569 15.5 21 16.8431 21 18.5V19C21 20.6569 19.6569 22 18 22H14C12.3431 22 11 20.6569 11 19" 
-          stroke="white" 
-          stroke-width="3" 
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        />
-        <!-- Points décoratifs -->
-        <circle cx="11" cy="24" r="1.5" fill="white"/>
-        <circle cx="21" cy="8" r="1.5" fill="white"/>
-      </g>
-    </svg>
-  `;
-
   for (const screen of splashScreens) {
     const outputPath = path.join(splashDir, `splash-${screen.width}x${screen.height}.png`);
+    const darkOverlay = Buffer.from(
+      `<svg width="${screen.width}" height="${screen.height}" xmlns="http://www.w3.org/2000/svg">
+        <rect width="100%" height="100%" fill="rgba(4, 8, 20, 0.22)" />
+      </svg>`
+    );
 
-    await sharp(Buffer.from(splashSvg))
+    await sharp(sourceLogo)
       .resize(screen.width, screen.height, {
-        fit: "contain",
-        background: "#4F46E5",
+        fit: "cover",
+        position: "center",
       })
-      .png()
+      .composite([{ input: darkOverlay, blend: "over" }])
+      .png({
+        compressionLevel: 9,
+      })
       .toFile(outputPath);
 
     console.log(`✓ Splashscreen ${screen.name} (${screen.width}x${screen.height}) générée`);
@@ -61,17 +49,19 @@ async function generateSplashScreens() {
 
 async function generateIcons() {
   try {
+    await fs.access(sourceLogo);
+
     // Créer les dossiers de sortie s'ils n'existent pas
     await fs.mkdir(outputDir, { recursive: true });
     await fs.mkdir(screenshotsDir, { recursive: true });
 
-    // Générer les icônes Android (avec bords arrondis)
+    // Générer les icônes Android
     for (const size of sizes) {
       const outputPath = path.join(outputDir, `icon-${size}x${size}.png`);
 
-      await sharp(inputSvg)
+      await sharp(sourceLogo)
         .resize(size, size, {
-          fit: "contain",
+          fit: "cover",
           background: { r: 0, g: 0, b: 0, alpha: 0 }, // Fond transparent
         })
         .png({
@@ -88,9 +78,9 @@ async function generateIcons() {
     for (const size of appleSizes) {
       const outputPath = path.join(outputDir, `apple-icon-${size}x${size}.png`);
 
-      await sharp(inputAppleSvg)
+      await sharp(sourceLogo)
         .resize(size, size, {
-          fit: "contain",
+          fit: "cover",
           background: { r: 0, g: 0, b: 0, alpha: 0 }, // Fond transparent
         })
         .png({
@@ -102,26 +92,25 @@ async function generateIcons() {
       console.log(`✓ Icône Apple ${size}x${size} générée`);
     }
 
+    // Générer le favicon principal utilisé par Next metadata
+    await sharp(sourceLogo)
+      .resize(64, 64, {
+        fit: "cover",
+      })
+      .png({
+        compressionLevel: 9,
+        palette: true,
+      })
+      .toFile(faviconPath);
+
+    console.log("✓ Favicon principal généré");
+
     // Générer les icônes de raccourcis
-    const shortcutIcons = [
-      { name: "home", icon: "Home" },
-      { name: "library", icon: "Library" },
-    ];
+    const shortcutIcons = ["home", "library"];
 
     for (const shortcut of shortcutIcons) {
-      const outputPath = path.join(outputDir, `${shortcut.name}.png`);
-
-      // Créer une image carrée avec fond indigo et icône blanche
-      const svg = `
-        <svg width="96" height="96" viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect width="96" height="96" rx="20" fill="#4F46E5"/>
-          <path d="${getIconPath(
-            shortcut.icon
-          )}" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      `;
-
-      await sharp(Buffer.from(svg))
+      const outputPath = path.join(outputDir, `${shortcut}.png`);
+      await sharp(sourceLogo)
         .resize(96, 96)
         .png({
           compressionLevel: 9,
@@ -129,7 +118,7 @@ async function generateIcons() {
         })
         .toFile(outputPath);
 
-      console.log(`✓ Icône de raccourci ${shortcut.name} générée`);
+      console.log(`✓ Icône de raccourci ${shortcut} générée`);
     }
 
     // Générer les screenshots de démonstration
@@ -164,16 +153,6 @@ async function generateIcons() {
     console.error("Erreur lors de la génération des icônes:", error);
     process.exit(1);
   }
-}
-
-// Fonction helper pour obtenir les chemins SVG des icônes
-function getIconPath(iconName) {
-  const paths = {
-    Home: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6",
-    Library:
-      "M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 19.5A2.5 2.5 0 0 0 6.5 22H20M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20",
-  };
-  return paths[iconName] || "";
 }
 
 generateIcons();

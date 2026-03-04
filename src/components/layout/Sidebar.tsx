@@ -157,8 +157,18 @@ export function Sidebar({
       id="sidebar"
     >
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(160deg,hsl(var(--primary)/0.12)_0%,hsl(192_85%_55%/0.08)_32%,transparent_58%),linear-gradient(332deg,hsl(338_82%_62%/0.06)_0%,transparent_42%),repeating-linear-gradient(135deg,hsl(var(--foreground)/0.02)_0_1px,transparent_1px_11px)]" />
+      <div className="pointer-events-none absolute inset-0 z-0">
+        <div
+          className="hidden h-full w-full bg-center bg-no-repeat opacity-[0.1] [background-size:260%] dark:block"
+          style={{ backgroundImage: "url('/images/logostripstream.png')" }}
+        />
+        <div
+          className="h-full w-full bg-center bg-no-repeat opacity-[0.12] [background-size:260%] dark:hidden"
+          style={{ backgroundImage: "url('/images/logostripstream-white.png')" }}
+        />
+      </div>
 
-      <div className="relative flex-1 space-y-4 overflow-y-auto px-3 py-4">
+      <div className="relative z-10 flex-1 space-y-4 overflow-y-auto px-3 py-4">
         <div className="rounded-xl border border-border/50 bg-background/30 p-2">
           <div className="space-y-1">
             <h2 className="mb-2 px-3 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">

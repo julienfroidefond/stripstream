@@ -36,8 +36,8 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
-        url: "/favicon.svg",
-        type: "image/svg+xml",
+        url: "/favicon.png",
+        type: "image/png",
       },
       { url: "/images/icons/icon-72x72.png", sizes: "72x72", type: "image/png" },
       { url: "/images/icons/icon-96x96.png", sizes: "96x96", type: "image/png" },
@@ -176,7 +176,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <AuthProvider>
           <I18nProvider locale={locale}>
             <PreferencesProvider initialPreferences={preferences}>
-              <ClientLayout initialLibraries={libraries} initialFavorites={favorites} userIsAdmin={userIsAdmin}>
+              <ClientLayout
+                initialLibraries={libraries}
+                initialFavorites={favorites}
+                userIsAdmin={userIsAdmin}
+              >
                 {children}
               </ClientLayout>
             </PreferencesProvider>

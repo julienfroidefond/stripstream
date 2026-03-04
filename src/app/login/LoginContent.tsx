@@ -43,21 +43,21 @@ export function LoginContent({ searchParams }: LoginContentProps) {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="relative z-20 flex items-center text-lg font-medium"
         >
-          <motion.svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="mr-2 h-6 w-6"
-            whileHover={{ rotate: 180 }}
+          <motion.img
+            src="/images/logostripstream.png"
+            alt="StripStream Logo"
+            className="mr-3 hidden h-9 w-9 rounded-md object-cover dark:block"
+            whileHover={{ scale: 1.08, rotate: -3 }}
             transition={{ duration: 0.3 }}
-          >
-            <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
-          </motion.svg>
-          <span className="text-2xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+          />
+          <motion.img
+            src="/images/logostripstream-white.png"
+            alt="StripStream Logo"
+            className="mr-3 h-9 w-9 rounded-md object-cover dark:hidden"
+            whileHover={{ scale: 1.08, rotate: -3 }}
+            transition={{ duration: 0.3 }}
+          />
+          <span className="text-2xl font-bold bg-gradient-to-r from-primary via-cyan-500 to-fuchsia-500 bg-clip-text text-transparent">
             StripStream
           </span>
         </motion.div>
@@ -83,12 +83,20 @@ export function LoginContent({ searchParams }: LoginContentProps) {
         <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
           <div className="flex flex-col items-center space-y-4 text-center">
             <div className="relative">
-              <div className="absolute -inset-1 bg-gradient-to-r from-[#4F46E5] to-[#6366F1] rounded-full opacity-75 blur-md animate-pulse"></div>
-              <div className="relative bg-gradient-to-br from-white to-gray-100 dark:from-slate-800 dark:to-slate-900 rounded-full shadow-xl overflow-hidden w-24 h-24 flex items-center justify-center">
+              <div className="relative bg-gradient-to-br from-white to-gray-100 dark:from-slate-800 dark:to-slate-900 rounded-full shadow-xl overflow-hidden w-32 h-32 flex items-center justify-center">
                 <motion.img
-                  src="/images/icons/apple-icon-180x180.png"
+                  src="/images/logostripstream.png"
                   alt="StripStream Logo"
-                  className="w-[100%] h-[100%] object-cover"
+                  className="hidden h-[100%] w-[100%] object-cover dark:block"
+                  initial={{ scale: 1.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.5 }}
+                  whileHover={{ scale: 1.05 }}
+                />
+                <motion.img
+                  src="/images/logostripstream-white.png"
+                  alt="StripStream Logo"
+                  className="h-[100%] w-[100%] object-cover dark:hidden"
                   initial={{ scale: 1.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ duration: 0.5 }}
@@ -99,7 +107,7 @@ export function LoginContent({ searchParams }: LoginContentProps) {
             <motion.h1
               initial={{ y: -20 }}
               animate={{ y: 0 }}
-              className="text-3xl font-bold tracking-tight bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent"
+              className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary via-cyan-500 to-fuchsia-500 bg-clip-text text-transparent"
             >
               {t("login.title")}
             </motion.h1>

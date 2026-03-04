@@ -6,6 +6,7 @@ import { RefreshButton } from "@/components/library/RefreshButton";
 import { PullToRefreshIndicator } from "@/components/common/PullToRefreshIndicator";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { revalidateForRefresh } from "@/app/actions/refresh";
+import Image from "next/image";
 
 interface HomeClientWrapperProps {
   children: ReactNode;
@@ -48,7 +49,25 @@ export function HomeClientWrapper({ children }: HomeClientWrapperProps) {
         isHiding={pullToRefresh.isHiding}
       />
       <main className="relative isolate overflow-hidden">
-        <div className="container mx-auto space-y-6 px-4 pb-8 pt-3">
+        <div className="pointer-events-none absolute inset-0 z-0 flex items-start justify-center pt-10">
+          <Image
+            src="/images/logostripstream.png"
+            alt=""
+            width={600}
+            height={600}
+            aria-hidden
+            className="hidden h-auto w-[min(78vw,600px)] opacity-[0.08] saturate-125 dark:block"
+          />
+          <Image
+            src="/images/logostripstream-white.png"
+            alt=""
+            width={600}
+            height={600}
+            aria-hidden
+            className="h-auto w-[min(78vw,600px)] opacity-[0.1] saturate-125 dark:hidden"
+          />
+        </div>
+        <div className="container relative z-10 mx-auto space-y-6 px-4 pb-8 pt-3">
           <div className="flex justify-end">
             <RefreshButton libraryId="home" refreshLibrary={handleRefresh} />
           </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 
 const SHOW_DELAY_MS = 140;
 
@@ -22,8 +23,22 @@ export default function AppLoading() {
       }`}
     >
       <div className="flex w-full max-w-sm flex-col items-center gap-6 text-center">
-        <div className="space-y-2">
-          <p className="bg-gradient-to-r from-primary via-cyan-500 to-fuchsia-500 bg-clip-text text-xl font-bold uppercase tracking-[0.12em] text-transparent">
+        <div className="space-y-3">
+          <Image
+            src="/images/logostripstream.png"
+            alt="StripStream Logo"
+            width={80}
+            height={80}
+            className="mx-auto hidden h-20 w-20 rounded-xl object-cover dark:block"
+          />
+          <Image
+            src="/images/logostripstream-white.png"
+            alt="StripStream Logo"
+            width={80}
+            height={80}
+            className="mx-auto h-20 w-20 rounded-xl object-cover dark:hidden"
+          />
+          <p className="bg-gradient-to-r from-primary via-cyan-500 to-fuchsia-500 bg-clip-text text-xl font-bold tracking-[0.08em] text-transparent">
             StripStream
           </p>
           <p className="text-sm text-muted-foreground">Chargement de votre bibliotheque...</p>

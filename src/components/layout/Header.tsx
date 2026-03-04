@@ -48,14 +48,14 @@ export function Header({
 
         <div className="mr-2 flex items-center md:mr-4">
           <a className="mr-2 flex items-center md:mr-6" href="/">
-            <span className="inline-flex bg-gradient-to-r from-primary via-cyan-500 to-fuchsia-500 bg-clip-text text-sm font-bold uppercase tracking-[0.1em] text-transparent sm:hidden">
-              StripStream
+            <span className="inline-flex bg-gradient-to-r from-primary via-cyan-500 to-fuchsia-500 bg-clip-text text-sm font-bold tracking-[0.06em] text-transparent sm:hidden">
+              Strip
             </span>
             <span className="hidden sm:inline-flex flex-col leading-none">
-              <span className="bg-gradient-to-r from-primary via-cyan-500 to-fuchsia-500 bg-clip-text text-lg font-bold tracking-[0.1em] text-transparent">
-                STRIPSTREAM
+              <span className="bg-gradient-to-r from-primary via-cyan-500 to-fuchsia-500 bg-clip-text text-lg font-bold tracking-[0.08em] text-transparent">
+                StripStream
               </span>
-              <span className="mt-1 text-[10px] font-medium uppercase tracking-[0.28em] text-foreground/70">
+              <span className="mt-1 text-[10px] font-medium uppercase tracking-[0.22em] text-foreground/70">
                 comic reader
               </span>
             </span>
