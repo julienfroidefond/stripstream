@@ -3,6 +3,7 @@
 import { BookService } from "@/lib/services/book.service";
 import { AppError } from "@/utils/errors";
 import type { KomgaBook } from "@/types/komga";
+import logger from "@/lib/logger";
 
 interface BookDataResult {
   success: boolean;
@@ -17,7 +18,12 @@ interface BookDataResult {
 export async function getBookData(bookId: string): Promise<BookDataResult> {
   try {
     const data = await BookService.getBook(bookId);
-    const nextBook = await BookService.getNextBook(bookId, data.book.seriesId);
+    let nextBook = null;
+    try {
+      nextBook = await BookService.getNextBook(bookId, data.book.seriesId);
+    } catch (error) {
+      logger.warn({ err: error, bookId }, "Failed to fetch next book in server action");
+    }
 
     return {
       success: true,
