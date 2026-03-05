@@ -80,7 +80,7 @@ export class SeriesService extends BaseApiService {
       const params: Record<string, string | string[]> = {
         page: String(page),
         size: String(size),
-        sort: "number,asc",
+        sort: "metadata.numberSort,asc",
       };
 
       const response = await this.fetchFromApi<LibraryResponse<KomgaBook>>(

@@ -201,7 +201,7 @@ export class BookService extends BaseApiService {
       }>(
         {
           path: "books/list",
-          params: { page: String(randomPage), size: "20", sort: "number,asc" },
+          params: { page: String(randomPage), size: "20", sort: "metadata.numberSort,asc" },
         },
         { "Content-Type": "application/json" },
         { method: "POST", body: JSON.stringify(searchBody) }
@@ -213,7 +213,10 @@ export class BookService extends BaseApiService {
           content: KomgaBook[];
           totalElements: number;
         }>(
-          { path: "books/list", params: { page: "0", size: "20", sort: "number,asc" } },
+          {
+            path: "books/list",
+            params: { page: "0", size: "20", sort: "metadata.numberSort,asc" },
+          },
           { "Content-Type": "application/json" },
           { method: "POST", body: JSON.stringify(searchBody) }
         );
