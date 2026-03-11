@@ -17,7 +17,7 @@ COPY package.json pnpm-lock.yaml ./
 COPY prisma ./prisma
 
 # Copy configuration files
-COPY tsconfig.json .eslintrc.json ./
+COPY tsconfig.json .eslintrc.json next.config.js ./
 COPY tailwind.config.ts postcss.config.js ./
 
 # Install dependencies with pnpm using cache mount for store
@@ -43,22 +43,20 @@ WORKDIR /app
 # Install OpenSSL (required by Prisma)
 RUN apk add --no-cache openssl libc6-compat
 
-# Copy package files and prisma schema
-COPY package.json pnpm-lock.yaml ./
-COPY prisma ./prisma
+# Copy standalone output (server.js + minimal node_modules)
+COPY --from=builder /app/.next/standalone ./
 
-# Enable pnpm
-RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
+# Copy static assets and public directory
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
 
-# Copy the entire node_modules from builder (includes Prisma Client)
+# Copy full node_modules for Prisma CLI (pnpm symlinks prevent cherry-picking)
 COPY --from=builder /app/node_modules ./node_modules
 
-# Copy built application from builder stage
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/next-env.d.ts ./
-COPY --from=builder /app/tailwind.config.ts ./
+# Copy prisma schema and init scripts
+COPY prisma ./prisma
 COPY --from=builder /app/scripts ./scripts
+COPY package.json ./
 
 # Copy entrypoint script
 COPY docker-entrypoint.sh ./
@@ -76,6 +74,7 @@ USER nextjs
 # Set environment variables
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV HOSTNAME="0.0.0.0"
 
 # Expose the port the app runs on
 EXPOSE 3000

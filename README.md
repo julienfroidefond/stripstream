@@ -74,7 +74,7 @@ A modern web application for reading digital comics, built with Next.js 14 and t
 ## 🛠 Prerequisites
 
 - Node.js 20.x or higher
-- Yarn 1.22.x or higher
+- pnpm 9.x or higher
 - Docker and Docker Compose (optional)
 
 ## 📦 Installation
@@ -91,7 +91,7 @@ cd stripstream
 2. Install dependencies
 
 ```bash
-yarn install
+pnpm install
 ```
 
 3. Copy the example environment file and adjust it to your needs
@@ -103,7 +103,7 @@ cp .env.example .env.local
 4. Start the development server
 
 ```bash
-yarn dev
+pnpm dev
 ```
 
 ### With Docker (Build Local)
@@ -121,7 +121,7 @@ cd stripstream
 docker-compose up --build
 ```
 
-The application will be accessible at `http://localhost:3000`
+The application will be accessible at `http://localhost:3020`
 
 ### With Docker (DockerHub Image)
 
@@ -130,18 +130,24 @@ You can also use the pre-built image from DockerHub without cloning the reposito
 1. Create a `docker-compose.yml` file:
 
 ```yaml
-version: '3.8'
-
 services:
   app:
     image: julienfroidefond32/stripstream:latest
     ports:
       - "3000:3000"
     environment:
-      - NODE_ENV=production
-      # Add your environment variables here or use an .env file
+      # Required
+      - NEXTAUTH_SECRET=your_secret_here        # openssl rand -base64 32
+      - NEXTAUTH_URL=http://localhost:3000
+
+      # Optional — defaults shown
+      # - NODE_ENV=production
+      # - DATABASE_URL=file:/app/prisma/data/stripstream.db
+      # - ADMIN_DEFAULT_PASSWORD=Admin@2025
+      # - AUTH_TRUST_HOST=true
+      # - KOMGA_MAX_CONCURRENT_REQUESTS=5
     volumes:
-      - ./data:/app/data
+      - ./data:/app/prisma/data
     restart: unless-stopped
 ```
 
@@ -155,11 +161,10 @@ The application will be accessible at `http://localhost:3000`
 
 ## 🔧 Available Scripts
 
-- `yarn dev` - Starts the development server
-- `yarn build` - Creates a production build
-- `yarn start` - Runs the production version
-- `yarn lint` - Checks code with ESLint
-- `yarn format` - Formats code with Prettier
+- `pnpm dev` - Starts the development server
+- `pnpm build` - Creates a production build
+- `pnpm start` - Runs the production version
+- `pnpm lint` - Checks code with ESLint
 - `./docker-push.sh [tag]` - Build and push Docker image to DockerHub (default tag: `latest`)
 
 ### Docker Push Script
