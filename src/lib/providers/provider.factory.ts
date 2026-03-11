@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-utils";
+import { getResolvedStripstreamConfig } from "./stripstream/stripstream-config-resolver";
 import type { IMediaProvider } from "./provider.interface";
 
 export async function getProvider(): Promise<IMediaProvider | null> {
@@ -13,7 +14,7 @@ export async function getProvider(): Promise<IMediaProvider | null> {
     select: {
       activeProvider: true,
       config: { select: { url: true, authHeader: true } },
-      stripstreamConfig: { select: { url: true, token: true } },
+      stripstreamConfig: { select: { id: true } },
     },
   });
 
@@ -21,12 +22,12 @@ export async function getProvider(): Promise<IMediaProvider | null> {
 
   const activeProvider = dbUser.activeProvider ?? "komga";
 
-  if (activeProvider === "stripstream" && dbUser.stripstreamConfig) {
-    const { StripstreamProvider } = await import("./stripstream/stripstream.provider");
-    return new StripstreamProvider(
-      dbUser.stripstreamConfig.url,
-      dbUser.stripstreamConfig.token
-    );
+  if (activeProvider === "stripstream") {
+    const resolved = await getResolvedStripstreamConfig(userId);
+    if (resolved) {
+      const { StripstreamProvider } = await import("./stripstream/stripstream.provider");
+      return new StripstreamProvider(resolved.url, resolved.token);
+    }
   }
 
   if (activeProvider === "komga" || !dbUser.activeProvider) {

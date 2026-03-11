@@ -30,6 +30,8 @@ export function useImageLoader({
   // Track ongoing fetch requests to prevent duplicates
   const pendingFetchesRef = useRef<Set<ImageKey>>(new Set());
   const abortControllersRef = useRef<Map<ImageKey, AbortController>>(new Map());
+  // Track promises for pages being loaded so we can await them
+  const loadingPromisesRef = useRef<Map<ImageKey, Promise<void>>>(new Map());
 
   // Keep refs in sync with state
   useEffect(() => {
@@ -44,12 +46,14 @@ export function useImageLoader({
     isMountedRef.current = true;
     const abortControllers = abortControllersRef.current;
     const pendingFetches = pendingFetchesRef.current;
+    const loadingPromises = loadingPromisesRef.current;
 
     return () => {
       isMountedRef.current = false;
       abortControllers.forEach((controller) => controller.abort());
       abortControllers.clear();
       pendingFetches.clear();
+      loadingPromises.clear();
     };
   }, []);
 
@@ -57,6 +61,7 @@ export function useImageLoader({
     abortControllersRef.current.forEach((controller) => controller.abort());
     abortControllersRef.current.clear();
     pendingFetchesRef.current.clear();
+    loadingPromisesRef.current.clear();
   }, []);
 
   const runWithConcurrency = useCallback(
@@ -92,73 +97,96 @@ export function useImageLoader({
         return;
       }
 
-      // Check if this page is already being fetched
-      if (pendingFetchesRef.current.has(pageNum)) {
-        return;
+      // Check if this page is already being fetched - if so, wait for it
+      const existingPromise = loadingPromisesRef.current.get(pageNum);
+      if (existingPromise) {
+        return existingPromise;
       }
 
-      // Mark as pending
+      // Mark as pending and create promise
       pendingFetchesRef.current.add(pageNum);
       const controller = new AbortController();
       abortControllersRef.current.set(pageNum, controller);
 
-      try {
-        // Use browser cache if available - the server sets Cache-Control headers
-        const response = await fetch(getPageUrl(pageNum), {
-          cache: "default", // Respect Cache-Control headers from server
-          signal: controller.signal,
-        });
-        if (!response.ok) {
-          return;
-        }
-
-        const blob = await response.blob();
-        const blobUrl = URL.createObjectURL(blob);
-
-        // Create image to get dimensions
-        const img = new Image();
-        img.onload = () => {
-          if (!isMountedRef.current || controller.signal.aborted) {
-            URL.revokeObjectURL(blobUrl);
+      const promise = (async () => {
+        try {
+          // Use browser cache if available - the server sets Cache-Control headers
+          const response = await fetch(getPageUrl(pageNum), {
+            cache: "default", // Respect Cache-Control headers from server
+            signal: controller.signal,
+          });
+          if (!response.ok) {
             return;
           }
 
-          setLoadedImages((prev) => ({
-            ...prev,
-            [pageNum]: { width: img.naturalWidth, height: img.naturalHeight },
-          }));
+          const blob = await response.blob();
+          const blobUrl = URL.createObjectURL(blob);
 
-          // Store the blob URL for immediate use
-          setImageBlobUrls((prev) => ({
-            ...prev,
-            [pageNum]: blobUrl,
-          }));
-        };
+          // Create image to get dimensions
+          const img = new Image();
+          
+          // Wait for image to load before resolving promise
+          await new Promise<void>((resolve, reject) => {
+            img.onload = () => {
+              if (!isMountedRef.current || controller.signal.aborted) {
+                URL.revokeObjectURL(blobUrl);
+                reject(new Error("Aborted"));
+                return;
+              }
 
-        img.onerror = () => {
-          URL.revokeObjectURL(blobUrl);
-        };
+              setLoadedImages((prev) => ({
+                ...prev,
+                [pageNum]: { width: img.naturalWidth, height: img.naturalHeight },
+              }));
 
-        img.src = blobUrl;
-      } catch {
-        // Silently fail prefetch
-      } finally {
-        // Remove from pending set
-        pendingFetchesRef.current.delete(pageNum);
-        abortControllersRef.current.delete(pageNum);
-      }
+              // Store the blob URL for immediate use
+              setImageBlobUrls((prev) => ({
+                ...prev,
+                [pageNum]: blobUrl,
+              }));
+
+              resolve();
+            };
+
+            img.onerror = () => {
+              URL.revokeObjectURL(blobUrl);
+              reject(new Error("Image load error"));
+            };
+
+            img.src = blobUrl;
+          });
+        } catch {
+          // Silently fail prefetch
+        } finally {
+          // Remove from pending set and promise map
+          pendingFetchesRef.current.delete(pageNum);
+          abortControllersRef.current.delete(pageNum);
+          loadingPromisesRef.current.delete(pageNum);
+        }
+      })();
+
+      // Store promise so other calls can await it
+      loadingPromisesRef.current.set(pageNum, promise);
+
+      return promise;
     },
     [getPageUrl]
   );
 
   // Prefetch multiple pages starting from a given page
   const prefetchPages = useCallback(
-    async (startPage: number, count: number = prefetchCount) => {
+    async (
+      startPage: number,
+      count: number = prefetchCount,
+      excludePages: number[] = [],
+      concurrency?: number
+    ) => {
       const pagesToPrefetch = [];
+      const excludeSet = new Set(excludePages);
 
       for (let i = 0; i < count; i++) {
         const pageNum = startPage + i;
-        if (pageNum <= _pages.length) {
+        if (pageNum <= _pages.length && !excludeSet.has(pageNum)) {
           const hasDimensions = loadedImagesRef.current[pageNum];
           const hasBlobUrl = imageBlobUrlsRef.current[pageNum];
           const isPending = pendingFetchesRef.current.has(pageNum);
@@ -170,10 +198,13 @@ export function useImageLoader({
         }
       }
 
+      // Use provided concurrency or default
+      const effectiveConcurrency = concurrency ?? PREFETCH_CONCURRENCY;
+
       // Let all prefetch requests run - the server queue will manage concurrency
       // The browser cache and our deduplication prevent redundant requests
       if (pagesToPrefetch.length > 0) {
-        runWithConcurrency(pagesToPrefetch, prefetchImage).catch(() => {
+        runWithConcurrency(pagesToPrefetch, prefetchImage, effectiveConcurrency).catch(() => {
           // Silently fail - prefetch is non-critical
         });
       }
@@ -340,6 +371,14 @@ export function useImageLoader({
     };
   }, []); // Empty dependency array - only cleanup on unmount
 
+  // Check if a page is currently being loaded
+  const isPageLoading = useCallback(
+    (pageNum: number) => {
+      return pendingFetchesRef.current.has(pageNum);
+    },
+    []
+  );
+
   return {
     loadedImages,
     imageBlobUrls,
@@ -350,5 +389,6 @@ export function useImageLoader({
     handleForceReload,
     getPageUrl,
     prefetchCount,
+    isPageLoading,
   };
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { useTranslate } from "@/hooks/useTranslate";
@@ -16,7 +15,6 @@ interface RegisterFormProps {
 }
 
 export function RegisterForm({ from }: RegisterFormProps) {
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<AppErrorType | null>(null);
   const { t } = useTranslate();
@@ -77,8 +75,7 @@ export function RegisterForm({ from }: RegisterFormProps) {
         });
       } else {
         const redirectPath = getSafeRedirectPath(from);
-        window.location.assign(redirectPath);
-        router.refresh();
+        window.location.href = redirectPath;
       }
     } catch {
       setError({

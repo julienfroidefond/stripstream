@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { useTranslate } from "@/hooks/useTranslate";
@@ -16,7 +15,6 @@ interface LoginFormProps {
 }
 
 export function LoginForm({ from }: LoginFormProps) {
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<AppErrorType | null>(null);
   const { t } = useTranslate();
@@ -57,8 +55,7 @@ export function LoginForm({ from }: LoginFormProps) {
       }
 
       const redirectPath = getSafeRedirectPath(from);
-      window.location.assign(redirectPath);
-      router.refresh();
+      window.location.href = redirectPath;
     } catch {
       setError({
         code: "AUTH_FETCH_ERROR",

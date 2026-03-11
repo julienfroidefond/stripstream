@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-utils";
 import { StripstreamProvider } from "@/lib/providers/stripstream/stripstream.provider";
+import { getResolvedStripstreamConfig } from "@/lib/providers/stripstream/stripstream-config-resolver";
 import { AppError } from "@/utils/errors";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import type { ProviderType } from "@/lib/providers/types";
@@ -81,8 +82,8 @@ export async function setActiveProvider(
       if (!config) {
         return { success: false, message: "Komga n'est pas encore configuré" };
       }
-    } else if (provider === "stripstream") {
-      const config = await prisma.stripstreamConfig.findUnique({ where: { userId } });
+    } else     if (provider === "stripstream") {
+      const config = await getResolvedStripstreamConfig(userId);
       if (!config) {
         return { success: false, message: "Stripstream n'est pas encore configuré" };
       }
@@ -108,7 +109,8 @@ export async function setActiveProvider(
 }
 
 /**
- * Récupère la configuration Stripstream de l'utilisateur
+ * Récupère la configuration Stripstream de l'utilisateur (affichage settings).
+ * Priorité : config en base, sinon env STRIPSTREAM_URL / STRIPSTREAM_TOKEN.
  */
 export async function getStripstreamConfig(): Promise<{
   url?: string;
@@ -119,13 +121,9 @@ export async function getStripstreamConfig(): Promise<{
     if (!user) return null;
     const userId = parseInt(user.id, 10);
 
-    const config = await prisma.stripstreamConfig.findUnique({
-      where: { userId },
-      select: { url: true },
-    });
-
-    if (!config) return null;
-    return { url: config.url, hasToken: true };
+    const resolved = await getResolvedStripstreamConfig(userId);
+    if (!resolved) return null;
+    return { url: resolved.url, hasToken: true };
   } catch {
     return null;
   }
@@ -166,15 +164,15 @@ export async function getProvidersStatus(): Promise<{
     }
     const userId = parseInt(user.id, 10);
 
-    const [dbUser, komgaConfig, stripstreamConfig] = await Promise.all([
+    const [dbUser, komgaConfig, stripstreamResolved] = await Promise.all([
       prisma.user.findUnique({ where: { id: userId }, select: { activeProvider: true } }),
       prisma.komgaConfig.findUnique({ where: { userId }, select: { id: true } }),
-      prisma.stripstreamConfig.findUnique({ where: { userId }, select: { id: true } }),
+      getResolvedStripstreamConfig(userId),
     ]);
 
     return {
       komgaConfigured: !!komgaConfig,
-      stripstreamConfigured: !!stripstreamConfig,
+      stripstreamConfigured: !!stripstreamResolved,
       activeProvider: (dbUser?.activeProvider as ProviderType) ?? "komga",
     };
   } catch {

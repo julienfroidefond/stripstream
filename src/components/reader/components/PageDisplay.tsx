@@ -9,6 +9,7 @@ interface PageDisplayProps {
   imageBlobUrls: Record<number, string>;
   getPageUrl: (pageNum: number) => string;
   isRTL: boolean;
+  isPageLoading?: (pageNum: number) => boolean;
 }
 
 export function PageDisplay({
@@ -19,6 +20,7 @@ export function PageDisplay({
   imageBlobUrls,
   getPageUrl,
   isRTL,
+  isPageLoading,
 }: PageDisplayProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -102,7 +104,10 @@ export function PageDisplay({
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 key={`page-${currentPage}-${imageBlobUrls[currentPage] || ""}`}
-                src={imageBlobUrls[currentPage] || getPageUrl(currentPage)}
+                src={
+                  imageBlobUrls[currentPage] ||
+                  (isPageLoading && isPageLoading(currentPage) ? undefined : getPageUrl(currentPage))
+                }
                 alt={`Page ${currentPage}`}
                 className={cn(
                   "max-h-full max-w-full cursor-pointer object-contain transition-opacity",
@@ -166,7 +171,12 @@ export function PageDisplay({
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   key={`page-${currentPage + 1}-${imageBlobUrls[currentPage + 1] || ""}`}
-                  src={imageBlobUrls[currentPage + 1] || getPageUrl(currentPage + 1)}
+                  src={
+                    imageBlobUrls[currentPage + 1] ||
+                    (isPageLoading && isPageLoading(currentPage + 1)
+                      ? undefined
+                      : getPageUrl(currentPage + 1))
+                  }
                   alt={`Page ${currentPage + 1}`}
                   className={cn(
                     "max-h-full max-w-full cursor-pointer object-contain transition-opacity",

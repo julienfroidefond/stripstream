@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth-utils";
-import prisma from "@/lib/prisma";
+import { getResolvedStripstreamConfig } from "@/lib/providers/stripstream/stripstream-config-resolver";
 import { StripstreamClient } from "@/lib/providers/stripstream/stripstream.client";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
@@ -23,7 +23,7 @@ export async function GET(
     }
 
     const userId = parseInt(user.id, 10);
-    const config = await prisma.stripstreamConfig.findUnique({ where: { userId } });
+    const config = await getResolvedStripstreamConfig(userId);
     if (!config) {
       throw new AppError(ERROR_CODES.STRIPSTREAM.MISSING_CONFIG);
     }

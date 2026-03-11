@@ -42,12 +42,14 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
   const {
     loadedImages,
     imageBlobUrls,
+    prefetchImage,
     prefetchPages,
     prefetchNextBook,
     cancelAllPrefetches,
     handleForceReload,
     getPageUrl,
     prefetchCount,
+    isPageLoading,
   } = useImageLoader({
     pageUrlBuilder: bookPageUrlBuilder,
     pages,
@@ -87,8 +89,26 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
 
   // Prefetch current and next pages
   useEffect(() => {
-    // Prefetch pages starting from current page
-    prefetchPages(currentPage, prefetchCount);
+    // Determine visible pages that need to be loaded immediately
+    const visiblePages: number[] = [];
+    if (isDoublePage && shouldShowDoublePage(currentPage, pages.length)) {
+      visiblePages.push(currentPage, currentPage + 1);
+    } else {
+      visiblePages.push(currentPage);
+    }
+
+    // Load visible pages first (priority) to avoid duplicate requests from <img> tags
+    // These will populate imageBlobUrls so <img> tags use blob URLs instead of making HTTP requests
+    const loadVisiblePages = async () => {
+      await Promise.all(visiblePages.map((page) => prefetchImage(page)));
+    };
+    loadVisiblePages().catch(() => {
+      // Silently fail - will fallback to direct HTTP requests
+    });
+
+    // Then prefetch other pages, excluding visible ones to avoid duplicates
+    const concurrency = isDoublePage && shouldShowDoublePage(currentPage, pages.length) ? 2 : 4;
+    prefetchPages(currentPage, prefetchCount, visiblePages, concurrency);
 
     // If double page mode, also prefetch additional pages for smooth double page navigation
     if (
@@ -96,7 +116,7 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
       shouldShowDoublePage(currentPage, pages.length) &&
       currentPage + prefetchCount < pages.length
     ) {
-      prefetchPages(currentPage + prefetchCount, 1);
+      prefetchPages(currentPage + prefetchCount, 1, visiblePages, concurrency);
     }
 
     // If we're near the end of the book, prefetch the next book
@@ -108,6 +128,7 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
     currentPage,
     isDoublePage,
     shouldShowDoublePage,
+    prefetchImage,
     prefetchPages,
     prefetchNextBook,
     prefetchCount,
@@ -229,6 +250,7 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
         imageBlobUrls={imageBlobUrls}
         getPageUrl={getPageUrl}
         isRTL={isRTL}
+        isPageLoading={isPageLoading}
       />
 
       <NavigationBar
