@@ -1,7 +1,7 @@
 "use client";
 
 import { Book, BookOpen, BookMarked, Star, StarOff } from "lucide-react";
-import type { KomgaSeries } from "@/types/komga";
+import type { NormalizedSeries } from "@/lib/providers/types";
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { RefreshButton } from "@/components/library/RefreshButton";
@@ -16,7 +16,7 @@ import logger from "@/lib/logger";
 import { addToFavorites, removeFromFavorites } from "@/app/actions/favorites";
 
 interface SeriesHeaderProps {
-  series: KomgaSeries;
+  series: NormalizedSeries;
   refreshSeries: (seriesId: string) => Promise<{ success: boolean; error?: string }>;
   initialIsFavorite: boolean;
 }
@@ -48,7 +48,7 @@ export const SeriesHeader = ({ series, refreshSeries, initialIsFavorite }: Serie
         window.dispatchEvent(event);
         toast({
           title: t(isFavorite ? "series.header.favorite.remove" : "series.header.favorite.add"),
-          description: series.metadata.title,
+          description: series.name,
         });
       } else {
         throw new AppError(
@@ -69,10 +69,11 @@ export const SeriesHeader = ({ series, refreshSeries, initialIsFavorite }: Serie
   };
 
   const getReadingStatusInfo = () => {
-    const { booksCount, booksReadCount, booksUnreadCount } = series;
-    const booksInProgressCount = booksCount - (booksReadCount + booksUnreadCount);
+    const { bookCount, booksReadCount } = series;
+    const booksUnreadCount = bookCount - booksReadCount;
+    const booksInProgressCount = bookCount - (booksReadCount + booksUnreadCount);
 
-    if (booksReadCount === booksCount) {
+    if (booksReadCount === bookCount) {
       return {
         label: t("series.header.status.read"),
         status: "success" as const,
@@ -80,11 +81,11 @@ export const SeriesHeader = ({ series, refreshSeries, initialIsFavorite }: Serie
       };
     }
 
-    if (booksInProgressCount > 0 || (booksReadCount > 0 && booksReadCount < booksCount)) {
+    if (booksInProgressCount > 0 || (booksReadCount > 0 && booksReadCount < bookCount)) {
       return {
         label: t("series.header.status.progress", {
           read: booksReadCount,
-          total: booksCount,
+          total: bookCount,
         }),
         status: "reading" as const,
         icon: BookOpen,
@@ -105,8 +106,8 @@ export const SeriesHeader = ({ series, refreshSeries, initialIsFavorite }: Serie
       {/* Image de fond */}
       <div className="absolute inset-0">
         <SeriesCover
-          series={series as KomgaSeries}
-          alt={t("series.header.coverAlt", { title: series.metadata.title })}
+          series={series}
+          alt={t("series.header.coverAlt", { title: series.name })}
           className="blur-sm scale-105 brightness-50"
           showProgressUi={false}
         />
@@ -118,18 +119,18 @@ export const SeriesHeader = ({ series, refreshSeries, initialIsFavorite }: Serie
           {/* Image principale */}
           <div className="relative w-[180px] aspect-[2/3] rounded-lg overflow-hidden shadow-lg bg-muted/80 backdrop-blur-md flex-shrink-0">
             <SeriesCover
-              series={series as KomgaSeries}
-              alt={t("series.header.coverAlt", { title: series.metadata.title })}
+              series={series}
+              alt={t("series.header.coverAlt", { title: series.name })}
               showProgressUi={false}
             />
           </div>
 
           {/* Informations */}
           <div className="flex-1 text-white space-y-2 text-center md:text-left">
-            <h1 className="text-2xl md:text-3xl font-bold">{series.metadata.title}</h1>
-            {series.metadata.summary && (
+            <h1 className="text-2xl md:text-3xl font-bold">{series.name}</h1>
+            {series.summary && (
               <p className="text-white/80 line-clamp-3 text-sm md:text-base">
-                {series.metadata.summary}
+                {series.summary}
               </p>
             )}
             <div className="flex items-center gap-4 mt-4 justify-center md:justify-start flex-wrap">
@@ -137,9 +138,9 @@ export const SeriesHeader = ({ series, refreshSeries, initialIsFavorite }: Serie
                 {statusInfo.label}
               </StatusBadge>
               <span className="text-sm text-white/80">
-                {series.booksCount === 1
-                  ? t("series.header.books", { count: series.booksCount })
-                  : t("series.header.books_plural", { count: series.booksCount })}
+                {series.bookCount === 1
+                  ? t("series.header.books", { count: series.bookCount })
+                  : t("series.header.books_plural", { count: series.bookCount })}
               </span>
               <IconButton
                 variant="ghost"

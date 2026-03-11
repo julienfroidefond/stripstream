@@ -1,6 +1,6 @@
 "use client";
 
-import type { KomgaSeries } from "@/types/komga";
+import type { NormalizedSeries } from "@/lib/providers/types";
 import { SeriesCover } from "@/components/ui/series-cover";
 import { useRouter } from "next/navigation";
 import { useTranslate } from "@/hooks/useTranslate";
@@ -10,28 +10,28 @@ import { BookOpen, Calendar, Tag, User } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 
 interface SeriesListProps {
-  series: KomgaSeries[];
+  series: NormalizedSeries[];
   isCompact?: boolean;
 }
 
 interface SeriesListItemProps {
-  series: KomgaSeries;
+  series: NormalizedSeries;
   isCompact?: boolean;
 }
 
 // Utility function to get reading status info
 const getReadingStatusInfo = (
-  series: KomgaSeries,
+  series: NormalizedSeries,
   t: (key: string, options?: { [key: string]: string | number }) => string
 ) => {
-  if (series.booksCount === 0) {
+  if (series.bookCount === 0) {
     return {
       label: t("series.status.noBooks"),
       className: "bg-yellow-500/10 text-yellow-500",
     };
   }
 
-  if (series.booksCount === series.booksReadCount) {
+  if (series.bookCount === series.booksReadCount) {
     return {
       label: t("series.status.read"),
       className: "bg-green-500/10 text-green-500",
@@ -42,7 +42,7 @@ const getReadingStatusInfo = (
     return {
       label: t("series.status.progress", {
         read: series.booksReadCount,
-        total: series.booksCount,
+        total: series.bookCount,
       }),
       className: "bg-primary/15 text-primary",
     };
@@ -62,9 +62,9 @@ function SeriesListItem({ series, isCompact = false }: SeriesListItemProps) {
     router.push(`/series/${series.id}`);
   };
 
-  const isCompleted = series.booksCount === series.booksReadCount;
+  const isCompleted = series.bookCount === series.booksReadCount;
   const progressPercentage =
-    series.booksCount > 0 ? (series.booksReadCount / series.booksCount) * 100 : 0;
+    series.bookCount > 0 ? (series.booksReadCount / series.bookCount) * 100 : 0;
 
   const statusInfo = getReadingStatusInfo(series, t);
 
@@ -81,7 +81,7 @@ function SeriesListItem({ series, isCompact = false }: SeriesListItemProps) {
         <div className="relative w-12 h-16 sm:w-14 sm:h-20 flex-shrink-0 rounded overflow-hidden bg-muted">
           <SeriesCover
             series={series}
-            alt={t("series.coverAlt", { title: series.metadata.title })}
+            alt={t("series.coverAlt", { title: series.name })}
             className="w-full h-full"
           />
         </div>
@@ -91,7 +91,7 @@ function SeriesListItem({ series, isCompact = false }: SeriesListItemProps) {
           {/* Titre et statut */}
           <div className="flex items-center justify-between gap-2">
             <h3 className="font-medium text-sm sm:text-base line-clamp-1 hover:text-primary transition-colors flex-1 min-w-0">
-              {series.metadata.title}
+              {series.name}
             </h3>
             <span
               className={cn(
@@ -108,15 +108,15 @@ function SeriesListItem({ series, isCompact = false }: SeriesListItemProps) {
             <div className="flex items-center gap-1">
               <BookOpen className="h-3 w-3" />
               <span>
-                {series.booksCount === 1
+                {series.bookCount === 1
                   ? t("series.book", { count: 1 })
-                  : t("series.books", { count: series.booksCount })}
+                  : t("series.books", { count: series.bookCount })}
               </span>
             </div>
-            {series.booksMetadata?.authors && series.booksMetadata.authors.length > 0 && (
+            {series.authors && series.authors.length > 0 && (
               <div className="flex items-center gap-1 hidden sm:flex">
                 <User className="h-3 w-3" />
-                <span className="line-clamp-1">{series.booksMetadata.authors[0].name}</span>
+                <span className="line-clamp-1">{series.authors[0].name}</span>
               </div>
             )}
           </div>
@@ -137,7 +137,7 @@ function SeriesListItem({ series, isCompact = false }: SeriesListItemProps) {
       <div className="relative w-20 h-28 sm:w-24 sm:h-36 flex-shrink-0 rounded overflow-hidden bg-muted">
         <SeriesCover
           series={series}
-          alt={t("series.coverAlt", { title: series.metadata.title })}
+          alt={t("series.coverAlt", { title: series.name })}
           className="w-full h-full"
         />
       </div>
@@ -148,7 +148,7 @@ function SeriesListItem({ series, isCompact = false }: SeriesListItemProps) {
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-base sm:text-lg line-clamp-2 hover:text-primary transition-colors">
-              {series.metadata.title}
+              {series.name}
             </h3>
           </div>
 
@@ -164,9 +164,9 @@ function SeriesListItem({ series, isCompact = false }: SeriesListItemProps) {
         </div>
 
         {/* Résumé */}
-        {series.metadata.summary && (
+        {series.summary && (
           <p className="text-sm text-muted-foreground line-clamp-2 hidden sm:block">
-            {series.metadata.summary}
+            {series.summary}
           </p>
         )}
 
@@ -176,55 +176,55 @@ function SeriesListItem({ series, isCompact = false }: SeriesListItemProps) {
           <div className="flex items-center gap-1">
             <BookOpen className="h-3 w-3" />
             <span>
-              {series.booksCount === 1
+              {series.bookCount === 1
                 ? t("series.book", { count: 1 })
-                : t("series.books", { count: series.booksCount })}
+                : t("series.books", { count: series.bookCount })}
             </span>
           </div>
 
           {/* Auteurs */}
-          {series.booksMetadata?.authors && series.booksMetadata.authors.length > 0 && (
+          {series.authors && series.authors.length > 0 && (
             <div className="flex items-center gap-1">
               <User className="h-3 w-3" />
               <span className="line-clamp-1">
-                {series.booksMetadata.authors.map((a) => a.name).join(", ")}
+                {series.authors.map((a) => a.name).join(", ")}
               </span>
             </div>
           )}
 
           {/* Date de création */}
-          {series.created && (
+          {series.createdAt && (
             <div className="flex items-center gap-1">
               <Calendar className="h-3 w-3" />
-              <span>{formatDate(series.created)}</span>
+              <span>{formatDate(series.createdAt)}</span>
             </div>
           )}
 
           {/* Genres */}
-          {series.metadata.genres && series.metadata.genres.length > 0 && (
+          {series.genres && series.genres.length > 0 && (
             <div className="flex items-center gap-1">
               <Tag className="h-3 w-3" />
               <span className="line-clamp-1">
-                {series.metadata.genres.slice(0, 3).join(", ")}
-                {series.metadata.genres.length > 3 && ` +${series.metadata.genres.length - 3}`}
+                {series.genres.slice(0, 3).join(", ")}
+                {series.genres.length > 3 && ` +${series.genres.length - 3}`}
               </span>
             </div>
           )}
 
           {/* Tags */}
-          {series.metadata.tags && series.metadata.tags.length > 0 && (
+          {series.tags && series.tags.length > 0 && (
             <div className="flex items-center gap-1">
               <Tag className="h-3 w-3" />
               <span className="line-clamp-1">
-                {series.metadata.tags.slice(0, 3).join(", ")}
-                {series.metadata.tags.length > 3 && ` +${series.metadata.tags.length - 3}`}
+                {series.tags.slice(0, 3).join(", ")}
+                {series.tags.length > 3 && ` +${series.tags.length - 3}`}
               </span>
             </div>
           )}
         </div>
 
         {/* Barre de progression */}
-        {series.booksCount > 0 && !isCompleted && series.booksReadCount > 0 && (
+        {series.bookCount > 0 && !isCompleted && series.booksReadCount > 0 && (
           <div className="space-y-1">
             <Progress value={progressPercentage} className="h-2" />
             <p className="text-xs text-muted-foreground">

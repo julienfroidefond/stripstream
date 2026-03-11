@@ -1,32 +1,26 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Loader2 } from "lucide-react";
-import type { KomgaBook } from "@/types/komga";
+import type { NormalizedBook } from "@/lib/providers/types";
 import { PhotoswipeReader } from "./PhotoswipeReader";
 import { useRouter } from "next/navigation";
 import { ClientOfflineBookService } from "@/lib/services/client-offlinebook.service";
 
 interface ClientBookWrapperProps {
-  book: KomgaBook;
+  book: NormalizedBook;
   pages: number[];
-  nextBook: KomgaBook | null;
+  nextBook: NormalizedBook | null;
 }
 
 export function ClientBookWrapper({ book, pages, nextBook }: ClientBookWrapperProps) {
   const router = useRouter();
   const [isClosing, setIsClosing] = useState(false);
-  const [targetPath, setTargetPath] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!isClosing || !targetPath) return;
-    router.push(targetPath);
-  }, [isClosing, targetPath, router]);
 
   const handleCloseReader = (currentPage: number) => {
     ClientOfflineBookService.setCurrentPage(book, currentPage);
-    setTargetPath(`/series/${book.seriesId}`);
     setIsClosing(true);
+    router.back();
   };
 
   if (isClosing) {

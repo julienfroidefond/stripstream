@@ -1,17 +1,17 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ClientOfflineBookService } from "@/lib/services/client-offlinebook.service";
-import type { KomgaBook } from "@/types/komga";
+import type { NormalizedBook } from "@/lib/providers/types";
 import logger from "@/lib/logger";
 import { updateReadProgress } from "@/app/actions/read-progress";
 
 interface UsePageNavigationProps {
-  book: KomgaBook;
+  book: NormalizedBook;
   pages: number[];
   isDoublePage: boolean;
   shouldShowDoublePage: (page: number) => boolean;
   onClose?: (currentPage: number) => void;
-  nextBook?: KomgaBook | null;
+  nextBook?: NormalizedBook | null;
 }
 
 export function usePageNavigation({

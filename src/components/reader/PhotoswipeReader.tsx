@@ -24,6 +24,17 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
   const lastClickTimeRef = useRef<number>(0);
   const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Derive page URL builder from book.thumbnailUrl (provider-agnostic)
+  const bookPageUrlBuilder = useCallback(
+    (pageNum: number) => book.thumbnailUrl.replace("/thumbnail", `/pages/${pageNum}`),
+    [book.thumbnailUrl]
+  );
+  const nextBookPageUrlBuilder = useCallback(
+    (pageNum: number) =>
+      nextBook ? nextBook.thumbnailUrl.replace("/thumbnail", `/pages/${pageNum}`) : "",
+    [nextBook]
+  );
+
   // Hooks
   const { direction, toggleDirection, isRTL } = useReadingDirection();
   const { isFullscreen, toggleFullscreen } = useFullscreen();
@@ -38,10 +49,10 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
     getPageUrl,
     prefetchCount,
   } = useImageLoader({
-    bookId: book.id,
+    pageUrlBuilder: bookPageUrlBuilder,
     pages,
     prefetchCount: preferences.readerPrefetchCount,
-    nextBook: nextBook ? { id: nextBook.id, pages: [] } : null,
+    nextBook: nextBook ? { getPageUrl: nextBookPageUrlBuilder, pages: [] } : null,
   });
   const { currentPage, showEndMessage, navigateToPage, handlePreviousPage, handleNextPage } =
     usePageNavigation({

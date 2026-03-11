@@ -1,4 +1,4 @@
-import type { KomgaBook, KomgaSeries } from "@/types/komga";
+import type { NormalizedBook, NormalizedSeries } from "@/lib/providers/types";
 
 export interface BaseCoverProps {
   alt?: string;
@@ -9,13 +9,13 @@ export interface BaseCoverProps {
 }
 
 export interface BookCoverProps extends BaseCoverProps {
-  book: KomgaBook;
-  onSuccess?: (book: KomgaBook, action: "read" | "unread") => void;
+  book: NormalizedBook;
+  onSuccess?: (book: NormalizedBook, action: "read" | "unread") => void;
   showControls?: boolean;
   showOverlay?: boolean;
   overlayVariant?: "default" | "home";
 }
 
 export interface SeriesCoverProps extends BaseCoverProps {
-  series: KomgaSeries;
+  series: NormalizedSeries;
 }

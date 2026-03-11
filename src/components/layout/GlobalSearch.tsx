@@ -6,26 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useTranslate } from "@/hooks/useTranslate";
-import { getImageUrl } from "@/lib/utils/image-url";
-
-interface SearchSeriesResult {
-  id: string;
-  title: string;
-  href: string;
-  booksCount: number;
-}
-
-interface SearchBookResult {
-  id: string;
-  title: string;
-  seriesTitle: string;
-  href: string;
-}
-
-interface SearchResponse {
-  series: SearchSeriesResult[];
-  books: SearchBookResult[];
-}
+import type { NormalizedSearchResult } from "@/lib/providers/types";
 
 const MIN_QUERY_LENGTH = 2;
 
@@ -38,21 +19,15 @@ export function GlobalSearch() {
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [results, setResults] = useState<SearchResponse>({ series: [], books: [] });
+  const [results, setResults] = useState<NormalizedSearchResult[]>([]);
 
-  const hasResults = results.series.length > 0 || results.books.length > 0;
+  const seriesResults = results.filter((r) => r.type === "series");
+  const bookResults = results.filter((r) => r.type === "book");
+  const hasResults = results.length > 0;
 
   const firstResultHref = useMemo(() => {
-    if (results.series.length > 0) {
-      return results.series[0].href;
-    }
-
-    if (results.books.length > 0) {
-      return results.books[0].href;
-    }
-
-    return null;
-  }, [results.books, results.series]);
+    return results[0]?.href ?? null;
+  }, [results]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -77,7 +52,7 @@ export function GlobalSearch() {
     const trimmedQuery = query.trim();
 
     if (trimmedQuery.length < MIN_QUERY_LENGTH) {
-      setResults({ series: [], books: [] });
+      setResults([]);
       setIsLoading(false);
       return;
     }
@@ -90,7 +65,7 @@ export function GlobalSearch() {
 
         setIsLoading(true);
 
-        const response = await fetch(`/api/komga/search?q=${encodeURIComponent(trimmedQuery)}`, {
+        const response = await fetch(`/api/provider/search?q=${encodeURIComponent(trimmedQuery)}`, {
           method: "GET",
           signal: controller.signal,
           cache: "no-store",
@@ -100,12 +75,12 @@ export function GlobalSearch() {
           throw new Error("Search request failed");
         }
 
-        const data = (await response.json()) as SearchResponse;
-        setResults(data);
+        const data = (await response.json()) as NormalizedSearchResult[];
+        setResults(Array.isArray(data) ? data : []);
         setIsOpen(true);
       } catch (error) {
         if ((error as Error).name !== "AbortError") {
-          setResults({ series: [], books: [] });
+          setResults([]);
         }
       } finally {
         setIsLoading(false);
@@ -158,12 +133,12 @@ export function GlobalSearch() {
       {isOpen && query.trim().length >= MIN_QUERY_LENGTH && (
         <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-xl backdrop-blur-xl">
           <div className="max-h-[26rem] overflow-y-auto p-2">
-            {results.series.length > 0 && (
+            {seriesResults.length > 0 && (
               <div className="mb-2">
                 <div className="px-2 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                   {t("header.search.series")}
                 </div>
-                {results.series.map((item) => (
+                {seriesResults.map((item) => (
                   <Link
                     key={item.id}
                     href={item.href}
@@ -172,16 +147,17 @@ export function GlobalSearch() {
                     aria-label={t("header.search.openSeries", { title: item.title })}
                   >
                     <img
-                      src={getImageUrl("series", item.id)}
+                      src={item.coverUrl}
                       alt={item.title}
                       loading="lazy"
-                      className="h-14 w-10 rounded object-cover bg-muted"
+                      className="h-14 w-10 shrink-0 rounded object-cover bg-muted"
+                      onError={(e) => { e.currentTarget.style.display = "none"; }}
                     />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-base font-medium">{item.title}</p>
                       <p className="mt-0.5 flex items-center gap-1 text-sm text-muted-foreground">
                         <Library className="h-3 w-3" />
-                        {t("series.books", { count: item.booksCount })}
+                        {item.bookCount !== undefined && t("series.books", { count: item.bookCount })}
                       </p>
                     </div>
                   </Link>
@@ -189,12 +165,12 @@ export function GlobalSearch() {
               </div>
             )}
 
-            {results.books.length > 0 && (
+            {bookResults.length > 0 && (
               <div>
                 <div className="px-2 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                   {t("header.search.books")}
                 </div>
-                {results.books.map((item) => (
+                {bookResults.map((item) => (
                   <Link
                     key={item.id}
                     href={item.href}
@@ -203,10 +179,11 @@ export function GlobalSearch() {
                     aria-label={t("header.search.openBook", { title: item.title })}
                   >
                     <img
-                      src={getImageUrl("book", item.id)}
+                      src={item.coverUrl}
                       alt={item.title}
                       loading="lazy"
-                      className="h-14 w-10 rounded object-cover bg-muted"
+                      className="h-14 w-10 shrink-0 rounded object-cover bg-muted"
+                      onError={(e) => { e.currentTarget.style.display = "none"; }}
                     />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-base font-medium">{item.title}</p>

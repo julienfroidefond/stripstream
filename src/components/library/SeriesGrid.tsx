@@ -1,29 +1,29 @@
 "use client";
 
-import type { KomgaSeries } from "@/types/komga";
+import type { NormalizedSeries } from "@/lib/providers/types";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { SeriesCover } from "@/components/ui/series-cover";
 import { useTranslate } from "@/hooks/useTranslate";
 
 interface SeriesGridProps {
-  series: KomgaSeries[];
+  series: NormalizedSeries[];
   isCompact?: boolean;
 }
 
 // Utility function to get reading status info
 const getReadingStatusInfo = (
-  series: KomgaSeries,
+  series: NormalizedSeries,
   t: (key: string, options?: { [key: string]: string | number }) => string
 ) => {
-  if (series.booksCount === 0) {
+  if (series.bookCount === 0) {
     return {
       label: t("series.status.noBooks"),
       className: "bg-yellow-500/10 text-yellow-500",
     };
   }
 
-  if (series.booksCount === series.booksReadCount) {
+  if (series.bookCount === series.booksReadCount) {
     return {
       label: t("series.status.read"),
       className: "bg-green-500/10 text-green-500",
@@ -34,7 +34,7 @@ const getReadingStatusInfo = (
     return {
       label: t("series.status.progress", {
         read: series.booksReadCount,
-        total: series.booksCount,
+        total: series.bookCount,
       }),
       className: "bg-primary/15 text-primary",
     };
@@ -67,32 +67,32 @@ export function SeriesGrid({ series, isCompact = false }: SeriesGridProps) {
           : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5"
       )}
     >
-      {series.map((series) => (
+      {series.map((seriesItem) => (
         <button
-          key={series.id}
-          onClick={() => router.push(`/series/${series.id}`)}
+          key={seriesItem.id}
+          onClick={() => router.push(`/series/${seriesItem.id}`)}
           className={cn(
             "group relative aspect-[2/3] overflow-hidden rounded-xl border border-border/60 bg-card/80 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
-            series.booksCount === series.booksReadCount && "opacity-50",
+            seriesItem.bookCount === seriesItem.booksReadCount && "opacity-50",
             isCompact && "aspect-[3/4]"
           )}
         >
           <SeriesCover
-            series={series as KomgaSeries}
-            alt={t("series.coverAlt", { title: series.metadata.title })}
+            series={seriesItem}
+            alt={t("series.coverAlt", { title: seriesItem.name })}
           />
           <div className="absolute inset-x-0 bottom-0 translate-y-full space-y-2 bg-gradient-to-t from-black/75 via-black/25 to-transparent p-4 transition-transform duration-200 group-hover:translate-y-0">
-            <h3 className="font-medium text-sm text-white line-clamp-2">{series.metadata.title}</h3>
+            <h3 className="font-medium text-sm text-white line-clamp-2">{seriesItem.name}</h3>
             <div className="flex items-center gap-2">
               <span
                 className={`px-2 py-0.5 rounded-full text-xs ${
-                  getReadingStatusInfo(series, t).className
+                  getReadingStatusInfo(seriesItem, t).className
                 }`}
               >
-                {getReadingStatusInfo(series, t).label}
+                {getReadingStatusInfo(seriesItem, t).label}
               </span>
               <span className="text-xs text-white/80">
-                {t("series.books", { count: series.booksCount })}
+                {t("series.books", { count: seriesItem.bookCount })}
               </span>
             </div>
           </div>

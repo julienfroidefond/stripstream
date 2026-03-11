@@ -10,7 +10,7 @@ import { AuthProvider } from "@/components/providers/AuthProvider";
 import { cookies, headers } from "next/headers";
 import { defaultPreferences } from "@/types/preferences";
 import type { UserPreferences } from "@/types/preferences";
-import type { KomgaLibrary, KomgaSeries } from "@/types/komga";
+import type { NormalizedLibrary, NormalizedSeries } from "@/lib/providers/types";
 import logger from "@/lib/logger";
 
 const inter = Inter({
@@ -77,8 +77,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   let preferences: UserPreferences = defaultPreferences;
   let userIsAdmin = false;
-  let libraries: KomgaLibrary[] = [];
-  let favorites: KomgaSeries[] = [];
+  let libraries: NormalizedLibrary[] = [];
+  let favorites: NormalizedSeries[] = [];
 
   try {
     const currentUser = await import("@/lib/auth-utils").then((m) => m.getCurrentUser());
@@ -86,7 +86,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     if (currentUser) {
       const [preferencesData, librariesData, favoritesData] = await Promise.allSettled([
         PreferencesService.getPreferences(),
-        import("@/lib/services/library.service").then((m) => m.LibraryService.getLibraries()),
+        import("@/lib/providers/provider.factory")
+          .then((m) => m.getProvider())
+          .then((provider) => provider?.getLibraries() ?? []),
         import("@/lib/services/favorites.service").then((m) =>
           m.FavoritesService.getFavorites({ requestPath, requestPathname })
         ),

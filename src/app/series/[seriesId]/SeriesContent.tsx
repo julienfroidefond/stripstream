@@ -4,13 +4,12 @@ import { PaginatedBookGrid } from "@/components/series/PaginatedBookGrid";
 import { SeriesHeader } from "@/components/series/SeriesHeader";
 import { Container } from "@/components/ui/container";
 import { useRefresh } from "@/contexts/RefreshContext";
-import type { LibraryResponse } from "@/types/library";
-import type { KomgaBook, KomgaSeries } from "@/types/komga";
+import type { NormalizedBooksPage, NormalizedSeries } from "@/lib/providers/types";
 import type { UserPreferences } from "@/types/preferences";
 
 interface SeriesContentProps {
-  series: KomgaSeries;
-  books: LibraryResponse<KomgaBook>;
+  series: NormalizedSeries;
+  books: NormalizedBooksPage;
   currentPage: number;
   preferences: UserPreferences;
   unreadOnly: boolean;
@@ -37,10 +36,10 @@ export function SeriesContent({
       />
       <Container>
         <PaginatedBookGrid
-          books={books.content || []}
+          books={books.items}
           currentPage={currentPage}
-          totalPages={books.totalPages}
-          totalElements={books.totalElements}
+          totalPages={books.totalPages ?? 1}
+          totalElements={books.totalElements ?? books.items.length}
           defaultShowOnlyUnread={preferences.showOnlyUnread}
           showOnlyUnread={unreadOnly}
         />

@@ -2,20 +2,18 @@
 
 import { ProgressBar } from "./progress-bar";
 import type { BookCoverProps } from "./cover-utils";
-import { getImageUrl } from "@/lib/utils/image-url";
 import { ClientOfflineBookService } from "@/lib/services/client-offlinebook.service";
 import { MarkAsReadButton } from "./mark-as-read-button";
 import { MarkAsUnreadButton } from "./mark-as-unread-button";
 import { BookOfflineButton } from "./book-offline-button";
 import { useTranslate } from "@/hooks/useTranslate";
-import type { KomgaBook } from "@/types/komga";
 import { formatDate } from "@/lib/utils";
 import { useBookOfflineStatus } from "@/hooks/useBookOfflineStatus";
 import { WifiOff } from "lucide-react";
 
 // Fonction utilitaire pour obtenir les informations de statut de lecture
 const getReadingStatusInfo = (
-  book: KomgaBook,
+  book: BookCoverProps["book"],
   t: (key: string, options?: { [key: string]: string | number }) => string
 ) => {
   if (!book.readProgress) {
@@ -26,7 +24,7 @@ const getReadingStatusInfo = (
   }
 
   if (book.readProgress.completed) {
-    const readDate = book.readProgress.readDate ? formatDate(book.readProgress.readDate) : null;
+    const readDate = book.readProgress.lastReadAt ? formatDate(book.readProgress.lastReadAt) : null;
     return {
       label: readDate ? t("books.status.readDate", { date: readDate }) : t("books.status.read"),
       className: "bg-green-500/10 text-green-500",
@@ -39,7 +37,7 @@ const getReadingStatusInfo = (
     return {
       label: t("books.status.progress", {
         current: currentPage,
-        total: book.media.pagesCount,
+        total: book.pageCount,
       }),
       className: "bg-blue-500/10 text-blue-500",
     };
@@ -64,11 +62,10 @@ export function BookCover({
   const { t } = useTranslate();
   const { isAccessible } = useBookOfflineStatus(book.id);
 
-  const imageUrl = getImageUrl("book", book.id);
   const isCompleted = book.readProgress?.completed || false;
 
   const currentPage = ClientOfflineBookService.getCurrentPage(book);
-  const totalPages = book.media.pagesCount;
+  const totalPages = book.pageCount;
   const showProgress = Boolean(showProgressUi && totalPages > 0 && currentPage > 0 && !isCompleted);
 
   const statusInfo = getReadingStatusInfo(book, t);
@@ -90,7 +87,7 @@ export function BookCover({
     <>
       <div className={`relative w-full h-full ${isUnavailable ? "opacity-40 grayscale" : ""}`}>
         <img
-          src={imageUrl.trim()}
+          src={book.thumbnailUrl.trim()}
           alt={alt || t("books.defaultCoverAlt")}
           loading="lazy"
           className={[
@@ -121,7 +118,7 @@ export function BookCover({
               {!isRead && (
                 <MarkAsReadButton
                   bookId={book.id}
-                  pagesCount={book.media.pagesCount}
+                  pagesCount={book.pageCount}
                   isRead={isRead}
                   onSuccess={() => handleMarkAsRead()}
                   className="bg-white/90 hover:bg-white text-black shadow-sm"
@@ -143,9 +140,9 @@ export function BookCover({
           {showOverlay && overlayVariant === "default" && (
             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-4 space-y-2 translate-y-full group-hover:translate-y-0 transition-transform duration-200">
               <p className="text-sm font-medium text-white text-left line-clamp-2">
-                {book.metadata.title ||
-                  (book.metadata.number
-                    ? t("navigation.volume", { number: book.metadata.number })
+                {book.title ||
+                  (book.number
+                    ? t("navigation.volume", { number: book.number })
                     : "")}
               </p>
               <div className="flex items-center gap-2">
@@ -160,15 +157,15 @@ export function BookCover({
       {showOverlay && overlayVariant === "home" && (
         <div className="absolute inset-0 bg-black/60 opacity-0 hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3">
           <h3 className="font-medium text-sm text-white line-clamp-2">
-            {book.metadata.title ||
-              (book.metadata.number
-                ? t("navigation.volume", { number: book.metadata.number })
+            {book.title ||
+              (book.number
+                ? t("navigation.volume", { number: book.number })
                 : "")}
           </h3>
           <p className="text-xs text-white/80 mt-1">
             {t("books.status.progress", {
               current: currentPage,
-              total: book.media.pagesCount,
+              total: book.pageCount,
             })}
           </p>
         </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import type { KomgaBook } from "@/types/komga";
+import type { NormalizedBook } from "@/lib/providers/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,7 @@ interface BookDownloadStatus {
 }
 
 interface DownloadedBook {
-  book: KomgaBook;
+  book: NormalizedBook;
   status: BookDownloadStatus;
 }
 
@@ -112,11 +112,11 @@ export function DownloadManager() {
     };
   }, [loadDownloadedBooks, updateBookStatuses]);
 
-  const handleDeleteBook = async (book: KomgaBook) => {
+  const handleDeleteBook = async (book: NormalizedBook) => {
     try {
       const cache = await caches.open("stripstream-books");
       await cache.delete(`/api/komga/images/books/${book.id}/pages`);
-      for (let i = 1; i <= book.media.pagesCount; i++) {
+      for (let i = 1; i <= book.pageCount; i++) {
         await cache.delete(`/api/komga/images/books/${book.id}/pages/${i}`);
       }
       localStorage.removeItem(getStorageKey(book.id));
@@ -135,7 +135,7 @@ export function DownloadManager() {
     }
   };
 
-  const handleRetryDownload = async (book: KomgaBook) => {
+  const handleRetryDownload = async (book: NormalizedBook) => {
     localStorage.removeItem(getStorageKey(book.id));
     setDownloadedBooks((prev) => prev.filter((b) => b.book.id !== book.id));
     toast({
@@ -279,7 +279,7 @@ export function DownloadManager() {
 }
 
 interface BookDownloadCardProps {
-  book: KomgaBook;
+  book: NormalizedBook;
   status: BookDownloadStatus;
   onDelete: () => void;
   onRetry: () => void;
@@ -315,8 +315,8 @@ function BookDownloadCard({ book, status, onDelete, onRetry }: BookDownloadCardP
       <div className="flex items-center gap-4">
         <div className="relative w-16 aspect-[2/3] bg-muted rounded overflow-hidden flex-shrink-0">
           <Image
-            src={`/api/komga/images/books/${book.id}/thumbnail`}
-            alt={t("books.coverAlt", { title: book.metadata?.title })}
+            src={book.thumbnailUrl}
+            alt={t("books.coverAlt", { title: book.title })}
             className="object-cover"
             fill
             sizes="64px"
@@ -330,19 +330,17 @@ function BookDownloadCard({ book, status, onDelete, onRetry }: BookDownloadCardP
             className="hover:underline hover:text-primary transition-colors"
           >
             <h3 className="font-medium truncate">
-              {book.metadata?.title || t("books.title", { number: book.metadata?.number })}
+              {book.title || t("books.title", { number: book.number ?? "" })}
             </h3>
           </Link>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span>{formatSize(book.sizeBytes)}</span>
-            <span>•</span>
             <span>
               {status.status === "downloading"
                 ? t("downloads.info.pages", {
-                    current: Math.floor((status.progress * book.media.pagesCount) / 100),
-                    total: book.media.pagesCount,
+                    current: Math.floor((status.progress * book.pageCount) / 100),
+                    total: book.pageCount,
                   })
-                : t("downloads.info.totalPages", { count: book.media.pagesCount })}
+                : t("downloads.info.totalPages", { count: book.pageCount })}
             </span>
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">

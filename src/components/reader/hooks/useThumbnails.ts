@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect } from "react";
-import type { KomgaBook } from "@/types/komga";
+import type { NormalizedBook } from "@/lib/providers/types";
 
 interface UseThumbnailsProps {
-  book: KomgaBook;
+  book: NormalizedBook;
   currentPage: number;
 }
 
@@ -16,9 +16,13 @@ export const useThumbnails = ({ book, currentPage }: UseThumbnailsProps) => {
 
   const getThumbnailUrl = useCallback(
     (pageNumber: number) => {
+      // Derive page URL from the book's thumbnailUrl provider pattern
+      if (book.thumbnailUrl.startsWith("/api/stripstream/")) {
+        return `/api/stripstream/images/books/${book.id}/pages/${pageNumber}`;
+      }
       return `/api/komga/images/books/${book.id}/pages/${pageNumber}/thumbnail?zero_based=true`;
     },
-    [book.id]
+    [book.id, book.thumbnailUrl]
   );
 
   // Mettre à jour les thumbnails visibles autour de la page courante

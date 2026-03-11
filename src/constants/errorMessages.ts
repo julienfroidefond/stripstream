@@ -21,6 +21,11 @@ export const ERROR_MESSAGES: Record<string, string> = {
   [ERROR_CODES.AUTH.LOGOUT_ERROR]: "🚪 Error during logout",
   [ERROR_CODES.AUTH.REGISTRATION_FAILED]: "❌ Registration failed",
 
+  // Stripstream
+  [ERROR_CODES.STRIPSTREAM.MISSING_CONFIG]: "⚙️ Stripstream Librarian configuration not found",
+  [ERROR_CODES.STRIPSTREAM.CONNECTION_ERROR]: "🌐 Stripstream connection error",
+  [ERROR_CODES.STRIPSTREAM.HTTP_ERROR]: "🌍 Stripstream HTTP Error: {status} {statusText}",
+
   // Komga
   [ERROR_CODES.KOMGA.MISSING_CONFIG]: "⚙️ Komga configuration not found",
   [ERROR_CODES.KOMGA.MISSING_CREDENTIALS]: "🔑 Missing Komga credentials",

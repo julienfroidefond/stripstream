@@ -5,7 +5,7 @@ import { SeriesList } from "./SeriesList";
 import { Pagination } from "@/components/ui/Pagination";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
-import type { KomgaSeries } from "@/types/komga";
+import type { NormalizedSeries } from "@/lib/providers/types";
 import { SearchInput } from "./SearchInput";
 import { useTranslate } from "@/hooks/useTranslate";
 import { PageSizeSelect } from "@/components/common/PageSizeSelect";
@@ -15,7 +15,7 @@ import { UnreadFilterButton } from "@/components/common/UnreadFilterButton";
 import { updatePreferences as updatePreferencesAction } from "@/app/actions/preferences";
 
 interface PaginatedSeriesGridProps {
-  series: KomgaSeries[];
+  series: NormalizedSeries[];
   currentPage: number;
   totalPages: number;
   totalElements: number;
@@ -108,19 +108,13 @@ export function PaginatedSeriesGrid({
   const handleUnreadFilter = async () => {
     const newUnreadState = !showOnlyUnread;
     setShowOnlyUnread(newUnreadState);
-    await updateUrlParams({
-      page: "1",
-      unread: newUnreadState ? "true" : "false",
-    });
+    await updateUrlParams({ page: "1", unread: newUnreadState ? "true" : "false" });
     await persistPreferences({ showOnlyUnread: newUnreadState });
   };
 
   const handlePageSizeChange = async (size: number) => {
     setCurrentPageSize(size);
-    await updateUrlParams({
-      page: "1",
-      size: size.toString(),
-    });
+    await updateUrlParams({ page: "1", size: size.toString() });
 
     await persistPreferences({
       displayMode: {

@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from "react";
 import type { KomgaConfig } from "@/types/komga";
-import type { KomgaLibrary } from "@/types/komga";
+import type { NormalizedLibrary, ProviderType } from "@/lib/providers/types";
 import { useTranslate } from "@/hooks/useTranslate";
 import { DisplaySettings } from "./DisplaySettings";
 import { KomgaSettings } from "./KomgaSettings";
+import { StripstreamSettings } from "./StripstreamSettings";
+import { ProviderSelector } from "./ProviderSelector";
 import { BackgroundSettings } from "./BackgroundSettings";
 import { AdvancedSettings } from "./AdvancedSettings";
 import { CacheSettings } from "./CacheSettings";
@@ -14,12 +16,23 @@ import { Monitor, Network } from "lucide-react";
 
 interface ClientSettingsProps {
   initialConfig: KomgaConfig | null;
-  initialLibraries: KomgaLibrary[];
+  initialLibraries: NormalizedLibrary[];
+  stripstreamConfig?: { url?: string; hasToken: boolean } | null;
+  providersStatus?: {
+    komgaConfigured: boolean;
+    stripstreamConfigured: boolean;
+    activeProvider: ProviderType;
+  };
 }
 
 const SETTINGS_TAB_STORAGE_KEY = "stripstream:settings-active-tab";
 
-export function ClientSettings({ initialConfig, initialLibraries }: ClientSettingsProps) {
+export function ClientSettings({
+  initialConfig,
+  initialLibraries,
+  stripstreamConfig,
+  providersStatus,
+}: ClientSettingsProps) {
   const { t } = useTranslate();
   const [activeTab, setActiveTab] = useState<"display" | "connection">("display");
 
@@ -63,7 +76,18 @@ export function ClientSettings({ initialConfig, initialLibraries }: ClientSettin
           </TabsContent>
 
           <TabsContent value="connection" className="mt-6 space-y-6">
+            {providersStatus && (
+              <ProviderSelector
+                activeProvider={providersStatus.activeProvider}
+                komgaConfigured={providersStatus.komgaConfigured}
+                stripstreamConfigured={providersStatus.stripstreamConfigured}
+              />
+            )}
             <KomgaSettings initialConfig={initialConfig} />
+            <StripstreamSettings
+              initialUrl={stripstreamConfig?.url}
+              hasToken={stripstreamConfig?.hasToken}
+            />
             <AdvancedSettings />
             <CacheSettings />
           </TabsContent>

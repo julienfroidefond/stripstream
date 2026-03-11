@@ -1,6 +1,6 @@
 "use client";
 
-import type { KomgaBook } from "@/types/komga";
+import type { NormalizedBook } from "@/lib/providers/types";
 import { BookCover } from "@/components/ui/book-cover";
 import { useState, useEffect, useRef } from "react";
 import { useTranslate } from "@/hooks/useTranslate";
@@ -9,22 +9,22 @@ import { useBookOfflineStatus } from "@/hooks/useBookOfflineStatus";
 import { formatDate } from "@/lib/utils";
 import { ClientOfflineBookService } from "@/lib/services/client-offlinebook.service";
 import { Progress } from "@/components/ui/progress";
-import { Calendar, FileText, User, Tag } from "lucide-react";
+import { FileText } from "lucide-react";
 import { MarkAsReadButton } from "@/components/ui/mark-as-read-button";
 import { MarkAsUnreadButton } from "@/components/ui/mark-as-unread-button";
 import { BookOfflineButton } from "@/components/ui/book-offline-button";
 
 interface BookListProps {
-  books: KomgaBook[];
-  onBookClick: (book: KomgaBook) => void;
+  books: NormalizedBook[];
+  onBookClick: (book: NormalizedBook) => void;
   isCompact?: boolean;
   onRefresh?: () => void;
 }
 
 interface BookListItemProps {
-  book: KomgaBook;
-  onBookClick: (book: KomgaBook) => void;
-  onSuccess: (book: KomgaBook, action: "read" | "unread") => void;
+  book: NormalizedBook;
+  onBookClick: (book: NormalizedBook) => void;
+  onSuccess: (book: NormalizedBook, action: "read" | "unread") => void;
   isCompact?: boolean;
 }
 
@@ -40,7 +40,7 @@ function BookListItem({ book, onBookClick, onSuccess, isCompact = false }: BookL
   const isRead = book.readProgress?.completed || false;
   const hasReadProgress = book.readProgress !== null;
   const currentPage = ClientOfflineBookService.getCurrentPage(book);
-  const totalPages = book.media.pagesCount;
+  const totalPages = book.pageCount;
   const progressPercentage = totalPages > 0 ? (currentPage / totalPages) * 100 : 0;
 
   const getStatusInfo = () => {
@@ -52,7 +52,7 @@ function BookListItem({ book, onBookClick, onSuccess, isCompact = false }: BookL
     }
 
     if (book.readProgress.completed) {
-      const readDate = book.readProgress.readDate ? formatDate(book.readProgress.readDate) : null;
+      const readDate = book.readProgress.lastReadAt ? formatDate(book.readProgress.lastReadAt) : null;
       return {
         label: readDate ? t("books.status.readDate", { date: readDate }) : t("books.status.read"),
         className: "bg-green-500/10 text-green-500",
@@ -77,8 +77,8 @@ function BookListItem({ book, onBookClick, onSuccess, isCompact = false }: BookL
 
   const statusInfo = getStatusInfo();
   const title =
-    book.metadata.title ||
-    (book.metadata.number ? t("navigation.volume", { number: book.metadata.number }) : book.name);
+    book.title ||
+    (book.number ? t("navigation.volume", { number: book.number }) : "");
 
   if (isCompact) {
     return (
@@ -130,8 +130,8 @@ function BookListItem({ book, onBookClick, onSuccess, isCompact = false }: BookL
 
           {/* Métadonnées minimales */}
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            {book.metadata.number && (
-              <span>{t("navigation.volume", { number: book.metadata.number })}</span>
+            {book.number && (
+              <span>{t("navigation.volume", { number: book.number })}</span>
             )}
             <div className="flex items-center gap-1">
               <FileText className="h-3 w-3" />
@@ -139,12 +139,6 @@ function BookListItem({ book, onBookClick, onSuccess, isCompact = false }: BookL
                 {totalPages} {totalPages > 1 ? t("books.pages_plural") : t("books.pages")}
               </span>
             </div>
-            {book.metadata.authors && book.metadata.authors.length > 0 && (
-              <div className="flex items-center gap-1 hidden sm:flex">
-                <User className="h-3 w-3" />
-                <span className="line-clamp-1">{book.metadata.authors[0].name}</span>
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -189,9 +183,9 @@ function BookListItem({ book, onBookClick, onSuccess, isCompact = false }: BookL
             >
               {title}
             </h3>
-            {book.metadata.number && (
+            {book.number && (
               <p className="text-sm text-muted-foreground mt-1">
-                {t("navigation.volume", { number: book.metadata.number })}
+                {t("navigation.volume", { number: book.number })}
               </p>
             )}
           </div>
@@ -207,13 +201,6 @@ function BookListItem({ book, onBookClick, onSuccess, isCompact = false }: BookL
           </span>
         </div>
 
-        {/* Résumé */}
-        {book.metadata.summary && (
-          <p className="text-sm text-muted-foreground line-clamp-2 hidden sm:block">
-            {book.metadata.summary}
-          </p>
-        )}
-
         {/* Métadonnées */}
         <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
           {/* Pages */}
@@ -223,35 +210,6 @@ function BookListItem({ book, onBookClick, onSuccess, isCompact = false }: BookL
               {totalPages} {totalPages > 1 ? t("books.pages_plural") : t("books.pages")}
             </span>
           </div>
-
-          {/* Auteurs */}
-          {book.metadata.authors && book.metadata.authors.length > 0 && (
-            <div className="flex items-center gap-1">
-              <User className="h-3 w-3" />
-              <span className="line-clamp-1">
-                {book.metadata.authors.map((a) => a.name).join(", ")}
-              </span>
-            </div>
-          )}
-
-          {/* Date de sortie */}
-          {book.metadata.releaseDate && (
-            <div className="flex items-center gap-1">
-              <Calendar className="h-3 w-3" />
-              <span>{formatDate(book.metadata.releaseDate)}</span>
-            </div>
-          )}
-
-          {/* Tags */}
-          {book.metadata.tags && book.metadata.tags.length > 0 && (
-            <div className="flex items-center gap-1">
-              <Tag className="h-3 w-3" />
-              <span className="line-clamp-1">
-                {book.metadata.tags.slice(0, 3).join(", ")}
-                {book.metadata.tags.length > 3 && ` +${book.metadata.tags.length - 3}`}
-              </span>
-            </div>
-          )}
         </div>
 
         {/* Barre de progression */}
@@ -269,7 +227,7 @@ function BookListItem({ book, onBookClick, onSuccess, isCompact = false }: BookL
           {!isRead && (
             <MarkAsReadButton
               bookId={book.id}
-              pagesCount={book.media.pagesCount}
+              pagesCount={book.pageCount}
               isRead={isRead}
               onSuccess={() => onSuccess(book, "read")}
               className="text-xs"
@@ -311,7 +269,7 @@ export function BookList({ books, onBookClick, isCompact = false, onRefresh }: B
     );
   }
 
-  const handleOnSuccess = (book: KomgaBook, action: "read" | "unread") => {
+  const handleOnSuccess = (book: NormalizedBook, action: "read" | "unread") => {
     if (action === "read") {
       setLocalBooks(
         localBooks.map((previousBook) =>
@@ -320,10 +278,8 @@ export function BookList({ books, onBookClick, isCompact = false, onRefresh }: B
                 ...previousBook,
                 readProgress: {
                   completed: true,
-                  page: previousBook.media.pagesCount,
-                  readDate: new Date().toISOString(),
-                  created: new Date().toISOString(),
-                  lastModified: new Date().toISOString(),
+                  page: previousBook.pageCount,
+                  lastReadAt: new Date().toISOString(),
                 },
               }
             : previousBook

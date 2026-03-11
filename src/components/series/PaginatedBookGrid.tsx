@@ -5,7 +5,7 @@ import { BookList } from "./BookList";
 import { Pagination } from "@/components/ui/Pagination";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
-import type { KomgaBook } from "@/types/komga";
+import type { NormalizedBook } from "@/lib/providers/types";
 import { useTranslate } from "@/hooks/useTranslate";
 import { useDisplayPreferences } from "@/hooks/useDisplayPreferences";
 import { usePreferences } from "@/contexts/PreferencesContext";
@@ -15,7 +15,7 @@ import { ViewModeButton } from "@/components/common/ViewModeButton";
 import { UnreadFilterButton } from "@/components/common/UnreadFilterButton";
 
 interface PaginatedBookGridProps {
-  books: KomgaBook[];
+  books: NormalizedBook[];
   currentPage: number;
   totalPages: number;
   totalElements: number;
@@ -95,13 +95,10 @@ export function PaginatedBookGrid({
   };
 
   const handlePageSizeChange = async (size: number) => {
-    await updateUrlParams({
-      page: "1",
-      size: size.toString(),
-    });
+    await updateUrlParams({ page: "1", size: size.toString() });
   };
 
-  const handleBookClick = (book: KomgaBook) => {
+  const handleBookClick = (book: NormalizedBook) => {
     router.push(`/books/${book.id}`);
   };
 

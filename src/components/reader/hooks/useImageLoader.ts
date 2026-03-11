@@ -9,14 +9,14 @@ interface ImageDimensions {
 type ImageKey = number | string; // Support both numeric pages and prefixed keys like "next-1"
 
 interface UseImageLoaderProps {
-  bookId: string;
+  pageUrlBuilder: (pageNum: number) => string;
   pages: number[];
   prefetchCount?: number; // Nombre de pages à précharger (défaut: 5)
-  nextBook?: { id: string; pages: number[] } | null; // Livre suivant pour prefetch
+  nextBook?: { getPageUrl: (pageNum: number) => string; pages: number[] } | null; // Livre suivant pour prefetch
 }
 
 export function useImageLoader({
-  bookId,
+  pageUrlBuilder,
   pages: _pages,
   prefetchCount = 5,
   nextBook,
@@ -73,8 +73,8 @@ export function useImageLoader({
   );
 
   const getPageUrl = useCallback(
-    (pageNum: number) => `/api/komga/books/${bookId}/pages/${pageNum}`,
-    [bookId]
+    (pageNum: number) => pageUrlBuilder(pageNum),
+    [pageUrlBuilder]
   );
 
   // Prefetch image and store dimensions
@@ -216,7 +216,7 @@ export function useImageLoader({
           abortControllersRef.current.set(nextBookPageKey, controller);
 
           try {
-            const response = await fetch(`/api/komga/books/${nextBook.id}/pages/${pageNum}`, {
+            const response = await fetch(nextBook.getPageUrl(pageNum), {
               cache: "default", // Respect Cache-Control headers from server
               signal: controller.signal,
             });

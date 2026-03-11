@@ -1,24 +1,26 @@
 import { FavoriteService } from "./favorite.service";
-import { SeriesService } from "./series.service";
-import type { KomgaSeries } from "@/types/komga";
+import { getProvider } from "@/lib/providers/provider.factory";
+import type { NormalizedSeries } from "@/lib/providers/types";
 import logger from "@/lib/logger";
 
 export class FavoritesService {
   static async getFavorites(context?: {
     requestPath?: string;
     requestPathname?: string;
-  }): Promise<KomgaSeries[]> {
+  }): Promise<NormalizedSeries[]> {
     try {
-      const favoriteIds = await FavoriteService.getAllFavoriteIds();
+      const [favoriteIds, provider] = await Promise.all([
+        FavoriteService.getAllFavoriteIds(),
+        getProvider(),
+      ]);
 
-      if (favoriteIds.length === 0) {
+      if (favoriteIds.length === 0 || !provider) {
         return [];
       }
 
-      // Fetch toutes les séries en parallèle
       const promises = favoriteIds.map(async (id: string) => {
         try {
-          return await SeriesService.getSeries(id);
+          return await provider.getSeriesById(id);
         } catch (error) {
           logger.error(
             {
@@ -40,7 +42,7 @@ export class FavoritesService {
       });
 
       const results = await Promise.all(promises);
-      return results.filter((series): series is KomgaSeries => series !== null);
+      return results.filter((series): series is NormalizedSeries => series !== null);
     } catch (error) {
       logger.error(
         {

@@ -1,11 +1,12 @@
 import { PreferencesService } from "@/lib/services/preferences.service";
-import { LibraryService } from "@/lib/services/library.service";
+import { getProvider } from "@/lib/providers/provider.factory";
 import { LibraryClientWrapper } from "./LibraryClientWrapper";
 import { LibraryContent } from "./LibraryContent";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { AppError } from "@/utils/errors";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import type { UserPreferences } from "@/types/preferences";
+import { redirect } from "next/navigation";
 
 interface PageProps {
   params: Promise<{ libraryId: string }>;
@@ -17,9 +18,9 @@ const DEFAULT_PAGE_SIZE = 20;
 export default async function LibraryPage({ params, searchParams }: PageProps) {
   const libraryId = (await params).libraryId;
   const unread = (await searchParams).unread;
-  const search = (await searchParams).search;
   const page = (await searchParams).page;
   const size = (await searchParams).size;
+  const search = (await searchParams).search;
 
   const currentPage = page ? parseInt(page) : 1;
   const preferences: UserPreferences = await PreferencesService.getPreferences();
@@ -31,31 +32,36 @@ export default async function LibraryPage({ params, searchParams }: PageProps) {
     : preferences.displayMode?.itemsPerPage || DEFAULT_PAGE_SIZE;
 
   try {
-    const [series, library] = await Promise.all([
-      LibraryService.getLibrarySeries(
-        libraryId,
-        currentPage - 1,
-        effectivePageSize,
-        unreadOnly,
-        search
-      ),
-      LibraryService.getLibrary(libraryId),
+    const provider = await getProvider();
+    if (!provider) redirect("/settings");
+
+    const [seriesPage, library] = await Promise.all([
+      provider.getSeries(libraryId, String(currentPage), effectivePageSize, unreadOnly, search),
+      provider.getLibraryById(libraryId),
     ]);
+
+    if (!library) throw new AppError(ERROR_CODES.LIBRARY.NOT_FOUND);
 
     return (
       <LibraryClientWrapper libraryId={libraryId}>
         <LibraryContent
           library={library}
-          series={series}
+          series={seriesPage}
           currentPage={currentPage}
           preferences={preferences}
           unreadOnly={unreadOnly}
-          search={search}
           pageSize={effectivePageSize}
         />
       </LibraryClientWrapper>
     );
   } catch (error) {
+    if (error instanceof AppError && (
+      error.code === ERROR_CODES.KOMGA.MISSING_CONFIG ||
+      error.code === ERROR_CODES.STRIPSTREAM.MISSING_CONFIG
+    )) {
+      redirect("/settings");
+    }
+
     const errorCode = error instanceof AppError ? error.code : ERROR_CODES.SERIES.FETCH_ERROR;
 
     return (

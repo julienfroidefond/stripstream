@@ -15,7 +15,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
 import { useEffect, useState, useCallback } from "react";
-import type { KomgaLibrary, KomgaSeries } from "@/types/komga";
+import type { NormalizedLibrary, NormalizedSeries } from "@/lib/providers/types";
 import { useToast } from "@/components/ui/use-toast";
 import { useTranslate } from "@/hooks/useTranslate";
 import { NavButton } from "@/components/ui/nav-button";
@@ -25,8 +25,8 @@ import logger from "@/lib/logger";
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
-  initialLibraries: KomgaLibrary[];
-  initialFavorites: KomgaSeries[];
+  initialLibraries: NormalizedLibrary[];
+  initialFavorites: NormalizedSeries[];
   userIsAdmin?: boolean;
 }
 
@@ -40,8 +40,8 @@ export function Sidebar({
   const { t } = useTranslate();
   const pathname = usePathname();
   const router = useRouter();
-  const [libraries, setLibraries] = useState<KomgaLibrary[]>(initialLibraries || []);
-  const [favorites, setFavorites] = useState<KomgaSeries[]>(initialFavorites || []);
+  const [libraries, setLibraries] = useState<NormalizedLibrary[]>(initialLibraries || []);
+  const [favorites, setFavorites] = useState<NormalizedSeries[]>(initialFavorites || []);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const { toast } = useToast();
@@ -60,7 +60,7 @@ export function Sidebar({
       const customEvent = event as CustomEvent<{
         seriesId?: string;
         action?: "add" | "remove";
-        series?: KomgaSeries;
+        series?: NormalizedSeries;
       }>;
 
       // Si on a les détails de l'action, faire une mise à jour optimiste locale
@@ -207,7 +207,7 @@ export function Sidebar({
                 <NavButton
                   key={series.id}
                   icon={Star}
-                  label={series.metadata.title}
+                  label={series.name}
                   active={pathname === `/series/${series.id}`}
                   onClick={() => handleLinkClick(`/series/${series.id}`)}
                   className="[&_svg]:fill-yellow-400 [&_svg]:text-yellow-400"

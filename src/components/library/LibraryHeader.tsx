@@ -1,17 +1,17 @@
 import { Library } from "lucide-react";
-import type { KomgaLibrary, KomgaSeries } from "@/types/komga";
+import type { NormalizedLibrary, NormalizedSeries } from "@/lib/providers/types";
 import { RefreshButton } from "./RefreshButton";
 import { ScanButton } from "./ScanButton";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { SeriesCover } from "@/components/ui/series-cover";
 
 interface LibraryHeaderProps {
-  library: KomgaLibrary;
+  library: NormalizedLibrary;
   seriesCount: number;
-  series: KomgaSeries[];
+  series: NormalizedSeries[];
 }
 
-const getHeaderSeries = (series: KomgaSeries[]) => {
+const getHeaderSeries = (series: NormalizedSeries[]) => {
   if (series.length === 0) {
     return { featured: null, background: null };
   }
@@ -84,8 +84,6 @@ export function LibraryHeader({
               <RefreshButton libraryId={library.id} />
               <ScanButton libraryId={library.id} />
             </div>
-
-            {library.unavailable && <p className="text-sm text-destructive mt-2">Bibliotheque indisponible</p>}
           </div>
         </div>
       </div>

@@ -375,6 +375,9 @@
     "KOMGA_CONNECTION_ERROR": "Erreur de connexion au serveur Komga",
     "KOMGA_HTTP_ERROR": "Erreur HTTP lors de la communication avec Komga",
     "KOMGA_SERVER_UNREACHABLE": "Serveur Komga inaccessible",
+    "STRIPSTREAM_MISSING_CONFIG": "Configuration Stripstream Librarian manquante",
+    "STRIPSTREAM_CONNECTION_ERROR": "Erreur de connexion à Stripstream Librarian",
+    "STRIPSTREAM_HTTP_ERROR": "Erreur HTTP lors de la communication avec Stripstream Librarian",
 
     "CONFIG_SAVE_ERROR": "Erreur lors de la sauvegarde de la configuration",
     "CONFIG_FETCH_ERROR": "Erreur lors de la récupération de la configuration",

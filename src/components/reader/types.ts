@@ -1,4 +1,4 @@
-import type { KomgaBook } from "@/types/komga";
+import type { NormalizedBook } from "@/lib/providers/types";
 
 export interface PageCache {
   [pageNumber: number]: {
@@ -10,10 +10,10 @@ export interface PageCache {
 }
 
 export interface BookReaderProps {
-  book: KomgaBook;
+  book: NormalizedBook;
   pages: number[];
   onClose?: (currentPage: number) => void;
-  nextBook?: KomgaBook | null;
+  nextBook?: NormalizedBook | null;
 }
 
 export interface ThumbnailProps {
@@ -32,7 +32,7 @@ export interface NavigationBarProps {
   onPageChange: (page: number) => void;
   showControls: boolean;
   showThumbnails: boolean;
-  book: KomgaBook;
+  book: NormalizedBook;
 }
 
 export interface ControlButtonsProps {
@@ -57,7 +57,7 @@ export interface ControlButtonsProps {
 }
 
 export interface UsePageNavigationProps {
-  book: KomgaBook;
+  book: NormalizedBook;
   pages: number[];
   isDoublePage: boolean;
   onClose?: () => void;

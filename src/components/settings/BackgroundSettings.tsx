@@ -14,11 +14,11 @@ import { Check } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SliderControl } from "@/components/ui/slider-control";
-import type { KomgaLibrary } from "@/types/komga";
+import type { NormalizedLibrary } from "@/lib/providers/types";
 import logger from "@/lib/logger";
 
 interface BackgroundSettingsProps {
-  initialLibraries: KomgaLibrary[];
+  initialLibraries: NormalizedLibrary[];
 }
 
 export function BackgroundSettings({ initialLibraries }: BackgroundSettingsProps) {
@@ -27,7 +27,7 @@ export function BackgroundSettings({ initialLibraries }: BackgroundSettingsProps
   const { preferences, updatePreferences } = usePreferences();
   const [customImageUrl, setCustomImageUrl] = useState(preferences.background.imageUrl || "");
   const [komgaConfigValid, setKomgaConfigValid] = useState(false);
-  const [libraries, setLibraries] = useState<KomgaLibrary[]>(initialLibraries || []);
+  const [libraries, setLibraries] = useState<NormalizedLibrary[]>(initialLibraries || []);
   const [selectedLibraries, setSelectedLibraries] = useState<string[]>(
     preferences.background.komgaLibraries || []
   );
@@ -278,7 +278,7 @@ export function BackgroundSettings({ initialLibraries }: BackgroundSettingsProps
                       htmlFor={`lib-${library.id}`}
                       className="cursor-pointer font-normal text-sm"
                     >
-                      {library.name} ({library.booksCount} livres)
+                      {library.name} ({library.bookCount} livres)
                     </Label>
                   </div>
                 ))}

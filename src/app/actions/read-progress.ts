@@ -1,27 +1,27 @@
 "use server";
 
 import { revalidateTag } from "next/cache";
-import { BookService } from "@/lib/services/book.service";
-import { LIBRARY_SERIES_CACHE_TAG } from "@/lib/services/library.service";
+import { getProvider } from "@/lib/providers/provider.factory";
+import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, SERIES_BOOKS_CACHE_TAG } from "@/constants/cacheConstants";
 import { AppError } from "@/utils/errors";
 
-const HOME_CACHE_TAG = "home-data";
+function revalidateReadCaches() {
+  revalidateTag(HOME_CACHE_TAG, "max");
+  revalidateTag(LIBRARY_SERIES_CACHE_TAG, "max");
+  revalidateTag(SERIES_BOOKS_CACHE_TAG, "max");
+}
 
-/**
- * Met à jour la progression de lecture d'un livre
- * Note: ne pas utiliser "use server" avec redirect - on gère manuellement
- */
 export async function updateReadProgress(
   bookId: string,
   page: number,
   completed: boolean = false
 ): Promise<{ success: boolean; message: string }> {
   try {
-    await BookService.updateReadProgress(bookId, page, completed);
+    const provider = await getProvider();
+    if (!provider) return { success: false, message: "Provider non configuré" };
 
-    // Invalider le cache home et libraries (statut de lecture des séries)
-    revalidateTag(HOME_CACHE_TAG, "max");
-    revalidateTag(LIBRARY_SERIES_CACHE_TAG, "max");
+    await provider.saveReadProgress(bookId, page, completed);
+    revalidateReadCaches();
 
     return { success: true, message: "Progression mise à jour" };
   } catch (error) {
@@ -32,18 +32,15 @@ export async function updateReadProgress(
   }
 }
 
-/**
- * Supprime la progression de lecture d'un livre
- */
 export async function deleteReadProgress(
   bookId: string
 ): Promise<{ success: boolean; message: string }> {
   try {
-    await BookService.deleteReadProgress(bookId);
+    const provider = await getProvider();
+    if (!provider) return { success: false, message: "Provider non configuré" };
 
-    // Invalider le cache home et libraries (statut de lecture des séries)
-    revalidateTag(HOME_CACHE_TAG, "max");
-    revalidateTag(LIBRARY_SERIES_CACHE_TAG, "max");
+    await provider.resetReadProgress(bookId);
+    revalidateReadCaches();
 
     return { success: true, message: "Progression supprimée" };
   } catch (error) {

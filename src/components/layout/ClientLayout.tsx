@@ -10,7 +10,7 @@ import { usePathname } from "next/navigation";
 import { NetworkStatus } from "../ui/NetworkStatus";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { ServiceWorkerProvider } from "@/contexts/ServiceWorkerContext";
-import type { KomgaLibrary, KomgaSeries } from "@/types/komga";
+import type { NormalizedLibrary, NormalizedSeries } from "@/lib/providers/types";
 import { defaultPreferences } from "@/types/preferences";
 import logger from "@/lib/logger";
 import { getRandomBookFromLibraries } from "@/app/actions/library";
@@ -20,8 +20,8 @@ const publicRoutes = ["/login", "/register"];
 
 interface ClientLayoutProps {
   children: React.ReactNode;
-  initialLibraries: KomgaLibrary[];
-  initialFavorites: KomgaSeries[];
+  initialLibraries: NormalizedLibrary[];
+  initialFavorites: NormalizedSeries[];
   userIsAdmin?: boolean;
 }
 

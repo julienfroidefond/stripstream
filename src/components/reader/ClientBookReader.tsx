@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { KomgaBook } from "@/types/komga";
+import type { NormalizedBook } from "@/lib/providers/types";
 import { PhotoswipeReader } from "./PhotoswipeReader";
 import { Button } from "@/components/ui/button";
 
 interface ClientBookReaderProps {
-  book: KomgaBook;
+  book: NormalizedBook;
   pages: number[];
 }
 

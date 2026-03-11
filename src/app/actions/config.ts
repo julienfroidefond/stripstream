@@ -2,8 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { ConfigDBService } from "@/lib/services/config-db.service";
-import { TestService } from "@/lib/services/test.service";
 import { AppError } from "@/utils/errors";
+import { ERROR_CODES } from "@/constants/errorCodes";
 import type { KomgaConfig, KomgaConfigData, KomgaLibrary } from "@/types/komga";
 
 interface SaveConfigInput {
@@ -13,9 +13,6 @@ interface SaveConfigInput {
   authHeader?: string;
 }
 
-/**
- * Teste la connexion à Komga
- */
 export async function testKomgaConnection(
   serverUrl: string,
   username: string,
@@ -23,12 +20,19 @@ export async function testKomgaConnection(
 ): Promise<{ success: boolean; message: string }> {
   try {
     const authHeader = Buffer.from(`${username}:${password}`).toString("base64");
-
-    const { libraries }: { libraries: KomgaLibrary[] } = await TestService.testConnection({
-      serverUrl,
-      authHeader,
+    const url = new URL(`${serverUrl}/api/v1/libraries`).toString();
+    const headers = new Headers({
+      Authorization: `Basic ${authHeader}`,
+      Accept: "application/json",
     });
 
+    const response = await fetch(url, { headers });
+
+    if (!response.ok) {
+      throw new AppError(ERROR_CODES.KOMGA.CONNECTION_ERROR);
+    }
+
+    const libraries: KomgaLibrary[] = await response.json();
     return {
       success: true,
       message: `Connexion réussie ! ${libraries.length} bibliothèque${libraries.length > 1 ? "s" : ""} trouvée${libraries.length > 1 ? "s" : ""}`,
@@ -41,9 +45,6 @@ export async function testKomgaConnection(
   }
 }
 
-/**
- * Sauvegarde la configuration Komga
- */
 export async function saveKomgaConfig(
   config: SaveConfigInput
 ): Promise<{ success: boolean; message: string; data?: KomgaConfig }> {
@@ -55,15 +56,8 @@ export async function saveKomgaConfig(
       authHeader: config.authHeader || "",
     };
     const mongoConfig = await ConfigDBService.saveConfig(configData);
-
-    // Invalider le cache
     revalidatePath("/settings");
-
-    return {
-      success: true,
-      message: "Configuration sauvegardée",
-      data: mongoConfig,
-    };
+    return { success: true, message: "Configuration sauvegardée", data: mongoConfig };
   } catch (error) {
     if (error instanceof AppError) {
       return { success: false, message: error.message };

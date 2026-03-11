@@ -1,7 +1,7 @@
-import type { KomgaBook } from "@/types/komga";
+import type { NormalizedBook } from "@/lib/providers/types";
 
 export class ClientOfflineBookService {
-  static setCurrentPage(book: KomgaBook, page: number) {
+  static setCurrentPage(book: NormalizedBook, page: number) {
     if (typeof window !== "undefined" && typeof localStorage !== "undefined" && localStorage.setItem) {
       try {
         localStorage.setItem(`${book.id}-page`, page.toString());
@@ -11,7 +11,7 @@ export class ClientOfflineBookService {
     }
   }
 
-  static getCurrentPage(book: KomgaBook) {
+  static getCurrentPage(book: NormalizedBook) {
     const readProgressPage = book.readProgress?.page || 0;
     if (typeof window !== "undefined" && typeof localStorage !== "undefined" && localStorage.getItem) {
       try {
@@ -31,7 +31,7 @@ export class ClientOfflineBookService {
     }
   }
 
-  static removeCurrentPage(book: KomgaBook) {
+  static removeCurrentPage(book: NormalizedBook) {
     if (typeof window !== "undefined" && typeof localStorage !== "undefined" && localStorage.removeItem) {
       try {
         localStorage.removeItem(`${book.id}-page`);

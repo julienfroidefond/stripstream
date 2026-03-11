@@ -1,14 +1,12 @@
 import { LibraryHeader } from "@/components/library/LibraryHeader";
 import { PaginatedSeriesGrid } from "@/components/library/PaginatedSeriesGrid";
 import { Container } from "@/components/ui/container";
-import type { KomgaLibrary } from "@/types/komga";
-import type { LibraryResponse } from "@/types/library";
-import type { Series } from "@/types/series";
+import type { NormalizedLibrary, NormalizedSeriesPage } from "@/lib/providers/types";
 import type { UserPreferences } from "@/types/preferences";
 
 interface LibraryContentProps {
-  library: KomgaLibrary;
-  series: LibraryResponse<Series>;
+  library: NormalizedLibrary;
+  series: NormalizedSeriesPage;
   currentPage: number;
   preferences: UserPreferences;
   unreadOnly: boolean;
@@ -28,15 +26,15 @@ export function LibraryContent({
     <>
       <LibraryHeader
         library={library}
-        seriesCount={series.totalElements}
-        series={series.content || []}
+        seriesCount={series.totalElements ?? series.items.length}
+        series={series.items}
       />
       <Container>
         <PaginatedSeriesGrid
-          series={series.content || []}
+          series={series.items}
           currentPage={currentPage}
-          totalPages={series.totalPages}
-          totalElements={series.totalElements}
+          totalPages={series.totalPages ?? 1}
+          totalElements={series.totalElements ?? series.items.length}
           defaultShowOnlyUnread={preferences.showOnlyUnread}
           showOnlyUnread={unreadOnly}
           pageSize={pageSize}

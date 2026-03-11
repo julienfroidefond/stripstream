@@ -1,9 +1,9 @@
-import type { KomgaBook, KomgaSeries } from "./komga";
+import type { NormalizedBook, NormalizedSeries } from "@/lib/providers/types";
 
 export interface HomeData {
-  ongoing: KomgaSeries[];
-  ongoingBooks: KomgaBook[];
-  recentlyRead: KomgaBook[];
-  onDeck: KomgaBook[];
-  latestSeries: KomgaSeries[];
+  ongoing: NormalizedSeries[];
+  ongoingBooks: NormalizedBook[];
+  recentlyRead: NormalizedBook[];
+  onDeck: NormalizedBook[];
+  latestSeries: NormalizedSeries[];
 }

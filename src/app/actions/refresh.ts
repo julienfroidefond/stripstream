@@ -1,9 +1,7 @@
 "use server";
 
 import { revalidatePath, revalidateTag } from "next/cache";
-import { LIBRARY_SERIES_CACHE_TAG } from "@/lib/services/library.service";
-
-const HOME_CACHE_TAG = "home-data";
+import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG } from "@/constants/cacheConstants";
 
 export type RefreshScope = "home" | "library" | "series";
 

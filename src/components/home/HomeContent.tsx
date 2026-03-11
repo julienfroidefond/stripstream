@@ -1,31 +1,9 @@
 import { MediaRow } from "./MediaRow";
-import type { KomgaBook, KomgaSeries } from "@/types/komga";
 import type { HomeData } from "@/types/home";
 
 interface HomeContentProps {
   data: HomeData;
 }
-
-const optimizeSeriesData = (series: KomgaSeries[]) => {
-  return series.map(({ id, metadata, booksCount, booksReadCount }) => ({
-    id,
-    metadata: { title: metadata.title },
-    booksCount,
-    booksReadCount,
-  }));
-};
-
-const optimizeBookData = (books: KomgaBook[]) => {
-  return books.map(({ id, metadata, readProgress, media }) => ({
-    id,
-    metadata: {
-      title: metadata.title,
-      number: metadata.number,
-    },
-    readProgress: readProgress || { page: 0 },
-    media,
-  }));
-};
 
 export function HomeContent({ data }: HomeContentProps) {
   return (
@@ -33,7 +11,7 @@ export function HomeContent({ data }: HomeContentProps) {
       {data.ongoingBooks && data.ongoingBooks.length > 0 && (
         <MediaRow
           titleKey="home.sections.continue_reading"
-          items={optimizeBookData(data.ongoingBooks)}
+          items={data.ongoingBooks}
           iconName="BookOpen"
           featuredHeader
         />
@@ -42,7 +20,7 @@ export function HomeContent({ data }: HomeContentProps) {
       {data.ongoing && data.ongoing.length > 0 && (
         <MediaRow
           titleKey="home.sections.continue_series"
-          items={optimizeSeriesData(data.ongoing)}
+          items={data.ongoing}
           iconName="LibraryBig"
         />
       )}
@@ -50,7 +28,7 @@ export function HomeContent({ data }: HomeContentProps) {
       {data.onDeck && data.onDeck.length > 0 && (
         <MediaRow
           titleKey="home.sections.up_next"
-          items={optimizeBookData(data.onDeck)}
+          items={data.onDeck}
           iconName="Clock"
         />
       )}
@@ -58,7 +36,7 @@ export function HomeContent({ data }: HomeContentProps) {
       {data.latestSeries && data.latestSeries.length > 0 && (
         <MediaRow
           titleKey="home.sections.latest_series"
-          items={optimizeSeriesData(data.latestSeries)}
+          items={data.latestSeries}
           iconName="Sparkles"
         />
       )}
@@ -66,7 +44,7 @@ export function HomeContent({ data }: HomeContentProps) {
       {data.recentlyRead && data.recentlyRead.length > 0 && (
         <MediaRow
           titleKey="home.sections.recently_added"
-          items={optimizeBookData(data.recentlyRead)}
+          items={data.recentlyRead}
           iconName="History"
         />
       )}

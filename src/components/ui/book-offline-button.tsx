@@ -4,11 +4,11 @@ import { useState, useEffect, useCallback } from "react";
 import { Download, Check, Loader2 } from "lucide-react";
 import { Button } from "./button";
 import { useToast } from "./use-toast";
-import type { KomgaBook } from "@/types/komga";
+import type { NormalizedBook } from "@/lib/providers/types";
 import logger from "@/lib/logger";
 
 interface BookOfflineButtonProps {
-  book: KomgaBook;
+  book: NormalizedBook;
   className?: string;
 }
 
@@ -57,7 +57,7 @@ export function BookOfflineButton({ book, className }: BookOfflineButtonProps) {
         // Marque le début du téléchargement
         setBookStatus(book.id, {
           status: "downloading",
-          progress: ((startFromPage - 1) / book.media.pagesCount) * 100,
+          progress: ((startFromPage - 1) / book.pageCount) * 100,
           timestamp: Date.now(),
           lastDownloadedPage: startFromPage - 1,
         });
@@ -71,7 +71,7 @@ export function BookOfflineButton({ book, className }: BookOfflineButtonProps) {
 
         // Cache chaque page avec retry
         let failedPages = 0;
-        for (let i = startFromPage; i <= book.media.pagesCount; i++) {
+        for (let i = startFromPage; i <= book.pageCount; i++) {
           let retryCount = 0;
           const maxRetries = 3;
 
@@ -105,7 +105,7 @@ export function BookOfflineButton({ book, className }: BookOfflineButtonProps) {
           }
 
           // Mise à jour du statut
-          const progress = (i / book.media.pagesCount) * 100;
+          const progress = (i / book.pageCount) * 100;
           setDownloadProgress(progress);
           setBookStatus(book.id, {
             status: "downloading",
@@ -125,7 +125,7 @@ export function BookOfflineButton({ book, className }: BookOfflineButtonProps) {
         if (failedPages > 0) {
           // Si des pages ont échoué, on supprime tout le cache pour ce livre
           await cache.delete(`/api/komga/images/books/${book.id}/pages`);
-          for (let i = 1; i <= book.media.pagesCount; i++) {
+          for (let i = 1; i <= book.pageCount; i++) {
             await cache.delete(`/api/komga/images/books/${book.id}/pages/${i}`);
           }
           setIsAvailableOffline(false);
@@ -159,7 +159,7 @@ export function BookOfflineButton({ book, className }: BookOfflineButtonProps) {
         setDownloadProgress(0);
       }
     },
-    [book.id, book.media.pagesCount, getBookStatus, setBookStatus, toast]
+    [book.id, book.pageCount, getBookStatus, setBookStatus, toast]
   );
 
   const checkOfflineAvailability = useCallback(async () => {
@@ -177,7 +177,7 @@ export function BookOfflineButton({ book, className }: BookOfflineButtonProps) {
 
       // Vérifie que toutes les pages sont dans le cache
       let allPagesAvailable = true;
-      for (let i = 1; i <= book.media.pagesCount; i++) {
+      for (let i = 1; i <= book.pageCount; i++) {
         const page = await cache.match(`/api/komga/images/books/${book.id}/pages/${i}`);
         if (!page) {
           allPagesAvailable = false;
@@ -195,7 +195,7 @@ export function BookOfflineButton({ book, className }: BookOfflineButtonProps) {
       logger.error({ err: error }, "Erreur lors de la vérification du cache:");
       setBookStatus(book.id, { status: "error", progress: 0, timestamp: Date.now() });
     }
-  }, [book.id, book.media.pagesCount, setBookStatus]);
+  }, [book.id, book.pageCount, setBookStatus]);
 
   useEffect(() => {
     const checkStatus = async () => {
@@ -242,9 +242,9 @@ export function BookOfflineButton({ book, className }: BookOfflineButtonProps) {
         setBookStatus(book.id, { status: "idle", progress: 0, timestamp: Date.now() });
         // Supprime le livre du cache
         await cache.delete(`/api/komga/images/books/${book.id}/pages`);
-        for (let i = 1; i <= book.media.pagesCount; i++) {
+        for (let i = 1; i <= book.pageCount; i++) {
           await cache.delete(`/api/komga/images/books/${book.id}/pages/${i}`);
-          const progress = (i / book.media.pagesCount) * 100;
+          const progress = (i / book.pageCount) * 100;
           setDownloadProgress(progress);
         }
         setIsAvailableOffline(false);

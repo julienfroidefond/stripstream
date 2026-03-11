@@ -1,0 +1,105 @@
+// Types natifs de l'API Stripstream Librarian
+
+export interface StripstreamBookItem {
+  id: string;
+  library_id: string;
+  kind: string;
+  title: string;
+  updated_at: string;
+  reading_status: "unread" | "reading" | "read";
+  author?: string | null;
+  language?: string | null;
+  page_count?: number | null;
+  reading_current_page?: number | null;
+  reading_last_read_at?: string | null;
+  series?: string | null;
+  thumbnail_url?: string | null;
+  volume?: number | null;
+}
+
+export interface StripstreamBookDetails {
+  id: string;
+  library_id: string;
+  kind: string;
+  title: string;
+  reading_status: "unread" | "reading" | "read";
+  author?: string | null;
+  file_format?: string | null;
+  file_parse_status?: string | null;
+  file_path?: string | null;
+  language?: string | null;
+  page_count?: number | null;
+  reading_current_page?: number | null;
+  reading_last_read_at?: string | null;
+  series?: string | null;
+  thumbnail_url?: string | null;
+  volume?: number | null;
+}
+
+export interface StripstreamBooksPage {
+  items: StripstreamBookItem[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface StripstreamSeriesItem {
+  name: string;
+  book_count: number;
+  books_read_count: number;
+  first_book_id: string;
+}
+
+export interface StripstreamSeriesPage {
+  items: StripstreamSeriesItem[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface StripstreamLibraryResponse {
+  id: string;
+  name: string;
+  root_path: string;
+  enabled: boolean;
+  book_count: number;
+  monitor_enabled: boolean;
+  scan_mode: string;
+  watcher_enabled: boolean;
+  next_scan_at?: string | null;
+}
+
+export interface StripstreamReadingProgressResponse {
+  status: "unread" | "reading" | "read";
+  current_page?: number | null;
+  last_read_at?: string | null;
+}
+
+export interface StripstreamUpdateReadingProgressRequest {
+  status: "unread" | "reading" | "read";
+  current_page?: number | null;
+}
+
+export interface StripstreamSearchResponse {
+  hits: StripstreamSearchHit[];
+  series_hits: StripstreamSeriesHit[];
+  estimated_total_hits?: number | null;
+  processing_time_ms?: number | null;
+}
+
+export interface StripstreamSearchHit {
+  id: string;
+  title: string;
+  series?: string | null;
+  library_id: string;
+  thumbnail_url?: string | null;
+  volume?: number | null;
+}
+
+export interface StripstreamSeriesHit {
+  name: string;
+  book_count: number;
+  books_read_count: number;
+  first_book_id: string;
+  library_id: string;
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import type { KomgaBook } from "@/types/komga";
+import type { NormalizedBook } from "@/lib/providers/types";
 import { BookCover } from "@/components/ui/book-cover";
 import { useState, useEffect, useRef } from "react";
 import { useTranslate } from "@/hooks/useTranslate";
@@ -8,16 +8,16 @@ import { cn } from "@/lib/utils";
 import { useBookOfflineStatus } from "@/hooks/useBookOfflineStatus";
 
 interface BookGridProps {
-  books: KomgaBook[];
-  onBookClick: (book: KomgaBook) => void;
+  books: NormalizedBook[];
+  onBookClick: (book: NormalizedBook) => void;
   isCompact?: boolean;
   onRefresh?: () => void;
 }
 
 interface BookCardProps {
-  book: KomgaBook;
-  onBookClick: (book: KomgaBook) => void;
-  onSuccess: (book: KomgaBook, action: "read" | "unread") => void;
+  book: NormalizedBook;
+  onBookClick: (book: NormalizedBook) => void;
+  onSuccess: (book: NormalizedBook, action: "read" | "unread") => void;
   isCompact: boolean;
 }
 
@@ -50,9 +50,9 @@ function BookCard({ book, onBookClick, onSuccess, isCompact }: BookCardProps) {
           book={book}
           alt={t("books.coverAlt", {
             title:
-              book.metadata.title ||
-              (book.metadata.number
-                ? t("navigation.volume", { number: book.metadata.number })
+              book.title ||
+              (book.number
+                ? t("navigation.volume", { number: book.number })
                 : ""),
           })}
           onSuccess={(book, action) => onSuccess(book, action)}
@@ -84,7 +84,7 @@ export function BookGrid({ books, onBookClick, isCompact = false, onRefresh }: B
     );
   }
 
-  const handleOnSuccess = (book: KomgaBook, action: "read" | "unread") => {
+  const handleOnSuccess = (book: NormalizedBook, action: "read" | "unread") => {
     if (action === "read") {
       setLocalBooks(
         localBooks.map((previousBook) =>
@@ -93,10 +93,8 @@ export function BookGrid({ books, onBookClick, isCompact = false, onRefresh }: B
                 ...previousBook,
                 readProgress: {
                   completed: true,
-                  page: previousBook.media.pagesCount,
-                  readDate: new Date().toISOString(),
-                  created: new Date().toISOString(),
-                  lastModified: new Date().toISOString(),
+                  page: previousBook.pageCount,
+                  lastReadAt: new Date().toISOString(),
                 },
               }
             : previousBook

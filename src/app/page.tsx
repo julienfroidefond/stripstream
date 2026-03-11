@@ -1,4 +1,4 @@
-import { HomeService } from "@/lib/services/home.service";
+import { getProvider } from "@/lib/providers/provider.factory";
 import { HomeContent } from "@/components/home/HomeContent";
 import { HomeClientWrapper } from "@/components/home/HomeClientWrapper";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
@@ -8,7 +8,10 @@ import { redirect } from "next/navigation";
 
 export default async function HomePage() {
   try {
-    const data = await HomeService.getHomeData();
+    const provider = await getProvider();
+    if (!provider) redirect("/settings");
+
+    const data = await provider.getHomeData();
 
     return (
       <HomeClientWrapper>
@@ -16,13 +19,14 @@ export default async function HomePage() {
       </HomeClientWrapper>
     );
   } catch (error) {
-    // Si la config Komga est manquante, rediriger vers les settings
-    if (error instanceof AppError && error.code === ERROR_CODES.KOMGA.MISSING_CONFIG) {
+    if (error instanceof AppError && (
+      error.code === ERROR_CODES.KOMGA.MISSING_CONFIG ||
+      error.code === ERROR_CODES.STRIPSTREAM.MISSING_CONFIG
+    )) {
       redirect("/settings");
     }
 
-    // Afficher une erreur pour les autres cas
-    const errorCode = error instanceof AppError ? error.code : ERROR_CODES.KOMGA.SERVER_UNREACHABLE;
+    const errorCode = error instanceof AppError ? error.code : ERROR_CODES.HOME.FETCH_ERROR;
 
     return (
       <main className="container mx-auto px-4 py-8">

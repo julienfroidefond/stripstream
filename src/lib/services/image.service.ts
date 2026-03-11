@@ -1,26 +1,28 @@
-import { BaseApiService } from "./base-api.service";
+import { ConfigDBService } from "./config-db.service";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
 import logger from "@/lib/logger";
 
-// Cache HTTP navigateur : 30 jours (immutable car les thumbnails ne changent pas)
 const IMAGE_CACHE_MAX_AGE = 2592000;
 
-export class ImageService extends BaseApiService {
-  /**
-   * Stream an image directly from Komga without buffering in memory
-   * Returns a Response that can be directly returned to the client
-   */
+export class ImageService {
   static async streamImage(
     path: string,
     cacheMaxAge: number = IMAGE_CACHE_MAX_AGE
   ): Promise<Response> {
     try {
-      const headers = { Accept: "image/jpeg, image/png, image/gif, image/webp, */*" };
+      const config = await ConfigDBService.getConfig();
+      if (!config) throw new AppError(ERROR_CODES.KOMGA.MISSING_CONFIG);
 
-      const response = await this.fetchFromApi<Response>({ path }, headers, { isImage: true });
+      const url = new URL(`${config.url}/api/v1/${path}`).toString();
+      const headers = new Headers({
+        Authorization: `Basic ${config.authHeader}`,
+        Accept: "image/jpeg, image/png, image/gif, image/webp, */*",
+      });
 
-      // Stream the response body directly without buffering
+      const response = await fetch(url, { headers });
+      if (!response.ok) throw new AppError(ERROR_CODES.IMAGE.FETCH_ERROR, { status: response.status });
+
       return new Response(response.body, {
         status: response.status,
         headers: {
@@ -31,23 +33,8 @@ export class ImageService extends BaseApiService {
       });
     } catch (error) {
       logger.error({ err: error }, "Erreur lors du streaming de l'image");
+      if (error instanceof AppError) throw error;
       throw new AppError(ERROR_CODES.IMAGE.FETCH_ERROR, {}, error);
     }
-  }
-
-  static getSeriesThumbnailUrl(seriesId: string): string {
-    return `/api/komga/images/series/${seriesId}/thumbnail`;
-  }
-
-  static getBookThumbnailUrl(bookId: string): string {
-    return `/api/komga/images/books/${bookId}/thumbnail`;
-  }
-
-  static getBookPageUrl(bookId: string, pageNumber: number): string {
-    return `/api/komga/images/books/${bookId}/pages/${pageNumber}`;
-  }
-
-  static getBookPageThumbnailUrl(bookId: string, pageNumber: number): string {
-    return `/api/komga/images/books/${bookId}/pages/${pageNumber}/thumbnail`;
   }
 }

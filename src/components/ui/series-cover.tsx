@@ -1,6 +1,5 @@
 import { ProgressBar } from "./progress-bar";
 import type { SeriesCoverProps } from "./cover-utils";
-import { getImageUrl } from "@/lib/utils/image-url";
 
 export function SeriesCover({
   series,
@@ -8,17 +7,16 @@ export function SeriesCover({
   className,
   showProgressUi = true,
 }: SeriesCoverProps) {
-  const imageUrl = getImageUrl("series", series.id);
-  const isCompleted = series.booksCount === series.booksReadCount;
+  const isCompleted = series.bookCount === series.booksReadCount;
 
   const readBooks = series.booksReadCount;
-  const totalBooks = series.booksCount;
+  const totalBooks = series.bookCount;
   const showProgress = Boolean(showProgressUi && totalBooks > 0 && readBooks > 0 && !isCompleted);
 
   return (
     <div className="relative w-full h-full">
       <img
-        src={imageUrl}
+        src={series.thumbnailUrl}
         alt={alt}
         loading="lazy"
         className={[

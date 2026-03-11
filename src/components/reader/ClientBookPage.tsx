@@ -5,16 +5,16 @@ import { ClientBookWrapper } from "./ClientBookWrapper";
 import { BookSkeleton } from "@/components/skeletons/BookSkeleton";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { ERROR_CODES } from "@/constants/errorCodes";
-import type { KomgaBook } from "@/types/komga";
+import type { NormalizedBook } from "@/lib/providers/types";
 import logger from "@/lib/logger";
 import { getBookData } from "@/app/actions/books";
 
 interface ClientBookPageProps {
   bookId: string;
   initialData?: {
-    book: KomgaBook;
+    book: NormalizedBook;
     pages: number[];
-    nextBook: KomgaBook | null;
+    nextBook: NormalizedBook | null;
   };
   initialError?: string;
 }
@@ -23,9 +23,9 @@ export function ClientBookPage({ bookId, initialData, initialError }: ClientBook
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<{
-    book: KomgaBook;
+    book: NormalizedBook;
     pages: number[];
-    nextBook: KomgaBook | null;
+    nextBook: NormalizedBook | null;
   } | null>(null);
 
   // Use SSR data if available
