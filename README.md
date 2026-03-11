@@ -106,7 +106,7 @@ cp .env.example .env.local
 yarn dev
 ```
 
-### With Docker
+### With Docker (Build Local)
 
 1. Clone the repository and navigate to the folder
 
@@ -123,6 +123,36 @@ docker-compose up --build
 
 The application will be accessible at `http://localhost:3000`
 
+### With Docker (DockerHub Image)
+
+You can also use the pre-built image from DockerHub without cloning the repository:
+
+1. Create a `docker-compose.yml` file:
+
+```yaml
+version: '3.8'
+
+services:
+  app:
+    image: julienfroidefond32/stripstream:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      # Add your environment variables here or use an .env file
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+```
+
+2. Run the container:
+
+```bash
+docker-compose up -d
+```
+
+The application will be accessible at `http://localhost:3000`
+
 ## 🔧 Available Scripts
 
 - `yarn dev` - Starts the development server
@@ -130,6 +160,21 @@ The application will be accessible at `http://localhost:3000`
 - `yarn start` - Runs the production version
 - `yarn lint` - Checks code with ESLint
 - `yarn format` - Formats code with Prettier
+- `./docker-push.sh [tag]` - Build and push Docker image to DockerHub (default tag: `latest`)
+
+### Docker Push Script
+
+The `docker-push.sh` script automates building and pushing the Docker image to DockerHub:
+
+```bash
+# Push with 'latest' tag
+./docker-push.sh
+
+# Push with a specific version tag
+./docker-push.sh v1.0.0
+```
+
+**Prerequisite:** You must be logged in to DockerHub (`docker login`) before running the script.
 
 ## 🌐 Komga API
 
