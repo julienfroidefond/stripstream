@@ -59,8 +59,14 @@ export class StripstreamClient {
         "🔵 Stripstream Request"
       );
     }
-    if (isCacheDebug && options.revalidate) {
-      logger.info({ url, cache: "enabled", ttl: options.revalidate }, "💾 Cache enabled");
+    if (isCacheDebug) {
+      if (options.tags) {
+        logger.info({ url, cache: "tags", tags: options.tags }, "💾 Cache tags");
+      } else if (options.revalidate !== undefined) {
+        logger.info({ url, cache: "revalidate", ttl: options.revalidate }, "💾 Cache revalidate");
+      } else {
+        logger.info({ url, cache: "none" }, "💾 Cache none");
+      }
     }
 
     const nextOptions = options.tags
@@ -105,10 +111,6 @@ export class StripstreamClient {
           { url, status: response.status, duration: `${duration}ms`, ok: response.ok },
           "🟢 Stripstream Response"
         );
-      }
-      if (isCacheDebug && options.revalidate) {
-        const cacheStatus = response.headers.get("x-nextjs-cache") ?? "UNKNOWN";
-        logger.info({ url, cacheStatus }, `💾 Cache ${cacheStatus}`);
       }
 
       if (!response.ok) {

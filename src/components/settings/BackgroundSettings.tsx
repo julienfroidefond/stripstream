@@ -278,7 +278,7 @@ export function BackgroundSettings({ initialLibraries }: BackgroundSettingsProps
                       htmlFor={`lib-${library.id}`}
                       className="cursor-pointer font-normal text-sm"
                     >
-                      {library.name} ({library.bookCount} livres)
+                      {library.name}
                     </Label>
                   </div>
                 ))}

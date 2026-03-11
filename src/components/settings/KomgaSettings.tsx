@@ -34,14 +34,8 @@ export function KomgaSettings({ initialConfig }: KomgaSettingsProps) {
   const handleTest = async () => {
     setIsLoading(true);
 
-    const form = document.querySelector("form") as HTMLFormElement;
-    const formData = new FormData(form);
-    const serverUrl = formData.get("serverUrl") as string;
-    const username = formData.get("username") as string;
-    const password = formData.get("password") as string;
-
     try {
-      const result = await testKomgaConnection(serverUrl.trim(), username, password || config.password);
+      const result = await testKomgaConnection(config.serverUrl.trim(), config.username, config.password);
 
       if (!result.success) {
         throw new Error(result.message);
@@ -55,8 +49,8 @@ export function KomgaSettings({ initialConfig }: KomgaSettingsProps) {
       logger.error({ err: error }, "Erreur:");
       toast({
         variant: "destructive",
-        title: t("settings.komga.error.title"),
-        description: t("settings.komga.error.message"),
+        title: t("settings.komga.error.connectionTitle"),
+        description: t("settings.komga.error.connectionMessage"),
       });
     } finally {
       setIsLoading(false);

@@ -38,7 +38,7 @@ export async function testKomgaConnection(
       message: `Connexion réussie ! ${libraries.length} bibliothèque${libraries.length > 1 ? "s" : ""} trouvée${libraries.length > 1 ? "s" : ""}`,
     };
   } catch (error) {
-    if (error instanceof AppError) {
+if (error instanceof AppError) {
       return { success: false, message: error.message };
     }
     return { success: false, message: "Erreur lors de la connexion" };
@@ -59,7 +59,7 @@ export async function saveKomgaConfig(
     revalidatePath("/settings");
     return { success: true, message: "Configuration sauvegardée", data: mongoConfig };
   } catch (error) {
-    if (error instanceof AppError) {
+if (error instanceof AppError) {
       return { success: false, message: error.message };
     }
     return { success: false, message: "Erreur lors de la sauvegarde" };

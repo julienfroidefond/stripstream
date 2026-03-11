@@ -17,6 +17,7 @@ import type { LibraryResponse } from "@/types/library";
 import type { AuthConfig } from "@/types/auth";
 import logger from "@/lib/logger";
 import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, SERIES_BOOKS_CACHE_TAG } from "@/constants/cacheConstants";
+import { unstable_cache } from "next/cache";
 
 type KomgaCondition = Record<string, unknown>;
 
@@ -64,7 +65,6 @@ export class KomgaProvider implements IMediaProvider {
 
     const isDebug = process.env.KOMGA_DEBUG === "true";
     const isCacheDebug = process.env.CACHE_DEBUG === "true";
-    const startTime = isDebug ? Date.now() : 0;
 
     if (isDebug) {
       logger.info(
@@ -72,8 +72,14 @@ export class KomgaProvider implements IMediaProvider {
         "🔵 Komga Request"
       );
     }
-    if (isCacheDebug && options.revalidate) {
-      logger.info({ url, cache: "enabled", ttl: options.revalidate }, "💾 Cache enabled");
+    if (isCacheDebug) {
+      if (options.tags) {
+        logger.info({ url, cache: "tags", tags: options.tags }, "💾 Cache tags");
+      } else if (options.revalidate !== undefined) {
+        logger.info({ url, cache: "revalidate", ttl: options.revalidate }, "💾 Cache revalidate");
+      } else {
+        logger.info({ url, cache: "none" }, "💾 Cache none");
+      }
     }
 
     const nextOptions = options.tags
@@ -87,6 +93,19 @@ export class KomgaProvider implements IMediaProvider {
       ...options,
       next: nextOptions,
     };
+
+    // Next.js does not cache POST fetch requests — use unstable_cache to cache results instead
+    if (options.method === "POST" && nextOptions) {
+      const cacheKey = ["komga", this.config.authHeader, url, String(options.body ?? "")];
+      return unstable_cache(() => this.executeRequest<T>(url, fetchOptions), cacheKey, nextOptions)();
+    }
+
+    return this.executeRequest<T>(url, fetchOptions);
+  }
+
+  private async executeRequest<T>(url: string, fetchOptions: RequestInit): Promise<T> {
+    const isDebug = process.env.KOMGA_DEBUG === "true";
+    const startTime = isDebug ? Date.now() : 0;
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
@@ -124,10 +143,6 @@ export class KomgaProvider implements IMediaProvider {
           "🟢 Komga Response"
         );
       }
-      if (isCacheDebug && options.revalidate) {
-        const cacheStatus = response.headers.get("x-nextjs-cache") ?? "UNKNOWN";
-        logger.info({ url, cacheStatus }, `💾 Cache ${cacheStatus}`);
-      }
 
       if (!response.ok) {
         if (isDebug) {
@@ -163,25 +178,7 @@ export class KomgaProvider implements IMediaProvider {
     const raw = await this.fetch<KomgaLibrary[]>("libraries", undefined, {
       revalidate: CACHE_TTL_LONG,
     });
-    // Enrich with book counts
-    const enriched = await Promise.all(
-      raw.map(async (lib) => {
-        try {
-          const resp = await this.fetch<{ totalElements: number }>(
-            "books",
-            {
-              library_id: lib.id,
-              size: "0",
-            },
-            { revalidate: CACHE_TTL_LONG }
-          );
-          return { ...lib, booksCount: resp.totalElements, booksReadCount: 0 } as KomgaLibrary;
-        } catch {
-          return { ...lib, booksCount: 0, booksReadCount: 0 } as KomgaLibrary;
-        }
-      })
-    );
-    return enriched.map(KomgaAdapter.toNormalizedLibrary);
+    return raw.map(KomgaAdapter.toNormalizedLibrary);
   }
 
   async getSeries(libraryId: string, cursor?: string, limit = 20, unreadOnly = false, search?: string): Promise<NormalizedSeriesPage> {
@@ -356,30 +353,8 @@ export class KomgaProvider implements IMediaProvider {
   }
 
   async getLibraryById(libraryId: string): Promise<NormalizedLibrary | null> {
-    try {
-      const lib = await this.fetch<KomgaLibrary>(`libraries/${libraryId}`, undefined, {
-        revalidate: CACHE_TTL_LONG,
-      });
-      try {
-        const resp = await this.fetch<{ totalElements: number }>(
-          "books",
-          {
-            library_id: lib.id,
-            size: "0",
-          },
-          { revalidate: CACHE_TTL_LONG }
-        );
-        return KomgaAdapter.toNormalizedLibrary({
-          ...lib,
-          booksCount: resp.totalElements,
-          booksReadCount: 0,
-        });
-      } catch {
-        return KomgaAdapter.toNormalizedLibrary({ ...lib, booksCount: 0, booksReadCount: 0 });
-      }
-    } catch {
-      return null;
-    }
+    const libraries = await this.getLibraries();
+    return libraries.find((lib) => lib.id === libraryId) ?? null;
   }
 
   async getNextBook(bookId: string): Promise<NormalizedBook | null> {
@@ -398,7 +373,14 @@ export class KomgaProvider implements IMediaProvider {
   }
 
   async getHomeData(): Promise<HomeData> {
-    const homeOpts = { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] };
+    return unstable_cache(
+      () => this.fetchHomeData(),
+      ["komga-home", this.config.authHeader],
+      { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] }
+    )();
+  }
+
+  private async fetchHomeData(): Promise<HomeData> {
     const [ongoing, ongoingBooks, recentlyRead, onDeck, latestSeries] = await Promise.all([
       this.fetch<LibraryResponse<KomgaSeries>>(
         "series/list",
@@ -408,7 +390,6 @@ export class KomgaProvider implements IMediaProvider {
           body: JSON.stringify({
             condition: { readStatus: { operator: "is", value: "IN_PROGRESS" } },
           }),
-          ...homeOpts,
         }
       ).catch(() => ({ content: [] as KomgaSeries[] })),
       this.fetch<LibraryResponse<KomgaBook>>(
@@ -419,23 +400,19 @@ export class KomgaProvider implements IMediaProvider {
           body: JSON.stringify({
             condition: { readStatus: { operator: "is", value: "IN_PROGRESS" } },
           }),
-          ...homeOpts,
         }
       ).catch(() => ({ content: [] as KomgaBook[] })),
       this.fetch<LibraryResponse<KomgaBook>>(
         "books/latest",
-        { page: "0", size: "10", media_status: "READY" },
-        { ...homeOpts }
+        { page: "0", size: "10", media_status: "READY" }
       ).catch(() => ({ content: [] as KomgaBook[] })),
       this.fetch<LibraryResponse<KomgaBook>>(
         "books/ondeck",
-        { page: "0", size: "10", media_status: "READY" },
-        { ...homeOpts }
+        { page: "0", size: "10", media_status: "READY" }
       ).catch(() => ({ content: [] as KomgaBook[] })),
       this.fetch<LibraryResponse<KomgaSeries>>(
         "series/latest",
-        { page: "0", size: "10", media_status: "READY" },
-        { ...homeOpts }
+        { page: "0", size: "10", media_status: "READY" }
       ).catch(() => ({ content: [] as KomgaSeries[] })),
     ]);
     return {

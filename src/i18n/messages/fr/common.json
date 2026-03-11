@@ -134,7 +134,9 @@
       },
       "error": {
         "title": "Erreur lors de la sauvegarde de la configuration",
-        "message": "Une erreur est survenue lors de la sauvegarde de la configuration"
+        "message": "Une erreur est survenue lors de la sauvegarde de la configuration",
+        "connectionTitle": "Erreur de connexion",
+        "connectionMessage": "Impossible de se connecter au serveur Komga. Vérifiez l'URL et les identifiants."
       }
     },
     "cache": {
@@ -359,7 +361,6 @@
   "errors": {
     "MONGODB_MISSING_URI": "URI MongoDB manquante",
     "MONGODB_CONNECTION_FAILED": "Erreur lors de la connexion à MongoDB",
-
     "AUTH_UNAUTHENTICATED": "Non authentifié",
     "AUTH_INVALID_CREDENTIALS": "Identifiants invalides",
     "AUTH_PASSWORD_NOT_STRONG": "Le mot de passe n'est pas assez fort",
@@ -369,7 +370,6 @@
     "AUTH_LOGOUT_ERROR": "Erreur lors de la déconnexion",
     "AUTH_LOGIN_ERROR": "Erreur lors de la connexion",
     "AUTH_REGISTER_ERROR": "Erreur lors de l'inscription",
-
     "KOMGA_MISSING_CONFIG": "Configuration Komga manquante",
     "KOMGA_MISSING_CREDENTIALS": "Identifiants Komga manquants",
     "KOMGA_CONNECTION_ERROR": "Erreur de connexion au serveur Komga",
@@ -378,25 +378,20 @@
     "STRIPSTREAM_MISSING_CONFIG": "Configuration Stripstream Librarian manquante",
     "STRIPSTREAM_CONNECTION_ERROR": "Erreur de connexion à Stripstream Librarian",
     "STRIPSTREAM_HTTP_ERROR": "Erreur HTTP lors de la communication avec Stripstream Librarian",
-
     "CONFIG_SAVE_ERROR": "Erreur lors de la sauvegarde de la configuration",
     "CONFIG_FETCH_ERROR": "Erreur lors de la récupération de la configuration",
     "CONFIG_TTL_SAVE_ERROR": "Erreur lors de la sauvegarde des TTL",
     "CONFIG_TTL_FETCH_ERROR": "Erreur lors de la récupération des TTL",
-
     "LIBRARY_NOT_FOUND": "Bibliothèque introuvable",
     "LIBRARY_FETCH_ERROR": "Erreur lors de la récupération de la bibliothèque",
     "LIBRARY_SCAN_ERROR": "Erreur lors de l'analyse de la bibliothèque",
-
     "SERIES_FETCH_ERROR": "Erreur lors de la récupération des séries",
     "SERIES_NO_BOOKS_FOUND": "Aucun livre trouvé dans la série",
-
     "BOOK_NOT_FOUND": "Livre introuvable",
     "BOOK_PROGRESS_UPDATE_ERROR": "Erreur lors de la mise à jour de la progression",
     "BOOK_PROGRESS_DELETE_ERROR": "Erreur lors de la suppression de la progression",
     "BOOK_PAGES_FETCH_ERROR": "Erreur lors de la récupération des pages du livre",
     "BOOK_DOWNLOAD_CANCELLED": "Téléchargement du livre annulé",
-
     "FAVORITE_ADD_ERROR": "Erreur lors de l'ajout aux favoris",
     "FAVORITE_DELETE_ERROR": "Erreur lors de la suppression des favoris",
     "FAVORITE_FETCH_ERROR": "Erreur lors de la récupération des favoris",
@@ -404,26 +399,19 @@
     "FAVORITE_NETWORK_ERROR": "Erreur réseau lors de l'accès aux favoris",
     "FAVORITE_SERVER_ERROR": "Erreur serveur lors de l'accès aux favoris",
     "FAVORITE_STATUS_CHECK_ERROR": "Erreur lors de la vérification du statut des favoris",
-
     "PREFERENCES_FETCH_ERROR": "Erreur lors de la récupération des préférences",
     "PREFERENCES_UPDATE_ERROR": "Erreur lors de la mise à jour des préférences",
     "PREFERENCES_CONTEXT_ERROR": "Erreur de contexte des préférences",
-
     "UI_TABS_TRIGGER_ERROR": "Erreur lors du déclenchement des onglets",
     "UI_TABS_CONTENT_ERROR": "Erreur lors du chargement du contenu des onglets",
-
     "IMAGE_FETCH_ERROR": "Erreur lors de la récupération de l'image",
-
     "HOME_FETCH_ERROR": "Erreur lors de la récupération de l'accueil",
-
     "MIDDLEWARE_UNAUTHORIZED": "Non autorisé",
     "MIDDLEWARE_INVALID_TOKEN": "Jeton d'authentification invalide",
     "MIDDLEWARE_INVALID_SESSION": "Session invalide",
-
     "CLIENT_FETCH_ERROR": "Erreur lors de la récupération des données",
     "CLIENT_NETWORK_ERROR": "Erreur réseau",
     "CLIENT_REQUEST_FAILED": "La requête a échoué",
-
     "GENERIC_ERROR": "Une erreur est survenue"
   },
   "reader": {

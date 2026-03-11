@@ -134,7 +134,9 @@
       },
       "error": {
         "title": "Error saving configuration",
-        "message": "An error occurred while saving the configuration"
+        "message": "An error occurred while saving the configuration",
+        "connectionTitle": "Connection error",
+        "connectionMessage": "Unable to connect to the Komga server. Check the URL and credentials."
       }
     },
     "cache": {
@@ -361,7 +363,6 @@
   "errors": {
     "MONGODB_MISSING_URI": "MongoDB URI missing",
     "MONGODB_CONNECTION_FAILED": "MongoDB connection failed",
-
     "AUTH_UNAUTHENTICATED": "Unauthenticated",
     "AUTH_INVALID_CREDENTIALS": "Invalid credentials",
     "AUTH_PASSWORD_NOT_STRONG": "Password is not strong enough",
@@ -371,7 +372,6 @@
     "AUTH_LOGOUT_ERROR": "Error during logout",
     "AUTH_LOGIN_ERROR": "Error during login",
     "AUTH_REGISTER_ERROR": "Error during registration",
-
     "KOMGA_MISSING_CONFIG": "Komga configuration missing",
     "KOMGA_MISSING_CREDENTIALS": "Komga credentials missing",
     "KOMGA_CONNECTION_ERROR": "Error connecting to Komga server",
@@ -380,25 +380,20 @@
     "STRIPSTREAM_MISSING_CONFIG": "Stripstream Librarian configuration missing",
     "STRIPSTREAM_CONNECTION_ERROR": "Error connecting to Stripstream Librarian",
     "STRIPSTREAM_HTTP_ERROR": "HTTP error while communicating with Stripstream Librarian",
-
     "CONFIG_SAVE_ERROR": "Error saving configuration",
     "CONFIG_FETCH_ERROR": "Error fetching configuration",
     "CONFIG_TTL_SAVE_ERROR": "Error saving TTL configuration",
     "CONFIG_TTL_FETCH_ERROR": "Error fetching TTL configuration",
-
     "LIBRARY_NOT_FOUND": "Library not found",
     "LIBRARY_FETCH_ERROR": "Error fetching library",
     "LIBRARY_SCAN_ERROR": "Error scanning library",
-
     "SERIES_FETCH_ERROR": "Error fetching series",
     "SERIES_NO_BOOKS_FOUND": "No books found in series",
-
     "BOOK_NOT_FOUND": "Book not found",
     "BOOK_PROGRESS_UPDATE_ERROR": "Error updating reading progress",
     "BOOK_PROGRESS_DELETE_ERROR": "Error deleting reading progress",
     "BOOK_PAGES_FETCH_ERROR": "Error fetching book pages",
     "BOOK_DOWNLOAD_CANCELLED": "Book download cancelled",
-
     "FAVORITE_ADD_ERROR": "Error adding to favorites",
     "FAVORITE_DELETE_ERROR": "Error removing from favorites",
     "FAVORITE_FETCH_ERROR": "Error fetching favorites",
@@ -406,26 +401,19 @@
     "FAVORITE_NETWORK_ERROR": "Network error while accessing favorites",
     "FAVORITE_SERVER_ERROR": "Server error while accessing favorites",
     "FAVORITE_STATUS_CHECK_ERROR": "Error checking favorites status",
-
     "PREFERENCES_FETCH_ERROR": "Error fetching preferences",
     "PREFERENCES_UPDATE_ERROR": "Error updating preferences",
     "PREFERENCES_CONTEXT_ERROR": "Preferences context error",
-
     "UI_TABS_TRIGGER_ERROR": "Error triggering tabs",
     "UI_TABS_CONTENT_ERROR": "Error loading tabs content",
-
     "IMAGE_FETCH_ERROR": "Error fetching image",
-
     "HOME_FETCH_ERROR": "Error fetching home page",
-
     "MIDDLEWARE_UNAUTHORIZED": "Unauthorized",
     "MIDDLEWARE_INVALID_TOKEN": "Invalid authentication token",
     "MIDDLEWARE_INVALID_SESSION": "Invalid session",
-
     "CLIENT_FETCH_ERROR": "Error fetching data",
     "CLIENT_NETWORK_ERROR": "Network error",
     "CLIENT_REQUEST_FAILED": "Request failed",
-
     "GENERIC_ERROR": "An error occurred"
   },
   "reader": {

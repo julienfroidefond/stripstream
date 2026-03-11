@@ -39,7 +39,7 @@ export class ConfigDBService {
 
       return config as KomgaConfig;
     } catch (error) {
-      if (error instanceof AppError) {
+if (error instanceof AppError) {
         throw error;
       }
       throw new AppError(ERROR_CODES.CONFIG.SAVE_ERROR, {}, error);
