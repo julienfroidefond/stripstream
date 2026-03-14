@@ -195,34 +195,58 @@ export class StripstreamProvider implements IMediaProvider {
   }
 
   async getHomeData(): Promise<HomeData> {
-    // Stripstream has no "in-progress" filter — show recent books and first library's series
     const homeOpts = { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] };
-    const [booksPage, libraries] = await Promise.allSettled([
+    const [ongoingBooksPage, booksPage, libraries] = await Promise.allSettled([
+      this.client.fetch<StripstreamBooksPage>("books", { limit: "10", reading_status: "reading" }, homeOpts),
       this.client.fetch<StripstreamBooksPage>("books", { limit: "10" }, homeOpts),
       this.client.fetch<StripstreamLibraryResponse[]>("libraries", undefined, { revalidate: CACHE_TTL_LONG, tags: [HOME_CACHE_TAG] }),
     ]);
+
+    const ongoingBooks = ongoingBooksPage.status === "fulfilled"
+      ? ongoingBooksPage.value.items.map(StripstreamAdapter.toNormalizedBook)
+      : [];
 
     const books = booksPage.status === "fulfilled"
       ? booksPage.value.items.map(StripstreamAdapter.toNormalizedBook)
       : [];
 
+    // Derive ongoing series from ongoing books (series with at least one book being read)
+    const ongoingSeriesNames = ongoingBooksPage.status === "fulfilled"
+      ? Array.from(new Set(ongoingBooksPage.value.items.filter((b) => b.series).map((b) => b.series!)))
+      : [];
+
+    let ongoingSeries: NormalizedSeries[] = [];
     let latestSeries: NormalizedSeries[] = [];
     if (libraries.status === "fulfilled" && libraries.value.length > 0) {
-      try {
-        const seriesPage = await this.client.fetch<StripstreamSeriesPage>(
-          `libraries/${libraries.value[0].id}/series`,
-          { limit: "10" },
-          homeOpts
-        );
-        latestSeries = seriesPage.items.map(StripstreamAdapter.toNormalizedSeries);
-      } catch {
-        latestSeries = [];
-      }
+      const libs = libraries.value;
+
+      // Fetch all series from all libraries for ongoing matching and latest
+      const allSeriesResults = await Promise.allSettled(
+        libs.map((lib) =>
+          this.client.fetch<StripstreamSeriesPage>(
+            `libraries/${lib.id}/series`,
+            { limit: "200" },
+            homeOpts
+          )
+        )
+      );
+      const allSeries = allSeriesResults
+        .filter((r): r is PromiseFulfilledResult<StripstreamSeriesPage> => r.status === "fulfilled")
+        .flatMap((r) => r.value.items);
+
+      ongoingSeries = allSeries
+        .filter((s) => ongoingSeriesNames.includes(s.name))
+        .map(StripstreamAdapter.toNormalizedSeries)
+        .slice(0, 10);
+
+      latestSeries = allSeries
+        .map(StripstreamAdapter.toNormalizedSeries)
+        .slice(0, 10);
     }
 
     return {
-      ongoing: latestSeries,
-      ongoingBooks: books,
+      ongoing: ongoingSeries,
+      ongoingBooks: ongoingBooks,
       recentlyRead: books,
       onDeck: [],
       latestSeries,
