@@ -2,6 +2,7 @@ version: "3.8"
 
 services:
   stripstream-app:
+    image: julienfroidefond32/stripstream:latest
     build:
       context: .
       dockerfile: Dockerfile

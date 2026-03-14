@@ -1,26 +1,30 @@
-name: Deploy with Docker Compose
+name: Build, Push & Deploy
 
 on:
   push:
     branches:
-      - main # adapte la branche que tu veux déployer
+      - main
 
 jobs:
   deploy:
-    runs-on: mac-orbstack-runner # le nom que tu as donné au runner
+    runs-on: mac-orbstack-runner
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Deploy stack
+      - name: Login to DockerHub
+        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
+      - name: Build Docker image
         env:
           DOCKER_BUILDKIT: 1
-          COMPOSE_DOCKER_CLI_BUILD: 1
-          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
-          NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }}
-          ADMIN_DEFAULT_PASSWORD: ${{ secrets.ADMIN_DEFAULT_PASSWORD }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          PRISMA_DATA_PATH: ${{ vars.PRISMA_DATA_PATH }}
-          NODE_ENV: production
+        run: docker build -t julienfroidefond32/stripstream:latest .
+
+      - name: Push to DockerHub
+        run: docker push julienfroidefond32/stripstream:latest
+
+      - name: Pull new image and restart container
         run: |
-          docker compose up -d --build
+          docker pull julienfroidefond32/stripstream:latest
+          cd /Users/julienfroidefond/Sites/docker-stack
+          ./scripts/stack.sh up stripstream
