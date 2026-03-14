@@ -28,3 +28,6 @@ jobs:
           docker pull julienfroidefond32/stripstream:latest
           cd /Users/julienfroidefond/Sites/docker-stack
           ./scripts/stack.sh up stripstream
+
+      - name: Cleanup old images
+        run: docker image prune -f
