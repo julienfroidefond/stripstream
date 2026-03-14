@@ -3,6 +3,7 @@ import { ERROR_CODES } from "@/constants/errorCodes";
 import logger from "@/lib/logger";
 
 const TIMEOUT_MS = 15000;
+const IMAGE_TIMEOUT_MS = 60000;
 
 interface FetchErrorLike { code?: string; cause?: { code?: string } }
 
@@ -149,7 +150,7 @@ export class StripstreamClient {
       Accept: "image/webp, image/jpeg, image/png, */*",
     });
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
+    const timeoutId = setTimeout(() => controller.abort(), IMAGE_TIMEOUT_MS);
     try {
       const response = await fetch(url, { headers, signal: controller.signal });
       if (!response.ok) {
