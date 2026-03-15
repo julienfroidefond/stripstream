@@ -199,22 +199,19 @@ export class StripstreamProvider implements IMediaProvider {
   async getHomeData(): Promise<HomeData> {
     const homeOpts = { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] };
     const [ongoingBooksResult, ongoingSeriesResult, booksPage, libraries] = await Promise.allSettled([
-      this.client.fetch<StripstreamBookItem[]>("books/ongoing", { limit: "10" }, homeOpts),
+      this.client.fetch<StripstreamBookItem[]>("books/ongoing", { limit: "20" }, homeOpts),
       this.client.fetch<StripstreamSeriesItem[]>("series/ongoing", { limit: "10" }, homeOpts),
       this.client.fetch<StripstreamBooksPage>("books", { limit: "10" }, homeOpts),
       this.client.fetch<StripstreamLibraryResponse[]>("libraries", undefined, { revalidate: CACHE_TTL_LONG, tags: [HOME_CACHE_TAG] }),
     ]);
 
-    const onDeck = ongoingBooksResult.status === "fulfilled"
+    // /books/ongoing returns both currently reading and next unread per series
+    const ongoingBooks = ongoingBooksResult.status === "fulfilled"
       ? ongoingBooksResult.value.map(StripstreamAdapter.toNormalizedBook)
       : [];
 
     const ongoingSeries = ongoingSeriesResult.status === "fulfilled"
       ? ongoingSeriesResult.value.map(StripstreamAdapter.toNormalizedSeries)
-      : [];
-
-    const ongoingBooks = booksPage.status === "fulfilled"
-      ? booksPage.value.items.filter((b) => b.reading_status === "reading").map(StripstreamAdapter.toNormalizedBook)
       : [];
 
     const recentlyRead = booksPage.status === "fulfilled"
@@ -241,9 +238,9 @@ export class StripstreamProvider implements IMediaProvider {
 
     return {
       ongoing: ongoingSeries,
-      ongoingBooks,
+      ongoingBooks: [],
       recentlyRead,
-      onDeck,
+      onDeck: ongoingBooks,
       latestSeries,
     };
   }

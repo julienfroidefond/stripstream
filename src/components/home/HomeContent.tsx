@@ -6,12 +6,24 @@ interface HomeContentProps {
 }
 
 export function HomeContent({ data }: HomeContentProps) {
+  // Merge onDeck (next unread per series) and ongoingBooks (currently reading),
+  // deduplicate by id, onDeck first
+  const continueReading = (() => {
+    const items = [...(data.onDeck ?? []), ...(data.ongoingBooks ?? [])];
+    const seen = new Set<string>();
+    return items.filter((item) => {
+      if (seen.has(item.id)) return false;
+      seen.add(item.id);
+      return true;
+    });
+  })();
+
   return (
     <div className="space-y-10 pb-2">
-      {data.ongoingBooks && data.ongoingBooks.length > 0 && (
+      {continueReading.length > 0 && (
         <MediaRow
           titleKey="home.sections.continue_reading"
-          items={data.ongoingBooks}
+          items={continueReading}
           iconName="BookOpen"
           featuredHeader
         />
@@ -30,14 +42,6 @@ export function HomeContent({ data }: HomeContentProps) {
           titleKey="home.sections.favorites"
           items={data.favorites}
           iconName="Heart"
-        />
-      )}
-
-      {data.onDeck && data.onDeck.length > 0 && (
-        <MediaRow
-          titleKey="home.sections.up_next"
-          items={data.onDeck}
-          iconName="Clock"
         />
       )}
 
