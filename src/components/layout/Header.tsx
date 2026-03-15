@@ -51,7 +51,7 @@ export function Header({
         <div className="mr-2 flex items-center md:mr-4">
           <a className="mr-2 flex items-center md:mr-6" href="/">
             <span className="inline-flex flex-col leading-none">
-              <span className="bg-gradient-to-r from-primary via-cyan-500 to-fuchsia-500 bg-clip-text text-sm font-bold tracking-[0.06em] text-transparent sm:text-lg sm:tracking-[0.08em]">
+              <span className="bg-gradient-to-r from-primary via-cyan-500 to-fuchsia-500 bg-clip-text text-base font-bold tracking-[0.06em] text-transparent sm:text-lg sm:tracking-[0.08em]">
                 StripStream
               </span>
               <span className="mt-1 hidden text-[10px] font-medium uppercase tracking-[0.22em] text-foreground/70 sm:inline">
