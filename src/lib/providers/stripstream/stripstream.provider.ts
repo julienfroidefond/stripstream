@@ -86,6 +86,11 @@ export class StripstreamProvider implements IMediaProvider {
         revalidate: CACHE_TTL_MED,
       });
       if (!book.series) return null;
+
+      // Try to find series in library to get real book counts
+      const seriesInfo = await this.findSeriesByName(book.series, book.library_id);
+      if (seriesInfo) return seriesInfo;
+
       return {
         id: seriesId,
         name: book.series,
@@ -108,6 +113,10 @@ export class StripstreamProvider implements IMediaProvider {
         );
         if (!page.items.length) return null;
         const firstBook = page.items[0];
+
+        const seriesInfo = await this.findSeriesByName(seriesId, firstBook.library_id);
+        if (seriesInfo) return seriesInfo;
+
         return {
           id: firstBook.id,
           name: seriesId,
@@ -124,6 +133,21 @@ export class StripstreamProvider implements IMediaProvider {
         return null;
       }
     }
+  }
+
+  private async findSeriesByName(seriesName: string, libraryId: string): Promise<NormalizedSeries | null> {
+    try {
+      const seriesPage = await this.client.fetch<StripstreamSeriesPage>(
+        `libraries/${libraryId}/series`,
+        { q: seriesName, limit: "10" },
+        { revalidate: CACHE_TTL_MED }
+      );
+      const match = seriesPage.items.find((s) => s.name === seriesName);
+      if (match) return StripstreamAdapter.toNormalizedSeries(match);
+    } catch {
+      // ignore
+    }
+    return null;
   }
 
   async getBooks(filter: BookListFilter): Promise<NormalizedBooksPage> {
