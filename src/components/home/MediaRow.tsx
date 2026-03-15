@@ -7,7 +7,7 @@ import { SeriesCover } from "../ui/series-cover";
 import { useTranslate } from "@/hooks/useTranslate";
 import { ScrollContainer } from "@/components/ui/scroll-container";
 import { Section } from "@/components/ui/section";
-import { History, Sparkles, Clock, LibraryBig, BookOpen } from "lucide-react";
+import { History, Sparkles, Clock, LibraryBig, BookOpen, Heart } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { useBookOfflineStatus } from "@/hooks/useBookOfflineStatus";
 import { cn } from "@/lib/utils";
@@ -25,6 +25,7 @@ const iconMap = {
   Clock,
   Sparkles,
   History,
+  Heart,
 };
 
 function isSeries(item: NormalizedSeries | NormalizedBook): item is NormalizedSeries {

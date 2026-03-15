@@ -35,6 +35,7 @@
     },
     "title": "Home",
     "sections": {
+      "favorites": "Favorite series",
       "continue_series": "Continue series",
       "continue_reading": "Continue reading",
       "up_next": "Up next",

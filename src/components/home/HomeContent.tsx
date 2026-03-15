@@ -25,6 +25,14 @@ export function HomeContent({ data }: HomeContentProps) {
         />
       )}
 
+      {data.favorites && data.favorites.length > 0 && (
+        <MediaRow
+          titleKey="home.sections.favorites"
+          items={data.favorites}
+          iconName="Heart"
+        />
+      )}
+
       {data.onDeck && data.onDeck.length > 0 && (
         <MediaRow
           titleKey="home.sections.up_next"

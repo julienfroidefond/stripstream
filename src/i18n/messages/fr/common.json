@@ -35,6 +35,7 @@
     },
     "title": "Accueil",
     "sections": {
+      "favorites": "Séries favorites",
       "continue_series": "Continuer la série",
       "continue_reading": "Continuer la lecture",
       "up_next": "À suivre",

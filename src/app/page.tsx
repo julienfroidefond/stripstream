@@ -4,6 +4,7 @@ import { HomeClientWrapper } from "@/components/home/HomeClientWrapper";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
+import { FavoritesService } from "@/lib/services/favorites.service";
 import { redirect } from "next/navigation";
 
 export default async function HomePage() {
@@ -11,7 +12,12 @@ export default async function HomePage() {
     const provider = await getProvider();
     if (!provider) redirect("/settings");
 
-    const data = await provider.getHomeData();
+    const [homeData, favorites] = await Promise.all([
+      provider.getHomeData(),
+      FavoritesService.getFavorites(),
+    ]);
+
+    const data = { ...homeData, favorites };
 
     return (
       <HomeClientWrapper>
