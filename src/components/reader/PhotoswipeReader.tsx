@@ -80,10 +80,26 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
   });
 
   // Activer le zoom dans le reader en enlevant la classe no-pinch-zoom
+  // et reset le zoom lors des changements d'orientation (iOS applique un zoom automatique)
   useEffect(() => {
     document.body.classList.remove("no-pinch-zoom");
 
+    const handleOrientationChange = () => {
+      const viewport = document.querySelector('meta[name="viewport"]');
+      if (viewport) {
+        const original = viewport.getAttribute("content") || "";
+        viewport.setAttribute("content", original + ", maximum-scale=1");
+        // Restaurer après que iOS ait appliqué le nouveau layout
+        requestAnimationFrame(() => {
+          viewport.setAttribute("content", original);
+        });
+      }
+    };
+
+    window.addEventListener("orientationchange", handleOrientationChange);
+
     return () => {
+      window.removeEventListener("orientationchange", handleOrientationChange);
       document.body.classList.add("no-pinch-zoom");
     };
   }, []);

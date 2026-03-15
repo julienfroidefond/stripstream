@@ -19,13 +19,9 @@ export function useTouchNavigation({
 
   // Helper pour vérifier si la page est zoomée (zoom natif du navigateur)
   const isZoomed = useCallback(() => {
-    // Utiliser visualViewport.scale pour détecter le zoom natif
-    // Si scale > 1, la page est zoomée
     if (window.visualViewport) {
       return window.visualViewport.scale > 1.05;
     }
-    // Fallback pour les navigateurs qui ne supportent pas visualViewport
-    // Comparer la taille de la fenêtre avec la taille réelle
     return window.innerWidth !== window.screen.width;
   }, []);
 
