@@ -222,11 +222,11 @@ export class StripstreamProvider implements IMediaProvider {
 
   async getHomeData(): Promise<HomeData> {
     const homeOpts = { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] };
-    const [ongoingBooksResult, ongoingSeriesResult, booksPage, libraries] = await Promise.allSettled([
+    const [ongoingBooksResult, ongoingSeriesResult, booksPage, latestSeriesResult] = await Promise.allSettled([
       this.client.fetch<StripstreamBookItem[]>("books/ongoing", { limit: "20" }, homeOpts),
       this.client.fetch<StripstreamSeriesItem[]>("series/ongoing", { limit: "10" }, homeOpts),
-      this.client.fetch<StripstreamBooksPage>("books", { limit: "10" }, homeOpts),
-      this.client.fetch<StripstreamLibraryResponse[]>("libraries", undefined, { revalidate: CACHE_TTL_LONG, tags: [HOME_CACHE_TAG] }),
+      this.client.fetch<StripstreamBooksPage>("books", { sort: "latest", limit: "10" }, homeOpts),
+      this.client.fetch<StripstreamSeriesPage>("series", { sort: "latest", limit: "10" }, homeOpts),
     ]);
 
     // /books/ongoing returns both currently reading and next unread per series
@@ -242,23 +242,9 @@ export class StripstreamProvider implements IMediaProvider {
       ? booksPage.value.items.map(StripstreamAdapter.toNormalizedBook)
       : [];
 
-    let latestSeries: NormalizedSeries[] = [];
-    if (libraries.status === "fulfilled" && libraries.value.length > 0) {
-      const allSeriesResults = await Promise.allSettled(
-        libraries.value.map((lib) =>
-          this.client.fetch<StripstreamSeriesPage>(
-            `libraries/${lib.id}/series`,
-            { limit: "10" },
-            homeOpts
-          )
-        )
-      );
-      latestSeries = allSeriesResults
-        .filter((r): r is PromiseFulfilledResult<StripstreamSeriesPage> => r.status === "fulfilled")
-        .flatMap((r) => r.value.items)
-        .map(StripstreamAdapter.toNormalizedSeries)
-        .slice(0, 10);
-    }
+    const latestSeries = latestSeriesResult.status === "fulfilled"
+      ? latestSeriesResult.value.items.map(StripstreamAdapter.toNormalizedSeries)
+      : [];
 
     return {
       ongoing: ongoingSeries,
