@@ -34,11 +34,14 @@ export class StripstreamAdapter {
       volume: book.volume ?? null,
       pageCount: book.page_count ?? 0,
       thumbnailUrl: `/api/stripstream/images/books/${book.id}/thumbnail`,
-      readProgress: {
-        page: book.reading_current_page ?? null,
-        completed: book.reading_status === "read",
-        lastReadAt: book.reading_last_read_at ?? null,
-      },
+      readProgress:
+        book.reading_status === "unread" && !book.reading_current_page
+          ? null
+          : {
+              page: book.reading_current_page ?? null,
+              completed: book.reading_status === "read",
+              lastReadAt: book.reading_last_read_at ?? null,
+            },
     };
   }
 
@@ -52,11 +55,14 @@ export class StripstreamAdapter {
       volume: book.volume ?? null,
       pageCount: book.page_count ?? 0,
       thumbnailUrl: `/api/stripstream/images/books/${book.id}/thumbnail`,
-      readProgress: {
-        page: book.reading_current_page ?? null,
-        completed: book.reading_status === "read",
-        lastReadAt: book.reading_last_read_at ?? null,
-      },
+      readProgress:
+        book.reading_status === "unread" && !book.reading_current_page
+          ? null
+          : {
+              page: book.reading_current_page ?? null,
+              completed: book.reading_status === "read",
+              lastReadAt: book.reading_last_read_at ?? null,
+            },
     };
   }
 
