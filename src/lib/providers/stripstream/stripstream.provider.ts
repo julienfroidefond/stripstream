@@ -18,6 +18,8 @@ import type {
   StripstreamLibraryResponse,
   StripstreamBooksPage,
   StripstreamSeriesPage,
+  StripstreamBookItem,
+  StripstreamSeriesItem,
   StripstreamBookDetails,
   StripstreamReadingProgressResponse,
   StripstreamSearchResponse,
@@ -196,59 +198,52 @@ export class StripstreamProvider implements IMediaProvider {
 
   async getHomeData(): Promise<HomeData> {
     const homeOpts = { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] };
-    const [ongoingBooksPage, booksPage, libraries] = await Promise.allSettled([
-      this.client.fetch<StripstreamBooksPage>("books", { limit: "10", reading_status: "reading" }, homeOpts),
+    const [ongoingBooksResult, ongoingSeriesResult, booksPage, libraries] = await Promise.allSettled([
+      this.client.fetch<StripstreamBookItem[]>("books/ongoing", { limit: "10" }, homeOpts),
+      this.client.fetch<StripstreamSeriesItem[]>("series/ongoing", { limit: "10" }, homeOpts),
       this.client.fetch<StripstreamBooksPage>("books", { limit: "10" }, homeOpts),
       this.client.fetch<StripstreamLibraryResponse[]>("libraries", undefined, { revalidate: CACHE_TTL_LONG, tags: [HOME_CACHE_TAG] }),
     ]);
 
-    const ongoingBooks = ongoingBooksPage.status === "fulfilled"
-      ? ongoingBooksPage.value.items.map(StripstreamAdapter.toNormalizedBook)
+    const onDeck = ongoingBooksResult.status === "fulfilled"
+      ? ongoingBooksResult.value.map(StripstreamAdapter.toNormalizedBook)
       : [];
 
-    const books = booksPage.status === "fulfilled"
+    const ongoingSeries = ongoingSeriesResult.status === "fulfilled"
+      ? ongoingSeriesResult.value.map(StripstreamAdapter.toNormalizedSeries)
+      : [];
+
+    const ongoingBooks = booksPage.status === "fulfilled"
+      ? booksPage.value.items.filter((b) => b.reading_status === "reading").map(StripstreamAdapter.toNormalizedBook)
+      : [];
+
+    const recentlyRead = booksPage.status === "fulfilled"
       ? booksPage.value.items.map(StripstreamAdapter.toNormalizedBook)
       : [];
 
-    // Derive ongoing series from ongoing books (series with at least one book being read)
-    const ongoingSeriesNames = ongoingBooksPage.status === "fulfilled"
-      ? Array.from(new Set(ongoingBooksPage.value.items.filter((b) => b.series).map((b) => b.series!)))
-      : [];
-
-    let ongoingSeries: NormalizedSeries[] = [];
     let latestSeries: NormalizedSeries[] = [];
     if (libraries.status === "fulfilled" && libraries.value.length > 0) {
-      const libs = libraries.value;
-
-      // Fetch all series from all libraries for ongoing matching and latest
       const allSeriesResults = await Promise.allSettled(
-        libs.map((lib) =>
+        libraries.value.map((lib) =>
           this.client.fetch<StripstreamSeriesPage>(
             `libraries/${lib.id}/series`,
-            { limit: "200" },
+            { limit: "10" },
             homeOpts
           )
         )
       );
-      const allSeries = allSeriesResults
+      latestSeries = allSeriesResults
         .filter((r): r is PromiseFulfilledResult<StripstreamSeriesPage> => r.status === "fulfilled")
-        .flatMap((r) => r.value.items);
-
-      ongoingSeries = allSeries
-        .filter((s) => ongoingSeriesNames.includes(s.name))
-        .map(StripstreamAdapter.toNormalizedSeries)
-        .slice(0, 10);
-
-      latestSeries = allSeries
+        .flatMap((r) => r.value.items)
         .map(StripstreamAdapter.toNormalizedSeries)
         .slice(0, 10);
     }
 
     return {
       ongoing: ongoingSeries,
-      ongoingBooks: ongoingBooks,
-      recentlyRead: books,
-      onDeck: [],
+      ongoingBooks,
+      recentlyRead,
+      onDeck,
       latestSeries,
     };
   }
