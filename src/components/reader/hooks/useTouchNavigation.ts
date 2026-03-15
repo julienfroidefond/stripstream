@@ -22,7 +22,7 @@ export function useTouchNavigation({
     // Utiliser visualViewport.scale pour détecter le zoom natif
     // Si scale > 1, la page est zoomée
     if (window.visualViewport) {
-      return window.visualViewport.scale > 1;
+      return window.visualViewport.scale > 1.05;
     }
     // Fallback pour les navigateurs qui ne supportent pas visualViewport
     // Comparer la taille de la fenêtre avec la taille réelle
