@@ -1,18 +1,18 @@
 import { useCallback, useRef, useEffect } from "react";
-import { useReadingDirection } from "./useReadingDirection";
 
 interface UseTouchNavigationProps {
   onPreviousPage: () => void;
   onNextPage: () => void;
   pswpRef: React.MutableRefObject<unknown>;
+  isRTL: boolean;
 }
 
 export function useTouchNavigation({
   onPreviousPage,
   onNextPage,
   pswpRef,
+  isRTL,
 }: UseTouchNavigationProps) {
-  const { isRTL } = useReadingDirection();
   const touchStartXRef = useRef<number | null>(null);
   const touchStartYRef = useRef<number | null>(null);
   const isPinchingRef = useRef(false);

@@ -76,6 +76,7 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
     onPreviousPage: handlePreviousPage,
     onNextPage: handleNextPage,
     pswpRef,
+    isRTL,
   });
 
   // Activer le zoom dans le reader en enlevant la classe no-pinch-zoom
