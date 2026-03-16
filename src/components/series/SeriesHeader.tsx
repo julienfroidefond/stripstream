@@ -1,6 +1,6 @@
 "use client";
 
-import { Book, BookOpen, BookMarked, Star, StarOff } from "lucide-react";
+import { Book, BookOpen, BookMarked, Star, StarOff, User } from "lucide-react";
 import type { NormalizedSeries } from "@/lib/providers/types";
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
@@ -100,6 +100,9 @@ export const SeriesHeader = ({ series, refreshSeries, initialIsFavorite }: Serie
   };
 
   const statusInfo = getReadingStatusInfo();
+  const authorsText = series.authors?.length
+    ? series.authors.map((a) => a.name).join(", ")
+    : null;
 
   return (
     <div className="relative min-h-[300px] md:h-[300px] w-screen -ml-[calc((100vw-100%)/2)] overflow-hidden">
@@ -128,6 +131,12 @@ export const SeriesHeader = ({ series, refreshSeries, initialIsFavorite }: Serie
           {/* Informations */}
           <div className="flex-1 text-white space-y-2 text-center md:text-left">
             <h1 className="text-2xl md:text-3xl font-bold">{series.name}</h1>
+            {authorsText && (
+              <p className="text-white/70 text-sm flex items-center gap-1 justify-center md:justify-start">
+                <User className="h-3.5 w-3.5 flex-shrink-0" />
+                {authorsText}
+              </p>
+            )}
             {series.summary && (
               <p className="text-white/80 line-clamp-3 text-sm md:text-base">
                 {series.summary}
@@ -158,6 +167,7 @@ export const SeriesHeader = ({ series, refreshSeries, initialIsFavorite }: Serie
           </div>
         </div>
       </div>
+
     </div>
   );
 };

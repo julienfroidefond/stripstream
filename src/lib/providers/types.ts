@@ -18,6 +18,7 @@ export interface NormalizedSeries {
   bookCount: number;
   booksReadCount: number;
   thumbnailUrl: string;
+  libraryId?: string;
   // Optional metadata (Komga-rich, Stripstream-sparse)
   summary?: string | null;
   authors?: Array<{ name: string; role: string }>;

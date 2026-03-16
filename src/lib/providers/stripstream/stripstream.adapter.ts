@@ -73,6 +73,7 @@ export class StripstreamAdapter {
       bookCount: series.book_count,
       booksReadCount: series.books_read_count,
       thumbnailUrl: `/api/stripstream/images/books/${series.first_book_id}/thumbnail`,
+      libraryId: series.library_id,
       summary: null,
       authors: [],
       genres: [],

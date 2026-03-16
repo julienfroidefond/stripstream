@@ -37,6 +37,7 @@ export class KomgaAdapter {
       bookCount: series.booksCount,
       booksReadCount: series.booksReadCount,
       thumbnailUrl: `/api/komga/images/series/${series.id}/thumbnail`,
+      libraryId: series.libraryId,
       summary: series.metadata?.summary ?? null,
       authors: series.booksMetadata?.authors ?? [],
       genres: series.metadata?.genres ?? [],

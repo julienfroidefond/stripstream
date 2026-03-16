@@ -48,6 +48,7 @@ export interface StripstreamSeriesItem {
   book_count: number;
   books_read_count: number;
   first_book_id: string;
+  library_id: string;
 }
 
 export interface StripstreamSeriesPage {
@@ -78,6 +79,15 @@ export interface StripstreamReadingProgressResponse {
 export interface StripstreamUpdateReadingProgressRequest {
   status: "unread" | "reading" | "read";
   current_page?: number | null;
+}
+
+export interface StripstreamSeriesMetadata {
+  authors: string[];
+  publishers: string[];
+  description?: string | null;
+  start_year?: number | null;
+  book_author?: string | null;
+  book_language?: string | null;
 }
 
 export interface StripstreamSearchResponse {
