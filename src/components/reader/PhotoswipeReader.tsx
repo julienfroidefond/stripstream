@@ -265,9 +265,7 @@ export function PhotoswipeReader({ book, pages, onClose, nextBook }: BookReaderP
         isDoublePage={isDoublePage}
         shouldShowDoublePage={(page) => shouldShowDoublePage(page, pages.length)}
         imageBlobUrls={imageBlobUrls}
-        getPageUrl={getPageUrl}
         isRTL={isRTL}
-        isPageLoading={isPageLoading}
       />
 
       <NavigationBar

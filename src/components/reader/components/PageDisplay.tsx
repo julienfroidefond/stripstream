@@ -7,9 +7,7 @@ interface PageDisplayProps {
   isDoublePage: boolean;
   shouldShowDoublePage: (page: number) => boolean;
   imageBlobUrls: Record<number, string>;
-  getPageUrl: (pageNum: number) => string;
   isRTL: boolean;
-  isPageLoading?: (pageNum: number) => boolean;
 }
 
 export function PageDisplay({
@@ -18,9 +16,7 @@ export function PageDisplay({
   isDoublePage,
   shouldShowDoublePage,
   imageBlobUrls,
-  getPageUrl,
   isRTL,
-  isPageLoading,
 }: PageDisplayProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -52,6 +48,21 @@ export function PageDisplay({
     setSecondPageLoading(true);
     setSecondPageHasError(false);
   }, [currentPage, isDoublePage]);
+
+  // Reset error state when blob URL becomes available
+  useEffect(() => {
+    if (imageBlobUrls[currentPage] && hasError) {
+      setHasError(false);
+      setIsLoading(true);
+    }
+  }, [imageBlobUrls[currentPage], currentPage, hasError]);
+
+  useEffect(() => {
+    if (imageBlobUrls[currentPage + 1] && secondPageHasError) {
+      setSecondPageHasError(false);
+      setSecondPageLoading(true);
+    }
+  }, [imageBlobUrls[currentPage + 1], currentPage, secondPageHasError]);
 
   return (
     <div className="relative flex w-full flex-1 items-center justify-center overflow-hidden">
@@ -99,15 +110,12 @@ export function PageDisplay({
               </svg>
               <span className="text-sm opacity-60">Image non disponible</span>
             </div>
-          ) : (
+          ) : imageBlobUrls[currentPage] ? (
             <>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                key={`page-${currentPage}-${imageBlobUrls[currentPage] || ""}`}
-                src={
-                  imageBlobUrls[currentPage] ||
-                  (isPageLoading && isPageLoading(currentPage) ? undefined : getPageUrl(currentPage))
-                }
+                key={`page-${currentPage}-${imageBlobUrls[currentPage]}`}
+                src={imageBlobUrls[currentPage]}
                 alt={`Page ${currentPage}`}
                 className={cn(
                   "max-h-full max-w-full cursor-pointer object-contain transition-opacity",
@@ -124,7 +132,7 @@ export function PageDisplay({
                 }}
               />
             </>
-          )}
+          ) : null}
         </div>
 
         {/* Page 2 (double page) */}
@@ -166,17 +174,12 @@ export function PageDisplay({
                 </svg>
                 <span className="text-sm opacity-60">Image non disponible</span>
               </div>
-            ) : (
+            ) : imageBlobUrls[currentPage + 1] ? (
               <>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  key={`page-${currentPage + 1}-${imageBlobUrls[currentPage + 1] || ""}`}
-                  src={
-                    imageBlobUrls[currentPage + 1] ||
-                    (isPageLoading && isPageLoading(currentPage + 1)
-                      ? undefined
-                      : getPageUrl(currentPage + 1))
-                  }
+                  key={`page-${currentPage + 1}-${imageBlobUrls[currentPage + 1]}`}
+                  src={imageBlobUrls[currentPage + 1]}
                   alt={`Page ${currentPage + 1}`}
                   className={cn(
                     "max-h-full max-w-full cursor-pointer object-contain transition-opacity",
@@ -193,7 +196,7 @@ export function PageDisplay({
                   }}
                 />
               </>
-            )}
+            ) : null}
           </div>
         )}
       </div>
