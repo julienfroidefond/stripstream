@@ -260,7 +260,9 @@
       "favorite": {
         "add": "Ajouté aux favoris",
         "remove": "Retiré des favoris"
-      }
+      },
+      "showMore": "Voir plus",
+      "showLess": "Voir moins"
     }
   },
   "books": {

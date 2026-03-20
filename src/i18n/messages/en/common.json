@@ -261,6 +261,8 @@
         "add": "Added to favorites",
         "remove": "Removed from favorites"
       },
+      "showMore": "Show more",
+      "showLess": "Show less",
       "toggleSidebar": "Toggle sidebar",
       "toggleTheme": "Toggle theme"
     }

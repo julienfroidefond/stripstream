@@ -24,6 +24,7 @@ interface SeriesHeaderProps {
 export const SeriesHeader = ({ series, refreshSeries, initialIsFavorite }: SeriesHeaderProps) => {
   const { toast } = useToast();
   const [isFavorite, setIsFavorite] = useState(initialIsFavorite);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const { t } = useTranslate();
 
   useEffect(() => {
@@ -105,7 +106,7 @@ export const SeriesHeader = ({ series, refreshSeries, initialIsFavorite }: Serie
     : null;
 
   return (
-    <div className="relative min-h-[300px] md:h-[300px] w-screen -ml-[calc((100vw-100%)/2)] overflow-hidden">
+    <div className="relative min-h-[300px] w-screen -ml-[calc((100vw-100%)/2)] overflow-hidden">
       {/* Image de fond */}
       <div className="absolute inset-0">
         <SeriesCover
@@ -138,9 +139,17 @@ export const SeriesHeader = ({ series, refreshSeries, initialIsFavorite }: Serie
               </p>
             )}
             {series.summary && (
-              <p className="text-white/80 line-clamp-3 text-sm md:text-base">
-                {series.summary}
-              </p>
+              <div>
+                <p className={`text-white/80 text-sm md:text-base ${isDescriptionExpanded ? "max-h-[200px] overflow-y-auto" : "line-clamp-3"}`}>
+                  {series.summary}
+                </p>
+                <button
+                  onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                  className="text-white/60 hover:text-white/90 text-xs mt-1 transition-colors"
+                >
+                  {t(isDescriptionExpanded ? "series.header.showLess" : "series.header.showMore")}
+                </button>
+              </div>
             )}
             <div className="flex items-center gap-4 mt-4 justify-center md:justify-start flex-wrap">
               <StatusBadge status={statusInfo.status} icon={statusInfo.icon}>
