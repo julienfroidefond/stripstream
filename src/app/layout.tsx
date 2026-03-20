@@ -248,6 +248,61 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           href="/images/splash/splash-2796x1290.png"
           media="(device-width: 932px) and (device-height: 430px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
         />
+        {/* iPad Mini 6 */}
+        <link
+          rel="apple-touch-startup-image"
+          href="/images/splash/splash-1488x2266.png"
+          media="(device-width: 744px) and (device-height: 1133px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+        />
+        <link
+          rel="apple-touch-startup-image"
+          href="/images/splash/splash-2266x1488.png"
+          media="(device-width: 1133px) and (device-height: 744px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+        />
+        {/* iPad Pro 11" M4 */}
+        <link
+          rel="apple-touch-startup-image"
+          href="/images/splash/splash-1668x2420.png"
+          media="(device-width: 834px) and (device-height: 1210px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+        />
+        <link
+          rel="apple-touch-startup-image"
+          href="/images/splash/splash-2420x1668.png"
+          media="(device-width: 1210px) and (device-height: 834px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+        />
+        {/* iPad Pro 13" M4 */}
+        <link
+          rel="apple-touch-startup-image"
+          href="/images/splash/splash-2064x2752.png"
+          media="(device-width: 1032px) and (device-height: 1376px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+        />
+        <link
+          rel="apple-touch-startup-image"
+          href="/images/splash/splash-2752x2064.png"
+          media="(device-width: 1376px) and (device-height: 1032px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+        />
+        {/* iPhone 16 Pro */}
+        <link
+          rel="apple-touch-startup-image"
+          href="/images/splash/splash-1206x2622.png"
+          media="(device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+        />
+        <link
+          rel="apple-touch-startup-image"
+          href="/images/splash/splash-2622x1206.png"
+          media="(device-width: 874px) and (device-height: 402px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
+        />
+        {/* iPhone 16 Pro Max */}
+        <link
+          rel="apple-touch-startup-image"
+          href="/images/splash/splash-1320x2868.png"
+          media="(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+        />
+        <link
+          rel="apple-touch-startup-image"
+          href="/images/splash/splash-2868x1320.png"
+          media="(device-width: 956px) and (device-height: 440px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
+        />
       </head>
       <body
         className={cn(

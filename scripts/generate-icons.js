@@ -9,6 +9,9 @@ const screenshotsDir = path.join(__dirname, "../public/images/screenshots");
 const splashDir = path.join(__dirname, "../public/images/splash");
 const faviconPath = path.join(__dirname, "../public/favicon.png");
 
+// Source pour les splash screens
+const splashSource = path.join(__dirname, "../public/images/Gemini_Generated_Image_wyfsoiwyfsoiwyfs.png");
+
 // Configuration des splashscreens pour différents appareils
 const splashScreens = [
   // iPad (portrait + landscape)
@@ -16,8 +19,14 @@ const splashScreens = [
   { width: 2732, height: 2048, name: "iPad Pro 12.9 landscape" },
   { width: 1668, height: 2388, name: "iPad Pro 11 portrait" },
   { width: 2388, height: 1668, name: "iPad Pro 11 landscape" },
+  { width: 1668, height: 2420, name: "iPad Pro 11 M4 portrait" },
+  { width: 2420, height: 1668, name: "iPad Pro 11 M4 landscape" },
+  { width: 2064, height: 2752, name: "iPad Pro 13 M4 portrait" },
+  { width: 2752, height: 2064, name: "iPad Pro 13 M4 landscape" },
   { width: 1536, height: 2048, name: "iPad Mini/Air portrait" },
   { width: 2048, height: 1536, name: "iPad Mini/Air landscape" },
+  { width: 1488, height: 2266, name: "iPad Mini 6 portrait" },
+  { width: 2266, height: 1488, name: "iPad Mini 6 landscape" },
   { width: 1620, height: 2160, name: "iPad 10.2 portrait" },
   { width: 2160, height: 1620, name: "iPad 10.2 landscape" },
   { width: 1640, height: 2360, name: "iPad Air 10.9 portrait" },
@@ -40,39 +49,36 @@ const splashScreens = [
   { width: 2532, height: 1170, name: "iPhone 12/13/14 landscape" },
   { width: 1284, height: 2778, name: "iPhone 12/13/14 Pro Max portrait" },
   { width: 2778, height: 1284, name: "iPhone 12/13/14 Pro Max landscape" },
-  { width: 1179, height: 2556, name: "iPhone 14 Pro portrait" },
-  { width: 2556, height: 1179, name: "iPhone 14 Pro landscape" },
+  { width: 1179, height: 2556, name: "iPhone 14 Pro/15 portrait" },
+  { width: 2556, height: 1179, name: "iPhone 14 Pro/15 landscape" },
   { width: 1290, height: 2796, name: "iPhone 14/15 Pro Max portrait" },
   { width: 2796, height: 1290, name: "iPhone 14/15 Pro Max landscape" },
-  { width: 1179, height: 2556, name: "iPhone 15 portrait" },
-  { width: 2556, height: 1179, name: "iPhone 15 landscape" },
+  { width: 1206, height: 2622, name: "iPhone 16 Pro portrait" },
+  { width: 2622, height: 1206, name: "iPhone 16 Pro landscape" },
+  { width: 1320, height: 2868, name: "iPhone 16 Pro Max portrait" },
+  { width: 2868, height: 1320, name: "iPhone 16 Pro Max landscape" },
   { width: 1170, height: 2532, name: "iPhone 16/16e portrait" },
   { width: 2532, height: 1170, name: "iPhone 16/16e landscape" },
 ];
 
 async function generateSplashScreens() {
   await fs.mkdir(splashDir, { recursive: true });
+  console.log(`\n📱 Génération des splash screens...`);
 
   for (const screen of splashScreens) {
     const outputPath = path.join(splashDir, `splash-${screen.width}x${screen.height}.png`);
-    const darkOverlay = Buffer.from(
-      `<svg width="${screen.width}" height="${screen.height}" xmlns="http://www.w3.org/2000/svg">
-        <rect width="100%" height="100%" fill="rgba(4, 8, 20, 0.22)" />
-      </svg>`
-    );
 
-    await sharp(sourceLogo)
+    await sharp(splashSource)
       .resize(screen.width, screen.height, {
         fit: "cover",
         position: "center",
       })
-      .composite([{ input: darkOverlay, blend: "over" }])
       .png({
         compressionLevel: 9,
       })
       .toFile(outputPath);
 
-    console.log(`✓ Splashscreen ${screen.name} (${screen.width}x${screen.height}) générée`);
+    console.log(`  ✓ ${screen.name} (${screen.width}x${screen.height})`);
   }
 }
 
