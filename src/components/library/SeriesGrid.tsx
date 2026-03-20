@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { SeriesCover } from "@/components/ui/series-cover";
 import { useTranslate } from "@/hooks/useTranslate";
+import { useAnonymous } from "@/contexts/AnonymousContext";
 
 interface SeriesGridProps {
   series: NormalizedSeries[];
@@ -49,6 +50,7 @@ const getReadingStatusInfo = (
 export function SeriesGrid({ series, isCompact = false }: SeriesGridProps) {
   const router = useRouter();
   const { t } = useTranslate();
+  const { isAnonymous } = useAnonymous();
 
   if (!series.length) {
     return (
@@ -73,24 +75,27 @@ export function SeriesGrid({ series, isCompact = false }: SeriesGridProps) {
           onClick={() => router.push(`/series/${seriesItem.id}`)}
           className={cn(
             "group relative aspect-[2/3] overflow-hidden rounded-xl border border-border/60 bg-card/80 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
-            seriesItem.bookCount === seriesItem.booksReadCount && "opacity-50",
+            !isAnonymous && seriesItem.bookCount === seriesItem.booksReadCount && "opacity-50",
             isCompact && "aspect-[3/4]"
           )}
         >
           <SeriesCover
             series={seriesItem}
             alt={t("series.coverAlt", { title: seriesItem.name })}
+            isAnonymous={isAnonymous}
           />
           <div className="absolute inset-x-0 bottom-0 translate-y-full space-y-2 bg-gradient-to-t from-black/75 via-black/25 to-transparent p-4 transition-transform duration-200 group-hover:translate-y-0">
             <h3 className="font-medium text-sm text-white line-clamp-2">{seriesItem.name}</h3>
             <div className="flex items-center gap-2">
-              <span
-                className={`px-2 py-0.5 rounded-full text-xs ${
-                  getReadingStatusInfo(seriesItem, t).className
-                }`}
-              >
-                {getReadingStatusInfo(seriesItem, t).label}
-              </span>
+              {!isAnonymous && (
+                <span
+                  className={`px-2 py-0.5 rounded-full text-xs ${
+                    getReadingStatusInfo(seriesItem, t).className
+                  }`}
+                >
+                  {getReadingStatusInfo(seriesItem, t).label}
+                </span>
+              )}
               <span className="text-xs text-white/80">
                 {t("series.books", { count: seriesItem.bookCount })}
               </span>

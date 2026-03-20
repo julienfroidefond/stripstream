@@ -18,4 +18,5 @@ export interface BookCoverProps extends BaseCoverProps {
 
 export interface SeriesCoverProps extends BaseCoverProps {
   series: NormalizedSeries;
+  isAnonymous?: boolean;
 }

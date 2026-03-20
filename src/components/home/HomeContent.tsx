@@ -3,9 +3,10 @@ import type { HomeData } from "@/types/home";
 
 interface HomeContentProps {
   data: HomeData;
+  isAnonymous?: boolean;
 }
 
-export function HomeContent({ data }: HomeContentProps) {
+export function HomeContent({ data, isAnonymous = false }: HomeContentProps) {
   // Merge onDeck (next unread per series) and ongoingBooks (currently reading),
   // deduplicate by id, onDeck first
   const continueReading = (() => {
@@ -20,7 +21,7 @@ export function HomeContent({ data }: HomeContentProps) {
 
   return (
     <div className="space-y-10 pb-2">
-      {continueReading.length > 0 && (
+      {!isAnonymous && continueReading.length > 0 && (
         <MediaRow
           titleKey="home.sections.continue_reading"
           items={continueReading}
@@ -29,7 +30,7 @@ export function HomeContent({ data }: HomeContentProps) {
         />
       )}
 
-      {data.ongoing && data.ongoing.length > 0 && (
+      {!isAnonymous && data.ongoing && data.ongoing.length > 0 && (
         <MediaRow
           titleKey="home.sections.continue_series"
           items={data.ongoing}

@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import ClientLayout from "@/components/layout/ClientLayout";
 import { PreferencesService } from "@/lib/services/preferences.service";
 import { PreferencesProvider } from "@/contexts/PreferencesContext";
+import { AnonymousProvider } from "@/contexts/AnonymousContext";
 import { I18nProvider } from "@/components/providers/I18nProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { cookies, headers } from "next/headers";
@@ -313,13 +314,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <AuthProvider>
           <I18nProvider locale={locale}>
             <PreferencesProvider initialPreferences={preferences}>
-              <ClientLayout
-                initialLibraries={libraries}
-                initialFavorites={favorites}
-                userIsAdmin={userIsAdmin}
-              >
-                {children}
-              </ClientLayout>
+              <AnonymousProvider>
+                <ClientLayout
+                  initialLibraries={libraries}
+                  initialFavorites={favorites}
+                  userIsAdmin={userIsAdmin}
+                >
+                  {children}
+                </ClientLayout>
+              </AnonymousProvider>
             </PreferencesProvider>
           </I18nProvider>
         </AuthProvider>

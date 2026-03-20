@@ -34,6 +34,7 @@ export class PreferencesService {
       return {
         showThumbnails: preferences.showThumbnails,
         showOnlyUnread: preferences.showOnlyUnread,
+        anonymousMode: preferences.anonymousMode,
         displayMode: {
           ...defaultPreferences.displayMode,
           ...displayMode,
@@ -72,6 +73,8 @@ export class PreferencesService {
       }
       if (preferences.readerPrefetchCount !== undefined)
         updateData.readerPrefetchCount = preferences.readerPrefetchCount;
+      if (preferences.anonymousMode !== undefined)
+        updateData.anonymousMode = preferences.anonymousMode;
 
       const updatedPreferences = await prisma.preferences.upsert({
         where: { userId },
@@ -80,6 +83,7 @@ export class PreferencesService {
           userId,
           showThumbnails: preferences.showThumbnails ?? defaultPreferences.showThumbnails,
           showOnlyUnread: preferences.showOnlyUnread ?? defaultPreferences.showOnlyUnread,
+          anonymousMode: preferences.anonymousMode ?? defaultPreferences.anonymousMode,
           displayMode: preferences.displayMode ?? defaultPreferences.displayMode,
           background: (preferences.background ??
             defaultPreferences.background) as unknown as Prisma.InputJsonValue,
@@ -90,6 +94,7 @@ export class PreferencesService {
       return {
         showThumbnails: updatedPreferences.showThumbnails,
         showOnlyUnread: updatedPreferences.showOnlyUnread,
+        anonymousMode: updatedPreferences.anonymousMode,
         displayMode: updatedPreferences.displayMode as UserPreferences["displayMode"],
         background: {
           ...defaultPreferences.background,

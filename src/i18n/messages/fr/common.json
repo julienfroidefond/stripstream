@@ -450,6 +450,9 @@
   "header": {
     "toggleSidebar": "Afficher/masquer le menu latéral",
     "toggleTheme": "Changer le thème",
+    "anonymousMode": "Mode anonyme",
+    "anonymousModeOn": "Mode anonyme activé",
+    "anonymousModeOff": "Mode anonyme désactivé",
     "search": {
       "placeholder": "Rechercher séries et tomes...",
       "empty": "Aucun résultat",

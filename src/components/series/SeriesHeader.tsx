@@ -14,6 +14,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { IconButton } from "@/components/ui/icon-button";
 import logger from "@/lib/logger";
 import { addToFavorites, removeFromFavorites } from "@/app/actions/favorites";
+import { useAnonymous } from "@/contexts/AnonymousContext";
 
 interface SeriesHeaderProps {
   series: NormalizedSeries;
@@ -23,6 +24,7 @@ interface SeriesHeaderProps {
 
 export const SeriesHeader = ({ series, refreshSeries, initialIsFavorite }: SeriesHeaderProps) => {
   const { toast } = useToast();
+  const { isAnonymous } = useAnonymous();
   const [isFavorite, setIsFavorite] = useState(initialIsFavorite);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const { t } = useTranslate();
@@ -100,7 +102,7 @@ export const SeriesHeader = ({ series, refreshSeries, initialIsFavorite }: Serie
     };
   };
 
-  const statusInfo = getReadingStatusInfo();
+  const statusInfo = isAnonymous ? null : getReadingStatusInfo();
   const authorsText = series.authors?.length
     ? series.authors.map((a) => a.name).join(", ")
     : null;
@@ -152,9 +154,11 @@ export const SeriesHeader = ({ series, refreshSeries, initialIsFavorite }: Serie
               </div>
             )}
             <div className="flex items-center gap-4 mt-4 justify-center md:justify-start flex-wrap">
-              <StatusBadge status={statusInfo.status} icon={statusInfo.icon}>
-                {statusInfo.label}
-              </StatusBadge>
+              {statusInfo && (
+                <StatusBadge status={statusInfo.status} icon={statusInfo.icon}>
+                  {statusInfo.label}
+                </StatusBadge>
+              )}
               <span className="text-sm text-white/80">
                 {series.bookCount === 1
                   ? t("series.header.books", { count: series.bookCount })

@@ -12,6 +12,7 @@ export interface BackgroundPreferences {
 export interface UserPreferences {
   showThumbnails: boolean;
   showOnlyUnread: boolean;
+  anonymousMode: boolean;
   displayMode: {
     compact: boolean;
     itemsPerPage: number;
@@ -24,6 +25,7 @@ export interface UserPreferences {
 export const defaultPreferences: UserPreferences = {
   showThumbnails: true,
   showOnlyUnread: false,
+  anonymousMode: false,
   displayMode: {
     compact: false,
     itemsPerPage: 20,

@@ -64,6 +64,7 @@ model Preferences {
   displayMode         Json
   background          Json
   readerPrefetchCount Int      @default(5)
+  anonymousMode       Boolean  @default(false)
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 

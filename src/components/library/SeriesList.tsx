@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 import { BookOpen, Calendar, Tag, User } from "lucide-react";
 import { formatDate } from "@/lib/utils";
+import { useAnonymous } from "@/contexts/AnonymousContext";
 
 interface SeriesListProps {
   series: NormalizedSeries[];
@@ -57,16 +58,17 @@ const getReadingStatusInfo = (
 function SeriesListItem({ series, isCompact = false }: SeriesListItemProps) {
   const router = useRouter();
   const { t } = useTranslate();
+  const { isAnonymous } = useAnonymous();
 
   const handleClick = () => {
     router.push(`/series/${series.id}`);
   };
 
-  const isCompleted = series.bookCount === series.booksReadCount;
+  const isCompleted = isAnonymous ? false : series.bookCount === series.booksReadCount;
   const progressPercentage =
     series.bookCount > 0 ? (series.booksReadCount / series.bookCount) * 100 : 0;
 
-  const statusInfo = getReadingStatusInfo(series, t);
+  const statusInfo = isAnonymous ? null : getReadingStatusInfo(series, t);
 
   if (isCompact) {
     return (
@@ -83,6 +85,7 @@ function SeriesListItem({ series, isCompact = false }: SeriesListItemProps) {
             series={series}
             alt={t("series.coverAlt", { title: series.name })}
             className="w-full h-full"
+            isAnonymous={isAnonymous}
           />
         </div>
 
@@ -93,14 +96,16 @@ function SeriesListItem({ series, isCompact = false }: SeriesListItemProps) {
             <h3 className="font-medium text-sm sm:text-base line-clamp-1 hover:text-primary transition-colors flex-1 min-w-0">
               {series.name}
             </h3>
-            <span
-              className={cn(
-                "px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0",
-                statusInfo.className
-              )}
-            >
-              {statusInfo.label}
-            </span>
+            {statusInfo && (
+              <span
+                className={cn(
+                  "px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0",
+                  statusInfo.className
+                )}
+              >
+                {statusInfo.label}
+              </span>
+            )}
           </div>
 
           {/* Métadonnées minimales */}
@@ -139,6 +144,7 @@ function SeriesListItem({ series, isCompact = false }: SeriesListItemProps) {
           series={series}
           alt={t("series.coverAlt", { title: series.name })}
           className="w-full h-full"
+          isAnonymous={isAnonymous}
         />
       </div>
 
@@ -153,14 +159,16 @@ function SeriesListItem({ series, isCompact = false }: SeriesListItemProps) {
           </div>
 
           {/* Badge de statut */}
-          <span
-            className={cn(
-              "px-2 py-1 rounded-full text-xs font-medium flex-shrink-0",
-              statusInfo.className
-            )}
-          >
-            {statusInfo.label}
-          </span>
+          {statusInfo && (
+            <span
+              className={cn(
+                "px-2 py-1 rounded-full text-xs font-medium flex-shrink-0",
+                statusInfo.className
+              )}
+            >
+              {statusInfo.label}
+            </span>
+          )}
         </div>
 
         {/* Résumé */}
@@ -224,7 +232,7 @@ function SeriesListItem({ series, isCompact = false }: SeriesListItemProps) {
         </div>
 
         {/* Barre de progression */}
-        {series.bookCount > 0 && !isCompleted && series.booksReadCount > 0 && (
+        {!isAnonymous && series.bookCount > 0 && !isCompleted && series.booksReadCount > 0 && (
           <div className="space-y-1">
             <Progress value={progressPercentage} className="h-2" />
             <p className="text-xs text-muted-foreground">

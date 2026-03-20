@@ -5,6 +5,7 @@ import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 import { FavoritesService } from "@/lib/services/favorites.service";
+import { PreferencesService } from "@/lib/services/preferences.service";
 import { redirect } from "next/navigation";
 
 export default async function HomePage() {
@@ -12,16 +13,17 @@ export default async function HomePage() {
     const provider = await getProvider();
     if (!provider) redirect("/settings");
 
-    const [homeData, favorites] = await Promise.all([
+    const [homeData, favorites, preferences] = await Promise.all([
       provider.getHomeData(),
       FavoritesService.getFavorites(),
+      PreferencesService.getPreferences().catch(() => null),
     ]);
 
     const data = { ...homeData, favorites };
 
     return (
       <HomeClientWrapper>
-        <HomeContent data={data} />
+        <HomeContent data={data} isAnonymous={preferences?.anonymousMode ?? false} />
       </HomeClientWrapper>
     );
   } catch (error) {

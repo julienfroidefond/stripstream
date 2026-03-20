@@ -11,6 +11,7 @@ import { History, Sparkles, Clock, LibraryBig, BookOpen, Heart } from "lucide-re
 import { Card } from "@/components/ui/card";
 import { useBookOfflineStatus } from "@/hooks/useBookOfflineStatus";
 import { cn } from "@/lib/utils";
+import { useAnonymous } from "@/contexts/AnonymousContext";
 
 interface MediaRowProps {
   titleKey: string;
@@ -78,6 +79,7 @@ interface MediaCardProps {
 
 function MediaCard({ item, onClick }: MediaCardProps) {
   const { t } = useTranslate();
+  const { isAnonymous } = useAnonymous();
   const isSeriesItem = isSeries(item);
   const { isAccessible } = useBookOfflineStatus(isSeriesItem ? "" : item.id);
 
@@ -105,7 +107,7 @@ function MediaCard({ item, onClick }: MediaCardProps) {
       <div className="relative aspect-[2/3] bg-muted">
         {isSeriesItem ? (
           <>
-            <SeriesCover series={item} alt={`Couverture de ${title}`} />
+            <SeriesCover series={item} alt={`Couverture de ${title}`} isAnonymous={isAnonymous} />
             <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/75 via-black/30 to-transparent p-3 opacity-0 transition-opacity duration-200 hover:opacity-100">
               <h3 className="font-medium text-sm text-white line-clamp-2">{title}</h3>
               <p className="text-xs text-white/80 mt-1">

@@ -10,6 +10,7 @@ import { useTranslate } from "@/hooks/useTranslate";
 import { formatDate } from "@/lib/utils";
 import { useBookOfflineStatus } from "@/hooks/useBookOfflineStatus";
 import { WifiOff } from "lucide-react";
+import { useAnonymous } from "@/contexts/AnonymousContext";
 
 // Fonction utilitaire pour obtenir les informations de statut de lecture
 const getReadingStatusInfo = (
@@ -60,17 +61,18 @@ export function BookCover({
   overlayVariant = "default",
 }: BookCoverProps) {
   const { t } = useTranslate();
+  const { isAnonymous } = useAnonymous();
   const { isAccessible } = useBookOfflineStatus(book.id);
 
-  const isCompleted = book.readProgress?.completed || false;
+  const isCompleted = isAnonymous ? false : (book.readProgress?.completed || false);
 
-  const currentPage = ClientOfflineBookService.getCurrentPage(book);
+  const currentPage = isAnonymous ? 0 : ClientOfflineBookService.getCurrentPage(book);
   const totalPages = book.pageCount;
-  const showProgress = Boolean(showProgressUi && totalPages > 0 && currentPage > 0 && !isCompleted);
+  const showProgress = Boolean(!isAnonymous && showProgressUi && totalPages > 0 && currentPage > 0 && !isCompleted);
 
-  const statusInfo = getReadingStatusInfo(book, t);
-  const isRead = book.readProgress?.completed || false;
-  const hasReadProgress = book.readProgress !== null || currentPage > 0;
+  const statusInfo = isAnonymous ? { label: "", className: "" } : getReadingStatusInfo(book, t);
+  const isRead = isAnonymous ? false : (book.readProgress?.completed || false);
+  const hasReadProgress = isAnonymous ? false : (book.readProgress !== null || currentPage > 0);
 
   // Détermine si le livre doit être grisé (non accessible hors ligne)
   const isUnavailable = !isAccessible;
@@ -115,7 +117,7 @@ export function BookCover({
           {showControls && (
             // Boutons en haut à droite avec un petit décalage
             <div className="absolute top-2 right-2 pointer-events-auto flex gap-1">
-              {!isRead && (
+              {!isAnonymous && !isRead && (
                 <MarkAsReadButton
                   bookId={book.id}
                   pagesCount={book.pageCount}
@@ -124,7 +126,7 @@ export function BookCover({
                   className="bg-white/90 hover:bg-white text-black shadow-sm"
                 />
               )}
-              {hasReadProgress && (
+              {!isAnonymous && hasReadProgress && (
                 <MarkAsUnreadButton
                   bookId={book.id}
                   onSuccess={() => handleMarkAsUnread()}
@@ -145,11 +147,13 @@ export function BookCover({
                     ? t("navigation.volume", { number: book.number })
                     : "")}
               </p>
-              <div className="flex items-center gap-2">
-                <span className={`px-2 py-0.5 rounded-full text-xs ${statusInfo.className}`}>
-                  {statusInfo.label}
-                </span>
-              </div>
+              {!isAnonymous && (
+                <div className="flex items-center gap-2">
+                  <span className={`px-2 py-0.5 rounded-full text-xs ${statusInfo.className}`}>
+                    {statusInfo.label}
+                  </span>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -162,12 +166,14 @@ export function BookCover({
                 ? t("navigation.volume", { number: book.number })
                 : "")}
           </h3>
-          <p className="text-xs text-white/80 mt-1">
-            {t("books.status.progress", {
-              current: currentPage,
-              total: book.pageCount,
-            })}
-          </p>
+          {!isAnonymous && (
+            <p className="text-xs text-white/80 mt-1">
+              {t("books.status.progress", {
+                current: currentPage,
+                total: book.pageCount,
+              })}
+            </p>
+          )}
         </div>
       )}
     </>

@@ -7,12 +7,13 @@ export function SeriesCover({
   alt = "Image de couverture",
   className,
   showProgressUi = true,
+  isAnonymous = false,
 }: SeriesCoverProps) {
-  const isCompleted = series.bookCount === series.booksReadCount;
+  const isCompleted = isAnonymous ? false : series.bookCount === series.booksReadCount;
 
-  const readBooks = series.booksReadCount;
+  const readBooks = isAnonymous ? 0 : series.booksReadCount;
   const totalBooks = series.bookCount;
-  const showProgress = Boolean(showProgressUi && totalBooks > 0 && readBooks > 0 && !isCompleted);
+  const showProgress = Boolean(!isAnonymous && showProgressUi && totalBooks > 0 && readBooks > 0 && !isCompleted);
   const missingCount = series.missingCount;
 
   return (

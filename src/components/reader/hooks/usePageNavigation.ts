@@ -4,6 +4,7 @@ import { ClientOfflineBookService } from "@/lib/services/client-offlinebook.serv
 import type { NormalizedBook } from "@/lib/providers/types";
 import logger from "@/lib/logger";
 import { updateReadProgress } from "@/app/actions/read-progress";
+import { useAnonymous } from "@/contexts/AnonymousContext";
 
 interface UsePageNavigationProps {
   book: NormalizedBook;
@@ -23,6 +24,13 @@ export function usePageNavigation({
   nextBook,
 }: UsePageNavigationProps) {
   const router = useRouter();
+  const { isAnonymous } = useAnonymous();
+  const isAnonymousRef = useRef(isAnonymous);
+
+  useEffect(() => {
+    isAnonymousRef.current = isAnonymous;
+  }, [isAnonymous]);
+
   const [currentPage, setCurrentPage] = useState(() => {
     const saved = ClientOfflineBookService.getCurrentPage(book);
     return saved < 1 ? 1 : saved;
@@ -48,8 +56,10 @@ export function usePageNavigation({
     async (page: number) => {
       try {
         ClientOfflineBookService.setCurrentPage(bookRef.current, page);
-        const completed = page === pagesLengthRef.current;
-        await updateReadProgress(bookRef.current.id, page, completed);
+        if (!isAnonymousRef.current) {
+          const completed = page === pagesLengthRef.current;
+          await updateReadProgress(bookRef.current.id, page, completed);
+        }
       } catch (error) {
         logger.error({ err: error }, "Sync error:");
       }

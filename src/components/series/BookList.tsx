@@ -13,6 +13,7 @@ import { FileText } from "lucide-react";
 import { MarkAsReadButton } from "@/components/ui/mark-as-read-button";
 import { MarkAsUnreadButton } from "@/components/ui/mark-as-unread-button";
 import { BookOfflineButton } from "@/components/ui/book-offline-button";
+import { useAnonymous } from "@/contexts/AnonymousContext";
 
 interface BookListProps {
   books: NormalizedBook[];
@@ -30,6 +31,7 @@ interface BookListItemProps {
 
 function BookListItem({ book, onBookClick, onSuccess, isCompact = false }: BookListItemProps) {
   const { t } = useTranslate();
+  const { isAnonymous } = useAnonymous();
   const { isAccessible } = useBookOfflineStatus(book.id);
 
   const handleClick = () => {
@@ -37,9 +39,9 @@ function BookListItem({ book, onBookClick, onSuccess, isCompact = false }: BookL
     onBookClick(book);
   };
 
-  const isRead = book.readProgress?.completed || false;
-  const hasReadProgress = book.readProgress !== null;
-  const currentPage = ClientOfflineBookService.getCurrentPage(book);
+  const isRead = isAnonymous ? false : (book.readProgress?.completed || false);
+  const hasReadProgress = isAnonymous ? false : book.readProgress !== null;
+  const currentPage = isAnonymous ? 0 : ClientOfflineBookService.getCurrentPage(book);
   const totalPages = book.pageCount;
   const progressPercentage = totalPages > 0 ? (currentPage / totalPages) * 100 : 0;
 
@@ -118,14 +120,16 @@ function BookListItem({ book, onBookClick, onSuccess, isCompact = false }: BookL
             >
               {title}
             </h3>
-            <span
-              className={cn(
-                "px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0",
-                statusInfo.className
-              )}
-            >
-              {statusInfo.label}
-            </span>
+            {!isAnonymous && (
+              <span
+                className={cn(
+                  "px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0",
+                  statusInfo.className
+                )}
+              >
+                {statusInfo.label}
+              </span>
+            )}
           </div>
 
           {/* Métadonnées minimales */}
@@ -191,14 +195,16 @@ function BookListItem({ book, onBookClick, onSuccess, isCompact = false }: BookL
           </div>
 
           {/* Badge de statut */}
-          <span
-            className={cn(
-              "px-2 py-1 rounded-full text-xs font-medium flex-shrink-0",
-              statusInfo.className
-            )}
-          >
-            {statusInfo.label}
-          </span>
+          {!isAnonymous && (
+            <span
+              className={cn(
+                "px-2 py-1 rounded-full text-xs font-medium flex-shrink-0",
+                statusInfo.className
+              )}
+            >
+              {statusInfo.label}
+            </span>
+          )}
         </div>
 
         {/* Métadonnées */}
@@ -224,7 +230,7 @@ function BookListItem({ book, onBookClick, onSuccess, isCompact = false }: BookL
 
         {/* Actions */}
         <div className="flex items-center gap-2 mt-auto pt-2">
-          {!isRead && (
+          {!isAnonymous && !isRead && (
             <MarkAsReadButton
               bookId={book.id}
               pagesCount={book.pageCount}
@@ -233,7 +239,7 @@ function BookListItem({ book, onBookClick, onSuccess, isCompact = false }: BookL
               className="text-xs"
             />
           )}
-          {hasReadProgress && (
+          {!isAnonymous && hasReadProgress && (
             <MarkAsUnreadButton
               bookId={book.id}
               onSuccess={() => onSuccess(book, "unread")}

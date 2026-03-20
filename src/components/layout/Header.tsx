@@ -1,10 +1,11 @@
-import { Menu, Moon, Sun, RefreshCw, Search } from "lucide-react";
+import { Menu, Moon, Sun, RefreshCw, Search, EyeOff, Eye } from "lucide-react";
 import { useTheme } from "next-themes";
 import LanguageSelector from "@/components/LanguageSelector";
 import { useTranslation } from "react-i18next";
 import { IconButton } from "@/components/ui/icon-button";
 import { useState } from "react";
 import { GlobalSearch } from "@/components/layout/GlobalSearch";
+import { useAnonymous } from "@/contexts/AnonymousContext";
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -19,6 +20,7 @@ export function Header({
 }: HeaderProps) {
   const { theme, setTheme } = useTheme();
   const { t } = useTranslation();
+  const { isAnonymous, toggleAnonymous } = useAnonymous();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
 
@@ -86,6 +88,14 @@ export function Header({
               icon={Search}
               className="h-9 w-9 rounded-full sm:hidden"
               tooltip={t("header.search.placeholder")}
+            />
+            <IconButton
+              onClick={toggleAnonymous}
+              variant="ghost"
+              size="icon"
+              icon={isAnonymous ? EyeOff : Eye}
+              className={`h-9 w-9 rounded-full ${isAnonymous ? "text-yellow-500 hover:text-yellow-400" : ""}`}
+              tooltip={t(isAnonymous ? "header.anonymousModeOn" : "header.anonymousModeOff")}
             />
             <LanguageSelector />
             <button
