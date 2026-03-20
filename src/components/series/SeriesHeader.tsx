@@ -1,6 +1,6 @@
 "use client";
 
-import { Book, BookOpen, BookMarked, Star, StarOff, User } from "lucide-react";
+import { Book, BookOpen, BookMarked, BookX, Star, StarOff, User } from "lucide-react";
 import type { NormalizedSeries } from "@/lib/providers/types";
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
@@ -160,6 +160,11 @@ export const SeriesHeader = ({ series, refreshSeries, initialIsFavorite }: Serie
                   ? t("series.header.books", { count: series.bookCount })
                   : t("series.header.books_plural", { count: series.bookCount })}
               </span>
+              {series.missingCount != null && series.missingCount > 0 && (
+                <StatusBadge status="warning" icon={BookX}>
+                  {t("series.header.missing", { count: series.missingCount })}
+                </StatusBadge>
+              )}
               <IconButton
                 variant="ghost"
                 size="icon"

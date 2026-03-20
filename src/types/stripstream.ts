@@ -49,6 +49,7 @@ export interface StripstreamSeriesItem {
   books_read_count: number;
   first_book_id: string;
   library_id: string;
+  missing_count?: number | null;
 }
 
 export interface StripstreamSeriesPage {

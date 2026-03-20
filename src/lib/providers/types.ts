@@ -25,6 +25,7 @@ export interface NormalizedSeries {
   genres?: string[];
   tags?: string[];
   createdAt?: string | null;
+  missingCount?: number | null;
 }
 
 export interface NormalizedBook {

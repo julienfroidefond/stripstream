@@ -262,7 +262,8 @@
         "remove": "Retiré des favoris"
       },
       "showMore": "Voir plus",
-      "showLess": "Voir moins"
+      "showLess": "Voir moins",
+      "missing": "{{count}} manquant(s)"
     }
   },
   "books": {

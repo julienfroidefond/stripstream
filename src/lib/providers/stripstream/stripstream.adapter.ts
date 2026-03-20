@@ -79,6 +79,7 @@ export class StripstreamAdapter {
       genres: [],
       tags: [],
       createdAt: null,
+      missingCount: series.missing_count ?? null,
     };
   }
 

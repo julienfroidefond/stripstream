@@ -263,6 +263,7 @@
       },
       "showMore": "Show more",
       "showLess": "Show less",
+      "missing": "{{count}} missing",
       "toggleSidebar": "Toggle sidebar",
       "toggleTheme": "Toggle theme"
     }
