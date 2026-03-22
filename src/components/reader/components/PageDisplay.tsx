@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 
 interface PageDisplayProps {
@@ -22,6 +22,8 @@ export function PageDisplay({
   const [hasError, setHasError] = useState(false);
   const [secondPageLoading, setSecondPageLoading] = useState(true);
   const [secondPageHasError, setSecondPageHasError] = useState(false);
+  const imageBlobUrlsRef = useRef(imageBlobUrls);
+  imageBlobUrlsRef.current = imageBlobUrls;
 
   const handleImageLoad = useCallback(() => {
     setIsLoading(false);
@@ -41,11 +43,11 @@ export function PageDisplay({
     setSecondPageHasError(true);
   }, []);
 
-  // Reset loading when page changes
+  // Reset loading when page changes, but skip if blob URL is already available
   useEffect(() => {
-    setIsLoading(true);
+    setIsLoading(!imageBlobUrlsRef.current[currentPage]);
     setHasError(false);
-    setSecondPageLoading(true);
+    setSecondPageLoading(!imageBlobUrlsRef.current[currentPage + 1]);
     setSecondPageHasError(false);
   }, [currentPage, isDoublePage]);
 
