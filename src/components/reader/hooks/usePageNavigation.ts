@@ -99,7 +99,7 @@ export function usePageNavigation({
   const handleNextPage = useCallback(() => {
     if (currentPage === pages.length) {
       if (nextBook) {
-        router.push(`/books/${nextBook.id}`);
+        router.replace(`/books/${nextBook.id}`);
         return;
       }
       setShowEndMessage(true);
