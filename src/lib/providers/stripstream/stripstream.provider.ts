@@ -22,6 +22,7 @@ import type {
   StripstreamReadingProgressResponse,
   StripstreamSearchResponse,
   StripstreamSeriesMetadata,
+  StripstreamSeriesLookup,
 } from "@/types/stripstream";
 import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, SERIES_BOOKS_CACHE_TAG } from "@/constants/cacheConstants";
 
@@ -78,92 +79,90 @@ export class StripstreamProvider implements IMediaProvider {
   }
 
   async getSeriesById(seriesId: string): Promise<NormalizedSeries | null> {
-    // seriesId can be either a first_book_id (from series cards) or a series name (from book.seriesId).
-    // Try first_book_id first; fall back to series name search.
+    // seriesId can be a real series UUID (from series listing) or a first_book_id (from search results).
+    // Try as series_id first via the global series list.
+    const series = await this.findSeriesInList(seriesId);
+    if (series) {
+      const normalized = StripstreamAdapter.toNormalizedSeries(series);
+      return this.enrichSeriesWithMetadata(normalized, series.library_id, series.series_id);
+    }
+
+    // Fallback: try as first_book_id (search results still use first_book_id)
     try {
       const book = await this.client.fetch<StripstreamBookDetails>(`books/${seriesId}`, undefined, {
         revalidate: CACHE_TTL_MED,
       });
       if (!book.series) return null;
+      return this.resolveSeriesByName(book.series, book.library_id);
+    } catch {
+      return null;
+    }
+  }
 
-      // Try to find series in library to get real book counts
-      const seriesInfo = await this.findSeriesByName(book.series, book.library_id);
-      if (seriesInfo) return seriesInfo;
+  private async findSeriesInList(seriesId: string): Promise<StripstreamSeriesItem | null> {
+    try {
+      let page = 1;
+      const limit = 200;
+      while (true) {
+        const response = await this.client.fetch<StripstreamSeriesPage>(
+          "series",
+          { limit: String(limit), page: String(page) },
+          { revalidate: CACHE_TTL_MED }
+        );
+        const match = response.items.find((s) => s.series_id === seriesId);
+        if (match) return match;
+        if (response.items.length < limit) return null;
+        page++;
+      }
+    } catch {
+      return null;
+    }
+  }
 
+  private async resolveSeriesByName(name: string, libraryId: string): Promise<NormalizedSeries | null> {
+    try {
+      // Use by-name endpoint to get the series UUID
+      const lookup = await this.client.fetch<StripstreamSeriesLookup>(
+        `libraries/${libraryId}/series/by-name/${encodeURIComponent(name)}`,
+        undefined,
+        { revalidate: CACHE_TTL_MED }
+      );
+
+      // Find the full series item for book counts etc.
+      const series = await this.findSeriesInList(lookup.id);
+      if (series) {
+        const normalized = StripstreamAdapter.toNormalizedSeries(series);
+        return this.enrichSeriesWithMetadata(normalized, series.library_id, series.series_id);
+      }
+
+      // Fallback: construct from lookup + metadata
       const fallback: NormalizedSeries = {
-        id: seriesId,
-        name: book.series,
+        id: lookup.id,
+        name: lookup.name,
         bookCount: 0,
         booksReadCount: 0,
-        thumbnailUrl: `/api/stripstream/images/books/${seriesId}/thumbnail`,
-        libraryId: book.library_id,
+        thumbnailUrl: "",
+        libraryId: lookup.library_id,
         summary: null,
         authors: [],
         genres: [],
         tags: [],
         createdAt: null,
       };
-      return this.enrichSeriesWithMetadata(fallback, book.library_id, book.series);
+      return this.enrichSeriesWithMetadata(fallback, lookup.library_id, lookup.id);
     } catch {
-      // Fall back: treat seriesId as a series name, find its first book
-      try {
-        const page = await this.client.fetch<StripstreamBooksPage>(
-          "books",
-          { series: seriesId, limit: "1" },
-          { revalidate: CACHE_TTL_MED }
-        );
-        if (!page.items.length) return null;
-        const firstBook = page.items[0];
-
-        const seriesInfo = await this.findSeriesByName(seriesId, firstBook.library_id);
-        if (seriesInfo) return seriesInfo;
-
-        const fallback: NormalizedSeries = {
-          id: firstBook.id,
-          name: seriesId,
-          bookCount: 0,
-          booksReadCount: 0,
-          thumbnailUrl: `/api/stripstream/images/books/${firstBook.id}/thumbnail`,
-          libraryId: firstBook.library_id,
-          summary: null,
-          authors: [],
-          genres: [],
-          tags: [],
-          createdAt: null,
-        };
-        return this.enrichSeriesWithMetadata(fallback, firstBook.library_id, seriesId);
-      } catch {
-        return null;
-      }
+      return null;
     }
-  }
-
-  private async findSeriesByName(seriesName: string, libraryId: string): Promise<NormalizedSeries | null> {
-    try {
-      const seriesPage = await this.client.fetch<StripstreamSeriesPage>(
-        `libraries/${libraryId}/series`,
-        { q: seriesName, limit: "10" },
-        { revalidate: CACHE_TTL_MED }
-      );
-      const match = seriesPage.items.find((s) => s.name === seriesName);
-      if (match) {
-        const normalized = StripstreamAdapter.toNormalizedSeries(match);
-        return this.enrichSeriesWithMetadata(normalized, libraryId, seriesName);
-      }
-    } catch {
-      // ignore
-    }
-    return null;
   }
 
   private async enrichSeriesWithMetadata(
     series: NormalizedSeries,
     libraryId: string,
-    seriesName: string
+    seriesId: string
   ): Promise<NormalizedSeries> {
     try {
       const metadata = await this.client.fetch<StripstreamSeriesMetadata>(
-        `libraries/${libraryId}/series/${encodeURIComponent(seriesName)}/metadata`,
+        `libraries/${libraryId}/series/${seriesId}/metadata`,
         undefined,
         { revalidate: CACHE_TTL_MED }
       );
@@ -172,18 +171,28 @@ export class StripstreamProvider implements IMediaProvider {
         summary: metadata.description ?? null,
         authors: metadata.authors.map((name) => ({ name, role: "writer" })),
       };
-    } catch (error) {
+    } catch {
       return series;
     }
   }
 
-  private async resolveSeriesInfo(seriesId: string): Promise<{ libraryId: string; seriesName: string } | null> {
+  private async resolveSeriesId(seriesIdOrBookId: string): Promise<string | null> {
+    // If it's already a series_id, verify it exists
+    const series = await this.findSeriesInList(seriesIdOrBookId);
+    if (series) return series.series_id;
+
+    // Fallback: try as first_book_id — resolve to series_id via by-name
     try {
-      const book = await this.client.fetch<StripstreamBookDetails>(`books/${seriesId}`, undefined, {
+      const book = await this.client.fetch<StripstreamBookDetails>(`books/${seriesIdOrBookId}`, undefined, {
         revalidate: CACHE_TTL_MED,
       });
       if (!book.series) return null;
-      return { libraryId: book.library_id, seriesName: book.series };
+      const lookup = await this.client.fetch<StripstreamSeriesLookup>(
+        `libraries/${book.library_id}/series/by-name/${encodeURIComponent(book.series)}`,
+        undefined,
+        { revalidate: CACHE_TTL_MED }
+      );
+      return lookup.id;
     } catch {
       return null;
     }
@@ -194,17 +203,9 @@ export class StripstreamProvider implements IMediaProvider {
     const params: Record<string, string | undefined> = { limit: String(limit) };
 
     if (filter.seriesName) {
-      // seriesName is first_book_id for Stripstream — resolve to actual series name
-      try {
-        const book = await this.client.fetch<StripstreamBookDetails>(
-          `books/${filter.seriesName}`,
-          undefined,
-          { revalidate: CACHE_TTL_MED }
-        );
-        params.series = book.series ?? filter.seriesName;
-      } catch {
-        params.series = filter.seriesName;
-      }
+      // seriesName is a series_id UUID — the books API now expects a series_id
+      const seriesId = await this.resolveSeriesId(filter.seriesName);
+      params.series = seriesId ?? filter.seriesName;
     } else if (filter.libraryId) {
       params.library_id = filter.libraryId;
     }
@@ -242,8 +243,15 @@ export class StripstreamProvider implements IMediaProvider {
       });
       if (!book.series || book.volume == null) return null;
 
+      // Resolve series name to series_id for the books API
+      const lookup = await this.client.fetch<StripstreamSeriesLookup>(
+        `libraries/${book.library_id}/series/by-name/${encodeURIComponent(book.series)}`,
+        undefined,
+        { revalidate: CACHE_TTL_MED }
+      );
+
       const response = await this.client.fetch<StripstreamBooksPage>("books", {
-        series: book.series,
+        series: lookup.id,
         limit: "200",
       }, { revalidate: CACHE_TTL_SHORT });
 
@@ -347,14 +355,30 @@ export class StripstreamProvider implements IMediaProvider {
       limit: String(limit),
     }, { revalidate: CACHE_TTL_SHORT });
 
-    const seriesResults: NormalizedSearchResult[] = response.series_hits.map((s) => ({
-      id: s.first_book_id,
-      title: s.name,
-      href: `/series/${s.first_book_id}`,
-      coverUrl: `/api/stripstream/images/books/${s.first_book_id}/thumbnail`,
-      type: "series" as const,
-      bookCount: s.book_count,
-    }));
+    // Resolve series_id for each hit via by-name lookup
+    const seriesResults: NormalizedSearchResult[] = await Promise.all(
+      response.series_hits.map(async (s) => {
+        let id = s.first_book_id;
+        try {
+          const lookup = await this.client.fetch<StripstreamSeriesLookup>(
+            `libraries/${s.library_id}/series/by-name/${encodeURIComponent(s.name)}`,
+            undefined,
+            { revalidate: CACHE_TTL_MED }
+          );
+          id = lookup.id;
+        } catch {
+          // fallback to first_book_id
+        }
+        return {
+          id,
+          title: s.name,
+          href: `/series/${id}`,
+          coverUrl: `/api/stripstream/images/books/${s.first_book_id}/thumbnail`,
+          type: "series" as const,
+          bookCount: s.book_count,
+        };
+      })
+    );
 
     const bookResults: NormalizedSearchResult[] = response.hits.map((hit) => ({
       id: hit.id,

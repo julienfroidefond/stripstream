@@ -44,12 +44,23 @@ export interface StripstreamBooksPage {
 }
 
 export interface StripstreamSeriesItem {
+  series_id: string;
   name: string;
   book_count: number;
   books_read_count: number;
   first_book_id: string;
   library_id: string;
   missing_count?: number | null;
+  anilist_id?: number | null;
+  anilist_url?: string | null;
+  metadata_provider?: string | null;
+  series_status?: string | null;
+}
+
+export interface StripstreamSeriesLookup {
+  id: string;
+  library_id: string;
+  name: string;
 }
 
 export interface StripstreamSeriesPage {

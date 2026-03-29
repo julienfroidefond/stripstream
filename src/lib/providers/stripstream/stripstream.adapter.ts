@@ -68,7 +68,7 @@ export class StripstreamAdapter {
 
   static toNormalizedSeries(series: StripstreamSeriesItem): NormalizedSeries {
     return {
-      id: series.first_book_id,
+      id: series.series_id,
       name: series.name,
       bookCount: series.book_count,
       booksReadCount: series.books_read_count,
