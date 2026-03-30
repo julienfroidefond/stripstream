@@ -79,12 +79,11 @@ export class StripstreamProvider implements IMediaProvider {
   }
 
   async getSeriesById(seriesId: string): Promise<NormalizedSeries | null> {
-    // seriesId can be a real series UUID (from series listing) or a first_book_id (from search results).
-    // Try as series_id first via the global series list.
-    const series = await this.findSeriesInList(seriesId);
+    // Try as series_id first via the direct endpoint
+    const series = await this.fetchSeriesById(seriesId);
     if (series) {
       const normalized = StripstreamAdapter.toNormalizedSeries(series);
-      return this.enrichSeriesWithMetadata(normalized, series.library_id, series.series_id);
+      return this.enrichSeriesWithMetadata(normalized, series.series_id);
     }
 
     // Fallback: try as first_book_id (search results still use first_book_id)
@@ -93,63 +92,31 @@ export class StripstreamProvider implements IMediaProvider {
         revalidate: CACHE_TTL_MED,
       });
       if (!book.series) return null;
-      return this.resolveSeriesByName(book.series, book.library_id);
-    } catch {
-      return null;
-    }
-  }
 
-  private async findSeriesInList(seriesId: string): Promise<StripstreamSeriesItem | null> {
-    try {
-      let page = 1;
-      const limit = 200;
-      while (true) {
-        const response = await this.client.fetch<StripstreamSeriesPage>(
-          "series",
-          { limit: String(limit), page: String(page) },
-          { revalidate: CACHE_TTL_MED }
-        );
-        const match = response.items.find((s) => s.series_id === seriesId);
-        if (match) return match;
-        if (response.items.length < limit) return null;
-        page++;
-      }
-    } catch {
-      return null;
-    }
-  }
-
-  private async resolveSeriesByName(name: string, libraryId: string): Promise<NormalizedSeries | null> {
-    try {
-      // Use by-name endpoint to get the series UUID
+      // Resolve series name → series_id via by-name endpoint
       const lookup = await this.client.fetch<StripstreamSeriesLookup>(
-        `libraries/${libraryId}/series/by-name/${encodeURIComponent(name)}`,
+        `libraries/${book.library_id}/series/by-name/${encodeURIComponent(book.series)}`,
         undefined,
         { revalidate: CACHE_TTL_MED }
       );
-
-      // Find the full series item for book counts etc.
-      const series = await this.findSeriesInList(lookup.id);
-      if (series) {
-        const normalized = StripstreamAdapter.toNormalizedSeries(series);
-        return this.enrichSeriesWithMetadata(normalized, series.library_id, series.series_id);
+      const resolved = await this.fetchSeriesById(lookup.id);
+      if (resolved) {
+        const normalized = StripstreamAdapter.toNormalizedSeries(resolved);
+        return this.enrichSeriesWithMetadata(normalized, resolved.series_id);
       }
+      return null;
+    } catch {
+      return null;
+    }
+  }
 
-      // Fallback: construct from lookup + metadata
-      const fallback: NormalizedSeries = {
-        id: lookup.id,
-        name: lookup.name,
-        bookCount: 0,
-        booksReadCount: 0,
-        thumbnailUrl: "",
-        libraryId: lookup.library_id,
-        summary: null,
-        authors: [],
-        genres: [],
-        tags: [],
-        createdAt: null,
-      };
-      return this.enrichSeriesWithMetadata(fallback, lookup.library_id, lookup.id);
+  private async fetchSeriesById(seriesId: string): Promise<StripstreamSeriesItem | null> {
+    try {
+      return await this.client.fetch<StripstreamSeriesItem>(
+        `series/${seriesId}/details`,
+        undefined,
+        { revalidate: CACHE_TTL_MED }
+      );
     } catch {
       return null;
     }
@@ -157,12 +124,11 @@ export class StripstreamProvider implements IMediaProvider {
 
   private async enrichSeriesWithMetadata(
     series: NormalizedSeries,
-    libraryId: string,
     seriesId: string
   ): Promise<NormalizedSeries> {
     try {
       const metadata = await this.client.fetch<StripstreamSeriesMetadata>(
-        `libraries/${libraryId}/series/${seriesId}/metadata`,
+        `series/${seriesId}/metadata`,
         undefined,
         { revalidate: CACHE_TTL_MED }
       );
@@ -177,8 +143,8 @@ export class StripstreamProvider implements IMediaProvider {
   }
 
   private async resolveSeriesId(seriesIdOrBookId: string): Promise<string | null> {
-    // If it's already a series_id, verify it exists
-    const series = await this.findSeriesInList(seriesIdOrBookId);
+    // Try as series_id directly
+    const series = await this.fetchSeriesById(seriesIdOrBookId);
     if (series) return series.series_id;
 
     // Fallback: try as first_book_id — resolve to series_id via by-name
