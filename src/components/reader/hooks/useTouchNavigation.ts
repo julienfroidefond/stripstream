@@ -18,11 +18,12 @@ export function useTouchNavigation({
   const isPinchingRef = useRef(false);
 
   // Helper pour vérifier si la page est zoomée (zoom natif du navigateur)
+  // Seuil à 1.15 pour tolérer les imprécisions après un depinch
   const isZoomed = useCallback(() => {
     if (window.visualViewport) {
-      return window.visualViewport.scale > 1.05;
+      return window.visualViewport.scale > 1.15;
     }
-    return window.innerWidth !== window.screen.width;
+    return false;
   }, []);
 
   // Touch handlers for swipe navigation
@@ -30,8 +31,6 @@ export function useTouchNavigation({
     (e: TouchEvent) => {
       // Ne pas gérer si Photoswipe est ouvert
       if (pswpRef.current) return;
-      // Ne pas gérer si la page est zoomée (zoom natif)
-      if (isZoomed()) return;
 
       // Détecter si c'est un pinch (2+ doigts)
       if (e.touches.length > 1) {
@@ -41,15 +40,16 @@ export function useTouchNavigation({
         return;
       }
 
-      // Un seul doigt - seulement si on n'était pas en train de pinch
-      // On réinitialise isPinchingRef seulement ici, quand on commence un nouveau geste à 1 doigt
+      // Un seul doigt — toujours enregistrer les coordonnées de départ
+      // Le check de zoom se fait au touchend pour éviter les faux positifs
+      // après un depinch où le viewport scale met du temps à revenir à 1.0
       if (e.touches.length === 1) {
         isPinchingRef.current = false;
         touchStartXRef.current = e.touches[0].clientX;
         touchStartYRef.current = e.touches[0].clientY;
       }
     },
-    [pswpRef, isZoomed]
+    [pswpRef]
   );
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
