@@ -230,7 +230,11 @@
       "noBooks": "Pas de tomes",
       "read": "Lu",
       "unread": "Non lu",
-      "progress": "{read}/{total}"
+      "progress": "{read}/{total}",
+      "ongoing": "En cours",
+      "ended": "Terminé",
+      "hiatus": "En pause",
+      "cancelled": "Annulé"
     },
     "book": "tome",
     "books": "{count} tomes",
@@ -263,7 +267,13 @@
       },
       "showMore": "Voir plus",
       "showLess": "Voir moins",
-      "missing": "{{count}} manquant(s)"
+      "missing": "{{count}} manquant(s)",
+      "seriesStatus": {
+        "ongoing": "En cours",
+        "ended": "Terminé",
+        "hiatus": "En pause",
+        "cancelled": "Annulé"
+      }
     }
   },
   "books": {

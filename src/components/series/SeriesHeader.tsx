@@ -1,6 +1,6 @@
 "use client";
 
-import { Book, BookOpen, BookMarked, BookX, Star, StarOff, User } from "lucide-react";
+import { Book, BookOpen, BookMarked, BookX, Star, StarOff, User, CircleDot, CircleCheck, CirclePause, CircleX } from "lucide-react";
 import type { NormalizedSeries } from "@/lib/providers/types";
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
@@ -102,7 +102,22 @@ export const SeriesHeader = ({ series, refreshSeries, initialIsFavorite }: Serie
     };
   };
 
+  const getSeriesStatusInfo = () => {
+    const status = series.seriesStatus;
+    if (!status) return null;
+    const map: Record<string, { status: "info" | "success" | "warning" | "error"; icon: typeof CircleDot }> = {
+      ongoing: { status: "info", icon: CircleDot },
+      ended: { status: "success", icon: CircleCheck },
+      hiatus: { status: "warning", icon: CirclePause },
+      cancelled: { status: "error", icon: CircleX },
+    };
+    const entry = map[status];
+    if (!entry) return null;
+    return { ...entry, label: t(`series.header.seriesStatus.${status}`) };
+  };
+
   const statusInfo = isAnonymous ? null : getReadingStatusInfo();
+  const seriesStatusInfo = getSeriesStatusInfo();
   const authorsText = series.authors?.length
     ? series.authors.map((a) => a.name).join(", ")
     : null;
@@ -154,6 +169,11 @@ export const SeriesHeader = ({ series, refreshSeries, initialIsFavorite }: Serie
               </div>
             )}
             <div className="flex items-center gap-4 mt-4 justify-center md:justify-start flex-wrap">
+              {seriesStatusInfo && (
+                <StatusBadge status={seriesStatusInfo.status} icon={seriesStatusInfo.icon}>
+                  {seriesStatusInfo.label}
+                </StatusBadge>
+              )}
               {statusInfo && (
                 <StatusBadge status={statusInfo.status} icon={statusInfo.icon}>
                   {statusInfo.label}

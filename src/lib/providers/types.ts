@@ -26,6 +26,7 @@ export interface NormalizedSeries {
   tags?: string[];
   createdAt?: string | null;
   missingCount?: number | null;
+  seriesStatus?: string | null;
 }
 
 export interface NormalizedBook {

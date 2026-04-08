@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useTranslate } from "@/hooks/useTranslate";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
-import { BookOpen, Calendar, Tag, User } from "lucide-react";
+import { BookOpen, Calendar, Tag, User, CircleDot, CircleCheck, CirclePause, CircleX } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { useAnonymous } from "@/contexts/AnonymousContext";
 
@@ -55,6 +55,13 @@ const getReadingStatusInfo = (
   };
 };
 
+const seriesStatusMap = {
+  ongoing: { className: "bg-blue-500/10 text-blue-500", icon: CircleDot },
+  ended: { className: "bg-green-500/10 text-green-500", icon: CircleCheck },
+  hiatus: { className: "bg-yellow-500/10 text-yellow-500", icon: CirclePause },
+  cancelled: { className: "bg-red-500/10 text-red-500", icon: CircleX },
+} as const;
+
 function SeriesListItem({ series, isCompact = false }: SeriesListItemProps) {
   const router = useRouter();
   const { t } = useTranslate();
@@ -69,6 +76,7 @@ function SeriesListItem({ series, isCompact = false }: SeriesListItemProps) {
     series.bookCount > 0 ? (series.booksReadCount / series.bookCount) * 100 : 0;
 
   const statusInfo = isAnonymous ? null : getReadingStatusInfo(series, t);
+  const seriesStatusEntry = series.seriesStatus ? seriesStatusMap[series.seriesStatus as keyof typeof seriesStatusMap] : null;
 
   if (isCompact) {
     return (
@@ -96,16 +104,19 @@ function SeriesListItem({ series, isCompact = false }: SeriesListItemProps) {
             <h3 className="font-medium text-sm sm:text-base line-clamp-1 hover:text-primary transition-colors flex-1 min-w-0">
               {series.name}
             </h3>
-            {statusInfo && (
-              <span
-                className={cn(
-                  "px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0",
-                  statusInfo.className
-                )}
-              >
-                {statusInfo.label}
-              </span>
-            )}
+            <div className="flex items-center gap-1.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+              {seriesStatusEntry && (
+                <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1", seriesStatusEntry.className)}>
+                  <seriesStatusEntry.icon className="h-3 w-3" />
+                  {t(`series.status.${series.seriesStatus}`)}
+                </span>
+              )}
+              {statusInfo && (
+                <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium", statusInfo.className)}>
+                  {statusInfo.label}
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Métadonnées minimales */}
@@ -158,17 +169,20 @@ function SeriesListItem({ series, isCompact = false }: SeriesListItemProps) {
             </h3>
           </div>
 
-          {/* Badge de statut */}
-          {statusInfo && (
-            <span
-              className={cn(
-                "px-2 py-1 rounded-full text-xs font-medium flex-shrink-0",
-                statusInfo.className
-              )}
-            >
-              {statusInfo.label}
-            </span>
-          )}
+          {/* Badges de statut */}
+          <div className="flex items-center gap-1.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+            {seriesStatusEntry && (
+              <span className={cn("px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1", seriesStatusEntry.className)}>
+                <seriesStatusEntry.icon className="h-3 w-3" />
+                {t(`series.status.${series.seriesStatus}`)}
+              </span>
+            )}
+            {statusInfo && (
+              <span className={cn("px-2 py-1 rounded-full text-xs font-medium", statusInfo.className)}>
+                {statusInfo.label}
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Résumé */}

@@ -100,7 +100,7 @@ function MediaCard({ item, onClick }: MediaCardProps) {
     <Card
       onClick={handleClick}
       className={cn(
-        "relative flex w-[188px] flex-shrink-0 flex-col overflow-hidden rounded-xl border border-border/60 bg-card/85 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-card hover:shadow-md sm:w-[200px]",
+        "group relative flex w-[188px] flex-shrink-0 flex-col overflow-hidden rounded-xl border border-border/60 bg-card/85 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-card hover:shadow-md sm:w-[200px]",
         !isSeriesItem && !isAccessible ? "cursor-not-allowed" : "cursor-pointer"
       )}
     >
@@ -108,7 +108,7 @@ function MediaCard({ item, onClick }: MediaCardProps) {
         {isSeriesItem ? (
           <>
             <SeriesCover series={item} alt={`Couverture de ${title}`} isAnonymous={isAnonymous} />
-            <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/75 via-black/30 to-transparent p-3 opacity-0 transition-opacity duration-200 hover:opacity-100">
+            <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
               <h3 className="font-medium text-sm text-white line-clamp-2">{title}</h3>
               <p className="text-xs text-white/80 mt-1">
                 {t("series.books", { count: item.bookCount })}

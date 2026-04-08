@@ -80,6 +80,7 @@ export class StripstreamAdapter {
       tags: [],
       createdAt: null,
       missingCount: series.missing_count ?? null,
+      seriesStatus: series.series_status ?? null,
     };
   }
 

@@ -230,7 +230,11 @@
       "noBooks": "No books",
       "read": "Read",
       "unread": "Unread",
-      "progress": "{read}/{total}"
+      "progress": "{read}/{total}",
+      "ongoing": "Ongoing",
+      "ended": "Completed",
+      "hiatus": "On hiatus",
+      "cancelled": "Cancelled"
     },
     "book": "book",
     "books": "{count} books",
@@ -265,7 +269,13 @@
       "showLess": "Show less",
       "missing": "{{count}} missing",
       "toggleSidebar": "Toggle sidebar",
-      "toggleTheme": "Toggle theme"
+      "toggleTheme": "Toggle theme",
+      "seriesStatus": {
+        "ongoing": "Ongoing",
+        "ended": "Completed",
+        "hiatus": "On hiatus",
+        "cancelled": "Cancelled"
+      }
     }
   },
   "books": {

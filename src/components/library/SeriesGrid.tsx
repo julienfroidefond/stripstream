@@ -6,6 +6,14 @@ import { cn } from "@/lib/utils";
 import { SeriesCover } from "@/components/ui/series-cover";
 import { useTranslate } from "@/hooks/useTranslate";
 import { useAnonymous } from "@/contexts/AnonymousContext";
+import { CircleDot, CircleCheck, CirclePause, CircleX } from "lucide-react";
+
+const seriesStatusMap = {
+  ongoing: { className: "bg-blue-500/10 text-blue-500", icon: CircleDot },
+  ended: { className: "bg-green-500/10 text-green-500", icon: CircleCheck },
+  hiatus: { className: "bg-yellow-500/10 text-yellow-500", icon: CirclePause },
+  cancelled: { className: "bg-red-500/10 text-red-500", icon: CircleX },
+} as const;
 
 interface SeriesGridProps {
   series: NormalizedSeries[];
@@ -84,9 +92,18 @@ export function SeriesGrid({ series, isCompact = false }: SeriesGridProps) {
             alt={t("series.coverAlt", { title: seriesItem.name })}
             isAnonymous={isAnonymous}
           />
-          <div className="absolute inset-x-0 bottom-0 translate-y-full space-y-2 bg-gradient-to-t from-black/75 via-black/25 to-transparent p-4 transition-transform duration-200 group-hover:translate-y-0">
+          <div className="absolute inset-x-0 bottom-0 translate-y-full space-y-2 bg-gradient-to-t from-black via-black/75 to-transparent p-4 transition-transform duration-200 group-hover:translate-y-0">
             <h3 className="font-medium text-sm text-white line-clamp-2">{seriesItem.name}</h3>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              {(() => {
+                const entry = seriesItem.seriesStatus ? seriesStatusMap[seriesItem.seriesStatus as keyof typeof seriesStatusMap] : null;
+                return entry ? (
+                  <span className={`px-2 py-0.5 rounded-full text-xs flex items-center gap-1 ${entry.className}`}>
+                    <entry.icon className="h-3 w-3" />
+                    {t(`series.status.${seriesItem.seriesStatus}`)}
+                  </span>
+                ) : null;
+              })()}
               {!isAnonymous && (
                 <span
                   className={`px-2 py-0.5 rounded-full text-xs ${
