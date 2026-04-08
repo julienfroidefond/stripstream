@@ -59,7 +59,7 @@ export class StripstreamProvider implements IMediaProvider {
   // Stripstream series endpoint: GET /libraries/{library_id}/series
   async getSeries(libraryId: string, page?: string, limit = 20, unreadOnly = false, search?: string): Promise<NormalizedSeriesPage> {
     const pageNumber = page ? parseInt(page) : 1;
-    const params: Record<string, string | undefined> = { limit: String(limit), page: String(pageNumber) };
+    const params: Record<string, string | undefined> = { limit: String(limit), page: String(pageNumber), has_books: "true" };
     if (unreadOnly) params.reading_status = "unread,reading";
     if (search?.trim()) params.q = search.trim();
 
@@ -239,7 +239,7 @@ export class StripstreamProvider implements IMediaProvider {
       this.client.fetch<StripstreamBookItem[]>("books/ongoing", { limit: "20" }, homeOpts),
       this.client.fetch<StripstreamSeriesItem[]>("series/ongoing", { limit: "10" }, homeOpts),
       this.client.fetch<StripstreamBooksPage>("books", { sort: "latest", limit: "10" }, homeOpts),
-      this.client.fetch<StripstreamSeriesPage>("series", { sort: "latest", limit: "10" }, homeOpts),
+      this.client.fetch<StripstreamSeriesPage>("series", { sort: "latest", limit: "10", has_books: "true" }, homeOpts),
     ]);
 
     // /books/ongoing returns both currently reading and next unread per series
