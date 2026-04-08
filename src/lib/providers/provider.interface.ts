@@ -22,7 +22,7 @@ export interface IMediaProvider {
   getLibraries(): Promise<NormalizedLibrary[]>;
   getLibraryById(libraryId: string): Promise<NormalizedLibrary | null>;
 
-  getSeries(libraryId: string, cursor?: string, limit?: number, unreadOnly?: boolean, search?: string): Promise<NormalizedSeriesPage>;
+  getSeries(libraryId: string, cursor?: string, limit?: number, unreadOnly?: boolean, search?: string, sort?: string): Promise<NormalizedSeriesPage>;
   getSeriesById(seriesId: string): Promise<NormalizedSeries | null>;
 
   getBooks(filter: BookListFilter): Promise<NormalizedBooksPage>;

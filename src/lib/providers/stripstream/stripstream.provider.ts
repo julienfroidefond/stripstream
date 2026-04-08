@@ -57,14 +57,15 @@ export class StripstreamProvider implements IMediaProvider {
   }
 
   // Stripstream series endpoint: GET /libraries/{library_id}/series
-  async getSeries(libraryId: string, page?: string, limit = 20, unreadOnly = false, search?: string): Promise<NormalizedSeriesPage> {
+  async getSeries(libraryId: string, page?: string, limit = 20, unreadOnly = false, search?: string, sort?: string): Promise<NormalizedSeriesPage> {
     const pageNumber = page ? parseInt(page) : 1;
-    const params: Record<string, string | undefined> = { limit: String(limit), page: String(pageNumber), has_books: "true" };
+    const params: Record<string, string | undefined> = { limit: String(limit), page: String(pageNumber), has_books: "true", library_id: libraryId };
     if (unreadOnly) params.reading_status = "unread,reading";
     if (search?.trim()) params.q = search.trim();
+    if (sort) params.sort = sort;
 
     const response = await this.client.fetch<StripstreamSeriesPage>(
-      `libraries/${libraryId}/series`,
+      `series`,
       params,
       { revalidate: CACHE_TTL_MED, tags: [LIBRARY_SERIES_CACHE_TAG] }
     );

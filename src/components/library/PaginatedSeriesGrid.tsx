@@ -12,6 +12,7 @@ import { PageSizeSelect } from "@/components/common/PageSizeSelect";
 import { CompactModeButton } from "@/components/common/CompactModeButton";
 import { ViewModeButton } from "@/components/common/ViewModeButton";
 import { UnreadFilterButton } from "@/components/common/UnreadFilterButton";
+import { SortButton } from "@/components/common/SortButton";
 import { updatePreferences as updatePreferencesAction } from "@/app/actions/preferences";
 
 interface PaginatedSeriesGridProps {
@@ -24,6 +25,7 @@ interface PaginatedSeriesGridProps {
   pageSize?: number;
   initialCompact: boolean;
   initialViewMode: "grid" | "list";
+  sort: string;
 }
 
 export function PaginatedSeriesGrid({
@@ -36,6 +38,7 @@ export function PaginatedSeriesGrid({
   pageSize,
   initialCompact,
   initialViewMode,
+  sort: initialSort,
 }: PaginatedSeriesGridProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -44,6 +47,7 @@ export function PaginatedSeriesGrid({
   const [isCompact, setIsCompact] = useState(initialCompact);
   const [viewMode, setViewMode] = useState<"grid" | "list">(initialViewMode);
   const [currentPageSize, setCurrentPageSize] = useState(pageSize || 20);
+  const [currentSort, setCurrentSort] = useState(initialSort);
 
   const effectivePageSize = pageSize || currentPageSize;
   const { t } = useTranslate();
@@ -137,6 +141,12 @@ export function PaginatedSeriesGrid({
     });
   };
 
+  const handleSortToggle = async () => {
+    const nextSort = currentSort === "title" ? "latest" : "title";
+    setCurrentSort(nextSort);
+    await updateUrlParams({ page: "1", sort: nextSort === "title" ? null : nextSort });
+  };
+
   const handleViewModeToggle = async (nextViewMode: "grid" | "list") => {
     setViewMode(nextViewMode);
 
@@ -181,6 +191,10 @@ export function PaginatedSeriesGrid({
 
           <div className="pb-1">
             <div className="flex flex-wrap items-center gap-2">
+              <SortButton
+                sort={currentSort}
+                onToggle={handleSortToggle}
+              />
               <UnreadFilterButton
                 showOnlyUnread={showOnlyUnread}
                 onToggle={handleUnreadFilter}

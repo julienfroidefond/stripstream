@@ -181,7 +181,7 @@ export class KomgaProvider implements IMediaProvider {
     return raw.map(KomgaAdapter.toNormalizedLibrary);
   }
 
-  async getSeries(libraryId: string, cursor?: string, limit = 20, unreadOnly = false, search?: string): Promise<NormalizedSeriesPage> {
+  async getSeries(libraryId: string, cursor?: string, limit = 20, unreadOnly = false, search?: string, _sort?: string): Promise<NormalizedSeriesPage> {
     const page = cursor ? parseInt(cursor, 10) - 1 : 0;
 
     let condition: KomgaCondition;

@@ -246,7 +246,9 @@
       "unread": "À lire",
       "search": "Rechercher une série...",
       "normal": "Affichage normal",
-      "compact": "Affichage compact"
+      "compact": "Affichage compact",
+      "sortTitle": "Titre",
+      "sortLatest": "Récentes"
     },
     "display": {
       "showing": "{start}-{end} sur {total}",

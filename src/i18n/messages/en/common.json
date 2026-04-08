@@ -246,7 +246,9 @@
       "unread": "Unread",
       "search": "Search series...",
       "normal": "Normal",
-      "compact": "Compact"
+      "compact": "Compact",
+      "sortTitle": "Title",
+      "sortLatest": "Latest"
     },
     "display": {
       "showing": "{start}-{end} of {total}",

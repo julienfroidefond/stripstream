@@ -10,7 +10,7 @@ import { redirect } from "next/navigation";
 
 interface PageProps {
   params: Promise<{ libraryId: string }>;
-  searchParams: Promise<{ page?: string; unread?: string; search?: string; size?: string }>;
+  searchParams: Promise<{ page?: string; unread?: string; search?: string; size?: string; sort?: string }>;
 }
 
 const DEFAULT_PAGE_SIZE = 20;
@@ -21,6 +21,7 @@ export default async function LibraryPage({ params, searchParams }: PageProps) {
   const page = (await searchParams).page;
   const size = (await searchParams).size;
   const search = (await searchParams).search;
+  const sort = (await searchParams).sort;
 
   const currentPage = page ? parseInt(page) : 1;
   const preferences: UserPreferences = await PreferencesService.getPreferences();
@@ -36,7 +37,7 @@ export default async function LibraryPage({ params, searchParams }: PageProps) {
     if (!provider) redirect("/settings");
 
     const [seriesPage, library] = await Promise.all([
-      provider.getSeries(libraryId, String(currentPage), effectivePageSize, unreadOnly, search),
+      provider.getSeries(libraryId, String(currentPage), effectivePageSize, unreadOnly, search, sort),
       provider.getLibraryById(libraryId),
     ]);
 
@@ -51,6 +52,7 @@ export default async function LibraryPage({ params, searchParams }: PageProps) {
           preferences={preferences}
           unreadOnly={unreadOnly}
           pageSize={effectivePageSize}
+          sort={sort || "title"}
         />
       </LibraryClientWrapper>
     );

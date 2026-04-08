@@ -12,6 +12,7 @@ interface LibraryContentProps {
   unreadOnly: boolean;
   search?: string;
   pageSize: number;
+  sort: string;
 }
 
 export function LibraryContent({
@@ -21,6 +22,7 @@ export function LibraryContent({
   preferences,
   unreadOnly,
   pageSize,
+  sort,
 }: LibraryContentProps) {
   return (
     <>
@@ -40,6 +42,7 @@ export function LibraryContent({
           pageSize={pageSize}
           initialCompact={preferences.displayMode.compact}
           initialViewMode={preferences.displayMode.viewMode || "grid"}
+          sort={sort}
         />
       </Container>
     </>
