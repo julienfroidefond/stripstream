@@ -70,9 +70,9 @@ export function PaginatedBookGrid({
       });
 
       if (replace) {
-        await router.replace(`${pathname}?${params.toString()}`);
+        await router.replace(`${pathname}?${params.toString()}`, { scroll: false });
       } else {
-        await router.push(`${pathname}?${params.toString()}`);
+        await router.push(`${pathname}?${params.toString()}`, { scroll: false });
       }
     },
     [router, pathname, searchParams]
