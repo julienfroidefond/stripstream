@@ -34,7 +34,7 @@ export default async function SeriesPage({ params, searchParams }: PageProps) {
     const provider = await getProvider();
     if (!provider) redirect("/settings");
 
-    const [booksPage, series, isFavorite] = await Promise.all([
+    const [booksPage, series, isFavorite, missingBooks] = await Promise.all([
       provider.getBooks({
         seriesName: seriesId,
         cursor: String(currentPage),
@@ -43,6 +43,7 @@ export default async function SeriesPage({ params, searchParams }: PageProps) {
       }),
       provider.getSeriesById(seriesId),
       FavoriteService.isFavorite(seriesId),
+      provider.getMissingBooks(seriesId),
     ]);
 
     if (!series) throw new AppError(ERROR_CODES.SERIES.FETCH_ERROR);
@@ -57,6 +58,7 @@ export default async function SeriesPage({ params, searchParams }: PageProps) {
           unreadOnly={unreadOnly}
           pageSize={effectivePageSize}
           initialIsFavorite={isFavorite}
+          missingBooks={missingBooks}
         />
       </SeriesClientWrapper>
     );

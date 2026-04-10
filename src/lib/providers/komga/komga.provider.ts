@@ -7,6 +7,7 @@ import type {
   NormalizedSearchResult,
   NormalizedSeriesPage,
   NormalizedBooksPage,
+  NormalizedMissingBook,
 } from "../types";
 import type { HomeData } from "@/types/home";
 import { KomgaAdapter } from "./komga.adapter";
@@ -181,7 +182,7 @@ export class KomgaProvider implements IMediaProvider {
     return raw.map(KomgaAdapter.toNormalizedLibrary);
   }
 
-  async getSeries(libraryId: string, cursor?: string, limit = 20, unreadOnly = false, search?: string, _sort?: string): Promise<NormalizedSeriesPage> {
+  async getSeries(libraryId: string, cursor?: string, limit = 20, unreadOnly = false, search?: string, _sort?: string, _hasMissing?: boolean): Promise<NormalizedSeriesPage> {
     const page = cursor ? parseInt(cursor, 10) - 1 : 0;
 
     let condition: KomgaCondition;
@@ -370,6 +371,10 @@ export class KomgaProvider implements IMediaProvider {
       }
       return null;
     }
+  }
+
+  async getMissingBooks(): Promise<NormalizedMissingBook[]> {
+    return [];
   }
 
   async getHomeData(): Promise<HomeData> {

@@ -4,8 +4,8 @@ import { BookGrid } from "./BookGrid";
 import { BookList } from "./BookList";
 import { Pagination } from "@/components/ui/Pagination";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { useState, useEffect, useCallback } from "react";
-import type { NormalizedBook } from "@/lib/providers/types";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import type { NormalizedBook, NormalizedMissingBook } from "@/lib/providers/types";
 import { useTranslate } from "@/hooks/useTranslate";
 import { useDisplayPreferences } from "@/hooks/useDisplayPreferences";
 import { usePreferences } from "@/contexts/PreferencesContext";
@@ -13,7 +13,7 @@ import { PageSizeSelect } from "@/components/common/PageSizeSelect";
 import { CompactModeButton } from "@/components/common/CompactModeButton";
 import { ViewModeButton } from "@/components/common/ViewModeButton";
 import { UnreadFilterButton } from "@/components/common/UnreadFilterButton";
-
+import { MissingFilterButton } from "@/components/common/MissingFilterButton";
 interface PaginatedBookGridProps {
   books: NormalizedBook[];
   currentPage: number;
@@ -22,6 +22,7 @@ interface PaginatedBookGridProps {
   defaultShowOnlyUnread: boolean;
   showOnlyUnread: boolean;
   onRefresh?: () => void;
+  missingBooks?: NormalizedMissingBook[];
 }
 
 export function PaginatedBookGrid({
@@ -32,11 +33,26 @@ export function PaginatedBookGrid({
   defaultShowOnlyUnread,
   showOnlyUnread: initialShowOnlyUnread,
   onRefresh,
+  missingBooks = [],
 }: PaginatedBookGridProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [showOnlyUnread, setShowOnlyUnread] = useState(initialShowOnlyUnread);
+  const [hideMissing, setHideMissing] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("hide-missing-books") === "true";
+    }
+    return false;
+  });
+
+  const toggleHideMissing = useCallback(() => {
+    setHideMissing((prev) => {
+      const next = !prev;
+      localStorage.setItem("hide-missing-books", String(next));
+      return next;
+    });
+  }, []);
   const { isCompact, itemsPerPage, viewMode } = useDisplayPreferences();
   const { updatePreferences } = usePreferences();
   const { t } = useTranslate();
@@ -102,6 +118,47 @@ export function PaginatedBookGrid({
     router.push(`/books/${book.id}`);
   };
 
+  const { regularBooks, specialBooks } = useMemo(() => {
+    const regular: NormalizedBook[] = [];
+    const special: NormalizedBook[] = [];
+    for (const book of books) {
+      if (book.volumeType && book.volumeType !== "regular") {
+        special.push(book);
+      } else {
+        regular.push(book);
+      }
+    }
+    return { regularBooks: regular, specialBooks: special };
+  }, [books]);
+
+  // Merge missing books into regular books as placeholders, sorted by volume number
+  const displayBooks = useMemo(() => {
+    if (hideMissing || missingBooks.length === 0) return regularBooks;
+
+    // Convert missing books to placeholder NormalizedBook entries
+    const missingAsBooks: NormalizedBook[] = missingBooks.map((mb) => ({
+      id: `missing-${mb.volumeNumber}`,
+      libraryId: "",
+      title: mb.title,
+      number: String(mb.volumeNumber),
+      seriesId: null,
+      volume: mb.volumeNumber,
+      pageCount: 0,
+      thumbnailUrl: mb.coverUrl ?? "",
+      readProgress: null,
+      volumeType: "_missing",
+    }));
+
+    // Merge and sort by volume number
+    const merged = [...regularBooks, ...missingAsBooks];
+    merged.sort((a, b) => {
+      const va = a.volume ?? Infinity;
+      const vb = b.volume ?? Infinity;
+      return va - vb;
+    });
+    return merged;
+  }, [regularBooks, missingBooks, hideMissing]);
+
   // Calculate start and end indices for display
   const startIndex = (currentPage - 1) * itemsPerPage + 1;
   const endIndex = Math.min(currentPage * itemsPerPage, totalElements);
@@ -120,28 +177,52 @@ export function PaginatedBookGrid({
     <div className="space-y-8 py-8">
       <div className="flex flex-col gap-4">
         <p className="text-sm text-muted-foreground text-right">{getShowingText()}</p>
-        <div className="flex items-center justify-end gap-2">
+        <div className="flex items-center justify-end gap-2 flex-wrap">
           <PageSizeSelect onSizeChange={handlePageSizeChange} />
           <ViewModeButton />
           <CompactModeButton />
           <UnreadFilterButton showOnlyUnread={showOnlyUnread} onToggle={handleUnreadFilter} />
+          {missingBooks.length > 0 && (
+            <MissingFilterButton active={hideMissing} onToggle={toggleHideMissing} />
+          )}
         </div>
       </div>
 
       {viewMode === "grid" ? (
         <BookGrid
-          books={books}
+          books={displayBooks}
           onBookClick={handleBookClick}
           isCompact={isCompact}
           onRefresh={onRefresh}
         />
       ) : (
         <BookList
-          books={books}
+          books={displayBooks}
           onBookClick={handleBookClick}
           isCompact={isCompact}
           onRefresh={onRefresh}
         />
+      )}
+
+      {specialBooks.length > 0 && (
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-muted-foreground">{t("books.special")}</h3>
+          {viewMode === "grid" ? (
+            <BookGrid
+              books={specialBooks}
+              onBookClick={handleBookClick}
+              isCompact={isCompact}
+              onRefresh={onRefresh}
+            />
+          ) : (
+            <BookList
+              books={specialBooks}
+              onBookClick={handleBookClick}
+              isCompact={isCompact}
+              onRefresh={onRefresh}
+            />
+          )}
+        </div>
       )}
 
       <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between">

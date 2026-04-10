@@ -39,6 +39,13 @@ export interface NormalizedBook {
   pageCount: number;
   thumbnailUrl: string;
   readProgress: NormalizedReadProgress | null;
+  volumeType?: string | null;
+}
+
+export interface NormalizedMissingBook {
+  title: string;
+  volumeNumber: number;
+  coverUrl: string | null;
 }
 
 export interface NormalizedSearchResult {

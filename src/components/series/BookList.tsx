@@ -9,7 +9,7 @@ import { useBookOfflineStatus } from "@/hooks/useBookOfflineStatus";
 import { formatDate } from "@/lib/utils";
 import { ClientOfflineBookService } from "@/lib/services/client-offlinebook.service";
 import { Progress } from "@/components/ui/progress";
-import { FileText } from "lucide-react";
+import { FileText, BookX } from "lucide-react";
 import { MarkAsReadButton } from "@/components/ui/mark-as-read-button";
 import { MarkAsUnreadButton } from "@/components/ui/mark-as-unread-button";
 import { BookOfflineButton } from "@/components/ui/book-offline-button";
@@ -309,15 +309,40 @@ export function BookList({ books, onBookClick, isCompact = false, onRefresh }: B
 
   return (
     <div className={cn("space-y-2", isCompact && "space-y-1")}>
-      {localBooks.map((book) => (
-        <BookListItem
-          key={book.id}
-          book={book}
-          onBookClick={onBookClick}
-          onSuccess={handleOnSuccess}
-          isCompact={isCompact}
-        />
-      ))}
+      {localBooks.map((book) =>
+        book.volumeType === "_missing" ? (
+          <div
+            key={book.id}
+            className={cn(
+              "group relative flex gap-3 p-2 rounded-lg border border-dashed border-orange-500/40 bg-muted/30 opacity-60",
+            )}
+          >
+            <div className="relative w-12 h-16 sm:w-14 sm:h-20 flex-shrink-0 rounded overflow-hidden bg-muted/50">
+              {book.thumbnailUrl ? (
+                <img src={book.thumbnailUrl} alt={book.title} loading="lazy" className="w-full h-full object-cover rounded opacity-50" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <BookX className="h-5 w-5 text-orange-500/40" />
+                </div>
+              )}
+            </div>
+            <div className="flex-1 min-w-0 flex items-center gap-2">
+              <span className="font-medium text-sm text-orange-400 truncate">{book.title}</span>
+              <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-orange-500/10 text-orange-500 flex-shrink-0">
+                {t("books.missingLabel")}
+              </span>
+            </div>
+          </div>
+        ) : (
+          <BookListItem
+            key={book.id}
+            book={book}
+            onBookClick={onBookClick}
+            onSuccess={handleOnSuccess}
+            isCompact={isCompact}
+          />
+        )
+      )}
     </div>
   );
 }

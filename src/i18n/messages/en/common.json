@@ -248,7 +248,10 @@
       "normal": "Normal",
       "compact": "Compact",
       "sortTitle": "Title",
-      "sortLatest": "Latest"
+      "sortLatest": "Latest",
+      "missing": "Missing",
+      "hideMissing": "Missing",
+      "showMissing": "Missing"
     },
     "display": {
       "showing": "{start}-{end} of {total}",
@@ -282,6 +285,9 @@
   },
   "books": {
     "empty": "No books available",
+    "special": "Specials",
+    "missing": "{{count}} missing volume(s)",
+    "missingLabel": "Missing",
     "coverAlt": "Cover of {{title}}",
     "defaultCoverAlt": "Cover image",
     "status": {

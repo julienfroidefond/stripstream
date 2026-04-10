@@ -248,7 +248,10 @@
       "normal": "Affichage normal",
       "compact": "Affichage compact",
       "sortTitle": "Titre",
-      "sortLatest": "Récentes"
+      "sortLatest": "Récentes",
+      "missing": "Manquants",
+      "hideMissing": "Manquants",
+      "showMissing": "Manquants"
     },
     "display": {
       "showing": "{start}-{end} sur {total}",
@@ -280,6 +283,9 @@
   },
   "books": {
     "empty": "Aucun tome disponible",
+    "special": "Hors-série",
+    "missing": "{{count}} tome(s) manquant(s)",
+    "missingLabel": "Manquant",
     "coverAlt": "Couverture de {{title}}",
     "defaultCoverAlt": "Image de couverture",
     "status": {

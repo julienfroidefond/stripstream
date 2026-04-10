@@ -4,7 +4,7 @@ import { PaginatedBookGrid } from "@/components/series/PaginatedBookGrid";
 import { SeriesHeader } from "@/components/series/SeriesHeader";
 import { Container } from "@/components/ui/container";
 import { useRefresh } from "@/contexts/RefreshContext";
-import type { NormalizedBooksPage, NormalizedSeries } from "@/lib/providers/types";
+import type { NormalizedBooksPage, NormalizedMissingBook, NormalizedSeries } from "@/lib/providers/types";
 import type { UserPreferences } from "@/types/preferences";
 
 interface SeriesContentProps {
@@ -15,6 +15,7 @@ interface SeriesContentProps {
   unreadOnly: boolean;
   pageSize: number;
   initialIsFavorite: boolean;
+  missingBooks: NormalizedMissingBook[];
 }
 
 export function SeriesContent({
@@ -24,6 +25,7 @@ export function SeriesContent({
   preferences,
   unreadOnly,
   initialIsFavorite,
+  missingBooks,
 }: SeriesContentProps) {
   const { refreshSeries } = useRefresh();
 
@@ -42,6 +44,7 @@ export function SeriesContent({
           totalElements={books.totalElements ?? books.items.length}
           defaultShowOnlyUnread={preferences.showOnlyUnread}
           showOnlyUnread={unreadOnly}
+          missingBooks={missingBooks}
         />
       </Container>
     </>

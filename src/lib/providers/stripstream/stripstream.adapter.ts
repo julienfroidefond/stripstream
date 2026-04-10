@@ -42,6 +42,7 @@ export class StripstreamAdapter {
               completed: book.reading_status === "read",
               lastReadAt: book.reading_last_read_at ?? null,
             },
+      volumeType: book.volume_type ?? null,
     };
   }
 
@@ -63,6 +64,7 @@ export class StripstreamAdapter {
               completed: book.reading_status === "read",
               lastReadAt: book.reading_last_read_at ?? null,
             },
+      volumeType: book.volume_type ?? null,
     };
   }
 

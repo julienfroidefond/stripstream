@@ -8,6 +8,7 @@ import type {
   NormalizedSearchResult,
   NormalizedSeriesPage,
   NormalizedBooksPage,
+  NormalizedMissingBook,
 } from "../types";
 import type { HomeData } from "@/types/home";
 import { StripstreamClient } from "./stripstream.client";
@@ -23,6 +24,8 @@ import type {
   StripstreamSearchResponse,
   StripstreamSeriesMetadata,
   StripstreamSeriesLookup,
+  StripstreamMetadataLink,
+  StripstreamMissingBooksDto,
 } from "@/types/stripstream";
 import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, SERIES_BOOKS_CACHE_TAG } from "@/constants/cacheConstants";
 
@@ -57,12 +60,13 @@ export class StripstreamProvider implements IMediaProvider {
   }
 
   // Stripstream series endpoint: GET /libraries/{library_id}/series
-  async getSeries(libraryId: string, page?: string, limit = 20, unreadOnly = false, search?: string, sort?: string): Promise<NormalizedSeriesPage> {
+  async getSeries(libraryId: string, page?: string, limit = 20, unreadOnly = false, search?: string, sort?: string, hasMissing?: boolean): Promise<NormalizedSeriesPage> {
     const pageNumber = page ? parseInt(page) : 1;
     const params: Record<string, string | undefined> = { limit: String(limit), page: String(pageNumber), has_books: "true", library_id: libraryId };
     if (unreadOnly) params.reading_status = "unread,reading";
     if (search?.trim()) params.q = search.trim();
     if (sort) params.sort = sort;
+    if (hasMissing) params.has_missing = "true";
 
     const response = await this.client.fetch<StripstreamSeriesPage>(
       `series`,
@@ -140,6 +144,37 @@ export class StripstreamProvider implements IMediaProvider {
       };
     } catch {
       return series;
+    }
+  }
+
+  async getMissingBooks(seriesId: string): Promise<NormalizedMissingBook[]> {
+    try {
+      // 1. Get metadata links for this series
+      const links = await this.client.fetch<StripstreamMetadataLink[]>(
+        `metadata/links`,
+        { series_id: seriesId },
+        { revalidate: CACHE_TTL_MED }
+      );
+
+      // 2. Find the approved link
+      const approvedLink = links.find((l) => l.status === "approved");
+      if (!approvedLink) return [];
+
+      // 3. Get missing books for this link
+      const dto = await this.client.fetch<StripstreamMissingBooksDto>(
+        `metadata/missing/${approvedLink.id}`,
+        undefined,
+        { revalidate: CACHE_TTL_MED }
+      );
+
+      return dto.missing_books.map((mb) => ({
+        title: mb.title,
+        volumeNumber: mb.volume_number,
+        coverUrl: mb.cover_url ?? null,
+      }));
+    } catch (error) {
+      logger.error({ err: error, seriesId }, "Failed to fetch missing books");
+      return [];
     }
   }
 

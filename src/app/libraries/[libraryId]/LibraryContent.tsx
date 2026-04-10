@@ -13,6 +13,7 @@ interface LibraryContentProps {
   search?: string;
   pageSize: number;
   sort: string;
+  hasMissing: boolean;
 }
 
 export function LibraryContent({
@@ -23,6 +24,7 @@ export function LibraryContent({
   unreadOnly,
   pageSize,
   sort,
+  hasMissing,
 }: LibraryContentProps) {
   return (
     <>
@@ -43,6 +45,7 @@ export function LibraryContent({
           initialCompact={preferences.displayMode.compact}
           initialViewMode={preferences.displayMode.viewMode || "grid"}
           sort={sort}
+          hasMissing={hasMissing}
         />
       </Container>
     </>

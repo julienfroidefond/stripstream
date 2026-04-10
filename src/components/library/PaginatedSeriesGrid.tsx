@@ -13,6 +13,7 @@ import { CompactModeButton } from "@/components/common/CompactModeButton";
 import { ViewModeButton } from "@/components/common/ViewModeButton";
 import { UnreadFilterButton } from "@/components/common/UnreadFilterButton";
 import { SortButton } from "@/components/common/SortButton";
+import { MissingFilterButton } from "@/components/common/MissingFilterButton";
 import { updatePreferences as updatePreferencesAction } from "@/app/actions/preferences";
 
 interface PaginatedSeriesGridProps {
@@ -26,6 +27,7 @@ interface PaginatedSeriesGridProps {
   initialCompact: boolean;
   initialViewMode: "grid" | "list";
   sort: string;
+  hasMissing: boolean;
 }
 
 export function PaginatedSeriesGrid({
@@ -39,6 +41,7 @@ export function PaginatedSeriesGrid({
   initialCompact,
   initialViewMode,
   sort: initialSort,
+  hasMissing: initialHasMissing,
 }: PaginatedSeriesGridProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -48,6 +51,7 @@ export function PaginatedSeriesGrid({
   const [viewMode, setViewMode] = useState<"grid" | "list">(initialViewMode);
   const [currentPageSize, setCurrentPageSize] = useState(pageSize || 20);
   const [currentSort, setCurrentSort] = useState(initialSort);
+  const [showMissing, setShowMissing] = useState(initialHasMissing);
 
   const effectivePageSize = pageSize || currentPageSize;
   const { t } = useTranslate();
@@ -141,6 +145,12 @@ export function PaginatedSeriesGrid({
     });
   };
 
+  const handleMissingToggle = async () => {
+    const next = !showMissing;
+    setShowMissing(next);
+    await updateUrlParams({ page: "1", missing: next ? "true" : null });
+  };
+
   const handleSortToggle = async () => {
     const nextSort = currentSort === "title" ? "latest" : "title";
     setCurrentSort(nextSort);
@@ -198,6 +208,10 @@ export function PaginatedSeriesGrid({
               <UnreadFilterButton
                 showOnlyUnread={showOnlyUnread}
                 onToggle={handleUnreadFilter}
+              />
+              <MissingFilterButton
+                active={showMissing}
+                onToggle={handleMissingToggle}
               />
               <ViewModeButton
                 viewMode={viewMode}

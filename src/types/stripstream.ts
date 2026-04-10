@@ -7,6 +7,7 @@ export interface StripstreamBookItem {
   title: string;
   updated_at: string;
   reading_status: "unread" | "reading" | "read";
+  volume_type: string;
   author?: string | null;
   language?: string | null;
   page_count?: number | null;
@@ -23,6 +24,7 @@ export interface StripstreamBookDetails {
   kind: string;
   title: string;
   reading_status: "unread" | "reading" | "read";
+  volume_type: string;
   author?: string | null;
   file_format?: string | null;
   file_parse_status?: string | null;
@@ -100,6 +102,31 @@ export interface StripstreamSeriesMetadata {
   start_year?: number | null;
   book_author?: string | null;
   book_language?: string | null;
+}
+
+export interface StripstreamMetadataLink {
+  id: string;
+  series_name: string;
+  provider: string;
+  external_id: string;
+  status: string;
+  metadata_json: unknown;
+  synced_at?: string | null;
+  total_volumes_external?: number | null;
+}
+
+export interface StripstreamMissingBook {
+  title: string;
+  volume_number: number;
+  external_book_id?: string | null;
+  cover_url?: string | null;
+}
+
+export interface StripstreamMissingBooksDto {
+  total_external: number;
+  total_local: number;
+  missing_count: number;
+  missing_books: StripstreamMissingBook[];
 }
 
 export interface StripstreamSearchResponse {
