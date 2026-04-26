@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
+import { RotateCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface PageDisplayProps {
@@ -7,7 +8,44 @@ interface PageDisplayProps {
   isDoublePage: boolean;
   shouldShowDoublePage: (page: number) => boolean;
   imageBlobUrls: Record<number, string>;
+  imageErrors: Record<number | string, boolean>;
+  onRetryImage: (pageNum: number) => void;
   isRTL: boolean;
+}
+
+function ErrorPlaceholder({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-3 text-muted-foreground">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="48"
+        height="48"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="opacity-40"
+      >
+        <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+        <circle cx="9" cy="9" r="2" />
+        <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+      </svg>
+      <span className="text-sm opacity-60">Image non disponible</span>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onRetry();
+        }}
+        className="flex items-center gap-2 rounded-full border border-border/60 bg-background/55 px-3 py-1.5 text-xs backdrop-blur-xl transition hover:bg-background/70"
+      >
+        <RotateCw className="h-3.5 w-3.5" />
+        Réessayer
+      </button>
+    </div>
+  );
 }
 
 export function PageDisplay({
@@ -16,6 +54,8 @@ export function PageDisplay({
   isDoublePage,
   shouldShowDoublePage,
   imageBlobUrls,
+  imageErrors,
+  onRetryImage,
   isRTL,
 }: PageDisplayProps) {
   const [isLoading, setIsLoading] = useState(true);
@@ -81,7 +121,7 @@ export function PageDisplay({
               }
           )}
         >
-          {isLoading && (
+          {isLoading && !hasError && !imageErrors[currentPage] && (
             <div className="absolute inset-0 flex items-center justify-center z-10 opacity-0 animate-fade-in">
               <div className="relative">
                 <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary/20"></div>
@@ -92,26 +132,8 @@ export function PageDisplay({
               </div>
             </div>
           )}
-          {hasError ? (
-            <div className="flex flex-col items-center justify-center gap-3 text-muted-foreground">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="48"
-                height="48"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="opacity-40"
-              >
-                <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
-                <circle cx="9" cy="9" r="2" />
-                <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
-              </svg>
-              <span className="text-sm opacity-60">Image non disponible</span>
-            </div>
+          {hasError || imageErrors[currentPage] ? (
+            <ErrorPlaceholder onRetry={() => onRetryImage(currentPage)} />
           ) : imageBlobUrls[currentPage] ? (
             <>
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -145,7 +167,7 @@ export function PageDisplay({
               "order-2 justify-start": !isRTL,
             })}
           >
-            {secondPageLoading && (
+            {secondPageLoading && !secondPageHasError && !imageErrors[currentPage + 1] && (
               <div className="absolute inset-0 flex items-center justify-center z-10 opacity-0 animate-fade-in">
                 <div className="relative">
                   <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary/20"></div>
@@ -156,26 +178,8 @@ export function PageDisplay({
                 </div>
               </div>
             )}
-            {secondPageHasError ? (
-              <div className="flex flex-col items-center justify-center gap-3 text-muted-foreground">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="48"
-                  height="48"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="opacity-40"
-                >
-                  <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
-                  <circle cx="9" cy="9" r="2" />
-                  <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
-                </svg>
-                <span className="text-sm opacity-60">Image non disponible</span>
-              </div>
+            {secondPageHasError || imageErrors[currentPage + 1] ? (
+              <ErrorPlaceholder onRetry={() => onRetryImage(currentPage + 1)} />
             ) : imageBlobUrls[currentPage + 1] ? (
               <>
                 {/* eslint-disable-next-line @next/next/no-img-element */}

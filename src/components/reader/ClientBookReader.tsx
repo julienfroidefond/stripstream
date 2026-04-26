@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { NormalizedBook } from "@/lib/providers/types";
-import { PhotoswipeReader } from "./PhotoswipeReader";
+import { BookReader } from "./BookReader";
 import { Button } from "@/components/ui/button";
 
 interface ClientBookReaderProps {
@@ -26,7 +26,7 @@ export function ClientBookReader({ book, pages }: ClientBookReaderProps) {
   };
 
   if (isReading) {
-    return <PhotoswipeReader book={book} pages={pages} onClose={handleCloseReader} />;
+    return <BookReader book={book} pages={pages} onClose={handleCloseReader} />;
   }
 
   return (

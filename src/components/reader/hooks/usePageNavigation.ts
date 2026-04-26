@@ -38,10 +38,12 @@ export function usePageNavigation({
   const [showEndMessage, setShowEndMessage] = useState(false);
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const currentPageRef = useRef(currentPage);
+  // Refs miroir de book/pages.length pour le sync au démontage uniquement.
+  // Ne PAS mettre ces valeurs dans les deps du cleanup effect : le sync appelle
+  // une server action qui revalide le path, ce qui crée une boucle infinie.
   const bookRef = useRef(book);
   const pagesLengthRef = useRef(pages.length);
 
-  // Garder les refs à jour
   useEffect(() => {
     currentPageRef.current = currentPage;
   }, [currentPage]);
@@ -51,39 +53,44 @@ export function usePageNavigation({
     pagesLengthRef.current = pages.length;
   }, [book, pages.length]);
 
-  // Sync progress
+  // Sync progress — book et totalPages passés en argument pour
+  // éviter qu'un debounce/cleanup tardif n'écrive sur un autre livre.
   const syncReadProgress = useCallback(
-    async (page: number) => {
+    async (targetBook: NormalizedBook, totalPages: number, page: number) => {
       try {
-        ClientOfflineBookService.setCurrentPage(bookRef.current, page);
+        ClientOfflineBookService.setCurrentPage(targetBook, page);
         if (!isAnonymousRef.current) {
-          const completed = page === pagesLengthRef.current;
-          await updateReadProgress(bookRef.current.id, page, completed);
+          const completed = page === totalPages;
+          await updateReadProgress(targetBook.id, page, completed);
         }
       } catch (error) {
         logger.error({ err: error }, "Sync error:");
       }
     },
-    [] // Pas de dépendances car on utilise des refs
+    []
   );
 
   const debouncedSync = useCallback(
     (page: number) => {
+      // Snapshot au moment du scheduling, pas de l'exécution
+      const bookSnapshot = book;
+      const totalSnapshot = pages.length;
       if (syncTimeoutRef.current) {
         clearTimeout(syncTimeoutRef.current);
       }
-      syncTimeoutRef.current = setTimeout(() => syncReadProgress(page), 500);
+      syncTimeoutRef.current = setTimeout(
+        () => syncReadProgress(bookSnapshot, totalSnapshot, page),
+        500
+      );
     },
-    [syncReadProgress]
+    [syncReadProgress, book, pages.length]
   );
 
   const navigateToPage = useCallback(
     (page: number) => {
       if (page >= 1 && page <= pages.length) {
         setCurrentPage(page);
-        // Mettre à jour le localStorage immédiatement
         ClientOfflineBookService.setCurrentPage(book, page);
-        // Débouncer seulement l'API Komga
         debouncedSync(page);
       }
     },
@@ -117,14 +124,17 @@ export function usePageNavigation({
     router,
   ]);
 
-  // Cleanup - Sync final sans debounce
+  // Cleanup — Sync final UNIQUEMENT au démontage du composant.
+  // syncReadProgress a des deps vides donc sa ref est stable → l'effet ne ré-exécute
+  // pas pendant le cycle de vie. Les refs fournissent les dernières valeurs au moment
+  // de l'unmount, sans introduire de boucle de revalidation.
   useEffect(() => {
     return () => {
       if (syncTimeoutRef.current) {
         clearTimeout(syncTimeoutRef.current);
+        syncTimeoutRef.current = null;
       }
-      // Sync immédiatement au cleanup avec la VRAIE valeur actuelle
-      syncReadProgress(currentPageRef.current);
+      syncReadProgress(bookRef.current, pagesLengthRef.current, currentPageRef.current);
     };
   }, [syncReadProgress]);
 

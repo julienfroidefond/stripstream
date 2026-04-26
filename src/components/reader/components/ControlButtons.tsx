@@ -10,8 +10,6 @@ import {
   MoveRight,
   MoveLeft,
   Images,
-  ZoomIn,
-  RotateCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PageInput } from "./PageInput";
@@ -35,8 +33,6 @@ export const ControlButtons = ({
   onPageChange,
   showThumbnails,
   onToggleThumbnails,
-  onZoom,
-  onForceReload,
 }: ControlButtonsProps) => {
   const { t } = useTranslation();
 
@@ -114,30 +110,6 @@ export const ControlButtons = ({
           )}
           iconClassName="h-5 w-5"
           className={cn("rounded-full h-9 w-9", showThumbnails && "ring-2 ring-primary")}
-        />
-        <IconButton
-          variant="ghost"
-          size="icon"
-          icon={ZoomIn}
-          onClick={(e) => {
-            e.stopPropagation();
-            onZoom();
-          }}
-          tooltip={t("reader.controls.zoom")}
-          iconClassName="h-5 w-5"
-          className="rounded-full h-9 w-9"
-        />
-        <IconButton
-          variant="ghost"
-          size="icon"
-          icon={RotateCw}
-          onClick={(e) => {
-            e.stopPropagation();
-            onForceReload();
-          }}
-          tooltip={t("reader.controls.reload")}
-          iconClassName="h-5 w-5"
-          className="rounded-full h-9 w-9"
         />
         <div className="px-1.5 rounded-full" onClick={(e) => e.stopPropagation()}>
           <PageInput

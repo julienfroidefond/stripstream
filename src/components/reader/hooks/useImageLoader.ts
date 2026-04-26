@@ -6,6 +6,28 @@ interface ImageDimensions {
   height: number;
 }
 
+const RETRY_BACKOFFS_MS = [800, 1600] as const;
+
+// Fenêtre de pages conservées en mémoire autour de la page courante.
+// On lit majoritairement vers l'avant, donc plus de buffer en aval.
+const EVICTION_BEHIND = 10;
+const EVICTION_AHEAD = 20;
+
+function sleep(ms: number, signal: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal.aborted) return reject(new Error("aborted"));
+    const timeout = setTimeout(resolve, ms);
+    signal.addEventListener(
+      "abort",
+      () => {
+        clearTimeout(timeout);
+        reject(new Error("aborted"));
+      },
+      { once: true }
+    );
+  });
+}
+
 type ImageKey = number | string; // Support both numeric pages and prefixed keys like "next-1"
 
 interface UseImageLoaderProps {
@@ -24,6 +46,7 @@ export function useImageLoader({
   const PREFETCH_CONCURRENCY = 4;
   const [loadedImages, setLoadedImages] = useState<Record<ImageKey, ImageDimensions>>({});
   const [imageBlobUrls, setImageBlobUrls] = useState<Record<ImageKey, string>>({});
+  const [imageErrors, setImageErrors] = useState<Record<ImageKey, boolean>>({});
   const loadedImagesRef = useRef(loadedImages);
   const imageBlobUrlsRef = useRef(imageBlobUrls);
   const isMountedRef = useRef(true);
@@ -64,6 +87,51 @@ export function useImageLoader({
     loadingPromisesRef.current.clear();
   }, []);
 
+  // Évince les pages hors de la fenêtre [currentPage - BEHIND, currentPage + AHEAD]
+  // pour borner la mémoire (Blob URLs + dimensions). Les pages du livre suivant
+  // (clés "next-N") et les fetches en cours sont préservés.
+  const evictOutsideWindow = useCallback((currentPage: number) => {
+    const minKeep = currentPage - EVICTION_BEHIND;
+    const maxKeep = currentPage + EVICTION_AHEAD;
+    const keysToEvict: number[] = [];
+
+    Object.keys(imageBlobUrlsRef.current).forEach((keyStr) => {
+      const num = Number(keyStr);
+      if (Number.isNaN(num)) return;
+      if (pendingFetchesRef.current.has(num)) return;
+      if (num < minKeep || num > maxKeep) keysToEvict.push(num);
+    });
+
+    if (keysToEvict.length === 0) return;
+
+    keysToEvict.forEach((key) => {
+      const url = imageBlobUrlsRef.current[key];
+      if (url) URL.revokeObjectURL(url);
+    });
+
+    setImageBlobUrls((prev) => {
+      const next = { ...prev };
+      keysToEvict.forEach((key) => delete next[key]);
+      return next;
+    });
+    setLoadedImages((prev) => {
+      const next = { ...prev };
+      keysToEvict.forEach((key) => delete next[key]);
+      return next;
+    });
+    setImageErrors((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      keysToEvict.forEach((key) => {
+        if (key in next) {
+          delete next[key];
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
+    });
+  }, []);
+
   const runWithConcurrency = useCallback(
     async <T,>(items: T[], worker: (item: T) => Promise<void>, concurrency = PREFETCH_CONCURRENCY) => {
       for (let i = 0; i < items.length; i += concurrency) {
@@ -82,95 +150,126 @@ export function useImageLoader({
     [pageUrlBuilder]
   );
 
-  // Prefetch image and store dimensions
+  // Une tentative : fetch + decode → setState ou throw
+  const fetchAndDecodeOnce = useCallback(
+    async (pageNum: number, controller: AbortController): Promise<void> => {
+      const response = await fetch(getPageUrl(pageNum), {
+        cache: "default",
+        signal: controller.signal,
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+
+      try {
+        await new Promise<void>((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => {
+            if (!isMountedRef.current || controller.signal.aborted) {
+              URL.revokeObjectURL(blobUrl);
+              reject(new Error("Aborted"));
+              return;
+            }
+            setLoadedImages((prev) => ({
+              ...prev,
+              [pageNum]: { width: img.naturalWidth, height: img.naturalHeight },
+            }));
+            setImageBlobUrls((prev) => {
+              const previous = prev[pageNum];
+              if (previous && previous !== blobUrl) URL.revokeObjectURL(previous);
+              return { ...prev, [pageNum]: blobUrl };
+            });
+            setImageErrors((prev) => {
+              if (!prev[pageNum]) return prev;
+              const next = { ...prev };
+              delete next[pageNum];
+              return next;
+            });
+            resolve();
+          };
+          img.onerror = () => {
+            URL.revokeObjectURL(blobUrl);
+            reject(new Error("Image decode error"));
+          };
+          img.src = blobUrl;
+        });
+      } catch (err) {
+        // Si le set state a déjà eu lieu, blobUrl a été conservé. Sinon on l'a révoqué dans onerror.
+        throw err;
+      }
+    },
+    [getPageUrl]
+  );
+
+  // Prefetch image avec retry exponential backoff (3 tentatives au total)
   const prefetchImage = useCallback(
     async (pageNum: number) => {
-      if (!isMountedRef.current) {
-        return;
-      }
+      if (!isMountedRef.current) return;
 
-      // Check if we already have both dimensions and blob URL
       const hasDimensions = loadedImagesRef.current[pageNum];
       const hasBlobUrl = imageBlobUrlsRef.current[pageNum];
+      if (hasDimensions && hasBlobUrl) return;
 
-      if (hasDimensions && hasBlobUrl) {
-        return;
-      }
-
-      // Check if this page is already being fetched - if so, wait for it
       const existingPromise = loadingPromisesRef.current.get(pageNum);
-      if (existingPromise) {
-        return existingPromise;
-      }
+      if (existingPromise) return existingPromise;
 
-      // Mark as pending and create promise
       pendingFetchesRef.current.add(pageNum);
       const controller = new AbortController();
       abortControllersRef.current.set(pageNum, controller);
 
       const promise = (async () => {
-        try {
-          // Use browser cache if available - the server sets Cache-Control headers
-          const response = await fetch(getPageUrl(pageNum), {
-            cache: "default", // Respect Cache-Control headers from server
-            signal: controller.signal,
-          });
-          if (!response.ok) {
-            return;
+        let lastError: unknown;
+        const maxAttempts = 1 + RETRY_BACKOFFS_MS.length;
+
+        for (let attempt = 0; attempt < maxAttempts; attempt++) {
+          if (!isMountedRef.current || controller.signal.aborted) return;
+
+          if (attempt > 0) {
+            try {
+              await sleep(RETRY_BACKOFFS_MS[attempt - 1], controller.signal);
+            } catch {
+              return; // aborted
+            }
           }
 
-          const blob = await response.blob();
-          const blobUrl = URL.createObjectURL(blob);
-
-          // Create image to get dimensions
-          const img = new Image();
-          
-          // Wait for image to load before resolving promise
-          await new Promise<void>((resolve, reject) => {
-            img.onload = () => {
-              if (!isMountedRef.current || controller.signal.aborted) {
-                URL.revokeObjectURL(blobUrl);
-                reject(new Error("Aborted"));
-                return;
-              }
-
-              setLoadedImages((prev) => ({
-                ...prev,
-                [pageNum]: { width: img.naturalWidth, height: img.naturalHeight },
-              }));
-
-              // Store the blob URL for immediate use
-              setImageBlobUrls((prev) => ({
-                ...prev,
-                [pageNum]: blobUrl,
-              }));
-
-              resolve();
-            };
-
-            img.onerror = () => {
-              URL.revokeObjectURL(blobUrl);
-              reject(new Error("Image load error"));
-            };
-
-            img.src = blobUrl;
-          });
-        } catch {
-          // Silently fail prefetch
-        } finally {
-          // Remove from pending set and promise map
-          pendingFetchesRef.current.delete(pageNum);
-          abortControllersRef.current.delete(pageNum);
-          loadingPromisesRef.current.delete(pageNum);
+          try {
+            await fetchAndDecodeOnce(pageNum, controller);
+            return; // success
+          } catch (err) {
+            lastError = err;
+            if (controller.signal.aborted) return;
+          }
         }
-      })();
 
-      // Store promise so other calls can await it
+        if (isMountedRef.current && !controller.signal.aborted) {
+          logger.warn({ pageNum, err: lastError }, "Failed to load page after retries");
+          setImageErrors((prev) => ({ ...prev, [pageNum]: true }));
+        }
+      })().finally(() => {
+        pendingFetchesRef.current.delete(pageNum);
+        abortControllersRef.current.delete(pageNum);
+        loadingPromisesRef.current.delete(pageNum);
+      });
+
       loadingPromisesRef.current.set(pageNum, promise);
-
       return promise;
     },
-    [getPageUrl]
+    [fetchAndDecodeOnce]
+  );
+
+  // Retry explicite déclenché par l'UI : reset l'état d'erreur puis re-prefetch
+  const retryImage = useCallback(
+    async (pageNum: number) => {
+      setImageErrors((prev) => {
+        if (!prev[pageNum]) return prev;
+        const next = { ...prev };
+        delete next[pageNum];
+        return next;
+      });
+      return prefetchImage(pageNum);
+    },
+    [prefetchImage]
   );
 
   // Prefetch multiple pages starting from a given page
@@ -271,11 +370,13 @@ export function useImageLoader({
                 [nextBookPageKey]: { width: img.naturalWidth, height: img.naturalHeight },
               }));
 
-              // Store the blob URL for immediate use
-              setImageBlobUrls((prev) => ({
-                ...prev,
-                [nextBookPageKey]: blobUrl,
-              }));
+              setImageBlobUrls((prev) => {
+                const previous = prev[nextBookPageKey];
+                if (previous && previous !== blobUrl) {
+                  URL.revokeObjectURL(previous);
+                }
+                return { ...prev, [nextBookPageKey]: blobUrl };
+              });
             };
 
             img.onerror = () => {
@@ -295,71 +396,6 @@ export function useImageLoader({
       }
     },
     [nextBook, prefetchCount, runWithConcurrency]
-  );
-
-  // Force reload handler
-  const handleForceReload = useCallback(
-    async (
-      currentPage: number,
-      isDoublePage: boolean,
-      shouldShowDoublePage: (page: number) => boolean
-    ) => {
-      // Révoquer les anciennes URLs blob
-      if (imageBlobUrls[currentPage]) {
-        URL.revokeObjectURL(imageBlobUrls[currentPage]);
-      }
-      if (imageBlobUrls[currentPage + 1]) {
-        URL.revokeObjectURL(imageBlobUrls[currentPage + 1]);
-      }
-
-      try {
-        // Fetch page 1 avec cache: reload
-        const response1 = await fetch(getPageUrl(currentPage), {
-          cache: "reload",
-          headers: {
-            "Cache-Control": "no-cache",
-            Pragma: "no-cache",
-          },
-        });
-
-        if (!response1.ok) {
-          throw new Error(`HTTP ${response1.status}`);
-        }
-
-        const blob1 = await response1.blob();
-        const blobUrl1 = URL.createObjectURL(blob1);
-
-        const newUrls: Record<number, string> = {
-          ...imageBlobUrls,
-          [currentPage]: blobUrl1,
-        };
-
-        // Fetch page 2 si double page
-        if (isDoublePage && shouldShowDoublePage(currentPage)) {
-          const response2 = await fetch(getPageUrl(currentPage + 1), {
-            cache: "reload",
-            headers: {
-              "Cache-Control": "no-cache",
-              Pragma: "no-cache",
-            },
-          });
-
-          if (!response2.ok) {
-            throw new Error(`HTTP ${response2.status}`);
-          }
-
-          const blob2 = await response2.blob();
-          const blobUrl2 = URL.createObjectURL(blob2);
-          newUrls[currentPage + 1] = blobUrl2;
-        }
-
-        setImageBlobUrls(newUrls);
-      } catch (error) {
-        logger.error({ err: error }, "Error reloading images:");
-        throw error;
-      }
-    },
-    [imageBlobUrls, getPageUrl]
   );
 
   // Cleanup blob URLs on unmount only
@@ -382,11 +418,13 @@ export function useImageLoader({
   return {
     loadedImages,
     imageBlobUrls,
+    imageErrors,
     prefetchImage,
+    retryImage,
     prefetchPages,
     prefetchNextBook,
     cancelAllPrefetches,
-    handleForceReload,
+    evictOutsideWindow,
     getPageUrl,
     prefetchCount,
     isPageLoading,

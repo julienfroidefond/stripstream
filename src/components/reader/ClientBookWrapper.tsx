@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import type { NormalizedBook } from "@/lib/providers/types";
-import { PhotoswipeReader } from "./PhotoswipeReader";
+import { BookReader } from "./BookReader";
 import { useRouter } from "next/navigation";
 import { ClientOfflineBookService } from "@/lib/services/client-offlinebook.service";
 
@@ -35,6 +35,6 @@ export function ClientBookWrapper({ book, pages, nextBook }: ClientBookWrapperPr
   }
 
   return (
-    <PhotoswipeReader book={book} pages={pages} onClose={handleCloseReader} nextBook={nextBook} />
+    <BookReader book={book} pages={pages} onClose={handleCloseReader} nextBook={nextBook} />
   );
 }

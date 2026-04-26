@@ -15,7 +15,7 @@
 
 | Business Concept | Technical Implementation |
 |-----------------|------------------------|
-| Read comics | `BookService.getBook()`, PhotoswipeReader component |
+| Read comics | `BookService.getBook()`, BookReader component |
 | Sync progress | Komga API calls in `ReadProgressService` |
 | Offline reading | Service Worker + IndexedDB via `ClientOfflineBookService` |
 | User preferences | MongoDB + `PreferencesService` |
@@ -43,7 +43,7 @@
 | HomeContent | HomeService |
 | SeriesGrid | SeriesService |
 | BookCover | BookService |
-| PhotoswipeReader | ImageService |
+| BookReader | ImageService |
 | FavoritesButton | FavoriteService |
 | SettingsPanel | PreferencesService |
 

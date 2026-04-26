@@ -23,9 +23,8 @@ export const PageInput = ({ currentPage, totalPages, onPageChange }: PageInputPr
   };
 
   const handleGoToPage = () => {
-    const value = parseInt(inputValue);
-    if (!isNaN(value) && value >= 1 && value <= totalPages) {
-      onPageChange(value);
+    if (isValid) {
+      onPageChange(parsedValue);
       setIsEditing(false);
     }
   };
@@ -48,12 +47,14 @@ export const PageInput = ({ currentPage, totalPages, onPageChange }: PageInputPr
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Ne garder que les chiffres
-    const value = e.target.value.replace(/[^0-9]/g, "");
-    if (value === "" || (parseInt(value) >= 1 && parseInt(value) <= totalPages)) {
-      setInputValue(value);
-    }
+    // Accepter toute saisie numérique pendant la frappe ;
+    // la validation borne min/max se fait au submit.
+    setInputValue(e.target.value.replace(/[^0-9]/g, ""));
   };
+
+  const parsedValue = parseInt(inputValue, 10);
+  const isValid =
+    inputValue !== "" && !isNaN(parsedValue) && parsedValue >= 1 && parsedValue <= totalPages;
 
   return (
     <div
@@ -66,21 +67,27 @@ export const PageInput = ({ currentPage, totalPages, onPageChange }: PageInputPr
           <input
             ref={inputRef}
             type="text"
+            inputMode="numeric"
             value={inputValue}
             onChange={handleChange}
             className={cn(
               "w-12 bg-background/70 backdrop-blur-md text-center rounded-md py-1 px-2",
-              "focus:outline-none focus:ring-2 focus:ring-primary",
-              "text-sm text-foreground"
+              "focus:outline-none focus:ring-2",
+              "text-sm text-foreground",
+              isValid || inputValue === ""
+                ? "focus:ring-primary"
+                : "ring-2 ring-destructive focus:ring-destructive"
             )}
             onKeyDown={handleKeyDown}
             onBlur={handleBlur}
             aria-label="Entrez un numéro de page"
+            aria-invalid={inputValue !== "" && !isValid}
           />
           <button
             onClick={handleGoToPage}
+            disabled={!isValid}
             data-action="goto"
-            className="p-1 rounded-md bg-background/70 backdrop-blur-md hover:bg-background/80 transition-colors"
+            className="p-1 rounded-md bg-background/70 backdrop-blur-md hover:bg-background/80 transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-background/70"
             aria-label="Aller à cette page"
           >
             <ArrowRight className="h-4 w-4" />
