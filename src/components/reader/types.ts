@@ -1,4 +1,5 @@
 import type { NormalizedBook } from "@/lib/providers/types";
+import type { FitMode } from "./hooks/useFitMode";
 
 export interface PageCache {
   [pageNumber: number]: {
@@ -47,11 +48,14 @@ export interface ControlButtonsProps {
   isDoublePage: boolean;
   onToggleDoublePage: () => void;
   isFullscreen: boolean;
+  isFullscreenAvailable: boolean;
   onToggleFullscreen: () => void;
   direction: "ltr" | "rtl";
   onToggleDirection: () => void;
   showThumbnails: boolean;
   onToggleThumbnails: () => void;
+  fitMode: FitMode;
+  onCycleFitMode: () => void;
 }
 
 export interface UsePageNavigationProps {

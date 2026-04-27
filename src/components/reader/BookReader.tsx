@@ -31,11 +31,14 @@ export function BookReader(props: BookReaderProps) {
         isDoublePage={s.isDoublePage}
         onToggleDoublePage={s.onToggleDoublePage}
         isFullscreen={s.isFullscreen}
+        isFullscreenAvailable={s.isFullscreenAvailable}
         onToggleFullscreen={s.onToggleFullscreen}
         direction={s.direction}
         onToggleDirection={s.onToggleDirection}
         showThumbnails={s.showThumbnails}
         onToggleThumbnails={s.onToggleThumbnails}
+        fitMode={s.fitMode}
+        onCycleFitMode={s.onCycleFitMode}
       />
 
       <PageDisplay
@@ -47,6 +50,7 @@ export function BookReader(props: BookReaderProps) {
         imageErrors={s.imageErrors}
         onRetryImage={s.onRetryImage}
         isRTL={s.isRTL}
+        fitMode={s.fitMode}
       />
 
       <NavigationBar

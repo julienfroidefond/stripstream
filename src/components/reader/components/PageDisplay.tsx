@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { RotateCw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { FitMode } from "../hooks/useFitMode";
 
 interface PageDisplayProps {
   currentPage: number;
@@ -11,6 +12,7 @@ interface PageDisplayProps {
   imageErrors: Record<number | string, boolean>;
   onRetryImage: (pageNum: number) => void;
   isRTL: boolean;
+  fitMode: FitMode;
 }
 
 function ErrorPlaceholder({ onRetry }: { onRetry: () => void }) {
@@ -48,6 +50,17 @@ function ErrorPlaceholder({ onRetry }: { onRetry: () => void }) {
   );
 }
 
+function imageClassNameFor(fitMode: FitMode, isLoading: boolean) {
+  return cn(
+    "cursor-pointer transition-opacity",
+    fitMode === "fit" && "max-h-full max-w-full object-contain",
+    fitMode === "width" && "w-full h-auto max-w-full",
+    fitMode === "height" && "h-[calc(100vh-2.5rem)] w-auto max-h-[calc(100vh-2.5rem)]",
+    fitMode === "original" && "block",
+    isLoading ? "opacity-0" : "opacity-100"
+  );
+}
+
 export function PageDisplay({
   currentPage,
   pages: _pages,
@@ -57,6 +70,7 @@ export function PageDisplay({
   imageErrors,
   onRetryImage,
   isRTL,
+  fitMode,
 }: PageDisplayProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -106,21 +120,52 @@ export function PageDisplay({
     }
   }, [imageBlobUrls[currentPage + 1], currentPage, secondPageHasError]);
 
+  const showSecondPage = isDoublePage && shouldShowDoublePage(currentPage);
+
+  const outerOverflow =
+    fitMode === "fit"
+      ? "overflow-hidden"
+      : fitMode === "width"
+        ? "overflow-y-auto overflow-x-hidden"
+        : fitMode === "height"
+          ? "overflow-x-auto overflow-y-hidden"
+          : "overflow-auto";
+
+  const innerSizing = cn(
+    "relative flex w-full px-2 sm:px-4",
+    fitMode === "fit" && "h-[calc(100vh-2.5rem)] items-center justify-center",
+    fitMode === "width" && "min-h-[calc(100vh-2.5rem)] items-start justify-center",
+    fitMode === "height" && "h-[calc(100vh-2.5rem)] items-center min-w-full",
+    fitMode === "original" && "min-h-[calc(100vh-2.5rem)] items-start"
+  );
+
+  // En modes non-"fit", contenir l'image dans un wrapper auto-sizé pour ne pas
+  // forcer la mise en colonne 50/50 hostile au scroll natif.
+  const pageWrapperClass = (isPage1: boolean) =>
+    cn(
+      "relative flex items-center",
+      fitMode === "fit" ? "h-full" : "h-auto",
+      showSecondPage
+        ? fitMode === "fit"
+          ? "w-1/2"
+          : "shrink-0"
+        : "w-full justify-center",
+      showSecondPage && {
+        [isPage1 ? "order-2 justify-start" : "order-1 justify-end"]: isRTL,
+        [isPage1 ? "order-1 justify-end" : "order-2 justify-start"]: !isRTL,
+      }
+    );
+
   return (
-    <div className="relative flex w-full flex-1 items-center justify-center overflow-hidden">
-      <div className="relative flex h-[calc(100vh-2.5rem)] w-full items-center justify-center px-2 sm:px-4">
+    <div
+      className={cn(
+        "relative flex w-full flex-1 items-center justify-center",
+        outerOverflow
+      )}
+    >
+      <div className={innerSizing}>
         {/* Page 1 */}
-        <div
-          className={cn(
-            "relative h-full flex items-center",
-            isDoublePage && shouldShowDoublePage(currentPage) ? "w-1/2" : "w-full justify-center",
-            isDoublePage &&
-              shouldShowDoublePage(currentPage) && {
-                "order-2 justify-start": isRTL,
-                "order-1 justify-end": !isRTL,
-              }
-          )}
-        >
+        <div className={pageWrapperClass(true)}>
           {isLoading && !hasError && !imageErrors[currentPage] && (
             <div className="absolute inset-0 flex items-center justify-center z-10 opacity-0 animate-fade-in">
               <div className="relative">
@@ -141,15 +186,11 @@ export function PageDisplay({
                 key={`page-${currentPage}-${imageBlobUrls[currentPage]}`}
                 src={imageBlobUrls[currentPage]}
                 alt={`Page ${currentPage}`}
-                className={cn(
-                  "max-h-full max-w-full cursor-pointer object-contain transition-opacity",
-                  isLoading ? "opacity-0" : "opacity-100"
-                )}
+                className={imageClassNameFor(fitMode, isLoading)}
                 loading="eager"
                 onLoad={handleImageLoad}
                 onError={handleImageError}
                 ref={(img) => {
-                  // Si l'image est déjà en cache, onLoad ne sera pas appelé
                   if (img?.complete && img?.naturalHeight !== 0) {
                     handleImageLoad();
                   }
@@ -160,13 +201,8 @@ export function PageDisplay({
         </div>
 
         {/* Page 2 (double page) */}
-        {isDoublePage && shouldShowDoublePage(currentPage) && (
-          <div
-            className={cn("relative h-full w-1/2 flex items-center", {
-              "order-1 justify-end": isRTL,
-              "order-2 justify-start": !isRTL,
-            })}
-          >
+        {showSecondPage && (
+          <div className={pageWrapperClass(false)}>
             {secondPageLoading && !secondPageHasError && !imageErrors[currentPage + 1] && (
               <div className="absolute inset-0 flex items-center justify-center z-10 opacity-0 animate-fade-in">
                 <div className="relative">
@@ -187,15 +223,11 @@ export function PageDisplay({
                   key={`page-${currentPage + 1}-${imageBlobUrls[currentPage + 1]}`}
                   src={imageBlobUrls[currentPage + 1]}
                   alt={`Page ${currentPage + 1}`}
-                  className={cn(
-                    "max-h-full max-w-full cursor-pointer object-contain transition-opacity",
-                    secondPageLoading ? "opacity-0" : "opacity-100"
-                  )}
+                  className={imageClassNameFor(fitMode, secondPageLoading)}
                   loading="eager"
                   onLoad={handleSecondImageLoad}
                   onError={handleSecondImageError}
                   ref={(img) => {
-                    // Si l'image est déjà en cache, onLoad ne sera pas appelé
                     if (img?.complete && img?.naturalHeight !== 0) {
                       handleSecondImageLoad();
                     }

@@ -5,6 +5,7 @@ import type { BookReaderProps } from "../types";
 import { useReadingDirection } from "./useReadingDirection";
 import { useFullscreen } from "./useFullscreen";
 import { useDoublePageMode } from "./useDoublePageMode";
+import { useFitMode } from "./useFitMode";
 import { useImageLoader } from "./useImageLoader";
 import { usePageNavigation } from "./usePageNavigation";
 import { useTouchNavigation } from "./useTouchNavigation";
@@ -28,12 +29,13 @@ export function useReaderState({ book, pages, onClose, nextBook }: BookReaderPro
   );
 
   const { direction, toggleDirection, isRTL } = useReadingDirection();
-  const { isFullscreen, toggleFullscreen } = useFullscreen();
+  const { isFullscreen, isFullscreenAvailable, toggleFullscreen } = useFullscreen();
   const {
     isDoublePage,
     shouldShowDoublePage: shouldShowDoublePageRaw,
     toggleDoublePage,
   } = useDoublePageMode();
+  const { fitMode, cycleFitMode } = useFitMode();
 
   // Wrapper mémoïsé : signature à 1 argument pour les consommateurs,
   // tout en bornant la longueur du livre une seule fois par render.
@@ -183,8 +185,10 @@ export function useReaderState({ book, pages, onClose, nextBook }: BookReaderPro
     showThumbnails,
     isDoublePage,
     isFullscreen,
+    isFullscreenAvailable,
     isRTL,
     direction,
+    fitMode,
     imageBlobUrls,
     imageErrors,
     shouldShowDoublePage,
@@ -197,6 +201,7 @@ export function useReaderState({ book, pages, onClose, nextBook }: BookReaderPro
     onToggleDoublePage: toggleDoublePage,
     onToggleFullscreen,
     onToggleDirection: toggleDirection,
+    onCycleFitMode: cycleFitMode,
     onRetryImage: retryImage,
   };
 }

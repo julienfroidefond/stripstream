@@ -10,6 +10,10 @@ import {
   MoveRight,
   MoveLeft,
   Images,
+  Frame,
+  StretchHorizontal,
+  StretchVertical,
+  ScanSearch,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PageInput } from "./PageInput";
@@ -27,14 +31,26 @@ export const ControlButtons = ({
   isDoublePage,
   onToggleDoublePage,
   isFullscreen,
+  isFullscreenAvailable,
   onToggleFullscreen,
   direction,
   onToggleDirection,
   onPageChange,
   showThumbnails,
   onToggleThumbnails,
+  fitMode,
+  onCycleFitMode,
 }: ControlButtonsProps) => {
   const { t } = useTranslation();
+
+  const fitIcon =
+    fitMode === "fit"
+      ? Frame
+      : fitMode === "width"
+        ? StretchHorizontal
+        : fitMode === "height"
+          ? StretchVertical
+          : ScanSearch;
 
   return (
     <>
@@ -83,17 +99,33 @@ export const ControlButtons = ({
           iconClassName="h-5 w-5"
           className="rounded-full h-9 w-9"
         />
+        {isFullscreenAvailable && (
+          <IconButton
+            variant="ghost"
+            size="icon"
+            icon={isFullscreen ? Minimize2 : Maximize2}
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleFullscreen();
+            }}
+            tooltip={t(
+              isFullscreen ? "reader.controls.fullscreen.exit" : "reader.controls.fullscreen.enter"
+            )}
+            iconClassName="h-5 w-5"
+            className="rounded-full h-9 w-9"
+          />
+        )}
         <IconButton
           variant="ghost"
           size="icon"
-          icon={isFullscreen ? Minimize2 : Maximize2}
+          icon={fitIcon}
           onClick={(e) => {
             e.stopPropagation();
-            onToggleFullscreen();
+            onCycleFitMode();
           }}
-          tooltip={t(
-            isFullscreen ? "reader.controls.fullscreen.exit" : "reader.controls.fullscreen.enter"
-          )}
+          tooltip={t("reader.controls.fitMode.current", {
+            mode: t(`reader.controls.fitMode.${fitMode}`),
+          })}
           iconClassName="h-5 w-5"
           className="rounded-full h-9 w-9"
         />

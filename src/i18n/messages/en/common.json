@@ -457,6 +457,13 @@
         "show": "Show thumbnails",
         "hide": "Hide thumbnails"
       },
+      "fitMode": {
+        "current": "Fit mode: {{mode}}",
+        "fit": "fit page",
+        "width": "fit width",
+        "height": "fit height",
+        "original": "original size"
+      },
       "close": "Close",
       "previousPage": "Previous page",
       "nextPage": "Next page"

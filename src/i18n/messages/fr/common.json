@@ -455,6 +455,13 @@
         "show": "Afficher les vignettes",
         "hide": "Masquer les vignettes"
       },
+      "fitMode": {
+        "current": "Affichage : {{mode}}",
+        "fit": "page entière",
+        "width": "largeur",
+        "height": "hauteur",
+        "original": "taille originale"
+      },
       "close": "Fermer",
       "previousPage": "Page précédente",
       "nextPage": "Page suivante"
