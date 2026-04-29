@@ -7,16 +7,29 @@ export interface ResolvedStripstreamConfig {
 }
 
 /**
- * Résout la config Stripstream : d'abord en base (par utilisateur), sinon depuis les env STRIPSTREAM_URL et STRIPSTREAM_TOKEN.
+ * Résout la config Stripstream :
+ *   1) `activeId` si fourni et appartient au user → utilise cette config
+ *   2) sinon, première config disponible du user
+ *   3) sinon, fallback aux variables d'env STRIPSTREAM_URL / STRIPSTREAM_TOKEN
  */
 export async function getResolvedStripstreamConfig(
-  userId: number
+  userId: number,
+  activeId?: number
 ): Promise<ResolvedStripstreamConfig | null> {
-  const fromDb = await prisma.stripstreamConfig.findUnique({
+  if (activeId) {
+    const config = await prisma.stripstreamConfig.findFirst({
+      where: { id: activeId, userId },
+      select: { url: true, token: true },
+    });
+    if (config) return { ...config, source: "db" };
+  }
+
+  const fallback = await prisma.stripstreamConfig.findFirst({
     where: { userId },
+    orderBy: { createdAt: "asc" },
     select: { url: true, token: true },
   });
-  if (fromDb) return { ...fromDb, source: "db" };
+  if (fallback) return { ...fallback, source: "db" };
 
   const url = process.env.STRIPSTREAM_URL?.trim();
   const token = process.env.STRIPSTREAM_TOKEN?.trim();

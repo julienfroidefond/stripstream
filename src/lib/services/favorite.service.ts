@@ -7,29 +7,51 @@ import { FAVORITES_CACHE_TAG } from "../../constants/cacheConstants";
 import type { User } from "@/types/komga";
 import logger from "@/lib/logger";
 
-// Lecture cachée par (userId, provider, seriesId), invalidée via FAVORITES_CACHE_TAG.
-const cachedIsFavorite = (userId: number, provider: string, seriesId: string) =>
+type ProviderType = "komga" | "stripstream";
+
+interface ActiveContext {
+  userId: number;
+  provider: ProviderType;
+  /** id de la config (komga ou stripstream) à laquelle scoper les favoris */
+  configId: number | null;
+}
+
+// Lecture cachée par (userId, provider, configId, seriesId), invalidée via FAVORITES_CACHE_TAG.
+const cachedIsFavorite = (
+  userId: number,
+  provider: ProviderType,
+  configId: number | null,
+  seriesId: string
+) =>
   unstable_cache(
     async () => {
-      const favorite = await prisma.favorite.findFirst({
-        where: { userId, seriesId, provider },
-      });
+      if (configId === null) return false;
+      const where =
+        provider === "komga"
+          ? { userId, seriesId, komgaConfigId: configId }
+          : { userId, seriesId, stripstreamConfigId: configId };
+      const favorite = await prisma.favorite.findFirst({ where });
       return !!favorite;
     },
-    ["favorite-is", String(userId), provider, seriesId],
+    ["favorite-is", String(userId), provider, String(configId ?? "none"), seriesId],
     { tags: [FAVORITES_CACHE_TAG] }
   )();
 
-const cachedFavoriteIds = (userId: number, provider: string) =>
+const cachedFavoriteIds = (userId: number, provider: ProviderType, configId: number | null) =>
   unstable_cache(
     async () => {
+      if (configId === null) return [];
+      const where =
+        provider === "komga"
+          ? { userId, komgaConfigId: configId }
+          : { userId, stripstreamConfigId: configId };
       const favorites = await prisma.favorite.findMany({
-        where: { userId, provider },
+        where,
         select: { seriesId: true },
       });
       return favorites.map((f) => f.seriesId);
     },
-    ["favorite-ids", String(userId), provider],
+    ["favorite-ids", String(userId), provider, String(configId ?? "none")],
     { tags: [FAVORITES_CACHE_TAG] }
   )();
 
@@ -42,21 +64,34 @@ export class FavoriteService {
     return user;
   }
 
-  private static async getCurrentUserWithProvider(): Promise<{ userId: number; provider: string }> {
+  /**
+   * Résout le contexte actif de l'utilisateur :
+   *   - le type de provider courant (komga/stripstream)
+   *   - l'id de la config active correspondante (peut être null si aucune)
+   */
+  private static async getActiveContext(): Promise<ActiveContext> {
     const user = await FavoriteService.getCurrentUser();
     const userId = parseInt(user.id, 10);
     const dbUser = await prisma.user.findUnique({
       where: { id: userId },
-      select: { activeProvider: true },
+      select: {
+        activeProvider: true,
+        activeKomgaConfigId: true,
+        activeStripstreamConfigId: true,
+      },
     });
-    const provider = dbUser?.activeProvider ?? "komga";
-    return { userId, provider };
+    const provider = (dbUser?.activeProvider ?? "komga") as ProviderType;
+    const configId =
+      provider === "komga"
+        ? dbUser?.activeKomgaConfigId ?? null
+        : dbUser?.activeStripstreamConfigId ?? null;
+    return { userId, provider, configId };
   }
 
   static async isFavorite(seriesId: string): Promise<boolean> {
     try {
-      const { userId, provider } = await this.getCurrentUserWithProvider();
-      return await cachedIsFavorite(userId, provider, seriesId);
+      const ctx = await this.getActiveContext();
+      return await cachedIsFavorite(ctx.userId, ctx.provider, ctx.configId, seriesId);
     } catch (error) {
       logger.error({ err: error, seriesId }, "Erreur lors de la vérification du favori");
       return false;
@@ -65,32 +100,64 @@ export class FavoriteService {
 
   static async addToFavorites(seriesId: string): Promise<void> {
     try {
-      const { userId, provider } = await this.getCurrentUserWithProvider();
-      await prisma.favorite.upsert({
-        where: {
-          userId_provider_seriesId: { userId, provider, seriesId },
-        },
-        update: {},
-        create: { userId, provider, seriesId },
-      });
+      const ctx = await this.getActiveContext();
+      if (ctx.configId === null) {
+        throw new AppError(ERROR_CODES.FAVORITE.ADD_ERROR);
+      }
+
+      const data =
+        ctx.provider === "komga"
+          ? {
+              userId: ctx.userId,
+              seriesId,
+              provider: "komga",
+              komgaConfigId: ctx.configId,
+            }
+          : {
+              userId: ctx.userId,
+              seriesId,
+              provider: "stripstream",
+              stripstreamConfigId: ctx.configId,
+            };
+
+      // upsert manuel : la contrainte unique dépend de la colonne config concernée
+      const existing =
+        ctx.provider === "komga"
+          ? await prisma.favorite.findFirst({
+              where: { userId: ctx.userId, seriesId, komgaConfigId: ctx.configId },
+              select: { id: true },
+            })
+          : await prisma.favorite.findFirst({
+              where: { userId: ctx.userId, seriesId, stripstreamConfigId: ctx.configId },
+              select: { id: true },
+            });
+
+      if (!existing) {
+        await prisma.favorite.create({ data });
+      }
     } catch (error) {
+      if (error instanceof AppError) throw error;
       throw new AppError(ERROR_CODES.FAVORITE.ADD_ERROR, {}, error);
     }
   }
 
   static async removeFromFavorites(seriesId: string): Promise<void> {
     try {
-      const { userId, provider } = await this.getCurrentUserWithProvider();
-      await prisma.favorite.deleteMany({
-        where: { userId, seriesId, provider },
-      });
+      const ctx = await this.getActiveContext();
+      if (ctx.configId === null) return;
+
+      const where =
+        ctx.provider === "komga"
+          ? { userId: ctx.userId, seriesId, komgaConfigId: ctx.configId }
+          : { userId: ctx.userId, seriesId, stripstreamConfigId: ctx.configId };
+      await prisma.favorite.deleteMany({ where });
     } catch (error) {
       throw new AppError(ERROR_CODES.FAVORITE.DELETE_ERROR, {}, error);
     }
   }
 
   static async getAllFavoriteIds(): Promise<string[]> {
-    const { userId, provider } = await this.getCurrentUserWithProvider();
-    return cachedFavoriteIds(userId, provider);
+    const ctx = await this.getActiveContext();
+    return cachedFavoriteIds(ctx.userId, ctx.provider, ctx.configId);
   }
 }

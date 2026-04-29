@@ -43,7 +43,7 @@ export class AdminService {
       const usersWithConfigs = await Promise.all(
         users.map(async (user) => {
           const [komgaConfig, preferences] = await Promise.all([
-            prisma.komgaConfig.findUnique({
+            prisma.komgaConfig.findFirst({
               where: { userId: user.id },
               select: { id: true },
             }),

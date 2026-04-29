@@ -107,7 +107,7 @@ export class UserService {
         prisma.preferences.findUnique({
           where: { userId },
         }),
-        prisma.komgaConfig.findUnique({
+        prisma.komgaConfig.findFirst({
           where: { userId },
         }),
       ]);

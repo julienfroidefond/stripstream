@@ -13,8 +13,8 @@ export async function getProvider(): Promise<IMediaProvider | null> {
     where: { id: userId },
     select: {
       activeProvider: true,
-      config: { select: { url: true, authHeader: true } },
-      stripstreamConfig: { select: { id: true } },
+      activeKomgaConfigId: true,
+      activeStripstreamConfigId: true,
     },
   });
 
@@ -23,7 +23,10 @@ export async function getProvider(): Promise<IMediaProvider | null> {
   const activeProvider = dbUser.activeProvider ?? "komga";
 
   if (activeProvider === "stripstream") {
-    const resolved = await getResolvedStripstreamConfig(userId);
+    const resolved = await getResolvedStripstreamConfig(
+      userId,
+      dbUser.activeStripstreamConfigId ?? undefined
+    );
     if (resolved) {
       const { StripstreamProvider } = await import("./stripstream/stripstream.provider");
       return new StripstreamProvider(resolved.url, resolved.token);
@@ -31,9 +34,10 @@ export async function getProvider(): Promise<IMediaProvider | null> {
   }
 
   if (activeProvider === "komga" || !dbUser.activeProvider) {
-    if (!dbUser.config) return null;
+    const config = await resolveActiveKomgaConfig(userId, dbUser.activeKomgaConfigId);
+    if (!config) return null;
     const { KomgaProvider } = await import("./komga/komga.provider");
-    return new KomgaProvider(dbUser.config.url, dbUser.config.authHeader);
+    return new KomgaProvider(config.url, config.authHeader);
   }
 
   return null;
@@ -50,4 +54,29 @@ export async function getActiveProviderType(): Promise<string | null> {
   });
 
   return dbUser?.activeProvider ?? "komga";
+}
+
+/**
+ * Récupère la config Komga active. Si activeId est fourni et existe, on la prend ;
+ * sinon on retombe sur la première config du user (cas d'un user qui n'a pas encore
+ * choisi explicitement une config active mais en possède au moins une).
+ */
+async function resolveActiveKomgaConfig(
+  userId: number,
+  activeId: number | null
+): Promise<{ url: string; authHeader: string } | null> {
+  if (activeId) {
+    const config = await prisma.komgaConfig.findFirst({
+      where: { id: activeId, userId },
+      select: { url: true, authHeader: true },
+    });
+    if (config) return config;
+  }
+
+  // Fallback : première config disponible
+  return prisma.komgaConfig.findFirst({
+    where: { userId },
+    orderBy: { createdAt: "asc" },
+    select: { url: true, authHeader: true },
+  });
 }

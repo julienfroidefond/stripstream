@@ -11,48 +11,58 @@ datasource db {
 }
 
 model User {
-  id             Int      @id @default(autoincrement())
-  email          String   @unique
-  password       String
-  roles          Json     @default("[\"ROLE_USER\"]")
-  authenticated  Boolean  @default(true)
-  activeProvider String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id                        Int      @id @default(autoincrement())
+  email                     String   @unique
+  password                  String
+  roles                     Json     @default("[\"ROLE_USER\"]")
+  authenticated             Boolean  @default(true)
+  activeProvider            String?
+  activeKomgaConfigId       Int?
+  activeStripstreamConfigId Int?
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
 
   // Relations
-  config              KomgaConfig?
-  stripstreamConfig   StripstreamConfig?
-  preferences         Preferences?
-  favorites           Favorite[]
+  komgaConfigs       KomgaConfig[]
+  stripstreamConfigs StripstreamConfig[]
+  preferences        Preferences?
+  favorites          Favorite[]
 
   @@map("users")
 }
 
 model KomgaConfig {
   id         Int      @id @default(autoincrement())
-  userId     Int      @unique
+  userId     Int
+  name       String
   url        String
   username   String
   authHeader String
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  favorites Favorite[]
 
+  @@unique([userId, name])
+  @@index([userId])
   @@map("komgaconfigs")
 }
 
 model StripstreamConfig {
   id        Int      @id @default(autoincrement())
-  userId    Int      @unique
+  userId    Int
+  name      String
   url       String
   token     String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  favorites Favorite[]
 
+  @@unique([userId, name])
+  @@index([userId])
   @@map("stripstreamconfigs")
 }
 
@@ -74,16 +84,24 @@ model Preferences {
 }
 
 model Favorite {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  seriesId  String
-  provider  String   @default("komga")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                  Int      @id @default(autoincrement())
+  userId              Int
+  seriesId            String
+  provider            String   @default("komga")
+  komgaConfigId       Int?
+  stripstreamConfigId Int?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  komgaConfig       KomgaConfig?       @relation(fields: [komgaConfigId], references: [id], onDelete: Cascade)
+  stripstreamConfig StripstreamConfig? @relation(fields: [stripstreamConfigId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, provider, seriesId])
+  // Une série ne peut être favorite qu'une seule fois par config (par type).
+  // Les deux contraintes coexistent car komgaConfigId et stripstreamConfigId
+  // sont mutuellement exclusifs (l'un nul si l'autre est défini).
+  @@unique([userId, komgaConfigId, seriesId])
+  @@unique([userId, stripstreamConfigId, seriesId])
   @@index([userId])
   @@map("favorites")
 }

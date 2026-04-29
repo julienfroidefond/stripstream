@@ -10,7 +10,8 @@ import { ERROR_CODES } from "@/constants/errorCodes";
 import type { ProviderType } from "@/lib/providers/types";
 
 /**
- * Sauvegarde la configuration Stripstream
+ * Sauvegarde la configuration Stripstream active. Si l'utilisateur n'en a pas encore,
+ * en crée une nommée "Default" et la définit comme active.
  */
 export async function saveStripstreamConfig(
   url: string,
@@ -23,11 +24,25 @@ export async function saveStripstreamConfig(
     }
     const userId = parseInt(user.id, 10);
 
-    await prisma.stripstreamConfig.upsert({
-      where: { userId },
-      update: { url, token },
-      create: { userId, url, token },
+    const dbUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { activeStripstreamConfigId: true },
     });
+
+    if (dbUser?.activeStripstreamConfigId) {
+      await prisma.stripstreamConfig.update({
+        where: { id: dbUser.activeStripstreamConfigId },
+        data: { url, token },
+      });
+    } else {
+      const config = await prisma.stripstreamConfig.create({
+        data: { userId, name: "Default", url, token },
+      });
+      await prisma.user.update({
+        where: { id: userId },
+        data: { activeStripstreamConfigId: config.id },
+      });
+    }
 
     revalidatePath("/settings");
     return { success: true, message: "Configuration Stripstream sauvegardée" };
@@ -64,7 +79,7 @@ export async function testStripstreamConnection(
 }
 
 /**
- * Définit le provider actif de l'utilisateur
+ * Définit le provider actif de l'utilisateur (type courant : komga ou stripstream).
  */
 export async function setActiveProvider(
   provider: ProviderType
@@ -76,13 +91,15 @@ export async function setActiveProvider(
     }
     const userId = parseInt(user.id, 10);
 
-    // Vérifier que le provider est configuré avant de l'activer
     if (provider === "komga") {
-      const config = await prisma.komgaConfig.findUnique({ where: { userId } });
-      if (!config) {
+      const hasConfig = await prisma.komgaConfig.findFirst({
+        where: { userId },
+        select: { id: true },
+      });
+      if (!hasConfig) {
         return { success: false, message: "Komga n'est pas encore configuré" };
       }
-    } else     if (provider === "stripstream") {
+    } else if (provider === "stripstream") {
       const config = await getResolvedStripstreamConfig(userId);
       if (!config) {
         return { success: false, message: "Stripstream n'est pas encore configuré" };
@@ -109,7 +126,7 @@ export async function setActiveProvider(
 }
 
 /**
- * Récupère la configuration Stripstream de l'utilisateur (affichage settings).
+ * Récupère la configuration Stripstream active de l'utilisateur (affichage settings).
  * Priorité : config en base, sinon env STRIPSTREAM_URL / STRIPSTREAM_TOKEN.
  */
 export async function getStripstreamConfig(): Promise<{
@@ -121,7 +138,15 @@ export async function getStripstreamConfig(): Promise<{
     if (!user) return null;
     const userId = parseInt(user.id, 10);
 
-    const resolved = await getResolvedStripstreamConfig(userId);
+    const dbUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { activeStripstreamConfigId: true },
+    });
+
+    const resolved = await getResolvedStripstreamConfig(
+      userId,
+      dbUser?.activeStripstreamConfigId ?? undefined
+    );
     if (!resolved) return null;
     return { url: resolved.url, hasToken: true };
   } catch {
@@ -150,7 +175,7 @@ export async function getActiveProvider(): Promise<ProviderType> {
 }
 
 /**
- * Vérifie quels providers sont configurés
+ * Vérifie quels providers sont configurés (au moins une config existe).
  */
 export async function getProvidersStatus(): Promise<{
   komgaConfigured: boolean;
@@ -166,7 +191,7 @@ export async function getProvidersStatus(): Promise<{
 
     const [dbUser, komgaConfig, stripstreamResolved] = await Promise.all([
       prisma.user.findUnique({ where: { id: userId }, select: { activeProvider: true } }),
-      prisma.komgaConfig.findUnique({ where: { userId }, select: { id: true } }),
+      prisma.komgaConfig.findFirst({ where: { userId }, select: { id: true } }),
       getResolvedStripstreamConfig(userId),
     ]);
 
