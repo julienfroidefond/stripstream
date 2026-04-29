@@ -5,7 +5,12 @@ import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-utils";
 import { AppError } from "@/utils/errors";
 import { ERROR_CODES } from "@/constants/errorCodes";
-import { FAVORITES_CACHE_TAG, HOME_CACHE_TAG } from "@/constants/cacheConstants";
+import {
+  FAVORITES_CACHE_TAG,
+  HOME_CACHE_TAG,
+  LIBRARY_SERIES_CACHE_TAG,
+  SERIES_BOOKS_CACHE_TAG,
+} from "@/constants/cacheConstants";
 import type { KomgaLibrary } from "@/types/komga";
 
 export interface KomgaConfigSummary {
@@ -38,6 +43,8 @@ function revalidateConnectionCaches() {
   revalidatePath("/settings");
   revalidatePath("/");
   revalidateTag(HOME_CACHE_TAG, "max");
+  revalidateTag(LIBRARY_SERIES_CACHE_TAG, "max");
+  revalidateTag(SERIES_BOOKS_CACHE_TAG, "max");
   revalidateTag(FAVORITES_CACHE_TAG, "max");
 }
 

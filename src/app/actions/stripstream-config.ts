@@ -7,7 +7,12 @@ import { StripstreamProvider } from "@/lib/providers/stripstream/stripstream.pro
 import { getResolvedStripstreamConfig } from "@/lib/providers/stripstream/stripstream-config-resolver";
 import { AppError } from "@/utils/errors";
 import { ERROR_CODES } from "@/constants/errorCodes";
-import { FAVORITES_CACHE_TAG, HOME_CACHE_TAG } from "@/constants/cacheConstants";
+import {
+  FAVORITES_CACHE_TAG,
+  HOME_CACHE_TAG,
+  LIBRARY_SERIES_CACHE_TAG,
+  SERIES_BOOKS_CACHE_TAG,
+} from "@/constants/cacheConstants";
 import type { ProviderType } from "@/lib/providers/types";
 
 export interface StripstreamConfigSummary {
@@ -34,6 +39,8 @@ function revalidateConnectionCaches() {
   revalidatePath("/settings");
   revalidatePath("/");
   revalidateTag(HOME_CACHE_TAG, "max");
+  revalidateTag(LIBRARY_SERIES_CACHE_TAG, "max");
+  revalidateTag(SERIES_BOOKS_CACHE_TAG, "max");
   revalidateTag(FAVORITES_CACHE_TAG, "max");
 }
 
