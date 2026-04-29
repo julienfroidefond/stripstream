@@ -16,10 +16,13 @@ import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
 import { useEffect, useState, useCallback } from "react";
 import type { NormalizedLibrary, NormalizedSeries } from "@/lib/providers/types";
+import type { KomgaConfigSummary } from "@/app/actions/config";
+import type { StripstreamConfigSummary } from "@/app/actions/stripstream-config";
 import { useToast } from "@/components/ui/use-toast";
 import { useTranslate } from "@/hooks/useTranslate";
 import { NavButton } from "@/components/ui/nav-button";
 import { IconButton } from "@/components/ui/icon-button";
+import { ProviderSwitcher } from "@/components/layout/ProviderSwitcher";
 import logger from "@/lib/logger";
 
 interface SidebarProps {
@@ -28,6 +31,8 @@ interface SidebarProps {
   initialLibraries: NormalizedLibrary[];
   initialFavorites: NormalizedSeries[];
   userIsAdmin?: boolean;
+  komgaConfigs?: KomgaConfigSummary[];
+  stripstreamConfigs?: StripstreamConfigSummary[];
 }
 
 export function Sidebar({
@@ -36,6 +41,8 @@ export function Sidebar({
   initialLibraries,
   initialFavorites,
   userIsAdmin = false,
+  komgaConfigs = [],
+  stripstreamConfigs = [],
 }: SidebarProps) {
   const { t } = useTranslate();
   const pathname = usePathname();
@@ -253,6 +260,18 @@ export function Sidebar({
                 />
               ))
             )}
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-border/50 bg-background/30 p-2">
+          <h2 className="mb-2 px-3 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+            {t("sidebar.connection")}
+          </h2>
+          <div className="px-1">
+            <ProviderSwitcher
+              komgaConfigs={komgaConfigs}
+              stripstreamConfigs={stripstreamConfigs}
+            />
           </div>
         </div>
 

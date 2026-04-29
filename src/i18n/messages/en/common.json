@@ -44,6 +44,7 @@
     }
   },
   "sidebar": {
+    "connection": "Connection",
     "navigation": "Navigation",
     "home": "Home",
     "downloads": "Downloads",
@@ -489,6 +490,11 @@
       "books": "Books",
       "openSeries": "Open series {{title}}",
       "openBook": "Open book {{title}}"
+    },
+    "providerSwitcher": {
+      "title": "Active connection",
+      "manage": "Manage connections",
+      "empty": "Set up a connection"
     }
   },
   "navigation": {

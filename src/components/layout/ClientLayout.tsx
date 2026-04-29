@@ -11,6 +11,8 @@ import { NetworkStatus } from "../ui/NetworkStatus";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { ServiceWorkerProvider } from "@/contexts/ServiceWorkerContext";
 import type { NormalizedLibrary, NormalizedSeries } from "@/lib/providers/types";
+import type { KomgaConfigSummary } from "@/app/actions/config";
+import type { StripstreamConfigSummary } from "@/app/actions/stripstream-config";
 import { defaultPreferences } from "@/types/preferences";
 import logger from "@/lib/logger";
 import { getRandomBookFromLibraries } from "@/app/actions/library";
@@ -23,6 +25,8 @@ interface ClientLayoutProps {
   initialLibraries: NormalizedLibrary[];
   initialFavorites: NormalizedSeries[];
   userIsAdmin?: boolean;
+  komgaConfigs?: KomgaConfigSummary[];
+  stripstreamConfigs?: StripstreamConfigSummary[];
 }
 
 export default function ClientLayout({
@@ -30,6 +34,8 @@ export default function ClientLayout({
   initialLibraries = [],
   initialFavorites = [],
   userIsAdmin = false,
+  komgaConfigs = [],
+  stripstreamConfigs = [],
 }: ClientLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [randomBookId, setRandomBookId] = useState<string | null>(null);
@@ -180,6 +186,8 @@ export default function ClientLayout({
               initialLibraries={initialLibraries}
               initialFavorites={initialFavorites}
               userIsAdmin={userIsAdmin}
+              komgaConfigs={komgaConfigs}
+              stripstreamConfigs={stripstreamConfigs}
             />
           )}
           {!isPublicRoute && isSidebarOpen && (

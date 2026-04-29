@@ -44,6 +44,7 @@
     }
   },
   "sidebar": {
+    "connection": "Connexion",
     "navigation": "Navigation",
     "home": "Accueil",
     "downloads": "Téléchargements",
@@ -487,6 +488,11 @@
       "books": "Tomes",
       "openSeries": "Ouvrir la série {{title}}",
       "openBook": "Ouvrir le tome {{title}}"
+    },
+    "providerSwitcher": {
+      "title": "Connexion active",
+      "manage": "Gérer les connexions",
+      "empty": "Configurer une connexion"
     }
   },
   "navigation": {

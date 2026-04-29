@@ -12,6 +12,8 @@ import { cookies, headers } from "next/headers";
 import { defaultPreferences } from "@/types/preferences";
 import type { UserPreferences } from "@/types/preferences";
 import type { NormalizedLibrary, NormalizedSeries } from "@/lib/providers/types";
+import type { KomgaConfigSummary } from "@/app/actions/config";
+import type { StripstreamConfigSummary } from "@/app/actions/stripstream-config";
 import logger from "@/lib/logger";
 
 const inter = Inter({
@@ -80,20 +82,25 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   let userIsAdmin = false;
   let libraries: NormalizedLibrary[] = [];
   let favorites: NormalizedSeries[] = [];
+  let komgaConfigs: KomgaConfigSummary[] = [];
+  let stripstreamConfigs: StripstreamConfigSummary[] = [];
 
   try {
     const currentUser = await import("@/lib/auth-utils").then((m) => m.getCurrentUser());
 
     if (currentUser) {
-      const [preferencesData, librariesData, favoritesData] = await Promise.allSettled([
-        PreferencesService.getPreferences(),
-        import("@/lib/providers/provider.factory")
-          .then((m) => m.getProvider())
-          .then((provider) => provider?.getLibraries() ?? []),
-        import("@/lib/services/favorites.service").then((m) =>
-          m.FavoritesService.getFavorites({ requestPath, requestPathname })
-        ),
-      ]);
+      const [preferencesData, librariesData, favoritesData, komgaConfigsData, stripstreamConfigsData] =
+        await Promise.allSettled([
+          PreferencesService.getPreferences(),
+          import("@/lib/providers/provider.factory")
+            .then((m) => m.getProvider())
+            .then((provider) => provider?.getLibraries() ?? []),
+          import("@/lib/services/favorites.service").then((m) =>
+            m.FavoritesService.getFavorites({ requestPath, requestPathname })
+          ),
+          import("@/app/actions/config").then((m) => m.listKomgaConfigs()),
+          import("@/app/actions/stripstream-config").then((m) => m.listStripstreamConfigs()),
+        ]);
 
       userIsAdmin = currentUser.roles.includes("ROLE_ADMIN");
 
@@ -107,6 +114,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
       if (favoritesData.status === "fulfilled") {
         favorites = favoritesData.value;
+      }
+
+      if (komgaConfigsData.status === "fulfilled") {
+        komgaConfigs = komgaConfigsData.value;
+      }
+
+      if (stripstreamConfigsData.status === "fulfilled") {
+        stripstreamConfigs = stripstreamConfigsData.value;
       }
     }
   } catch (error) {
@@ -319,6 +334,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   initialLibraries={libraries}
                   initialFavorites={favorites}
                   userIsAdmin={userIsAdmin}
+                  komgaConfigs={komgaConfigs}
+                  stripstreamConfigs={stripstreamConfigs}
                 >
                   {children}
                 </ClientLayout>
