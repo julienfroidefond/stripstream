@@ -1,13 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { KomgaConfig } from "@/types/komga";
-import type { NormalizedLibrary, ProviderType } from "@/lib/providers/types";
+import type { NormalizedLibrary } from "@/lib/providers/types";
+import type { KomgaConfigSummary } from "@/app/actions/config";
+import type { StripstreamConfigSummary } from "@/app/actions/stripstream-config";
 import { useTranslate } from "@/hooks/useTranslate";
 import { DisplaySettings } from "./DisplaySettings";
-import { KomgaSettings } from "./KomgaSettings";
-import { StripstreamSettings } from "./StripstreamSettings";
-import { ProviderSelector } from "./ProviderSelector";
+import { ConnectionsSettings } from "./ConnectionsSettings";
 import { BackgroundSettings } from "./BackgroundSettings";
 import { AdvancedSettings } from "./AdvancedSettings";
 import { CacheSettings } from "./CacheSettings";
@@ -15,23 +14,17 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Monitor, Network } from "lucide-react";
 
 interface ClientSettingsProps {
-  initialConfig: KomgaConfig | null;
   initialLibraries: NormalizedLibrary[];
-  stripstreamConfig?: { url?: string; hasToken: boolean } | null;
-  providersStatus?: {
-    komgaConfigured: boolean;
-    stripstreamConfigured: boolean;
-    activeProvider: ProviderType;
-  };
+  komgaConfigs: KomgaConfigSummary[];
+  stripstreamConfigs: StripstreamConfigSummary[];
 }
 
 const SETTINGS_TAB_STORAGE_KEY = "stripstream:settings-active-tab";
 
 export function ClientSettings({
-  initialConfig,
   initialLibraries,
-  stripstreamConfig,
-  providersStatus,
+  komgaConfigs,
+  stripstreamConfigs,
 }: ClientSettingsProps) {
   const { t } = useTranslate();
   const [activeTab, setActiveTab] = useState<"display" | "connection">("display");
@@ -76,17 +69,9 @@ export function ClientSettings({
           </TabsContent>
 
           <TabsContent value="connection" className="mt-6 space-y-6">
-            {providersStatus && (
-              <ProviderSelector
-                activeProvider={providersStatus.activeProvider}
-                komgaConfigured={providersStatus.komgaConfigured}
-                stripstreamConfigured={providersStatus.stripstreamConfigured}
-              />
-            )}
-            <KomgaSettings initialConfig={initialConfig} />
-            <StripstreamSettings
-              initialUrl={stripstreamConfig?.url}
-              hasToken={stripstreamConfig?.hasToken}
+            <ConnectionsSettings
+              komgaConfigs={komgaConfigs}
+              stripstreamConfigs={stripstreamConfigs}
             />
             <AdvancedSettings />
             <CacheSettings />

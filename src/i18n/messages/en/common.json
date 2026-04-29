@@ -115,30 +115,34 @@
       "title": "Error",
       "message": "An error occurred while updating preferences"
     },
-    "komga": {
-      "title": "Komga Configuration",
-      "description": "Configure your Komga server connection information.",
+    "connections": {
+      "title": "My connections",
+      "description": "Manage your Komga and Stripstream Librarian connections. Activate the one you want to use.",
+      "addTitle": "Add connection",
+      "addDescription": "Pick a type, give it a name and fill in the credentials.",
+      "editTitle": "Edit connection",
+      "editDescription": "Update the credentials or name of this connection.",
+      "type": "Type",
+      "name": "Name",
+      "komgaNamePlaceholder": "E.g. Home Komga",
+      "stripstreamNamePlaceholder": "E.g. My Stripstream",
       "serverUrl": "Server URL",
-      "email": "Login email address",
+      "username": "Username",
       "password": "Password",
-      "buttons": {
-        "edit": "Edit configuration",
-        "save": "Save",
-        "test": "Test connection",
-        "cancel": "Cancel",
-        "saving": "Saving...",
-        "testing": "Testing..."
-      },
-      "messages": {
-        "connectionSuccess": "Successfully connected to Komga server",
-        "configSaved": "Configuration saved successfully"
-      },
-      "error": {
-        "title": "Error saving configuration",
-        "message": "An error occurred while saving the configuration",
-        "connectionTitle": "Connection error",
-        "connectionMessage": "Unable to connect to the Komga server. Check the URL and credentials."
-      }
+      "token": "API token",
+      "editHint": "leave empty to keep current",
+      "active": "Active",
+      "activate": "Activate",
+      "edit": "Edit",
+      "delete": "Delete",
+      "empty": "No connection configured yet. Add one to get started.",
+      "add": "Add connection",
+      "save": "Save",
+      "saving": "Saving...",
+      "test": "Test",
+      "testing": "Testing...",
+      "cancel": "Cancel",
+      "confirmDelete": "Delete connection \"{{name}}\"?"
     },
     "cache": {
       "title": "Cache & Storage",
@@ -493,6 +497,7 @@
     "volume": "Volume {number}"
   },
   "common": {
-    "retry": "Retry"
+    "retry": "Retry",
+    "error": "Error"
   }
 }

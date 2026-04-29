@@ -115,30 +115,34 @@
       "title": "Erreur",
       "message": "Une erreur est survenue lors de la mise à jour des préférences"
     },
-    "komga": {
-      "title": "Configuration Komga",
-      "description": "Configurez les informations de connexion à votre serveur Komga.",
-      "serverUrl": "L'URL du serveur",
-      "email": "L'adresse email de connexion",
+    "connections": {
+      "title": "Mes connexions",
+      "description": "Gère tes connexions Komga et Stripstream Librarian. Active celle que tu veux utiliser.",
+      "addTitle": "Ajouter une connexion",
+      "addDescription": "Choisis le type, donne-lui un nom et renseigne les identifiants.",
+      "editTitle": "Modifier la connexion",
+      "editDescription": "Mets à jour les identifiants ou le nom de cette connexion.",
+      "type": "Type",
+      "name": "Nom",
+      "komgaNamePlaceholder": "Ex : Komga maison",
+      "stripstreamNamePlaceholder": "Ex : Stripstream perso",
+      "serverUrl": "URL du serveur",
+      "username": "Identifiant",
       "password": "Mot de passe",
-      "buttons": {
-        "edit": "Modifier la configuration",
-        "save": "Sauvegarder",
-        "test": "Tester la connexion",
-        "cancel": "Annuler",
-        "saving": "Sauvegarde...",
-        "testing": "Test en cours..."
-      },
-      "messages": {
-        "connectionSuccess": "La connexion au serveur Komga a été établie avec succès",
-        "configSaved": "La configuration a été sauvegardée avec succès"
-      },
-      "error": {
-        "title": "Erreur lors de la sauvegarde de la configuration",
-        "message": "Une erreur est survenue lors de la sauvegarde de la configuration",
-        "connectionTitle": "Erreur de connexion",
-        "connectionMessage": "Impossible de se connecter au serveur Komga. Vérifiez l'URL et les identifiants."
-      }
+      "token": "Token API",
+      "editHint": "laisser vide pour conserver l'actuel",
+      "active": "Active",
+      "activate": "Activer",
+      "edit": "Modifier",
+      "delete": "Supprimer",
+      "empty": "Aucune connexion configurée. Ajoute-en une pour commencer.",
+      "add": "Ajouter une connexion",
+      "save": "Sauvegarder",
+      "saving": "Sauvegarde...",
+      "test": "Tester",
+      "testing": "Test...",
+      "cancel": "Annuler",
+      "confirmDelete": "Supprimer la connexion \"{{name}}\" ?"
     },
     "cache": {
       "title": "Cache et stockage",
@@ -491,6 +495,7 @@
     "volume": "Tome {number}"
   },
   "common": {
-    "retry": "Réessayer"
+    "retry": "Réessayer",
+    "error": "Erreur"
   }
 }
