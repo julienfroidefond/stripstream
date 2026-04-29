@@ -3,6 +3,7 @@
 import { Book, BookOpen, BookMarked, BookX, Star, StarOff, User, CircleDot, CircleCheck, CirclePause, CircleX } from "lucide-react";
 import type { NormalizedSeries } from "@/lib/providers/types";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
 import { RefreshButton } from "@/components/library/RefreshButton";
 import { AppError } from "@/utils/errors";
@@ -23,6 +24,7 @@ interface SeriesHeaderProps {
 }
 
 export const SeriesHeader = ({ series, refreshSeries, initialIsFavorite }: SeriesHeaderProps) => {
+  const router = useRouter();
   const { toast } = useToast();
   const { isAnonymous } = useAnonymous();
   const [isFavorite, setIsFavorite] = useState(initialIsFavorite);
@@ -49,6 +51,9 @@ export const SeriesHeader = ({ series, refreshSeries, initialIsFavorite }: Serie
           },
         });
         window.dispatchEvent(event);
+        // Force le client à re-fetch le layout (avec cache invalidé par revalidateTag).
+        // Sans ça, initialFavorites côté Sidebar reste stale et écrase l'optimistic update.
+        router.refresh();
         toast({
           title: t(isFavorite ? "series.header.favorite.remove" : "series.header.favorite.add"),
           description: series.name,
