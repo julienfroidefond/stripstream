@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { SeriesService } from "@/lib/services/series.service";
+import { KomgaSeriesService } from "@/lib/services/komga/series.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 import { getErrorMessage } from "@/utils/errors";
@@ -14,7 +14,7 @@ export async function GET(
   try {
     const seriesId: string = (await params).seriesId;
 
-    const response = await SeriesService.getCover(seriesId);
+    const response = await KomgaSeriesService.getCover(seriesId);
     return response;
   } catch (error) {
     logger.error({ err: error }, "Erreur lors de la récupération de la couverture de la série:");

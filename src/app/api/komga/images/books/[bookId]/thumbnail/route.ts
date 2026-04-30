@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { BookService } from "@/lib/services/book.service";
+import { KomgaBookService } from "@/lib/services/komga/book.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 import { getErrorMessage } from "@/utils/errors";
@@ -14,7 +14,7 @@ export async function GET(
   try {
     const bookId: string = (await params).bookId;
 
-    const response = await BookService.getCover(bookId);
+    const response = await KomgaBookService.getCover(bookId);
     return response;
   } catch (error) {
     logger.error({ err: error }, "Erreur lors de la récupération de la miniature du livre:");

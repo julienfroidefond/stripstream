@@ -4,7 +4,9 @@ import { getCurrentUser } from "../auth-utils";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
 import { FAVORITES_CACHE_TAG } from "../../constants/cacheConstants";
+import { getProvider } from "@/lib/providers/provider.factory";
 import type { User } from "@/types/komga";
+import type { NormalizedSeries } from "@/lib/providers/types";
 import logger from "@/lib/logger";
 
 type ProviderType = "komga" | "stripstream";
@@ -159,5 +161,63 @@ export class FavoriteService {
   static async getAllFavoriteIds(): Promise<string[]> {
     const ctx = await this.getActiveContext();
     return cachedFavoriteIds(ctx.userId, ctx.provider, ctx.configId);
+  }
+
+  /**
+   * Récupère les favoris enrichis (NormalizedSeries) de l'utilisateur courant
+   * en combinant les IDs cachés avec un appel `getSeriesById` au provider actif.
+   * Si une série n'existe plus (provider 404), elle est silencieusement retirée
+   * des favoris pour éviter les listes pollués.
+   */
+  static async listFavorites(context?: {
+    requestPath?: string;
+    requestPathname?: string;
+  }): Promise<NormalizedSeries[]> {
+    try {
+      const [favoriteIds, provider] = await Promise.all([
+        FavoriteService.getAllFavoriteIds(),
+        getProvider(),
+      ]);
+
+      if (favoriteIds.length === 0 || !provider) {
+        return [];
+      }
+
+      const promises = favoriteIds.map(async (id) => {
+        try {
+          return await provider.getSeriesById(id);
+        } catch (error) {
+          logger.error(
+            {
+              err: error,
+              seriesId: id,
+              requestPath: context?.requestPath,
+              requestPathname: context?.requestPathname,
+            },
+            "Error fetching favorite series"
+          );
+          // Cleanup silencieux : la série n'existe plus côté provider
+          try {
+            await FavoriteService.removeFromFavorites(id);
+          } catch {
+            // ignore cleanup errors
+          }
+          return null;
+        }
+      });
+
+      const results = await Promise.all(promises);
+      return results.filter((s): s is NormalizedSeries => s !== null);
+    } catch (error) {
+      logger.error(
+        {
+          err: error,
+          requestPath: context?.requestPath,
+          requestPathname: context?.requestPathname,
+        },
+        "Error fetching favorites"
+      );
+      return [];
+    }
   }
 }

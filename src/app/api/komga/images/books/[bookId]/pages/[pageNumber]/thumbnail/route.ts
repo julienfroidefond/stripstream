@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { BookService } from "@/lib/services/book.service";
+import { KomgaImageService } from "@/lib/services/komga/image.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 import { getErrorMessage } from "@/utils/errors";
@@ -28,8 +28,9 @@ export async function GET(
       );
     }
 
-    const response = await BookService.getPageThumbnail(bookId, pageNumber);
-    return response;
+    return await KomgaImageService.streamImage(
+      `books/${bookId}/pages/${pageNumber}/thumbnail?zero_based=true`
+    );
   } catch (error) {
     logger.error({ err: error }, "Erreur lors de la récupération de la miniature de la page:");
 

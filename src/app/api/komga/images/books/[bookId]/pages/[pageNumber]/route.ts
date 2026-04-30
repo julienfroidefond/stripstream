@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { BookService } from "@/lib/services/book.service";
+import { KomgaImageService } from "@/lib/services/komga/image.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 import { getErrorMessage } from "@/utils/errors";
@@ -14,8 +14,11 @@ export async function GET(
   try {
     const { bookId, pageNumber } = await params;
 
-    const response = await BookService.getPage(bookId, parseInt(pageNumber));
-    return response;
+    // pageNumber est 1-based côté client, l'API Komga zero_based attend 0-based
+    const adjusted = parseInt(pageNumber) - 1;
+    return await KomgaImageService.streamImage(
+      `books/${bookId}/pages/${adjusted}?zero_based=true`
+    );
   } catch (error) {
     logger.error({ err: error }, "Erreur lors de la récupération de la page du livre:");
 

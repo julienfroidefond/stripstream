@@ -4,7 +4,7 @@ import { HomeClientWrapper } from "@/components/home/HomeClientWrapper";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
-import { FavoritesService } from "@/lib/services/favorites.service";
+import { FavoriteService } from "@/lib/services/favorite.service";
 import { PreferencesService } from "@/lib/services/preferences.service";
 import { redirect } from "next/navigation";
 
@@ -15,7 +15,7 @@ export default async function HomePage() {
 
     const [homeData, favorites, preferences] = await Promise.all([
       provider.getHomeData(),
-      FavoritesService.getFavorites(),
+      FavoriteService.listFavorites(),
       PreferencesService.getPreferences().catch(() => null),
     ]);
 

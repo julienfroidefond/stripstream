@@ -11,7 +11,11 @@ import {
   LIBRARY_SERIES_CACHE_TAG,
   SERIES_BOOKS_CACHE_TAG,
 } from "@/constants/cacheConstants";
+import { checkRateLimit } from "@/utils/rate-limit";
 import type { KomgaLibrary } from "@/types/komga";
+
+const TEST_CONNECTION_LIMIT = 5;
+const TEST_CONNECTION_WINDOW_MS = 30_000;
 
 export interface KomgaConfigSummary {
   id: number;
@@ -54,6 +58,18 @@ export async function testKomgaConnection(
   password: string
 ): Promise<{ success: boolean; message: string }> {
   try {
+    const userId = await requireUserId();
+    const rl = checkRateLimit(`test-komga:${userId}`, {
+      limit: TEST_CONNECTION_LIMIT,
+      windowMs: TEST_CONNECTION_WINDOW_MS,
+    });
+    if (!rl.allowed) {
+      return {
+        success: false,
+        message: `Trop de tentatives. Réessaie dans ${Math.ceil(rl.resetMs / 1000)}s.`,
+      };
+    }
+
     const authHeader = buildAuthHeader(username, password);
     const url = new URL(`${serverUrl}/api/v1/libraries`).toString();
     const headers = new Headers({
@@ -221,6 +237,16 @@ export async function testKomgaConfigById(
 ): Promise<{ success: boolean; message: string }> {
   try {
     const userId = await requireUserId();
+    const rl = checkRateLimit(`test-komga:${userId}`, {
+      limit: TEST_CONNECTION_LIMIT,
+      windowMs: TEST_CONNECTION_WINDOW_MS,
+    });
+    if (!rl.allowed) {
+      return {
+        success: false,
+        message: `Trop de tentatives. Réessaie dans ${Math.ceil(rl.resetMs / 1000)}s.`,
+      };
+    }
     const config = await prisma.komgaConfig.findFirst({
       where: { id, userId },
       select: { url: true, authHeader: true },

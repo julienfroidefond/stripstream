@@ -96,8 +96,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           import("@/lib/providers/provider.factory")
             .then((m) => m.getProvider())
             .then((provider) => provider?.getLibraries() ?? []),
-          import("@/lib/services/favorites.service").then((m) =>
-            m.FavoritesService.getFavorites({ requestPath, requestPathname })
+          import("@/lib/services/favorite.service").then((m) =>
+            m.FavoriteService.listFavorites({ requestPath, requestPathname })
           ),
           import("@/app/actions/config").then((m) => m.listKomgaConfigs()),
           import("@/app/actions/stripstream-config").then((m) => m.listStripstreamConfigs()),

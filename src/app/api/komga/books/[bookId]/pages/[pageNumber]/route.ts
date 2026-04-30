@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { BookService } from "@/lib/services/book.service";
+import { KomgaImageService } from "@/lib/services/komga/image.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { getErrorMessage } from "@/utils/errors";
 import { AppError } from "@/utils/errors";
@@ -35,7 +35,10 @@ export async function GET(
     const { buffer, contentType } = await requestDeduplicationService.deduplicate(
       deduplicationKey,
       async () => {
-        const response = await BookService.getPage(bookIdParam, pageNumber);
+        const adjusted = pageNumber - 1;
+        const response = await KomgaImageService.streamImage(
+          `books/${bookIdParam}/pages/${adjusted}?zero_based=true`
+        );
         const buffer = await response.arrayBuffer();
         const contentType = response.headers.get("Content-Type") || "image/jpeg";
         // Retourner le buffer et contentType pour que chaque requête puisse créer sa propre réponse

@@ -13,6 +13,10 @@ import {
   LIBRARY_SERIES_CACHE_TAG,
   SERIES_BOOKS_CACHE_TAG,
 } from "@/constants/cacheConstants";
+import { checkRateLimit } from "@/utils/rate-limit";
+
+const TEST_CONNECTION_LIMIT = 5;
+const TEST_CONNECTION_WINDOW_MS = 30_000;
 import type { ProviderType } from "@/lib/providers/types";
 
 export interface StripstreamConfigSummary {
@@ -49,6 +53,18 @@ export async function testStripstreamConnection(
   token: string
 ): Promise<{ success: boolean; message: string }> {
   try {
+    const userId = await requireUserId();
+    const rl = checkRateLimit(`test-stripstream:${userId}`, {
+      limit: TEST_CONNECTION_LIMIT,
+      windowMs: TEST_CONNECTION_WINDOW_MS,
+    });
+    if (!rl.allowed) {
+      return {
+        success: false,
+        message: `Trop de tentatives. Réessaie dans ${Math.ceil(rl.resetMs / 1000)}s.`,
+      };
+    }
+
     const provider = new StripstreamProvider(url, token);
     const result = await provider.testConnection();
     if (!result.ok) {
@@ -198,6 +214,16 @@ export async function testStripstreamConfigById(
 ): Promise<{ success: boolean; message: string }> {
   try {
     const userId = await requireUserId();
+    const rl = checkRateLimit(`test-stripstream:${userId}`, {
+      limit: TEST_CONNECTION_LIMIT,
+      windowMs: TEST_CONNECTION_WINDOW_MS,
+    });
+    if (!rl.allowed) {
+      return {
+        success: false,
+        message: `Trop de tentatives. Réessaie dans ${Math.ceil(rl.resetMs / 1000)}s.`,
+      };
+    }
     const config = await prisma.stripstreamConfig.findFirst({
       where: { id, userId },
       select: { url: true, token: true },
