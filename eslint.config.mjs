@@ -89,7 +89,16 @@ export default defineConfig([
     },
   },
   {
-    files: ["src/components/ui/cover-client.tsx"],
+    // URLs proxy Komga/Stripstream déjà thumbnailées côté provider :
+    // l'optimizer next/image ajouterait un round-trip sans gain réel.
+    files: [
+      "src/components/ui/cover-client.tsx",
+      "src/components/ui/book-cover.tsx",
+      "src/components/ui/series-cover.tsx",
+      "src/components/series/BookGrid.tsx",
+      "src/components/series/BookList.tsx",
+      "src/components/layout/GlobalSearch.tsx",
+    ],
     rules: {
       "@next/next/no-img-element": "off",
     },

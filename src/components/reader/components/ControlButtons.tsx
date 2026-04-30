@@ -177,7 +177,8 @@ export const ControlButtons = ({
           icon={ChevronLeft}
           onClick={(e) => {
             e.stopPropagation();
-            direction === "rtl" ? onNextPage() : onPreviousPage();
+            if (direction === "rtl") onNextPage();
+            else onPreviousPage();
           }}
           tooltip={t("reader.controls.previousPage")}
           iconClassName="h-8 w-8"
@@ -197,7 +198,8 @@ export const ControlButtons = ({
           icon={ChevronRight}
           onClick={(e) => {
             e.stopPropagation();
-            direction === "rtl" ? onPreviousPage() : onNextPage();
+            if (direction === "rtl") onPreviousPage();
+            else onNextPage();
           }}
           tooltip={t("reader.controls.nextPage")}
           iconClassName="h-8 w-8"

@@ -105,20 +105,23 @@ export function PageDisplay({
     setSecondPageHasError(false);
   }, [currentPage, isDoublePage]);
 
+  const currentBlobUrl = imageBlobUrls[currentPage];
+  const nextBlobUrl = imageBlobUrls[currentPage + 1];
+
   // Reset error state when blob URL becomes available
   useEffect(() => {
-    if (imageBlobUrls[currentPage] && hasError) {
+    if (currentBlobUrl && hasError) {
       setHasError(false);
       setIsLoading(true);
     }
-  }, [imageBlobUrls[currentPage], currentPage, hasError]);
+  }, [currentBlobUrl, hasError]);
 
   useEffect(() => {
-    if (imageBlobUrls[currentPage + 1] && secondPageHasError) {
+    if (nextBlobUrl && secondPageHasError) {
       setSecondPageHasError(false);
       setSecondPageLoading(true);
     }
-  }, [imageBlobUrls[currentPage + 1], currentPage, secondPageHasError]);
+  }, [nextBlobUrl, secondPageHasError]);
 
   const showSecondPage = isDoublePage && shouldShowDoublePage(currentPage);
 

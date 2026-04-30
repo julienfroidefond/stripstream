@@ -288,11 +288,6 @@ interface BookDownloadCardProps {
 function BookDownloadCard({ book, status, onDelete, onRetry }: BookDownloadCardProps) {
   const { t } = useTranslate();
 
-  const formatSize = (bytes: number) => {
-    const mb = bytes / (1024 * 1024);
-    return t("downloads.info.size", { size: mb.toFixed(1) });
-  };
-
   const getStatusIcon = (status: BookStatus) => {
     switch (status) {
       case "downloading":

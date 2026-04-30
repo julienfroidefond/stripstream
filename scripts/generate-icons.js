@@ -9,9 +9,6 @@ const screenshotsDir = path.join(__dirname, "../public/images/screenshots");
 const splashDir = path.join(__dirname, "../public/images/splash");
 const faviconPath = path.join(__dirname, "../public/favicon.png");
 
-// Source pour les splash screens
-const splashSource = path.join(__dirname, "../public/images/Gemini_Generated_Image_wyfsoiwyfsoiwyfs.png");
-
 // Configuration des splashscreens pour différents appareils
 const splashScreens = [
   // iPad (portrait + landscape)
@@ -69,7 +66,6 @@ async function generateSplashScreens() {
   const bg = { r: 17, g: 24, b: 38 };
 
   // Charger le logo source
-  const logoMeta = await sharp(sourceLogo).metadata();
   const logoBuffer = await sharp(sourceLogo).png().toBuffer();
 
   for (const screen of splashScreens) {
@@ -78,9 +74,6 @@ async function generateSplashScreens() {
 
     // Taille du logo : 40% du côté le plus court
     const logoSize = Math.round(shortSide * 0.4);
-
-    const cx = Math.round(width / 2);
-    const cy = Math.round(height / 2);
 
     // Fond uni + touches cyan/magenta + grille subtile + glow derrière le logo
     const glowRadius = Math.round(logoSize * 0.9);

@@ -70,9 +70,11 @@ export function useTouchNavigation({
 
       const { onPreviousPage, onNextPage, isRTL } = propsRef.current;
       if (deltaX > 0) {
-        isRTL ? onNextPage() : onPreviousPage();
+        if (isRTL) onNextPage();
+        else onPreviousPage();
       } else {
-        isRTL ? onPreviousPage() : onNextPage();
+        if (isRTL) onPreviousPage();
+        else onNextPage();
       }
     };
 
