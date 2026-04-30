@@ -4,6 +4,13 @@
     "fr": "French",
     "en": "English"
   },
+  "layout": {
+    "errors": {
+      "title": "Loading error",
+      "libraries": "Unable to load libraries. Check your connection or try again later.",
+      "favorites": "Unable to load favorites."
+    }
+  },
   "login": {
     "title": "Welcome to StripStream",
     "subtitle": "Sign in or create an account to get started",
@@ -403,10 +410,18 @@
     "KOMGA_MISSING_CREDENTIALS": "Komga credentials missing",
     "KOMGA_CONNECTION_ERROR": "Error connecting to Komga server",
     "KOMGA_HTTP_ERROR": "HTTP error while communicating with Komga",
+    "KOMGA_UNAUTHORIZED": "Komga credentials invalid (HTTP 401). Update the username or password in your connections.",
+    "KOMGA_FORBIDDEN": "Komga access denied (HTTP 403). Check your account permissions.",
+    "KOMGA_NOT_FOUND": "Komga resource not found (HTTP 404). The server URL might be wrong.",
+    "KOMGA_SERVER_ERROR": "Komga server issue (HTTP 5xx). Try again later.",
     "KOMGA_SERVER_UNREACHABLE": "Komga server unreachable",
     "STRIPSTREAM_MISSING_CONFIG": "Stripstream Librarian configuration missing",
     "STRIPSTREAM_CONNECTION_ERROR": "Error connecting to Stripstream Librarian",
     "STRIPSTREAM_HTTP_ERROR": "HTTP error while communicating with Stripstream Librarian",
+    "STRIPSTREAM_UNAUTHORIZED": "Stripstream token invalid or expired (HTTP 401). Update the token in your connections.",
+    "STRIPSTREAM_FORBIDDEN": "Stripstream access denied (HTTP 403). Check the token's permissions.",
+    "STRIPSTREAM_NOT_FOUND": "Stripstream resource not found (HTTP 404). The server URL might be wrong.",
+    "STRIPSTREAM_SERVER_ERROR": "Stripstream server issue (HTTP 5xx). Try again later.",
     "CONFIG_SAVE_ERROR": "Error saving configuration",
     "CONFIG_FETCH_ERROR": "Error fetching configuration",
     "CONFIG_TTL_SAVE_ERROR": "Error saving TTL configuration",
@@ -417,6 +432,7 @@
     "SERIES_FETCH_ERROR": "Error fetching series",
     "SERIES_NO_BOOKS_FOUND": "No books found in series",
     "BOOK_NOT_FOUND": "Book not found",
+    "BOOK_FETCH_ERROR": "Error fetching book",
     "BOOK_PROGRESS_UPDATE_ERROR": "Error updating reading progress",
     "BOOK_PROGRESS_DELETE_ERROR": "Error deleting reading progress",
     "BOOK_PAGES_FETCH_ERROR": "Error fetching book pages",

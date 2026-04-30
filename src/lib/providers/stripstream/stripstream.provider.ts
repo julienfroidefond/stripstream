@@ -28,6 +28,8 @@ import type {
   StripstreamMissingBooksDto,
 } from "@/types/stripstream";
 import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, SERIES_BOOKS_CACHE_TAG } from "@/constants/cacheConstants";
+import { AppError } from "@/utils/errors";
+import { ERROR_CODES } from "@/constants/errorCodes";
 
 const CACHE_TTL_LONG = 300;
 const CACHE_TTL_MED = 120;
@@ -278,12 +280,26 @@ export class StripstreamProvider implements IMediaProvider {
 
   async getHomeData(): Promise<HomeData> {
     const homeOpts = { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] };
-    const [ongoingBooksResult, ongoingSeriesResult, booksPage, latestSeriesResult] = await Promise.allSettled([
+    const results = await Promise.allSettled([
       this.client.fetch<StripstreamBookItem[]>("books/ongoing", { limit: "20" }, homeOpts),
       this.client.fetch<StripstreamSeriesItem[]>("series/ongoing", { limit: "10" }, homeOpts),
       this.client.fetch<StripstreamBooksPage>("books", { sort: "latest", limit: "10" }, homeOpts),
       this.client.fetch<StripstreamSeriesPage>("series", { sort: "latest", limit: "10", has_books: "true" }, homeOpts),
     ]);
+
+    // Si la majorité des endpoints ont échoué, on propage une erreur pour que
+    // la page affiche un message au lieu d'une home vide silencieuse. On
+    // préserve l'AppError la plus spécifique disponible (ex. UNAUTHORIZED)
+    // plutôt que de la wrapper en HOME.FETCH_ERROR générique.
+    const failures = results.filter((r) => r.status === "rejected");
+    if (failures.length >= 3) {
+      const reasons = failures.map((r) => (r as PromiseRejectedResult).reason);
+      const firstAppError = reasons.find((r): r is AppError => r instanceof AppError);
+      if (firstAppError) throw firstAppError;
+      throw new AppError(ERROR_CODES.HOME.FETCH_ERROR, {}, reasons[0]);
+    }
+
+    const [ongoingBooksResult, ongoingSeriesResult, booksPage, latestSeriesResult] = results;
 
     // /books/ongoing returns both currently reading and next unread per series
     const ongoingBooks = ongoingBooksResult.status === "fulfilled"

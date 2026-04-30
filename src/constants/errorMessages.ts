@@ -25,12 +25,28 @@ export const ERROR_MESSAGES: Record<string, string> = {
   [ERROR_CODES.STRIPSTREAM.MISSING_CONFIG]: "⚙️ Stripstream Librarian configuration not found",
   [ERROR_CODES.STRIPSTREAM.CONNECTION_ERROR]: "🌐 Stripstream connection error",
   [ERROR_CODES.STRIPSTREAM.HTTP_ERROR]: "🌍 Stripstream HTTP Error: {status} {statusText}",
+  [ERROR_CODES.STRIPSTREAM.UNAUTHORIZED]:
+    "🔐 Stripstream token invalid or expired (HTTP 401). Update the token in your connection settings.",
+  [ERROR_CODES.STRIPSTREAM.FORBIDDEN]:
+    "⛔️ Stripstream access denied (HTTP 403). Check your token's permissions.",
+  [ERROR_CODES.STRIPSTREAM.NOT_FOUND]:
+    "🔍 Stripstream resource not found (HTTP 404). The server URL might be wrong.",
+  [ERROR_CODES.STRIPSTREAM.SERVER_ERROR]:
+    "💥 Stripstream server error (HTTP {status}). Try again later or check the server status.",
 
   // Komga
   [ERROR_CODES.KOMGA.MISSING_CONFIG]: "⚙️ Komga configuration not found",
   [ERROR_CODES.KOMGA.MISSING_CREDENTIALS]: "🔑 Missing Komga credentials",
   [ERROR_CODES.KOMGA.CONNECTION_ERROR]: "🌐 Connection test error",
   [ERROR_CODES.KOMGA.HTTP_ERROR]: "🌍 HTTP Error: {status} {statusText}",
+  [ERROR_CODES.KOMGA.UNAUTHORIZED]:
+    "🔐 Komga credentials invalid (HTTP 401). Update your username/password in connection settings.",
+  [ERROR_CODES.KOMGA.FORBIDDEN]:
+    "⛔️ Komga access denied (HTTP 403). Check your account permissions.",
+  [ERROR_CODES.KOMGA.NOT_FOUND]:
+    "🔍 Komga resource not found (HTTP 404). The server URL might be wrong.",
+  [ERROR_CODES.KOMGA.SERVER_ERROR]:
+    "💥 Komga server error (HTTP {status}). Try again later or check the server status.",
   [ERROR_CODES.KOMGA.SERVER_UNREACHABLE]:
     "📡 Unable to connect to server. Check the URL and ensure the server is accessible.",
 

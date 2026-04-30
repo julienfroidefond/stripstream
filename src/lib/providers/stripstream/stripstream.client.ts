@@ -1,6 +1,15 @@
 import { AppError } from "@/utils/errors";
 import { ERROR_CODES } from "@/constants/errorCodes";
+import { codeForHttpStatus } from "@/utils/http-error";
 import logger from "@/lib/logger";
+
+const STRIPSTREAM_HTTP_CODES = {
+  UNAUTHORIZED: ERROR_CODES.STRIPSTREAM.UNAUTHORIZED,
+  FORBIDDEN: ERROR_CODES.STRIPSTREAM.FORBIDDEN,
+  NOT_FOUND: ERROR_CODES.STRIPSTREAM.NOT_FOUND,
+  SERVER_ERROR: ERROR_CODES.STRIPSTREAM.SERVER_ERROR,
+  HTTP_ERROR: ERROR_CODES.STRIPSTREAM.HTTP_ERROR,
+};
 
 const TIMEOUT_MS = 15000;
 const IMAGE_TIMEOUT_MS = 60000;
@@ -121,7 +130,7 @@ export class StripstreamClient {
             "🔴 Stripstream Error Response"
           );
         }
-        throw new AppError(ERROR_CODES.STRIPSTREAM.HTTP_ERROR, {
+        throw new AppError(codeForHttpStatus(response.status, STRIPSTREAM_HTTP_CODES), {
           status: response.status,
           statusText: response.statusText,
         });

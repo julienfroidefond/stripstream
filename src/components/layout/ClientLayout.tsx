@@ -14,6 +14,8 @@ import type { NormalizedLibrary, NormalizedSeries } from "@/lib/providers/types"
 import type { KomgaConfigSummary } from "@/app/actions/config";
 import type { StripstreamConfigSummary } from "@/app/actions/stripstream-config";
 import { defaultPreferences } from "@/types/preferences";
+import { useToast } from "@/components/ui/use-toast";
+import { useTranslate } from "@/hooks/useTranslate";
 import logger from "@/lib/logger";
 import { getRandomBookFromLibraries } from "@/app/actions/library";
 
@@ -27,6 +29,7 @@ interface ClientLayoutProps {
   userIsAdmin?: boolean;
   komgaConfigs?: KomgaConfigSummary[];
   stripstreamConfigs?: StripstreamConfigSummary[];
+  initialErrors?: { libraries?: boolean; favorites?: boolean };
 }
 
 export default function ClientLayout({
@@ -36,12 +39,41 @@ export default function ClientLayout({
   userIsAdmin = false,
   komgaConfigs = [],
   stripstreamConfigs = [],
+  initialErrors,
 }: ClientLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [randomBookId, setRandomBookId] = useState<string | null>(null);
   const pathname = usePathname();
   const { preferences } = usePreferences();
+  const { toast } = useToast();
+  const { t } = useTranslate();
   const prevLibraryIdsRef = useRef<string>("");
+
+  // Toaster une seule fois les erreurs détectées au SSR du root layout
+  // (libraries / favorites injoignables) pour que l'utilisateur sache que
+  // l'état affiché peut être incomplet plutôt que silencieusement vide.
+  const reportedErrorsRef = useRef(false);
+  useEffect(() => {
+    if (reportedErrorsRef.current) return;
+    if (!initialErrors) return;
+    if (initialErrors.libraries) {
+      toast({
+        variant: "destructive",
+        title: t("layout.errors.title"),
+        description: t("layout.errors.libraries"),
+      });
+    }
+    if (initialErrors.favorites) {
+      toast({
+        variant: "destructive",
+        title: t("layout.errors.title"),
+        description: t("layout.errors.favorites"),
+      });
+    }
+    if (initialErrors.libraries || initialErrors.favorites) {
+      reportedErrorsRef.current = true;
+    }
+  }, [initialErrors, toast, t]);
 
   const backgroundType = preferences.background.type;
   const komgaLibraries = preferences.background.komgaLibraries;

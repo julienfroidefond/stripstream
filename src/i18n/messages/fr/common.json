@@ -4,6 +4,13 @@
     "fr": "Français",
     "en": "Anglais"
   },
+  "layout": {
+    "errors": {
+      "title": "Erreur de chargement",
+      "libraries": "Impossible de charger les bibliothèques. Vérifie ta connexion ou réessaie plus tard.",
+      "favorites": "Impossible de charger les favoris."
+    }
+  },
   "login": {
     "title": "Bienvenue sur StripStream",
     "subtitle": "Connectez-vous ou créez un compte pour commencer",
@@ -401,10 +408,18 @@
     "KOMGA_MISSING_CREDENTIALS": "Identifiants Komga manquants",
     "KOMGA_CONNECTION_ERROR": "Erreur de connexion au serveur Komga",
     "KOMGA_HTTP_ERROR": "Erreur HTTP lors de la communication avec Komga",
+    "KOMGA_UNAUTHORIZED": "Identifiants Komga invalides (HTTP 401). Mets à jour le nom d'utilisateur ou le mot de passe dans tes connexions.",
+    "KOMGA_FORBIDDEN": "Accès Komga refusé (HTTP 403). Vérifie les permissions de ton compte.",
+    "KOMGA_NOT_FOUND": "Ressource Komga introuvable (HTTP 404). L'URL du serveur est peut-être incorrecte.",
+    "KOMGA_SERVER_ERROR": "Le serveur Komga rencontre un problème (HTTP 5xx). Réessaie plus tard.",
     "KOMGA_SERVER_UNREACHABLE": "Serveur Komga inaccessible",
     "STRIPSTREAM_MISSING_CONFIG": "Configuration Stripstream Librarian manquante",
     "STRIPSTREAM_CONNECTION_ERROR": "Erreur de connexion à Stripstream Librarian",
     "STRIPSTREAM_HTTP_ERROR": "Erreur HTTP lors de la communication avec Stripstream Librarian",
+    "STRIPSTREAM_UNAUTHORIZED": "Token Stripstream invalide ou expiré (HTTP 401). Mets à jour le token dans tes connexions.",
+    "STRIPSTREAM_FORBIDDEN": "Accès Stripstream refusé (HTTP 403). Vérifie les permissions du token.",
+    "STRIPSTREAM_NOT_FOUND": "Ressource Stripstream introuvable (HTTP 404). L'URL du serveur est peut-être incorrecte.",
+    "STRIPSTREAM_SERVER_ERROR": "Le serveur Stripstream rencontre un problème (HTTP 5xx). Réessaie plus tard.",
     "CONFIG_SAVE_ERROR": "Erreur lors de la sauvegarde de la configuration",
     "CONFIG_FETCH_ERROR": "Erreur lors de la récupération de la configuration",
     "CONFIG_TTL_SAVE_ERROR": "Erreur lors de la sauvegarde des TTL",
@@ -415,6 +430,7 @@
     "SERIES_FETCH_ERROR": "Erreur lors de la récupération des séries",
     "SERIES_NO_BOOKS_FOUND": "Aucun livre trouvé dans la série",
     "BOOK_NOT_FOUND": "Livre introuvable",
+    "BOOK_FETCH_ERROR": "Erreur lors de la récupération du livre",
     "BOOK_PROGRESS_UPDATE_ERROR": "Erreur lors de la mise à jour de la progression",
     "BOOK_PROGRESS_DELETE_ERROR": "Erreur lors de la suppression de la progression",
     "BOOK_PAGES_FETCH_ERROR": "Erreur lors de la récupération des pages du livre",

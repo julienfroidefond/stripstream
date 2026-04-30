@@ -84,6 +84,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   let favorites: NormalizedSeries[] = [];
   let komgaConfigs: KomgaConfigSummary[] = [];
   let stripstreamConfigs: StripstreamConfigSummary[] = [];
+  const initialErrors: { libraries?: boolean; favorites?: boolean } = {};
 
   try {
     const currentUser = await import("@/lib/auth-utils").then((m) => m.getCurrentUser());
@@ -106,22 +107,37 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
       if (preferencesData.status === "fulfilled") {
         preferences = preferencesData.value;
+      } else {
+        logger.warn({ err: preferencesData.reason }, "Failed to load preferences in root layout");
       }
 
       if (librariesData.status === "fulfilled") {
         libraries = librariesData.value || [];
+      } else {
+        logger.warn({ err: librariesData.reason }, "Failed to load libraries in root layout");
+        initialErrors.libraries = true;
       }
 
       if (favoritesData.status === "fulfilled") {
         favorites = favoritesData.value;
+      } else {
+        logger.warn({ err: favoritesData.reason }, "Failed to load favorites in root layout");
+        initialErrors.favorites = true;
       }
 
       if (komgaConfigsData.status === "fulfilled") {
         komgaConfigs = komgaConfigsData.value;
+      } else {
+        logger.warn({ err: komgaConfigsData.reason }, "Failed to load Komga configs in root layout");
       }
 
       if (stripstreamConfigsData.status === "fulfilled") {
         stripstreamConfigs = stripstreamConfigsData.value;
+      } else {
+        logger.warn(
+          { err: stripstreamConfigsData.reason },
+          "Failed to load Stripstream configs in root layout"
+        );
       }
     }
   } catch (error) {
@@ -336,6 +352,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   userIsAdmin={userIsAdmin}
                   komgaConfigs={komgaConfigs}
                   stripstreamConfigs={stripstreamConfigs}
+                  initialErrors={initialErrors}
                 >
                   {children}
                 </ClientLayout>

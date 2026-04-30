@@ -13,6 +13,15 @@ import type { HomeData } from "@/types/home";
 import { KomgaAdapter } from "./komga.adapter";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
+import { codeForHttpStatus } from "@/utils/http-error";
+
+const KOMGA_HTTP_CODES = {
+  UNAUTHORIZED: ERROR_CODES.KOMGA.UNAUTHORIZED,
+  FORBIDDEN: ERROR_CODES.KOMGA.FORBIDDEN,
+  NOT_FOUND: ERROR_CODES.KOMGA.NOT_FOUND,
+  SERVER_ERROR: ERROR_CODES.KOMGA.SERVER_ERROR,
+  HTTP_ERROR: ERROR_CODES.KOMGA.HTTP_ERROR,
+};
 import type { KomgaBook, KomgaSeries, KomgaLibrary } from "@/types/komga";
 import type { LibraryResponse } from "@/types/library";
 import type { AuthConfig } from "@/types/auth";
@@ -152,7 +161,7 @@ export class KomgaProvider implements IMediaProvider {
             "🔴 Komga Error Response"
           );
         }
-        throw new AppError(ERROR_CODES.KOMGA.HTTP_ERROR, {
+        throw new AppError(codeForHttpStatus(response.status, KOMGA_HTTP_CODES), {
           status: response.status,
           statusText: response.statusText,
         });
@@ -390,7 +399,7 @@ export class KomgaProvider implements IMediaProvider {
   }
 
   private async fetchHomeData(): Promise<HomeData> {
-    const [ongoing, ongoingBooks, recentlyRead, onDeck, latestSeries] = await Promise.all([
+    const results = await Promise.allSettled([
       this.fetch<LibraryResponse<KomgaSeries>>(
         "series/list",
         { page: "0", size: "10", sort: "readDate,desc" },
@@ -400,7 +409,7 @@ export class KomgaProvider implements IMediaProvider {
             condition: { readStatus: { operator: "is", value: "IN_PROGRESS" } },
           }),
         }
-      ).catch(() => ({ content: [] as KomgaSeries[] })),
+      ),
       this.fetch<LibraryResponse<KomgaBook>>(
         "books/list",
         { page: "0", size: "10", sort: "readProgress.readDate,desc" },
@@ -410,20 +419,44 @@ export class KomgaProvider implements IMediaProvider {
             condition: { readStatus: { operator: "is", value: "IN_PROGRESS" } },
           }),
         }
-      ).catch(() => ({ content: [] as KomgaBook[] })),
+      ),
       this.fetch<LibraryResponse<KomgaBook>>(
         "books/latest",
         { page: "0", size: "10", media_status: "READY" }
-      ).catch(() => ({ content: [] as KomgaBook[] })),
+      ),
       this.fetch<LibraryResponse<KomgaBook>>(
         "books/ondeck",
         { page: "0", size: "10", media_status: "READY" }
-      ).catch(() => ({ content: [] as KomgaBook[] })),
+      ),
       this.fetch<LibraryResponse<KomgaSeries>>(
         "series/latest",
         { page: "0", size: "10", media_status: "READY" }
-      ).catch(() => ({ content: [] as KomgaSeries[] })),
+      ),
     ]);
+
+    // Si la majorité des endpoints ont échoué, on considère que le serveur est
+    // injoignable : on propage une erreur pour que la page affiche un message
+    // au lieu d'une home vide silencieuse. On préserve l'AppError la plus
+    // spécifique disponible (ex. UNAUTHORIZED) plutôt que de la wrapper en
+    // HOME.FETCH_ERROR générique.
+    const failures = results.filter((r) => r.status === "rejected");
+    if (failures.length >= 3) {
+      const reasons = failures.map((r) => (r as PromiseRejectedResult).reason);
+      const firstAppError = reasons.find((r): r is AppError => r instanceof AppError);
+      if (firstAppError) throw firstAppError;
+      throw new AppError(ERROR_CODES.HOME.FETCH_ERROR, {}, reasons[0]);
+    }
+
+    const [ongoing, ongoingBooks, recentlyRead, onDeck, latestSeries] = results.map((r) =>
+      r.status === "fulfilled" ? r.value : { content: [] }
+    ) as [
+      LibraryResponse<KomgaSeries>,
+      LibraryResponse<KomgaBook>,
+      LibraryResponse<KomgaBook>,
+      LibraryResponse<KomgaBook>,
+      LibraryResponse<KomgaSeries>,
+    ];
+
     return {
       ongoing: (ongoing.content || []).map(KomgaAdapter.toNormalizedSeries),
       ongoingBooks: (ongoingBooks.content || []).map(KomgaAdapter.toNormalizedBook),
