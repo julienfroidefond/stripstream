@@ -1,7 +1,7 @@
 // StripStream Service Worker - Version 2
 // Architecture: static + image caching, resilient offline navigation fallback
 
-const VERSION = "v2.16";
+const VERSION = "v2.17";
 const STATIC_CACHE = `stripstream-static-${VERSION}`;
 const PAGES_CACHE = `stripstream-pages-${VERSION}`; // Navigation documents + RSC payloads
 const API_CACHE = `stripstream-api-${VERSION}`;
