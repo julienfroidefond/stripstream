@@ -7,8 +7,6 @@ import { AppError } from "@/utils/errors";
 import logger from "@/lib/logger";
 import { requestDeduplicationService } from "@/lib/services/request-deduplication.service";
 
-export const dynamic = "force-dynamic";
-
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ bookId: string; pageNumber: string }> }

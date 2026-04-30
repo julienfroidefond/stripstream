@@ -212,7 +212,7 @@ export class KomgaProvider implements IMediaProvider {
         method: "POST",
         body: JSON.stringify(searchBody),
         revalidate: CACHE_TTL_MED,
-        tags: [LIBRARY_SERIES_CACHE_TAG],
+        tags: [LIBRARY_SERIES_CACHE_TAG, `library-series:${libraryId}`],
       }
     );
 
@@ -257,10 +257,14 @@ export class KomgaProvider implements IMediaProvider {
       condition = {};
     }
 
+    const granularTags: string[] = [SERIES_BOOKS_CACHE_TAG];
+    if (filter.seriesName) granularTags.push(`series-books:${filter.seriesName}`);
+    if (filter.libraryId) granularTags.push(`library-books:${filter.libraryId}`);
+
     const response = await this.fetch<LibraryResponse<KomgaBook>>(
       "books/list",
       { page: String(page), size: String(limit), sort: "metadata.numberSort,asc" },
-      { method: "POST", body: JSON.stringify({ condition }), revalidate: CACHE_TTL_MED, tags: [SERIES_BOOKS_CACHE_TAG] }
+      { method: "POST", body: JSON.stringify({ condition }), revalidate: CACHE_TTL_MED, tags: granularTags }
     );
     const items = response.content.filter((b) => !b.deleted).map(KomgaAdapter.toNormalizedBook);
     return {

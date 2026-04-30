@@ -61,7 +61,7 @@ export function usePageNavigation({
         ClientOfflineBookService.setCurrentPage(targetBook, page);
         if (!isAnonymousRef.current) {
           const completed = page === totalPages;
-          await updateReadProgress(targetBook.id, page, completed);
+          await updateReadProgress(targetBook.id, page, completed, targetBook.seriesId);
         }
       } catch (error) {
         logger.error({ err: error }, "Sync error:");

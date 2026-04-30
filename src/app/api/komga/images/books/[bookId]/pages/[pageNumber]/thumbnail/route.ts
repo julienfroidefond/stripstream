@@ -7,8 +7,6 @@ import { getErrorMessage } from "@/utils/errors";
 import { findHttpStatus } from "@/utils/image-errors";
 import logger from "@/lib/logger";
 
-export const dynamic = "force-dynamic";
-
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ bookId: string; pageNumber: string }> }

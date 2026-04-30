@@ -5,23 +5,33 @@ import { getProvider } from "@/lib/providers/provider.factory";
 import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, SERIES_BOOKS_CACHE_TAG } from "@/constants/cacheConstants";
 import { AppError } from "@/utils/errors";
 
-function revalidateReadCaches() {
+/**
+ * Invalide les caches après modification d'une progression.
+ * Si `seriesId` est fourni, on cible uniquement `series-books:${seriesId}`
+ * au lieu d'invalider toutes les listes de livres → meilleur hit rate.
+ */
+function revalidateReadCaches(seriesId?: string | null) {
   revalidateTag(HOME_CACHE_TAG, "max");
   revalidateTag(LIBRARY_SERIES_CACHE_TAG, "max");
-  revalidateTag(SERIES_BOOKS_CACHE_TAG, "max");
+  if (seriesId) {
+    revalidateTag(`series-books:${seriesId}`, "max");
+  } else {
+    revalidateTag(SERIES_BOOKS_CACHE_TAG, "max");
+  }
 }
 
 export async function updateReadProgress(
   bookId: string,
   page: number,
-  completed: boolean = false
+  completed: boolean = false,
+  seriesId?: string | null
 ): Promise<{ success: boolean; message: string }> {
   try {
     const provider = await getProvider();
     if (!provider) return { success: false, message: "Provider non configuré" };
 
     await provider.saveReadProgress(bookId, page, completed);
-    revalidateReadCaches();
+    revalidateReadCaches(seriesId);
 
     return { success: true, message: "Progression mise à jour" };
   } catch (error) {
@@ -33,14 +43,15 @@ export async function updateReadProgress(
 }
 
 export async function deleteReadProgress(
-  bookId: string
+  bookId: string,
+  seriesId?: string | null
 ): Promise<{ success: boolean; message: string }> {
   try {
     const provider = await getProvider();
     if (!provider) return { success: false, message: "Provider non configuré" };
 
     await provider.resetReadProgress(bookId);
-    revalidateReadCaches();
+    revalidateReadCaches(seriesId);
 
     return { success: true, message: "Progression supprimée" };
   } catch (error) {

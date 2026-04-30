@@ -10,6 +10,7 @@ import { useImageLoader } from "./useImageLoader";
 import { usePageNavigation } from "./usePageNavigation";
 import { useTouchNavigation } from "./useTouchNavigation";
 import { usePreferences } from "@/contexts/PreferencesContext";
+import logger from "@/lib/logger";
 
 export function useReaderState({ book, pages, onClose, nextBook }: BookReaderProps) {
   const { preferences } = usePreferences();
@@ -108,7 +109,9 @@ export function useReaderState({ book, pages, onClose, nextBook }: BookReaderPro
       visiblePages.push(currentPage);
     }
 
-    Promise.all(visiblePages.map((page) => prefetchImage(page))).catch(() => {});
+    Promise.all(visiblePages.map((page) => prefetchImage(page))).catch((err) => {
+      logger.warn({ err, currentPage }, "Reader prefetch of visible pages failed");
+    });
 
     const concurrency = isDoublePage && shouldShowDoublePage(currentPage) ? 2 : 4;
     prefetchPages(currentPage, prefetchCount, visiblePages, concurrency);

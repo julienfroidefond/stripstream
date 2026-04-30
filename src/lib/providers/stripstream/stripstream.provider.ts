@@ -71,7 +71,10 @@ export class StripstreamProvider implements IMediaProvider {
     const response = await this.client.fetch<StripstreamSeriesPage>(
       `series`,
       params,
-      { revalidate: CACHE_TTL_MED, tags: [LIBRARY_SERIES_CACHE_TAG] }
+      {
+        revalidate: CACHE_TTL_MED,
+        tags: [LIBRARY_SERIES_CACHE_TAG, `library-series:${libraryId}`],
+      }
     );
 
     const totalPages = Math.ceil(response.total / limit);
@@ -216,9 +219,13 @@ export class StripstreamProvider implements IMediaProvider {
     const pageNumber = filter.cursor ? parseInt(filter.cursor) : 1;
     params.page = String(pageNumber);
 
+    const granularTags: string[] = [SERIES_BOOKS_CACHE_TAG];
+    if (params.series) granularTags.push(`series-books:${params.series}`);
+    if (filter.libraryId) granularTags.push(`library-books:${filter.libraryId}`);
+
     const response = await this.client.fetch<StripstreamBooksPage>("books", params, {
       revalidate: CACHE_TTL_MED,
-      tags: [SERIES_BOOKS_CACHE_TAG],
+      tags: granularTags,
     });
 
     const pageSize = filter.limit ?? 24;
