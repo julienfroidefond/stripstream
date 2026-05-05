@@ -8,8 +8,11 @@ const LEGACY_PAGE_KEY_SUFFIX = "-page";
 
 function getOrigin(book: NormalizedBook): string | null {
   if (!book.thumbnailUrl) return null;
+  if (typeof window === "undefined") return null;
   try {
-    return new URL(book.thumbnailUrl).origin;
+    // thumbnailUrl peut être relatif (proxy `/api/...`) ou absolu (cas hérité).
+    // On résout systématiquement contre l'origine courante pour ne jamais throw.
+    return new URL(book.thumbnailUrl, window.location.origin).origin;
   } catch {
     return null;
   }
