@@ -67,8 +67,8 @@ export function HomeClientWrapper({ children }: HomeClientWrapperProps) {
             className="h-auto w-[min(78vw,600px)] opacity-[0.1] saturate-125 dark:hidden"
           />
         </div>
-        <div className="container relative z-10 mx-auto space-y-6 px-4 pb-8 pt-3">
-          <div className="flex justify-end">
+        <div className="container relative z-10 mx-auto px-4 pb-8 pt-3">
+          <div className="mb-6 hidden justify-end md:flex">
             <RefreshButton libraryId="home" refreshLibrary={handleRefresh} />
           </div>
           {children}
