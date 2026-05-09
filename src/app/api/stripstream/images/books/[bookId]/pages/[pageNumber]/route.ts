@@ -6,6 +6,7 @@ import { StripstreamClient } from "@/lib/providers/stripstream/stripstream.clien
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 import { getErrorMessage } from "@/utils/errors";
+import { isConnectionError } from "@/utils/http-error";
 import logger from "@/lib/logger";
 
 export async function GET(
@@ -43,7 +44,11 @@ export async function GET(
 
     return new NextResponse(response.body, { headers });
   } catch (error) {
-    logger.error({ err: error }, "Stripstream page fetch error");
+    if (isConnectionError(error)) {
+      logger.warn({ err: error }, "Stripstream page fetch error (provider unreachable)");
+    } else {
+      logger.error({ err: error }, "Stripstream page fetch error");
+    }
 
     if (error instanceof AppError) {
       return NextResponse.json(

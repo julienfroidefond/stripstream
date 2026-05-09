@@ -5,6 +5,7 @@ import { getResolvedStripstreamConfig } from "@/lib/providers/stripstream/strips
 import { StripstreamClient } from "@/lib/providers/stripstream/stripstream.client";
 import { AppError } from "@/utils/errors";
 import { ERROR_CODES } from "@/constants/errorCodes";
+import { isConnectionError } from "@/utils/http-error";
 import logger from "@/lib/logger";
 
 export async function GET(
@@ -38,7 +39,11 @@ export async function GET(
       },
     });
   } catch (error) {
-    logger.error({ err: error }, "Stripstream thumbnail fetch error");
+    if (isConnectionError(error)) {
+      logger.warn({ err: error }, "Stripstream thumbnail fetch error (provider unreachable)");
+    } else {
+      logger.error({ err: error }, "Stripstream thumbnail fetch error");
+    }
     return new NextResponse(null, { status: 404 });
   }
 }

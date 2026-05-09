@@ -1,6 +1,6 @@
 import { AppError } from "@/utils/errors";
 import { ERROR_CODES } from "@/constants/errorCodes";
-import { codeForHttpStatus } from "@/utils/http-error";
+import { codeForHttpStatus, isConnectionError } from "@/utils/http-error";
 import logger from "@/lib/logger";
 
 const STRIPSTREAM_HTTP_CODES = {
@@ -145,7 +145,13 @@ export class StripstreamClient {
         );
       }
       if (error instanceof AppError) throw error;
-      logger.error({ err: error, url }, "Stripstream request failed");
+      // Provider injoignable (DNS, socket, refus) → warn pour ne pas spammer le log :
+      // l'AppError remontée sera de toute façon loggée par les couches appelantes.
+      if (isConnectionError(error)) {
+        logger.warn({ err: error, url }, "Stripstream request failed");
+      } else {
+        logger.error({ err: error, url }, "Stripstream request failed");
+      }
       throw new AppError(ERROR_CODES.STRIPSTREAM.CONNECTION_ERROR, {}, error);
     } finally {
       clearTimeout(timeoutId);
