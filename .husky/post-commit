@@ -1,0 +1,50 @@
+# Auto-bump package.json from Conventional Commit type and amend into HEAD.
+#   feat!: / fix!: / "BREAKING CHANGE"               → major
+#   feat:                                            → minor
+#   fix: / perf: / refactor:                         → patch
+#   docs: / chore: / style: / test: / ci: / build:   → no bump
+# We use post-commit + amend because git captures the index BEFORE
+# prepare-commit-msg runs, so a `git add` from that hook lands in the
+# NEXT commit instead of the current one. The amend strategy here lets
+# us include the bump in the same commit as the user's change.
+
+# Recursion guard: amend below re-fires this hook; we skip the second pass.
+[ -n "$HUSKY_BUMP_DONE" ] && exit 0
+
+# Skip during rebase / cherry-pick / merge — risky to amend.
+[ -d "$(git rev-parse --git-path rebase-merge 2>/dev/null)" ] && exit 0
+[ -d "$(git rev-parse --git-path rebase-apply 2>/dev/null)" ] && exit 0
+[ -f "$(git rev-parse --git-path CHERRY_PICK_HEAD 2>/dev/null)" ] && exit 0
+[ -f "$(git rev-parse --git-path MERGE_HEAD 2>/dev/null)" ] && exit 0
+
+# Belt-and-suspenders: skip if the just-made commit already touches package.json
+# (e.g. we already amended it, or the user committed a manual bump).
+if git log -1 --name-only --pretty="" | grep -q "^package\.json$"; then
+  exit 0
+fi
+
+msg=$(git log -1 --pretty=%s)
+
+case "$msg" in
+  "chore(release):"*) exit 0 ;;
+esac
+
+if echo "$msg" | grep -qE '^[a-z]+(\([^)]+\))?!:|BREAKING CHANGE'; then
+  part=major
+elif echo "$msg" | grep -qE '^feat(\([^)]+\))?:'; then
+  part=minor
+elif echo "$msg" | grep -qE '^(fix|perf|refactor)(\([^)]+\))?:'; then
+  part=patch
+else
+  exit 0
+fi
+
+npm version "$part" --no-git-tag-version --silent >/dev/null
+git add package.json
+
+# Amend silently. --no-verify avoids re-triggering pre-commit/commit-msg ;
+# HUSKY_BUMP_DONE blocks this same post-commit on the recursive run.
+HUSKY_BUMP_DONE=1 git commit --amend --no-edit --no-verify >/dev/null
+
+new_version=$(node -p "require('./package.json').version")
+echo "🔖 Auto-bumped package.json to v${new_version} ($part), amended into HEAD"
