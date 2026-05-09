@@ -5,6 +5,9 @@ on:
     branches:
       - main
 
+env:
+  IMAGE: julienfroidefond32/stripstream
+
 jobs:
   deploy:
     runs-on: mac-orbstack-runner
@@ -12,20 +15,37 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Read version from package.json and short SHA
+        id: version
+        run: |
+          v=$(node -p "require('./package.json').version")
+          sha=$(git rev-parse --short HEAD)
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "Detected version: $v ($sha)"
+
       - name: Login to DockerHub
         run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
       - name: Build Docker image
         env:
           DOCKER_BUILDKIT: 1
-        run: docker build -t julienfroidefond32/stripstream:latest .
+        run: |
+          docker build \
+            -t ${{ env.IMAGE }}:latest \
+            -t ${{ env.IMAGE }}:${{ steps.version.outputs.version }} \
+            -t ${{ env.IMAGE }}:${{ steps.version.outputs.version }}-${{ steps.version.outputs.sha }} \
+            .
 
       - name: Push to DockerHub
-        run: docker push julienfroidefond32/stripstream:latest
+        run: |
+          docker push ${{ env.IMAGE }}:latest
+          docker push ${{ env.IMAGE }}:${{ steps.version.outputs.version }}
+          docker push ${{ env.IMAGE }}:${{ steps.version.outputs.version }}-${{ steps.version.outputs.sha }}
 
       - name: Pull new image and restart container
         run: |
-          docker pull julienfroidefond32/stripstream:latest
+          docker pull ${{ env.IMAGE }}:latest
           cd /Users/julienfroidefond/Sites/docker-stack
           ./scripts/stack.sh up stripstream
 

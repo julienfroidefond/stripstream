@@ -1,0 +1,34 @@
+# Auto-bump package.json version from Conventional Commit type.
+#   feat!: / fix!: / "BREAKING CHANGE"  → major
+#   feat:                                → minor
+#   fix: / perf: / refactor:             → patch
+#   docs: / chore: / style: / test: / ci: / build:  → no bump
+# Bump is staged into the same commit. Skipped for merges, squashes, amends.
+
+COMMIT_MSG_FILE=$1
+COMMIT_SOURCE=$2
+
+case "$COMMIT_SOURCE" in
+  merge|squash|commit) exit 0 ;;
+esac
+
+msg=$(head -1 "$COMMIT_MSG_FILE" 2>/dev/null || echo "")
+[ -z "$msg" ] && exit 0
+case "$msg" in
+  \#*) exit 0 ;;
+esac
+
+if echo "$msg" | grep -qE '^[a-z]+(\([^)]+\))?!:|BREAKING CHANGE'; then
+  part=major
+elif echo "$msg" | grep -qE '^feat(\([^)]+\))?:'; then
+  part=minor
+elif echo "$msg" | grep -qE '^(fix|perf|refactor)(\([^)]+\))?:'; then
+  part=patch
+else
+  exit 0
+fi
+
+npm version "$part" --no-git-tag-version --silent >/dev/null
+git add package.json
+new_version=$(node -p "require('./package.json').version")
+echo "🔖 Auto-bumped package.json to v${new_version} ($part)"
