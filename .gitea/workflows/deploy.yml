@@ -11,6 +11,16 @@ env:
 jobs:
   deploy:
     runs-on: mac-orbstack-runner
+    # Skip non-runtime commits (chore, docs, style, test, ci, build) - same
+    # types that the auto-bump hook ignores. Spares a build when only tooling,
+    # docs or formatting changes.
+    if: |
+      !startsWith(github.event.head_commit.message, 'chore') &&
+      !startsWith(github.event.head_commit.message, 'docs') &&
+      !startsWith(github.event.head_commit.message, 'style') &&
+      !startsWith(github.event.head_commit.message, 'test') &&
+      !startsWith(github.event.head_commit.message, 'ci') &&
+      !startsWith(github.event.head_commit.message, 'build')
     steps:
       - name: Checkout
         uses: actions/checkout@v4
