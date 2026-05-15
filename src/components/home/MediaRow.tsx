@@ -104,7 +104,7 @@ function MediaCard({ item, onClick }: MediaCardProps) {
         !isSeriesItem && !isAccessible ? "cursor-not-allowed" : "cursor-pointer"
       )}
     >
-      <div className="relative aspect-[2/3] bg-muted">
+      <div className="relative aspect-[2/3] bg-muted overflow-hidden">
         {isSeriesItem ? (
           <>
             <SeriesCover series={item} alt={`Couverture de ${title}`} isAnonymous={isAnonymous} />

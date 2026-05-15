@@ -32,7 +32,7 @@ export function SeriesCover({
         alt={alt}
         loading="lazy"
         className={[
-          "absolute inset-0 w-full h-full object-cover rounded-lg",
+          "absolute inset-0 w-full h-full object-cover",
           isCompleted ? "opacity-50" : "",
           className || "",
         ]
