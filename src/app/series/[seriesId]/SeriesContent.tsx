@@ -3,6 +3,7 @@
 import { PaginatedBookGrid } from "@/components/series/PaginatedBookGrid";
 import { SeriesHeader } from "@/components/series/SeriesHeader";
 import { Container } from "@/components/ui/container";
+import { RelatedSeriesRow } from "@/components/series/RelatedSeriesRow";
 import { useRefresh } from "@/contexts/RefreshContext";
 import type { NormalizedBooksPage, NormalizedMissingBook, NormalizedSeries } from "@/lib/providers/types";
 import type { UserPreferences } from "@/types/preferences";
@@ -16,6 +17,7 @@ interface SeriesContentProps {
   pageSize: number;
   initialIsFavorite: boolean;
   missingBooks: NormalizedMissingBook[];
+  relatedSeries?: NormalizedSeries[];
 }
 
 export function SeriesContent({
@@ -26,6 +28,7 @@ export function SeriesContent({
   unreadOnly,
   initialIsFavorite,
   missingBooks,
+  relatedSeries = [],
 }: SeriesContentProps) {
   const { refreshSeries } = useRefresh();
 
@@ -46,6 +49,11 @@ export function SeriesContent({
           showOnlyUnread={unreadOnly}
           missingBooks={missingBooks}
         />
+        {relatedSeries.length > 0 && (
+          <div className="mt-10 pb-4">
+            <RelatedSeriesRow series={relatedSeries} />
+          </div>
+        )}
       </Container>
     </>
   );

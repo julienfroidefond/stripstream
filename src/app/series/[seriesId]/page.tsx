@@ -48,6 +48,8 @@ export default async function SeriesPage({ params, searchParams }: PageProps) {
 
     if (!series) throw new AppError(ERROR_CODES.SERIES.FETCH_ERROR);
 
+    const relatedSeries = await provider.getRelatedSeries(series.id).catch(() => []);
+
     return (
       <SeriesClientWrapper seriesId={seriesId}>
         <SeriesContent
@@ -59,6 +61,7 @@ export default async function SeriesPage({ params, searchParams }: PageProps) {
           pageSize={effectivePageSize}
           initialIsFavorite={isFavorite}
           missingBooks={missingBooks}
+          relatedSeries={relatedSeries}
         />
       </SeriesClientWrapper>
     );

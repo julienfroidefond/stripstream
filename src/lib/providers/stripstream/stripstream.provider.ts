@@ -26,6 +26,7 @@ import type {
   StripstreamSeriesLookup,
   StripstreamMetadataLink,
   StripstreamMissingBooksDto,
+  StripstreamRelatedSeriesItem,
 } from "@/types/stripstream";
 import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, SERIES_BOOKS_CACHE_TAG } from "@/constants/cacheConstants";
 import { AppError } from "@/utils/errors";
@@ -416,6 +417,19 @@ export class StripstreamProvider implements IMediaProvider {
     }));
 
     return [...seriesResults, ...bookResults];
+  }
+
+  async getRelatedSeries(seriesId: string, limit = 10): Promise<NormalizedSeries[]> {
+    try {
+      const items = await this.client.fetch<StripstreamRelatedSeriesItem[]>(
+        `series/${seriesId}/related`,
+        { limit: String(limit) },
+        { revalidate: CACHE_TTL_MED, tags: [`series-related:${seriesId}`] }
+      );
+      return items.map(StripstreamAdapter.toNormalizedRelatedSeries);
+    } catch {
+      return [];
+    }
   }
 
   async testConnection(): Promise<{ ok: boolean; error?: string }> {

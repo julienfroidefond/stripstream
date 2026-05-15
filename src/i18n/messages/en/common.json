@@ -241,6 +241,12 @@
     }
   },
   "series": {
+    "related": "Similar series",
+    "matchReasons": {
+      "same_author": "Same author",
+      "same_genre": "Same genre",
+      "same_publisher": "Same publisher"
+    },
     "empty": "No series available",
     "coverAlt": "Cover of {title}",
     "status": {

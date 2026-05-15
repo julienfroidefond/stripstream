@@ -43,6 +43,9 @@ export interface IMediaProvider {
   scanLibrary(libraryId: string): Promise<void>;
   getRandomBook(libraryIds?: string[]): Promise<string | null>;
 
+  // ── Related series ───────────────────────────────────────────────────────
+  getRelatedSeries(seriesId: string, limit?: number): Promise<NormalizedSeries[]>;
+
   // ── Search ───────────────────────────────────────────────────────────────
   search(query: string, limit?: number): Promise<NormalizedSearchResult[]>;
 

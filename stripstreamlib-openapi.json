@@ -1,0 +1,1683 @@
+{
+  "openapi": "3.0.3",
+  "info": { "title": "api", "description": "", "license": { "name": "MIT" }, "version": "3.32.0" },
+  "paths": {
+    "/authors": {
+      "get": {
+        "tags": ["authors"],
+        "summary": "List all unique authors with book/series counts",
+        "operationId": "list_authors",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "description": "Search by author name",
+            "required": false,
+            "schema": { "type": "string", "nullable": true }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number (1-based)",
+            "required": false,
+            "schema": { "type": "integer", "format": "int64", "nullable": true }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Items per page (max 100)",
+            "required": false,
+            "schema": { "type": "integer", "format": "int64", "nullable": true }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sort: name (default) or books",
+            "required": false,
+            "schema": { "type": "string", "nullable": true }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AuthorsPageResponse" }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" }
+        },
+        "security": [{ "Bearer": [] }]
+      }
+    },
+    "/books": {
+      "get": {
+        "tags": ["books"],
+        "summary": "List books with optional filtering and pagination",
+        "operationId": "list_books",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "description": "Text search on title, series and author (case-insensitive, partial match)",
+            "required": false,
+            "schema": { "type": "string", "nullable": true }
+          },
+          {
+            "name": "library_id",
+            "in": "query",
+            "description": "Filter by library ID",
+            "required": false,
+            "schema": { "type": "string", "nullable": true }
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "description": "Filter by book kind (cbz, cbr, pdf, epub)",
+            "required": false,
+            "schema": { "type": "string", "nullable": true }
+          },
+          {
+            "name": "series",
+            "in": "query",
+            "description": "Filter by series name (use 'unclassified' for books without series)",
+            "required": false,
+            "schema": { "type": "string", "nullable": true }
+          },
+          {
+            "name": "reading_status",
+            "in": "query",
+            "description": "Filter by reading status, comma-separated (e.g. 'unread,reading')",
+            "required": false,
+            "schema": { "type": "string", "nullable": true }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number (1-indexed, default 1)",
+            "required": false,
+            "schema": { "type": "integer", "format": "int64", "nullable": true }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Items per page (max 200, default 50)",
+            "required": false,
+            "schema": { "type": "integer", "format": "int64", "nullable": true }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sort order: 'title' (default) or 'latest' (most recently added first)",
+            "required": false,
+            "schema": { "type": "string", "nullable": true }
+          },
+          {
+            "name": "metadata_provider",
+            "in": "query",
+            "description": "Filter by metadata provider: 'linked' (any provider), 'unlinked' (no provider), or a specific provider name",
+            "required": false,
+            "schema": { "type": "string", "nullable": true }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/BooksPage" } }
+            }
+          },
+          "401": { "description": "Unauthorized" }
+        },
+        "security": [{ "Bearer": [] }]
+      }
+    },
+    "/books/ongoing": {
+      "get": {
+        "tags": ["series"],
+        "summary": "List next unread book for each ongoing series (sorted by most recent activity)",
+        "operationId": "ongoing_books",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Max items to return (default 10, max 50)",
+            "required": false,
+            "schema": { "type": "integer", "format": "int64", "nullable": true }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/BookItem" } }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" }
+        },
+        "security": [{ "Bearer": [] }]
+      }
+    },
+    "/books/{book_id}/pages/{n}": {
+      "get": {
+        "tags": ["books"],
+        "summary": "Get a specific page image from a book with optional format conversion",
+        "operationId": "get_page",
+        "parameters": [
+          {
+            "name": "book_id",
+            "in": "path",
+            "description": "Book UUID",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "n",
+            "in": "path",
+            "description": "Page number (starts at 1)",
+            "required": true,
+            "schema": { "type": "integer", "format": "int32", "minimum": 0 }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "description": "Output format: webp, jpeg, png",
+            "required": false,
+            "schema": { "type": "string", "nullable": true }
+          },
+          {
+            "name": "quality",
+            "in": "query",
+            "description": "JPEG quality 1-100",
+            "required": false,
+            "schema": { "type": "integer", "format": "int32", "nullable": true, "minimum": 0 }
+          },
+          {
+            "name": "width",
+            "in": "query",
+            "description": "Max width (max 2160)",
+            "required": false,
+            "schema": { "type": "integer", "format": "int32", "nullable": true, "minimum": 0 }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Page image" },
+          "400": { "description": "Invalid parameters" },
+          "401": { "description": "Unauthorized" },
+          "404": { "description": "Book or page not found" }
+        },
+        "security": [{ "Bearer": [] }]
+      }
+    },
+    "/books/{id}": {
+      "get": {
+        "tags": ["books"],
+        "summary": "Get detailed information about a specific book",
+        "operationId": "get_book",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Book UUID",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/BookDetails" } }
+            }
+          },
+          "401": { "description": "Unauthorized" },
+          "404": { "description": "Book not found" }
+        },
+        "security": [{ "Bearer": [] }]
+      }
+    },
+    "/books/{id}/progress": {
+      "get": {
+        "tags": ["reading-progress"],
+        "summary": "Get reading progress for a book",
+        "operationId": "get_reading_progress",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Book UUID",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ReadingProgressResponse" }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" },
+          "404": { "description": "Book not found" }
+        },
+        "security": [{ "Bearer": [] }]
+      },
+      "patch": {
+        "tags": ["reading-progress"],
+        "summary": "Update reading progress for a book",
+        "operationId": "update_reading_progress",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Book UUID",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateReadingProgressRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ReadingProgressResponse" }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" },
+          "404": { "description": "Book not found" },
+          "422": {
+            "description": "Validation error (missing or invalid current_page for status 'reading')"
+          }
+        },
+        "security": [{ "Bearer": [] }]
+      }
+    },
+    "/books/{id}/thumbnail": {
+      "get": {
+        "tags": ["books"],
+        "summary": "Get book thumbnail image",
+        "operationId": "get_thumbnail",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Book UUID",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "WebP thumbnail image" },
+          "304": { "description": "Not modified (matches If-None-Match)" },
+          "401": { "description": "Unauthorized" },
+          "404": { "description": "Book not found or thumbnail not available" }
+        },
+        "security": [{ "Bearer": [] }]
+      }
+    },
+    "/libraries": {
+      "get": {
+        "tags": ["libraries"],
+        "summary": "List all libraries with their book counts",
+        "operationId": "list_libraries",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/LibraryResponse" }
+                }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" }
+        },
+        "security": [{ "Bearer": [] }]
+      }
+    },
+    "/libraries/{library_id}/series": {
+      "get": {
+        "tags": ["series"],
+        "summary": "List all series in a library with pagination",
+        "operationId": "list_series",
+        "parameters": [
+          {
+            "name": "library_id",
+            "in": "path",
+            "description": "Library UUID",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "description": "Filter by series name (case-insensitive, partial match)",
+            "required": false,
+            "schema": { "type": "string", "nullable": true }
+          },
+          {
+            "name": "reading_status",
+            "in": "query",
+            "description": "Filter by reading status, comma-separated (e.g. 'unread,reading')",
+            "required": false,
+            "schema": { "type": "string", "nullable": true }
+          },
+          {
+            "name": "metadata_provider",
+            "in": "query",
+            "description": "Filter by metadata provider: a provider name (e.g. 'google_books'), 'linked' (any provider), or 'unlinked' (no provider)",
+            "required": false,
+            "schema": { "type": "string", "nullable": true }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number (1-indexed, default 1)",
+            "required": false,
+            "schema": { "type": "integer", "format": "int64", "nullable": true }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Items per page (max 200, default 50)",
+            "required": false,
+            "schema": { "type": "integer", "format": "int64", "nullable": true }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/SeriesPage" } }
+            }
+          },
+          "401": { "description": "Unauthorized" }
+        },
+        "security": [{ "Bearer": [] }]
+      }
+    },
+    "/libraries/{library_id}/series/by-name/{name}": {
+      "get": {
+        "tags": ["series"],
+        "summary": "Look up a series by name within a library. Returns its UUID and name.",
+        "operationId": "get_series_by_name",
+        "parameters": [
+          {
+            "name": "library_id",
+            "in": "path",
+            "description": "Library UUID",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "description": "Series name (URL-encoded)",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/SeriesLookup" } }
+            }
+          },
+          "401": { "description": "Unauthorized" },
+          "404": { "description": "Series not found" }
+        },
+        "security": [{ "Bearer": [] }]
+      }
+    },
+    "/metadata/links": {
+      "get": {
+        "tags": ["metadata"],
+        "operationId": "get_metadata_links",
+        "parameters": [
+          {
+            "name": "library_id",
+            "in": "query",
+            "description": "Library UUID",
+            "required": false,
+            "schema": { "type": "string", "nullable": true }
+          },
+          {
+            "name": "series_id",
+            "in": "query",
+            "description": "Series UUID",
+            "required": false,
+            "schema": { "type": "string", "nullable": true }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/ExternalMetadataLinkDto" }
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "Bearer": [] }]
+      }
+    },
+    "/metadata/missing/{id}": {
+      "get": {
+        "tags": ["metadata"],
+        "operationId": "get_missing_books",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Link UUID",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/MissingBooksDto" } }
+            }
+          },
+          "404": { "description": "Link not found" }
+        },
+        "security": [{ "Bearer": [] }]
+      }
+    },
+    "/search": {
+      "get": {
+        "tags": ["search"],
+        "summary": "Search books across all libraries",
+        "operationId": "search_books",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "description": "Search query (books + series via PostgreSQL full-text)",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "library_id",
+            "in": "query",
+            "description": "Filter by library ID",
+            "required": false,
+            "schema": { "type": "string", "nullable": true }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "description": "Filter by type (cbz, cbr, pdf, epub)",
+            "required": false,
+            "schema": { "type": "string", "nullable": true }
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "description": "Filter by kind (alias for type)",
+            "required": false,
+            "schema": { "type": "string", "nullable": true }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Max results per type (max 100)",
+            "required": false,
+            "schema": { "type": "integer", "nullable": true, "minimum": 0 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/SearchResponse" } }
+            }
+          },
+          "401": { "description": "Unauthorized" }
+        },
+        "security": [{ "Bearer": [] }]
+      }
+    },
+    "/series": {
+      "get": {
+        "tags": ["series"],
+        "summary": "List all series across libraries with optional filtering and pagination",
+        "operationId": "list_all_series",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "description": "Filter by series name (case-insensitive, partial match)",
+            "required": false,
+            "schema": { "type": "string", "nullable": true }
+          },
+          {
+            "name": "library_id",
+            "in": "query",
+            "description": "Filter by library ID",
+            "required": false,
+            "schema": { "type": "string", "nullable": true }
+          },
+          {
+            "name": "reading_status",
+            "in": "query",
+            "description": "Filter by reading status, comma-separated (e.g. 'unread,reading')",
+            "required": false,
+            "schema": { "type": "string", "nullable": true }
+          },
+          {
+            "name": "metadata_provider",
+            "in": "query",
+            "description": "Filter by metadata provider: a provider name (e.g. 'google_books'), 'linked' (any provider), or 'unlinked' (no provider)",
+            "required": false,
+            "schema": { "type": "string", "nullable": true }
+          },
+          {
+            "name": "author",
+            "in": "query",
+            "description": "Filter by author name (matches in series.authors or book-level authors)",
+            "required": false,
+            "schema": { "type": "string", "nullable": true }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number (1-indexed, default 1)",
+            "required": false,
+            "schema": { "type": "integer", "format": "int64", "nullable": true }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Items per page (max 200, default 50)",
+            "required": false,
+            "schema": { "type": "integer", "format": "int64", "nullable": true }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sort order: 'title' (default) or 'latest' (most recently added first)",
+            "required": false,
+            "schema": { "type": "string", "nullable": true }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/SeriesPage" } }
+            }
+          },
+          "401": { "description": "Unauthorized" }
+        },
+        "security": [{ "Bearer": [] }]
+      }
+    },
+    "/series/mark-read": {
+      "post": {
+        "tags": ["reading-progress"],
+        "summary": "Mark all books in a series as read or unread",
+        "operationId": "mark_series_read",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/MarkSeriesReadRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MarkSeriesReadResponse" }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" },
+          "422": { "description": "Invalid status" }
+        },
+        "security": [{ "Bearer": [] }]
+      }
+    },
+    "/series/ongoing": {
+      "get": {
+        "tags": ["series"],
+        "summary": "List ongoing series (partially read, sorted by most recent activity)",
+        "operationId": "ongoing_series",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Max items to return (default 10, max 50)",
+            "required": false,
+            "schema": { "type": "integer", "format": "int64", "nullable": true }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/SeriesItem" }
+                }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" }
+        },
+        "security": [{ "Bearer": [] }]
+      }
+    },
+    "/series/provider-statuses": {
+      "get": {
+        "tags": ["series"],
+        "summary": "List distinct raw provider statuses from external metadata links",
+        "operationId": "provider_statuses",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "type": "array", "items": { "type": "string" } } }
+            }
+          },
+          "401": { "description": "Unauthorized" }
+        },
+        "security": [{ "Bearer": [] }]
+      }
+    },
+    "/series/statuses": {
+      "get": {
+        "tags": ["series"],
+        "summary": "List all distinct series status values present in the database",
+        "operationId": "series_statuses",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "type": "array", "items": { "type": "string" } } }
+            }
+          },
+          "401": { "description": "Unauthorized" }
+        },
+        "security": [{ "Bearer": [] }]
+      }
+    },
+    "/series/{series_id}/details": {
+      "get": {
+        "tags": ["series"],
+        "summary": "Get a series by its UUID (resolves library_id internally)",
+        "operationId": "get_series_by_id",
+        "parameters": [
+          {
+            "name": "series_id",
+            "in": "path",
+            "description": "Series UUID",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/SeriesItem" } }
+            }
+          },
+          "401": { "description": "Unauthorized" },
+          "404": { "description": "Series not found" }
+        },
+        "security": [{ "Bearer": [] }]
+      }
+    },
+    "/series/{series_id}/metadata": {
+      "get": {
+        "tags": ["series"],
+        "summary": "Get metadata for a series by its UUID (resolves library_id internally)",
+        "operationId": "get_series_metadata_by_id",
+        "parameters": [
+          {
+            "name": "series_id",
+            "in": "path",
+            "description": "Series UUID",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/SeriesMetadata" } }
+            }
+          },
+          "401": { "description": "Unauthorized" },
+          "404": { "description": "Series not found" }
+        },
+        "security": [{ "Bearer": [] }]
+      }
+    },
+    "/series/{series_id}/related": {
+      "get": {
+        "tags": ["series"],
+        "summary": "Get related series (same author, genre, or publisher) ordered by weighted score",
+        "operationId": "get_related_series",
+        "parameters": [
+          {
+            "name": "series_id",
+            "in": "path",
+            "description": "Series UUID",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Max results (default 10, max 50)",
+            "required": false,
+            "schema": { "type": "integer", "format": "int64", "nullable": true }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/RelatedSeriesItem" }
+                }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" },
+          "404": { "description": "Series not found" }
+        },
+        "security": [{ "Bearer": [] }]
+      }
+    },
+    "/stats": {
+      "get": {
+        "tags": ["stats"],
+        "summary": "Get collection statistics for the dashboard",
+        "operationId": "get_stats",
+        "parameters": [
+          {
+            "name": "period",
+            "in": "path",
+            "description": "Granularity: \"day\", \"week\" or \"month\" (default: \"week\")",
+            "required": true,
+            "schema": { "type": "string", "nullable": true }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/StatsResponse" } }
+            }
+          },
+          "401": { "description": "Unauthorized" }
+        },
+        "security": [{ "Bearer": [] }]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AuthorItem": {
+        "type": "object",
+        "required": ["name", "book_count", "series_count"],
+        "properties": {
+          "book_count": { "type": "integer", "format": "int64" },
+          "name": { "type": "string" },
+          "series_count": { "type": "integer", "format": "int64" }
+        }
+      },
+      "AuthorsPageResponse": {
+        "type": "object",
+        "required": ["items", "total", "page", "limit"],
+        "properties": {
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/AuthorItem" } },
+          "limit": { "type": "integer", "format": "int64" },
+          "page": { "type": "integer", "format": "int64" },
+          "total": { "type": "integer", "format": "int64" }
+        }
+      },
+      "BookDetails": {
+        "type": "object",
+        "required": [
+          "id",
+          "library_id",
+          "kind",
+          "title",
+          "authors",
+          "volume_type",
+          "reading_status",
+          "updated_at"
+        ],
+        "properties": {
+          "author": { "type": "string", "nullable": true },
+          "authors": { "type": "array", "items": { "type": "string" } },
+          "file_format": { "type": "string", "nullable": true },
+          "file_parse_status": { "type": "string", "nullable": true },
+          "file_path": { "type": "string", "nullable": true },
+          "id": { "type": "string" },
+          "isbn": { "type": "string", "nullable": true },
+          "kind": { "type": "string" },
+          "language": { "type": "string", "nullable": true },
+          "library_id": { "type": "string" },
+          "locked_fields": {
+            "description": "Fields locked from external metadata sync",
+            "nullable": true
+          },
+          "page_count": { "type": "integer", "format": "int32", "nullable": true },
+          "publish_date": { "type": "string", "nullable": true },
+          "reading_current_page": { "type": "integer", "format": "int32", "nullable": true },
+          "reading_last_read_at": { "type": "string", "nullable": true },
+          "reading_status": {
+            "type": "string",
+            "description": "Reading status: \"unread\", \"reading\", or \"read\""
+          },
+          "series": { "type": "string", "nullable": true },
+          "series_id": { "type": "string", "nullable": true },
+          "summary": { "type": "string", "nullable": true },
+          "thumbnail_url": { "type": "string", "nullable": true },
+          "title": { "type": "string" },
+          "updated_at": { "type": "string" },
+          "volume": { "type": "integer", "format": "int32", "nullable": true },
+          "volume_type": { "type": "string" }
+        }
+      },
+      "BookItem": {
+        "type": "object",
+        "required": [
+          "id",
+          "library_id",
+          "kind",
+          "title",
+          "authors",
+          "volume_type",
+          "updated_at",
+          "reading_status"
+        ],
+        "properties": {
+          "author": { "type": "string", "nullable": true },
+          "authors": { "type": "array", "items": { "type": "string" } },
+          "format": { "type": "string", "nullable": true },
+          "id": { "type": "string" },
+          "kind": { "type": "string" },
+          "language": { "type": "string", "nullable": true },
+          "library_id": { "type": "string" },
+          "page_count": { "type": "integer", "format": "int32", "nullable": true },
+          "reading_current_page": { "type": "integer", "format": "int32", "nullable": true },
+          "reading_last_read_at": { "type": "string", "nullable": true },
+          "reading_status": {
+            "type": "string",
+            "description": "Reading status: \"unread\", \"reading\", or \"read\""
+          },
+          "series": { "type": "string", "nullable": true },
+          "thumbnail_url": { "type": "string", "nullable": true },
+          "title": { "type": "string" },
+          "updated_at": { "type": "string" },
+          "volume": { "type": "integer", "format": "int32", "nullable": true },
+          "volume_type": { "type": "string" }
+        }
+      },
+      "BooksPage": {
+        "type": "object",
+        "required": ["items", "total", "page", "limit"],
+        "properties": {
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/BookItem" } },
+          "limit": { "type": "integer", "format": "int64" },
+          "page": { "type": "integer", "format": "int64" },
+          "total": { "type": "integer", "format": "int64" }
+        }
+      },
+      "CurrentlyReadingItem": {
+        "type": "object",
+        "required": ["book_id", "title", "current_page", "page_count"],
+        "properties": {
+          "book_id": { "type": "string" },
+          "current_page": { "type": "integer", "format": "int32" },
+          "page_count": { "type": "integer", "format": "int32" },
+          "series": { "type": "string", "nullable": true },
+          "title": { "type": "string" },
+          "username": { "type": "string", "nullable": true }
+        }
+      },
+      "DownloadStats": {
+        "type": "object",
+        "required": [
+          "active_downloads",
+          "imported_downloads",
+          "error_downloads",
+          "total_downloads",
+          "available_series",
+          "total_missing_volumes",
+          "recent_downloads"
+        ],
+        "properties": {
+          "active_downloads": { "type": "integer", "format": "int64" },
+          "available_series": { "type": "integer", "format": "int64" },
+          "error_downloads": { "type": "integer", "format": "int64" },
+          "imported_downloads": { "type": "integer", "format": "int64" },
+          "recent_downloads": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/RecentDownloadItem" }
+          },
+          "total_downloads": { "type": "integer", "format": "int64" },
+          "total_missing_volumes": { "type": "integer", "format": "int64" }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": ["error"],
+        "properties": { "error": { "type": "string" } }
+      },
+      "ExternalMetadataLinkDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "library_id",
+          "series_name",
+          "provider",
+          "external_id",
+          "status",
+          "metadata_json",
+          "matched_at"
+        ],
+        "properties": {
+          "approved_at": { "type": "string", "nullable": true },
+          "confidence": { "type": "number", "format": "float", "nullable": true },
+          "external_id": { "type": "string" },
+          "external_url": { "type": "string", "nullable": true },
+          "id": { "type": "string" },
+          "library_id": { "type": "string" },
+          "matched_at": { "type": "string" },
+          "metadata_json": {},
+          "provider": { "type": "string" },
+          "series_name": { "type": "string" },
+          "status": { "type": "string" },
+          "synced_at": { "type": "string", "nullable": true },
+          "total_volumes_external": { "type": "integer", "format": "int32", "nullable": true }
+        }
+      },
+      "FormatCount": {
+        "type": "object",
+        "required": ["format", "count"],
+        "properties": {
+          "count": { "type": "integer", "format": "int64" },
+          "format": { "type": "string" }
+        }
+      },
+      "JobTimePoint": {
+        "type": "object",
+        "required": [
+          "label",
+          "scan",
+          "rebuild",
+          "thumbnail",
+          "metadata",
+          "downloads",
+          "reading",
+          "conversion"
+        ],
+        "properties": {
+          "conversion": { "type": "integer", "format": "int64" },
+          "downloads": { "type": "integer", "format": "int64" },
+          "label": { "type": "string" },
+          "metadata": { "type": "integer", "format": "int64" },
+          "reading": { "type": "integer", "format": "int64" },
+          "rebuild": { "type": "integer", "format": "int64" },
+          "scan": { "type": "integer", "format": "int64" },
+          "thumbnail": { "type": "integer", "format": "int64" }
+        }
+      },
+      "LanguageCount": {
+        "type": "object",
+        "required": ["count"],
+        "properties": {
+          "count": { "type": "integer", "format": "int64" },
+          "language": { "type": "string", "nullable": true }
+        }
+      },
+      "LibraryResponse": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "root_path",
+          "enabled",
+          "book_count",
+          "monitor_enabled",
+          "scan_mode",
+          "watcher_enabled",
+          "metadata_refresh_mode",
+          "series_count",
+          "thumbnail_book_ids",
+          "reading_status_push_mode",
+          "download_detection_mode",
+          "tags"
+        ],
+        "properties": {
+          "book_count": { "type": "integer", "format": "int64" },
+          "download_detection_mode": { "type": "string" },
+          "enabled": { "type": "boolean" },
+          "fallback_metadata_provider": { "type": "string", "nullable": true },
+          "id": { "type": "string" },
+          "metadata_provider": { "type": "string", "nullable": true },
+          "metadata_refresh_mode": { "type": "string" },
+          "monitor_enabled": { "type": "boolean" },
+          "name": { "type": "string" },
+          "next_download_detection_at": { "type": "string", "nullable": true },
+          "next_metadata_refresh_at": { "type": "string", "nullable": true },
+          "next_reading_status_push_at": { "type": "string", "nullable": true },
+          "next_scan_at": { "type": "string", "nullable": true },
+          "reading_status_provider": { "type": "string", "nullable": true },
+          "reading_status_push_mode": { "type": "string" },
+          "root_path": { "type": "string" },
+          "scan_mode": { "type": "string" },
+          "series_count": { "type": "integer", "format": "int64" },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "thumbnail_book_ids": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "First book IDs from up to 5 distinct series (for thumbnail fan display)"
+          },
+          "watcher_enabled": { "type": "boolean" }
+        }
+      },
+      "LibraryStats": {
+        "type": "object",
+        "required": [
+          "library_name",
+          "book_count",
+          "size_bytes",
+          "read_count",
+          "reading_count",
+          "unread_count"
+        ],
+        "properties": {
+          "book_count": { "type": "integer", "format": "int64" },
+          "library_name": { "type": "string" },
+          "read_count": { "type": "integer", "format": "int64" },
+          "reading_count": { "type": "integer", "format": "int64" },
+          "size_bytes": { "type": "integer", "format": "int64" },
+          "unread_count": { "type": "integer", "format": "int64" }
+        }
+      },
+      "ListAllSeriesQuery": {
+        "type": "object",
+        "properties": {
+          "author": {
+            "type": "string",
+            "description": "Filter by author name (matches in series.authors or book-level authors)",
+            "example": "Toriyama",
+            "nullable": true
+          },
+          "has_books": {
+            "type": "string",
+            "description": "Only return series with at least one book: \"true\" to exclude empty series",
+            "example": "true",
+            "nullable": true
+          },
+          "has_missing": {
+            "type": "string",
+            "description": "Filter series with missing books: \"true\" to show only series with missing books",
+            "example": "true",
+            "nullable": true
+          },
+          "library_id": { "type": "string", "nullable": true },
+          "limit": { "type": "integer", "format": "int64", "example": 50, "nullable": true },
+          "metadata_provider": {
+            "type": "string",
+            "description": "Filter by metadata provider: a provider name (e.g. \"google_books\"), \"linked\" (any provider), or \"unlinked\" (no provider)",
+            "example": "google_books",
+            "nullable": true
+          },
+          "page": { "type": "integer", "format": "int64", "example": 1, "nullable": true },
+          "q": { "type": "string", "example": "dragon", "nullable": true },
+          "reading_status": { "type": "string", "example": "unread,reading", "nullable": true },
+          "series_status": {
+            "type": "string",
+            "description": "Filter by series status (e.g. \"ongoing\", \"ended\")",
+            "example": "ongoing",
+            "nullable": true
+          },
+          "sort": {
+            "type": "string",
+            "description": "Sort order: \"title\" (default) or \"latest\" (most recently added first)",
+            "example": "latest",
+            "nullable": true
+          }
+        }
+      },
+      "ListAuthorsQuery": {
+        "type": "object",
+        "properties": {
+          "limit": { "type": "integer", "format": "int64", "example": 20, "nullable": true },
+          "page": { "type": "integer", "format": "int64", "example": 1, "nullable": true },
+          "q": { "type": "string", "example": "batman", "nullable": true },
+          "sort": {
+            "type": "string",
+            "description": "Sort order: \"name\" (default), \"books\" (most books first)",
+            "example": "books",
+            "nullable": true
+          }
+        }
+      },
+      "ListBooksQuery": {
+        "type": "object",
+        "properties": {
+          "author": {
+            "type": "string",
+            "description": "Filter by exact author name (matches in authors array or scalar author field)",
+            "nullable": true
+          },
+          "format": { "type": "string", "example": "cbz", "nullable": true },
+          "kind": { "type": "string", "nullable": true },
+          "library_id": { "type": "string", "nullable": true },
+          "limit": { "type": "integer", "format": "int64", "example": 50, "nullable": true },
+          "metadata_provider": {
+            "type": "string",
+            "description": "Filter by metadata provider: \"linked\" (any provider), \"unlinked\" (no provider), or a specific provider name",
+            "example": "linked",
+            "nullable": true
+          },
+          "page": { "type": "integer", "format": "int64", "example": 1, "nullable": true },
+          "q": {
+            "type": "string",
+            "description": "Text search on title, series and author (case-insensitive, partial match)",
+            "example": "dragon",
+            "nullable": true
+          },
+          "reading_status": { "type": "string", "example": "unread,reading", "nullable": true },
+          "series": { "type": "string", "nullable": true },
+          "sort": {
+            "type": "string",
+            "description": "Sort order: \"title\" (default) or \"latest\" (most recently added first)",
+            "example": "latest",
+            "nullable": true
+          }
+        }
+      },
+      "MarkSeriesReadRequest": {
+        "type": "object",
+        "required": ["series", "status"],
+        "properties": {
+          "series": {
+            "type": "string",
+            "description": "Series name (use \"unclassified\" for books without series)"
+          },
+          "status": { "type": "string", "description": "Status to set: \"read\" or \"unread\"" }
+        }
+      },
+      "MarkSeriesReadResponse": {
+        "type": "object",
+        "required": ["updated"],
+        "properties": { "updated": { "type": "integer", "format": "int64" } }
+      },
+      "MetadataStats": {
+        "type": "object",
+        "required": [
+          "total_series",
+          "series_linked",
+          "series_unlinked",
+          "books_with_summary",
+          "books_with_isbn",
+          "by_provider"
+        ],
+        "properties": {
+          "books_with_isbn": { "type": "integer", "format": "int64" },
+          "books_with_summary": { "type": "integer", "format": "int64" },
+          "by_provider": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ProviderCount" }
+          },
+          "series_linked": { "type": "integer", "format": "int64" },
+          "series_unlinked": { "type": "integer", "format": "int64" },
+          "total_series": { "type": "integer", "format": "int64" }
+        }
+      },
+      "MissingBookItem": {
+        "type": "object",
+        "properties": {
+          "cover_url": { "type": "string", "nullable": true },
+          "external_book_id": { "type": "string", "nullable": true },
+          "title": { "type": "string", "nullable": true },
+          "volume_number": { "type": "integer", "format": "int32", "nullable": true }
+        }
+      },
+      "MissingBooksDto": {
+        "type": "object",
+        "required": ["total_external", "total_local", "missing_count", "missing_books"],
+        "properties": {
+          "missing_books": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/MissingBookItem" }
+          },
+          "missing_count": { "type": "integer", "format": "int64" },
+          "total_external": { "type": "integer", "format": "int64" },
+          "total_local": { "type": "integer", "format": "int64" }
+        }
+      },
+      "MonthlyAdditions": {
+        "type": "object",
+        "required": ["month", "books_added"],
+        "properties": {
+          "books_added": { "type": "integer", "format": "int64" },
+          "month": { "type": "string" }
+        }
+      },
+      "MonthlyReading": {
+        "type": "object",
+        "required": ["month", "books_read", "pages_read"],
+        "properties": {
+          "books_read": { "type": "integer", "format": "int64" },
+          "month": { "type": "string" },
+          "pages_read": { "type": "integer", "format": "int64" }
+        }
+      },
+      "OngoingQuery": {
+        "type": "object",
+        "properties": {
+          "limit": { "type": "integer", "format": "int64", "example": 10, "nullable": true }
+        }
+      },
+      "PageQuery": {
+        "type": "object",
+        "properties": {
+          "format": { "type": "string", "example": "webp", "nullable": true },
+          "quality": {
+            "type": "integer",
+            "format": "int32",
+            "example": 80,
+            "nullable": true,
+            "minimum": 0
+          },
+          "width": {
+            "type": "integer",
+            "format": "int32",
+            "example": 1200,
+            "nullable": true,
+            "minimum": 0
+          }
+        }
+      },
+      "ProviderCount": {
+        "type": "object",
+        "required": ["provider", "count"],
+        "properties": {
+          "count": { "type": "integer", "format": "int64" },
+          "provider": { "type": "string" }
+        }
+      },
+      "ReadingProgressResponse": {
+        "type": "object",
+        "required": ["status"],
+        "properties": {
+          "current_page": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Current page (only set when status is \"reading\")",
+            "nullable": true
+          },
+          "last_read_at": { "type": "string", "nullable": true },
+          "status": {
+            "type": "string",
+            "description": "Reading status: \"unread\", \"reading\", or \"read\""
+          }
+        }
+      },
+      "ReadingStatusStats": {
+        "type": "object",
+        "required": ["unread", "reading", "read"],
+        "properties": {
+          "read": { "type": "integer", "format": "int64" },
+          "reading": { "type": "integer", "format": "int64" },
+          "unread": { "type": "integer", "format": "int64" }
+        }
+      },
+      "RecentDownloadItem": {
+        "type": "object",
+        "required": ["id", "series_name", "status", "expected_volumes", "created_at"],
+        "properties": {
+          "created_at": { "type": "string" },
+          "expected_volumes": {
+            "type": "array",
+            "items": { "type": "integer", "format": "int32" }
+          },
+          "id": { "type": "string" },
+          "series_name": { "type": "string" },
+          "status": { "type": "string" }
+        }
+      },
+      "RecentlyReadItem": {
+        "type": "object",
+        "required": ["book_id", "title", "last_read_at"],
+        "properties": {
+          "book_id": { "type": "string" },
+          "last_read_at": { "type": "string" },
+          "series": { "type": "string", "nullable": true },
+          "title": { "type": "string" },
+          "username": { "type": "string", "nullable": true }
+        }
+      },
+      "RelatedSeriesItem": {
+        "type": "object",
+        "required": [
+          "name",
+          "series_id",
+          "book_count",
+          "books_read_count",
+          "library_id",
+          "score",
+          "match_reasons"
+        ],
+        "properties": {
+          "book_count": { "type": "integer", "format": "int64" },
+          "books_read_count": { "type": "integer", "format": "int64" },
+          "cover_url": { "type": "string", "nullable": true },
+          "first_book_id": { "type": "string", "nullable": true },
+          "first_book_updated_at": { "type": "string", "nullable": true },
+          "library_id": { "type": "string" },
+          "match_reasons": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Reasons for the match: \"same_author\", \"same_genre\", \"same_publisher\""
+          },
+          "metadata_provider": { "type": "string", "nullable": true },
+          "name": { "type": "string" },
+          "score": { "type": "integer", "format": "int64" },
+          "series_id": { "type": "string" },
+          "series_status": { "type": "string", "nullable": true }
+        }
+      },
+      "RelatedSeriesQuery": {
+        "type": "object",
+        "properties": {
+          "limit": { "type": "integer", "format": "int64", "example": 10, "nullable": true }
+        }
+      },
+      "SearchQuery": {
+        "type": "object",
+        "required": ["q"],
+        "properties": {
+          "kind": { "type": "string", "example": "cbz", "nullable": true },
+          "library_id": { "type": "string", "nullable": true },
+          "limit": { "type": "integer", "example": 20, "nullable": true, "minimum": 0 },
+          "q": { "type": "string", "example": "batman" },
+          "type": { "type": "string", "example": "cbz", "nullable": true }
+        }
+      },
+      "SearchResponse": {
+        "type": "object",
+        "required": ["hits", "series_hits"],
+        "properties": {
+          "estimated_total_hits": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "minimum": 0
+          },
+          "hits": {},
+          "processing_time_ms": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "minimum": 0
+          },
+          "series_hits": { "type": "array", "items": { "$ref": "#/components/schemas/SeriesHit" } }
+        }
+      },
+      "SeriesHit": {
+        "type": "object",
+        "required": [
+          "series_id",
+          "library_id",
+          "name",
+          "book_count",
+          "books_read_count",
+          "first_book_id"
+        ],
+        "properties": {
+          "book_count": { "type": "integer", "format": "int64" },
+          "books_read_count": { "type": "integer", "format": "int64" },
+          "first_book_id": { "type": "string" },
+          "first_book_updated_at": { "type": "string", "nullable": true },
+          "library_id": { "type": "string" },
+          "name": { "type": "string" },
+          "series_id": { "type": "string" }
+        }
+      },
+      "SeriesItem": {
+        "type": "object",
+        "required": ["name", "series_id", "book_count", "books_read_count", "library_id"],
+        "properties": {
+          "anilist_id": { "type": "integer", "format": "int32", "nullable": true },
+          "anilist_url": { "type": "string", "nullable": true },
+          "book_count": { "type": "integer", "format": "int64" },
+          "books_read_count": { "type": "integer", "format": "int64" },
+          "cover_url": { "type": "string", "nullable": true },
+          "first_book_id": { "type": "string", "nullable": true },
+          "first_book_updated_at": { "type": "string", "nullable": true },
+          "library_id": { "type": "string" },
+          "metadata_provider": { "type": "string", "nullable": true },
+          "missing_count": { "type": "integer", "format": "int64", "nullable": true },
+          "name": { "type": "string" },
+          "series_id": { "type": "string" },
+          "series_status": { "type": "string", "nullable": true }
+        }
+      },
+      "SeriesLookup": {
+        "type": "object",
+        "required": ["id", "library_id", "name"],
+        "properties": {
+          "id": { "type": "string" },
+          "library_id": { "type": "string" },
+          "name": { "type": "string" }
+        }
+      },
+      "SeriesMetadata": {
+        "type": "object",
+        "required": ["series_name", "authors", "publishers", "locked_fields"],
+        "properties": {
+          "authors": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Authors of the series (series-level metadata, distinct from per-book author field)"
+          },
+          "book_author": {
+            "type": "string",
+            "description": "Convenience: author from first book (for pre-filling the per-book apply section)",
+            "nullable": true
+          },
+          "book_language": { "type": "string", "nullable": true },
+          "description": { "type": "string", "nullable": true },
+          "locked_fields": {
+            "description": "Fields locked from external metadata sync, e.g. {\"authors\": true, \"description\": true}"
+          },
+          "publishers": { "type": "array", "items": { "type": "string" } },
+          "series_name": { "type": "string", "description": "Name of the series" },
+          "start_year": { "type": "integer", "format": "int32", "nullable": true },
+          "status": {
+            "type": "string",
+            "description": "Series status: \"ongoing\", \"ended\", \"hiatus\", \"cancelled\", or null",
+            "nullable": true
+          },
+          "total_volumes": { "type": "integer", "format": "int32", "nullable": true }
+        }
+      },
+      "SeriesPage": {
+        "type": "object",
+        "required": ["items", "total", "page", "limit"],
+        "properties": {
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/SeriesItem" } },
+          "limit": { "type": "integer", "format": "int64" },
+          "page": { "type": "integer", "format": "int64" },
+          "total": { "type": "integer", "format": "int64" }
+        }
+      },
+      "StatsOverview": {
+        "type": "object",
+        "required": [
+          "total_books",
+          "total_series",
+          "total_libraries",
+          "total_pages",
+          "total_size_bytes",
+          "total_authors"
+        ],
+        "properties": {
+          "total_authors": { "type": "integer", "format": "int64" },
+          "total_books": { "type": "integer", "format": "int64" },
+          "total_libraries": { "type": "integer", "format": "int64" },
+          "total_pages": { "type": "integer", "format": "int64" },
+          "total_series": { "type": "integer", "format": "int64" },
+          "total_size_bytes": { "type": "integer", "format": "int64" }
+        }
+      },
+      "StatsResponse": {
+        "type": "object",
+        "required": [
+          "overview",
+          "reading_status",
+          "currently_reading",
+          "recently_read",
+          "reading_over_time",
+          "by_format",
+          "by_language",
+          "by_library",
+          "top_series",
+          "additions_over_time",
+          "jobs_over_time",
+          "metadata",
+          "users_reading_over_time",
+          "downloads"
+        ],
+        "properties": {
+          "additions_over_time": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/MonthlyAdditions" }
+          },
+          "by_format": { "type": "array", "items": { "$ref": "#/components/schemas/FormatCount" } },
+          "by_language": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/LanguageCount" }
+          },
+          "by_library": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/LibraryStats" }
+          },
+          "currently_reading": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/CurrentlyReadingItem" }
+          },
+          "downloads": { "$ref": "#/components/schemas/DownloadStats" },
+          "jobs_over_time": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/JobTimePoint" }
+          },
+          "metadata": { "$ref": "#/components/schemas/MetadataStats" },
+          "overview": { "$ref": "#/components/schemas/StatsOverview" },
+          "reading_over_time": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/MonthlyReading" }
+          },
+          "reading_status": { "$ref": "#/components/schemas/ReadingStatusStats" },
+          "recently_read": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/RecentlyReadItem" }
+          },
+          "top_series": { "type": "array", "items": { "$ref": "#/components/schemas/TopSeries" } },
+          "users_reading_over_time": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/UserMonthlyReading" }
+          }
+        }
+      },
+      "TopSeries": {
+        "type": "object",
+        "required": ["series", "book_count", "read_count", "total_pages"],
+        "properties": {
+          "book_count": { "type": "integer", "format": "int64" },
+          "read_count": { "type": "integer", "format": "int64" },
+          "series": { "type": "string" },
+          "total_pages": { "type": "integer", "format": "int64" }
+        }
+      },
+      "UpdateReadingProgressRequest": {
+        "type": "object",
+        "required": ["status"],
+        "properties": {
+          "current_page": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Required when status is \"reading\", must be > 0",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "description": "Reading status: \"unread\", \"reading\", or \"read\""
+          }
+        }
+      },
+      "UserMonthlyReading": {
+        "type": "object",
+        "required": ["month", "username", "books_read", "pages_read"],
+        "properties": {
+          "books_read": { "type": "integer", "format": "int64" },
+          "month": { "type": "string" },
+          "pages_read": { "type": "integer", "format": "int64" },
+          "username": { "type": "string" }
+        }
+      }
+    },
+    "securitySchemes": {
+      "Bearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Enter your API Bearer token (format: stl_<prefix>_<secret>)"
+      }
+    }
+  },
+  "security": [{ "Bearer": [] }],
+  "tags": [
+    { "name": "books", "description": "Book browsing, details, pages and thumbnails" },
+    { "name": "series", "description": "Series browsing, filtering and details" },
+    { "name": "metadata", "description": "Metadata links and missing volumes" },
+    { "name": "reading-progress", "description": "Reading progress tracking per book" },
+    { "name": "search", "description": "Full-text search across books and series" },
+    { "name": "authors", "description": "Author browsing and listing" },
+    { "name": "stats", "description": "Collection statistics and dashboard data" },
+    { "name": "libraries", "description": "Library listing" }
+  ]
+}

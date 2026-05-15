@@ -241,6 +241,12 @@
     }
   },
   "series": {
+    "related": "Séries similaires",
+    "matchReasons": {
+      "same_author": "Même auteur",
+      "same_genre": "Même genre",
+      "same_publisher": "Même éditeur"
+    },
     "empty": "Aucune série disponible",
     "coverAlt": "Couverture de {title}",
     "status": {

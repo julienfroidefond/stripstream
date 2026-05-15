@@ -4,6 +4,7 @@ import type {
   StripstreamSeriesItem,
   StripstreamLibraryResponse,
   StripstreamReadingProgressResponse,
+  StripstreamRelatedSeriesItem,
 } from "@/types/stripstream";
 import type {
   NormalizedBook,
@@ -86,6 +87,28 @@ export class StripstreamAdapter {
       createdAt: null,
       missingCount: series.missing_count ?? null,
       seriesStatus: series.series_status ?? null,
+    };
+  }
+
+  static toNormalizedRelatedSeries(item: StripstreamRelatedSeriesItem): NormalizedSeries {
+    const thumbnailUrl = item.first_book_id
+      ? `/api/stripstream/images/books/${item.first_book_id}/thumbnail`
+      : "";
+    return {
+      id: item.series_id,
+      name: item.name,
+      bookCount: item.book_count,
+      booksReadCount: item.books_read_count,
+      thumbnailUrl,
+      libraryId: item.library_id,
+      summary: null,
+      authors: [],
+      genres: [],
+      tags: [],
+      createdAt: null,
+      missingCount: null,
+      seriesStatus: item.series_status ?? null,
+      matchReasons: item.match_reasons,
     };
   }
 

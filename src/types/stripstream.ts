@@ -140,6 +140,21 @@ export interface StripstreamSearchResponse {
   processing_time_ms?: number | null;
 }
 
+export interface StripstreamRelatedSeriesItem {
+  series_id: string;
+  name: string;
+  book_count: number;
+  books_read_count: number;
+  library_id: string;
+  score: number;
+  match_reasons: string[];
+  first_book_id?: string | null;
+  series_status?: string | null;
+  cover_url?: string | null;
+  metadata_provider?: string | null;
+  first_book_updated_at?: string | null;
+}
+
 export interface StripstreamSearchHit {
   id: string;
   title: string;
