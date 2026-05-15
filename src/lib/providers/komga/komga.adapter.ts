@@ -27,6 +27,7 @@ export class KomgaAdapter {
       pageCount: book.media?.pagesCount ?? 0,
       thumbnailUrl: `/api/komga/images/books/${book.id}/thumbnail`,
       readProgress: KomgaAdapter.toNormalizedReadProgress(book.readProgress),
+      summary: book.metadata?.summary?.trim() || null,
     };
   }
 

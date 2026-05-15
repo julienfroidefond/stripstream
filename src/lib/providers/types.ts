@@ -40,6 +40,8 @@ export interface NormalizedBook {
   thumbnailUrl: string;
   readProgress: NormalizedReadProgress | null;
   volumeType?: string | null;
+  /** Optional per-book summary (Komga-rich, Stripstream usually absent). */
+  summary?: string | null;
 }
 
 export interface NormalizedMissingBook {

@@ -52,7 +52,9 @@ export class StripstreamAdapter {
       libraryId: book.library_id,
       title: book.title,
       number: book.volume !== null && book.volume !== undefined ? String(book.volume) : null,
-      seriesId: book.series ?? null,
+      // Prefer the UUID when the details payload provides it (BookDetails has
+      // series_id, BookItem does not). Falls back to the series name otherwise.
+      seriesId: book.series_id ?? book.series ?? null,
       volume: book.volume ?? null,
       pageCount: book.page_count ?? 0,
       thumbnailUrl: `/api/stripstream/images/books/${book.id}/thumbnail`,
@@ -65,6 +67,7 @@ export class StripstreamAdapter {
               lastReadAt: book.reading_last_read_at ?? null,
             },
       volumeType: book.volume_type ?? null,
+      summary: book.summary?.trim() || null,
     };
   }
 

@@ -34,6 +34,10 @@ export interface StripstreamBookDetails {
   reading_current_page?: number | null;
   reading_last_read_at?: string | null;
   series?: string | null;
+  /** UUID of the parent series (only present in details, not in list items). */
+  series_id?: string | null;
+  /** Per-book summary; usually richer than the series summary. */
+  summary?: string | null;
   thumbnail_url?: string | null;
   volume?: number | null;
 }

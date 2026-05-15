@@ -7,4 +7,6 @@ export interface HomeData {
   recentlyRead: NormalizedBook[];
   onDeck: NormalizedBook[];
   latestSeries: NormalizedSeries[];
+  /** Series metadata resolved server-side for the books powering the hero. */
+  heroSeries?: NormalizedSeries[];
 }

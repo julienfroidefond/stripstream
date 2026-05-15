@@ -1,4 +1,5 @@
 import { MediaRow } from "./MediaRow";
+import { ContinueReadingHero } from "./ContinueReadingHero";
 import type { HomeData } from "@/types/home";
 
 interface HomeContentProps {
@@ -19,16 +20,29 @@ export function HomeContent({ data, isAnonymous = false }: HomeContentProps) {
     });
   })();
 
+  const showHero = !isAnonymous && continueReading.length > 0;
+
+  // Largest series pool we can offer the hero for name/summary lookups.
+  // heroSeries first because it's fetched specifically for these books and
+  // is the most reliable source of summary/genres/authors.
+  const seriesPool = (() => {
+    const items = [
+      ...(data.heroSeries ?? []),
+      ...(data.ongoing ?? []),
+      ...(data.favorites ?? []),
+      ...(data.latestSeries ?? []),
+    ];
+    const seen = new Set<string>();
+    return items.filter((s) => {
+      if (seen.has(s.id)) return false;
+      seen.add(s.id);
+      return true;
+    });
+  })();
+
   return (
     <div className="space-y-10 pb-2">
-      {!isAnonymous && continueReading.length > 0 && (
-        <MediaRow
-          titleKey="home.sections.continue_reading"
-          items={continueReading}
-          iconName="BookOpen"
-          featuredHeader
-        />
-      )}
+      {showHero && <ContinueReadingHero books={continueReading} series={seriesPool} />}
 
       {!isAnonymous && data.ongoing && data.ongoing.length > 0 && (
         <MediaRow

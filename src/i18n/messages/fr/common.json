@@ -38,7 +38,12 @@
     "hero": {
       "title": "Bienvenue sur StripStream",
       "subtitle": "Votre bibliothèque numérique pour lire vos BD, mangas et comics préférés.",
-      "coverAlt": "Couverture de {title}"
+      "coverAlt": "Couverture de {title}",
+      "label": "Reprendre la lecture",
+      "resume": "Reprendre",
+      "start": "Commencer",
+      "tomeLabel": "Tome {{number}}",
+      "page": "Page {{current}} / {{total}}"
     },
     "title": "Accueil",
     "sections": {
