@@ -52,7 +52,11 @@
       "continue_reading": "Continuer la lecture",
       "up_next": "À suivre",
       "latest_series": "Dernières séries",
-      "recently_added": "Ajouts récents"
+      "recently_added": "Ajouts récents",
+      "recommendations": "Pour vous"
+    },
+    "recommendations": {
+      "because": "Parce que vous aimez"
     }
   },
   "sidebar": {

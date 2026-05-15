@@ -52,7 +52,11 @@
       "continue_reading": "Continue reading",
       "up_next": "Up next",
       "latest_series": "Latest series",
-      "recently_added": "Recently added"
+      "recently_added": "Recently added",
+      "recommendations": "For you"
+    },
+    "recommendations": {
+      "because": "Because you like"
     }
   },
   "sidebar": {

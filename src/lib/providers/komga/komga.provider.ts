@@ -507,6 +507,10 @@ export class KomgaProvider implements IMediaProvider {
     return [];
   }
 
+  async getRecommendations(_limit?: number): Promise<NormalizedSeries[]> {
+    return [];
+  }
+
   async testConnection(): Promise<{ ok: boolean; error?: string }> {
     try {
       await this.fetch<KomgaLibrary[]>("libraries");

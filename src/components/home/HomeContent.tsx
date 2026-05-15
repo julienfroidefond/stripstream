@@ -1,5 +1,6 @@
 import { MediaRow } from "./MediaRow";
 import { ContinueReadingHero } from "./ContinueReadingHero";
+import { RecommendationsRow } from "./RecommendationsRow";
 import type { HomeData } from "@/types/home";
 
 interface HomeContentProps {
@@ -74,6 +75,10 @@ export function HomeContent({ data, isAnonymous = false }: HomeContentProps) {
           items={data.recentlyRead}
           iconName="History"
         />
+      )}
+
+      {!isAnonymous && data.recommendations && data.recommendations.length > 0 && (
+        <RecommendationsRow series={data.recommendations} />
       )}
     </div>
   );

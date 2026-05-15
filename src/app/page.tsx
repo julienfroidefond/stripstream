@@ -14,10 +14,11 @@ export default async function HomePage() {
     const provider = await getProvider();
     if (!provider) redirect("/settings");
 
-    const [homeData, favorites, preferences] = await Promise.all([
+    const [homeData, favorites, preferences, recommendations] = await Promise.all([
       provider.getHomeData(),
       FavoriteService.listFavorites(),
       PreferencesService.getPreferences().catch(() => null),
+      provider.getRecommendations().catch(() => []),
     ]);
 
     // Enrich the books that power the hero with their per-book details
@@ -56,6 +57,7 @@ export default async function HomePage() {
       ongoingBooks: (homeData.ongoingBooks ?? []).map(mergeBook),
       favorites,
       heroSeries,
+      recommendations,
     };
 
     return (

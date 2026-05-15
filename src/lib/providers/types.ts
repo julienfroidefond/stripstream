@@ -28,6 +28,8 @@ export interface NormalizedSeries {
   missingCount?: number | null;
   seriesStatus?: string | null;
   matchReasons?: string[];
+  /** For recommendations: names of recently-read series that triggered this recommendation. */
+  becauseOf?: string[];
 }
 
 export interface NormalizedBook {
