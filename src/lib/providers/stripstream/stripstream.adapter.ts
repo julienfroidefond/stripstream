@@ -75,12 +75,15 @@ export class StripstreamAdapter {
 
   static toNormalizedSeries(series: StripstreamSeriesItem): NormalizedSeries {
     const isValidId = series.first_book_id && series.first_book_id !== "00000000-0000-0000-0000-000000000000";
+    const thumbnailUrl = isValidId
+      ? `/api/stripstream/images/books/${series.first_book_id}/thumbnail`
+      : (series.cover_url ?? "");
     return {
       id: series.series_id,
       name: series.name,
       bookCount: series.book_count,
       booksReadCount: series.books_read_count,
-      thumbnailUrl: isValidId ? `/api/stripstream/images/books/${series.first_book_id}/thumbnail` : "",
+      thumbnailUrl,
       libraryId: series.library_id,
       summary: null,
       authors: [],

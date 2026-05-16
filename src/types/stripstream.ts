@@ -54,13 +54,15 @@ export interface StripstreamSeriesItem {
   name: string;
   book_count: number;
   books_read_count: number;
-  first_book_id: string;
+  first_book_id: string | null;
+  first_book_updated_at?: string | null;
   library_id: string;
   missing_count?: number | null;
   anilist_id?: number | null;
   anilist_url?: string | null;
   metadata_provider?: string | null;
   series_status?: string | null;
+  cover_url?: string | null;
 }
 
 export interface StripstreamSeriesLookup {
