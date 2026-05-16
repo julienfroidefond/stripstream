@@ -99,7 +99,7 @@ export class StripstreamAdapter {
     const isValidId = item.first_book_id && item.first_book_id !== "00000000-0000-0000-0000-000000000000";
     const thumbnailUrl = isValidId
       ? `/api/stripstream/images/books/${item.first_book_id}/thumbnail`
-      : "";
+      : (item.cover_url ?? "");
     return {
       id: item.series_id,
       name: item.name,
@@ -122,7 +122,7 @@ export class StripstreamAdapter {
     const isValidId = item.first_book_id && item.first_book_id !== "00000000-0000-0000-0000-000000000000";
     const thumbnailUrl = isValidId
       ? `/api/stripstream/images/books/${item.first_book_id}/thumbnail`
-      : "";
+      : (item.cover_url ?? "");
     return {
       id: item.series_id,
       name: item.name,
