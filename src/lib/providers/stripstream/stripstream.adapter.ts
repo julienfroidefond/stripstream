@@ -74,12 +74,13 @@ export class StripstreamAdapter {
   }
 
   static toNormalizedSeries(series: StripstreamSeriesItem): NormalizedSeries {
+    const isValidId = series.first_book_id && series.first_book_id !== "00000000-0000-0000-0000-000000000000";
     return {
       id: series.series_id,
       name: series.name,
       bookCount: series.book_count,
       booksReadCount: series.books_read_count,
-      thumbnailUrl: `/api/stripstream/images/books/${series.first_book_id}/thumbnail`,
+      thumbnailUrl: isValidId ? `/api/stripstream/images/books/${series.first_book_id}/thumbnail` : "",
       libraryId: series.library_id,
       summary: null,
       authors: [],
@@ -92,7 +93,8 @@ export class StripstreamAdapter {
   }
 
   static toNormalizedRelatedSeries(item: StripstreamRelatedSeriesItem): NormalizedSeries {
-    const thumbnailUrl = item.first_book_id
+    const isValidId = item.first_book_id && item.first_book_id !== "00000000-0000-0000-0000-000000000000";
+    const thumbnailUrl = isValidId
       ? `/api/stripstream/images/books/${item.first_book_id}/thumbnail`
       : "";
     return {
@@ -114,7 +116,8 @@ export class StripstreamAdapter {
   }
 
   static toNormalizedRecommendedSeries(item: StripstreamRecommendedSeriesItem): NormalizedSeries {
-    const thumbnailUrl = item.first_book_id
+    const isValidId = item.first_book_id && item.first_book_id !== "00000000-0000-0000-0000-000000000000";
+    const thumbnailUrl = isValidId
       ? `/api/stripstream/images/books/${item.first_book_id}/thumbnail`
       : "";
     return {
