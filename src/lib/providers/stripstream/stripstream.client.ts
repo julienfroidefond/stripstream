@@ -21,6 +21,22 @@ interface FetchOptions extends RequestInit {
   tags?: string[];
 }
 
+const RETRYABLE_CODES = new Set([
+  "EAI_AGAIN",    // DNS transient failure
+  "ENOTFOUND",    // DNS resolution failure (Docker restart)
+  "ECONNRESET",   // socket closed mid-request (rolling restart)
+  "UND_ERR_SOCKET",
+  "UND_ERR_CONNECT_TIMEOUT",
+]);
+
+function isRetryable(err: unknown): boolean {
+  if (!err || typeof err !== "object") return false;
+  const e = err as FetchErrorLike;
+  if (e.code && RETRYABLE_CODES.has(e.code)) return true;
+  if (e.cause?.code && RETRYABLE_CODES.has(e.cause.code)) return true;
+  return false;
+}
+
 export class StripstreamClient {
   private baseUrl: string;
   private token: string;
@@ -98,13 +114,9 @@ export class StripstreamClient {
       try {
         return await fetch(url, { ...fetchOptions, signal: controller.signal });
       } catch (err: unknown) {
-        const e = err as FetchErrorLike;
-        if (e.cause?.code === "EAI_AGAIN" || e.code === "EAI_AGAIN") {
-          logger.error(`DNS resolution failed for ${url}, retrying...`);
-          return fetch(url, { ...fetchOptions, signal: controller.signal });
-        }
-        if (e.cause?.code === "UND_ERR_CONNECT_TIMEOUT") {
-          logger.info(`⏱️ Connection timeout for ${url}, retrying (cold start)...`);
+        if (isRetryable(err)) {
+          logger.warn({ err, url }, "Transient network error, retrying...");
+          await new Promise((r) => setTimeout(r, 500));
           return fetch(url, { ...fetchOptions, signal: controller.signal });
         }
         throw err;
