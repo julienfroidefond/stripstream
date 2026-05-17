@@ -1,7 +1,7 @@
 // StripStream Service Worker - Version 2
 // Architecture: static + image caching, resilient offline navigation fallback
 
-const VERSION = "v2.17";
+const VERSION = "v2.18";
 const STATIC_CACHE = `stripstream-static-${VERSION}`;
 const PAGES_CACHE = `stripstream-pages-${VERSION}`; // Navigation documents + RSC payloads
 const API_CACHE = `stripstream-api-${VERSION}`;
@@ -28,7 +28,7 @@ function isNextRSCRequest(request) {
 }
 
 function isImageRequest(url) {
-  return url.includes("/api/komga/images/");
+  return url.includes("/api/komga/images/") || url.includes("/api/stripstream/images/");
 }
 
 function isBookPageRequest(url) {
