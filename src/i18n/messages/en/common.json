@@ -502,7 +502,8 @@
       },
       "close": "Close",
       "previousPage": "Previous page",
-      "nextPage": "Next page"
+      "nextPage": "Next page",
+      "refresh": "Reload book"
     },
     "endOfSeries": "End of series",
     "endOfSeriesMessage": "You have finished all the books in this series!",

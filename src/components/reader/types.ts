@@ -14,6 +14,7 @@ export interface BookReaderProps {
   book: NormalizedBook;
   pages: number[];
   onClose?: (currentPage: number) => void;
+  onRefresh?: () => Promise<void>;
   nextBook?: NormalizedBook | null;
 }
 
@@ -43,6 +44,7 @@ export interface ControlButtonsProps {
   onNextPage: () => void;
   onPageChange: (page: number) => void;
   onClose?: (currentPage: number) => void;
+  onRefresh?: () => Promise<void>;
   currentPage: number;
   totalPages: number;
   isDoublePage: boolean;

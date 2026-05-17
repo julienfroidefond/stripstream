@@ -14,7 +14,9 @@ import {
   StretchHorizontal,
   StretchVertical,
   ScanSearch,
+  RotateCcw,
 } from "lucide-react";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { PageInput } from "./PageInput";
 import { useTranslation } from "react-i18next";
@@ -26,6 +28,7 @@ export const ControlButtons = ({
   onPreviousPage,
   onNextPage,
   onClose,
+  onRefresh,
   currentPage,
   totalPages,
   isDoublePage,
@@ -42,6 +45,18 @@ export const ControlButtons = ({
   onCycleFitMode,
 }: ControlButtonsProps) => {
   const { t } = useTranslation();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!onRefresh || isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      await onRefresh();
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const fitIcon =
     fitMode === "fit"
@@ -143,6 +158,17 @@ export const ControlButtons = ({
           iconClassName="h-5 w-5"
           className={cn("rounded-full h-9 w-9", showThumbnails && "ring-2 ring-primary")}
         />
+        {onRefresh && (
+          <IconButton
+            variant="ghost"
+            size="icon"
+            icon={RotateCcw}
+            onClick={handleRefresh}
+            tooltip={t("reader.controls.refresh")}
+            iconClassName={cn("h-5 w-5", isRefreshing && "animate-spin")}
+            className="rounded-full h-9 w-9"
+          />
+        )}
         <div className="px-1.5 rounded-full" onClick={(e) => e.stopPropagation()}>
           <PageInput
             currentPage={currentPage}

@@ -8,6 +8,7 @@ import { ERROR_CODES } from "@/constants/errorCodes";
 import type { NormalizedBook } from "@/lib/providers/types";
 import logger from "@/lib/logger";
 import { getBookData } from "@/app/actions/books";
+import { revalidateForRefresh } from "@/app/actions/refresh";
 
 interface ClientBookPageProps {
   bookId: string;
@@ -67,6 +68,11 @@ export function ClientBookPage({ bookId, initialData, initialError }: ClientBook
     fetchBookData();
   };
 
+  const handleRefresh = async () => {
+    await revalidateForRefresh("book", bookId);
+    await fetchBookData();
+  };
+
   if (loading) {
     return <BookSkeleton />;
   }
@@ -87,5 +93,5 @@ export function ClientBookPage({ bookId, initialData, initialError }: ClientBook
     );
   }
 
-  return <ClientBookWrapper book={data.book} pages={data.pages} nextBook={data.nextBook} />;
+  return <ClientBookWrapper book={data.book} pages={data.pages} nextBook={data.nextBook} onRefresh={handleRefresh} />;
 }

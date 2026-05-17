@@ -500,7 +500,8 @@
       },
       "close": "Fermer",
       "previousPage": "Page précédente",
-      "nextPage": "Page suivante"
+      "nextPage": "Page suivante",
+      "refresh": "Recharger le livre"
     },
     "endOfSeries": "Fin de la série",
     "endOfSeriesMessage": "Vous avez terminé tous les tomes de cette série !",

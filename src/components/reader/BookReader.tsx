@@ -26,6 +26,7 @@ export function BookReader(props: BookReaderProps) {
         onNextPage={s.onNextPage}
         onPageChange={s.onPageChange}
         onClose={s.onClose}
+        onRefresh={props.onRefresh}
         currentPage={s.currentPage}
         totalPages={s.totalPages}
         isDoublePage={s.isDoublePage}

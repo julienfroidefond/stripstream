@@ -29,7 +29,7 @@ import type {
   StripstreamRelatedSeriesItem,
   StripstreamRecommendedSeriesItem,
 } from "@/types/stripstream";
-import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, SERIES_BOOKS_CACHE_TAG } from "@/constants/cacheConstants";
+import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, SERIES_BOOKS_CACHE_TAG, BOOK_CACHE_TAG } from "@/constants/cacheConstants";
 import { AppError } from "@/utils/errors";
 import { ERROR_CODES } from "@/constants/errorCodes";
 
@@ -245,7 +245,7 @@ export class StripstreamProvider implements IMediaProvider {
 
   async getBook(bookId: string): Promise<NormalizedBook> {
     const book = await this.client.fetch<StripstreamBookDetails>(`books/${bookId}`, undefined, {
-      revalidate: CACHE_TTL_SHORT,
+      tags: [`${BOOK_CACHE_TAG}:${bookId}`],
     });
     return StripstreamAdapter.toNormalizedBookDetails(book);
   }

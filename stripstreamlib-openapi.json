@@ -712,6 +712,44 @@
         "security": [{ "Bearer": [] }]
       }
     },
+    "/series/recommendations": {
+      "get": {
+        "tags": ["series"],
+        "summary": "Get personalised series recommendations based on the user's recent reading history",
+        "operationId": "get_recommendations",
+        "parameters": [
+          {
+            "name": "sources",
+            "in": "query",
+            "description": "Number of recently-read source series to use (default 3, max 5)",
+            "required": false,
+            "schema": { "type": "integer", "format": "int64", "nullable": true }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Max recommendations to return (default 20, max 50)",
+            "required": false,
+            "schema": { "type": "integer", "format": "int64", "nullable": true }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/RecommendedSeriesItem" }
+                }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" }
+        },
+        "security": [{ "Bearer": [] }]
+      }
+    },
     "/series/statuses": {
       "get": {
         "tags": ["series"],
@@ -1142,6 +1180,12 @@
             "example": "Toriyama",
             "nullable": true
           },
+          "genre": {
+            "type": "string",
+            "description": "Filter by genre (exact match, case-sensitive)",
+            "example": "Fantasy",
+            "nullable": true
+          },
           "has_books": {
             "type": "string",
             "description": "Only return series with at least one book: \"true\" to exclude empty series",
@@ -1390,6 +1434,59 @@
           "username": { "type": "string", "nullable": true }
         }
       },
+      "RecommendationsQuery": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Max recommendations to return (default 20, max 50)",
+            "example": 20,
+            "nullable": true
+          },
+          "sources": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Number of source series to base recommendations on (default 3, max 5)",
+            "example": 3,
+            "nullable": true
+          }
+        }
+      },
+      "RecommendedSeriesItem": {
+        "type": "object",
+        "required": [
+          "series_id",
+          "name",
+          "library_id",
+          "book_count",
+          "score",
+          "because_of",
+          "match_reasons"
+        ],
+        "properties": {
+          "because_of": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Names of the recently-read series that triggered this recommendation"
+          },
+          "book_count": { "type": "integer", "format": "int64" },
+          "cover_url": { "type": "string", "nullable": true },
+          "first_book_id": { "type": "string", "nullable": true },
+          "first_book_updated_at": { "type": "string", "nullable": true },
+          "library_id": { "type": "string" },
+          "match_reasons": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Match reasons: \"same_genre\", \"same_author\", \"same_publisher\""
+          },
+          "metadata_provider": { "type": "string", "nullable": true },
+          "name": { "type": "string" },
+          "score": { "type": "integer", "format": "int64" },
+          "series_id": { "type": "string" },
+          "series_status": { "type": "string", "nullable": true }
+        }
+      },
       "RelatedSeriesItem": {
         "type": "object",
         "required": [
@@ -1507,7 +1604,7 @@
       },
       "SeriesMetadata": {
         "type": "object",
-        "required": ["series_name", "authors", "publishers", "locked_fields"],
+        "required": ["series_name", "authors", "genres", "publishers", "locked_fields"],
         "properties": {
           "authors": {
             "type": "array",
@@ -1521,6 +1618,7 @@
           },
           "book_language": { "type": "string", "nullable": true },
           "description": { "type": "string", "nullable": true },
+          "genres": { "type": "array", "items": { "type": "string" } },
           "locked_fields": {
             "description": "Fields locked from external metadata sync, e.g. {\"authors\": true, \"description\": true}"
           },

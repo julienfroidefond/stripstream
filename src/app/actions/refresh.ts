@@ -1,9 +1,9 @@
 "use server";
 
 import { revalidatePath, revalidateTag } from "next/cache";
-import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG } from "@/constants/cacheConstants";
+import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, BOOK_CACHE_TAG } from "@/constants/cacheConstants";
 
-export type RefreshScope = "home" | "library" | "series";
+export type RefreshScope = "home" | "library" | "series" | "book";
 
 /**
  * Invalide le cache Next.js pour forcer un re-fetch au prochain router.refresh().
@@ -23,6 +23,10 @@ export async function revalidateForRefresh(scope: RefreshScope, id: string): Pro
     case "series":
       revalidatePath(`/series/${id}`);
       revalidatePath("/series");
+      break;
+    case "book":
+      revalidateTag(`${BOOK_CACHE_TAG}:${id}`, "everything");
+      revalidatePath(`/books/${id}`);
       break;
     default:
       break;

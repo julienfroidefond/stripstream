@@ -11,9 +11,10 @@ interface ClientBookWrapperProps {
   book: NormalizedBook;
   pages: number[];
   nextBook: NormalizedBook | null;
+  onRefresh?: () => Promise<void>;
 }
 
-export function ClientBookWrapper({ book, pages, nextBook }: ClientBookWrapperProps) {
+export function ClientBookWrapper({ book, pages, nextBook, onRefresh }: ClientBookWrapperProps) {
   const router = useRouter();
   const [isClosing, setIsClosing] = useState(false);
 
@@ -35,6 +36,6 @@ export function ClientBookWrapper({ book, pages, nextBook }: ClientBookWrapperPr
   }
 
   return (
-    <BookReader book={book} pages={pages} onClose={handleCloseReader} nextBook={nextBook} />
+    <BookReader book={book} pages={pages} onClose={handleCloseReader} onRefresh={onRefresh} nextBook={nextBook} />
   );
 }
