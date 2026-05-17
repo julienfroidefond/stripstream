@@ -60,4 +60,9 @@ jobs:
           ./scripts/stack.sh up stripstream
 
       - name: Cleanup old images
-        run: docker image prune -f
+        run: |
+          docker image prune -f
+          docker images --format "{{.Repository}}:{{.Tag}}" \
+            | grep "julienfroidefond32/stripstream" \
+            | grep -vE ":(latest|buildcache)$" \
+            | xargs -r docker rmi -f || true
