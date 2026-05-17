@@ -148,6 +148,7 @@ export class StripstreamProvider implements IMediaProvider {
         ...series,
         summary: metadata.description ?? null,
         authors: metadata.authors.map((name) => ({ name, role: "writer" })),
+        genres: metadata.genres ?? [],
       };
     } catch {
       return series;

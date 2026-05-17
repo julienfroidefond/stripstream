@@ -160,6 +160,18 @@ export const SeriesHeader = ({ series, refreshSeries, initialIsFavorite }: Serie
                 {authorsText}
               </p>
             )}
+            {series.genres && series.genres.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 justify-center md:justify-start">
+                {series.genres.map((genre) => (
+                  <span
+                    key={genre}
+                    className="px-2 py-0.5 rounded-full text-xs font-medium bg-white/10 text-white/80 backdrop-blur-sm border border-white/20"
+                  >
+                    {genre}
+                  </span>
+                ))}
+              </div>
+            )}
             {series.summary && (
               <div>
                 <p className={`text-white/80 text-sm md:text-base ${isDescriptionExpanded ? "max-h-[200px] overflow-y-auto" : "line-clamp-3"}`}>

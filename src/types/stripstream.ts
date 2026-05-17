@@ -103,6 +103,7 @@ export interface StripstreamUpdateReadingProgressRequest {
 
 export interface StripstreamSeriesMetadata {
   authors: string[];
+  genres: string[];
   publishers: string[];
   description?: string | null;
   start_year?: number | null;
