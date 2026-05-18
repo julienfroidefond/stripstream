@@ -18,25 +18,20 @@ import {
   RefreshCw,
   HardDrive,
   Image as ImageIcon,
-  FileJson,
   BookOpen,
   CheckCircle2,
   XCircle,
   Loader2,
   ChevronDown,
   ChevronRight,
-  LayoutGrid,
   RotateCcw,
 } from "lucide-react";
 
 interface CacheStats {
   static: { size: number; entries: number };
-  pages: { size: number; entries: number };
-  api: { size: number; entries: number };
   images: { size: number; entries: number };
   books: { size: number; entries: number };
   total: number;
-  visitablePages: number;
 }
 
 interface CacheEntry {
@@ -44,7 +39,7 @@ interface CacheEntry {
   size: number;
 }
 
-type CacheType = "static" | "pages" | "api" | "images" | "books";
+type CacheType = "static" | "images" | "books";
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return "0 B";
@@ -230,7 +225,7 @@ export function CacheSettings() {
     loadStats();
   }, [loadStats]);
 
-  const handleClearCache = async (cacheType: "all" | "static" | "pages" | "api" | "images") => {
+  const handleClearCache = async (cacheType: "all" | "static" | "images") => {
     setClearingCache(cacheType);
     try {
       const success = await clearCache(cacheType);
@@ -377,9 +372,6 @@ export function CacheSettings() {
             <p className="text-xs text-muted-foreground text-right">
               {t("settings.cache.imagesQuota", { used: Math.round(usagePercent) })}
             </p>
-            <p className="text-xs text-muted-foreground">
-              {t("settings.cache.visitablePages", { count: stats.visitablePages })}
-            </p>
           </div>
         )}
 
@@ -396,28 +388,6 @@ export function CacheSettings() {
                 description={t("settings.cache.staticDesc")}
                 onClear={() => handleClearCache("static")}
                 isClearing={clearingCache === "static"}
-                onLoadEntries={handleLoadEntries}
-              />
-              <CacheItem
-                icon={<LayoutGrid className="h-4 w-4" />}
-                label={t("settings.cache.pages")}
-                size={stats.pages.size}
-                entries={stats.pages.entries}
-                cacheType="pages"
-                description={t("settings.cache.pagesDesc")}
-                onClear={() => handleClearCache("pages")}
-                isClearing={clearingCache === "pages"}
-                onLoadEntries={handleLoadEntries}
-              />
-              <CacheItem
-                icon={<FileJson className="h-4 w-4" />}
-                label={t("settings.cache.api")}
-                size={stats.api.size}
-                entries={stats.api.entries}
-                cacheType="api"
-                description={t("settings.cache.apiDesc")}
-                onClear={() => handleClearCache("api")}
-                isClearing={clearingCache === "api"}
                 onLoadEntries={handleLoadEntries}
               />
               <CacheItem

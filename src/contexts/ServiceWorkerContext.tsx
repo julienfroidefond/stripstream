@@ -12,12 +12,9 @@ import logger from "@/lib/logger";
 
 interface CacheStats {
   static: { size: number; entries: number };
-  pages: { size: number; entries: number };
-  api: { size: number; entries: number };
   images: { size: number; entries: number };
   books: { size: number; entries: number };
   total: number;
-  visitablePages: number;
 }
 
 interface CacheEntry {
@@ -30,7 +27,7 @@ interface CacheUpdate {
   timestamp: number;
 }
 
-type CacheType = "all" | "static" | "pages" | "api" | "images" | "books";
+type CacheType = "all" | "static" | "images" | "books";
 
 interface ServiceWorkerContextValue {
   isSupported: boolean;
