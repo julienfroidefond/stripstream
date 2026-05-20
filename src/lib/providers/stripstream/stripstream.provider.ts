@@ -285,7 +285,7 @@ export class StripstreamProvider implements IMediaProvider {
     const homeOpts = { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] };
     const results = await Promise.allSettled([
       this.client.fetch<StripstreamBookItem[]>("books/ongoing", { limit: "20" }, homeOpts),
-      this.client.fetch<StripstreamSeriesItem[]>("series/ongoing", { limit: "10" }, homeOpts),
+      this.client.fetch<StripstreamSeriesItem[]>("series/ongoing", { limit: "20" }, homeOpts),
       this.client.fetch<StripstreamBooksPage>("books", { sort: "latest", limit: "10" }, homeOpts),
       this.client.fetch<StripstreamSeriesPage>("series", { sort: "latest", limit: "10", has_books: "true" }, homeOpts),
     ]);

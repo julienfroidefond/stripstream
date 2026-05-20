@@ -14,6 +14,7 @@ export interface StripstreamBookItem {
   reading_current_page?: number | null;
   reading_last_read_at?: string | null;
   series?: string | null;
+  series_id?: string | null;
   thumbnail_url?: string | null;
   volume?: number | null;
 }
@@ -63,6 +64,9 @@ export interface StripstreamSeriesItem {
   metadata_provider?: string | null;
   series_status?: string | null;
   cover_url?: string | null;
+  genres?: string[] | null;
+  authors?: string[] | null;
+  description?: string | null;
 }
 
 export interface StripstreamSeriesLookup {

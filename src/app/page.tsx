@@ -6,7 +6,6 @@ import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 import { FavoriteService } from "@/lib/services/favorite.service";
 import { PreferencesService } from "@/lib/services/preferences.service";
-import type { NormalizedBook, NormalizedSeries } from "@/lib/providers/types";
 import { redirect } from "next/navigation";
 
 export default async function HomePage() {
@@ -21,42 +20,11 @@ export default async function HomePage() {
       provider.getRecommendations().catch(() => []),
     ]);
 
-    // Enrich the books that power the hero with their per-book details
-    // (BookDetails has `summary` + UUID seriesId on Stripstream, where list
-    // endpoints only give the series name). We then look up matching series
-    // metadata (genres / authors / series-level summary) as a richer fallback.
-    const heroBookIds = Array.from(
-      new Set(
-        [...(homeData.onDeck ?? []), ...(homeData.ongoingBooks ?? [])].map((b) => b.id)
-      )
-    );
-    const enrichedHeroBooks = (
-      await Promise.all(
-        heroBookIds.map((id) => provider.getBook(id).catch(() => null))
-      )
-    ).filter((b): b is NormalizedBook => b !== null);
-
-    const heroBookById = new Map(enrichedHeroBooks.map((b) => [b.id, b] as const));
-    const mergeBook = (b: NormalizedBook): NormalizedBook => {
-      const enriched = heroBookById.get(b.id);
-      return enriched ? { ...b, ...enriched } : b;
-    };
-
-    const heroSeriesIds = Array.from(
-      new Set(enrichedHeroBooks.map((b) => b.seriesId).filter((id): id is string => !!id))
-    );
-    const heroSeries = (
-      await Promise.all(
-        heroSeriesIds.map((id) => provider.getSeriesById(id).catch(() => null))
-      )
-    ).filter((s): s is NormalizedSeries => s !== null);
-
+    // Series metadata (genres/authors/description) is now inline in homeData.ongoing,
+    // so the two extra waterfall phases (getBook + getSeriesById) are no longer needed.
     const data = {
       ...homeData,
-      onDeck: (homeData.onDeck ?? []).map(mergeBook),
-      ongoingBooks: (homeData.ongoingBooks ?? []).map(mergeBook),
       favorites,
-      heroSeries,
       recommendations,
     };
 
