@@ -12,7 +12,6 @@ import { cn } from "@/lib/utils";
 
 interface ContinueReadingHeroProps {
   books: NormalizedBook[];
-  /** Series pool used to resolve the series name + summary from book.seriesId. */
   series?: NormalizedSeries[];
 }
 
@@ -32,16 +31,11 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
 
   const total = books.length;
   const hasMany = total > 1;
-  // Clamp at read time; avoids a setState-in-effect for the case where the
-  // upstream list shrinks under us between renders.
   const safeIndex = total > 0 ? ((index % total) + total) % total : 0;
 
   if (total === 0) return null;
 
   const book = books[safeIndex];
-  // Stripstream's book.series is the series *name*, while NormalizedSeries.id
-  // is the UUID — match on either to stay compatible across providers, and
-  // be tolerant to case/whitespace differences between endpoints.
   const target = book.seriesId?.trim() ?? "";
   const targetLower = target.toLowerCase();
   const matchedSeries =
@@ -52,9 +46,6 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
         s.name.trim().toLowerCase() === targetLower
     ) ?? null;
   const seriesName = matchedSeries?.name ?? null;
-  // Fallback cascade for the description line: per-book summary → series
-  // summary → genres → primary author. Many Komga libraries don't have summaries
-  // filled in, so showing genres/author at least gives a sense of context.
   const summary = (() => {
     const fromBook = book.summary?.trim();
     if (fromBook) return fromBook;
@@ -90,11 +81,25 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
     <section
       className={cn(
         "relative overflow-hidden rounded-2xl border border-border/40",
-        "bg-card/60 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.5)] backdrop-blur-sm"
+        // Mobile : couverture en fond avec dégradé discret
+        "bg-card/60 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.5)] backdrop-blur-sm",
+        // Desktop : fond uni, mise en page côte-à-côte
+        "sm:bg-card/60"
       )}
       aria-roledescription="carousel"
       aria-label={t("home.hero.label")}
     >
+      {/* Mobile only: cover as subtle blurred background */}
+      <div className="absolute inset-0 sm:hidden">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={book.thumbnailUrl}
+          alt=""
+          aria-hidden="true"
+          className="h-full w-full object-cover object-top opacity-35 blur-sm scale-105"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-card/90 via-card/60 to-card/30" />
+      </div>
 
       <div className="relative overflow-hidden px-5 py-5 sm:px-7 sm:py-7">
         <AnimatePresence mode="popLayout" custom={direction} initial={false}>
@@ -116,7 +121,7 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
             <button
               type="button"
               onClick={handleResume}
-              className="group/cover relative mx-auto block aspect-[2/3] w-[140px] flex-shrink-0 overflow-hidden rounded-xl border border-border/60 shadow-lg shadow-black/40 transition-transform duration-200 hover:-translate-y-0.5 sm:mx-0 sm:w-[180px]"
+              className="group/cover relative mx-auto block aspect-[2/3] w-[170px] flex-shrink-0 overflow-hidden rounded-xl border border-border/60 shadow-lg shadow-black/40 transition-transform duration-200 hover:-translate-y-0.5 sm:mx-0 sm:w-[180px]"
               aria-label={t("home.hero.resume")}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
