@@ -1,19 +1,20 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Sparkles } from "lucide-react";
+import { Sparkles, UserRound, Tag, Building2 } from "lucide-react";
 import { SeriesCover } from "@/components/ui/series-cover";
 import { ScrollContainer } from "@/components/ui/scroll-container";
 import { Section } from "@/components/ui/section";
 import { useTranslate } from "@/hooks/useTranslate";
 import { useAnonymous } from "@/contexts/AnonymousContext";
 import { cn } from "@/lib/utils";
+import type { LucideIcon } from "lucide-react";
 import type { NormalizedSeries } from "@/lib/providers/types";
 
-const REASON_STYLES: Record<string, string> = {
-  same_author: "bg-blue-600/90 text-white",
-  same_genre: "bg-violet-600/90 text-white",
-  same_publisher: "bg-emerald-600/90 text-white",
+const REASON_CONFIG: Record<string, { icon: LucideIcon; className: string }> = {
+  same_author:    { icon: UserRound,  className: "bg-blue-600/90 text-white" },
+  same_genre:     { icon: Tag,        className: "bg-violet-600/90 text-white" },
+  same_publisher: { icon: Building2,  className: "bg-emerald-600/90 text-white" },
 };
 
 interface RelatedSeriesRowProps {
@@ -54,20 +55,25 @@ export function RelatedSeriesRow({ series }: RelatedSeriesRowProps) {
               <p className="line-clamp-2 text-left text-sm font-medium text-white">{s.name}</p>
             </div>
 
-            {/* match reason badges — always visible, top-left */}
+            {/* match reason badges — icon only */}
             {s.matchReasons && s.matchReasons.length > 0 && (
               <div className="absolute left-2 top-2 flex flex-col gap-1">
-                {s.matchReasons.map((reason) => (
-                  <span
-                    key={reason}
-                    className={cn(
-                      "rounded-full px-2 py-0.5 text-[10px] font-semibold leading-none shadow backdrop-blur-sm",
-                      REASON_STYLES[reason] ?? "bg-black/50 text-white"
-                    )}
-                  >
-                    {t(`series.matchReasons.${reason}` as Parameters<typeof t>[0]) ?? reason}
-                  </span>
-                ))}
+                {s.matchReasons.map((reason) => {
+                  const config = REASON_CONFIG[reason];
+                  const Icon = config?.icon;
+                  return (
+                    <span
+                      key={reason}
+                      title={t(`series.matchReasons.${reason}` as Parameters<typeof t>[0]) ?? reason}
+                      className={cn(
+                        "flex h-6 w-6 items-center justify-center rounded-full shadow backdrop-blur-sm",
+                        config?.className ?? "bg-black/50 text-white"
+                      )}
+                    >
+                      {Icon && <Icon className="h-3 w-3" />}
+                    </span>
+                  );
+                })}
               </div>
             )}
           </button>
