@@ -149,12 +149,14 @@ export function PaginatedSeriesGrid({
     const next = !showMissing;
     setShowMissing(next);
     await updateUrlParams({ page: "1", missing: next ? "true" : null });
+    await persistPreferences({ showMissingBooks: next });
   };
 
   const handleSortToggle = async () => {
     const nextSort = currentSort === "title" ? "latest" : "title";
     setCurrentSort(nextSort);
     await updateUrlParams({ page: "1", sort: nextSort === "title" ? null : nextSort });
+    await persistPreferences({ defaultSortOrder: nextSort as "title" | "latest" });
   };
 
   const handleViewModeToggle = async (nextViewMode: "grid" | "list") => {

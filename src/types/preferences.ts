@@ -9,6 +9,10 @@ export interface BackgroundPreferences {
   komgaLibraries?: string[]; // IDs des bibliothèques Komga sélectionnées
 }
 
+export type FitMode = "fit" | "width" | "height" | "original";
+export type ReadingDirection = "ltr" | "rtl";
+export type SortOrder = "title" | "latest";
+
 export interface UserPreferences {
   showThumbnails: boolean;
   showOnlyUnread: boolean;
@@ -20,6 +24,12 @@ export interface UserPreferences {
   };
   background: BackgroundPreferences;
   readerPrefetchCount: number;
+  readingDirection: ReadingDirection;
+  readerFitMode: FitMode;
+  readerDoublePageMode: boolean;
+  defaultSortOrder: SortOrder;
+  showMissingBooks: boolean;
+  hideMissingBooks: boolean;
 }
 
 export const defaultPreferences: UserPreferences = {
@@ -37,6 +47,12 @@ export const defaultPreferences: UserPreferences = {
     blur: 0,
   },
   readerPrefetchCount: 5,
+  readingDirection: "ltr",
+  readerFitMode: "fit",
+  readerDoublePageMode: false,
+  defaultSortOrder: "title",
+  showMissingBooks: true,
+  hideMissingBooks: false,
 };
 
 // Dégradés prédéfinis

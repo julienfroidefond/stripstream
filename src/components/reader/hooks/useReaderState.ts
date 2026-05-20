@@ -29,14 +29,14 @@ export function useReaderState({ book, pages, onClose, nextBook }: BookReaderPro
     [nextBook]
   );
 
-  const { direction, toggleDirection, isRTL } = useReadingDirection();
+  const { direction, toggleDirection, isRTL } = useReadingDirection(preferences.readingDirection);
   const { isFullscreen, isFullscreenAvailable, toggleFullscreen } = useFullscreen();
   const {
     isDoublePage,
     shouldShowDoublePage: shouldShowDoublePageRaw,
     toggleDoublePage,
-  } = useDoublePageMode();
-  const { fitMode, cycleFitMode } = useFitMode();
+  } = useDoublePageMode(preferences.readerDoublePageMode);
+  const { fitMode, cycleFitMode } = useFitMode(preferences.readerFitMode);
 
   // Wrapper mémoïsé : signature à 1 argument pour les consommateurs,
   // tout en bornant la longueur du livre une seule fois par render.

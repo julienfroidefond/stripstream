@@ -1,22 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import type { ReadingDirection } from "@/types/preferences";
+import { updatePreferences } from "@/app/actions/preferences";
 
-type ReadingDirection = "ltr" | "rtl";
-
-export const useReadingDirection = () => {
-  const [direction, setDirection] = useState<ReadingDirection>(() => {
-    if (typeof window !== "undefined") {
-      const savedDirection = localStorage.getItem("reading-direction") as ReadingDirection;
-      return savedDirection === "rtl" ? "rtl" : "ltr";
-    }
-    return "ltr";
-  });
-
-  useEffect(() => {
-    localStorage.setItem("reading-direction", direction);
-  }, [direction]);
+export const useReadingDirection = (initial: ReadingDirection = "ltr") => {
+  const [direction, setDirection] = useState<ReadingDirection>(initial);
 
   const toggleDirection = () => {
-    setDirection((prev) => (prev === "ltr" ? "rtl" : "ltr"));
+    setDirection((prev) => {
+      const next = prev === "ltr" ? "rtl" : "ltr";
+      updatePreferences({ readingDirection: next }).catch((_err: unknown) => undefined);
+      return next;
+    });
   };
 
   return {

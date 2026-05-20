@@ -67,16 +67,22 @@ model StripstreamConfig {
 }
 
 model Preferences {
-  id                  Int      @id @default(autoincrement())
-  userId              Int      @unique
-  showThumbnails      Boolean  @default(true)
-  showOnlyUnread      Boolean  @default(false)
-  displayMode         Json
-  background          Json
-  readerPrefetchCount Int      @default(5)
-  anonymousMode       Boolean  @default(false)
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  id                   Int      @id @default(autoincrement())
+  userId               Int      @unique
+  showThumbnails       Boolean  @default(true)
+  showOnlyUnread       Boolean  @default(false)
+  displayMode          Json
+  background           Json
+  readerPrefetchCount  Int      @default(5)
+  anonymousMode        Boolean  @default(false)
+  readingDirection     String   @default("ltr")
+  readerFitMode        String   @default("fit")
+  readerDoublePageMode Boolean  @default(false)
+  defaultSortOrder     String   @default("title")
+  showMissingBooks     Boolean  @default(true)
+  hideMissingBooks     Boolean  @default(false)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

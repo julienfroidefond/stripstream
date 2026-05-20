@@ -39,23 +39,19 @@ export function PaginatedBookGrid({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [showOnlyUnread, setShowOnlyUnread] = useState(initialShowOnlyUnread);
-  const [hideMissing, setHideMissing] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("hide-missing-books") === "true";
-    }
-    return false;
-  });
+  const { isCompact, itemsPerPage, viewMode } = useDisplayPreferences();
+  const { preferences, updatePreferences } = usePreferences();
+  const { t } = useTranslate();
+
+  const [hideMissing, setHideMissing] = useState(preferences.hideMissingBooks);
 
   const toggleHideMissing = useCallback(() => {
     setHideMissing((prev) => {
       const next = !prev;
-      localStorage.setItem("hide-missing-books", String(next));
+      updatePreferences({ hideMissingBooks: next }).catch((_err: unknown) => undefined);
       return next;
     });
-  }, []);
-  const { isCompact, itemsPerPage, viewMode } = useDisplayPreferences();
-  const { updatePreferences } = usePreferences();
-  const { t } = useTranslate();
+  }, [updatePreferences]);
 
   const updateUrlParams = useCallback(
     async (updates: Record<string, string | null>, replace: boolean = false) => {

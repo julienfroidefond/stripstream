@@ -1,17 +1,19 @@
 import { useState, useCallback } from "react";
+import type { FitMode } from "@/types/preferences";
+import { updatePreferences } from "@/app/actions/preferences";
 
-export type FitMode = "fit" | "width" | "height" | "original";
+export type { FitMode };
 
 const FIT_MODES: readonly FitMode[] = ["fit", "width", "height", "original"];
 
-// Pas de persistance : à chaque ouverture du reader, on revient à "page entière".
-export const useFitMode = () => {
-  const [fitMode, setFitMode] = useState<FitMode>("fit");
+export const useFitMode = (initial: FitMode = "fit") => {
+  const [fitMode, setFitMode] = useState<FitMode>(initial);
 
   const cycleFitMode = useCallback(() => {
     setFitMode((prev) => {
-      const idx = FIT_MODES.indexOf(prev);
-      return FIT_MODES[(idx + 1) % FIT_MODES.length];
+      const next = FIT_MODES[(FIT_MODES.indexOf(prev) + 1) % FIT_MODES.length];
+      updatePreferences({ readerFitMode: next }).catch((_err: unknown) => undefined);
+      return next;
     });
   }, []);
 

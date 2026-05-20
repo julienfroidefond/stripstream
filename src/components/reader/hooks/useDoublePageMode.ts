@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { useOrientation } from "./useOrientation";
+import { updatePreferences } from "@/app/actions/preferences";
 
-export function useDoublePageMode() {
+export function useDoublePageMode(initial = false) {
   const isLandscape = useOrientation();
-  const [isDoublePage, setIsDoublePage] = useState(false);
+  const [isDoublePage, setIsDoublePage] = useState(initial);
 
   // Auto double page en paysage
   useEffect(() => {
@@ -22,7 +23,11 @@ export function useDoublePageMode() {
   );
 
   const toggleDoublePage = useCallback(() => {
-    setIsDoublePage((prev) => !prev);
+    setIsDoublePage((prev) => {
+      const next = !prev;
+      updatePreferences({ readerDoublePageMode: next }).catch((_err: unknown) => undefined);
+      return next;
+    });
   }, []);
 
   return {

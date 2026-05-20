@@ -32,13 +32,15 @@ export default async function LibraryPage({ params, searchParams }: PageProps) {
   const effectivePageSize = size
     ? parseInt(size)
     : preferences.displayMode?.itemsPerPage || DEFAULT_PAGE_SIZE;
+  const effectiveSort = sort ?? preferences.defaultSortOrder ?? "title";
+  const effectiveMissing = missing !== undefined ? missing === "true" : preferences.showMissingBooks === false ? false : undefined;
 
   try {
     const provider = await getProvider();
     if (!provider) redirect("/settings");
 
     const [seriesPage, library] = await Promise.all([
-      provider.getSeries(libraryId, String(currentPage), effectivePageSize, unreadOnly, search, sort, missing === "true"),
+      provider.getSeries(libraryId, String(currentPage), effectivePageSize, unreadOnly, search, effectiveSort, effectiveMissing === true),
       provider.getLibraryById(libraryId),
     ]);
 
@@ -53,8 +55,8 @@ export default async function LibraryPage({ params, searchParams }: PageProps) {
           preferences={preferences}
           unreadOnly={unreadOnly}
           pageSize={effectivePageSize}
-          sort={sort || "title"}
-          hasMissing={missing === "true"}
+          sort={effectiveSort}
+          hasMissing={effectiveMissing === true}
         />
       </LibraryClientWrapper>
     );
