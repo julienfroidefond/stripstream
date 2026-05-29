@@ -1,5 +1,5 @@
+/* eslint-disable no-console */
 import { useState, useCallback, useEffect, useRef } from "react";
-import logger from "@/lib/logger";
 import { computeEvictionKeys } from "./imageEviction";
 
 interface ImageDimensions {
@@ -80,6 +80,8 @@ export function useImageLoader({
   }, []);
 
   const cancelAllPrefetches = useCallback(() => {
+    const count = abortControllersRef.current.size;
+    console.debug(`[reader/image] cancelAllPrefetches: aborting ${count} in-flight fetches`);
     abortControllersRef.current.forEach((controller) => controller.abort());
     abortControllersRef.current.clear();
     pendingFetchesRef.current.clear();
@@ -99,6 +101,8 @@ export function useImageLoader({
     );
 
     if (keysToEvict.length === 0) return;
+
+    console.debug(`[reader/image] evict: ${keysToEvict.length} pages (window ${currentPage - EVICTION_BEHIND}–${currentPage + EVICTION_AHEAD}), keys:`, keysToEvict);
 
     keysToEvict.forEach((key) => {
       const url = imageBlobUrlsRef.current[key];
@@ -151,7 +155,10 @@ export function useImageLoader({
         cache: "default",
         signal: controller.signal,
       });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      if (!response.ok) {
+        console.warn(`[reader/image] HTTP error key=${String(key)} status=${response.status} url=${url}`);
+        throw new Error(`HTTP ${response.status}`);
+      }
 
       const blob = await response.blob();
       const blobUrl = URL.createObjectURL(blob);
@@ -160,6 +167,7 @@ export function useImageLoader({
         const img = new Image();
         img.onload = () => {
           if (!isMountedRef.current || controller.signal.aborted) {
+            console.debug(`[reader/image] aborted after decode key=${String(key)} mounted=${isMountedRef.current}`);
             URL.revokeObjectURL(blobUrl);
             reject(new Error("Aborted"));
             return;
@@ -182,6 +190,7 @@ export function useImageLoader({
           resolve();
         };
         img.onerror = () => {
+          console.warn(`[reader/image] decode error key=${String(key)}`);
           URL.revokeObjectURL(blobUrl);
           reject(new Error("Image decode error"));
         };
@@ -214,12 +223,17 @@ export function useImageLoader({
         const maxAttempts = 1 + RETRY_BACKOFFS_MS.length;
 
         for (let attempt = 0; attempt < maxAttempts; attempt++) {
-          if (!isMountedRef.current || controller.signal.aborted) return;
+          if (!isMountedRef.current || controller.signal.aborted) {
+            console.debug(`[reader/image] aborted before attempt ${attempt} key=${String(key)}`);
+            return;
+          }
 
           if (attempt > 0) {
+            console.warn(`[reader/image] retry ${attempt}/${maxAttempts - 1} key=${String(key)} backoff=${RETRY_BACKOFFS_MS[attempt - 1]}ms err=${String(lastError)}`);
             try {
               await sleep(RETRY_BACKOFFS_MS[attempt - 1], controller.signal);
             } catch {
+              console.debug(`[reader/image] sleep aborted during retry key=${String(key)}`);
               return;
             }
           }
@@ -229,12 +243,15 @@ export function useImageLoader({
             return;
           } catch (err) {
             lastError = err;
-            if (controller.signal.aborted) return;
+            if (controller.signal.aborted) {
+              console.debug(`[reader/image] fetch aborted attempt=${attempt} key=${String(key)}`);
+              return;
+            }
           }
         }
 
         if (isMountedRef.current && !controller.signal.aborted) {
-          logger.warn({ key, err: lastError }, "Failed to load image after retries");
+          console.error(`[reader/image] FAILED after ${maxAttempts} attempts key=${String(key)} url=${url} err=${String(lastError)}`);
           setImageErrors((prev) => ({ ...prev, [key]: true }));
         }
       })().finally(() => {
@@ -336,9 +353,9 @@ export function useImageLoader({
   // Cleanup blob URLs on unmount only
   useEffect(() => {
     return () => {
-      Object.values(imageBlobUrlsRef.current).forEach((url) => {
-        if (url) URL.revokeObjectURL(url);
-      });
+      const urls = Object.values(imageBlobUrlsRef.current).filter(Boolean);
+      console.debug(`[reader/image] unmount: revoking ${urls.length} blob URLs`);
+      urls.forEach((url) => URL.revokeObjectURL(url));
     };
   }, []);
 

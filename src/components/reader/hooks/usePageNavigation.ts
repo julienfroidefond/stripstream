@@ -1,8 +1,8 @@
+/* eslint-disable no-console */
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ClientOfflineBookService } from "@/lib/services/client-offlinebook.service";
 import type { NormalizedBook } from "@/lib/providers/types";
-import logger from "@/lib/logger";
 import { updateReadProgress } from "@/app/actions/read-progress";
 import { useAnonymous } from "@/contexts/AnonymousContext";
 
@@ -33,7 +33,9 @@ export function usePageNavigation({
 
   const [currentPage, setCurrentPage] = useState(() => {
     const saved = ClientOfflineBookService.getCurrentPage(book);
-    return saved < 1 ? 1 : saved;
+    const initial = saved < 1 ? 1 : saved;
+    console.debug(`[reader/nav] init bookId=${book.id} savedPage=${saved} startPage=${initial} total=${pages.length}`);
+    return initial;
   });
   const [showEndMessage, setShowEndMessage] = useState(false);
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -57,6 +59,7 @@ export function usePageNavigation({
   // éviter qu'un debounce/cleanup tardif n'écrive sur un autre livre.
   const syncReadProgress = useCallback(
     async (targetBook: NormalizedBook, totalPages: number, page: number) => {
+      console.debug(`[reader/nav] sync bookId=${targetBook.id} page=${page}/${totalPages} anonymous=${isAnonymousRef.current}`);
       try {
         ClientOfflineBookService.setCurrentPage(targetBook, page);
         if (!isAnonymousRef.current) {
@@ -64,7 +67,7 @@ export function usePageNavigation({
           await updateReadProgress(targetBook.id, page, completed, targetBook.seriesId);
         }
       } catch (error) {
-        logger.error({ err: error }, "Sync error:");
+        console.error(`[reader/nav] sync error bookId=${targetBook.id} page=${page}`, error);
       }
     },
     []
@@ -89,12 +92,15 @@ export function usePageNavigation({
   const navigateToPage = useCallback(
     (page: number) => {
       if (page >= 1 && page <= pages.length) {
+        console.debug(`[reader/nav] navigate ${currentPage} → ${page} bookId=${book.id}`);
         setCurrentPage(page);
         ClientOfflineBookService.setCurrentPage(book, page);
         debouncedSync(page);
+      } else {
+        console.warn(`[reader/nav] navigate out of bounds page=${page} total=${pages.length}`);
       }
     },
-    [pages.length, debouncedSync, book]
+    [currentPage, pages.length, debouncedSync, book]
   );
 
   const handlePreviousPage = useCallback(() => {
@@ -106,9 +112,11 @@ export function usePageNavigation({
   const handleNextPage = useCallback(() => {
     if (currentPage === pages.length) {
       if (nextBook) {
+        console.debug(`[reader/nav] end of book → next bookId=${nextBook.id}`);
         router.replace(`/books/${nextBook.id}`);
         return;
       }
+      console.debug(`[reader/nav] end of book, no next → end message`);
       setShowEndMessage(true);
       return;
     }
@@ -130,6 +138,7 @@ export function usePageNavigation({
   // de l'unmount, sans introduire de boucle de revalidation.
   useEffect(() => {
     return () => {
+      console.debug(`[reader/nav] unmount final sync bookId=${bookRef.current.id} page=${currentPageRef.current}/${pagesLengthRef.current}`);
       if (syncTimeoutRef.current) {
         clearTimeout(syncTimeoutRef.current);
         syncTimeoutRef.current = null;

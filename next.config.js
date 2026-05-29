@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  logging: {
+    browserToTerminal: true,
+  },
   output: "standalone",
   webpack: (config) => {
     config.resolve.fallback = {

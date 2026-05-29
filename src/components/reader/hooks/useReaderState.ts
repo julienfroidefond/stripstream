@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
@@ -10,7 +11,6 @@ import { useImageLoader } from "./useImageLoader";
 import { usePageNavigation } from "./usePageNavigation";
 import { useTouchNavigation } from "./useTouchNavigation";
 import { usePreferences } from "@/contexts/PreferencesContext";
-import logger from "@/lib/logger";
 
 export function useReaderState({ book, pages, onClose, nextBook }: BookReaderProps) {
   const { preferences } = usePreferences();
@@ -109,8 +109,9 @@ export function useReaderState({ book, pages, onClose, nextBook }: BookReaderPro
       visiblePages.push(currentPage);
     }
 
+    console.debug(`[reader/state] page=${currentPage} visible=[${visiblePages.join(",")}] doublePage=${isDoublePage}`);
     Promise.all(visiblePages.map((page) => prefetchImage(page))).catch((err) => {
-      logger.warn({ err, currentPage }, "Reader prefetch of visible pages failed");
+      console.warn(`[reader/state] prefetch failed page=${currentPage}`, err);
     });
 
     const concurrency = isDoublePage && shouldShowDoublePage(currentPage) ? 2 : 4;
@@ -145,10 +146,11 @@ export function useReaderState({ book, pages, onClose, nextBook }: BookReaderPro
 
   const handleCloseReader = useCallback(
     (page: number) => {
+      console.debug(`[reader/state] close bookId=${book.id} page=${page}`);
       cancelAllPrefetches();
       onClose?.(page);
     },
-    [cancelAllPrefetches, onClose]
+    [book.id, cancelAllPrefetches, onClose]
   );
 
   // Navigation clavier
