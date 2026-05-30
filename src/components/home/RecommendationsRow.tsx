@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Wand2, UserRound, Tag, Building2, Sparkles } from "lucide-react";
+import { Wand2, UserRound, Tag, Building2, Sparkles, Bookmark } from "lucide-react";
 import { SeriesCover } from "@/components/ui/series-cover";
 import { ScrollContainer } from "@/components/ui/scroll-container";
 import { Section } from "@/components/ui/section";
@@ -12,9 +12,10 @@ import type { LucideIcon } from "lucide-react";
 import type { NormalizedSeries } from "@/lib/providers/types";
 
 const REASON_CONFIG: Record<string, { icon: LucideIcon; className: string }> = {
-  same_author:    { icon: UserRound,  className: "bg-blue-600/90 text-white" },
-  same_genre:     { icon: Tag,        className: "bg-violet-600/90 text-white" },
-  same_publisher: { icon: Building2,  className: "bg-emerald-600/90 text-white" },
+  same_reading_list: { icon: Bookmark,  className: "bg-cyan-600/90 text-white" },
+  same_author:       { icon: UserRound, className: "bg-blue-600/90 text-white" },
+  same_genre:        { icon: Tag,       className: "bg-violet-600/90 text-white" },
+  same_publisher:    { icon: Building2, className: "bg-emerald-600/90 text-white" },
 };
 
 interface RecommendationsRowProps {
