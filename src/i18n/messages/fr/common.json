@@ -53,10 +53,17 @@
       "up_next": "À suivre",
       "latest_series": "Dernières séries",
       "recently_added": "Ajouts récents",
-      "recommendations": "Pour vous"
+      "recommendations": "Pour vous",
+      "reading_lists": "Mes listes"
     },
     "recommendations": {
       "because": "Parce que vous aimez"
+    },
+    "reading_lists": {
+      "series_count": "{{count}} série",
+      "series_count_plural": "{{count}} séries",
+      "back": "Retour à l'accueil",
+      "empty": "Cette liste est vide"
     }
   },
   "sidebar": {

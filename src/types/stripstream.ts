@@ -193,3 +193,32 @@ export interface StripstreamSeriesHit {
   first_book_id: string;
   library_id: string;
 }
+
+export interface StripstreamReadingList {
+  id: string;
+  name: string;
+  description: string | null;
+  series_count: number;
+  preview_covers: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface StripstreamReadingListItem {
+  id: string;
+  name: string;
+  cover_url: string | null;
+  first_book_id: string | null;
+  library_id: string;
+  library_name: string;
+  position: number;
+}
+
+export interface StripstreamReadingListDetail {
+  id: string;
+  name: string;
+  description: string | null;
+  items: StripstreamReadingListItem[];
+  created_at: string;
+  updated_at: string;
+}

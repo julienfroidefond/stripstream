@@ -2,6 +2,7 @@ import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-utils";
 import { getResolvedStripstreamConfig } from "./stripstream/stripstream-config-resolver";
 import type { IMediaProvider } from "./provider.interface";
+import type { StripstreamReadingListDetail } from "@/types/stripstream";
 
 export async function getProvider(): Promise<IMediaProvider | null> {
   const user = await getCurrentUser();
@@ -54,6 +55,33 @@ export async function getActiveProviderType(): Promise<string | null> {
   });
 
   return dbUser?.activeProvider ?? "komga";
+}
+
+/**
+ * Fetches the detail of a reading list (Stripstream-only feature).
+ * Returns null if the active provider is not Stripstream or the user is not authenticated.
+ */
+export async function fetchReadingListDetail(id: string): Promise<StripstreamReadingListDetail | null> {
+  const user = await getCurrentUser();
+  if (!user) return null;
+
+  const userId = parseInt(user.id, 10);
+  const dbUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { activeProvider: true, activeStripstreamConfigId: true },
+  });
+
+  if (!dbUser || dbUser.activeProvider !== "stripstream") return null;
+
+  const resolved = await getResolvedStripstreamConfig(
+    userId,
+    dbUser.activeStripstreamConfigId ?? undefined
+  );
+  if (!resolved) return null;
+
+  const { StripstreamProvider } = await import("./stripstream/stripstream.provider");
+  const provider = new StripstreamProvider(resolved.url, resolved.token);
+  return provider.getReadingListDetail(id);
 }
 
 /**

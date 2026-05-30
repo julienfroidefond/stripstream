@@ -1,6 +1,7 @@
 import { MediaRow } from "./MediaRow";
 import { ContinueReadingHero } from "./ContinueReadingHero";
 import { RecommendationsRow } from "./RecommendationsRow";
+import { ReadingListRow } from "./ReadingListRow";
 import type { HomeData } from "@/types/home";
 
 interface HomeContentProps {
@@ -59,6 +60,10 @@ export function HomeContent({ data, isAnonymous = false }: HomeContentProps) {
           items={data.favorites}
           iconName="Heart"
         />
+      )}
+
+      {data.readingLists && data.readingLists.length > 0 && (
+        <ReadingListRow lists={data.readingLists} />
       )}
 
       {data.latestSeries && data.latestSeries.length > 0 && (

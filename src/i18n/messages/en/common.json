@@ -53,10 +53,17 @@
       "up_next": "Up next",
       "latest_series": "Latest series",
       "recently_added": "Recently added",
-      "recommendations": "For you"
+      "recommendations": "For you",
+      "reading_lists": "My lists"
     },
     "recommendations": {
       "because": "Because you like"
+    },
+    "reading_lists": {
+      "series_count": "{{count}} series",
+      "series_count_plural": "{{count}} series",
+      "back": "Back to home",
+      "empty": "This list is empty"
     }
   },
   "sidebar": {

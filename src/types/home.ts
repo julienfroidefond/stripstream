@@ -1,4 +1,5 @@
 import type { NormalizedBook, NormalizedSeries } from "@/lib/providers/types";
+import type { StripstreamReadingList } from "@/types/stripstream";
 
 export interface HomeData {
   favorites?: NormalizedSeries[];
@@ -11,4 +12,6 @@ export interface HomeData {
   heroSeries?: NormalizedSeries[];
   /** Personalised recommendations (Stripstream only). */
   recommendations?: NormalizedSeries[];
+  /** Reading lists (Stripstream only). */
+  readingLists?: StripstreamReadingList[];
 }

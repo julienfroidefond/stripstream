@@ -28,6 +28,8 @@ import type {
   StripstreamMissingBooksDto,
   StripstreamRelatedSeriesItem,
   StripstreamRecommendedSeriesItem,
+  StripstreamReadingList,
+  StripstreamReadingListDetail,
 } from "@/types/stripstream";
 import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, SERIES_BOOKS_CACHE_TAG, BOOK_CACHE_TAG } from "@/constants/cacheConstants";
 import { AppError } from "@/utils/errors";
@@ -288,6 +290,7 @@ export class StripstreamProvider implements IMediaProvider {
       this.client.fetch<StripstreamSeriesItem[]>("series/ongoing", { limit: "20" }, homeOpts),
       this.client.fetch<StripstreamBooksPage>("books", { sort: "latest", limit: "10" }, homeOpts),
       this.client.fetch<StripstreamSeriesPage>("series", { sort: "latest", limit: "10", has_books: "true" }, homeOpts),
+      this.client.fetch<StripstreamReadingList[]>("reading-lists", undefined, homeOpts),
     ]);
 
     // Si la majorité des endpoints ont échoué, on propage une erreur pour que
@@ -302,7 +305,7 @@ export class StripstreamProvider implements IMediaProvider {
       throw new AppError(ERROR_CODES.HOME.FETCH_ERROR, {}, reasons[0]);
     }
 
-    const [ongoingBooksResult, ongoingSeriesResult, booksPage, latestSeriesResult] = results;
+    const [ongoingBooksResult, ongoingSeriesResult, booksPage, latestSeriesResult, readingListsResult] = results;
 
     // /books/ongoing returns both currently reading and next unread per series
     const ongoingBooks = ongoingBooksResult.status === "fulfilled"
@@ -321,13 +324,26 @@ export class StripstreamProvider implements IMediaProvider {
       ? latestSeriesResult.value.items.map(StripstreamAdapter.toNormalizedSeries)
       : [];
 
+    const readingLists = readingListsResult.status === "fulfilled"
+      ? readingListsResult.value
+      : [];
+
     return {
       ongoing: ongoingSeries,
       ongoingBooks: [],
       recentlyRead,
       onDeck: ongoingBooks,
       latestSeries,
+      readingLists,
     };
+  }
+
+  async getReadingListDetail(id: string): Promise<StripstreamReadingListDetail> {
+    return this.client.fetch<StripstreamReadingListDetail>(
+      `reading-lists/${id}`,
+      undefined,
+      { revalidate: CACHE_TTL_MED }
+    );
   }
 
   async getReadProgress(bookId: string): Promise<NormalizedReadProgress | null> {
