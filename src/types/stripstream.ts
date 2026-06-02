@@ -160,6 +160,9 @@ export interface StripstreamRecommendedSeriesItem {
   cover_url?: string | null;
   metadata_provider?: string | null;
   first_book_updated_at?: string | null;
+  description: string | null;
+  authors: string[];
+  genres: string[];
 }
 
 export interface StripstreamRelatedSeriesItem {

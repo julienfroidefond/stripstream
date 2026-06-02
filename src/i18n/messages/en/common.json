@@ -57,7 +57,8 @@
       "reading_lists": "My lists"
     },
     "recommendations": {
-      "because": "Because you like"
+      "because": "Because you like",
+      "discover": "Discover"
     },
     "reading_lists": {
       "series_count": "{{count}} series",
@@ -256,7 +257,8 @@
     "matchReasons": {
       "same_author": "Same author",
       "same_genre": "Same genre",
-      "same_publisher": "Same publisher"
+      "same_publisher": "Same publisher",
+      "same_reading_list": "Same reading list"
     },
     "empty": "No series available",
     "coverAlt": "Cover of {title}",
