@@ -6,6 +6,7 @@ import type { UserPreferences, BackgroundPreferences } from "@/types/preferences
 import { defaultPreferences } from "@/types/preferences";
 import type { User } from "@/types/komga";
 import type { Prisma } from "@prisma/client";
+import { normalizeGridPageSize } from "@/lib/pageSize";
 
 export class PreferencesService {
   static async getCurrentUser(): Promise<User> {
@@ -30,6 +31,7 @@ export class PreferencesService {
       }
 
       const displayMode = preferences.displayMode as UserPreferences["displayMode"];
+      const compact = displayMode?.compact ?? defaultPreferences.displayMode.compact;
 
       return {
         showThumbnails: preferences.showThumbnails,
@@ -38,6 +40,7 @@ export class PreferencesService {
         displayMode: {
           ...defaultPreferences.displayMode,
           ...displayMode,
+          itemsPerPage: normalizeGridPageSize(displayMode?.itemsPerPage, compact),
           viewMode: displayMode?.viewMode || defaultPreferences.displayMode.viewMode,
         },
         background: {

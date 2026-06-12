@@ -7,13 +7,14 @@ import { AppError } from "@/utils/errors";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import type { UserPreferences } from "@/types/preferences";
 import { redirect } from "next/navigation";
+import { normalizeGridPageSize } from "@/lib/pageSize";
 
 interface PageProps {
   params: Promise<{ libraryId: string }>;
   searchParams: Promise<{ page?: string; unread?: string; search?: string; size?: string; sort?: string; missing?: string }>;
 }
 
-const DEFAULT_PAGE_SIZE = 20;
+const DEFAULT_PAGE_SIZE = 30;
 
 export default async function LibraryPage({ params, searchParams }: PageProps) {
   const libraryId = (await params).libraryId;
@@ -26,12 +27,14 @@ export default async function LibraryPage({ params, searchParams }: PageProps) {
 
   const currentPage = page ? parseInt(page) : 1;
   const preferences: UserPreferences = await PreferencesService.getPreferences();
+  const isCompact = preferences.displayMode?.compact ?? false;
 
   // Utiliser le paramètre d'URL s'il existe, sinon utiliser la préférence utilisateur
   const unreadOnly = unread !== undefined ? unread === "true" : preferences.showOnlyUnread;
-  const effectivePageSize = size
-    ? parseInt(size)
-    : preferences.displayMode?.itemsPerPage || DEFAULT_PAGE_SIZE;
+  const effectivePageSize = normalizeGridPageSize(
+    size ? parseInt(size) : preferences.displayMode?.itemsPerPage || DEFAULT_PAGE_SIZE,
+    isCompact
+  );
   const effectiveSort = sort ?? preferences.defaultSortOrder ?? "title";
   const effectiveMissing = missing !== undefined ? missing === "true" : preferences.showMissingBooks === false ? false : undefined;
 

@@ -14,6 +14,8 @@ import { CompactModeButton } from "@/components/common/CompactModeButton";
 import { ViewModeButton } from "@/components/common/ViewModeButton";
 import { UnreadFilterButton } from "@/components/common/UnreadFilterButton";
 import { MissingFilterButton } from "@/components/common/MissingFilterButton";
+import { normalizeGridPageSize } from "@/lib/pageSize";
+
 interface PaginatedBookGridProps {
   books: NormalizedBook[];
   currentPage: number;
@@ -21,6 +23,9 @@ interface PaginatedBookGridProps {
   totalElements: number;
   defaultShowOnlyUnread: boolean;
   showOnlyUnread: boolean;
+  pageSize: number;
+  initialCompact: boolean;
+  initialViewMode: "grid" | "list";
   onRefresh?: () => void;
   missingBooks?: NormalizedMissingBook[];
 }
@@ -32,6 +37,9 @@ export function PaginatedBookGrid({
   totalElements,
   defaultShowOnlyUnread,
   showOnlyUnread: initialShowOnlyUnread,
+  pageSize,
+  initialCompact,
+  initialViewMode,
   onRefresh,
   missingBooks = [],
 }: PaginatedBookGridProps) {
@@ -39,11 +47,17 @@ export function PaginatedBookGrid({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [showOnlyUnread, setShowOnlyUnread] = useState(initialShowOnlyUnread);
-  const { isCompact, itemsPerPage, viewMode } = useDisplayPreferences();
+  const {
+    itemsPerPage: preferenceItemsPerPage,
+    handlePageSizeChange: persistPageSizeChange,
+    handleViewModeToggle: persistViewModeToggle,
+  } = useDisplayPreferences();
   const { preferences, updatePreferences } = usePreferences();
   const { t } = useTranslate();
-
+  const [isCompact, setIsCompact] = useState(initialCompact);
+  const [viewMode, setViewMode] = useState<"grid" | "list">(initialViewMode);
   const [hideMissing, setHideMissing] = useState(preferences.hideMissingBooks);
+  const effectivePageSize = normalizeGridPageSize(pageSize || preferenceItemsPerPage, isCompact);
 
   const toggleHideMissing = useCallback(() => {
     setHideMissing((prev) => {
@@ -79,6 +93,14 @@ export function PaginatedBookGrid({
     setShowOnlyUnread(initialShowOnlyUnread);
   }, [initialShowOnlyUnread]);
 
+  useEffect(() => {
+    setIsCompact(initialCompact);
+  }, [initialCompact]);
+
+  useEffect(() => {
+    setViewMode(initialViewMode);
+  }, [initialViewMode]);
+
   // Apply default filter on initial load
   useEffect(() => {
     if (defaultShowOnlyUnread && !searchParams.has("unread")) {
@@ -107,7 +129,32 @@ export function PaginatedBookGrid({
   };
 
   const handlePageSizeChange = async (size: number) => {
-    await updateUrlParams({ page: "1", size: size.toString() });
+    const nextSize = normalizeGridPageSize(size, isCompact);
+    await persistPageSizeChange(nextSize);
+    await updateUrlParams({ page: "1", size: nextSize.toString() });
+  };
+
+  const handleCompactModeToggle = async (nextCompactMode: boolean) => {
+    setIsCompact(nextCompactMode);
+
+    const nextSize = normalizeGridPageSize(effectivePageSize, nextCompactMode);
+    await updatePreferences({
+      displayMode: {
+        ...preferences.displayMode,
+        compact: nextCompactMode,
+        itemsPerPage: nextSize,
+        viewMode,
+      },
+    });
+
+    if (nextSize !== effectivePageSize) {
+      await updateUrlParams({ page: "1", size: nextSize.toString() });
+    }
+  };
+
+  const handleViewModeToggle = async (nextViewMode: "grid" | "list") => {
+    setViewMode(nextViewMode);
+    await persistViewModeToggle(nextViewMode);
   };
 
   const handleBookClick = (book: NormalizedBook) => {
@@ -156,8 +203,8 @@ export function PaginatedBookGrid({
   }, [regularBooks, missingBooks, hideMissing]);
 
   // Calculate start and end indices for display
-  const startIndex = (currentPage - 1) * itemsPerPage + 1;
-  const endIndex = Math.min(currentPage * itemsPerPage, totalElements);
+  const startIndex = (currentPage - 1) * effectivePageSize + 1;
+  const endIndex = Math.min(currentPage * effectivePageSize, totalElements);
 
   const getShowingText = () => {
     if (!totalElements) return t("books.empty");
@@ -174,9 +221,13 @@ export function PaginatedBookGrid({
       <div className="flex flex-col gap-4">
         <p className="text-sm text-muted-foreground text-right">{getShowingText()}</p>
         <div className="flex items-center justify-end gap-2 flex-wrap">
-          <PageSizeSelect onSizeChange={handlePageSizeChange} />
-          <ViewModeButton />
-          <CompactModeButton />
+          <PageSizeSelect
+            pageSize={effectivePageSize}
+            isCompact={isCompact}
+            onSizeChange={handlePageSizeChange}
+          />
+          <ViewModeButton viewMode={viewMode} onToggle={handleViewModeToggle} />
+          <CompactModeButton isCompact={isCompact} onToggle={handleCompactModeToggle} />
           <UnreadFilterButton showOnlyUnread={showOnlyUnread} onToggle={handleUnreadFilter} />
           {missingBooks.length > 0 && (
             <MissingFilterButton active={hideMissing} onToggle={toggleHideMissing} />

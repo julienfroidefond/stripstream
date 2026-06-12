@@ -38,7 +38,7 @@ export const defaultPreferences: UserPreferences = {
   anonymousMode: false,
   displayMode: {
     compact: false,
-    itemsPerPage: 20,
+    itemsPerPage: 30,
     viewMode: "grid",
   },
   background: {

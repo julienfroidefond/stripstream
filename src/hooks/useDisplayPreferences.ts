@@ -1,15 +1,19 @@
 import { usePreferences } from "@/contexts/PreferencesContext";
 import logger from "@/lib/logger";
+import { normalizeGridPageSize } from "@/lib/pageSize";
 
 export function useDisplayPreferences() {
   const { preferences, updatePreferences } = usePreferences();
 
   const handleCompactToggle = async (checked: boolean) => {
     try {
+      const itemsPerPage = normalizeGridPageSize(preferences.displayMode.itemsPerPage, checked);
+
       await updatePreferences({
         displayMode: {
           ...preferences.displayMode,
           compact: checked,
+          itemsPerPage,
         },
       });
     } catch (error) {
@@ -22,7 +26,7 @@ export function useDisplayPreferences() {
       await updatePreferences({
         displayMode: {
           ...preferences.displayMode,
-          itemsPerPage: size,
+          itemsPerPage: normalizeGridPageSize(size, preferences.displayMode.compact),
         },
       });
     } catch (error) {
@@ -45,7 +49,10 @@ export function useDisplayPreferences() {
 
   return {
     isCompact: preferences.displayMode.compact,
-    itemsPerPage: preferences.displayMode.itemsPerPage,
+    itemsPerPage: normalizeGridPageSize(
+      preferences.displayMode.itemsPerPage,
+      preferences.displayMode.compact
+    ),
     viewMode: preferences.displayMode.viewMode || "grid",
     handleCompactToggle,
     handlePageSizeChange,

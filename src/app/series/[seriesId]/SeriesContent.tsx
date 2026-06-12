@@ -26,6 +26,7 @@ export function SeriesContent({
   currentPage,
   preferences,
   unreadOnly,
+  pageSize,
   initialIsFavorite,
   missingBooks,
   relatedSeries = [],
@@ -47,6 +48,9 @@ export function SeriesContent({
           totalElements={books.totalElements ?? books.items.length}
           defaultShowOnlyUnread={preferences.showOnlyUnread}
           showOnlyUnread={unreadOnly}
+          pageSize={pageSize}
+          initialCompact={preferences.displayMode.compact}
+          initialViewMode={preferences.displayMode.viewMode || "grid"}
           missingBooks={missingBooks}
         />
         {relatedSeries.length > 0 && (

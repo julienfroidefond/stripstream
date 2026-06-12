@@ -15,6 +15,7 @@ import { UnreadFilterButton } from "@/components/common/UnreadFilterButton";
 import { SortButton } from "@/components/common/SortButton";
 import { MissingFilterButton } from "@/components/common/MissingFilterButton";
 import { updatePreferences as updatePreferencesAction } from "@/app/actions/preferences";
+import { normalizeGridPageSize } from "@/lib/pageSize";
 
 interface PaginatedSeriesGridProps {
   series: NormalizedSeries[];
@@ -49,11 +50,13 @@ export function PaginatedSeriesGrid({
   const [showOnlyUnread, setShowOnlyUnread] = useState(initialShowOnlyUnread);
   const [isCompact, setIsCompact] = useState(initialCompact);
   const [viewMode, setViewMode] = useState<"grid" | "list">(initialViewMode);
-  const [currentPageSize, setCurrentPageSize] = useState(pageSize || 20);
+  const [currentPageSize, setCurrentPageSize] = useState(
+    normalizeGridPageSize(pageSize || 30, initialCompact)
+  );
   const [currentSort, setCurrentSort] = useState(initialSort);
   const [showMissing, setShowMissing] = useState(initialHasMissing);
 
-  const effectivePageSize = pageSize || currentPageSize;
+  const effectivePageSize = normalizeGridPageSize(pageSize || currentPageSize, isCompact);
   const { t } = useTranslate();
 
   const persistPreferences = useCallback(async (payload: Parameters<typeof updatePreferencesAction>[0]) => {
@@ -99,8 +102,8 @@ export function PaginatedSeriesGrid({
   }, [initialViewMode]);
 
   useEffect(() => {
-    setCurrentPageSize(pageSize || 20);
-  }, [pageSize]);
+    setCurrentPageSize(normalizeGridPageSize(pageSize || 30, initialCompact));
+  }, [pageSize, initialCompact]);
 
   // Apply default filter on initial load
   useEffect(() => {
@@ -121,13 +124,14 @@ export function PaginatedSeriesGrid({
   };
 
   const handlePageSizeChange = async (size: number) => {
-    setCurrentPageSize(size);
-    await updateUrlParams({ page: "1", size: size.toString() });
+    const nextSize = normalizeGridPageSize(size, isCompact);
+    setCurrentPageSize(nextSize);
+    await updateUrlParams({ page: "1", size: nextSize.toString() });
 
     await persistPreferences({
       displayMode: {
         compact: isCompact,
-        itemsPerPage: size,
+        itemsPerPage: nextSize,
         viewMode,
       },
     });
@@ -135,11 +139,17 @@ export function PaginatedSeriesGrid({
 
   const handleCompactModeToggle = async (nextCompactMode: boolean) => {
     setIsCompact(nextCompactMode);
+    const nextSize = normalizeGridPageSize(effectivePageSize, nextCompactMode);
+    setCurrentPageSize(nextSize);
+
+    if (nextSize !== effectivePageSize) {
+      await updateUrlParams({ page: "1", size: nextSize.toString() });
+    }
 
     await persistPreferences({
       displayMode: {
         compact: nextCompactMode,
-        itemsPerPage: effectivePageSize,
+        itemsPerPage: nextSize,
         viewMode,
       },
     });
@@ -225,6 +235,7 @@ export function PaginatedSeriesGrid({
               />
               <PageSizeSelect
                 pageSize={effectivePageSize}
+                isCompact={isCompact}
                 onSizeChange={handlePageSizeChange}
               />
             </div>
