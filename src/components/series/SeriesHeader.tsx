@@ -1,6 +1,6 @@
 "use client";
 
-import { Book, BookOpen, BookMarked, BookX, Star, StarOff, User, CircleDot, CircleCheck, CirclePause, CircleX } from "lucide-react";
+import { Book, BookOpen, BookMarked, BookX, Star, StarOff, User, CircleDot, CircleCheck, CirclePause, CircleX, Calendar } from "lucide-react";
 import type { NormalizedSeries } from "@/lib/providers/types";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -158,6 +158,12 @@ export const SeriesHeader = ({ series, refreshSeries, initialIsFavorite }: Serie
               <p className="text-white/70 text-sm flex items-center gap-1 justify-center md:justify-start">
                 <User className="h-3.5 w-3.5 flex-shrink-0" />
                 {authorsText}
+              </p>
+            )}
+            {series.startYear != null && (
+              <p className="text-white/70 text-sm flex items-center gap-1 justify-center md:justify-start">
+                <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
+                {series.startYear}
               </p>
             )}
             {series.genres && series.genres.length > 0 && (

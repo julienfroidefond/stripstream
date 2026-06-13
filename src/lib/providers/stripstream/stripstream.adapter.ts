@@ -90,6 +90,7 @@ export class StripstreamAdapter {
       genres: series.genres ?? [],
       tags: [],
       createdAt: null,
+      startYear: series.start_year ?? null,
       missingCount: series.missing_count ?? null,
       seriesStatus: series.series_status ?? null,
     };
@@ -112,6 +113,7 @@ export class StripstreamAdapter {
       genres: [],
       tags: [],
       createdAt: null,
+      startYear: item.start_year ?? null,
       missingCount: null,
       seriesStatus: item.series_status ?? null,
       matchReasons: item.match_reasons,
@@ -135,6 +137,7 @@ export class StripstreamAdapter {
       genres: item.genres ?? [],
       tags: [],
       createdAt: null,
+      startYear: item.start_year ?? null,
       missingCount: null,
       seriesStatus: item.series_status ?? null,
       matchReasons: item.match_reasons,

@@ -67,6 +67,7 @@ export interface StripstreamSeriesItem {
   genres?: string[] | null;
   authors?: string[] | null;
   description?: string | null;
+  start_year?: number | null;
 }
 
 export interface StripstreamSeriesLookup {
@@ -163,6 +164,7 @@ export interface StripstreamRecommendedSeriesItem {
   description: string | null;
   authors: string[];
   genres: string[];
+  start_year?: number | null;
 }
 
 export interface StripstreamRelatedSeriesItem {
@@ -178,6 +180,7 @@ export interface StripstreamRelatedSeriesItem {
   cover_url?: string | null;
   metadata_provider?: string | null;
   first_book_updated_at?: string | null;
+  start_year?: number | null;
 }
 
 export interface StripstreamSearchHit {

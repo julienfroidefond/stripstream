@@ -25,6 +25,7 @@ export interface NormalizedSeries {
   genres?: string[];
   tags?: string[];
   createdAt?: string | null;
+  startYear?: number | null;
   missingCount?: number | null;
   seriesStatus?: string | null;
   matchReasons?: string[];
