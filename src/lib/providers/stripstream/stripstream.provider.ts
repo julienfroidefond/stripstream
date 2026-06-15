@@ -10,7 +10,7 @@ import type {
   NormalizedBooksPage,
   NormalizedMissingBook,
 } from "../types";
-import type { HomeData } from "@/types/home";
+import type { HomeData, HomeDeferredData, HomePrimaryData } from "@/types/home";
 import { StripstreamClient } from "./stripstream.client";
 import { StripstreamAdapter } from "./stripstream.adapter";
 import type {
@@ -284,29 +284,22 @@ export class StripstreamProvider implements IMediaProvider {
     }
   }
 
-  async getHomeData(): Promise<HomeData> {
+  async getHomePrimaryData(): Promise<HomePrimaryData> {
     const homeOpts = { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] };
     const results = await Promise.allSettled([
       this.client.fetch<StripstreamBookItem[]>("books/ongoing", { limit: "20" }, homeOpts),
       this.client.fetch<StripstreamSeriesItem[]>("series/ongoing", { limit: "20" }, homeOpts),
-      this.client.fetch<StripstreamBooksPage>("books", { sort: "latest", limit: "10" }, homeOpts),
-      this.client.fetch<StripstreamSeriesPage>("series", { sort: "latest", limit: "10", has_books: "true" }, homeOpts),
-      this.client.fetch<StripstreamReadingList[]>("reading-lists", undefined, homeOpts),
     ]);
 
-    // Si la majorité des endpoints ont échoué, on propage une erreur pour que
-    // la page affiche un message au lieu d'une home vide silencieuse. On
-    // préserve l'AppError la plus spécifique disponible (ex. UNAUTHORIZED)
-    // plutôt que de la wrapper en HOME.FETCH_ERROR générique.
     const failures = results.filter((r) => r.status === "rejected");
-    if (failures.length >= 3) {
+    if (failures.length === results.length) {
       const reasons = failures.map((r) => (r as PromiseRejectedResult).reason);
       const firstAppError = reasons.find((r): r is AppError => r instanceof AppError);
       if (firstAppError) throw firstAppError;
       throw new AppError(ERROR_CODES.HOME.FETCH_ERROR, {}, reasons[0]);
     }
 
-    const [ongoingBooksResult, ongoingSeriesResult, booksPage, latestSeriesResult, readingListsResult] = results;
+    const [ongoingBooksResult, ongoingSeriesResult] = results;
 
     // /books/ongoing returns both currently reading and next unread per series
     const ongoingBooks = ongoingBooksResult.status === "fulfilled"
@@ -316,6 +309,31 @@ export class StripstreamProvider implements IMediaProvider {
     const ongoingSeries = ongoingSeriesResult.status === "fulfilled"
       ? ongoingSeriesResult.value.map(StripstreamAdapter.toNormalizedSeries)
       : [];
+
+    return {
+      ongoing: ongoingSeries,
+      ongoingBooks: [],
+      onDeck: ongoingBooks,
+    };
+  }
+
+  async getHomeDeferredData(): Promise<HomeDeferredData> {
+    const homeOpts = { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] };
+    const results = await Promise.allSettled([
+      this.client.fetch<StripstreamBooksPage>("books", { sort: "latest", limit: "10" }, homeOpts),
+      this.client.fetch<StripstreamSeriesPage>("series", { sort: "latest", limit: "10", has_books: "true" }, homeOpts),
+      this.client.fetch<StripstreamReadingList[]>("reading-lists", undefined, homeOpts),
+    ]);
+
+    const failures = results.filter((r) => r.status === "rejected");
+    if (failures.length === results.length) {
+      const reasons = failures.map((r) => (r as PromiseRejectedResult).reason);
+      const firstAppError = reasons.find((r): r is AppError => r instanceof AppError);
+      if (firstAppError) throw firstAppError;
+      throw new AppError(ERROR_CODES.HOME.FETCH_ERROR, {}, reasons[0]);
+    }
+
+    const [booksPage, latestSeriesResult, readingListsResult] = results;
 
     const recentlyRead = booksPage.status === "fulfilled"
       ? booksPage.value.items.map(StripstreamAdapter.toNormalizedBook)
@@ -330,12 +348,21 @@ export class StripstreamProvider implements IMediaProvider {
       : [];
 
     return {
-      ongoing: ongoingSeries,
-      ongoingBooks: [],
       recentlyRead,
-      onDeck: ongoingBooks,
       latestSeries,
       readingLists,
+    };
+  }
+
+  async getHomeData(): Promise<HomeData> {
+    const [primaryData, deferredData] = await Promise.all([
+      this.getHomePrimaryData(),
+      this.getHomeDeferredData(),
+    ]);
+
+    return {
+      ...primaryData,
+      ...deferredData,
     };
   }
 

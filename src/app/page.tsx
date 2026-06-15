@@ -1,5 +1,10 @@
+import { Suspense } from "react";
 import { getProvider } from "@/lib/providers/provider.factory";
-import { HomeContent } from "@/components/home/HomeContent";
+import {
+  HomeDeferredContent,
+  HomeDeferredContentSkeleton,
+  HomePrimaryContent,
+} from "@/components/home/HomeContent";
 import { HomeClientWrapper } from "@/components/home/HomeClientWrapper";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { ERROR_CODES } from "@/constants/errorCodes";
@@ -7,30 +12,44 @@ import { AppError } from "@/utils/errors";
 import { FavoriteService } from "@/lib/services/favorite.service";
 import { PreferencesService } from "@/lib/services/preferences.service";
 import { redirect } from "next/navigation";
+import type { HomeDeferredData } from "@/types/home";
+import type { NormalizedSeries } from "@/lib/providers/types";
 
 export default async function HomePage() {
   try {
     const provider = await getProvider();
     if (!provider) redirect("/settings");
 
-    const [homeData, favorites, preferences, recommendations] = await Promise.all([
-      provider.getHomeData(),
+    const homePrimaryPromise = provider.getHomePrimaryData();
+    const homeDeferredPromise = provider.getHomeDeferredData();
+    const recommendationsPromise = provider.getRecommendations().catch(() => []);
+
+    const [homePrimaryData, favorites, preferences] = await Promise.all([
+      homePrimaryPromise,
       FavoriteService.listFavorites(),
       PreferencesService.getPreferences().catch(() => null),
-      provider.getRecommendations().catch(() => []),
     ]);
 
-    // Series metadata (genres/authors/description) is now inline in homeData.ongoing,
-    // so the two extra waterfall phases (getBook + getSeriesById) are no longer needed.
-    const data = {
-      ...homeData,
-      favorites,
-      recommendations,
-    };
+    const isAnonymous = preferences?.anonymousMode ?? false;
 
     return (
       <HomeClientWrapper>
-        <HomeContent data={data} isAnonymous={preferences?.anonymousMode ?? false} />
+        <div className="space-y-10 pb-2">
+          <HomePrimaryContent
+            data={{
+              ...homePrimaryData,
+              favorites,
+            }}
+            isAnonymous={isAnonymous}
+          />
+          <Suspense fallback={<HomeDeferredContentSkeleton />}>
+            <HomeDeferredSections
+              homeDeferredPromise={homeDeferredPromise}
+              recommendationsPromise={recommendationsPromise}
+              isAnonymous={isAnonymous}
+            />
+          </Suspense>
+        </div>
       </HomeClientWrapper>
     );
   } catch (error) {
@@ -48,5 +67,40 @@ export default async function HomePage() {
         <ErrorMessage errorCode={errorCode} />
       </main>
     );
+  }
+}
+
+interface HomeDeferredSectionsProps {
+  homeDeferredPromise: Promise<HomeDeferredData>;
+  recommendationsPromise: Promise<NormalizedSeries[]>;
+  isAnonymous: boolean;
+}
+
+async function HomeDeferredSections({
+  homeDeferredPromise,
+  recommendationsPromise,
+  isAnonymous,
+}: HomeDeferredSectionsProps) {
+  try {
+    const [homeDeferredData, recommendations] = await Promise.all([
+      homeDeferredPromise.catch(() => null),
+      isAnonymous ? Promise.resolve([]) : recommendationsPromise,
+    ]);
+
+    if (!homeDeferredData) {
+      return null;
+    }
+
+    return (
+      <HomeDeferredContent
+        data={{
+          ...homeDeferredData,
+          recommendations,
+        }}
+        isAnonymous={isAnonymous}
+      />
+    );
+  } catch {
+    return null;
   }
 }

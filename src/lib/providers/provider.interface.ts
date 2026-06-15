@@ -8,7 +8,7 @@ import type {
   NormalizedBooksPage,
   NormalizedMissingBook,
 } from "./types";
-import type { HomeData } from "@/types/home";
+import type { HomeData, HomeDeferredData, HomePrimaryData } from "@/types/home";
 
 export interface BookListFilter {
   libraryId?: string;
@@ -32,6 +32,8 @@ export interface IMediaProvider {
   getMissingBooks(seriesId: string): Promise<NormalizedMissingBook[]>;
 
   // ── Home ─────────────────────────────────────────────────────────────────
+  getHomePrimaryData(): Promise<HomePrimaryData>;
+  getHomeDeferredData(): Promise<HomeDeferredData>;
   getHomeData(): Promise<HomeData>;
 
   // ── Read progress ────────────────────────────────────────────────────────

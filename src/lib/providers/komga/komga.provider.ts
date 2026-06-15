@@ -9,7 +9,7 @@ import type {
   NormalizedBooksPage,
   NormalizedMissingBook,
 } from "../types";
-import type { HomeData } from "@/types/home";
+import type { HomeData, HomeDeferredData, HomePrimaryData } from "@/types/home";
 import { KomgaAdapter } from "./komga.adapter";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
@@ -390,15 +390,15 @@ export class KomgaProvider implements IMediaProvider {
     return [];
   }
 
-  async getHomeData(): Promise<HomeData> {
+  async getHomePrimaryData(): Promise<HomePrimaryData> {
     return unstable_cache(
-      () => this.fetchHomeData(),
-      ["komga-home", this.config.authHeader],
+      () => this.fetchHomePrimaryData(),
+      ["komga-home-primary", this.config.authHeader],
       { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] }
     )();
   }
 
-  private async fetchHomeData(): Promise<HomeData> {
+  private async fetchHomePrimaryData(): Promise<HomePrimaryData> {
     const results = await Promise.allSettled([
       this.fetch<LibraryResponse<KomgaSeries>>(
         "series/list",
@@ -428,41 +428,81 @@ export class KomgaProvider implements IMediaProvider {
         "books/ondeck",
         { page: "0", size: "10", media_status: "READY" }
       ),
-      this.fetch<LibraryResponse<KomgaSeries>>(
-        "series/latest",
-        { page: "0", size: "10", media_status: "READY" }
-      ),
     ]);
 
-    // Si la majorité des endpoints ont échoué, on considère que le serveur est
-    // injoignable : on propage une erreur pour que la page affiche un message
-    // au lieu d'une home vide silencieuse. On préserve l'AppError la plus
-    // spécifique disponible (ex. UNAUTHORIZED) plutôt que de la wrapper en
-    // HOME.FETCH_ERROR générique.
     const failures = results.filter((r) => r.status === "rejected");
-    if (failures.length >= 3) {
+    if (failures.length === results.length) {
       const reasons = failures.map((r) => (r as PromiseRejectedResult).reason);
       const firstAppError = reasons.find((r): r is AppError => r instanceof AppError);
       if (firstAppError) throw firstAppError;
       throw new AppError(ERROR_CODES.HOME.FETCH_ERROR, {}, reasons[0]);
     }
 
-    const [ongoing, ongoingBooks, recentlyRead, onDeck, latestSeries] = results.map((r) =>
+    const [ongoing, ongoingBooks, onDeck] = results.map((r) =>
       r.status === "fulfilled" ? r.value : { content: [] }
     ) as [
       LibraryResponse<KomgaSeries>,
       LibraryResponse<KomgaBook>,
       LibraryResponse<KomgaBook>,
-      LibraryResponse<KomgaBook>,
-      LibraryResponse<KomgaSeries>,
     ];
 
     return {
       ongoing: (ongoing.content || []).map(KomgaAdapter.toNormalizedSeries),
       ongoingBooks: (ongoingBooks.content || []).map(KomgaAdapter.toNormalizedBook),
-      recentlyRead: (recentlyRead.content || []).map(KomgaAdapter.toNormalizedBook),
       onDeck: (onDeck.content || []).map(KomgaAdapter.toNormalizedBook),
+    };
+  }
+
+  async getHomeDeferredData(): Promise<HomeDeferredData> {
+    return unstable_cache(
+      () => this.fetchHomeDeferredData(),
+      ["komga-home-deferred", this.config.authHeader],
+      { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] }
+    )();
+  }
+
+  private async fetchHomeDeferredData(): Promise<HomeDeferredData> {
+    const results = await Promise.allSettled([
+      this.fetch<LibraryResponse<KomgaBook>>(
+        "books/latest",
+        { page: "0", size: "10", media_status: "READY" }
+      ),
+      this.fetch<LibraryResponse<KomgaSeries>>(
+        "series/latest",
+        { page: "0", size: "10", media_status: "READY" }
+      ),
+    ]);
+
+    const failures = results.filter((r) => r.status === "rejected");
+    if (failures.length === results.length) {
+      const reasons = failures.map((r) => (r as PromiseRejectedResult).reason);
+      const firstAppError = reasons.find((r): r is AppError => r instanceof AppError);
+      if (firstAppError) throw firstAppError;
+      throw new AppError(ERROR_CODES.HOME.FETCH_ERROR, {}, reasons[0]);
+    }
+
+    const [recentlyRead, latestSeries] = results.map((r) =>
+      r.status === "fulfilled" ? r.value : { content: [] }
+    ) as [
+      LibraryResponse<KomgaBook>,
+      LibraryResponse<KomgaSeries>,
+    ];
+
+    return {
+      recentlyRead: (recentlyRead.content || []).map(KomgaAdapter.toNormalizedBook),
       latestSeries: (latestSeries.content || []).map(KomgaAdapter.toNormalizedSeries),
+    };
+  }
+
+  async getHomeData(): Promise<HomeData> {
+    const [primaryData, deferredData] = await Promise.all([
+      this.getHomePrimaryData(),
+      this.getHomeDeferredData(),
+    ]);
+
+    return {
+      ...primaryData,
+      ...deferredData,
     };
   }
 
