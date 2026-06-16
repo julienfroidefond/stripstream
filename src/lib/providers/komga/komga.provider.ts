@@ -10,6 +10,7 @@ import type {
   NormalizedMissingBook,
 } from "../types";
 import type { HomeData, HomeDeferredData, HomePrimaryData } from "@/types/home";
+import type { StripstreamReadingList } from "@/types/stripstream";
 import { KomgaAdapter } from "./komga.adapter";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
@@ -399,57 +400,15 @@ export class KomgaProvider implements IMediaProvider {
   }
 
   private async fetchHomePrimaryData(): Promise<HomePrimaryData> {
-    const results = await Promise.allSettled([
-      this.fetch<LibraryResponse<KomgaSeries>>(
-        "series/list",
-        { page: "0", size: "10", sort: "readDate,desc" },
-        {
-          method: "POST",
-          body: JSON.stringify({
-            condition: { readStatus: { operator: "is", value: "IN_PROGRESS" } },
-          }),
-        }
-      ),
-      this.fetch<LibraryResponse<KomgaBook>>(
-        "books/list",
-        { page: "0", size: "10", sort: "readProgress.readDate,desc" },
-        {
-          method: "POST",
-          body: JSON.stringify({
-            condition: { readStatus: { operator: "is", value: "IN_PROGRESS" } },
-          }),
-        }
-      ),
-      this.fetch<LibraryResponse<KomgaBook>>(
-        "books/latest",
-        { page: "0", size: "10", media_status: "READY" }
-      ),
-      this.fetch<LibraryResponse<KomgaBook>>(
-        "books/ondeck",
-        { page: "0", size: "10", media_status: "READY" }
-      ),
+    const [continueReadingData, ongoing] = await Promise.all([
+      this.getHomeContinueReadingData(),
+      this.getHomeOngoingSeries(),
     ]);
 
-    const failures = results.filter((r) => r.status === "rejected");
-    if (failures.length === results.length) {
-      const reasons = failures.map((r) => (r as PromiseRejectedResult).reason);
-      const firstAppError = reasons.find((r): r is AppError => r instanceof AppError);
-      if (firstAppError) throw firstAppError;
-      throw new AppError(ERROR_CODES.HOME.FETCH_ERROR, {}, reasons[0]);
-    }
-
-    const [ongoing, ongoingBooks, onDeck] = results.map((r) =>
-      r.status === "fulfilled" ? r.value : { content: [] }
-    ) as [
-      LibraryResponse<KomgaSeries>,
-      LibraryResponse<KomgaBook>,
-      LibraryResponse<KomgaBook>,
-    ];
-
     return {
-      ongoing: (ongoing.content || []).map(KomgaAdapter.toNormalizedSeries),
-      ongoingBooks: (ongoingBooks.content || []).map(KomgaAdapter.toNormalizedBook),
-      onDeck: (onDeck.content || []).map(KomgaAdapter.toNormalizedBook),
+      ongoing,
+      ongoingBooks: continueReadingData.ongoingBooks,
+      onDeck: continueReadingData.onDeck,
     };
   }
 
@@ -462,35 +421,16 @@ export class KomgaProvider implements IMediaProvider {
   }
 
   private async fetchHomeDeferredData(): Promise<HomeDeferredData> {
-    const results = await Promise.allSettled([
-      this.fetch<LibraryResponse<KomgaBook>>(
-        "books/latest",
-        { page: "0", size: "10", media_status: "READY" }
-      ),
-      this.fetch<LibraryResponse<KomgaSeries>>(
-        "series/latest",
-        { page: "0", size: "10", media_status: "READY" }
-      ),
+    const [recentlyRead, latestSeries, readingLists] = await Promise.all([
+      this.getHomeRecentlyRead(),
+      this.getHomeLatestSeries(),
+      this.getHomeReadingLists(),
     ]);
 
-    const failures = results.filter((r) => r.status === "rejected");
-    if (failures.length === results.length) {
-      const reasons = failures.map((r) => (r as PromiseRejectedResult).reason);
-      const firstAppError = reasons.find((r): r is AppError => r instanceof AppError);
-      if (firstAppError) throw firstAppError;
-      throw new AppError(ERROR_CODES.HOME.FETCH_ERROR, {}, reasons[0]);
-    }
-
-    const [recentlyRead, latestSeries] = results.map((r) =>
-      r.status === "fulfilled" ? r.value : { content: [] }
-    ) as [
-      LibraryResponse<KomgaBook>,
-      LibraryResponse<KomgaSeries>,
-    ];
-
     return {
-      recentlyRead: (recentlyRead.content || []).map(KomgaAdapter.toNormalizedBook),
-      latestSeries: (latestSeries.content || []).map(KomgaAdapter.toNormalizedSeries),
+      recentlyRead,
+      latestSeries,
+      readingLists,
     };
   }
 
@@ -504,6 +444,103 @@ export class KomgaProvider implements IMediaProvider {
       ...primaryData,
       ...deferredData,
     };
+  }
+
+  async getHomeContinueReadingData(): Promise<Pick<HomePrimaryData, "ongoingBooks" | "onDeck">> {
+    return unstable_cache(
+      async () => {
+        const results = await Promise.allSettled([
+          this.fetch<LibraryResponse<KomgaBook>>(
+            "books/list",
+            { page: "0", size: "10", sort: "readProgress.readDate,desc" },
+            {
+              method: "POST",
+              body: JSON.stringify({
+                condition: { readStatus: { operator: "is", value: "IN_PROGRESS" } },
+              }),
+            }
+          ),
+          this.fetch<LibraryResponse<KomgaBook>>(
+            "books/ondeck",
+            { page: "0", size: "10", media_status: "READY" }
+          ),
+        ]);
+
+        const failures = results.filter((r) => r.status === "rejected");
+        if (failures.length === results.length) {
+          const reasons = failures.map((r) => (r as PromiseRejectedResult).reason);
+          const firstAppError = reasons.find((r): r is AppError => r instanceof AppError);
+          if (firstAppError) throw firstAppError;
+          throw new AppError(ERROR_CODES.HOME.FETCH_ERROR, {}, reasons[0]);
+        }
+
+        const [ongoingBooks, onDeck] = results.map((r) =>
+          r.status === "fulfilled" ? r.value : { content: [] }
+        ) as [LibraryResponse<KomgaBook>, LibraryResponse<KomgaBook>];
+
+        return {
+          ongoingBooks: (ongoingBooks.content || []).map(KomgaAdapter.toNormalizedBook),
+          onDeck: (onDeck.content || []).map(KomgaAdapter.toNormalizedBook),
+        };
+      },
+      ["komga-home-continue-reading", this.config.authHeader],
+      { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] }
+    )();
+  }
+
+  async getHomeOngoingSeries(): Promise<NormalizedSeries[]> {
+    return unstable_cache(
+      async () => {
+        const ongoing = await this.fetch<LibraryResponse<KomgaSeries>>(
+          "series/list",
+          { page: "0", size: "10", sort: "readDate,desc" },
+          {
+            method: "POST",
+            body: JSON.stringify({
+              condition: { readStatus: { operator: "is", value: "IN_PROGRESS" } },
+            }),
+          }
+        );
+
+        return (ongoing.content || []).map(KomgaAdapter.toNormalizedSeries);
+      },
+      ["komga-home-ongoing-series", this.config.authHeader],
+      { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] }
+    )();
+  }
+
+  async getHomeLatestSeries(): Promise<NormalizedSeries[]> {
+    return unstable_cache(
+      async () => {
+        const latestSeries = await this.fetch<LibraryResponse<KomgaSeries>>(
+          "series/latest",
+          { page: "0", size: "10", media_status: "READY" }
+        );
+
+        return (latestSeries.content || []).map(KomgaAdapter.toNormalizedSeries);
+      },
+      ["komga-home-latest-series", this.config.authHeader],
+      { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] }
+    )();
+  }
+
+  async getHomeRecentlyRead(): Promise<NormalizedBook[]> {
+    return unstable_cache(
+      async () => {
+        const recentlyRead = await this.fetch<LibraryResponse<KomgaBook>>(
+          "books/latest",
+          { page: "0", size: "10", media_status: "READY" }
+        );
+
+        return (recentlyRead.content || []).map(KomgaAdapter.toNormalizedBook);
+      },
+      ["komga-home-recently-read", this.config.authHeader],
+      { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] }
+    )();
+  }
+
+  async getHomeReadingLists(): Promise<StripstreamReadingList[]> {
+    return [];
   }
 
   async resetReadProgress(bookId: string): Promise<void> {

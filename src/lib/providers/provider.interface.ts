@@ -9,6 +9,7 @@ import type {
   NormalizedMissingBook,
 } from "./types";
 import type { HomeData, HomeDeferredData, HomePrimaryData } from "@/types/home";
+import type { StripstreamReadingList } from "@/types/stripstream";
 
 export interface BookListFilter {
   libraryId?: string;
@@ -32,6 +33,11 @@ export interface IMediaProvider {
   getMissingBooks(seriesId: string): Promise<NormalizedMissingBook[]>;
 
   // ── Home ─────────────────────────────────────────────────────────────────
+  getHomeContinueReadingData(): Promise<Pick<HomePrimaryData, "ongoingBooks" | "onDeck">>;
+  getHomeOngoingSeries(): Promise<NormalizedSeries[]>;
+  getHomeLatestSeries(): Promise<NormalizedSeries[]>;
+  getHomeRecentlyRead(): Promise<NormalizedBook[]>;
+  getHomeReadingLists(): Promise<StripstreamReadingList[]>;
   getHomePrimaryData(): Promise<HomePrimaryData>;
   getHomeDeferredData(): Promise<HomeDeferredData>;
   getHomeData(): Promise<HomeData>;

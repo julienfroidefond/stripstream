@@ -285,73 +285,26 @@ export class StripstreamProvider implements IMediaProvider {
   }
 
   async getHomePrimaryData(): Promise<HomePrimaryData> {
-    const homeOpts = { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] };
-    const results = await Promise.allSettled([
-      this.client.fetch<StripstreamBookItem[]>("books/ongoing", { limit: "20" }, homeOpts),
-      this.client.fetch<StripstreamSeriesItem[]>("series/ongoing", { limit: "20" }, homeOpts),
+    const [continueReadingData, ongoing] = await Promise.all([
+      this.getHomeContinueReadingData(),
+      this.getHomeOngoingSeries(),
     ]);
 
-    const failures = results.filter((r) => r.status === "rejected");
-    if (failures.length === results.length) {
-      const reasons = failures.map((r) => (r as PromiseRejectedResult).reason);
-      const firstAppError = reasons.find((r): r is AppError => r instanceof AppError);
-      if (firstAppError) throw firstAppError;
-      throw new AppError(ERROR_CODES.HOME.FETCH_ERROR, {}, reasons[0]);
-    }
-
-    const [ongoingBooksResult, ongoingSeriesResult] = results;
-
-    // /books/ongoing returns both currently reading and next unread per series
-    const ongoingBooks = ongoingBooksResult.status === "fulfilled"
-      ? ongoingBooksResult.value.map(StripstreamAdapter.toNormalizedBook)
-      : [];
-
-    const ongoingSeries = ongoingSeriesResult.status === "fulfilled"
-      ? ongoingSeriesResult.value.map(StripstreamAdapter.toNormalizedSeries)
-      : [];
-
     return {
-      ongoing: ongoingSeries,
-      ongoingBooks: [],
-      onDeck: ongoingBooks,
+      ongoing,
+      ongoingBooks: continueReadingData.ongoingBooks,
+      onDeck: continueReadingData.onDeck,
     };
   }
 
   async getHomeDeferredData(): Promise<HomeDeferredData> {
-    const homeOpts = { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] };
-    const results = await Promise.allSettled([
-      this.client.fetch<StripstreamBooksPage>("books", { sort: "latest", limit: "10" }, homeOpts),
-      this.client.fetch<StripstreamSeriesPage>("series", { sort: "latest", limit: "10", has_books: "true" }, homeOpts),
-      this.client.fetch<StripstreamReadingList[]>("reading-lists", undefined, homeOpts),
+    const [recentlyRead, latestSeries, readingLists] = await Promise.all([
+      this.getHomeRecentlyRead(),
+      this.getHomeLatestSeries(),
+      this.getHomeReadingLists(),
     ]);
 
-    const failures = results.filter((r) => r.status === "rejected");
-    if (failures.length === results.length) {
-      const reasons = failures.map((r) => (r as PromiseRejectedResult).reason);
-      const firstAppError = reasons.find((r): r is AppError => r instanceof AppError);
-      if (firstAppError) throw firstAppError;
-      throw new AppError(ERROR_CODES.HOME.FETCH_ERROR, {}, reasons[0]);
-    }
-
-    const [booksPage, latestSeriesResult, readingListsResult] = results;
-
-    const recentlyRead = booksPage.status === "fulfilled"
-      ? booksPage.value.items.map(StripstreamAdapter.toNormalizedBook)
-      : [];
-
-    const latestSeries = latestSeriesResult.status === "fulfilled"
-      ? latestSeriesResult.value.items.map(StripstreamAdapter.toNormalizedSeries)
-      : [];
-
-    const readingLists = readingListsResult.status === "fulfilled"
-      ? readingListsResult.value
-      : [];
-
-    return {
-      recentlyRead,
-      latestSeries,
-      readingLists,
-    };
+    return { recentlyRead, latestSeries, readingLists };
   }
 
   async getHomeData(): Promise<HomeData> {
@@ -364,6 +317,58 @@ export class StripstreamProvider implements IMediaProvider {
       ...primaryData,
       ...deferredData,
     };
+  }
+
+  async getHomeContinueReadingData(): Promise<Pick<HomePrimaryData, "ongoingBooks" | "onDeck">> {
+    const homeOpts = { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] };
+    const ongoingBooks = await this.client.fetch<StripstreamBookItem[]>(
+      "books/ongoing",
+      { limit: "20" },
+      homeOpts
+    );
+
+    return {
+      ongoingBooks: [],
+      onDeck: ongoingBooks.map(StripstreamAdapter.toNormalizedBook),
+    };
+  }
+
+  async getHomeOngoingSeries(): Promise<NormalizedSeries[]> {
+    const homeOpts = { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] };
+    const ongoingSeries = await this.client.fetch<StripstreamSeriesItem[]>(
+      "series/ongoing",
+      { limit: "20" },
+      homeOpts
+    );
+
+    return ongoingSeries.map(StripstreamAdapter.toNormalizedSeries);
+  }
+
+  async getHomeLatestSeries(): Promise<NormalizedSeries[]> {
+    const homeOpts = { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] };
+    const latestSeries = await this.client.fetch<StripstreamSeriesPage>(
+      "series",
+      { sort: "latest", limit: "10", has_books: "true" },
+      homeOpts
+    );
+
+    return latestSeries.items.map(StripstreamAdapter.toNormalizedSeries);
+  }
+
+  async getHomeRecentlyRead(): Promise<NormalizedBook[]> {
+    const homeOpts = { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] };
+    const booksPage = await this.client.fetch<StripstreamBooksPage>(
+      "books",
+      { sort: "latest", limit: "10" },
+      homeOpts
+    );
+
+    return booksPage.items.map(StripstreamAdapter.toNormalizedBook);
+  }
+
+  async getHomeReadingLists(): Promise<StripstreamReadingList[]> {
+    const homeOpts = { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] };
+    return this.client.fetch<StripstreamReadingList[]>("reading-lists", undefined, homeOpts);
   }
 
   async getReadingListDetail(id: string): Promise<StripstreamReadingListDetail> {
