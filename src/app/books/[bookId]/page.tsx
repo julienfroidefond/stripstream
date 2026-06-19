@@ -2,10 +2,10 @@ import { Suspense } from "react";
 import { ClientBookPage } from "@/components/reader/ClientBookPage";
 import { BookSkeleton } from "@/components/skeletons/BookSkeleton";
 import { getProvider } from "@/lib/providers/provider.factory";
+import { getReaderData } from "@/lib/reader/getReaderData";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 import { redirect } from "next/navigation";
-import logger from "@/lib/logger";
 
 export default async function BookPage({ params }: { params: Promise<{ bookId: string }> }) {
   const { bookId } = await params;
@@ -13,20 +13,11 @@ export default async function BookPage({ params }: { params: Promise<{ bookId: s
   try {
     const provider = await getProvider();
     if (!provider) redirect("/settings");
-
-    const book = await provider.getBook(bookId);
-    const pages = Array.from({ length: book.pageCount }, (_, i) => i + 1);
-
-    let nextBook = null;
-    try {
-      nextBook = await provider.getNextBook(bookId);
-    } catch (error) {
-      logger.warn({ err: error, bookId }, "Failed to fetch next book, continuing without it");
-    }
+    const readerData = await getReaderData(provider, bookId);
 
     return (
       <Suspense fallback={<BookSkeleton />}>
-        <ClientBookPage bookId={bookId} initialData={{ book, pages, nextBook }} />
+        <ClientBookPage bookId={bookId} initialData={readerData} />
       </Suspense>
     );
   } catch (error) {

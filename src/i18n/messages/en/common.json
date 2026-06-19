@@ -509,10 +509,20 @@
         "height": "fit height",
         "original": "original size"
       },
+      "info": "Book information",
       "close": "Close",
       "previousPage": "Previous page",
       "nextPage": "Next page",
       "refresh": "Reload book"
+    },
+    "info": {
+      "positionValue": "Volume {{current}} of {{total}}",
+      "positionCurrentOnly": "Volume {{current}}",
+      "progressValue": "{{progress}}% of the series",
+      "readingProgressValue": "Page {{current}} of {{total}}",
+      "description": "Description",
+      "noDescription": "No description available for this book.",
+      "notAvailable": "Not available"
     },
     "endOfSeries": "End of series",
     "endOfSeriesMessage": "You have finished all the books in this series!",

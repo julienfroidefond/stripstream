@@ -1,6 +1,14 @@
 import type { NormalizedBook } from "@/lib/providers/types";
 import type { FitMode } from "./hooks/useFitMode";
 
+export interface ReaderInfo {
+  seriesTitle: string | null;
+  seriesSummary: string | null;
+  bookSummary: string | null;
+  positionInSeries: number | null;
+  totalInSeries: number | null;
+}
+
 export interface PageCache {
   [pageNumber: number]: {
     blob: Blob;
@@ -13,6 +21,7 @@ export interface PageCache {
 export interface BookReaderProps {
   book: NormalizedBook;
   pages: number[];
+  readerInfo?: ReaderInfo | null;
   onClose?: (currentPage: number) => void;
   onRefresh?: () => Promise<void>;
   nextBook?: NormalizedBook | null;
@@ -40,6 +49,7 @@ export interface NavigationBarProps {
 export interface ControlButtonsProps {
   showControls: boolean;
   onToggleControls: () => void;
+  onToggleInfo: () => void;
   onPreviousPage: () => void;
   onNextPage: () => void;
   onPageChange: (page: number) => void;

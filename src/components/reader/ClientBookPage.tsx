@@ -5,29 +5,21 @@ import { ClientBookWrapper } from "./ClientBookWrapper";
 import { BookSkeleton } from "@/components/skeletons/BookSkeleton";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { ERROR_CODES } from "@/constants/errorCodes";
-import type { NormalizedBook } from "@/lib/providers/types";
 import logger from "@/lib/logger";
 import { getBookData } from "@/app/actions/books";
 import { revalidateForRefresh } from "@/app/actions/refresh";
+import type { ReaderData } from "@/lib/reader/getReaderData";
 
 interface ClientBookPageProps {
   bookId: string;
-  initialData?: {
-    book: NormalizedBook;
-    pages: number[];
-    nextBook: NormalizedBook | null;
-  };
+  initialData?: ReaderData;
   initialError?: string;
 }
 
 export function ClientBookPage({ bookId, initialData, initialError }: ClientBookPageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<{
-    book: NormalizedBook;
-    pages: number[];
-    nextBook: NormalizedBook | null;
-  } | null>(null);
+  const [data, setData] = useState<ReaderData | null>(null);
 
   // Use SSR data if available
   useEffect(() => {
@@ -93,5 +85,13 @@ export function ClientBookPage({ bookId, initialData, initialError }: ClientBook
     );
   }
 
-  return <ClientBookWrapper book={data.book} pages={data.pages} nextBook={data.nextBook} onRefresh={handleRefresh} />;
+  return (
+    <ClientBookWrapper
+      book={data.book}
+      pages={data.pages}
+      nextBook={data.nextBook}
+      readerInfo={data.readerInfo}
+      onRefresh={handleRefresh}
+    />
+  );
 }

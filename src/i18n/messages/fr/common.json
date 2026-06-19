@@ -507,10 +507,20 @@
         "height": "hauteur",
         "original": "taille originale"
       },
+      "info": "Informations du tome",
       "close": "Fermer",
       "previousPage": "Page précédente",
       "nextPage": "Page suivante",
       "refresh": "Recharger le livre"
+    },
+    "info": {
+      "positionValue": "Tome {{current}} sur {{total}}",
+      "positionCurrentOnly": "Tome {{current}}",
+      "progressValue": "{{progress}}% de la série",
+      "readingProgressValue": "Page {{current}} sur {{total}}",
+      "description": "Description",
+      "noDescription": "Aucune description disponible pour ce tome.",
+      "notAvailable": "Non disponible"
     },
     "endOfSeries": "Fin de la série",
     "endOfSeriesMessage": "Vous avez terminé tous les tomes de cette série !",

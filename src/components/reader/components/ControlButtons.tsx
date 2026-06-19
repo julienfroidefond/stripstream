@@ -15,6 +15,7 @@ import {
   StretchVertical,
   ScanSearch,
   RotateCcw,
+  Info,
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -25,6 +26,7 @@ import { IconButton } from "@/components/ui/icon-button";
 export const ControlButtons = ({
   showControls,
   onToggleControls,
+  onToggleInfo,
   onPreviousPage,
   onNextPage,
   onClose,
@@ -141,6 +143,18 @@ export const ControlButtons = ({
           tooltip={t("reader.controls.fitMode.current", {
             mode: t(`reader.controls.fitMode.${fitMode}`),
           })}
+          iconClassName="h-5 w-5"
+          className="rounded-full h-9 w-9"
+        />
+        <IconButton
+          variant="ghost"
+          size="icon"
+          icon={Info}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleInfo();
+          }}
+          tooltip={t("reader.controls.info")}
           iconClassName="h-5 w-5"
           className="rounded-full h-9 w-9"
         />

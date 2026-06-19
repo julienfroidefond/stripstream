@@ -6,15 +6,17 @@ import type { NormalizedBook } from "@/lib/providers/types";
 import { BookReader } from "./BookReader";
 import { useRouter } from "next/navigation";
 import { ClientOfflineBookService } from "@/lib/services/client-offlinebook.service";
+import type { ReaderInfo } from "./types";
 
 interface ClientBookWrapperProps {
   book: NormalizedBook;
   pages: number[];
   nextBook: NormalizedBook | null;
+  readerInfo?: ReaderInfo | null;
   onRefresh?: () => Promise<void>;
 }
 
-export function ClientBookWrapper({ book, pages, nextBook, onRefresh }: ClientBookWrapperProps) {
+export function ClientBookWrapper({ book, pages, nextBook, readerInfo, onRefresh }: ClientBookWrapperProps) {
   const router = useRouter();
   const [isClosing, setIsClosing] = useState(false);
 
@@ -36,6 +38,13 @@ export function ClientBookWrapper({ book, pages, nextBook, onRefresh }: ClientBo
   }
 
   return (
-    <BookReader book={book} pages={pages} onClose={handleCloseReader} onRefresh={onRefresh} nextBook={nextBook} />
+    <BookReader
+      book={book}
+      pages={pages}
+      readerInfo={readerInfo}
+      onClose={handleCloseReader}
+      onRefresh={onRefresh}
+      nextBook={nextBook}
+    />
   );
 }

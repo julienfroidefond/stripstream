@@ -16,6 +16,7 @@ export function useReaderState({ book, pages, onClose, nextBook }: BookReaderPro
   const { preferences } = usePreferences();
   const [showControls, setShowControls] = useState(false);
   const [showThumbnails, setShowThumbnails] = useState(false);
+  const [showInfo, setShowInfo] = useState(false);
 
   const totalPages = pages.length;
 
@@ -175,6 +176,8 @@ export function useReaderState({ book, pages, onClose, nextBook }: BookReaderPro
 
   const onToggleControls = useCallback(() => setShowControls((prev) => !prev), []);
   const onToggleThumbnails = useCallback(() => setShowThumbnails((prev) => !prev), []);
+  const onToggleInfo = useCallback(() => setShowInfo((prev) => !prev), []);
+  const onInfoOpenChange = useCallback((open: boolean) => setShowInfo(open), []);
   const onToggleFullscreen = useCallback(
     () => toggleFullscreen(document.body),
     [toggleFullscreen]
@@ -188,6 +191,7 @@ export function useReaderState({ book, pages, onClose, nextBook }: BookReaderPro
     showEndMessage,
     showControls,
     showThumbnails,
+    showInfo,
     isDoublePage,
     isFullscreen,
     isFullscreenAvailable,
@@ -203,6 +207,8 @@ export function useReaderState({ book, pages, onClose, nextBook }: BookReaderPro
     onClose: handleCloseReader,
     onToggleControls,
     onToggleThumbnails,
+    onToggleInfo,
+    onInfoOpenChange,
     onToggleDoublePage: toggleDoublePage,
     onToggleFullscreen,
     onToggleDirection: toggleDirection,
