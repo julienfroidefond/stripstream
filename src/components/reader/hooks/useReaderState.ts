@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import type { BookReaderProps } from "../types";
 import { useReadingDirection } from "./useReadingDirection";
 import { useFullscreen } from "./useFullscreen";
@@ -46,6 +46,11 @@ export function useReaderState({ book, pages, onClose, nextBook }: BookReaderPro
     [shouldShowDoublePageRaw, totalPages]
   );
 
+  const nextBookForLoader = useMemo(
+    () => nextBook ? { getPageUrl: nextBookPageUrlBuilder, pages: [] as number[] } : null,
+    [nextBook, nextBookPageUrlBuilder]
+  );
+
   const {
     imageBlobUrls,
     imageErrors,
@@ -60,7 +65,7 @@ export function useReaderState({ book, pages, onClose, nextBook }: BookReaderPro
     pageUrlBuilder: bookPageUrlBuilder,
     pages,
     prefetchCount: preferences.readerPrefetchCount,
-    nextBook: nextBook ? { getPageUrl: nextBookPageUrlBuilder, pages: [] } : null,
+    nextBook: nextBookForLoader,
   });
 
   const { currentPage, showEndMessage, navigateToPage, handlePreviousPage, handleNextPage } =

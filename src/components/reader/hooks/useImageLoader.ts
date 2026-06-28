@@ -51,6 +51,7 @@ export function useImageLoader({
   const [imageErrors, setImageErrors] = useState<Record<ImageKey, boolean>>({});
   const loadedImagesRef = useRef(loadedImages);
   const imageBlobUrlsRef = useRef(imageBlobUrls);
+  const imageErrorsRef = useRef(imageErrors);
   const isMountedRef = useRef(true);
   const pendingFetchesRef = useRef<Set<ImageKey>>(new Set());
   const abortControllersRef = useRef<Map<ImageKey, AbortController>>(new Map());
@@ -63,6 +64,10 @@ export function useImageLoader({
   useEffect(() => {
     imageBlobUrlsRef.current = imageBlobUrls;
   }, [imageBlobUrls]);
+
+  useEffect(() => {
+    imageErrorsRef.current = imageErrors;
+  }, [imageErrors]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -211,6 +216,8 @@ export function useImageLoader({
       const hasBlobUrl = imageBlobUrlsRef.current[key];
       if (hasDimensions && hasBlobUrl) return;
 
+      if (imageErrorsRef.current[key]) return;
+
       const existingPromise = loadingPromisesRef.current.get(key);
       if (existingPromise) return existingPromise;
 
@@ -274,6 +281,7 @@ export function useImageLoader({
   // Retry explicite déclenché par l'UI : reset l'état d'erreur puis re-prefetch
   const retryImage = useCallback(
     async (pageNum: number) => {
+      delete imageErrorsRef.current[pageNum];
       setImageErrors((prev) => {
         if (!prev[pageNum]) return prev;
         const next = { ...prev };
@@ -302,8 +310,9 @@ export function useImageLoader({
           const hasDimensions = loadedImagesRef.current[pageNum];
           const hasBlobUrl = imageBlobUrlsRef.current[pageNum];
           const isPending = pendingFetchesRef.current.has(pageNum);
+          const hasError = imageErrorsRef.current[pageNum];
 
-          if ((!hasDimensions || !hasBlobUrl) && !isPending) {
+          if ((!hasDimensions || !hasBlobUrl) && !isPending && !hasError) {
             pagesToPrefetch.push(pageNum);
           }
         }
