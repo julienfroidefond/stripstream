@@ -12,6 +12,7 @@ import {
   SERIES_BOOKS_CACHE_TAG,
 } from "@/constants/cacheConstants";
 import { checkRateLimit } from "@/utils/rate-limit";
+import { getActiveConnection, setActiveConnection } from "@/lib/active-connection";
 import type { KomgaLibrary } from "@/types/komga";
 
 const TEST_CONNECTION_LIMIT = 5;
@@ -99,22 +100,17 @@ export async function testKomgaConnection(
 export async function listKomgaConfigs(): Promise<KomgaConfigSummary[]> {
   try {
     const userId = await requireUserId();
-    const [configs, dbUser] = await Promise.all([
+    const [configs, activeConnection] = await Promise.all([
       prisma.komgaConfig.findMany({
         where: { userId },
         orderBy: { createdAt: "asc" },
         select: { id: true, name: true, url: true, username: true },
       }),
-      prisma.user.findUnique({
-        where: { id: userId },
-        select: { activeProvider: true, activeKomgaConfigId: true },
-      }),
+      getActiveConnection(userId),
     ]);
-    // Active uniquement si Komga est le provider courant ET que cette config est l'active
-    const isKomgaActive = dbUser?.activeProvider === "komga";
     return configs.map((c) => ({
       ...c,
-      isActive: isKomgaActive && dbUser?.activeKomgaConfigId === c.id,
+      isActive: activeConnection.provider === "komga" && activeConnection.configId === c.id,
     }));
   } catch {
     return [];
@@ -167,18 +163,6 @@ export async function saveKomgaConfig(
       data: { userId, name, url, username, authHeader },
     });
 
-    // Si l'utilisateur n'a aucune config active, activer celle-ci
-    const dbUser = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { activeKomgaConfigId: true },
-    });
-    if (!dbUser?.activeKomgaConfigId) {
-      await prisma.user.update({
-        where: { id: userId },
-        data: { activeKomgaConfigId: created.id, activeProvider: "komga" },
-      });
-    }
-
     revalidateConnectionCaches();
     return { success: true, message: "Configuration créée", id: created.id };
   } catch (error) {
@@ -204,23 +188,6 @@ export async function deleteKomgaConfig(
     if (!config) return { success: false, message: "Configuration introuvable" };
 
     await prisma.komgaConfig.delete({ where: { id } });
-
-    // Si on vient de supprimer la config active, en désigner une autre s'il en reste
-    const dbUser = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { activeKomgaConfigId: true },
-    });
-    if (dbUser?.activeKomgaConfigId === id) {
-      const next = await prisma.komgaConfig.findFirst({
-        where: { userId },
-        orderBy: { createdAt: "asc" },
-        select: { id: true },
-      });
-      await prisma.user.update({
-        where: { id: userId },
-        data: { activeKomgaConfigId: next?.id ?? null },
-      });
-    }
 
     revalidateConnectionCaches();
     return { success: true, message: "Configuration supprimée" };
@@ -283,10 +250,7 @@ export async function setActiveKomgaConfig(
     });
     if (!config) return { success: false, message: "Configuration introuvable" };
 
-    await prisma.user.update({
-      where: { id: userId },
-      data: { activeKomgaConfigId: id, activeProvider: "komga" },
-    });
+    await setActiveConnection("komga", id);
 
     revalidateConnectionCaches();
     return { success: true, message: `Komga actif : ${config.name}` };

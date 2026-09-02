@@ -14,6 +14,7 @@ import {
   SERIES_BOOKS_CACHE_TAG,
 } from "@/constants/cacheConstants";
 import { checkRateLimit } from "@/utils/rate-limit";
+import { getActiveConnection, setActiveConnection } from "@/lib/active-connection";
 
 const TEST_CONNECTION_LIMIT = 5;
 const TEST_CONNECTION_WINDOW_MS = 30_000;
@@ -82,22 +83,17 @@ export async function testStripstreamConnection(
 export async function listStripstreamConfigs(): Promise<StripstreamConfigSummary[]> {
   try {
     const userId = await requireUserId();
-    const [configs, dbUser] = await Promise.all([
+    const [configs, activeConnection] = await Promise.all([
       prisma.stripstreamConfig.findMany({
         where: { userId },
         orderBy: { createdAt: "asc" },
         select: { id: true, name: true, url: true },
       }),
-      prisma.user.findUnique({
-        where: { id: userId },
-        select: { activeProvider: true, activeStripstreamConfigId: true },
-      }),
+      getActiveConnection(userId),
     ]);
-    // Active uniquement si Stripstream est le provider courant ET que cette config est l'active
-    const isStripstreamActive = dbUser?.activeProvider === "stripstream";
     return configs.map((c) => ({
       ...c,
-      isActive: isStripstreamActive && dbUser?.activeStripstreamConfigId === c.id,
+      isActive: activeConnection.provider === "stripstream" && activeConnection.configId === c.id,
     }));
   } catch {
     return [];
@@ -146,17 +142,6 @@ export async function saveStripstreamConfig(
       data: { userId, name, url, token: input.token.trim() },
     });
 
-    const dbUser = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { activeStripstreamConfigId: true },
-    });
-    if (!dbUser?.activeStripstreamConfigId) {
-      await prisma.user.update({
-        where: { id: userId },
-        data: { activeStripstreamConfigId: created.id, activeProvider: "stripstream" },
-      });
-    }
-
     revalidateConnectionCaches();
     return { success: true, message: "Configuration créée", id: created.id };
   } catch (error) {
@@ -182,22 +167,6 @@ export async function deleteStripstreamConfig(
     if (!config) return { success: false, message: "Configuration introuvable" };
 
     await prisma.stripstreamConfig.delete({ where: { id } });
-
-    const dbUser = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { activeStripstreamConfigId: true },
-    });
-    if (dbUser?.activeStripstreamConfigId === id) {
-      const next = await prisma.stripstreamConfig.findFirst({
-        where: { userId },
-        orderBy: { createdAt: "asc" },
-        select: { id: true },
-      });
-      await prisma.user.update({
-        where: { id: userId },
-        data: { activeStripstreamConfigId: next?.id ?? null },
-      });
-    }
 
     revalidateConnectionCaches();
     return { success: true, message: "Configuration supprimée" };
@@ -252,10 +221,7 @@ export async function setActiveStripstreamConfig(
     });
     if (!config) return { success: false, message: "Configuration introuvable" };
 
-    await prisma.user.update({
-      where: { id: userId },
-      data: { activeStripstreamConfigId: id, activeProvider: "stripstream" },
-    });
+    await setActiveConnection("stripstream", id);
 
     revalidateConnectionCaches();
     return { success: true, message: `Stripstream actif : ${config.name}` };
@@ -274,24 +240,26 @@ export async function setActiveProvider(
     const userId = await requireUserId();
 
     if (provider === "komga") {
-      const hasConfig = await prisma.komgaConfig.findFirst({
+      const config = await prisma.komgaConfig.findFirst({
         where: { userId },
+        orderBy: { createdAt: "asc" },
         select: { id: true },
       });
-      if (!hasConfig) {
+      if (!config) {
         return { success: false, message: "Komga n'est pas encore configuré" };
       }
+      await setActiveConnection("komga", config.id);
     } else if (provider === "stripstream") {
-      const config = await getResolvedStripstreamConfig(userId);
+      const config = await prisma.stripstreamConfig.findFirst({
+        where: { userId },
+        orderBy: { createdAt: "asc" },
+        select: { id: true },
+      });
       if (!config) {
         return { success: false, message: "Stripstream n'est pas encore configuré" };
       }
+      await setActiveConnection("stripstream", config.id);
     }
-
-    await prisma.user.update({
-      where: { id: userId },
-      data: { activeProvider: provider },
-    });
 
     revalidateConnectionCaches();
     return {
@@ -312,12 +280,7 @@ export async function getActiveProvider(): Promise<ProviderType> {
     if (!user) return "komga";
     const userId = parseInt(user.id, 10);
 
-    const dbUser = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { activeProvider: true },
-    });
-
-    return (dbUser?.activeProvider as ProviderType) ?? "komga";
+    return (await getActiveConnection(userId)).provider;
   } catch {
     return "komga";
   }
@@ -335,8 +298,8 @@ export async function getProvidersStatus(): Promise<{
     }
     const userId = parseInt(user.id, 10);
 
-    const [dbUser, komgaConfig, stripstreamResolved] = await Promise.all([
-      prisma.user.findUnique({ where: { id: userId }, select: { activeProvider: true } }),
+    const [activeConnection, komgaConfig, stripstreamResolved] = await Promise.all([
+      getActiveConnection(userId),
       prisma.komgaConfig.findFirst({ where: { userId }, select: { id: true } }),
       getResolvedStripstreamConfig(userId),
     ]);
@@ -344,7 +307,7 @@ export async function getProvidersStatus(): Promise<{
     return {
       komgaConfigured: !!komgaConfig,
       stripstreamConfigured: !!stripstreamResolved,
-      activeProvider: (dbUser?.activeProvider as ProviderType) ?? "komga",
+      activeProvider: activeConnection.provider,
     };
   } catch {
     return { komgaConfigured: false, stripstreamConfigured: false, activeProvider: "komga" };

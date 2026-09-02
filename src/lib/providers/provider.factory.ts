@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-utils";
+import { getActiveConnection } from "@/lib/active-connection";
 import { getResolvedStripstreamConfig } from "./stripstream/stripstream-config-resolver";
 import type { IMediaProvider } from "./provider.interface";
 import type { StripstreamReadingListDetail } from "@/types/stripstream";
@@ -10,23 +11,13 @@ export async function getProvider(): Promise<IMediaProvider | null> {
 
   const userId = parseInt(user.id, 10);
 
-  const dbUser = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      activeProvider: true,
-      activeKomgaConfigId: true,
-      activeStripstreamConfigId: true,
-    },
-  });
-
-  if (!dbUser) return null;
-
-  const activeProvider = dbUser.activeProvider ?? "komga";
+  const activeConnection = await getActiveConnection(userId);
+  const activeProvider = activeConnection.provider;
 
   if (activeProvider === "stripstream") {
     const resolved = await getResolvedStripstreamConfig(
       userId,
-      dbUser.activeStripstreamConfigId ?? undefined
+      activeConnection.configId ?? undefined
     );
     if (resolved) {
       const { StripstreamProvider } = await import("./stripstream/stripstream.provider");
@@ -34,8 +25,8 @@ export async function getProvider(): Promise<IMediaProvider | null> {
     }
   }
 
-  if (activeProvider === "komga" || !dbUser.activeProvider) {
-    const config = await resolveActiveKomgaConfig(userId, dbUser.activeKomgaConfigId);
+  if (activeProvider === "komga") {
+    const config = await resolveActiveKomgaConfig(userId, activeConnection.configId);
     if (!config) return null;
     const { KomgaProvider } = await import("./komga/komga.provider");
     return new KomgaProvider(config.url, config.authHeader);
@@ -49,12 +40,7 @@ export async function getActiveProviderType(): Promise<string | null> {
   if (!user) return null;
 
   const userId = parseInt(user.id, 10);
-  const dbUser = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { activeProvider: true },
-  });
-
-  return dbUser?.activeProvider ?? "komga";
+  return (await getActiveConnection(userId)).provider;
 }
 
 /**
@@ -66,16 +52,12 @@ export async function fetchReadingListDetail(id: string): Promise<StripstreamRea
   if (!user) return null;
 
   const userId = parseInt(user.id, 10);
-  const dbUser = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { activeProvider: true, activeStripstreamConfigId: true },
-  });
-
-  if (!dbUser || dbUser.activeProvider !== "stripstream") return null;
+  const activeConnection = await getActiveConnection(userId);
+  if (activeConnection.provider !== "stripstream") return null;
 
   const resolved = await getResolvedStripstreamConfig(
     userId,
-    dbUser.activeStripstreamConfigId ?? undefined
+    activeConnection.configId ?? undefined
   );
   if (!resolved) return null;
 

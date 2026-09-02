@@ -1,6 +1,7 @@
 import { unstable_cache } from "next/cache";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "../auth-utils";
+import { getActiveConnection } from "@/lib/active-connection";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
 import { FAVORITES_CACHE_TAG } from "../../constants/cacheConstants";
@@ -74,20 +75,8 @@ export class FavoriteService {
   private static async getActiveContext(): Promise<ActiveContext> {
     const user = await FavoriteService.getCurrentUser();
     const userId = parseInt(user.id, 10);
-    const dbUser = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        activeProvider: true,
-        activeKomgaConfigId: true,
-        activeStripstreamConfigId: true,
-      },
-    });
-    const provider = (dbUser?.activeProvider ?? "komga") as ProviderType;
-    const configId =
-      provider === "komga"
-        ? dbUser?.activeKomgaConfigId ?? null
-        : dbUser?.activeStripstreamConfigId ?? null;
-    return { userId, provider, configId };
+    const activeConnection = await getActiveConnection(userId);
+    return { userId, provider: activeConnection.provider, configId: activeConnection.configId };
   }
 
   static async isFavorite(seriesId: string): Promise<boolean> {

@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "../auth-utils";
+import { getActiveConnection } from "@/lib/active-connection";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
 import type { User, KomgaConfigData, KomgaConfig } from "@/types/komga";
@@ -26,14 +27,11 @@ export class ConfigDBService {
 
       const authHeader = Buffer.from(`${data.username}:${data.password}`).toString("base64");
 
-      const dbUser = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { activeKomgaConfigId: true },
-      });
+      const activeConnection = await getActiveConnection(userId);
 
-      if (dbUser?.activeKomgaConfigId) {
+      if (activeConnection.provider === "komga" && activeConnection.configId) {
         const config = await prisma.komgaConfig.update({
-          where: { id: dbUser.activeKomgaConfigId },
+          where: { id: activeConnection.configId },
           data: { url: data.url, username: data.username, authHeader },
         });
         return config as KomgaConfig;
@@ -47,10 +45,6 @@ export class ConfigDBService {
           username: data.username,
           authHeader,
         },
-      });
-      await prisma.user.update({
-        where: { id: userId },
-        data: { activeKomgaConfigId: config.id },
       });
       return config as KomgaConfig;
     } catch (error) {
@@ -67,14 +61,11 @@ export class ConfigDBService {
       const user = await this.getCurrentUser();
       const userId = parseInt(user.id, 10);
 
-      const dbUser = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { activeKomgaConfigId: true },
-      });
+      const activeConnection = await getActiveConnection(userId);
 
-      if (dbUser?.activeKomgaConfigId) {
+      if (activeConnection.provider === "komga" && activeConnection.configId) {
         const config = await prisma.komgaConfig.findFirst({
-          where: { id: dbUser.activeKomgaConfigId, userId },
+          where: { id: activeConnection.configId, userId },
         });
         if (config) return config as KomgaConfig;
       }
