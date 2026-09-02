@@ -18,8 +18,8 @@ function getOrigin(book: NormalizedBook): string | null {
   }
 }
 
-function buildKey(origin: string, bookId: string): string {
-  return `${origin}::${bookId}${PAGE_KEY_SUFFIX}`;
+function buildKey(origin: string, bookId: string, scope?: string): string {
+  return `${origin}::${scope ?? "anonymous"}::${bookId}${PAGE_KEY_SUFFIX}`;
 }
 
 function hasLocalStorage(): boolean {
@@ -32,7 +32,7 @@ export class ClientOfflineBookService {
     const origin = getOrigin(book);
     if (!origin) return;
     try {
-      localStorage.setItem(buildKey(origin, book.id), page.toString());
+      localStorage.setItem(buildKey(origin, book.id, book.readProgressScope), page.toString());
     } catch {
       // Ignore localStorage errors (quota, SSR, private mode)
     }
@@ -44,7 +44,7 @@ export class ClientOfflineBookService {
     const origin = getOrigin(book);
     if (!origin) return readProgressPage;
     try {
-      const stored = localStorage.getItem(buildKey(origin, book.id));
+      const stored = localStorage.getItem(buildKey(origin, book.id, book.readProgressScope));
       if (!stored) return readProgressPage;
       const currentPage = parseInt(stored, 10);
       if (Number.isNaN(currentPage)) return readProgressPage;
@@ -59,7 +59,7 @@ export class ClientOfflineBookService {
     if (!hasLocalStorage()) return;
     const origin = getOrigin(book);
     try {
-      if (origin) localStorage.removeItem(buildKey(origin, book.id));
+      if (origin) localStorage.removeItem(buildKey(origin, book.id, book.readProgressScope));
       // Nettoyage de l'ancienne clé non scopée si elle traîne
       localStorage.removeItem(`${book.id}${LEGACY_PAGE_KEY_SUFFIX}`);
     } catch {

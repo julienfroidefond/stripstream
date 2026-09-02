@@ -27,6 +27,7 @@ model User {
   stripstreamConfigs StripstreamConfig[]
   preferences        Preferences?
   favorites          Favorite[]
+  readProgresses     ReadProgress[]
 
   @@map("users")
 }
@@ -110,4 +111,24 @@ model Favorite {
   @@unique([userId, stripstreamConfigId, seriesId])
   @@index([userId])
   @@map("favorites")
+}
+
+// L'avancement appartient au compte Stripstream, pas au compte technique du
+// fournisseur (Komga ou Stripstream). Deux utilisateurs peuvent donc partager
+// une même bibliothèque sans partager leurs lectures.
+model ReadProgress {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  bookId     String
+  page       Int?
+  completed  Boolean  @default(false)
+  lastReadAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, bookId])
+  @@index([userId])
+  @@map("readprogresses")
 }
