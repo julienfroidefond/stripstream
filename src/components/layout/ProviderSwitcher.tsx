@@ -76,6 +76,7 @@ export function ProviderSwitcher({ komgaConfigs, stripstreamConfigs }: ProviderS
   const handleActivate = async (conn: UnifiedConnection) => {
     if (conn.isActive || busyKey) return;
     setBusyKey(keyOf(conn));
+    setIsOpen(false);
     try {
       const result =
         conn.type === "komga"
@@ -87,9 +88,15 @@ export function ProviderSwitcher({ komgaConfigs, stripstreamConfigs }: ProviderS
         description: result.message,
       });
       if (result.success) {
-        setIsOpen(false);
-        router.refresh();
+        // Une navigation RSC repasse par les Suspense de la home et affiche
+        // les skeletons, contrairement à router.refresh() qui conserve
+        // l'ancien arbre pendant le chargement.
+        router.replace(`/?connection=${Date.now()}`);
+      } else {
+        setIsOpen(true);
       }
+    } catch {
+      setIsOpen(true);
     } finally {
       setBusyKey(null);
     }
