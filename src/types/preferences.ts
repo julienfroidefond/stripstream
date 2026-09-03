@@ -11,6 +11,7 @@ export interface BackgroundPreferences {
 
 export type FitMode = "fit" | "width" | "height" | "original";
 export type ReadingDirection = "ltr" | "rtl";
+export type ReaderBackground = "default" | "black" | "white" | "cream";
 export type SortOrder = "title" | "latest";
 
 export interface UserPreferences {
@@ -25,6 +26,7 @@ export interface UserPreferences {
   background: BackgroundPreferences;
   readerPrefetchCount: number;
   readingDirection: ReadingDirection;
+  readerBackground: ReaderBackground;
   readerFitMode: FitMode;
   readerDoublePageMode: boolean;
   defaultSortOrder: SortOrder;
@@ -48,6 +50,7 @@ export const defaultPreferences: UserPreferences = {
   },
   readerPrefetchCount: 5,
   readingDirection: "ltr",
+  readerBackground: "default",
   readerFitMode: "fit",
   readerDoublePageMode: false,
   defaultSortOrder: "title",

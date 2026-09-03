@@ -1,4 +1,5 @@
 import type { NormalizedBook } from "@/lib/providers/types";
+import type { ReaderBackground } from "@/types/preferences";
 
 export interface ReaderInfo {
   seriesTitle: string | null;
@@ -65,6 +66,8 @@ export interface ControlButtonsProps {
   onToggleDirection: () => void;
   showThumbnails: boolean;
   onToggleThumbnails: () => void;
+  readerBackground: ReaderBackground;
+  onReaderBackgroundChange: (background: ReaderBackground) => void;
 }
 
 export interface UsePageNavigationProps {

@@ -77,6 +77,7 @@ model Preferences {
   readerPrefetchCount  Int      @default(5)
   anonymousMode        Boolean  @default(false)
   readingDirection     String   @default("ltr")
+  readerBackground     String   @default("default")
   readerFitMode        String   @default("fit")
   readerDoublePageMode Boolean  @default(false)
   defaultSortOrder     String   @default("title")

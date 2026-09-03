@@ -500,6 +500,13 @@
         "show": "Afficher les vignettes",
         "hide": "Masquer les vignettes"
       },
+      "background": {
+        "title": "Fond de lecture",
+        "default": "Défaut",
+        "black": "Noir",
+        "white": "Blanc",
+        "cream": "Crème"
+      },
       "fitMode": {
         "current": "Affichage : {{mode}}",
         "fit": "page entière",

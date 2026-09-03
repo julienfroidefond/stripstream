@@ -10,6 +10,7 @@ import {
   MoveRight,
   MoveLeft,
   Images,
+  Palette,
   RotateCcw,
   Info,
 } from "lucide-react";
@@ -18,6 +19,21 @@ import { cn } from "@/lib/utils";
 import { PageInput } from "./PageInput";
 import { useTranslation } from "react-i18next";
 import { IconButton } from "@/components/ui/icon-button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import type { ReaderBackground } from "@/types/preferences";
+
+const readerBackgroundOptions: { value: ReaderBackground; className: string }[] = [
+  { value: "default", className: "bg-gradient-to-br from-primary/70 via-background to-cyan-400/50" },
+  { value: "black", className: "bg-[#09090b]" },
+  { value: "white", className: "border border-black/20 bg-white" },
+  { value: "cream", className: "bg-[#f4ead8]" },
+];
 
 export const ControlButtons = ({
   showControls,
@@ -39,6 +55,8 @@ export const ControlButtons = ({
   onPageChange,
   showThumbnails,
   onToggleThumbnails,
+  readerBackground,
+  onReaderBackgroundChange,
 }: ControlButtonsProps) => {
   const { t } = useTranslation();
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -143,6 +161,29 @@ export const ControlButtons = ({
           iconClassName="h-5 w-5"
           className={cn("rounded-full h-9 w-9", showThumbnails && "ring-2 ring-primary")}
         />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <IconButton
+              variant="ghost"
+              size="icon"
+              icon={Palette}
+              onClick={(e) => e.stopPropagation()}
+              tooltip={t("reader.controls.background.title")}
+              iconClassName="h-5 w-5"
+              className="rounded-full h-9 w-9"
+            />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="center" className="min-w-40" onClick={(e) => e.stopPropagation()}>
+            <DropdownMenuRadioGroup value={readerBackground} onValueChange={(value) => onReaderBackgroundChange(value as ReaderBackground)}>
+              {readerBackgroundOptions.map(({ value, className }) => (
+                <DropdownMenuRadioItem key={value} value={value} className="gap-2">
+                  <span className={cn("h-4 w-4 rounded-full", className)} aria-hidden />
+                  {t(`reader.controls.background.${value}`)}
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
         {onRefresh && (
           <IconButton
             variant="ghost"

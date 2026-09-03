@@ -49,6 +49,7 @@ export class PreferencesService {
         },
         readerPrefetchCount: preferences.readerPrefetchCount,
         readingDirection: (preferences.readingDirection as UserPreferences["readingDirection"]) ?? defaultPreferences.readingDirection,
+        readerBackground: (preferences.readerBackground as UserPreferences["readerBackground"]) ?? defaultPreferences.readerBackground,
         readerFitMode: (preferences.readerFitMode as UserPreferences["readerFitMode"]) ?? defaultPreferences.readerFitMode,
         readerDoublePageMode: preferences.readerDoublePageMode,
         defaultSortOrder: (preferences.defaultSortOrder as UserPreferences["defaultSortOrder"]) ?? defaultPreferences.defaultSortOrder,
@@ -86,6 +87,8 @@ export class PreferencesService {
         updateData.anonymousMode = preferences.anonymousMode;
       if (preferences.readingDirection !== undefined)
         updateData.readingDirection = preferences.readingDirection;
+      if (preferences.readerBackground !== undefined)
+        updateData.readerBackground = preferences.readerBackground;
       if (preferences.readerFitMode !== undefined)
         updateData.readerFitMode = preferences.readerFitMode;
       if (preferences.readerDoublePageMode !== undefined)
@@ -110,6 +113,7 @@ export class PreferencesService {
             defaultPreferences.background) as unknown as Prisma.InputJsonValue,
           readerPrefetchCount: preferences.readerPrefetchCount ?? 5,
           readingDirection: preferences.readingDirection ?? defaultPreferences.readingDirection,
+          readerBackground: preferences.readerBackground ?? defaultPreferences.readerBackground,
           readerFitMode: preferences.readerFitMode ?? defaultPreferences.readerFitMode,
           readerDoublePageMode: preferences.readerDoublePageMode ?? defaultPreferences.readerDoublePageMode,
           defaultSortOrder: preferences.defaultSortOrder ?? defaultPreferences.defaultSortOrder,
@@ -129,6 +133,7 @@ export class PreferencesService {
         },
         readerPrefetchCount: updatedPreferences.readerPrefetchCount,
         readingDirection: (updatedPreferences.readingDirection as UserPreferences["readingDirection"]) ?? defaultPreferences.readingDirection,
+        readerBackground: (updatedPreferences.readerBackground as UserPreferences["readerBackground"]) ?? defaultPreferences.readerBackground,
         readerFitMode: (updatedPreferences.readerFitMode as UserPreferences["readerFitMode"]) ?? defaultPreferences.readerFitMode,
         readerDoublePageMode: updatedPreferences.readerDoublePageMode,
         defaultSortOrder: (updatedPreferences.defaultSortOrder as UserPreferences["defaultSortOrder"]) ?? defaultPreferences.defaultSortOrder,

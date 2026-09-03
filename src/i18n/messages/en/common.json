@@ -502,6 +502,13 @@
         "show": "Show thumbnails",
         "hide": "Hide thumbnails"
       },
+      "background": {
+        "title": "Reading background",
+        "default": "Default",
+        "black": "Black",
+        "white": "White",
+        "cream": "Cream"
+      },
       "fitMode": {
         "current": "Fit mode: {{mode}}",
         "fit": "fit page",

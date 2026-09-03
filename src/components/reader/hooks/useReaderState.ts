@@ -10,12 +10,15 @@ import { useImageLoader } from "./useImageLoader";
 import { usePageNavigation } from "./usePageNavigation";
 import { useTouchNavigation } from "./useTouchNavigation";
 import { usePreferences } from "@/contexts/PreferencesContext";
+import { updatePreferences } from "@/app/actions/preferences";
+import type { ReaderBackground } from "@/types/preferences";
 
 export function useReaderState({ book, pages, onClose, nextBook }: BookReaderProps) {
   const { preferences } = usePreferences();
   const [showControls, setShowControls] = useState(false);
   const [showThumbnails, setShowThumbnails] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+  const [readerBackground, setReaderBackground] = useState<ReaderBackground>(preferences.readerBackground);
 
   const totalPages = pages.length;
 
@@ -184,6 +187,10 @@ export function useReaderState({ book, pages, onClose, nextBook }: BookReaderPro
   const onToggleControls = useCallback(() => setShowControls((prev) => !prev), []);
   const onToggleThumbnails = useCallback(() => setShowThumbnails((prev) => !prev), []);
   const onToggleInfo = useCallback(() => setShowInfo((prev) => !prev), []);
+  const onReaderBackgroundChange = useCallback((background: ReaderBackground) => {
+    setReaderBackground(background);
+    updatePreferences({ readerBackground: background }).catch(() => undefined);
+  }, []);
   const onInfoOpenChange = useCallback((open: boolean) => setShowInfo(open), []);
   const onToggleFullscreen = useCallback(
     () => toggleFullscreen(document.body),
@@ -199,6 +206,7 @@ export function useReaderState({ book, pages, onClose, nextBook }: BookReaderPro
     showControls,
     showThumbnails,
     showInfo,
+    readerBackground,
     isDoublePage,
     isFullscreen,
     isFullscreenAvailable,
@@ -215,6 +223,7 @@ export function useReaderState({ book, pages, onClose, nextBook }: BookReaderPro
     onToggleControls,
     onToggleThumbnails,
     onToggleInfo,
+    onReaderBackgroundChange,
     onInfoOpenChange,
     onToggleDoublePage: toggleDoublePage,
     onToggleFullscreen,

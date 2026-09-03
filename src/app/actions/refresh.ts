@@ -25,7 +25,7 @@ export async function revalidateForRefresh(scope: RefreshScope, id: string): Pro
       revalidatePath("/series");
       break;
     case "book":
-      revalidateTag(`${BOOK_CACHE_TAG}:${id}`, "everything");
+      revalidateTag(`${BOOK_CACHE_TAG}:${id}`, "max");
       revalidatePath(`/books/${id}`);
       break;
     default:

@@ -13,7 +13,7 @@ export function BookReader(props: BookReaderProps) {
   const s = useReaderState(props);
 
   return (
-    <ReaderContainer onContainerClick={s.onToggleControls}>
+    <ReaderContainer onContainerClick={s.onToggleControls} background={s.readerBackground}>
       <ReaderInfoDialog
         open={s.showInfo}
         onOpenChange={s.onInfoOpenChange}
@@ -47,6 +47,8 @@ export function BookReader(props: BookReaderProps) {
         onToggleDirection={s.onToggleDirection}
         showThumbnails={s.showThumbnails}
         onToggleThumbnails={s.onToggleThumbnails}
+        readerBackground={s.readerBackground}
+        onReaderBackgroundChange={s.onReaderBackgroundChange}
       />
 
       <PageDisplay
