@@ -27,7 +27,7 @@ export async function scanLibrary(
 
 export async function getRandomBookFromLibraries(
   libraryIds: string[]
-): Promise<{ success: boolean; bookId?: string; message?: string }> {
+): Promise<{ success: boolean; thumbnailUrl?: string; message?: string }> {
   try {
     if (!libraryIds.length) {
       return { success: false, message: "Au moins une bibliothèque doit être sélectionnée" };
@@ -37,7 +37,11 @@ export async function getRandomBookFromLibraries(
     if (!provider) return { success: false, message: "Provider non configuré" };
 
     const bookId = await provider.getRandomBook(libraryIds);
-    return { success: true, bookId: bookId ?? undefined };
+    if (!bookId) {
+      return { success: false, message: "Aucun livre trouvé dans les bibliothèques sélectionnées" };
+    }
+
+    return { success: true, thumbnailUrl: provider.getBookThumbnailUrl(bookId) };
   } catch (error) {
     if (error instanceof AppError) {
       return { success: false, message: error.message };

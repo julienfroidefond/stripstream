@@ -200,7 +200,7 @@ export function BackgroundSettings({ initialLibraries }: BackgroundSettingsProps
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="komga-random" id="bg-komga-random" />
                   <Label htmlFor="bg-komga-random" className="cursor-pointer font-normal">
-                    Cover Komga aléatoire
+                    Cover aléatoire
                   </Label>
                 </div>
               )}
@@ -262,7 +262,7 @@ export function BackgroundSettings({ initialLibraries }: BackgroundSettingsProps
             </div>
           )}
 
-          {/* Sélection des bibliothèques Komga */}
+          {/* Sélection des bibliothèques utilisées pour la cover aléatoire */}
           {preferences.background.type === "komga-random" && (
             <div className="space-y-3">
               <Label>Bibliothèques</Label>

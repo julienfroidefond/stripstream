@@ -42,7 +42,7 @@ export default function ClientLayout({
   initialErrors,
 }: ClientLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [randomBookId, setRandomBookId] = useState<string | null>(null);
+  const [randomBookThumbnailUrl, setRandomBookThumbnailUrl] = useState<string | null>(null);
   const pathname = usePathname();
   const { preferences } = usePreferences();
   const { toast } = useToast();
@@ -90,12 +90,13 @@ export default function ClientLayout({
   // Récupérer un book aléatoire pour le background
   const fetchRandomBook = useCallback(async () => {
     if (backgroundType === "komga-random" && libraryIdsString) {
+      setRandomBookThumbnailUrl(null);
       try {
         const libraryIds = libraryIdsString.split(",").filter(Boolean);
         const result = await getRandomBookFromLibraries(libraryIds);
 
-        if (result.success && result.bookId) {
-          setRandomBookId(result.bookId);
+        if (result.success && result.thumbnailUrl) {
+          setRandomBookThumbnailUrl(result.thumbnailUrl);
         }
       } catch (error) {
         logger.error({ err: error }, "Erreur lors de la récupération d'un book aléatoire:");
@@ -130,9 +131,9 @@ export default function ClientLayout({
       };
     }
 
-    if (bg.type === "komga-random" && randomBookId) {
+    if (bg.type === "komga-random" && randomBookThumbnailUrl) {
       return {
-        backgroundImage: `url(/api/komga/images/books/${randomBookId}/thumbnail)`,
+        backgroundImage: `url(${randomBookThumbnailUrl})`,
         backgroundSize: "cover" as const,
         backgroundPosition: "top center" as const,
         backgroundRepeat: "no-repeat" as const,
@@ -141,7 +142,7 @@ export default function ClientLayout({
     }
 
     return {};
-  }, [preferences.background, randomBookId]);
+  }, [preferences.background, randomBookThumbnailUrl]);
 
   const handleCloseSidebar = () => {
     setIsSidebarOpen(false);

@@ -566,12 +566,15 @@ export class KomgaProvider implements IMediaProvider {
       const condition: KomgaCondition = libraryId
         ? { libraryId: { operator: "is", value: libraryId } }
         : {};
-      const randomPage = Math.floor(Math.random() * 5);
-      const response = await this.fetch<LibraryResponse<KomgaBook>>(
+      const getPage = (page: number) => this.fetch<LibraryResponse<KomgaBook>>(
         "books/list",
-        { page: String(randomPage), size: "20", sort: "metadata.numberSort,asc" },
+        { page: String(page), size: "20", sort: "metadata.numberSort,asc" },
         { method: "POST", body: JSON.stringify({ condition }) }
       );
+      const firstPage = await getPage(0);
+      const response = firstPage.totalPages > 1
+        ? await getPage(Math.floor(Math.random() * firstPage.totalPages))
+        : firstPage;
       const books = response.content.filter((b) => !b.deleted);
       if (!books.length) return null;
       return books[Math.floor(Math.random() * books.length)].id;
