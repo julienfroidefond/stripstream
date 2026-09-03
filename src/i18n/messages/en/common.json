@@ -95,6 +95,7 @@
     "title": "Preferences",
     "tabs": {
       "display": "Display",
+      "reading": "Reading",
       "connection": "Connection"
     },
     "display": {
@@ -139,6 +140,46 @@
     "error": {
       "title": "Error",
       "message": "An error occurred while updating preferences"
+    },
+    "messages": {
+      "configSaved": "Settings saved"
+    },
+    "reader": {
+      "title": "Reader",
+      "description": "Customize your reading experience.",
+      "experience": {
+        "title": "Reading Experience",
+        "description": "Customize the reader for your comfort."
+      },
+      "readingDirection": {
+        "label": "Reading direction",
+        "description": "Choose the reading direction (left to right or right to left)."
+      },
+      "background": {
+        "label": "Reading background",
+        "description": "Choose the reader background color."
+      },
+      "doublePage": {
+        "label": "Double page mode",
+        "description": "Display two pages side by side (useful in landscape)."
+      },
+      "library": {
+        "title": "Library Display",
+        "description": "Customize the display of your series."
+      },
+      "sortOrder": {
+        "label": "Default sort",
+        "placeholder": "Select sort order",
+        "description": "Order of series display in libraries."
+      },
+      "showMissing": {
+        "label": "Show missing books",
+        "description": "Show missing books in series."
+      },
+      "hideMissing": {
+        "label": "Hide missing books",
+        "description": "Hide missing books in series."
+      }
     },
     "connections": {
       "title": "My connections",

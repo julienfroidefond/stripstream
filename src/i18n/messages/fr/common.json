@@ -95,6 +95,7 @@
     "title": "Préférences",
     "tabs": {
       "display": "Affichage",
+      "reading": "Lecture",
       "connection": "Connexion"
     },
     "display": {
@@ -139,6 +140,51 @@
     "error": {
       "title": "Erreur",
       "message": "Une erreur est survenue lors de la mise à jour des préférences"
+    },
+    "messages": {
+      "configSaved": "Préférences enregistrées"
+    },
+    "komga": {
+      "messages": {
+        "configSaved": "Préférences enregistrées"
+      }
+    },
+    "reader": {
+      "title": "Lecteur",
+      "description": "Personnalisez l'expérience de lecture.",
+      "experience": {
+        "title": "Expérience de lecture",
+        "description": "Personnalisez le lecteur pour votre confort."
+      },
+      "readingDirection": {
+        "label": "Sens de lecture",
+        "description": "Choisissez le sens de lecture (gauche à droite ou droite à gauche)."
+      },
+      "background": {
+        "label": "Fond de lecture",
+        "description": "Choisissez la couleur de fond du lecteur."
+      },
+      "doublePage": {
+        "label": "Mode double page",
+        "description": "Afficher deux pages côte à côte (utile en paysage)."
+      },
+      "library": {
+        "title": "Affichage de la bibliothèque",
+        "description": "Personnalisez l'affichage de vos séries."
+      },
+      "sortOrder": {
+        "label": "Tri par défaut",
+        "placeholder": "Sélectionner un tri",
+        "description": "Ordre d'affichage des séries dans les bibliothèques."
+      },
+      "showMissing": {
+        "label": "Afficher les tomes manquants",
+        "description": "Afficher les tomes manquants dans les séries."
+      },
+      "hideMissing": {
+        "label": "Masquer les tomes manquants",
+        "description": "Masquer les tomes manquants dans les séries."
+      }
     },
     "connections": {
       "title": "Mes connexions",

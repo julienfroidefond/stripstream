@@ -10,8 +10,9 @@ import { ConnectionsSettings } from "./ConnectionsSettings";
 import { BackgroundSettings } from "./BackgroundSettings";
 import { AdvancedSettings } from "./AdvancedSettings";
 import { CacheSettings } from "./CacheSettings";
+import { ReaderSettings } from "./ReaderSettings";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Monitor, Network } from "lucide-react";
+import { Monitor, Network, BookOpen } from "lucide-react";
 
 interface ClientSettingsProps {
   initialLibraries: NormalizedLibrary[];
@@ -27,11 +28,11 @@ export function ClientSettings({
   stripstreamConfigs,
 }: ClientSettingsProps) {
   const { t } = useTranslate();
-  const [activeTab, setActiveTab] = useState<"display" | "connection">("display");
+  const [activeTab, setActiveTab] = useState<"display" | "reader" | "connection">("display");
 
   useEffect(() => {
     const savedTab = window.sessionStorage.getItem(SETTINGS_TAB_STORAGE_KEY);
-    if (savedTab === "display" || savedTab === "connection") {
+    if (savedTab === "display" || savedTab === "reader" || savedTab === "connection") {
       const rafId = window.requestAnimationFrame(() => {
         setActiveTab(savedTab);
       });
@@ -40,7 +41,7 @@ export function ClientSettings({
   }, []);
 
   const handleTabChange = (tab: string) => {
-    if (tab === "display" || tab === "connection") {
+    if (tab === "display" || tab === "reader" || tab === "connection") {
       setActiveTab(tab);
       window.sessionStorage.setItem(SETTINGS_TAB_STORAGE_KEY, tab);
     }
@@ -52,10 +53,14 @@ export function ClientSettings({
         <h1 className="text-3xl font-bold">{t("settings.title")}</h1>
 
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="display" className="flex items-center gap-2">
               <Monitor className="h-4 w-4" />
               {t("settings.tabs.display")}
+            </TabsTrigger>
+            <TabsTrigger value="reader" className="flex items-center gap-2">
+              <BookOpen className="h-4 w-4" />
+              {t("settings.tabs.reading")}
             </TabsTrigger>
             <TabsTrigger value="connection" className="flex items-center gap-2">
               <Network className="h-4 w-4" />
@@ -66,6 +71,10 @@ export function ClientSettings({
           <TabsContent value="display" className="mt-6 space-y-6">
             <DisplaySettings />
             <BackgroundSettings initialLibraries={initialLibraries} />
+          </TabsContent>
+
+          <TabsContent value="reader" className="mt-6 space-y-6">
+            <ReaderSettings />
           </TabsContent>
 
           <TabsContent value="connection" className="mt-6 space-y-6">
