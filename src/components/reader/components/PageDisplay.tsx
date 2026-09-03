@@ -135,7 +135,9 @@ export function PageDisplay({
           : "overflow-auto";
 
   const innerSizing = cn(
-    "relative flex w-full px-2 sm:px-4",
+    // Le lecteur est un overlay fixe : le spread doit se centrer par rapport au
+    // viewport, jamais à un parent flex qui peut se réduire à son contenu.
+    "relative flex w-screen min-w-screen max-w-none px-2 sm:px-4",
     fitMode === "fit" && "h-[calc(100vh-2.5rem)] items-center justify-center",
     fitMode === "width" && "min-h-[calc(100vh-2.5rem)] items-start justify-center",
     fitMode === "height" && "h-[calc(100vh-2.5rem)] items-center min-w-full",
@@ -162,7 +164,7 @@ export function PageDisplay({
   return (
     <div
       className={cn(
-        "relative flex w-full flex-1 items-center justify-center",
+        "relative flex w-screen max-w-none flex-1 self-stretch items-center justify-center",
         outerOverflow
       )}
     >
