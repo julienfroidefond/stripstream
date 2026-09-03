@@ -1,7 +1,9 @@
-// StripStream Service Worker - v3
+// StripStream Service Worker - v3.1
 // Strategy: static assets + images only. HTML/RSC are never cached to prevent stale-page white screens.
 
-const VERSION = "v3.0";
+// Bump this when a deployed client bundle must no longer be served from the
+// static cache (for example after a reader layout correction).
+const VERSION = "v3.1";
 const STATIC_CACHE = `stripstream-static-${VERSION}`;
 const IMAGES_CACHE = `stripstream-images-${VERSION}`;
 const BOOKS_CACHE = "stripstream-books"; // Never version — managed by DownloadManager
