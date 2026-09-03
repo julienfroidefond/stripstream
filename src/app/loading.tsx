@@ -1,58 +1,22 @@
-"use client";
+import { Bookmark, Heart, History, LibraryBig, Sparkles, Wand2 } from "lucide-react";
+import { HomeCarouselSkeleton, HomeHeroSkeleton } from "@/components/home/HomeContent";
 
-import { useEffect, useState } from "react";
-import Image from "next/image";
-
-const SHOW_DELAY_MS = 140;
-
+/**
+ * The root layout also reloads connection-specific navigation data. Keep the
+ * route fallback consistent with the Home RSC boundaries while that happens,
+ * instead of replacing the whole app with a separate client-side loader.
+ */
 export default function AppLoading() {
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      setIsVisible(true);
-    }, SHOW_DELAY_MS);
-
-    return () => window.clearTimeout(timeoutId);
-  }, []);
-
   return (
-    <main
-      className={`flex min-h-screen items-center justify-center px-6 transition-opacity duration-300 motion-reduce:transition-none ${
-        isVisible ? "opacity-100" : "opacity-0"
-      }`}
-    >
-      <div className="flex w-full max-w-sm flex-col items-center gap-6 text-center">
-        <div className="space-y-3">
-          <Image
-            src="/images/logostripstream.png"
-            alt="StripStream Logo"
-            width={80}
-            height={80}
-            className="mx-auto hidden h-20 w-20 rounded-xl object-cover dark:block"
-          />
-          <Image
-            src="/images/logostripstream-white.png"
-            alt="StripStream Logo"
-            width={80}
-            height={80}
-            className="mx-auto h-20 w-20 rounded-xl object-cover dark:hidden"
-          />
-          <p className="bg-gradient-to-r from-primary via-cyan-500 to-fuchsia-500 bg-clip-text text-xl font-bold tracking-[0.08em] text-transparent">
-            StripStream
-          </p>
-          <p className="text-sm text-muted-foreground">Chargement de votre bibliotheque...</p>
-        </div>
-
-        <div className="flex items-center gap-2" aria-hidden>
-          <span className="h-2 w-2 animate-bounce rounded-full bg-primary [animation-delay:-200ms]" />
-          <span className="h-2 w-2 animate-bounce rounded-full bg-cyan-500 [animation-delay:-100ms]" />
-          <span className="h-2 w-2 animate-bounce rounded-full bg-fuchsia-500" />
-        </div>
-
-        <div className="relative h-1.5 w-56 overflow-hidden rounded-full bg-muted/80" aria-hidden>
-          <div className="animate-loader-slide absolute inset-y-0 w-1/3 rounded-full bg-gradient-to-r from-primary via-cyan-500 to-fuchsia-500" />
-        </div>
+    <main className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
+      <div className="space-y-10 pb-2">
+        <HomeHeroSkeleton />
+        <HomeCarouselSkeleton icon={LibraryBig} />
+        <HomeCarouselSkeleton icon={Heart} />
+        <HomeCarouselSkeleton icon={Bookmark} />
+        <HomeCarouselSkeleton icon={Sparkles} />
+        <HomeCarouselSkeleton icon={History} />
+        <HomeCarouselSkeleton icon={Wand2} />
       </div>
     </main>
   );
