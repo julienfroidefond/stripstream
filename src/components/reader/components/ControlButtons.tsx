@@ -10,10 +10,6 @@ import {
   MoveRight,
   MoveLeft,
   Images,
-  Frame,
-  StretchHorizontal,
-  StretchVertical,
-  ScanSearch,
   RotateCcw,
   Info,
 } from "lucide-react";
@@ -43,8 +39,6 @@ export const ControlButtons = ({
   onPageChange,
   showThumbnails,
   onToggleThumbnails,
-  fitMode,
-  onCycleFitMode,
 }: ControlButtonsProps) => {
   const { t } = useTranslation();
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -59,15 +53,6 @@ export const ControlButtons = ({
       setIsRefreshing(false);
     }
   };
-
-  const fitIcon =
-    fitMode === "fit"
-      ? Frame
-      : fitMode === "width"
-        ? StretchHorizontal
-        : fitMode === "height"
-          ? StretchVertical
-          : ScanSearch;
 
   return (
     <>
@@ -132,20 +117,6 @@ export const ControlButtons = ({
             className="rounded-full h-9 w-9"
           />
         )}
-        <IconButton
-          variant="ghost"
-          size="icon"
-          icon={fitIcon}
-          onClick={(e) => {
-            e.stopPropagation();
-            onCycleFitMode();
-          }}
-          tooltip={t("reader.controls.fitMode.current", {
-            mode: t(`reader.controls.fitMode.${fitMode}`),
-          })}
-          iconClassName="h-5 w-5"
-          className="rounded-full h-9 w-9"
-        />
         <IconButton
           variant="ghost"
           size="icon"

@@ -47,8 +47,6 @@ export function BookReader(props: BookReaderProps) {
         onToggleDirection={s.onToggleDirection}
         showThumbnails={s.showThumbnails}
         onToggleThumbnails={s.onToggleThumbnails}
-        fitMode={s.fitMode}
-        onCycleFitMode={s.onCycleFitMode}
       />
 
       <PageDisplay

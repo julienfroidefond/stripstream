@@ -1,5 +1,4 @@
 import type { NormalizedBook } from "@/lib/providers/types";
-import type { FitMode } from "./hooks/useFitMode";
 
 export interface ReaderInfo {
   seriesTitle: string | null;
@@ -66,8 +65,6 @@ export interface ControlButtonsProps {
   onToggleDirection: () => void;
   showThumbnails: boolean;
   onToggleThumbnails: () => void;
-  fitMode: FitMode;
-  onCycleFitMode: () => void;
 }
 
 export interface UsePageNavigationProps {

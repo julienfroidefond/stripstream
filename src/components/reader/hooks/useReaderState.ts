@@ -6,7 +6,6 @@ import type { BookReaderProps } from "../types";
 import { useReadingDirection } from "./useReadingDirection";
 import { useFullscreen } from "./useFullscreen";
 import { useDoublePageMode } from "./useDoublePageMode";
-import { useFitMode } from "./useFitMode";
 import { useImageLoader } from "./useImageLoader";
 import { usePageNavigation } from "./usePageNavigation";
 import { useTouchNavigation } from "./useTouchNavigation";
@@ -37,7 +36,10 @@ export function useReaderState({ book, pages, onClose, nextBook }: BookReaderPro
     shouldShowDoublePage: shouldShowDoublePageRaw,
     toggleDoublePage,
   } = useDoublePageMode(preferences.readerDoublePageMode);
-  const { fitMode, cycleFitMode } = useFitMode(preferences.readerFitMode);
+  // Les anciens modes largeur/hauteur/original sont retirés. On ignore aussi
+  // toute préférence historique persistée afin que chaque lecteur utilise le
+  // même cadrage, compatible avec le spread double page.
+  const fitMode = "fit" as const;
 
   // Wrapper mémoïsé : signature à 1 argument pour les consommateurs,
   // tout en bornant la longueur du livre une seule fois par render.
@@ -217,7 +219,6 @@ export function useReaderState({ book, pages, onClose, nextBook }: BookReaderPro
     onToggleDoublePage: toggleDoublePage,
     onToggleFullscreen,
     onToggleDirection: toggleDirection,
-    onCycleFitMode: cycleFitMode,
     onRetryImage: retryImage,
   };
 }
