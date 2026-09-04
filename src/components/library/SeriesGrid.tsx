@@ -1,4 +1,5 @@
 "use client";
+import React from "react";
 
 import type { NormalizedSeries } from "@/lib/providers/types";
 import { useRouter } from "next/navigation";
@@ -123,3 +124,4 @@ export function SeriesGrid({ series, isCompact = false }: SeriesGridProps) {
     </div>
   );
 }
+)

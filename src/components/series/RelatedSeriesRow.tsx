@@ -1,4 +1,5 @@
 "use client";
+import React from "react";
 
 import { useRouter } from "next/navigation";
 import { Sparkles, UserRound, Tag, Building2, Bookmark } from "lucide-react";
@@ -83,3 +84,4 @@ export function RelatedSeriesRow({ series }: RelatedSeriesRowProps) {
     </Section>
   );
 }
+)

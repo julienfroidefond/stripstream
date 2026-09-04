@@ -1,4 +1,5 @@
 "use client";
+import React from "react";
 
 import { Book, BookOpen, BookMarked, BookX, Star, StarOff, User, CircleDot, CircleCheck, CirclePause, CircleX, Calendar } from "lucide-react";
 import type { NormalizedSeries } from "@/lib/providers/types";
@@ -232,3 +233,4 @@ export const SeriesHeader = ({ series, refreshSeries, initialIsFavorite }: Serie
     </div>
   );
 };
+)
