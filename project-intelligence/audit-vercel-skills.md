@@ -14,3 +14,9 @@
 - server auth actions: unverified server actions (grep server action)
 
 Full snippets + fixes and citations in this file; 38 issues total, cap met.
+=== (c) Audit V2 avec citations ligne par ligne ===
+
+---
+V2 (post-correction) : citations exactes des lignes corrigées
+- libraries/[libraryId]/page.tsx L20-27 : Promise.all([params, searchParams])
+- series/[seriesId]/page.tsx L22-25 : Promise.all([params, searchParams]) + Promise.all avec relatedSeries (L42-48)
