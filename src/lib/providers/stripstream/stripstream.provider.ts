@@ -32,8 +32,6 @@ import type {
   StripstreamReadingListDetail,
 } from "@/types/stripstream";
 import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, SERIES_BOOKS_CACHE_TAG, BOOK_CACHE_TAG } from "@/constants/cacheConstants";
-import { AppError } from "@/utils/errors";
-import { ERROR_CODES } from "@/constants/errorCodes";
 
 const CACHE_TTL_LONG = 300;
 const CACHE_TTL_MED = 120;

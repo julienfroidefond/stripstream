@@ -19,10 +19,7 @@ interface PageProps {
 const DEFAULT_PAGE_SIZE = 30;
 
 export default async function SeriesPage({ params, searchParams }: PageProps) {
-  const seriesId = (await params).seriesId;
-  const page = (await searchParams).page;
-  const size = (await searchParams).size;
-  const unread = (await searchParams).unread;
+  const [{ seriesId }, { page, size, unread }] = await Promise.all([params, searchParams]);
   const currentPage = page ? parseInt(page) : 1;
   const preferences: UserPreferences = await PreferencesService.getPreferences();
   const isCompact = preferences.displayMode?.compact ?? false;
@@ -37,7 +34,7 @@ export default async function SeriesPage({ params, searchParams }: PageProps) {
     const provider = await getProvider();
     if (!provider) redirect("/settings");
 
-    const [booksPage, series, isFavorite, missingBooks] = await Promise.all([
+    const [booksPage, series, isFavorite, missingBooks, relatedSeries] = await Promise.all([
       provider.getBooks({
         seriesName: seriesId,
         cursor: String(currentPage),
@@ -47,11 +44,10 @@ export default async function SeriesPage({ params, searchParams }: PageProps) {
       provider.getSeriesById(seriesId),
       FavoriteService.isFavorite(seriesId),
       provider.getMissingBooks(seriesId),
+      provider.getRelatedSeries(seriesId).catch(() => []),
     ]);
 
     if (!series) throw new AppError(ERROR_CODES.SERIES.FETCH_ERROR);
-
-    const relatedSeries = await provider.getRelatedSeries(series.id).catch(() => []);
 
     return (
       <SeriesClientWrapper seriesId={seriesId}>

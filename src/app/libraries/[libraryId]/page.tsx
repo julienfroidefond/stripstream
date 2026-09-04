@@ -17,13 +17,10 @@ interface PageProps {
 const DEFAULT_PAGE_SIZE = 30;
 
 export default async function LibraryPage({ params, searchParams }: PageProps) {
-  const libraryId = (await params).libraryId;
-  const unread = (await searchParams).unread;
-  const page = (await searchParams).page;
-  const size = (await searchParams).size;
-  const search = (await searchParams).search;
-  const sort = (await searchParams).sort;
-  const missing = (await searchParams).missing;
+  const [{ libraryId }, { unread, page, size, search, sort, missing }] = await Promise.all([
+    params,
+    searchParams,
+  ]);
 
   const currentPage = page ? parseInt(page) : 1;
   const preferences: UserPreferences = await PreferencesService.getPreferences();

@@ -1,6 +1,6 @@
 import type { IMediaProvider } from "@/lib/providers/provider.interface";
 import type { NormalizedBook } from "@/lib/providers/types";
-import type { ReaderInfo } from "@/components/reader/types";
+import type { ReaderInfo } from "@/lib/reader/types";
 import logger from "@/lib/logger";
 
 export interface ReaderData {

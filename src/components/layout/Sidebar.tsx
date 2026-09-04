@@ -154,7 +154,7 @@ export function Sidebar({
 
   return (
     <aside
-      suppressHydrationWarning
+      
       className={cn(
         "fixed left-0 top-[calc(4rem+env(safe-area-inset-top,0px))] z-30 h-[calc(100vh-4rem-env(safe-area-inset-top,0px))] w-72 border-r border-primary/30",
         "bg-background/70 shadow-sm backdrop-blur-xl supports-[backdrop-filter]:bg-background/65",
