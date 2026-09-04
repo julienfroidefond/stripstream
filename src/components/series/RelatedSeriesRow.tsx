@@ -84,4 +84,3 @@ export function RelatedSeriesRow({ series }: RelatedSeriesRowProps) {
     </Section>
   );
 }
-)

@@ -233,4 +233,3 @@ export const SeriesHeader = ({ series, refreshSeries, initialIsFavorite }: Serie
     </div>
   );
 };
-)

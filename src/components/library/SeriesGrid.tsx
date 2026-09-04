@@ -124,4 +124,3 @@ export function SeriesGrid({ series, isCompact = false }: SeriesGridProps) {
     </div>
   );
 }
-)
