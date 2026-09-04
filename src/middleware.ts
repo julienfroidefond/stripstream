@@ -60,6 +60,7 @@ export default async function middleware(request: NextRequest) {
     }
 
     const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("from", requestPath);
     return NextResponse.redirect(loginUrl);
   }
 

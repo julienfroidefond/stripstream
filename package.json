@@ -11,6 +11,9 @@
     "reset-admin-password": "node scripts/reset-admin-password.mjs",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:report": "playwright show-report",
     "icons": "node scripts/generate-icons.js",
     "postinstall": "prisma generate",
     "prepare": "husky"
