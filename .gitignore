@@ -56,3 +56,6 @@ prisma/data/
 *.sqlite3 
 
 temp/
+# Playwright auth state
+.auth/
+.env.local
