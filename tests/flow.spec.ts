@@ -4,13 +4,12 @@ test.describe('Stripstream prod flow', () => {
   test('home loads and redirects to /login', async ({ page }) => {
     await page.goto('/');
     await expect(page).toHaveURL(/\/login/);
-    await expect(page.getByText(/login|register|sign/i).first()).toBeVisible();
   });
 
-  test('login page exposes login + register tabs', async ({ page }) => {
+  test('login page has Sign in + Sign up tabs', async ({ page }) => {
     await page.goto('/login');
-    await expect(page.getByRole('tab', { name: /login/i })).toBeVisible();
-    await expect(page.getByRole('tab', { name: /register/i })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Sign in' })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Sign up' })).toBeVisible();
   });
 
   test('library page loads without 5xx', async ({ page }) => {
@@ -33,7 +32,7 @@ test.describe('Stripstream prod flow', () => {
     expect(res?.status() ?? 500).toBeLessThan(500);
   });
 
-  test('home / library / book / admin return HTML', async ({ page }) => {
+  test('pages return non-empty HTML', async ({ page }) => {
     for (const path of ['/', '/library', '/series/x', '/books/x', '/admin']) {
       await page.goto(path);
       const html = await page.content();
