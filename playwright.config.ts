@@ -1,27 +1,17 @@
 import { defineConfig, devices } from '@playwright/test';
-
-const BASE_URL = process.env.BASE_URL ?? 'https://stripstream.julienfroidefond.com';
-
 export default defineConfig({
   testDir: './tests',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
-  reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
+  retries: 1,
+  workers: 2,
+  reporter: 'list',
   use: {
-    baseURL: BASE_URL,
+    baseURL: 'https://stripstream.julienfroidefond.com',
     trace: 'on-first-retry',
-    actionTimeout: 15_000,
-    navigationTimeout: 30_000,
-  },
-  expect: {
-    timeout: 10_000,
+    screenshot: 'only-on-failure',
   },
   projects: [
-    {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-    },
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
   ],
 });
