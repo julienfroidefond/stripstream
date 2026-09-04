@@ -13,7 +13,8 @@ for (const vp of VIEWPORTS) {
     expect(resp, 'navigation response').not.toBeNull();
     expect(resp!.status(), 'response status').toBeLessThan(500);
 
-    await expect(page.locator('body')).toBeVisible();
+    await expect(page.locator('form')).toBeVisible();
+    await expect(page.getByRole('tab')).toHaveCount(2);
 
     const viewport = page.viewportSize();
     expect(viewport?.width, 'viewport width honored').toBe(vp.width);

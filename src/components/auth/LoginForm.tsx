@@ -77,7 +77,6 @@ export function LoginForm({ from }: LoginFormProps) {
           type="email"
           autoComplete="email"
           required
-          defaultValue="demo@stripstream.local"
         />
       </div>
       <div className="space-y-2">
@@ -88,7 +87,6 @@ export function LoginForm({ from }: LoginFormProps) {
           type="password"
           autoComplete="current-password"
           required
-          defaultValue="fft$VSD96dis"
         />
       </div>
       <div className="flex items-center space-x-2">
