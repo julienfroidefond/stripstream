@@ -14,6 +14,7 @@ import { MarkAsReadButton } from "@/components/ui/mark-as-read-button";
 import { MarkAsUnreadButton } from "@/components/ui/mark-as-unread-button";
 import { BookOfflineButton } from "@/components/ui/book-offline-button";
 import { useAnonymous } from "@/contexts/AnonymousContext";
+import { useRouter } from "next/navigation";
 
 interface BookListProps {
   books: NormalizedBook[];
@@ -255,13 +256,18 @@ const BookListItem = memo(function BookListItem({ book, onBookClick, onSuccess, 
 
 export function BookList({ books, onBookClick, isCompact = false, onRefresh }: BookListProps) {
   const { t } = useTranslate();
+  const router = useRouter();
 
   const handleOnSuccess = useCallback(
     (_book: NormalizedBook, _action: "read" | "unread") => {
       // Rafraîchir les données après avoir marqué comme lu/non lu
-      onRefresh?.();
+      if (onRefresh) {
+        onRefresh();
+      } else {
+        router.refresh();
+      }
     },
-    [onRefresh]
+    [onRefresh, router]
   );
 
   if (!books.length) {

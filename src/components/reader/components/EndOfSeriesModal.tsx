@@ -12,9 +12,14 @@ export function EndOfSeriesModal({ show, onClose, currentPage }: EndOfSeriesModa
   if (!show) return null;
 
   return (
-    <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm z-50">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="end-of-series-title"
+      className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm z-50"
+    >
       <div className="bg-background/80 backdrop-blur-md border rounded-lg shadow-lg p-6 max-w-md text-center">
-        <h3 className="text-lg font-semibold mb-2">{t("reader.endOfSeries")}</h3>
+        <h3 id="end-of-series-title" className="text-lg font-semibold mb-2">{t("reader.endOfSeries")}</h3>
         <p className="text-muted-foreground mb-4">{t("reader.endOfSeriesMessage")}</p>
         <button
           onClick={() => onClose(currentPage)}
