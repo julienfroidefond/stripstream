@@ -4,9 +4,14 @@ import { ThemeProvider } from "next-themes";
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
+import dynamic from "next/dynamic";
 import { InstallPWA } from "../ui/InstallPWA";
-import { Toaster } from "@/components/ui/toaster";
 import { usePathname } from "next/navigation";
+
+// Toaster chargé paresseusement (il n'est utile que lorsque des toasts apparaissent).
+const Toaster = dynamic(() => import("@/components/ui/toaster").then((m) => m.Toaster), {
+  ssr: false,
+});
 import { NetworkStatus } from "../ui/NetworkStatus";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { ServiceWorkerProvider } from "@/contexts/ServiceWorkerContext";
@@ -144,13 +149,13 @@ export default function ClientLayout({
     return {};
   }, [preferences.background, randomBookThumbnailUrl]);
 
-  const handleCloseSidebar = () => {
+  const handleCloseSidebar = useCallback(() => {
     setIsSidebarOpen(false);
-  };
+  }, []);
 
-  const handleToggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
+  const handleToggleSidebar = useCallback(() => {
+    setIsSidebarOpen((prev) => !prev);
+  }, []);
 
   // Gestionnaire pour fermer la barre latérale lors d'un clic en dehors
   useEffect(() => {
@@ -175,7 +180,7 @@ export default function ClientLayout({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isSidebarOpen]);
+  }, [isSidebarOpen, handleCloseSidebar]);
 
 
   // Ne pas afficher le header et la sidebar sur les routes publiques et le reader

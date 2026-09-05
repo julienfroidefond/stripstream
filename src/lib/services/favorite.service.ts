@@ -172,7 +172,13 @@ export class FavoriteService {
         return [];
       }
 
-      const promises = favoriteIds.map(async (id) => {
+      // Piscine de concurrence bornée : on ne lance pas 2N requêtes d'un coup
+      // (getSeriesById + cleanup éventuel par favori). Le cache Next déduplique
+      // les appels redondants au sein d'un même rendu serveur.
+      const CONCURRENCY = 3;
+      const results: (NormalizedSeries | null)[] = [];
+
+      const fetchOne = async (id: string): Promise<NormalizedSeries | null> => {
         try {
           return await provider.getSeriesById(id);
         } catch (error) {
@@ -193,9 +199,14 @@ export class FavoriteService {
           }
           return null;
         }
-      });
+      };
 
-      const results = await Promise.all(promises);
+      for (let i = 0; i < favoriteIds.length; i += CONCURRENCY) {
+        const chunk = favoriteIds.slice(i, i + CONCURRENCY);
+        const chunkResults = await Promise.all(chunk.map(fetchOne));
+        results.push(...chunkResults);
+      }
+
       return results.filter((s): s is NormalizedSeries => s !== null);
     } catch (error) {
       logger.error(

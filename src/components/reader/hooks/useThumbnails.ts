@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import type { NormalizedBook } from "@/lib/providers/types";
 
 interface UseThumbnailsProps {
@@ -8,7 +8,6 @@ interface UseThumbnailsProps {
 
 export const useThumbnails = ({ book, currentPage }: UseThumbnailsProps) => {
   const [loadedThumbnails, setLoadedThumbnails] = useState<{ [key: number]: boolean }>({});
-  const [visibleThumbnails, setVisibleThumbnails] = useState<number[]>([]);
 
   const handleThumbnailLoad = useCallback((pageNumber: number) => {
     setLoadedThumbnails((prev) => ({ ...prev, [pageNumber]: true }));
@@ -25,14 +24,8 @@ export const useThumbnails = ({ book, currentPage }: UseThumbnailsProps) => {
     [book.id, book.thumbnailUrl]
   );
 
-  // Mettre à jour les thumbnails visibles autour de la page courante
-  useEffect(() => {
-    const windowSize = 0; // DÉSACTIVÉ TEMPORAIREMENT: Thumbnails désactivés pour éviter de surcharger Komga
-    const start = Math.max(1, currentPage - windowSize);
-    const end = currentPage + windowSize;
-    const newVisibleThumbnails = Array.from({ length: end - start + 1 }, (_, i) => start + i);
-    setVisibleThumbnails(newVisibleThumbnails);
-  }, [currentPage]);
+  // Dérivé directement pendant le rendu (fenêtre désactivée : seule la page courante est visible).
+  const visibleThumbnails = [currentPage];
 
   const scrollToActiveThumbnail = useCallback(() => {
     const thumbnail = document.getElementById(`thumbnail-${currentPage}`);

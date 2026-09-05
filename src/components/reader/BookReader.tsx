@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import type { BookReaderProps } from "./types";
 import { useReaderState } from "./hooks/useReaderState";
 import { ControlButtons } from "./components/ControlButtons";
@@ -9,7 +10,7 @@ import { PageDisplay } from "./components/PageDisplay";
 import { ReaderContainer } from "./components/ReaderContainer";
 import { ReaderInfoDialog } from "./components/ReaderInfoDialog";
 
-export function BookReader(props: BookReaderProps) {
+export const BookReader = memo(function BookReader(props: BookReaderProps) {
   const s = useReaderState(props);
 
   return (
@@ -73,4 +74,6 @@ export function BookReader(props: BookReaderProps) {
       />
     </ReaderContainer>
   );
-}
+});
+
+BookReader.displayName = "BookReader";

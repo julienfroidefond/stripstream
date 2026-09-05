@@ -1,10 +1,10 @@
 import type { ThumbnailProps } from "../types";
 import { ImageLoader } from "@/components/ui/image-loader";
 import { cn } from "@/lib/utils";
-import { forwardRef, useEffect, useState, useCallback, useRef, useImperativeHandle } from "react";
+import { forwardRef, memo, useEffect, useState, useCallback, useRef, useImperativeHandle } from "react";
 import logger from "@/lib/logger";
 
-export const Thumbnail = forwardRef<HTMLButtonElement, ThumbnailProps>(
+export const Thumbnail = memo(forwardRef<HTMLButtonElement, ThumbnailProps>(
   (
     {
       pageNumber,
@@ -151,6 +151,6 @@ export const Thumbnail = forwardRef<HTMLButtonElement, ThumbnailProps>(
       </button>
     );
   }
-);
+));
 
 Thumbnail.displayName = "Thumbnail";

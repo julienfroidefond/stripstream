@@ -2,7 +2,7 @@ import type { NavigationBarProps } from "../types";
 import { cn } from "@/lib/utils";
 import { Thumbnail } from "./Thumbnail";
 import { useThumbnails } from "../hooks/useThumbnails";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export const NavigationBar = ({
   currentPage,
@@ -48,6 +48,31 @@ export const NavigationBar = ({
     }
   }, [showThumbnails, currentPage, isTooSmall]);
 
+  const handleTouchStart = useCallback((e: React.TouchEvent) => e.stopPropagation(), []);
+  const handleTouchMove = useCallback((e: React.TouchEvent) => e.stopPropagation(), []);
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => e.stopPropagation(), []);
+
+  const thumbnails = useMemo(
+    () =>
+      pages.map((_, index) => {
+        const pageNumber = index + 1;
+        const isVisible = visibleThumbnails.includes(pageNumber);
+        return (
+          <Thumbnail
+            key={pageNumber}
+            pageNumber={pageNumber}
+            currentPage={currentPage}
+            onPageChange={onPageChange}
+            getThumbnailUrl={getThumbnailUrl}
+            loadedThumbnails={loadedThumbnails}
+            onThumbnailLoad={handleThumbnailLoad}
+            isVisible={isVisible}
+          />
+        );
+      }),
+    [pages, currentPage, onPageChange, getThumbnailUrl, loadedThumbnails, handleThumbnailLoad, visibleThumbnails]
+  );
+
   if (isTooSmall) {
     return null;
   }
@@ -64,28 +89,13 @@ export const NavigationBar = ({
           <div
             id="thumbnails-container"
             className="flex h-full snap-x snap-mandatory items-center gap-2 overflow-x-auto px-4 scroll-smooth"
-            onTouchStart={(e) => e.stopPropagation()}
-            onTouchMove={(e) => e.stopPropagation()}
-            onTouchEnd={(e) => e.stopPropagation()}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
             ref={thumbnailsContainerRef}
           >
             <div className="w-[calc(50vw-18rem)] flex-shrink-0" />
-            {pages.map((_, index) => {
-              const pageNumber = index + 1;
-              const isVisible = visibleThumbnails.includes(pageNumber);
-              return (
-                <Thumbnail
-                  key={pageNumber}
-                  pageNumber={pageNumber}
-                  currentPage={currentPage}
-                  onPageChange={onPageChange}
-                  getThumbnailUrl={getThumbnailUrl}
-                  loadedThumbnails={loadedThumbnails}
-                  onThumbnailLoad={handleThumbnailLoad}
-                  isVisible={isVisible}
-                />
-              );
-            })}
+            {thumbnails}
             <div className="w-[calc(50vw-18rem)] flex-shrink-0" />
           </div>
 

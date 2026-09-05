@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { useTranslate } from "@/hooks/useTranslate";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { Label } from "@/components/ui/label";
@@ -26,21 +26,14 @@ export function BackgroundSettings({ initialLibraries }: BackgroundSettingsProps
   const { toast } = useToast();
   const { preferences, updatePreferences } = usePreferences();
   const [customImageUrl, setCustomImageUrl] = useState(preferences.background.imageUrl || "");
-  const [komgaConfigValid, setKomgaConfigValid] = useState(false);
-  const [libraries, setLibraries] = useState<NormalizedLibrary[]>(initialLibraries || []);
+  const [libraries] = useState<NormalizedLibrary[]>(initialLibraries || []);
   const [selectedLibraries, setSelectedLibraries] = useState<string[]>(
     preferences.background.komgaLibraries || []
   );
 
-  useEffect(() => {
-    setLibraries(initialLibraries || []);
-  }, [initialLibraries]);
+  const komgaConfigValid = libraries.length > 0;
 
-  useEffect(() => {
-    setKomgaConfigValid(libraries.length > 0);
-  }, [libraries]);
-
-  const handleBackgroundTypeChange = async (type: BackgroundType) => {
+  const handleBackgroundTypeChange = useCallback(async (type: BackgroundType) => {
     try {
       await updatePreferences({
         background: {
@@ -60,9 +53,9 @@ export function BackgroundSettings({ initialLibraries }: BackgroundSettingsProps
         description: t("settings.error.message"),
       });
     }
-  };
+  }, [preferences.background, updatePreferences, toast, t]);
 
-  const handleGradientSelect = async (gradient: string) => {
+  const handleGradientSelect = useCallback(async (gradient: string) => {
     try {
       await updatePreferences({
         background: {
@@ -83,9 +76,9 @@ export function BackgroundSettings({ initialLibraries }: BackgroundSettingsProps
         description: t("settings.error.message"),
       });
     }
-  };
+  }, [preferences.background, updatePreferences, toast, t]);
 
-  const handleCustomImageSave = async () => {
+  const handleCustomImageSave = useCallback(async () => {
     if (!customImageUrl.trim()) {
       toast({
         variant: "destructive",
@@ -115,9 +108,9 @@ export function BackgroundSettings({ initialLibraries }: BackgroundSettingsProps
         description: t("settings.error.message"),
       });
     }
-  };
+  }, [customImageUrl, preferences.background, updatePreferences, toast, t]);
 
-  const handleOpacityChange = async (value: number[]) => {
+  const handleOpacityChange = useCallback(async (value: number[]) => {
     try {
       await updatePreferences({
         background: {
@@ -128,9 +121,9 @@ export function BackgroundSettings({ initialLibraries }: BackgroundSettingsProps
     } catch (error) {
       logger.error({ err: error }, "Erreur:");
     }
-  };
+  }, [preferences.background, updatePreferences]);
 
-  const handleBlurChange = async (value: number[]) => {
+  const handleBlurChange = useCallback(async (value: number[]) => {
     try {
       await updatePreferences({
         background: {
@@ -141,9 +134,9 @@ export function BackgroundSettings({ initialLibraries }: BackgroundSettingsProps
     } catch (error) {
       logger.error({ err: error }, "Erreur:");
     }
-  };
+  }, [preferences.background, updatePreferences]);
 
-  const handleLibraryToggle = async (libraryId: string) => {
+  const handleLibraryToggle = useCallback(async (libraryId: string) => {
     const newSelection = selectedLibraries.includes(libraryId)
       ? selectedLibraries.filter((id) => id !== libraryId)
       : [...selectedLibraries, libraryId];
@@ -160,7 +153,7 @@ export function BackgroundSettings({ initialLibraries }: BackgroundSettingsProps
     } catch (error) {
       logger.error({ err: error }, "Erreur:");
     }
-  };
+  }, [selectedLibraries, preferences.background, updatePreferences]);
 
   return (
     <Card>

@@ -43,9 +43,11 @@ async function getReaderInfo(
     let totalInSeries: number | null = series.bookCount ?? null;
 
     try {
+      // Charge au maximum 100 tomes pour le calcul de position : un full-load
+      // de série géante est inutile pour la position du tome courant.
       const seriesBooks = await provider.getBooks({
         seriesName: series.id,
-        limit: Math.max(series.bookCount || 0, 24),
+        limit: Math.min(Math.max(series.bookCount || 0, 24), 100),
       });
       const orderedBooks = [...seriesBooks.items].sort(sortBooksBySeriesPosition);
       const bookIndex = orderedBooks.findIndex((candidate) => candidate.id === book.id);
@@ -80,16 +82,17 @@ export async function getReaderData(
   provider: IMediaProvider,
   bookId: string
 ): Promise<ReaderData> {
-  const book = await provider.getBook(bookId);
-  const pages = Array.from({ length: book.pageCount }, (_, i) => i + 1);
-
-  const [nextBook, readerInfo] = await Promise.all([
+  // getNextBook ne dépend que de bookId : on le lance en parallèle de getBook.
+  const [book, nextBook] = await Promise.all([
+    provider.getBook(bookId),
     provider.getNextBook(bookId).catch((error) => {
       logger.warn({ err: error, bookId }, "Failed to fetch next book, continuing without it");
       return null;
     }),
-    getReaderInfo(provider, book),
   ]);
+
+  const pages = Array.from({ length: book.pageCount }, (_, i) => i + 1);
+  const readerInfo = await getReaderInfo(provider, book);
 
   return {
     book,

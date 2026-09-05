@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { MediaRow } from "./MediaRow";
 import { ContinueReadingHero } from "./ContinueReadingHero";
 import { RecommendationsRow } from "./RecommendationsRow";
@@ -53,9 +54,9 @@ export function getSeriesPool(
 }
 
 export function HomePrimaryContent({ data, isAnonymous = false }: HomePrimaryContentProps) {
-  const continueReading = getContinueReading(data);
+  const continueReading = useMemo(() => getContinueReading(data), [data]);
   const showHero = !isAnonymous && continueReading.length > 0;
-  const seriesPool = getSeriesPool(data);
+  const seriesPool = useMemo(() => getSeriesPool(data), [data]);
 
   return (
     <>

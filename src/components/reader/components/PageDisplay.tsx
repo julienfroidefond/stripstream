@@ -1,4 +1,3 @@
-import { useState, useCallback, useEffect, useRef } from "react";
 import { RotateCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { FitMode } from "../hooks/useFitMode";
@@ -72,56 +71,13 @@ export function PageDisplay({
   isRTL,
   fitMode,
 }: PageDisplayProps) {
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
-  const [secondPageLoading, setSecondPageLoading] = useState(true);
-  const [secondPageHasError, setSecondPageHasError] = useState(false);
-  const imageBlobUrlsRef = useRef(imageBlobUrls);
-  imageBlobUrlsRef.current = imageBlobUrls;
-
-  const handleImageLoad = useCallback(() => {
-    setIsLoading(false);
-  }, []);
-
-  const handleImageError = useCallback(() => {
-    setIsLoading(false);
-    setHasError(true);
-  }, []);
-
-  const handleSecondImageLoad = useCallback(() => {
-    setSecondPageLoading(false);
-  }, []);
-
-  const handleSecondImageError = useCallback(() => {
-    setSecondPageLoading(false);
-    setSecondPageHasError(true);
-  }, []);
-
-  // Reset loading when page changes, but skip if blob URL is already available
-  useEffect(() => {
-    setIsLoading(!imageBlobUrlsRef.current[currentPage]);
-    setHasError(false);
-    setSecondPageLoading(!imageBlobUrlsRef.current[currentPage + 1]);
-    setSecondPageHasError(false);
-  }, [currentPage, isDoublePage]);
-
+  // États dérivés directement pendant le rendu (pas de setState dans un effet).
   const currentBlobUrl = imageBlobUrls[currentPage];
   const nextBlobUrl = imageBlobUrls[currentPage + 1];
-
-  // Reset error state when blob URL becomes available
-  useEffect(() => {
-    if (currentBlobUrl && hasError) {
-      setHasError(false);
-      setIsLoading(true);
-    }
-  }, [currentBlobUrl, hasError]);
-
-  useEffect(() => {
-    if (nextBlobUrl && secondPageHasError) {
-      setSecondPageHasError(false);
-      setSecondPageLoading(true);
-    }
-  }, [nextBlobUrl, secondPageHasError]);
+  const isLoading = !currentBlobUrl;
+  const hasError = !!imageErrors[currentPage];
+  const secondPageLoading = !nextBlobUrl;
+  const secondPageHasError = !!imageErrors[currentPage + 1];
 
   const showSecondPage = isDoublePage && shouldShowDoublePage(currentPage);
 
@@ -193,13 +149,6 @@ export function PageDisplay({
                 alt={`Page ${currentPage}`}
                 className={imageClassNameFor(fitMode, isLoading)}
                 loading="eager"
-                onLoad={handleImageLoad}
-                onError={handleImageError}
-                ref={(img) => {
-                  if (img?.complete && img?.naturalHeight !== 0) {
-                    handleImageLoad();
-                  }
-                }}
               />
             </>
           ) : null}
@@ -230,13 +179,6 @@ export function PageDisplay({
                   alt={`Page ${currentPage + 1}`}
                   className={imageClassNameFor(fitMode, secondPageLoading)}
                   loading="eager"
-                  onLoad={handleSecondImageLoad}
-                  onError={handleSecondImageError}
-                  ref={(img) => {
-                    if (img?.complete && img?.naturalHeight !== 0) {
-                      handleSecondImageLoad();
-                    }
-                  }}
                 />
               </>
             ) : null}

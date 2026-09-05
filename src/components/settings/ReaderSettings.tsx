@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback } from "react";
 import { useTranslate } from "@/hooks/useTranslate";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { useToast } from "@/components/ui/use-toast";
@@ -30,7 +31,7 @@ export function ReaderSettings() {
   const { toast } = useToast();
   const { preferences, updatePreferences } = usePreferences();
 
-  const handleReadingDirectionChange = async (value: ReadingDirection) => {
+  const handleReadingDirectionChange = useCallback(async (value: ReadingDirection) => {
     try {
       await updatePreferences({ readingDirection: value });
       toast({
@@ -45,9 +46,9 @@ export function ReaderSettings() {
         description: t("settings.error.message"),
       });
     }
-  };
+  }, [updatePreferences, toast, t]);
 
-  const handleReaderBackgroundChange = async (value: ReaderBackground) => {
+  const handleReaderBackgroundChange = useCallback(async (value: ReaderBackground) => {
     try {
       await updatePreferences({ readerBackground: value });
       toast({
@@ -62,9 +63,9 @@ export function ReaderSettings() {
         description: t("settings.error.message"),
       });
     }
-  };
+  }, [updatePreferences, toast, t]);
 
-  const handleDoublePageChange = async (checked: boolean) => {
+  const handleDoublePageChange = useCallback(async (checked: boolean) => {
     try {
       await updatePreferences({ readerDoublePageMode: checked });
       toast({
@@ -79,7 +80,7 @@ export function ReaderSettings() {
         description: t("settings.error.message"),
       });
     }
-  };
+  }, [updatePreferences, toast, t]);
 
   return (
     <Card>

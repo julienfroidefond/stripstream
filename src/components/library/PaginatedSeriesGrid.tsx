@@ -88,23 +88,6 @@ export function PaginatedSeriesGrid({
     [router, pathname, searchParams]
   );
 
-  // Update local state when prop changes
-  useEffect(() => {
-    setShowOnlyUnread(initialShowOnlyUnread);
-  }, [initialShowOnlyUnread]);
-
-  useEffect(() => {
-    setIsCompact(initialCompact);
-  }, [initialCompact]);
-
-  useEffect(() => {
-    setViewMode(initialViewMode);
-  }, [initialViewMode]);
-
-  useEffect(() => {
-    setCurrentPageSize(normalizeGridPageSize(pageSize || 30, initialCompact));
-  }, [pageSize, initialCompact]);
-
   // Apply default filter on initial load
   useEffect(() => {
     if (defaultShowOnlyUnread && !searchParams.has("unread")) {
@@ -112,74 +95,86 @@ export function PaginatedSeriesGrid({
     }
   }, [defaultShowOnlyUnread, pathname, router, searchParams, updateUrlParams]);
 
-  const handlePageChange = async (page: number) => {
-    await updateUrlParams({ page: page.toString() });
-  };
+  const handlePageChange = useCallback(
+    async (page: number) => {
+      await updateUrlParams({ page: page.toString() });
+    },
+    [updateUrlParams]
+  );
 
-  const handleUnreadFilter = async () => {
+  const handleUnreadFilter = useCallback(async () => {
     const newUnreadState = !showOnlyUnread;
     setShowOnlyUnread(newUnreadState);
     await updateUrlParams({ page: "1", unread: newUnreadState ? "true" : "false" });
     await persistPreferences({ showOnlyUnread: newUnreadState });
-  };
+  }, [showOnlyUnread, updateUrlParams, persistPreferences]);
 
-  const handlePageSizeChange = async (size: number) => {
-    const nextSize = normalizeGridPageSize(size, isCompact);
-    setCurrentPageSize(nextSize);
-    await updateUrlParams({ page: "1", size: nextSize.toString() });
-
-    await persistPreferences({
-      displayMode: {
-        compact: isCompact,
-        itemsPerPage: nextSize,
-        viewMode,
-      },
-    });
-  };
-
-  const handleCompactModeToggle = async (nextCompactMode: boolean) => {
-    setIsCompact(nextCompactMode);
-    const nextSize = normalizeGridPageSize(effectivePageSize, nextCompactMode);
-    setCurrentPageSize(nextSize);
-
-    if (nextSize !== effectivePageSize) {
+  const handlePageSizeChange = useCallback(
+    async (size: number) => {
+      const nextSize = normalizeGridPageSize(size, isCompact);
+      setCurrentPageSize(nextSize);
       await updateUrlParams({ page: "1", size: nextSize.toString() });
-    }
 
-    await persistPreferences({
-      displayMode: {
-        compact: nextCompactMode,
-        itemsPerPage: nextSize,
-        viewMode,
-      },
-    });
-  };
+      await persistPreferences({
+        displayMode: {
+          compact: isCompact,
+          itemsPerPage: nextSize,
+          viewMode,
+        },
+      });
+    },
+    [isCompact, updateUrlParams, persistPreferences, viewMode]
+  );
 
-  const handleMissingToggle = async () => {
+  const handleCompactModeToggle = useCallback(
+    async (nextCompactMode: boolean) => {
+      setIsCompact(nextCompactMode);
+      const nextSize = normalizeGridPageSize(effectivePageSize, nextCompactMode);
+      setCurrentPageSize(nextSize);
+
+      if (nextSize !== effectivePageSize) {
+        await updateUrlParams({ page: "1", size: nextSize.toString() });
+      }
+
+      await persistPreferences({
+        displayMode: {
+          compact: nextCompactMode,
+          itemsPerPage: nextSize,
+          viewMode,
+        },
+      });
+    },
+    [effectivePageSize, updateUrlParams, persistPreferences, viewMode]
+  );
+
+  const handleMissingToggle = useCallback(async () => {
     const next = !showMissing;
     setShowMissing(next);
     await updateUrlParams({ page: "1", missing: next ? "true" : null });
     await persistPreferences({ showMissingBooks: next });
-  };
+  }, [showMissing, updateUrlParams, persistPreferences]);
 
-  const handleSortToggle = async () => {
+  const handleSortToggle = useCallback(async () => {
     const nextSort = currentSort === "title" ? "latest" : "title";
     setCurrentSort(nextSort);
     await updateUrlParams({ page: "1", sort: nextSort === "title" ? null : nextSort });
     await persistPreferences({ defaultSortOrder: nextSort as "title" | "latest" });
-  };
+  }, [currentSort, updateUrlParams, persistPreferences]);
 
-  const handleViewModeToggle = async (nextViewMode: "grid" | "list") => {
-    setViewMode(nextViewMode);
+  const handleViewModeToggle = useCallback(
+    async (nextViewMode: "grid" | "list") => {
+      setViewMode(nextViewMode);
 
-    await persistPreferences({
-      displayMode: {
-        compact: isCompact,
-        itemsPerPage: effectivePageSize,
-        viewMode: nextViewMode,
-      },
-    });
-  };
+      await persistPreferences({
+        displayMode: {
+          compact: isCompact,
+          itemsPerPage: effectivePageSize,
+          viewMode: nextViewMode,
+        },
+      });
+    },
+    [isCompact, effectivePageSize, persistPreferences]
+  );
 
   // Calculate start and end indices for display
   const startIndex = (currentPage - 1) * effectivePageSize + 1;

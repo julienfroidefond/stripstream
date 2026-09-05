@@ -3,7 +3,7 @@ import React from "react";
 
 import { Book, BookOpen, BookMarked, BookX, Star, StarOff, User, CircleDot, CircleCheck, CirclePause, CircleX, Calendar } from "lucide-react";
 import type { NormalizedSeries } from "@/lib/providers/types";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
 import { RefreshButton } from "@/components/library/RefreshButton";
@@ -31,10 +31,6 @@ export const SeriesHeader = ({ series, refreshSeries, initialIsFavorite }: Serie
   const [isFavorite, setIsFavorite] = useState(initialIsFavorite);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const { t } = useTranslate();
-
-  useEffect(() => {
-    setIsFavorite(initialIsFavorite);
-  }, [series.id, initialIsFavorite]);
 
   const handleToggleFavorite = async () => {
     try {

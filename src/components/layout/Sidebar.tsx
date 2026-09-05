@@ -14,7 +14,7 @@ import {
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import type { NormalizedLibrary, NormalizedSeries } from "@/lib/providers/types";
 import type { KomgaConfigSummary } from "@/app/actions/config";
 import type { StripstreamConfigSummary } from "@/app/actions/stripstream-config";
@@ -52,14 +52,6 @@ export function Sidebar({
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const { toast } = useToast();
-
-  useEffect(() => {
-    setLibraries(initialLibraries || []);
-  }, [initialLibraries]);
-
-  useEffect(() => {
-    setFavorites(initialFavorites || []);
-  }, [initialFavorites]);
 
   // Mettre à jour les favoris quand ils changent (mise à jour optimiste)
   useEffect(() => {
@@ -139,18 +131,21 @@ export function Sidebar({
     [pathname, router, onClose]
   );
 
-  const mainNavItems = [
-    {
-      title: t("sidebar.home"),
-      href: "/",
-      icon: Home,
-    },
-    {
-      title: t("sidebar.downloads"),
-      href: "/downloads",
-      icon: Download,
-    },
-  ];
+  const mainNavItems = useMemo(
+    () => [
+      {
+        title: t("sidebar.home"),
+        href: "/",
+        icon: Home,
+      },
+      {
+        title: t("sidebar.downloads"),
+        href: "/downloads",
+        icon: Download,
+      },
+    ],
+    [t]
+  );
 
   return (
     <aside

@@ -1,5 +1,6 @@
 "use client";
 
+import { memo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import type { NormalizedBook, NormalizedSeries } from "@/lib/providers/types";
 import { BookCover } from "../ui/book-cover";
@@ -38,10 +39,13 @@ export function MediaRow({ titleKey, items, iconName, featuredHeader = false }: 
   const { t } = useTranslate();
   const icon = iconName ? iconMap[iconName as keyof typeof iconMap] : undefined;
 
-  const onItemClick = (item: NormalizedSeries | NormalizedBook) => {
-    const path = isSeries(item) ? `/series/${item.id}` : `/books/${item.id}`;
-    router.push(path);
-  };
+  const onItemClick = useCallback(
+    (item: NormalizedSeries | NormalizedBook) => {
+      const path = isSeries(item) ? `/series/${item.id}` : `/books/${item.id}`;
+      router.push(path);
+    },
+    [router]
+  );
 
   if (!items.length) return null;
 
@@ -65,7 +69,7 @@ export function MediaRow({ titleKey, items, iconName, featuredHeader = false }: 
         arrowRightLabel={t("navigation.scrollRight")}
       >
         {items.map((item) => (
-          <MediaCard key={item.id} item={item} onClick={() => onItemClick?.(item)} />
+          <MediaCard key={item.id} item={item} onClick={onItemClick} />
         ))}
       </ScrollContainer>
     </Section>
@@ -74,10 +78,10 @@ export function MediaRow({ titleKey, items, iconName, featuredHeader = false }: 
 
 interface MediaCardProps {
   item: NormalizedSeries | NormalizedBook;
-  onClick?: () => void;
+  onClick: (item: NormalizedSeries | NormalizedBook) => void;
 }
 
-function MediaCard({ item, onClick }: MediaCardProps) {
+const MediaCard = memo(function MediaCard({ item, onClick }: MediaCardProps) {
   const { t } = useTranslate();
   const { isAnonymous } = useAnonymous();
   const isSeriesItem = isSeries(item);
@@ -92,7 +96,7 @@ function MediaCard({ item, onClick }: MediaCardProps) {
     // Pour les séries, toujours autoriser le clic
     // Pour les livres, vérifier si accessible
     if (isSeriesItem || isAccessible) {
-      onClick?.();
+      onClick(item);
     }
   };
 
@@ -128,4 +132,4 @@ function MediaCard({ item, onClick }: MediaCardProps) {
       </div>
     </Card>
   );
-}
+});

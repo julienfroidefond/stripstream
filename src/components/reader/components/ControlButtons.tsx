@@ -14,7 +14,7 @@ import {
   RotateCcw,
   Info,
 } from "lucide-react";
-import { useState } from "react";
+import { memo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { PageInput } from "./PageInput";
 import { useTranslation } from "react-i18next";
@@ -35,7 +35,7 @@ const readerBackgroundOptions: { value: ReaderBackground; className: string }[] 
   { value: "cream", className: "bg-[#f4ead8]" },
 ];
 
-export const ControlButtons = ({
+export const ControlButtons = memo(function ControlButtons({
   showControls,
   onToggleControls,
   onToggleInfo,
@@ -57,7 +57,7 @@ export const ControlButtons = ({
   onToggleThumbnails,
   readerBackground,
   onReaderBackgroundChange,
-}: ControlButtonsProps) => {
+}: ControlButtonsProps) {
   const { t } = useTranslation();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -264,4 +264,6 @@ export const ControlButtons = ({
       )}
     </>
   );
-};
+});
+
+ControlButtons.displayName = "ControlButtons";

@@ -46,6 +46,11 @@ export function useImageLoader({
   prefetchCount = 5,
   nextBook,
 }: UseImageLoaderProps) {
+  // NOTE (perf): état groupé par image (loadedImages / imageBlobUrls / imageErrors).
+  // Regrouper ces trois slices dans un seul état par clé (ex. Record<ImageKey, {dims, url, error}>)
+  // réduirait le nombre de setState par fetch, mais c'est risqué car de nombreux callbacks
+  // (evictOutsideWindow, prefetchKey, retryImage) lisent/écrivent chaque slice séparément via
+  // des refs. Laissé tel quel : refactorisation non triviale, à traiter séparément.
   const [loadedImages, setLoadedImages] = useState<Record<ImageKey, ImageDimensions>>({});
   const [imageBlobUrls, setImageBlobUrls] = useState<Record<ImageKey, string>>({});
   const [imageErrors, setImageErrors] = useState<Record<ImageKey, boolean>>({});

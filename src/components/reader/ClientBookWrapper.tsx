@@ -1,10 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { Loader2 } from "lucide-react";
 import type { NormalizedBook } from "@/lib/providers/types";
-import { BookReader } from "./BookReader";
 import { useRouter } from "next/navigation";
+
+// Chargement différé du lecteur lourd (uniquement quand on ouvre le reader).
+const BookReader = dynamic(() => import("./BookReader").then((m) => m.BookReader), {
+  ssr: false,
+  loading: () => null,
+});
 import { ClientOfflineBookService } from "@/lib/services/client-offlinebook.service";
 import type { ReaderInfo } from "./types";
 

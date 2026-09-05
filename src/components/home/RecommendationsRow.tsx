@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, memo } from "react";
 import { useRouter } from "next/navigation";
 import { Wand2, UserRound, Tag, Building2, Sparkles, Bookmark, ArrowRight, LayoutGrid, GalleryHorizontal } from "lucide-react";
 import { AnimatePresence, motion, type PanInfo } from "framer-motion";
@@ -250,7 +250,7 @@ function RecommendationHero({ series }: { series: NormalizedSeries[] }) {
 
 /* ── Card (scroll grid) ─────────────────────────────────────────────────────── */
 
-function RecommendationCard({ series: s }: { series: NormalizedSeries }) {
+const RecommendationCard = memo(function RecommendationCard({ series: s }: { series: NormalizedSeries }) {
   const router = useRouter();
   const { t } = useTranslate();
   const { isAnonymous } = useAnonymous();
@@ -298,4 +298,4 @@ function RecommendationCard({ series: s }: { series: NormalizedSeries }) {
       )}
     </button>
   );
-}
+});

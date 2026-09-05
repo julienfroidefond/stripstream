@@ -2,7 +2,7 @@
 
 import type { NormalizedBook } from "@/lib/providers/types";
 import { BookCover } from "@/components/ui/book-cover";
-import { useState, useEffect, useRef } from "react";
+import { memo, useCallback } from "react";
 import { useTranslate } from "@/hooks/useTranslate";
 import { cn } from "@/lib/utils";
 import { useBookOfflineStatus } from "@/hooks/useBookOfflineStatus";
@@ -29,7 +29,7 @@ interface BookListItemProps {
   isCompact?: boolean;
 }
 
-function BookListItem({ book, onBookClick, onSuccess, isCompact = false }: BookListItemProps) {
+const BookListItem = memo(function BookListItem({ book, onBookClick, onSuccess, isCompact = false }: BookListItemProps) {
   const { t } = useTranslate();
   const { isAnonymous } = useAnonymous();
   const { isAccessible } = useBookOfflineStatus(book.id);
@@ -251,23 +251,20 @@ function BookListItem({ book, onBookClick, onSuccess, isCompact = false }: BookL
       </div>
     </div>
   );
-}
+});
 
 export function BookList({ books, onBookClick, isCompact = false, onRefresh }: BookListProps) {
-  const [localBooks, setLocalBooks] = useState(books);
   const { t } = useTranslate();
-  const previousBookIdsRef = useRef<string>(books.map((b) => b.id).join(","));
 
-  useEffect(() => {
-    // Ne réinitialiser que si les IDs des livres ont changé (nouvelle page, nouveau filtre, etc.)
-    const newIds = books.map((b) => b.id).join(",");
-    if (previousBookIdsRef.current !== newIds) {
-      setLocalBooks(books);
-      previousBookIdsRef.current = newIds;
-    }
-  }, [books]);
+  const handleOnSuccess = useCallback(
+    (_book: NormalizedBook, _action: "read" | "unread") => {
+      // Rafraîchir les données après avoir marqué comme lu/non lu
+      onRefresh?.();
+    },
+    [onRefresh]
+  );
 
-  if (!localBooks.length) {
+  if (!books.length) {
     return (
       <div className="text-center p-8">
         <p className="text-muted-foreground whitespace-pre-line">{t("books.empty")}</p>
@@ -275,41 +272,9 @@ export function BookList({ books, onBookClick, isCompact = false, onRefresh }: B
     );
   }
 
-  const handleOnSuccess = (book: NormalizedBook, action: "read" | "unread") => {
-    if (action === "read") {
-      setLocalBooks(
-        localBooks.map((previousBook) =>
-          previousBook.id === book.id
-            ? {
-                ...previousBook,
-                readProgress: {
-                  completed: true,
-                  page: previousBook.pageCount,
-                  lastReadAt: new Date().toISOString(),
-                },
-              }
-            : previousBook
-        )
-      );
-    } else if (action === "unread") {
-      setLocalBooks(
-        localBooks.map((previousBook) =>
-          previousBook.id === book.id
-            ? {
-                ...previousBook,
-                readProgress: null,
-              }
-            : previousBook
-        )
-      );
-    }
-    // Rafraîchir les données après avoir marqué comme lu/non lu
-    onRefresh?.();
-  };
-
   return (
     <div className={cn("space-y-2", isCompact && "space-y-1")}>
-      {localBooks.map((book) =>
+      {books.map((book) =>
         book.volumeType === "_missing" ? (
           <div
             key={book.id}
