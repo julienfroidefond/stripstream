@@ -25,15 +25,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
       - name: Read version from package.json and short SHA
         id: version
         run: |
-          v=$(node -p "require('./package.json').version")
+          v=$(grep -o '"version": *"[^"]*"' package.json | head -1 | sed 's/.*"version": *"//; s/"$//')
           sha=$(git rev-parse --short HEAD)
           echo "version=$v" >> "$GITHUB_OUTPUT"
           echo "sha=$sha" >> "$GITHUB_OUTPUT"
