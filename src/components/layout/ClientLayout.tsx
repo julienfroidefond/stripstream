@@ -15,12 +15,7 @@ const Toaster = dynamic(() => import("@/components/ui/toaster").then((m) => m.To
 import { NetworkStatus } from "../ui/NetworkStatus";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { ServiceWorkerProvider } from "@/contexts/ServiceWorkerContext";
-import type { NormalizedLibrary, NormalizedSeries } from "@/lib/providers/types";
-import type { KomgaConfigSummary } from "@/app/actions/config";
-import type { StripstreamConfigSummary } from "@/app/actions/stripstream-config";
 import { defaultPreferences } from "@/types/preferences";
-import { useToast } from "@/components/ui/use-toast";
-import { useTranslate } from "@/hooks/useTranslate";
 import logger from "@/lib/logger";
 import { getRandomBookFromLibraries } from "@/app/actions/library";
 
@@ -29,56 +24,31 @@ const publicRoutes = ["/login", "/register"];
 
 interface ClientLayoutProps {
   children: React.ReactNode;
-  initialLibraries: NormalizedLibrary[];
-  initialFavorites: NormalizedSeries[];
   userIsAdmin?: boolean;
-  komgaConfigs?: KomgaConfigSummary[];
-  stripstreamConfigs?: StripstreamConfigSummary[];
-  initialErrors?: { libraries?: boolean; favorites?: boolean };
+  // Slots serveur streamés pour la sidebar (Suspense géré côté Sidebar)
+  sidebarFavorites?: React.ReactNode;
+  sidebarLibraries?: React.ReactNode;
+  sidebarConnections?: React.ReactNode;
+  sidebarFavoritesSkeleton?: React.ReactNode;
+  sidebarLibrariesSkeleton?: React.ReactNode;
+  sidebarConnectionsSkeleton?: React.ReactNode;
 }
 
 export default function ClientLayout({
   children,
-  initialLibraries = [],
-  initialFavorites = [],
   userIsAdmin = false,
-  komgaConfigs = [],
-  stripstreamConfigs = [],
-  initialErrors,
+  sidebarFavorites,
+  sidebarLibraries,
+  sidebarConnections,
+  sidebarFavoritesSkeleton,
+  sidebarLibrariesSkeleton,
+  sidebarConnectionsSkeleton,
 }: ClientLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [randomBookThumbnailUrl, setRandomBookThumbnailUrl] = useState<string | null>(null);
   const pathname = usePathname();
   const { preferences } = usePreferences();
-  const { toast } = useToast();
-  const { t } = useTranslate();
   const prevLibraryIdsRef = useRef<string>("");
-
-  // Toaster une seule fois les erreurs détectées au SSR du root layout
-  // (libraries / favorites injoignables) pour que l'utilisateur sache que
-  // l'état affiché peut être incomplet plutôt que silencieusement vide.
-  const reportedErrorsRef = useRef(false);
-  useEffect(() => {
-    if (reportedErrorsRef.current) return;
-    if (!initialErrors) return;
-    if (initialErrors.libraries) {
-      toast({
-        variant: "destructive",
-        title: t("layout.errors.title"),
-        description: t("layout.errors.libraries"),
-      });
-    }
-    if (initialErrors.favorites) {
-      toast({
-        variant: "destructive",
-        title: t("layout.errors.title"),
-        description: t("layout.errors.favorites"),
-      });
-    }
-    if (initialErrors.libraries || initialErrors.favorites) {
-      reportedErrorsRef.current = true;
-    }
-  }, [initialErrors, toast, t]);
 
   const backgroundType = preferences.background.type;
   const komgaLibraries = preferences.background.komgaLibraries;
@@ -182,7 +152,6 @@ export default function ClientLayout({
     };
   }, [isSidebarOpen, handleCloseSidebar]);
 
-
   // Ne pas afficher le header et la sidebar sur les routes publiques et le reader
   const isPublicRoute = publicRoutes.includes(pathname) || pathname.startsWith("/books/");
 
@@ -193,7 +162,6 @@ export default function ClientLayout({
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <ServiceWorkerProvider>
-        {/* Background fixe pour les images et gradients */}
         {hasCustomBackground && <div className="fixed inset-0 -z-10" style={backgroundStyle} />}
         {!hasCustomBackground && (
           <>
@@ -221,11 +189,13 @@ export default function ClientLayout({
             <Sidebar
               isOpen={isSidebarOpen}
               onClose={handleCloseSidebar}
-              initialLibraries={initialLibraries}
-              initialFavorites={initialFavorites}
               userIsAdmin={userIsAdmin}
-              komgaConfigs={komgaConfigs}
-              stripstreamConfigs={stripstreamConfigs}
+              favoritesSlot={sidebarFavorites}
+              librariesSlot={sidebarLibraries}
+              connectionsSlot={sidebarConnections}
+              favoritesSkeleton={sidebarFavoritesSkeleton}
+              librariesSkeleton={sidebarLibrariesSkeleton}
+              connectionsSkeleton={sidebarConnectionsSkeleton}
             />
           )}
           {!isPublicRoute && isSidebarOpen && (
