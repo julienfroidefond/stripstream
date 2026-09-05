@@ -2,6 +2,7 @@ import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
+import { checkRateLimit } from "../../utils/rate-limit";
 
 export interface UserData {
   id: string;
@@ -12,11 +13,23 @@ export interface UserData {
 
 export class AuthServerService {
   private static readonly SALT_ROUNDS = 10;
+  private static readonly LOGIN_LIMIT = 10;
+  private static readonly LOGIN_WINDOW_MS = 60_000;
+  private static readonly REGISTER_LIMIT = 5;
+  private static readonly REGISTER_WINDOW_MS = 60_000;
 
   static async registerUser(email: string, password: string): Promise<UserData> {
     //check if password is strong
     if (!AuthServerService.isPasswordStrong(password)) {
       throw new AppError(ERROR_CODES.AUTH.PASSWORD_NOT_STRONG);
+    }
+
+    const rl = checkRateLimit(`register:${email.toLowerCase()}`, {
+      limit: this.REGISTER_LIMIT,
+      windowMs: this.REGISTER_WINDOW_MS,
+    });
+    if (!rl.allowed) {
+      throw new AppError(ERROR_CODES.AUTH.RATE_LIMITED);
     }
 
     // Check if user already exists
@@ -69,6 +82,14 @@ export class AuthServerService {
   }
 
   static async loginUser(email: string, password: string): Promise<UserData> {
+    const rl = checkRateLimit(`login:${email.toLowerCase()}`, {
+      limit: this.LOGIN_LIMIT,
+      windowMs: this.LOGIN_WINDOW_MS,
+    });
+    if (!rl.allowed) {
+      throw new AppError(ERROR_CODES.AUTH.RATE_LIMITED);
+    }
+
     const user = await prisma.user.findUnique({
       where: { email: email.toLowerCase() },
     });
