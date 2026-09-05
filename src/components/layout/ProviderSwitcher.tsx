@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ChevronDown, Loader2, Server, Settings } from "lucide-react";
@@ -42,23 +42,58 @@ export function ProviderSwitcher({ komgaConfigs, stripstreamConfigs }: ProviderS
   const [isOpen, setIsOpen] = useState(false);
   const [busyKey, setBusyKey] = useState<string | null>(null);
 
-  const connections: UnifiedConnection[] = [
-    ...komgaConfigs.map((c) => ({
-      id: c.id,
-      type: "komga" as const,
-      name: c.name,
-      isActive: c.isActive,
-    })),
-    ...stripstreamConfigs.map((c) => ({
-      id: c.id,
-      type: "stripstream" as const,
-      name: c.name,
-      isActive: c.isActive,
-    })),
-  ];
+  const connections = useMemo<UnifiedConnection[]>(
+    () => [
+      ...komgaConfigs.map((c) => ({
+        id: c.id,
+        type: "komga" as const,
+        name: c.name,
+        isActive: c.isActive,
+      })),
+      ...stripstreamConfigs.map((c) => ({
+        id: c.id,
+        type: "stripstream" as const,
+        name: c.name,
+        isActive: c.isActive,
+      })),
+    ],
+    [komgaConfigs, stripstreamConfigs]
+  );
 
   const active = connections.find((c) => c.isActive);
   const keyOf = (c: UnifiedConnection) => `${c.type}-${c.id}`;
+
+  const handleActivate = useCallback(
+    async (conn: UnifiedConnection) => {
+      if (conn.isActive || busyKey) return;
+      setBusyKey(keyOf(conn));
+      setIsOpen(false);
+      try {
+        const result =
+          conn.type === "komga"
+            ? await setActiveKomgaConfig(conn.id)
+            : await setActiveStripstreamConfig(conn.id);
+        toast({
+          variant: result.success ? "default" : "destructive",
+          title: t("header.providerSwitcher.title"),
+          description: result.message,
+        });
+        if (result.success) {
+          // Une navigation RSC repasse par les Suspense de la home et affiche
+          // les skeletons, contrairement à router.refresh() qui conserve
+          // l'ancien arbre pendant le chargement.
+          router.replace(`/?connection=${Date.now()}`);
+        } else {
+          setIsOpen(true);
+        }
+      } catch {
+        setIsOpen(true);
+      } finally {
+        setBusyKey(null);
+      }
+    },
+    [busyKey, router, toast, t]
+  );
 
   // Pas de connexion configurée → bouton qui mène vers les paramètres
   if (connections.length === 0) {
@@ -72,35 +107,6 @@ export function ProviderSwitcher({ komgaConfigs, stripstreamConfigs }: ProviderS
       </Link>
     );
   }
-
-  const handleActivate = async (conn: UnifiedConnection) => {
-    if (conn.isActive || busyKey) return;
-    setBusyKey(keyOf(conn));
-    setIsOpen(false);
-    try {
-      const result =
-        conn.type === "komga"
-          ? await setActiveKomgaConfig(conn.id)
-          : await setActiveStripstreamConfig(conn.id);
-      toast({
-        variant: result.success ? "default" : "destructive",
-        title: t("header.providerSwitcher.title"),
-        description: result.message,
-      });
-      if (result.success) {
-        // Une navigation RSC repasse par les Suspense de la home et affiche
-        // les skeletons, contrairement à router.refresh() qui conserve
-        // l'ancien arbre pendant le chargement.
-        router.replace(`/?connection=${Date.now()}`);
-      } else {
-        setIsOpen(true);
-      }
-    } catch {
-      setIsOpen(true);
-    } finally {
-      setBusyKey(null);
-    }
-  };
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen} className="space-y-0.5">

@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import type { NormalizedSeries } from "@/lib/providers/types";
 import { SeriesCover } from "@/components/ui/series-cover";
 import { useRouter } from "next/navigation";
@@ -62,7 +63,7 @@ const seriesStatusMap = {
   cancelled: { className: "bg-red-500/10 text-red-500", icon: CircleX },
 } as const;
 
-function SeriesListItem({ series, isCompact = false }: SeriesListItemProps) {
+const SeriesListItem = memo(function SeriesListItem({ series, isCompact = false }: SeriesListItemProps) {
   const router = useRouter();
   const { t } = useTranslate();
   const { isAnonymous } = useAnonymous();
@@ -257,7 +258,7 @@ function SeriesListItem({ series, isCompact = false }: SeriesListItemProps) {
       </div>
     </div>
   );
-}
+});
 
 export function SeriesList({ series, isCompact = false }: SeriesListProps) {
   const { t } = useTranslate();

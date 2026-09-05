@@ -265,9 +265,12 @@ export class StripstreamProvider implements IMediaProvider {
         { revalidate: CACHE_TTL_MED }
       );
 
+      // Charge une page bornée (50) triée par volume pour repérer le tome suivant :
+      // pas besoin de charger toute la série.
       const response = await this.client.fetch<StripstreamBooksPage>("books", {
         series: lookup.id,
-        limit: "200",
+        limit: "50",
+        sort: "volume",
       }, { revalidate: CACHE_TTL_SHORT });
 
       const sorted = response.items
@@ -430,30 +433,53 @@ export class StripstreamProvider implements IMediaProvider {
       limit: String(limit),
     }, { revalidate: CACHE_TTL_SHORT });
 
-    // Resolve series_id for each hit via by-name lookup
-    const seriesResults: NormalizedSearchResult[] = await Promise.all(
-      response.series_hits.map(async (s) => {
-        let id = s.first_book_id;
-        try {
-          const lookup = await this.client.fetch<StripstreamSeriesLookup>(
-            `libraries/${s.library_id}/series/by-name/${encodeURIComponent(s.name)}`,
-            undefined,
-            { revalidate: CACHE_TTL_MED }
-          );
-          id = lookup.id;
-        } catch {
-          // fallback to first_book_id
-        }
-        return {
-          id,
-          title: s.name,
-          href: `/series/${id}`,
-          coverUrl: `/api/stripstream/images/books/${s.first_book_id}/thumbnail`,
-          type: "series" as const,
-          bookCount: s.book_count,
-        };
-      })
-    );
+    // Resolve series_id for each hit via by-name lookup.
+    // Piscine de concurrence bornée pour ne pas tirer N requêtes réseau d'un coup.
+    const CONCURRENCY = 3;
+    const hits = response.series_hits;
+    const resolved = new Map<string, string>();
+    const seriesResults: NormalizedSearchResult[] = [];
+
+    const resolveHit = async (s: (typeof hits)[number]): Promise<string> => {
+      let id = s.first_book_id;
+      try {
+        const lookup = await this.client.fetch<StripstreamSeriesLookup>(
+          `libraries/${s.library_id}/series/by-name/${encodeURIComponent(s.name)}`,
+          undefined,
+          { revalidate: CACHE_TTL_MED }
+        );
+        id = lookup.id;
+      } catch {
+        // fallback to first_book_id
+      }
+      return id;
+    };
+
+    const seenIds = new Set<string>();
+    for (let i = 0; i < hits.length; i += CONCURRENCY) {
+      const chunk = hits.slice(i, i + CONCURRENCY);
+      const chunkIds = await Promise.allSettled(chunk.map(resolveHit));
+      chunk.forEach((s, j) => {
+        const settled = chunkIds[j];
+        const id = settled.status === "fulfilled" ? settled.value : s.first_book_id;
+        resolved.set(s.name, id);
+      });
+    }
+
+    // Garde l'unicité par series_id tout en préservant l'ordre des hits.
+    for (const s of hits) {
+      const id = resolved.get(s.name) ?? s.first_book_id;
+      if (seenIds.has(id)) continue;
+      seenIds.add(id);
+      seriesResults.push({
+        id,
+        title: s.name,
+        href: `/series/${id}`,
+        coverUrl: `/api/stripstream/images/books/${s.first_book_id}/thumbnail`,
+        type: "series" as const,
+        bookCount: s.book_count,
+      });
+    }
 
     const bookResults: NormalizedSearchResult[] = response.hits.map((hit) => ({
       id: hit.id,

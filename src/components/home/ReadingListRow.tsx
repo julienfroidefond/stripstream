@@ -1,5 +1,6 @@
 "use client";
 
+import { memo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Bookmark, BookMarked } from "lucide-react";
 import { ScrollContainer } from "@/components/ui/scroll-container";
@@ -14,6 +15,13 @@ interface ReadingListRowProps {
 export function ReadingListRow({ lists }: ReadingListRowProps) {
   const router = useRouter();
   const { t } = useTranslate();
+
+  const handleOpenList = useCallback(
+    (id: string) => {
+      router.push(`/reading-lists/${id}`);
+    },
+    [router]
+  );
 
   if (!lists.length) return null;
 
@@ -34,7 +42,7 @@ export function ReadingListRow({ lists }: ReadingListRowProps) {
           <ReadingListCard
             key={list.id}
             list={list}
-            onClick={() => router.push(`/reading-lists/${list.id}`)}
+            onClick={handleOpenList}
           />
         ))}
       </ScrollContainer>
@@ -44,17 +52,17 @@ export function ReadingListRow({ lists }: ReadingListRowProps) {
 
 interface ReadingListCardProps {
   list: StripstreamReadingList;
-  onClick: () => void;
+  onClick: (id: string) => void;
 }
 
-function ReadingListCard({ list, onClick }: ReadingListCardProps) {
+const ReadingListCard = memo(function ReadingListCard({ list, onClick }: ReadingListCardProps) {
   const { t } = useTranslate();
   const firstCover = list.preview_covers[0];
 
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={() => onClick(list.id)}
       className="group relative flex w-[160px] flex-shrink-0 flex-col gap-1.5 sm:w-[188px]"
     >
       {/* Cover */}
@@ -88,4 +96,4 @@ function ReadingListCard({ list, onClick }: ReadingListCardProps) {
       </div>
     </button>
   );
-}
+});

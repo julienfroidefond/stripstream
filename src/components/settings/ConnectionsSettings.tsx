@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslate } from "@/hooks/useTranslate";
 import { useToast } from "@/components/ui/use-toast";
@@ -78,23 +78,26 @@ export function ConnectionsSettings({ komgaConfigs, stripstreamConfigs }: Connec
   const [isSaving, setIsSaving] = useState(false);
   const [busyKey, setBusyKey] = useState<string | null>(null);
 
-  const connections: UnifiedConnection[] = [
-    ...komgaConfigs.map((c) => ({
-      id: c.id,
-      type: "komga" as const,
-      name: c.name,
-      url: c.url,
-      username: c.username,
-      isActive: c.isActive,
-    })),
-    ...stripstreamConfigs.map((c) => ({
-      id: c.id,
-      type: "stripstream" as const,
-      name: c.name,
-      url: c.url,
-      isActive: c.isActive,
-    })),
-  ];
+  const connections = useMemo<UnifiedConnection[]>(
+    () => [
+      ...komgaConfigs.map((c) => ({
+        id: c.id,
+        type: "komga" as const,
+        name: c.name,
+        url: c.url,
+        username: c.username,
+        isActive: c.isActive,
+      })),
+      ...stripstreamConfigs.map((c) => ({
+        id: c.id,
+        type: "stripstream" as const,
+        name: c.name,
+        url: c.url,
+        isActive: c.isActive,
+      })),
+    ],
+    [komgaConfigs, stripstreamConfigs]
+  );
 
   const activeKey = connections.find((c) => c.isActive)
     ? `${connections.find((c) => c.isActive)!.type}-${connections.find((c) => c.isActive)!.id}`
@@ -115,7 +118,7 @@ export function ConnectionsSettings({ komgaConfigs, stripstreamConfigs }: Connec
 
   const keyOf = (c: UnifiedConnection) => `${c.type}-${c.id}`;
 
-  const handleTest = async () => {
+  const handleTest = useCallback(async () => {
     if (!editing) return;
     setIsTesting(true);
     try {
@@ -133,9 +136,9 @@ export function ConnectionsSettings({ komgaConfigs, stripstreamConfigs }: Connec
     } finally {
       setIsTesting(false);
     }
-  };
+  }, [editing, toast, t]);
 
-  const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSave = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!editing) return;
     setIsSaving(true);
@@ -165,9 +168,9 @@ export function ConnectionsSettings({ komgaConfigs, stripstreamConfigs }: Connec
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [editing, toast, t, router]);
 
-  const handleDelete = async (conn: UnifiedConnection) => {
+  const handleDelete = useCallback(async (conn: UnifiedConnection) => {
     if (!confirm(t("settings.connections.confirmDelete", { name: conn.name }))) return;
     setBusyKey(keyOf(conn));
     try {
@@ -184,9 +187,9 @@ export function ConnectionsSettings({ komgaConfigs, stripstreamConfigs }: Connec
     } finally {
       setBusyKey(null);
     }
-  };
+  }, [t, router, toast]);
 
-  const handleTestExisting = async (conn: UnifiedConnection) => {
+  const handleTestExisting = useCallback(async (conn: UnifiedConnection) => {
     setBusyKey(keyOf(conn));
     try {
       const result =
@@ -201,9 +204,9 @@ export function ConnectionsSettings({ komgaConfigs, stripstreamConfigs }: Connec
     } finally {
       setBusyKey(null);
     }
-  };
+  }, [t, toast]);
 
-  const handleActivate = async (conn: UnifiedConnection) => {
+  const handleActivate = useCallback(async (conn: UnifiedConnection) => {
     setBusyKey(keyOf(conn));
     try {
       const result =
@@ -219,7 +222,7 @@ export function ConnectionsSettings({ komgaConfigs, stripstreamConfigs }: Connec
     } finally {
       setBusyKey(null);
     }
-  };
+  }, [t, router, toast]);
 
   return (
     <Card>

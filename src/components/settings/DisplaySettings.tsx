@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import { useTranslate } from "@/hooks/useTranslate";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { Switch } from "@/components/ui/switch";
@@ -20,7 +21,7 @@ export function DisplaySettings() {
   const { toast } = useToast();
   const { preferences, updatePreferences } = usePreferences();
 
-  const handleToggleThumbnails = async (checked: boolean) => {
+  const handleToggleThumbnails = useCallback(async (checked: boolean) => {
     try {
       await updatePreferences({ showThumbnails: checked });
       toast({
@@ -35,9 +36,9 @@ export function DisplaySettings() {
         description: t("settings.error.message"),
       });
     }
-  };
+  }, [updatePreferences, toast, t]);
 
-  const handleToggleUnreadFilter = async (checked: boolean) => {
+  const handleToggleUnreadFilter = useCallback(async (checked: boolean) => {
     try {
       await updatePreferences({ showOnlyUnread: checked });
       toast({
@@ -52,9 +53,9 @@ export function DisplaySettings() {
         description: t("settings.error.message"),
       });
     }
-  };
+  }, [updatePreferences, toast, t]);
 
-  const handleSortOrderChange = async (value: SortOrder) => {
+  const handleSortOrderChange = useCallback(async (value: SortOrder) => {
     try {
       await updatePreferences({ defaultSortOrder: value });
       toast({
@@ -69,9 +70,9 @@ export function DisplaySettings() {
         description: t("settings.error.message"),
       });
     }
-  };
+  }, [updatePreferences, toast, t]);
 
-  const handleShowMissingBooksChange = async (checked: boolean) => {
+  const handleShowMissingBooksChange = useCallback(async (checked: boolean) => {
     try {
       await updatePreferences({ showMissingBooks: checked });
       toast({
@@ -86,9 +87,9 @@ export function DisplaySettings() {
         description: t("settings.error.message"),
       });
     }
-  };
+  }, [updatePreferences, toast, t]);
 
-  const handleHideMissingBooksChange = async (checked: boolean) => {
+  const handleHideMissingBooksChange = useCallback(async (checked: boolean) => {
     try {
       await updatePreferences({ hideMissingBooks: checked });
       toast({
@@ -103,7 +104,7 @@ export function DisplaySettings() {
         description: t("settings.error.message"),
       });
     }
-  };
+  }, [updatePreferences, toast, t]);
 
   return (
     <div className="space-y-6">

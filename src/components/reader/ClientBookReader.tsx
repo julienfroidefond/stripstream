@@ -1,10 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import type { NormalizedBook } from "@/lib/providers/types";
-import { BookReader } from "./BookReader";
 import { Button } from "@/components/ui/button";
+
+// Chargement du lecteur lourd uniquement quand l'utilisateur clique sur « Commencer la lecture ».
+const BookReader = dynamic(() => import("./BookReader").then((m) => m.BookReader), {
+  ssr: false,
+  loading: () => null,
+});
 
 interface ClientBookReaderProps {
   book: NormalizedBook;

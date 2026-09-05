@@ -39,29 +39,29 @@ export class AdminService {
         },
       });
 
-      // Vérifier les configs pour chaque user
-      const usersWithConfigs = await Promise.all(
-        users.map(async (user) => {
-          const [komgaConfig, preferences] = await Promise.all([
-            prisma.komgaConfig.findFirst({
-              where: { userId: user.id },
-              select: { id: true },
-            }),
-            prisma.preferences.findUnique({
-              where: { userId: user.id },
-              select: { id: true },
-            }),
-          ]);
+      // Vérifier les configs en 2 requêtes groupées (au lieu de 2N requêtes)
+      const userIds = users.map((u) => u.id);
+      const [komgaConfigs, preferences] = await Promise.all([
+        prisma.komgaConfig.findMany({
+          where: { userId: { in: userIds } },
+          select: { userId: true, id: true },
+        }),
+        prisma.preferences.findMany({
+          where: { userId: { in: userIds } },
+          select: { userId: true, id: true },
+        }),
+      ]);
 
-          return {
-            ...user,
-            id: user.id.toString(),
-            roles: user.roles as string[],
-            hasKomgaConfig: !!komgaConfig,
-            hasPreferences: !!preferences,
-          };
-        })
-      );
+      const komgaByUser = new Set(komgaConfigs.map((c) => c.userId));
+      const prefsByUser = new Set(preferences.map((p) => p.userId));
+
+      const usersWithConfigs = users.map((user) => ({
+        ...user,
+        id: user.id.toString(),
+        roles: user.roles as string[],
+        hasKomgaConfig: komgaByUser.has(user.id),
+        hasPreferences: prefsByUser.has(user.id),
+      }));
 
       return usersWithConfigs;
     } catch (error) {

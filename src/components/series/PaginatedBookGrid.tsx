@@ -88,19 +88,6 @@ export function PaginatedBookGrid({
     [router, pathname, searchParams]
   );
 
-  // Update local state when prop changes
-  useEffect(() => {
-    setShowOnlyUnread(initialShowOnlyUnread);
-  }, [initialShowOnlyUnread]);
-
-  useEffect(() => {
-    setIsCompact(initialCompact);
-  }, [initialCompact]);
-
-  useEffect(() => {
-    setViewMode(initialViewMode);
-  }, [initialViewMode]);
-
   // Apply default filter on initial load
   useEffect(() => {
     if (defaultShowOnlyUnread && !searchParams.has("unread")) {
@@ -108,11 +95,14 @@ export function PaginatedBookGrid({
     }
   }, [defaultShowOnlyUnread, pathname, router, searchParams, updateUrlParams]);
 
-  const handlePageChange = async (page: number) => {
-    await updateUrlParams({ page: page.toString() });
-  };
+  const handlePageChange = useCallback(
+    async (page: number) => {
+      await updateUrlParams({ page: page.toString() });
+    },
+    [updateUrlParams]
+  );
 
-  const handleUnreadFilter = async () => {
+  const handleUnreadFilter = useCallback(async () => {
     const newUnreadState = !showOnlyUnread;
     setShowOnlyUnread(newUnreadState);
     await updateUrlParams({
@@ -126,40 +116,52 @@ export function PaginatedBookGrid({
       // Log l'erreur mais ne bloque pas l'utilisateur
       console.error("Erreur lors de la sauvegarde de la préférence:", error);
     }
-  };
+  }, [showOnlyUnread, updateUrlParams, updatePreferences]);
 
-  const handlePageSizeChange = async (size: number) => {
-    const nextSize = normalizeGridPageSize(size, isCompact);
-    await persistPageSizeChange(nextSize);
-    await updateUrlParams({ page: "1", size: nextSize.toString() });
-  };
-
-  const handleCompactModeToggle = async (nextCompactMode: boolean) => {
-    setIsCompact(nextCompactMode);
-
-    const nextSize = normalizeGridPageSize(effectivePageSize, nextCompactMode);
-    await updatePreferences({
-      displayMode: {
-        ...preferences.displayMode,
-        compact: nextCompactMode,
-        itemsPerPage: nextSize,
-        viewMode,
-      },
-    });
-
-    if (nextSize !== effectivePageSize) {
+  const handlePageSizeChange = useCallback(
+    async (size: number) => {
+      const nextSize = normalizeGridPageSize(size, isCompact);
+      await persistPageSizeChange(nextSize);
       await updateUrlParams({ page: "1", size: nextSize.toString() });
-    }
-  };
+    },
+    [isCompact, persistPageSizeChange, updateUrlParams]
+  );
 
-  const handleViewModeToggle = async (nextViewMode: "grid" | "list") => {
-    setViewMode(nextViewMode);
-    await persistViewModeToggle(nextViewMode);
-  };
+  const handleCompactModeToggle = useCallback(
+    async (nextCompactMode: boolean) => {
+      setIsCompact(nextCompactMode);
 
-  const handleBookClick = (book: NormalizedBook) => {
-    router.push(`/books/${book.id}`);
-  };
+      const nextSize = normalizeGridPageSize(effectivePageSize, nextCompactMode);
+      await updatePreferences({
+        displayMode: {
+          ...preferences.displayMode,
+          compact: nextCompactMode,
+          itemsPerPage: nextSize,
+          viewMode,
+        },
+      });
+
+      if (nextSize !== effectivePageSize) {
+        await updateUrlParams({ page: "1", size: nextSize.toString() });
+      }
+    },
+    [effectivePageSize, preferences.displayMode, viewMode, updateUrlParams, updatePreferences]
+  );
+
+  const handleViewModeToggle = useCallback(
+    async (nextViewMode: "grid" | "list") => {
+      setViewMode(nextViewMode);
+      await persistViewModeToggle(nextViewMode);
+    },
+    [persistViewModeToggle]
+  );
+
+  const handleBookClick = useCallback(
+    (book: NormalizedBook) => {
+      router.push(`/books/${book.id}`);
+    },
+    [router]
+  );
 
   const { regularBooks, specialBooks } = useMemo(() => {
     const regular: NormalizedBook[] = [];

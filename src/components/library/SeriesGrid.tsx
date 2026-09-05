@@ -3,6 +3,7 @@ import React from "react";
 
 import type { NormalizedSeries } from "@/lib/providers/types";
 import { useRouter } from "next/navigation";
+import { memo, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { SeriesCover } from "@/components/ui/series-cover";
 import { useTranslate } from "@/hooks/useTranslate";
@@ -56,10 +57,71 @@ const getReadingStatusInfo = (
   };
 };
 
+const SeriesGridItem = memo(function SeriesGridItem({
+  series,
+  isCompact,
+  isAnonymous,
+  onOpen,
+}: {
+  series: NormalizedSeries;
+  isCompact: boolean;
+  isAnonymous: boolean;
+  onOpen: (id: string) => void;
+}) {
+  const { t } = useTranslate();
+  const statusInfo = getReadingStatusInfo(series, t);
+  const seriesStatusEntry = series.seriesStatus
+    ? seriesStatusMap[series.seriesStatus as keyof typeof seriesStatusMap]
+    : null;
+
+  return (
+    <button
+      onClick={() => onOpen(series.id)}
+      className={cn(
+        "group relative aspect-[2/3] overflow-hidden rounded-xl border border-border/60 bg-card/80 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
+        !isAnonymous && series.bookCount === series.booksReadCount && "opacity-50",
+        isCompact && "aspect-[3/4]"
+      )}
+    >
+      <SeriesCover
+        series={series}
+        alt={t("series.coverAlt", { title: series.name })}
+        isAnonymous={isAnonymous}
+      />
+      <div className="absolute inset-x-0 bottom-0 translate-y-full space-y-2 bg-gradient-to-t from-black via-black/75 to-transparent p-4 transition-transform duration-200 group-hover:translate-y-0">
+        <h3 className="font-medium text-sm text-white line-clamp-2">{series.name}</h3>
+        <div className="flex items-center gap-2 flex-wrap">
+          {seriesStatusEntry && (
+            <span className={`px-2 py-0.5 rounded-full text-xs flex items-center gap-1 ${seriesStatusEntry.className}`}>
+              <seriesStatusEntry.icon className="h-3 w-3" />
+              {t(`series.status.${series.seriesStatus}`)}
+            </span>
+          )}
+          {!isAnonymous && (
+            <span className={`px-2 py-0.5 rounded-full text-xs ${statusInfo.className}`}>
+              {statusInfo.label}
+            </span>
+          )}
+          <span className="text-xs text-white/80">
+            {t("series.books", { count: series.bookCount })}
+          </span>
+        </div>
+      </div>
+    </button>
+  );
+});
+
 export function SeriesGrid({ series, isCompact = false }: SeriesGridProps) {
   const router = useRouter();
   const { t } = useTranslate();
   const { isAnonymous } = useAnonymous();
+
+  const handleOpenSeries = useCallback(
+    (id: string) => {
+      router.push(`/series/${id}`);
+    },
+    [router]
+  );
 
   if (!series.length) {
     return (
@@ -79,47 +141,13 @@ export function SeriesGrid({ series, isCompact = false }: SeriesGridProps) {
       )}
     >
       {series.map((seriesItem) => (
-        <button
+        <SeriesGridItem
           key={seriesItem.id}
-          onClick={() => router.push(`/series/${seriesItem.id}`)}
-          className={cn(
-            "group relative aspect-[2/3] overflow-hidden rounded-xl border border-border/60 bg-card/80 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
-            !isAnonymous && seriesItem.bookCount === seriesItem.booksReadCount && "opacity-50",
-            isCompact && "aspect-[3/4]"
-          )}
-        >
-          <SeriesCover
-            series={seriesItem}
-            alt={t("series.coverAlt", { title: seriesItem.name })}
-            isAnonymous={isAnonymous}
-          />
-          <div className="absolute inset-x-0 bottom-0 translate-y-full space-y-2 bg-gradient-to-t from-black via-black/75 to-transparent p-4 transition-transform duration-200 group-hover:translate-y-0">
-            <h3 className="font-medium text-sm text-white line-clamp-2">{seriesItem.name}</h3>
-            <div className="flex items-center gap-2 flex-wrap">
-              {(() => {
-                const entry = seriesItem.seriesStatus ? seriesStatusMap[seriesItem.seriesStatus as keyof typeof seriesStatusMap] : null;
-                return entry ? (
-                  <span className={`px-2 py-0.5 rounded-full text-xs flex items-center gap-1 ${entry.className}`}>
-                    <entry.icon className="h-3 w-3" />
-                    {t(`series.status.${seriesItem.seriesStatus}`)}
-                  </span>
-                ) : null;
-              })()}
-              {!isAnonymous && (
-                <span
-                  className={`px-2 py-0.5 rounded-full text-xs ${
-                    getReadingStatusInfo(seriesItem, t).className
-                  }`}
-                >
-                  {getReadingStatusInfo(seriesItem, t).label}
-                </span>
-              )}
-              <span className="text-xs text-white/80">
-                {t("series.books", { count: seriesItem.bookCount })}
-              </span>
-            </div>
-          </div>
-        </button>
+          series={seriesItem}
+          isCompact={isCompact}
+          isAnonymous={isAnonymous}
+          onOpen={handleOpenSeries}
+        />
       ))}
     </div>
   );
