@@ -22,7 +22,17 @@ import type { NormalizedBook, NormalizedSeries } from "@/lib/providers/types";
 import type { HomePrimaryData } from "@/types/home";
 import type { StripstreamReadingList } from "@/types/stripstream";
 
-export default async function HomePage() {
+export default function HomePage() {
+  return (
+    <HomeClientWrapper>
+      <Suspense fallback={<HomePageSkeleton />}>
+        <HomeStreamingContent />
+      </Suspense>
+    </HomeClientWrapper>
+  );
+}
+
+async function HomeStreamingContent() {
   try {
     const provider = await getProvider();
     if (!provider) redirect("/settings");
@@ -41,7 +51,6 @@ export default async function HomePage() {
       : provider.getRecommendations().catch(() => []);
 
     return (
-      <HomeClientWrapper>
         <div className="space-y-10 pb-2">
           <Suspense fallback={<HomeHeroSkeleton />}>
             <ContinueReadingSection
@@ -79,7 +88,6 @@ export default async function HomePage() {
             />
           </Suspense>
         </div>
-      </HomeClientWrapper>
     );
   } catch (error) {
     if (error instanceof AppError && (
@@ -227,4 +235,18 @@ async function RecommendationsSection({
   if (recommendations.length === 0) return null;
 
   return <RecommendationsRow series={recommendations} />;
+}
+
+function HomePageSkeleton() {
+  return (
+    <div className="space-y-10 pb-2">
+      <HomeHeroSkeleton />
+      <HomeCarouselSkeleton icon={LibraryBig} />
+      <HomeCarouselSkeleton icon={Heart} />
+      <HomeCarouselSkeleton icon={Bookmark} />
+      <HomeCarouselSkeleton icon={Sparkles} />
+      <HomeCarouselSkeleton icon={History} />
+      <HomeCarouselSkeleton icon={Wand2} />
+    </div>
+  );
 }
