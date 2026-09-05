@@ -18,6 +18,7 @@ import { ServiceWorkerProvider } from "@/contexts/ServiceWorkerContext";
 import { defaultPreferences } from "@/types/preferences";
 import logger from "@/lib/logger";
 import { getRandomBookFromLibraries } from "@/app/actions/library";
+import { ConnectionTransitionProvider } from "@/contexts/ConnectionTransitionContext";
 
 // Routes qui ne nécessitent pas d'authentification
 const publicRoutes = ["/login", "/register"];
@@ -162,6 +163,7 @@ export default function ClientLayout({
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <ServiceWorkerProvider>
+        <ConnectionTransitionProvider>
         {hasCustomBackground && <div className="fixed inset-0 -z-10" style={backgroundStyle} />}
         {!hasCustomBackground && (
           <>
@@ -211,6 +213,7 @@ export default function ClientLayout({
           <Toaster />
           <NetworkStatus />
         </div>
+        </ConnectionTransitionProvider>
       </ServiceWorkerProvider>
     </ThemeProvider>
   );

@@ -15,6 +15,9 @@ const libName = instance === 'B' ? 'Bibliothèque B' : 'Bibliothèque A';
 const seriesName = instance === 'B' ? 'BD-B (Tome 1)' : 'BD-A (Tome 1)';
 const seriesId = instance === 'B' ? 'series-b' : 'series-a';
 const bookId = instance === 'B' ? 'book-b' : 'book-a';
+// La seconde connexion est volontairement lente afin de rendre observable le
+// fallback de bascule dans le test E2E.
+const responseDelayMs = instance === 'B' ? 750 : 0;
 
 const libraries = [
   { id: `lib-${instance.toLowerCase()}`, name: libName, bookCount: 1 },
@@ -65,8 +68,10 @@ const server = http.createServer((req, res) => {
   const path = url.pathname;
 
   const send = (data, status = 200) => {
-    res.statusCode = status;
-    res.end(JSON.stringify(data));
+    setTimeout(() => {
+      res.statusCode = status;
+      res.end(JSON.stringify(data));
+    }, responseDelayMs);
   };
 
   // GET /api/v1/libraries

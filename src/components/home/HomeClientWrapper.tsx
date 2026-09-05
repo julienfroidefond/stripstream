@@ -7,6 +7,9 @@ import { PullToRefreshIndicator } from "@/components/common/PullToRefreshIndicat
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { revalidateForRefresh } from "@/app/actions/refresh";
 import Image from "next/image";
+import { HomeCarouselSkeleton, HomeHeroSkeleton } from "@/components/home/HomeContent";
+import { Bookmark, Heart, History, LibraryBig, Sparkles, Wand2 } from "lucide-react";
+import { useConnectionTransition } from "@/contexts/ConnectionTransitionContext";
 
 interface HomeClientWrapperProps {
   children: ReactNode;
@@ -16,6 +19,7 @@ const REFRESH_ANIMATION_MS = 400;
 
 export function HomeClientWrapper({ children }: HomeClientWrapperProps) {
   const router = useRouter();
+  const { isSwitchingConnection } = useConnectionTransition();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleRefresh = useCallback(async () => {
@@ -71,9 +75,24 @@ export function HomeClientWrapper({ children }: HomeClientWrapperProps) {
           <div className="mb-6 hidden justify-end md:flex">
             <RefreshButton libraryId="home" refreshLibrary={handleRefresh} />
           </div>
-          {children}
+          {isSwitchingConnection ? <ConnectionSwitchingSkeleton /> : children}
         </div>
       </main>
     </>
+  );
+}
+
+function ConnectionSwitchingSkeleton() {
+  return (
+    <div aria-busy="true" data-testid="connection-switch-loading" className="space-y-10 pb-2">
+      <span className="sr-only">Chargement de la nouvelle connexion</span>
+      <HomeHeroSkeleton />
+      <HomeCarouselSkeleton icon={LibraryBig} />
+      <HomeCarouselSkeleton icon={Heart} />
+      <HomeCarouselSkeleton icon={Bookmark} />
+      <HomeCarouselSkeleton icon={Sparkles} />
+      <HomeCarouselSkeleton icon={History} />
+      <HomeCarouselSkeleton icon={Wand2} />
+    </div>
   );
 }

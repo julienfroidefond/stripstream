@@ -20,6 +20,7 @@ import {
   setActiveStripstreamConfig,
   type StripstreamConfigSummary,
 } from "@/app/actions/stripstream-config";
+import { useConnectionTransition } from "@/contexts/ConnectionTransitionContext";
 
 type ConnectionType = "komga" | "stripstream";
 
@@ -39,6 +40,7 @@ export function ProviderSwitcher({ komgaConfigs, stripstreamConfigs }: ProviderS
   const router = useRouter();
   const { toast } = useToast();
   const { t } = useTranslate();
+  const { beginConnectionSwitch, cancelConnectionSwitch } = useConnectionTransition();
   const [isOpen, setIsOpen] = useState(false);
   const [busyKey, setBusyKey] = useState<string | null>(null);
 
@@ -68,6 +70,7 @@ export function ProviderSwitcher({ komgaConfigs, stripstreamConfigs }: ProviderS
       if (conn.isActive || busyKey) return;
       setBusyKey(keyOf(conn));
       setIsOpen(false);
+      beginConnectionSwitch();
       try {
         const result =
           conn.type === "komga"
@@ -84,15 +87,17 @@ export function ProviderSwitcher({ komgaConfigs, stripstreamConfigs }: ProviderS
           // l'ancien arbre pendant le chargement.
           router.replace(`/?connection=${Date.now()}`);
         } else {
+          cancelConnectionSwitch();
           setIsOpen(true);
         }
       } catch {
+        cancelConnectionSwitch();
         setIsOpen(true);
       } finally {
         setBusyKey(null);
       }
     },
-    [busyKey, router, toast, t]
+    [beginConnectionSwitch, busyKey, cancelConnectionSwitch, router, toast, t]
   );
 
   // Pas de connexion configurée → bouton qui mène vers les paramètres

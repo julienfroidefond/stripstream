@@ -60,7 +60,7 @@ test.describe('Home streaming + changement de connexion', () => {
     await openSidebar(page);
   });
 
-  test('change de connexion et la home se met à jour', async ({ page }) => {
+  test('change de connexion, affiche le fallback, puis les données de la nouvelle home', async ({ page }) => {
     await signIn(page);
     await page.goto('/', { waitUntil: 'domcontentloaded' });
 
@@ -71,9 +71,16 @@ test.describe('Home streaming + changement de connexion', () => {
     // Cliquer sur "Stub B" dans la liste déroulante
     await page.locator('#sidebar').getByRole('button').filter({ hasText: /stub b/i }).first().click();
 
+    // Une transition App Router conserve normalement l'ancien arbre visible.
+    // Notre état client doit donc remplacer immédiatement la home par son skeleton.
+    await expect(page.getByTestId('connection-switch-loading')).toBeVisible();
+
     // La connexion active devient Stub B (le trigger affiche désormais B)
     await expect(
       page.locator('#sidebar').getByRole('button').filter({ hasText: /stub b/i }).first()
     ).toBeVisible({ timeout: 15_000 });
+
+    await expect(page.getByText('BD-B (Tome 1)').first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('connection-switch-loading')).toHaveCount(0);
   });
 });
