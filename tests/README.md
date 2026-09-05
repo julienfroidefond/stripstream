@@ -22,9 +22,16 @@ Authenticated tests discover real library, series, and book IDs from the UI. If
 the seeded account has no matching data, only the data-dependent scenario is
 skipped; authentication, account, settings, and authorization tests still run.
 
-The suite deliberately does not change passwords, users, provider connections,
-favorites, or reading progress. Those operations need isolated seeded data and a
-database reset hook before they can safely become parallel E2E tests.
+When `E2E_DATABASE_URL` is set, `global-setup` recreates the dedicated
+`e2e-stream@test.local` account before the run. It is then safe to run the
+mutable journeys that persist reader preferences and create, edit, then delete
+a provider connection. The reader fixture also serves ten deterministic pages,
+thumbnails, and in-memory read-progress mutations. Never point this variable at
+a shared development or production database.
+
+Password changes remain intentionally out of the suite. Favorites, reading
+lists, and reading progress are covered only through the isolated account and
+deterministic provider fixtures described above.
 
 To target a deployed environment explicitly, set `E2E_BASE_URL`. Tests never
 register users or mutate library data:

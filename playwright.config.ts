@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const baseURL = process.env.E2E_BASE_URL ?? 'http://127.0.0.1:3000';
+const e2ePort = process.env.E2E_PORT ?? '3000';
+const baseURL = process.env.E2E_BASE_URL ?? `http://127.0.0.1:${e2ePort}`;
 const startsLocalServer = !process.env.E2E_BASE_URL;
 // DB e2e dédiée (seedée par global-setup) — activée via env pour les tests stream.
 // Normalisée en chemin absolu : Prisma résout `file:` relatif au dossier schema.prisma.
@@ -28,14 +29,17 @@ export default defineConfig({
   webServer: startsLocalServer
     ? [
         {
-          command: 'pnpm dev',
+          // Appeler Next directement évite que Corepack tente de télécharger
+          // et vérifier une autre copie de pnpm pendant le démarrage E2E.
+          command: './node_modules/.bin/next dev',
           url: baseURL,
           reuseExistingServer: !process.env.CI,
           timeout: 120_000,
           env: {
             ...process.env,
             NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET ?? 'stripstream-e2e-local-secret',
-            NEXTAUTH_URL: process.env.E2E_BASE_URL ?? 'http://127.0.0.1:3000',
+            NEXTAUTH_URL: baseURL,
+            PORT: e2ePort,
             // DB e2e dédiée si fournie, sinon DB par défaut
             ...(e2eDbUrl ? { DATABASE_URL: e2eDbUrl } : {}),
           },

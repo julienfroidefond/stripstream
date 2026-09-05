@@ -15,15 +15,20 @@ export default async function globalSetup() {
   const prisma = new PrismaClient({ datasources: { db: { url } } });
 
   const email = 'e2e-stream@test.local';
+  const readerEmail = 'e2e-reader@test.local';
   const password = 'E2eStrong!123';
   const hashed = await bcrypt.hash(password, 10);
 
-  await prisma.user.upsert({
-    where: { email },
-    update: {},
-    create: { email, password: hashed, roles: ['ROLE_USER'] },
+  // Cette base est réservée aux E2E : repartir d'un compte neuf rend les
+  // scénarios mutables indépendants d'une exécution précédente. Les relations
+  // du compte (préférences et connexions incluses) sont supprimées par cascade.
+  await prisma.user.deleteMany({ where: { email: { in: [email, readerEmail] } } });
+  const user = await prisma.user.create({
+    data: { email, password: hashed, roles: ['ROLE_USER'] },
   });
-  const user = await prisma.user.findUniqueOrThrow({ where: { email } });
+  const readerUser = await prisma.user.create({
+    data: { email: readerEmail, password: hashed, roles: ['ROLE_USER'] },
+  });
 
   const basic = Buffer.from('user:pass').toString('base64');
   const header = `Basic ${basic}`;
@@ -44,6 +49,25 @@ export default async function globalSetup() {
     data: { activeKomgaConfigId: configA.id },
   });
 
+  const readerConfigA = await prisma.komgaConfig.create({
+    data: { userId: readerUser.id, name: 'Stub A', url: 'http://127.0.0.1:8444', username: 'user', authHeader: header },
+  });
+  await prisma.komgaConfig.create({
+    data: { userId: readerUser.id, name: 'Stub B', url: 'http://127.0.0.1:8445', username: 'user', authHeader: header },
+  });
+  await prisma.user.update({
+    where: { id: readerUser.id },
+    data: { activeKomgaConfigId: readerConfigA.id },
+  });
+  await prisma.stripstreamConfig.create({
+    data: {
+      userId: user.id,
+      name: 'Stub Lists',
+      url: 'http://127.0.0.1:8444',
+      token: 'e2e-stripstream-token',
+    },
+  });
+
   await prisma.$disconnect();
-  console.log(`[setup] e2e user seeded (${email}), active=Stub A (${configA.id}), B=${configB.id}`);
+  console.log(`[setup] e2e users seeded (${email}, ${readerEmail}), active Stub A (${configA.id}/${readerConfigA.id}), B=${configB.id}`);
 }
