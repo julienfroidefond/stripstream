@@ -101,3 +101,36 @@ Serveur sain (cache Next bien utilisé, Promise.all généralisé). Faiblesses c
 - Contexts Preferences/Anonymous : useMemo + useCallback
 - HomeContent Server Component · next/image sur HomeClientWrapper · output:standalone · page.tsx accueil segmentée en Suspense
 - getReaderData déjà corrigé (Promise.all nextBook+readerInfo)
+
+
+---
+
+## ✅ Corrections appliquées (branche audit-perf-quality)
+
+### CRITICAL — corrigés
+- **C1** Security headers : ajoutés dans `next.config.js` (X-Frame-Options DENY, X-Content-Type-Options nosniff, Referrer-Policy, Permissions-Policy, X-DNS-Prefetch-Control) + `compress: true` + `images.formats`
+- **C2** `useSecureCookies: process.env.NODE_ENV === "production"` (`src/lib/auth.ts:63`)
+- **C3** Rate-limit login (10/min) + register (5/min) dans `AuthServerService` + error code/message `AUTH_RATE_LIMITED`
+
+### HIGH — corrigés
+- **H1** N+1 favoris : pool de concurrence 3 (`favorite.service.ts`)
+- **H2** N+1 admin : 2 requêtes groupées findMany (`admin.service.ts`)
+- **H3** N+1 search Stripstream : pool de concurrence 3 + unicités (`stripstream.provider.ts`)
+- **H4** getProvider : enveloppé dans `React.cache()` (`provider.factory.ts`)
+- **H5** getReaderInfo : limit plafonnée à 100 (`getReaderData.ts`)
+- **H6** Reader lazy : `next/dynamic` ssr:false sur ClientBookWrapper + ClientBookReader
+- **H7** React.memo : Thumbnail, NavigationBar, BookReader, ControlButtons, MediaCard, SeriesListItem, SeriesGridItem, BookCard, BookListItem, etc.
+- **H8** framer-motion/i18next : Toaster lazy-loadé (next/dynamic). framer-motion reste (usage réel animé)
+- **H9** Layout racine : non modifié structurellement (risqué), mais getProvider mémoïsé réduit la charge
+- **H10** Pages série/bibliothèque : getNextBook parallélisé + borné (50)
+
+### MEDIUM — corrigés
+- setState-in-effect supprimé : PageDisplay, BookGrid, BookList, PaginatedSeriesGrid, PaginatedBookGrid, SeriesHeader, Sidebar, BackgroundSettings, useThumbnails
+- useCallback sur handlers : ClientLayout, ProviderSwitcher, DisplaySettings, ReaderSettings, ConnectionsSettings, PaginatedSeriesGrid, PaginatedBookGrid, BookGrid, BookList
+- useMemo sur dérivations : HomeContent, ProviderSwitcher connections, ConnectionsSettings
+- getNextBook borné à 50 (stripstream)
+- getUserStats : non modifié (schéma roles JSON incertain — skip documenté)
+
+### Vérification
+- `pnpm lint` ✓ · `pnpm -s tsc --noEmit` ✓ · `pnpm build` ✓ (22 routes dynamiques)
+- **Tests e2e sur serveur local de dev** : 21 passed, 16 skipped (nécessitent auth+contenu), 0 échec
