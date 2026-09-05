@@ -134,3 +134,8 @@ Serveur sain (cache Next bien utilisé, Promise.all généralisé). Faiblesses c
 ### Vérification
 - `pnpm lint` ✓ · `pnpm -s tsc --noEmit` ✓ · `pnpm build` ✓ (22 routes dynamiques)
 - **Tests e2e sur serveur local de dev** : 21 passed, 16 skipped (nécessitent auth+contenu), 0 échec
+
+### Tests e2e ajoutés
+- `tests/security.spec.ts` (4 tests) : security headers (X-Frame-Options DENY, nosniff, Referrer-Policy, Permissions-Policy) sur pages publiques + redirect protégé ; rate-limit register (blocage après 5 tentatives) ; login invalide reste sur /login. **4/4 pass**.
+- Suite e2e complète sur serveur dev local : 24 pass, 16 skip (nécessitent compte E2E + contenu provider), 1 fail = `/api/auth/session` 500 **MissingSecret** (NEXTAUTH_SECRET absent de .env.local — problème d'environnement de test, pas une régression ; le playwright.config injecte le secret via son propre webServer).
+- Le reader (lazy-loading, PageDisplay) est couvert par `tests/reader.spec.ts` existant (skip sans credentials E2E + contenu).
