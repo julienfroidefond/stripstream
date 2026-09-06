@@ -65,14 +65,13 @@ test.describe('Reading statuses', () => {
     await currentPage.click({ position: { x: 10, y: 10 } });
     await page.getByRole('button', { name: /thumbnails|vignettes/i }).click();
     await page.locator('#thumbnail-1').click();
-    await expect(page.getByAltText('Page 1')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('img', { name: 'Page 1', exact: true })).toBeVisible({ timeout: 15_000 });
 
-    await page.getByRole('button', { name: /thumbnails|vignettes/i }).click();
     await page.locator('#thumbnail-10').click();
     const lastPage = page.getByRole('img', { name: 'Page 10', exact: true });
     await expect(lastPage).toBeVisible({ timeout: 10_000 });
     await lastPage.click({ position: { x: 10, y: 10 } });
-    await page.getByRole('button', { name: /thumbnails|vignettes/i }).click();
+    await page.getByRole('button', { name: /thumbnails|vignettes/i }).click({ force: true });
     const directionLabel = await page.getByRole('button', { name: /direction/i }).getAttribute('aria-label');
     await page.keyboard.press(/right to left|droite (?:à|vers) gauche|rtl/i.test(directionLabel ?? '') ? 'ArrowLeft' : 'ArrowRight');
     await expect(page.getByRole('dialog')).toBeVisible();
