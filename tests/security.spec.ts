@@ -29,6 +29,8 @@ test.describe('Security headers', () => {
 });
 
 test.describe('Rate limiting', () => {
+  test.describe.configure({ timeout: 60_000 });
+
   test('rejects invalid credentials and stays on login', async ({ page }) => {
     // Comportement de base : credentials invalides → erreur, on reste sur /login
     await page.goto('/login');

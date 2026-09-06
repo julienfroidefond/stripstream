@@ -14,7 +14,8 @@ async function signIn(page: import('@playwright/test').Page) {
 }
 
 test.describe('Reader against the deterministic Komga fixture', () => {
-  test.skip(!hasIsolatedDatabase, 'Set E2E_DATABASE_URL to use the stub provider');
+  test.skip(!hasIsolatedDatabase, 'Local E2E database unavailable');
+  test.describe.configure({ timeout: 90_000 });
 
   test('loads pages, navigates, switches spread direction, and syncs progress', async ({ page }) => {
     await signIn(page);

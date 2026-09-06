@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { hasE2eCredentials, signIn } from './helpers/auth';
 
 test.describe('Authenticated navigation', () => {
-  test.skip(!hasE2eCredentials, 'Set E2E_USER_EMAIL and E2E_USER_PASSWORD to run authenticated journeys');
+  test.skip(!hasE2eCredentials, 'Local E2E account unavailable');
 
   test.beforeEach(async ({ page }) => {
     await signIn(page);
@@ -12,7 +12,7 @@ test.describe('Authenticated navigation', () => {
     await page.goto('/');
 
     await expect(page).not.toHaveURL(/\/login/);
-    await expect(page.locator('main')).toBeVisible();
+    await expect(page.getByRole('main').first()).toBeVisible();
     await expect(page.getByRole('navigation')).toBeVisible();
   });
 

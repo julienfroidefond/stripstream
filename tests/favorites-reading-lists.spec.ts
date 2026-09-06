@@ -14,17 +14,23 @@ async function signIn(page: import('@playwright/test').Page) {
 }
 
 test.describe('Favorites and reading lists', () => {
-  test.skip(!hasIsolatedDatabase, 'Set E2E_DATABASE_URL to use the isolated seeded account');
+  test.skip(!hasIsolatedDatabase, 'Local E2E database unavailable');
 
   test('adds and removes a series favorite, including persistence after reload', async ({ page }) => {
     await signIn(page);
     await page.goto('/series/series-a');
 
     const add = page.getByRole('button', { name: /add.*favorite|ajouter.*favori/i });
+    const remove = page.getByRole('button', { name: /remove.*favorite|retirer.*favori/i });
+    // Keep the assertion deterministic even if a previous interrupted run left
+    // the freshly seeded local account with this favorite already present.
+    if (await remove.isVisible().catch(() => false)) {
+      await remove.click();
+      await expect(add).toBeVisible({ timeout: 15_000 });
+    }
     await expect(add).toBeVisible({ timeout: 15_000 });
     await add.click();
 
-    const remove = page.getByRole('button', { name: /remove.*favorite|retirer.*favori/i });
     await expect(remove).toBeVisible();
     await page.reload();
     await expect(page.getByRole('button', { name: /remove.*favorite|retirer.*favori/i })).toBeVisible();
@@ -40,7 +46,7 @@ test.describe('Favorites and reading lists', () => {
     const listsConnection = page.locator('li').filter({ hasText: 'Stub Lists' });
     await expect(listsConnection).toBeVisible();
     await listsConnection.getByText('Stub Lists', { exact: true }).click();
-    await page.waitForTimeout(500);
+    await expect(listsConnection.getByRole('radio')).toBeChecked({ timeout: 15_000 });
 
     await page.goto('/reading-lists/list-a');
     await expect(page.getByRole('heading', { name: 'E2E Reading List' })).toBeVisible();

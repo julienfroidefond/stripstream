@@ -14,7 +14,7 @@ async function signIn(page: import('@playwright/test').Page) {
 }
 
 test.describe('Reading statuses', () => {
-  test.skip(!hasIsolatedDatabase, 'Set E2E_DATABASE_URL to use the isolated seeded account');
+  test.skip(!hasIsolatedDatabase, 'Local E2E database unavailable');
   test.describe.configure({ mode: 'serial' });
 
   test('marks a book read and unread from the series card', async ({ page }) => {
@@ -28,12 +28,23 @@ test.describe('Reading statuses', () => {
     await page.goto('/series/series-a');
 
     const markRead = page.getByRole('button', { name: /mark as read|marquer comme lu/i }).first();
-    await expect(markRead).toBeVisible({ timeout: 15_000 });
-    await markRead.click();
-
     const markUnread = page.getByRole('button', { name: /mark as unread|marquer comme non lu/i }).first();
+    if (await markRead.isVisible({ timeout: 15_000 }).catch(() => false)) {
+      await markRead.click();
+    } else {
+      // The fixture can retain progress when another serial scenario has
+      // already touched the same book; normalize it to unread first.
+      await expect(markUnread).toBeVisible({ timeout: 15_000 });
+      await markUnread.click();
+      await expect(markUnread).toBeEnabled({ timeout: 15_000 });
+      await page.reload();
+      await expect(markRead).toBeVisible({ timeout: 15_000 });
+      await markRead.click();
+    }
+
+    await expect(markRead).toBeEnabled({ timeout: 15_000 });
     await page.reload();
-    await expect(markUnread).toBeVisible();
+    await expect(markUnread).toBeVisible({ timeout: 15_000 });
     await expect(page.getByRole('button', { name: /mark as unread|marquer comme non lu/i }).first()).toBeVisible();
 
     await page.getByRole('button', { name: /mark as unread|marquer comme non lu/i }).first().click();

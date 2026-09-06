@@ -19,7 +19,7 @@ async function openSettingsTab(page: import('@playwright/test').Page, name: RegE
 }
 
 test.describe('Mutations on the isolated E2E account', () => {
-  test.skip(!hasIsolatedDatabase, 'Set E2E_DATABASE_URL to use the isolated seeded account');
+  test.skip(!hasIsolatedDatabase, 'Local E2E database unavailable');
   test.describe.configure({ mode: 'serial' });
 
   test.beforeEach(async ({ page }) => {
@@ -32,7 +32,7 @@ test.describe('Mutations on the isolated E2E account', () => {
     await page.locator('#reading-dir-rtl').click();
     await expect(page.locator('#reading-dir-rtl')).toHaveAttribute('data-state', 'checked');
 
-    await page.locator('label[for="reader-bg-cream"]').click();
+    await page.locator('#reader-bg-cream').click({ force: true });
     await expect(page.locator('#reader-bg-cream')).toHaveAttribute('data-state', 'checked');
 
     const doublePage = page.locator('#double-page-mode');

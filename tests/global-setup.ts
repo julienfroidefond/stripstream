@@ -1,5 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import { execFileSync } from 'node:child_process';
+import { join } from 'node:path';
 
 export default async function globalSetup() {
   let url = process.env.E2E_DATABASE_URL;
@@ -8,9 +10,16 @@ export default async function globalSetup() {
     url = 'file:' + process.cwd() + '/prisma/' + url.slice('file:./'.length);
   }
   if (!url) {
-    console.log('[e2e] E2E_DATABASE_URL absent — setup skip, tests stream skip.');
-    return;
+    throw new Error('[e2e] E2E_DATABASE_URL must be provided by playwright.config.ts');
   }
+  if (!url.startsWith('file:')) {
+    throw new Error('[e2e] E2E_DATABASE_URL must point to a local SQLite database');
+  }
+
+  execFileSync(join(process.cwd(), 'node_modules/.bin/prisma'), ['migrate', 'deploy'], {
+    env: { ...process.env, DATABASE_URL: url },
+    stdio: 'inherit',
+  });
 
   const prisma = new PrismaClient({ datasources: { db: { url } } });
 

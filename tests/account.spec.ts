@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { e2eEmail, hasE2eCredentials, signIn } from './helpers/auth';
 
 test.describe('Account', () => {
-  test.skip(!hasE2eCredentials, 'Set E2E_USER_EMAIL and E2E_USER_PASSWORD');
+  test.skip(!hasE2eCredentials, 'Local E2E account unavailable');
 
   test.beforeEach(async ({ page }) => {
     await signIn(page);
@@ -25,7 +25,9 @@ test.describe('Account', () => {
     await page.getByLabel('Confirmer le mot de passe').fill('Short1');
     await page.getByRole('button', { name: 'Changer le mot de passe' }).click();
 
-    await expect(page.getByText('Le mot de passe doit contenir au moins 8 caractères')).toBeVisible();
+    await expect(
+      page.getByText('Le mot de passe doit contenir au moins 8 caractères', { exact: true })
+    ).toBeVisible();
   });
 
   test('rejects mismatching new passwords before contacting the server', async ({ page }) => {
@@ -34,6 +36,8 @@ test.describe('Account', () => {
     await page.getByLabel('Confirmer le mot de passe').fill('SecondPassword1');
     await page.getByRole('button', { name: 'Changer le mot de passe' }).click();
 
-    await expect(page.getByText('Les mots de passe ne correspondent pas')).toBeVisible();
+    await expect(
+      page.getByText('Les mots de passe ne correspondent pas', { exact: true })
+    ).toBeVisible();
   });
 });

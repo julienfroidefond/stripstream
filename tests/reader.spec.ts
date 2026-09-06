@@ -16,7 +16,7 @@ async function openFirstBook(page: import('@playwright/test').Page) {
 }
 
 test.describe('Reader', () => {
-  test.skip(!hasE2eCredentials, 'Set E2E_USER_EMAIL and E2E_USER_PASSWORD');
+  test.skip(!hasE2eCredentials, 'Local E2E account unavailable');
 
   test.beforeEach(async ({ page }) => {
     await signIn(page);

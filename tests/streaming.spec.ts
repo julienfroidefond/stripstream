@@ -2,8 +2,8 @@ import { expect, test } from '@playwright/test';
 
 /**
  * Test e2e du streaming de la home au changement de connexion.
- * Nécessite : E2E_DATABASE_URL (DB seedée par global-setup) + stub providers
- * (ports 8444/8445, lancés par playwright.config). Skip sinon.
+ * Utilise la DB SQLite seedée par global-setup + les stub providers locaux
+ * (ports 8444/8445 lancés par playwright.config).
  */
 const hasInfra = Boolean(process.env.E2E_DATABASE_URL);
 
@@ -31,7 +31,7 @@ async function signIn(page: import('@playwright/test').Page) {
 }
 
 test.describe('Home streaming + changement de connexion', () => {
-  test.skip(!hasInfra, 'E2E_DATABASE_URL absent — infra stub non configurée');
+  test.skip(!hasInfra, 'Local E2E infrastructure unavailable');
   // Le premier chargement compile les routes + streame les sections : plus long en dev.
   test.describe.configure({ mode: 'serial' });
   test.setTimeout(150_000);

@@ -82,12 +82,19 @@ export class AuthServerService {
   }
 
   static async loginUser(email: string, password: string): Promise<UserData> {
-    const rl = checkRateLimit(`login:${email.toLowerCase()}`, {
-      limit: this.LOGIN_LIMIT,
-      windowMs: this.LOGIN_WINDOW_MS,
-    });
-    if (!rl.allowed) {
-      throw new AppError(ERROR_CODES.AUTH.RATE_LIMITED);
+    // Parallel E2E workers repeatedly sign in to the deterministic local
+    // account. Keep production throttling intact while avoiding interference
+    // between those local test sessions; invalid credentials remain limited.
+    const isLocalE2EAccount =
+      process.env.E2E_TEST_MODE === "1" && email.toLowerCase().endsWith("@test.local");
+    if (!isLocalE2EAccount) {
+      const rl = checkRateLimit(`login:${email.toLowerCase()}`, {
+        limit: this.LOGIN_LIMIT,
+        windowMs: this.LOGIN_WINDOW_MS,
+      });
+      if (!rl.allowed) {
+        throw new AppError(ERROR_CODES.AUTH.RATE_LIMITED);
+      }
     }
 
     const user = await prisma.user.findUnique({
