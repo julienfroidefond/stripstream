@@ -18,6 +18,7 @@ export function MissingFilterButton({ active, onToggle, className }: MissingFilt
 
   return (
     <Button
+      data-testid="library-filter-missing"
       variant="ghost"
       size="sm"
       onClick={onToggle}

@@ -8,8 +8,14 @@ export const hasE2eCredentials = Boolean(e2eEmail && e2ePassword);
 
 export async function signIn(page: Page) {
   await page.goto('/login');
-  await page.getByLabel(/email/i).fill(e2eEmail!);
-  await page.getByLabel(/password|mot de passe/i).fill(e2ePassword!);
+  const email = page.locator('#email');
+  const password = page.locator('#password');
+  await expect(email).toBeEditable();
+  await expect(password).toBeEditable();
+  await email.fill(e2eEmail!);
+  await password.fill(e2ePassword!);
+  await expect(email).toHaveValue(e2eEmail!);
+  await expect(password).toHaveValue(e2ePassword!);
   await page.getByRole('button', { name: /sign in|se connecter/i }).click();
   await expect(page).not.toHaveURL(/\/login(?:\?|$)/, { timeout: 15_000 });
 }

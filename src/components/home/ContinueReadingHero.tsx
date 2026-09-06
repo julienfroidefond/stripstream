@@ -79,6 +79,7 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
 
   return (
     <section
+      data-testid="home-continue-reading"
       className={cn(
         "relative overflow-hidden rounded-2xl border border-border/40",
         // Mobile : couverture en fond avec dégradé discret
@@ -179,6 +180,7 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
 
               <div className="mt-2 flex justify-center sm:justify-start">
                 <Button
+                  data-testid="home-resume-reading"
                   onClick={handleResume}
                   size="lg"
                   className="gap-2 bg-gradient-to-r from-indigo-600 via-purple-600 to-fuchsia-600 font-semibold text-white shadow-lg shadow-indigo-900/30 hover:from-indigo-500 hover:via-purple-500 hover:to-fuchsia-500 hover:text-white"

@@ -53,12 +53,14 @@ export function Pagination({ currentPage, totalPages, onPageChange, className }:
 
   return (
     <nav
+      data-testid="pagination"
       role="navigation"
       aria-label="Pagination"
       className={cn("flex justify-center items-center gap-1", className)}
     >
       {/* Bouton précédent */}
       <button
+        data-testid="pagination-next"
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
         className="inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 py-2 gap-1 hover:bg-accent/80 hover:backdrop-blur-md hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"

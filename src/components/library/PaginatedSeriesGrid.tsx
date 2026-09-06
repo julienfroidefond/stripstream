@@ -204,7 +204,7 @@ export function PaginatedSeriesGrid({
         </div>
 
         <div className="space-y-3">
-          <SearchInput placeholder={t("series.filters.search")} />
+          <SearchInput placeholder={t("series.filters.search")} testId="library-search" />
 
           <div className="pb-1">
             <div className="flex flex-wrap items-center gap-2">

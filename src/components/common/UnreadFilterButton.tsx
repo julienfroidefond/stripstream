@@ -22,6 +22,7 @@ export function UnreadFilterButton({
 
   return (
     <Button
+      data-testid="library-filter-unread"
       variant="ghost"
       size="sm"
       onClick={onToggle}

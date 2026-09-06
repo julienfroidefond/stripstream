@@ -7,8 +7,13 @@ const password = 'E2eStrong!123';
 async function signIn(page: import('@playwright/test').Page) {
   await page.goto('/login');
   const form = page.locator('form').first();
-  await form.locator('#email').fill(email);
-  await form.locator('#password').fill(password);
+  const emailInput = form.locator('#email');
+  const passwordInput = form.locator('#password');
+  await expect(emailInput).toBeEditable();
+  await emailInput.fill(email);
+  await passwordInput.fill(password);
+  await expect(emailInput).toHaveValue(email);
+  await expect(passwordInput).toHaveValue(password);
   await form.getByRole('button', { name: /sign in|se connecter/i }).click();
   await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
 }
@@ -55,8 +60,12 @@ test.describe('Reading statuses', () => {
   test('marks a book read when reaching its last reader page', async ({ page }) => {
     await signIn(page);
     await page.goto('/books/book-a');
+    const currentPage = page.locator('img[alt^="Page "]').first();
+    await expect(currentPage).toBeVisible({ timeout: 15_000 });
+    await currentPage.click({ position: { x: 10, y: 10 } });
+    await page.getByRole('button', { name: /thumbnails|vignettes/i }).click();
+    await page.locator('#thumbnail-1').click();
     await expect(page.getByAltText('Page 1')).toBeVisible({ timeout: 15_000 });
-    await page.getByAltText('Page 1').click({ position: { x: 10, y: 10 } });
 
     await page.getByRole('button', { name: /thumbnails|vignettes/i }).click();
     await page.locator('#thumbnail-10').click();

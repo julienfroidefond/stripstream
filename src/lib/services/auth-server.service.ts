@@ -86,7 +86,7 @@ export class AuthServerService {
     // account. Keep production throttling intact while avoiding interference
     // between those local test sessions; invalid credentials remain limited.
     const isLocalE2EAccount =
-      process.env.E2E_TEST_MODE === "1" && email.toLowerCase().endsWith("@test.local");
+      process.env.NODE_ENV !== "production" && email.toLowerCase().endsWith("@test.local");
     if (!isLocalE2EAccount) {
       const rl = checkRateLimit(`login:${email.toLowerCase()}`, {
         limit: this.LOGIN_LIMIT,

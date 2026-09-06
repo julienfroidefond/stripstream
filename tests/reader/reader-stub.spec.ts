@@ -7,8 +7,14 @@ const password = 'E2eStrong!123';
 async function signIn(page: import('@playwright/test').Page) {
   await page.goto('/login');
   const form = page.locator('form').first();
-  await form.locator('#email').fill(email);
-  await form.locator('#password').fill(password);
+  const emailInput = form.locator('#email');
+  const passwordInput = form.locator('#password');
+  await expect(emailInput).toBeEditable();
+  await expect(passwordInput).toBeEditable();
+  await emailInput.fill(email);
+  await passwordInput.fill(password);
+  await expect(emailInput).toHaveValue(email);
+  await expect(passwordInput).toHaveValue(password);
   await form.getByRole('button', { name: /sign in|se connecter/i }).click();
   await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
 }

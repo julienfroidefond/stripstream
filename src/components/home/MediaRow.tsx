@@ -19,6 +19,7 @@ interface MediaRowProps {
   items: (NormalizedSeries | NormalizedBook)[];
   iconName?: string;
   featuredHeader?: boolean;
+  testId?: string;
 }
 
 const iconMap = {
@@ -34,7 +35,7 @@ function isSeries(item: NormalizedSeries | NormalizedBook): item is NormalizedSe
   return "bookCount" in item;
 }
 
-export function MediaRow({ titleKey, items, iconName, featuredHeader = false }: MediaRowProps) {
+export function MediaRow({ titleKey, items, iconName, featuredHeader = false, testId }: MediaRowProps) {
   const router = useRouter();
   const { t } = useTranslate();
   const icon = iconName ? iconMap[iconName as keyof typeof iconMap] : undefined;
@@ -51,6 +52,7 @@ export function MediaRow({ titleKey, items, iconName, featuredHeader = false }: 
 
   return (
     <Section
+      data-testid={testId}
       title={t(titleKey)}
       icon={icon}
       className="space-y-5"

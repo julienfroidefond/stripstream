@@ -2,11 +2,8 @@ import { expect, test } from '@playwright/test';
 import { hasE2eCredentials, signIn } from '../helpers/auth';
 
 async function openFirstLibrary(page: import('@playwright/test').Page) {
-  await page.goto('/');
-  const link = page.locator('a[href^="/libraries/"]').first();
-  test.skip((await link.count()) === 0, 'The E2E account has no configured library');
-  await link.click();
-  await expect(page).toHaveURL(/\/libraries\/[^/]+/);
+  await page.goto('/libraries/lib-a');
+  await expect(page).toHaveURL(/\/libraries\/lib-a/);
 }
 
 test.describe('Library browsing', () => {
@@ -18,7 +15,7 @@ test.describe('Library browsing', () => {
   });
 
   test('synchronizes search with the URL and can clear it', async ({ page }) => {
-    const search = page.getByRole('searchbox');
+    const search = page.getByTestId('library-search');
     await search.fill('__e2e_no_match__');
     await expect(page).toHaveURL(/search=__e2e_no_match__/);
 
@@ -33,6 +30,33 @@ test.describe('Library browsing', () => {
     await sort.click();
 
     await expect(page).toHaveURL((url) => url.pathname === path && url.searchParams.has('sort'));
+  });
+
+  test('toggles unread and missing filters through the URL', async ({ page }) => {
+    const unread = page.getByTestId('library-filter-unread');
+    await unread.click();
+    await expect(page).toHaveURL(/unread=true/);
+
+    const showAll = page.getByTestId('library-filter-unread');
+    await showAll.click();
+    await expect(page).toHaveURL(/unread=false/);
+
+    const missing = page.getByTestId('library-filter-missing');
+    await missing.click();
+    await expect(page).toHaveURL(/missing=true/);
+  });
+
+  test('navigates between library pages when the result set spans pages', async ({ page }) => {
+    const pagination = page.getByTestId('pagination');
+    test.skip((await pagination.count()) === 0, 'The provider result set fits on one page');
+
+    await expect(page.getByTestId('pagination-next')).toBeEnabled();
+    await page.getByTestId('pagination-next').click();
+    await expect(page).toHaveURL(/page=2/);
+    await expect(page.getByRole('button', { name: 'Page 2' })).toHaveAttribute(
+      'aria-current',
+      'page'
+    );
   });
 
   test('opens a real series card when content exists', async ({ page }) => {

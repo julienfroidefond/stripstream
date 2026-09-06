@@ -27,6 +27,7 @@ export function ReadingListRow({ lists }: ReadingListRowProps) {
 
   return (
     <Section
+      data-testid="home-reading-lists"
       title={t("home.sections.reading_lists")}
       icon={Bookmark}
       className="space-y-5"
@@ -62,6 +63,7 @@ const ReadingListCard = memo(function ReadingListCard({ list, onClick }: Reading
   return (
     <button
       type="button"
+      data-testid={`home-reading-list-${list.id}`}
       onClick={() => onClick(list.id)}
       className="group relative flex w-[160px] flex-shrink-0 flex-col gap-1.5 sm:w-[188px]"
     >

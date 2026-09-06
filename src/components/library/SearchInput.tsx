@@ -6,9 +6,10 @@ import { debounce } from "@/lib/utils";
 
 interface SearchInputProps {
   placeholder?: string;
+  testId?: string;
 }
 
-export const SearchInput = ({ placeholder }: SearchInputProps) => {
+export const SearchInput = ({ placeholder, testId }: SearchInputProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
@@ -37,6 +38,7 @@ export const SearchInput = ({ placeholder }: SearchInputProps) => {
     <div className="relative w-full rounded-2xl border border-border/60 bg-[linear-gradient(140deg,hsl(var(--background)/0.72),hsl(var(--background)/0.5))] px-1 shadow-sm backdrop-blur-sm transition-colors focus-within:border-primary/40 focus-within:ring-2 focus-within:ring-ring/30 sm:max-w-2xl">
       <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
       <Input
+        data-testid={testId}
         type={isPending ? "text" : "search"}
         placeholder={placeholder}
         className="h-12 rounded-xl border-0 bg-transparent pl-10 pr-10 text-sm shadow-none focus-visible:border-0 focus-visible:ring-0 focus-visible:ring-offset-0"

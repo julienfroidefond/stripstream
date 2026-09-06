@@ -75,6 +75,7 @@ export function HomePrimaryContent({ data, isAnonymous = false }: HomePrimaryCon
           titleKey="home.sections.favorites"
           items={data.favorites}
           iconName="Heart"
+          testId="home-favorites"
         />
       )}
     </>

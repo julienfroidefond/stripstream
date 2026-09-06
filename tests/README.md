@@ -6,6 +6,7 @@ The suite is organized by user-facing area:
 tests/
 ├── public/        # authentication, access control, PWA, responsive, security
 ├── account/       # account, settings, session, administrator access
+├── home/          # continue reading, favorites, and reading lists
 ├── library/       # navigation, libraries, favorites, lists, reading status
 ├── reader/        # reader controls and deterministic reader fixture
 └── integrations/  # provider mutations and streaming connection changes

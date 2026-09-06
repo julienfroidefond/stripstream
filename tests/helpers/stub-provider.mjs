@@ -24,17 +24,22 @@ const libraries = [
   { id: `lib-${instance.toLowerCase()}`, name: libName, bookCount: 1 },
 ];
 
-const series = [
-  {
-    id: seriesId,
-    name: seriesName,
-    metadata: { titleSort: seriesName, summary: `Summary ${instance}`, title: seriesName },
+const series = Array.from({ length: 31 }, (_, index) => {
+  const suffix = index === 0 ? '' : ` ${String(index + 1).padStart(2, '0')}`;
+  return {
+    id: index === 0 ? seriesId : `${seriesId}-${index + 1}`,
+    name: `${seriesName}${suffix}`,
+    metadata: {
+      titleSort: `${seriesName}${suffix}`,
+      summary: `Summary ${instance}`,
+      title: `${seriesName}${suffix}`,
+    },
     booksCount: 1,
     readStatus: 'UNREAD',
     status: 'ENDED',
     type: 'SINGLE_BOOK',
-  },
-];
+  };
+});
 
 const books = [
   {
