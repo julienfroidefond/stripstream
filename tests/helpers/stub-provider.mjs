@@ -82,6 +82,79 @@ const readingListDetail = {
   ],
 };
 
+// ─── Stripstream fixtures ───────────────────────────────────────────────────
+// La même instance stub sert la connexion "Stub Lists" (Stripstream) via des
+// endpoints racine (sans préfixe /api/v1), distincts des routes Komga.
+
+const stripstreamLibraries = [
+  { id: 'lib-a', name: libName, root_path: '/data', enabled: true, book_count: 1, monitor_enabled: false, scan_mode: 'manual', watcher_enabled: false, next_scan_at: null },
+];
+
+const stripstreamSeriesItem = {
+  series_id: 'series-a',
+  name: seriesName,
+  book_count: 1,
+  books_read_count: 0,
+  first_book_id: 'book-a',
+  first_book_updated_at: '2026-01-01T00:00:00.000Z',
+  library_id: 'lib-a',
+  missing_count: 0,
+  anilist_id: null,
+  anilist_url: null,
+  metadata_provider: null,
+  series_status: 'ended',
+  cover_url: null,
+  genres: ['Action'],
+  authors: ['E2E Author'],
+  description: 'E2E Stripstream series summary',
+  start_year: 2020,
+};
+
+const stripstreamSeriesMetadata = {
+  authors: ['E2E Author'],
+  genres: ['Action'],
+  publishers: ['E2E Publisher'],
+  description: 'E2E Stripstream series summary',
+  start_year: 2020,
+  book_author: null,
+  book_language: null,
+};
+
+const stripstreamBookItem = {
+  id: 'book-a',
+  library_id: 'lib-a',
+  kind: 'comic',
+  title: `${seriesName} #1`,
+  updated_at: '2026-01-01T00:00:00.000Z',
+  reading_status: 'unread',
+  volume_type: 'regular',
+  author: 'E2E Author',
+  language: 'fr',
+  page_count: 10,
+  reading_current_page: null,
+  reading_last_read_at: null,
+  series: seriesName,
+  series_id: 'series-a',
+  thumbnail_url: null,
+  volume: 1,
+};
+
+// Store de notation en mémoire (reset au démarrage du stub) — clé: seriesId.
+const stripstreamRatings = new Map();
+
+function stripstreamSeriesPage() {
+  // 31 séries pour exercer la pagination, comme le fixture Komga.
+  const items = Array.from({ length: 31 }, (_, index) => {
+    const suffix = index === 0 ? '' : ` ${String(index + 1).padStart(2, '0')}`;
+    return {
+      ...stripstreamSeriesItem,
+      series_id: index === 0 ? 'series-a' : `series-a-${index + 1}`,
+      name: `${seriesName}${suffix}`,
+    };
+  });
+  return { items, total: items.length, page: 1, limit: 50 };
+}
+
 function paged(content, page = 0, size = 20) {
   return {
     content,
@@ -126,8 +199,101 @@ const server = http.createServer((req, res) => {
   if (path === '/reading-lists/list-a' && req.method === 'GET') {
     return send(readingListDetail);
   }
-  if (path === '/books/book-a/thumbnail' && req.method === 'GET') {
+
+  // ─── Stripstream endpoints (root paths, for the "Stub Lists" connection) ───
+  // Le préfixe /api/v1 distingue Komga ; ces routes racine servent Stripstream.
+
+  if (path === '/libraries' && req.method === 'GET') {
+    return send(stripstreamLibraries);
+  }
+
+  // GET /series (cross-library list, utilisé par /libraries/lib-a via library_id)
+  if (path === '/series' && req.method === 'GET') {
+    return send(stripstreamSeriesPage());
+  }
+
+  // GET /series/ongoing, /series/recommendations
+  if (path === '/series/ongoing' && req.method === 'GET') {
+    return send([]);
+  }
+  if (path === '/series/recommendations' && req.method === 'GET') {
+    return send([]);
+  }
+
+  // GET /series/{id}/details
+  let ss = path.match(/^\/series\/([^/]+)\/details$/);
+  if (ss && req.method === 'GET') {
+    return send({ ...stripstreamSeriesItem, series_id: ss[1], name: ss[1] === 'series-a' ? seriesName : ss[1] });
+  }
+
+  // GET /series/{id}/metadata
+  ss = path.match(/^\/series\/([^/]+)\/metadata$/);
+  if (ss && req.method === 'GET') {
+    return send(stripstreamSeriesMetadata);
+  }
+
+  // GET /series/{id}/related
+  ss = path.match(/^\/series\/([^/]+)\/related$/);
+  if (ss && req.method === 'GET') {
+    return send([]);
+  }
+
+  // GET /series/{id}/ratings  ·  PUT /series/{id}/rating  ·  DELETE /series/{id}/rating
+  ss = path.match(/^\/series\/([^/]+)\/ratings$/);
+  if (ss && req.method === 'GET') {
+    return send({
+      user_rating: stripstreamRatings.get(ss[1]) ?? null,
+      anilist_pulled_rating: null,
+      provider_ratings: [
+        { provider: 'anilist', rating: 4.2, rating_scale: 10, rating_count: 123 },
+      ],
+    });
+  }
+  ss = path.match(/^\/series\/([^/]+)\/rating$/);
+  if (ss && req.method === 'PUT') {
+    let body = '';
+    req.on('data', (chunk) => { body += chunk; });
+    req.on('end', () => {
+      let payload = {};
+      try { payload = JSON.parse(body); } catch { /* invalid payload stays empty */ }
+      stripstreamRatings.set(ss[1], Number(payload.rating));
+      res.statusCode = 204;
+      res.end();
+    });
+    return;
+  }
+  if (ss && req.method === 'DELETE') {
+    stripstreamRatings.delete(ss[1]);
+    res.statusCode = 204;
+    res.end();
+    return;
+  }
+
+  // GET /books (list, with optional series/library_id/sort params)
+  if (path === '/books' && req.method === 'GET') {
+    return send({ items: [stripstreamBookItem], total: 1, page: 1, limit: 50 });
+  }
+
+  // GET /books/{id}
+  ss = path.match(/^\/books\/([^/]+)$/);
+  if (ss && req.method === 'GET') {
+    return send({ ...stripstreamBookItem, id: ss[1] });
+  }
+
+  // GET /books/{id}/thumbnail (image proxy)
+  ss = path.match(/^\/books\/([^/]+)\/thumbnail$/);
+  if (ss && req.method === 'GET') {
     return sendImage(res, 1);
+  }
+
+  // GET /metadata/links?series_id=...
+  if (path === '/metadata/links' && req.method === 'GET') {
+    return send([]);
+  }
+
+  // GET /search?q=...
+  if (path === '/search' && req.method === 'GET') {
+    return send({ series_hits: [], hits: [] });
   }
 
   // GET /api/v1/libraries
