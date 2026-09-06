@@ -26,14 +26,14 @@ test.describe('Reading statuses', () => {
     await signIn(page);
     await page.goto('/settings');
     await page.getByRole('tab', { name: /connection/i }).click();
-    const komgaConnection = page.locator('li').filter({ hasText: 'Stub A' }).first();
+    const komgaConnection = page.getByTestId('connection-komga-stub-a');
     await expect(komgaConnection).toBeVisible();
     await komgaConnection.getByText('Stub A', { exact: true }).click();
     await page.waitForTimeout(500);
     await page.goto('/series/series-a');
 
-    const markRead = page.getByRole('button', { name: /mark as read|marquer comme lu/i }).first();
-    const markUnread = page.getByRole('button', { name: /mark as unread|marquer comme non lu/i }).first();
+    const markRead = page.getByTestId('mark-as-read').first();
+    const markUnread = page.getByTestId('mark-as-unread').first();
     if (await markRead.isVisible({ timeout: 15_000 }).catch(() => false)) {
       await markRead.click();
     } else {
@@ -50,9 +50,9 @@ test.describe('Reading statuses', () => {
     await expect(markRead).toBeEnabled({ timeout: 15_000 });
     await page.reload();
     await expect(markUnread).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByRole('button', { name: /mark as unread|marquer comme non lu/i }).first()).toBeVisible();
+    await expect(page.getByTestId('mark-as-unread').first()).toBeVisible();
 
-    await page.getByRole('button', { name: /mark as unread|marquer comme non lu/i }).first().click();
+    await page.getByTestId('mark-as-unread').first().click();
     await page.reload();
     await expect(page.getByText(/unread|non lu/i).first()).toBeVisible();
   });
@@ -77,6 +77,6 @@ test.describe('Reading statuses', () => {
     await expect(page.getByRole('dialog')).toBeVisible();
 
     await page.goto('/series/series-a');
-    await expect(page.getByRole('button', { name: /mark as unread|marquer comme non lu/i }).first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('mark-as-unread').first()).toBeVisible({ timeout: 15_000 });
   });
 });

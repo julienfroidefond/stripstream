@@ -18,7 +18,8 @@ test.describe('Home functional journeys', () => {
   async function selectConnection(page: import('@playwright/test').Page, name: string) {
     await page.goto('/settings');
     await page.getByRole('tab', { name: /connection/i }).click();
-    const connection = page.locator('li').filter({ hasText: name }).first();
+    const connectionId = `connection-${name === 'Stub Lists' ? 'stripstream' : 'komga'}-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+    const connection = page.getByTestId(connectionId);
     await expect(connection).toBeVisible();
     await connection.getByText(name, { exact: true }).click();
     await expect(connection.getByRole('radio')).toBeChecked({ timeout: 15_000 });

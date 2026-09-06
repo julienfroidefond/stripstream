@@ -52,6 +52,7 @@ export function MarkAsUnreadButton({ bookId, onSuccess, className }: MarkAsUnrea
 
   return (
     <Button
+      data-testid="mark-as-unread"
       variant="ghost"
       size="icon"
       onClick={handleMarkAsUnread}

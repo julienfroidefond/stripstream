@@ -255,6 +255,7 @@ export function ConnectionsSettings({ komgaConfigs, stripstreamConfigs }: Connec
                 return (
                   <li
                     key={k}
+                    data-testid={`connection-${conn.type}-${conn.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
                     className={cn(
                       "rounded-lg border p-3 transition-colors",
                       conn.isActive ? "border-primary bg-primary/5" : "border-border"
@@ -289,6 +290,7 @@ export function ConnectionsSettings({ komgaConfigs, stripstreamConfigs }: Connec
                       </label>
                       <div className="flex shrink-0 items-center gap-1">
                         <button
+                          data-testid="connection-test"
                           type="button"
                           disabled={isBusy}
                           onClick={() => handleTestExisting(conn)}
@@ -303,6 +305,7 @@ export function ConnectionsSettings({ komgaConfigs, stripstreamConfigs }: Connec
                           )}
                         </button>
                         <button
+                          data-testid="connection-edit"
                           type="button"
                           disabled={isBusy}
                           onClick={() => startEdit(conn)}
@@ -312,6 +315,7 @@ export function ConnectionsSettings({ komgaConfigs, stripstreamConfigs }: Connec
                           <Pencil className="h-4 w-4" />
                         </button>
                         <button
+                          data-testid="connection-delete"
                           type="button"
                           disabled={isBusy}
                           onClick={() => handleDelete(conn)}
@@ -329,7 +333,7 @@ export function ConnectionsSettings({ komgaConfigs, stripstreamConfigs }: Connec
           </RadioGroup>
         )}
 
-        <button type="button" onClick={startCreate} className={cn(btnSecondary, "w-full")}>
+        <button type="button" data-testid="connection-add" onClick={startCreate} className={cn(btnSecondary, "w-full")}>
           <Plus className="mr-2 h-4 w-4" />
           {t("settings.connections.add")}
         </button>
@@ -495,6 +499,7 @@ export function ConnectionsSettings({ komgaConfigs, stripstreamConfigs }: Connec
             <button
               type="submit"
               form="connection-form"
+              data-testid="connection-save"
               disabled={isSaving}
               className={btnPrimary}
             >

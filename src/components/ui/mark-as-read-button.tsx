@@ -59,6 +59,7 @@ export function MarkAsReadButton({
 
   return (
     <Button
+      data-testid="mark-as-read"
       variant="ghost"
       size="icon"
       onClick={handleMarkAsRead}

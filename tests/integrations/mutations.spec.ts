@@ -52,25 +52,25 @@ test.describe('Mutations on the isolated E2E account', () => {
 
   test('creates, edits, and deletes a Komga connection', async ({ page }) => {
     await openSettingsTab(page, /connection/i);
-    await page.getByRole('button', { name: /add connection|ajouter/i }).click();
+    await page.getByTestId('connection-add').click();
 
     await page.locator('#conn-name').fill('E2E mutable connection');
     await page.locator('#conn-url').fill('http://127.0.0.1:8444');
     await page.locator('#conn-username').fill('user');
     await page.locator('#conn-password').fill('pass');
-    await page.getByRole('button', { name: /save|enregistrer/i }).click();
+    await page.getByTestId('connection-save').click();
 
-    const created = page.locator('li').filter({ hasText: 'E2E mutable connection' });
+    const created = page.getByTestId('connection-komga-e2e-mutable-connection');
     await expect(created).toBeVisible();
 
-    await created.getByRole('button', { name: /edit|modifier/i }).click();
+    await created.getByTestId('connection-edit').click();
     await page.locator('#conn-name').fill('E2E renamed connection');
-    await page.getByRole('button', { name: /save|enregistrer/i }).click();
+    await page.getByTestId('connection-save').click();
 
-    const renamed = page.locator('li').filter({ hasText: 'E2E renamed connection' });
+    const renamed = page.getByTestId('connection-komga-e2e-renamed-connection');
     await expect(renamed).toBeVisible();
     page.once('dialog', (dialog) => dialog.accept());
-    await renamed.getByRole('button', { name: /delete|supprimer/i }).click();
+    await renamed.getByTestId('connection-delete').click();
     await expect(renamed).toHaveCount(0);
   });
 });

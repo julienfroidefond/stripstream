@@ -25,8 +25,8 @@ test.describe('Favorites and reading lists', () => {
     await signIn(page);
     await page.goto('/series/series-a');
 
-    const add = page.getByRole('button', { name: /add.*favorite|ajouter.*favori/i });
-    const remove = page.getByRole('button', { name: /remove.*favorite|retirer.*favori/i });
+    const add = page.getByTestId('series-favorite-add').first();
+    const remove = page.getByTestId('series-favorite-remove').first();
     // Keep the assertion deterministic even if a previous interrupted run left
     // the freshly seeded local account with this favorite already present.
     if (await remove.isVisible().catch(() => false)) {
@@ -38,17 +38,17 @@ test.describe('Favorites and reading lists', () => {
 
     await expect(remove).toBeVisible();
     await page.reload();
-    await expect(page.getByRole('button', { name: /remove.*favorite|retirer.*favori/i })).toBeVisible();
+    await expect(page.getByTestId('series-favorite-remove').first()).toBeVisible();
 
-    await page.getByRole('button', { name: /remove.*favorite|retirer.*favori/i }).click();
-    await expect(page.getByRole('button', { name: /add.*favorite|ajouter.*favori/i })).toBeVisible();
+    await page.getByTestId('series-favorite-remove').first().click();
+    await expect(page.getByTestId('series-favorite-add').first()).toBeVisible();
   });
 
   test('opens a deterministic reading list through the Stripstream connection', async ({ page }) => {
     await signIn(page);
     await page.goto('/settings');
     await page.getByRole('tab', { name: /connection/i }).click();
-    const listsConnection = page.locator('li').filter({ hasText: 'Stub Lists' });
+    const listsConnection = page.getByTestId('connection-stripstream-stub-lists');
     await expect(listsConnection).toBeVisible();
     await listsConnection.getByText('Stub Lists', { exact: true }).click();
     await expect(listsConnection.getByRole('radio')).toBeChecked({ timeout: 15_000 });

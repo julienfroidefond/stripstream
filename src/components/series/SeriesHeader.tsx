@@ -210,6 +210,7 @@ export const SeriesHeader = ({ series, refreshSeries, initialIsFavorite }: Serie
                 </StatusBadge>
               )}
               <IconButton
+                data-testid={isFavorite ? "series-favorite-remove" : "series-favorite-add"}
                 variant="ghost"
                 size="icon"
                 icon={isFavorite ? Star : StarOff}
