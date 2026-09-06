@@ -78,5 +78,5 @@ export default async function globalSetup() {
   });
 
   await prisma.$disconnect();
-  console.log(`[setup] e2e users seeded (${email}, ${readerEmail}), active Stub A (${configA.id}/${readerConfigA.id}), B=${configB.id}`);
+  console.warn(`[setup] e2e users seeded (${email}, ${readerEmail}), active Stub A (${configA.id}/${readerConfigA.id}), B=${configB.id}`);
 }

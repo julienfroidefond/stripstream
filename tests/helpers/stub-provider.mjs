@@ -215,6 +215,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(port, () => {
-  // eslint-disable-next-line no-console
   console.warn(`[stub-provider] instance ${instance} on :${port}`);
 });
