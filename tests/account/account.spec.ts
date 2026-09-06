@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { e2eEmail, hasE2eCredentials, signIn } from './helpers/auth';
+import { e2eEmail, hasE2eCredentials, signIn } from '../helpers/auth';
 
 test.describe('Account', () => {
   test.skip(!hasE2eCredentials, 'Local E2E account unavailable');

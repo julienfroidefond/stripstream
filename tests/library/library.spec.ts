@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { hasE2eCredentials, signIn } from './helpers/auth';
+import { hasE2eCredentials, signIn } from '../helpers/auth';
 
 async function openFirstLibrary(page: import('@playwright/test').Page) {
   await page.goto('/');

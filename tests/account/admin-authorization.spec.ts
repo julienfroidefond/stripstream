@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { hasE2eCredentials, signIn } from './helpers/auth';
+import { hasE2eCredentials, signIn } from '../helpers/auth';
 
 const expectsAdmin = process.env.E2E_USER_IS_ADMIN === 'true';
 

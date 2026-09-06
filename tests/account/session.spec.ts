@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { hasE2eCredentials, signIn } from './helpers/auth';
+import { hasE2eCredentials, signIn } from '../helpers/auth';
 
 const hasIsolatedDatabase = Boolean(process.env.E2E_DATABASE_URL);
 

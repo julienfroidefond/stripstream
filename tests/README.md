@@ -1,5 +1,16 @@
 # End-to-end tests
 
+The suite is organized by user-facing area:
+
+```text
+tests/
+├── public/        # authentication, access control, PWA, responsive, security
+├── account/       # account, settings, session, administrator access
+├── library/       # navigation, libraries, favorites, lists, reading status
+├── reader/        # reader controls and deterministic reader fixture
+└── integrations/  # provider mutations and streaming connection changes
+```
+
 The default suite starts the local Next.js server and tests public authentication,
 access control, API protection, and responsive behaviour:
 
