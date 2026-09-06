@@ -13,6 +13,16 @@ async function signIn(page: import('@playwright/test').Page) {
   await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
 }
 
+async function goToPage(page: import('@playwright/test').Page, pageNumber: number) {
+  await page.locator('img[alt^="Page "]').first().click({ position: { x: 10, y: 10 } });
+  const pageInput = page.getByRole('group', { name: 'Navigation par numéro de page' });
+  await expect(pageInput).toContainText(/\d+\/10/);
+  await pageInput.getByRole('button').click();
+  const input = page.getByRole('textbox', { name: 'Entrez un numéro de page' });
+  await input.fill(String(pageNumber));
+  await input.press('Enter');
+}
+
 test.describe('Reader against the deterministic Komga fixture', () => {
   test.skip(!hasIsolatedDatabase, 'Local E2E database unavailable');
   test.describe.configure({ timeout: 90_000 });
@@ -21,6 +31,9 @@ test.describe('Reader against the deterministic Komga fixture', () => {
     await signIn(page);
     await page.goto('/books/book-a');
 
+    // The reader intentionally resumes at the last page seen. Normalize the
+    // starting point before asserting deterministic navigation behavior.
+    await goToPage(page, 1);
     await expect(page.getByAltText('Page 1')).toBeVisible({ timeout: 15_000 });
     await page.getByAltText('Page 1').click({ position: { x: 10, y: 10 } });
 
@@ -49,6 +62,7 @@ test.describe('Reader against the deterministic Komga fixture', () => {
   test('opens thumbnails and reader information, then shows the end-of-book dialog', async ({ page }) => {
     await signIn(page);
     await page.goto('/books/book-a');
+    await goToPage(page, 1);
     await expect(page.getByAltText('Page 1')).toBeVisible({ timeout: 15_000 });
     await page.getByAltText('Page 1').click({ position: { x: 10, y: 10 } });
 
