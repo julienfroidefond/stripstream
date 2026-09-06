@@ -86,6 +86,7 @@ export const ControlButtons = memo(function ControlButtons({
         }}
       >
         <IconButton
+          data-testid="reader-toggle-double-page"
           variant="ghost"
           size="icon"
           icon={isDoublePage ? LayoutTemplate : SplitSquareVertical}
@@ -102,6 +103,7 @@ export const ControlButtons = memo(function ControlButtons({
           className="rounded-full h-9 w-9"
         />
         <IconButton
+          data-testid="reader-toggle-direction"
           variant="ghost"
           size="icon"
           icon={direction === "rtl" ? MoveLeft : MoveRight}
@@ -136,6 +138,7 @@ export const ControlButtons = memo(function ControlButtons({
           />
         )}
         <IconButton
+          data-testid="reader-info"
           variant="ghost"
           size="icon"
           icon={Info}
@@ -148,6 +151,7 @@ export const ControlButtons = memo(function ControlButtons({
           className="rounded-full h-9 w-9"
         />
         <IconButton
+          data-testid="reader-thumbnails"
           variant="ghost"
           size="icon"
           icon={Images}
@@ -164,6 +168,7 @@ export const ControlButtons = memo(function ControlButtons({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <IconButton
+              data-testid="reader-background"
               variant="ghost"
               size="icon"
               icon={Palette}

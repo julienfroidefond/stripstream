@@ -60,6 +60,7 @@ export const PageInput = ({ currentPage, totalPages, onPageChange }: PageInputPr
     <div
       className="relative flex items-center gap-1"
       role="group"
+      data-testid="reader-page-navigation"
       aria-label="Navigation par numéro de page"
     >
       {isEditing ? (
