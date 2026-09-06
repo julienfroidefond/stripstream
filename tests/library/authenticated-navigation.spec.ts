@@ -30,33 +30,19 @@ test.describe('Authenticated navigation', () => {
   });
 
   test('discovers a real library and exercises search when data exists', async ({ page }) => {
-    await page.goto('/');
-    const libraryLink = page.locator('a[href^="/libraries/"]').first();
-    test.skip((await libraryLink.count()) === 0, 'The E2E account has no configured library');
-
-    await libraryLink.click();
-    await expect(page).toHaveURL(/\/libraries\/[^/]+/);
-    const search = page.getByRole('textbox', { name: /search|recherch/i });
+    await page.goto('/libraries/lib-a');
+    await expect(page).toHaveURL(/\/libraries\/lib-a/);
+    const search = page.getByTestId('library-search').first();
     await expect(search).toBeVisible();
     await search.fill('__e2e_no_match__');
     await expect(search).toHaveValue('__e2e_no_match__');
   });
 
   test('opens a real series and book when the provider has content', async ({ page }) => {
-    await page.goto('/');
-    const libraryLink = page.locator('a[href^="/libraries/"]').first();
-    test.skip((await libraryLink.count()) === 0, 'The E2E account has no configured library');
-    await libraryLink.click();
-
-    const seriesLink = page.locator('a[href^="/series/"]').first();
-    test.skip((await seriesLink.count()) === 0, 'The configured library contains no series');
-    await seriesLink.click();
-    await expect(page).toHaveURL(/\/series\/[^/]+/);
-
-    const bookLink = page.locator('a[href^="/books/"]').first();
-    test.skip((await bookLink.count()) === 0, 'The series contains no readable book');
-    await bookLink.click();
-    await expect(page).toHaveURL(/\/books\/[^/]+/);
-    await expect(page.locator('main')).toBeVisible();
+    await page.goto('/series/series-a');
+    await expect(page).toHaveURL(/\/series\/series-a/);
+    await page.goto('/books/book-a');
+    await expect(page).toHaveURL(/\/books\/book-a/);
+    await expect(page.locator('img[alt^="Page "]').first()).toBeVisible({ timeout: 15_000 });
   });
 });
