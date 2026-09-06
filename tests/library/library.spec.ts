@@ -15,7 +15,7 @@ test.describe('Library browsing', () => {
   });
 
   test('synchronizes search with the URL and can clear it', async ({ page }) => {
-    const search = page.getByTestId('library-search');
+    const search = page.getByTestId('library-search').first();
     await search.fill('__e2e_no_match__');
     await expect(page).toHaveURL(/search=__e2e_no_match__/);
 
@@ -33,15 +33,15 @@ test.describe('Library browsing', () => {
   });
 
   test('toggles unread and missing filters through the URL', async ({ page }) => {
-    const unread = page.getByTestId('library-filter-unread');
+    const unread = page.getByTestId('library-filter-unread').first();
     await unread.click();
     await expect(page).toHaveURL(/unread=true/);
 
-    const showAll = page.getByTestId('library-filter-unread');
+    const showAll = page.getByTestId('library-filter-unread').first();
     await showAll.click();
     await expect(page).toHaveURL(/unread=false/);
 
-    const missing = page.getByTestId('library-filter-missing');
+    const missing = page.getByTestId('library-filter-missing').first();
     await missing.click();
     await expect(page).toHaveURL(/missing=true/);
   });
