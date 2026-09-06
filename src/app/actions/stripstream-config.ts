@@ -223,7 +223,9 @@ export async function setActiveStripstreamConfig(
 
     await setActiveConnection("stripstream", id);
 
-    revalidateConnectionCaches();
+    // Refresh the page segment for the new cookie, but keep provider data warm:
+    // cache keys are already scoped to the selected connection.
+    revalidatePath("/");
     return { success: true, message: `Stripstream actif : ${config.name}` };
   } catch {
     return { success: false, message: "Erreur lors du changement de config" };

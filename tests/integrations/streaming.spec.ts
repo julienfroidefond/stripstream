@@ -71,9 +71,9 @@ test.describe('Home streaming + changement de connexion', () => {
     // Cliquer sur "Stub B" dans la liste déroulante
     await page.locator('#sidebar').getByTestId('provider-switch-komga-stub-b').click();
 
-    // Une transition App Router conserve normalement l'ancien arbre visible.
-    // Notre état client doit donc remplacer immédiatement la home par son skeleton.
-    await expect(page.getByTestId('connection-switch-loading')).toBeVisible();
+    // Conserver la home courante pendant le chargement évite un flash plein écran.
+    await expect(page.getByText('BD-A (Tome 1)').first()).toBeVisible();
+    await expect(page.getByTestId('connection-switch-loading')).toHaveCount(0);
 
     // La connexion active devient Stub B (le trigger affiche désormais B)
     await expect(
@@ -81,6 +81,5 @@ test.describe('Home streaming + changement de connexion', () => {
     ).toBeVisible({ timeout: 15_000 });
 
     await expect(page.getByText('BD-B (Tome 1)').first()).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByTestId('connection-switch-loading')).toHaveCount(0);
   });
 });

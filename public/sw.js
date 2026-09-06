@@ -1,9 +1,9 @@
-// StripStream Service Worker - v3.1
+// StripStream Service Worker - v3.2
 // Strategy: static assets + images only. HTML/RSC are never cached to prevent stale-page white screens.
 
 // Bump this when a deployed client bundle must no longer be served from the
 // static cache (for example after a reader layout correction).
-const VERSION = "v3.1";
+const VERSION = "v3.2";
 const STATIC_CACHE = `stripstream-static-${VERSION}`;
 const IMAGES_CACHE = `stripstream-images-${VERSION}`;
 const BOOKS_CACHE = "stripstream-books"; // Never version — managed by DownloadManager
@@ -110,26 +110,31 @@ async function cacheFirstStrategy(request, cacheName, options = {}) {
   }
 }
 
-async function staleWhileRevalidateStrategy(request, cacheName, options = {}) {
-  const cache = await caches.open(cacheName);
+// Multiple home rows can reference the same cover before the first response
+// has reached Cache Storage. Share that first network request so the image
+// proxy and the upstream provider only receive it once.
+const pendingImageRequests = new Map();
+
+async function deduplicatedImageCacheFirstStrategy(request) {
+  const cache = await caches.open(IMAGES_CACHE);
   const cached = await cache.match(request);
-
-  const fetchPromise = fetch(request)
-    .then(async (response) => {
-      if (shouldCacheResponse(response)) {
-        await cache.put(request, response.clone());
-        if (options.maxEntries) trimCache(cacheName, options.maxEntries);
-      }
-      return response;
-    })
-    .catch(() => null);
-
   if (cached) return cached;
 
-  const response = await fetchPromise;
-  if (response) return response;
+  let pending = pendingImageRequests.get(request.url);
+  if (!pending) {
+    pending = fetch(request)
+      .then(async (response) => {
+        if (shouldCacheResponse(response)) {
+          await cache.put(request, response.clone());
+          trimCache(IMAGES_CACHE, IMAGES_CACHE_MAX_ENTRIES);
+        }
+        return response;
+      })
+      .finally(() => pendingImageRequests.delete(request.url));
+    pendingImageRequests.set(request.url, pending);
+  }
 
-  throw new Error("Network failed and no cache available");
+  return pending.then((response) => response.clone());
 }
 
 // ============================================================================
@@ -326,13 +331,10 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Route 3: Images (thumbnails, covers) → stale-while-revalidate
+  // Route 3: immutable thumbnails/covers → cache-first. Revalidating these on
+  // every home visit defeats the session cache and reloads every carousel.
   if (isImageRequest(url.href)) {
-    event.respondWith(
-      staleWhileRevalidateStrategy(request, IMAGES_CACHE, {
-        maxEntries: IMAGES_CACHE_MAX_ENTRIES,
-      })
-    );
+    event.respondWith(deduplicatedImageCacheFirstStrategy(request));
     return;
   }
 

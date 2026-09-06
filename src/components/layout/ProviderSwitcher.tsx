@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback, useMemo } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ChevronDown, Loader2, Server, Settings } from "lucide-react";
 import {
@@ -20,7 +19,6 @@ import {
   setActiveStripstreamConfig,
   type StripstreamConfigSummary,
 } from "@/app/actions/stripstream-config";
-import { useConnectionTransition } from "@/contexts/ConnectionTransitionContext";
 
 type ConnectionType = "komga" | "stripstream";
 
@@ -37,10 +35,8 @@ interface ProviderSwitcherProps {
 }
 
 export function ProviderSwitcher({ komgaConfigs, stripstreamConfigs }: ProviderSwitcherProps) {
-  const router = useRouter();
   const { toast } = useToast();
   const { t } = useTranslate();
-  const { beginConnectionSwitch, cancelConnectionSwitch } = useConnectionTransition();
   const [isOpen, setIsOpen] = useState(false);
   const [busyKey, setBusyKey] = useState<string | null>(null);
 
@@ -70,7 +66,6 @@ export function ProviderSwitcher({ komgaConfigs, stripstreamConfigs }: ProviderS
       if (conn.isActive || busyKey) return;
       setBusyKey(keyOf(conn));
       setIsOpen(false);
-      beginConnectionSwitch();
       try {
         const result =
           conn.type === "komga"
@@ -81,23 +76,16 @@ export function ProviderSwitcher({ komgaConfigs, stripstreamConfigs }: ProviderS
           title: t("header.providerSwitcher.title"),
           description: result.message,
         });
-        if (result.success) {
-          // Une navigation RSC repasse par les Suspense de la home et affiche
-          // les skeletons, contrairement à router.refresh() qui conserve
-          // l'ancien arbre pendant le chargement.
-          router.replace(`/?connection=${Date.now()}`);
-        } else {
-          cancelConnectionSwitch();
+        if (!result.success) {
           setIsOpen(true);
         }
       } catch {
-        cancelConnectionSwitch();
         setIsOpen(true);
       } finally {
         setBusyKey(null);
       }
     },
-    [beginConnectionSwitch, busyKey, cancelConnectionSwitch, router, toast, t]
+    [busyKey, toast, t]
   );
 
   // Pas de connexion configurée → bouton qui mène vers les paramètres

@@ -1,11 +1,13 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { createHash } from "node:crypto";
 import { getCurrentUser } from "@/lib/auth-utils";
 import { getResolvedStripstreamConfig } from "@/lib/providers/stripstream/stripstream-config-resolver";
 import { StripstreamClient } from "@/lib/providers/stripstream/stripstream.client";
 import { AppError } from "@/utils/errors";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { isConnectionError } from "@/utils/http-error";
+import { requestDeduplicationService } from "@/lib/services/request-deduplication.service";
 import logger from "@/lib/logger";
 
 export async function GET(
@@ -26,13 +28,22 @@ export async function GET(
       throw new AppError(ERROR_CODES.STRIPSTREAM.MISSING_CONFIG);
     }
 
-    const client = new StripstreamClient(config.url, config.token);
-    const response = await client.fetchImage(`books/${bookId}/thumbnail`);
+    const connectionKey = createHash("sha256")
+      .update(`${config.url}\0${config.token}`)
+      .digest("hex");
+    const { buffer, contentType } = await requestDeduplicationService.deduplicate(
+      `stripstream-thumbnail:${connectionKey}:${bookId}`,
+      async () => {
+        const client = new StripstreamClient(config.url, config.token);
+        const response = await client.fetchImage(`books/${bookId}/thumbnail`);
+        return {
+          buffer: await response.arrayBuffer(),
+          contentType: response.headers.get("content-type") ?? "image/jpeg",
+        };
+      }
+    );
 
-    const contentType = response.headers.get("content-type") ?? "image/jpeg";
-    const buffer = await response.arrayBuffer();
-
-    return new NextResponse(buffer, {
+    return new NextResponse(buffer.slice(0), {
       headers: {
         "Content-Type": contentType,
         "Cache-Control": "public, max-age=2592000, immutable",
