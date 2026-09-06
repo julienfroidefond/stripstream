@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+  # Permet de déclencher un déploiement manuel depuis l'UI Gitea, y compris
+  # quand le dernier commit est filtré (chore/docs/...). Voir le if ci-dessous.
+  workflow_dispatch:
 
 env:
   IMAGE: julienfroidefond32/stripstream
@@ -13,14 +16,15 @@ jobs:
     runs-on: mac-orbstack-runner
     # Skip non-runtime commits (chore, docs, style, test, ci, build) - same
     # types that the auto-bump hook ignores. Spares a build when only tooling,
-    # docs or formatting changes.
+    # docs or formatting changes. Unconditionally run when triggered manually.
     if: |
-      !startsWith(github.event.head_commit.message, 'chore') &&
-      !startsWith(github.event.head_commit.message, 'docs') &&
-      !startsWith(github.event.head_commit.message, 'style') &&
-      !startsWith(github.event.head_commit.message, 'test') &&
-      !startsWith(github.event.head_commit.message, 'ci') &&
-      !startsWith(github.event.head_commit.message, 'build')
+      github.event_name == 'workflow_dispatch' ||
+      (!startsWith(github.event.head_commit.message, 'chore') &&
+       !startsWith(github.event.head_commit.message, 'docs') &&
+       !startsWith(github.event.head_commit.message, 'style') &&
+       !startsWith(github.event.head_commit.message, 'test') &&
+       !startsWith(github.event.head_commit.message, 'ci') &&
+       !startsWith(github.event.head_commit.message, 'build'))
     steps:
       - name: Checkout
         uses: actions/checkout@v4
