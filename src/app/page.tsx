@@ -56,7 +56,6 @@ async function HomeStreamingContent() {
             <ContinueReadingSection
               continueReadingPromise={continueReadingPromise}
               ongoingPromise={ongoingPromise}
-              favoritesPromise={favoritesPromise}
               isAnonymous={isAnonymous}
             />
           </Suspense>
@@ -110,22 +109,19 @@ async function HomeStreamingContent() {
 interface ContinueReadingSectionProps {
   continueReadingPromise: Promise<Pick<HomePrimaryData, "ongoingBooks" | "onDeck"> | null>;
   ongoingPromise: Promise<NormalizedSeries[]>;
-  favoritesPromise: Promise<NormalizedSeries[]>;
   isAnonymous: boolean;
 }
 
 async function ContinueReadingSection({
   continueReadingPromise,
   ongoingPromise,
-  favoritesPromise,
   isAnonymous,
 }: ContinueReadingSectionProps) {
   if (isAnonymous) return null;
 
-  const [continueReadingData, ongoing, favorites] = await Promise.all([
+  const [continueReadingData, ongoing] = await Promise.all([
     continueReadingPromise,
     ongoingPromise,
-    favoritesPromise,
   ]);
 
   if (!continueReadingData) return null;
@@ -136,7 +132,7 @@ async function ContinueReadingSection({
   const seriesPool = getSeriesPool({
     heroSeries: [],
     ongoing,
-    favorites,
+    favorites: [],
   });
 
   return <ContinueReadingHero books={continueReading} series={seriesPool} />;

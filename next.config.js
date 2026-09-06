@@ -23,6 +23,14 @@ const securityHeaders = [
 ];
 
 const nextConfig = {
+  experimental: {
+    // Keep dynamic page segments in the client router cache for the same
+    // duration as the home provider data. Revisiting the home page during a
+    // session can then reuse its RSC payload instead of replaying every row.
+    staleTimes: {
+      dynamic: 120,
+    },
+  },
   logging: {
     browserToTerminal: true,
   },
