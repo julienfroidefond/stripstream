@@ -116,6 +116,7 @@ export function ProviderSwitcher({ komgaConfigs, stripstreamConfigs }: ProviderS
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen} className="space-y-0.5">
       <CollapsibleTrigger
+        data-testid="provider-switcher"
         className={cn(
           "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
           "hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -147,6 +148,7 @@ export function ProviderSwitcher({ komgaConfigs, stripstreamConfigs }: ProviderS
               <button
                 key={k}
                 type="button"
+                data-testid={`provider-switch-${conn.type}-${conn.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
                 onClick={() => handleActivate(conn)}
                 disabled={busyKey !== null}
                 className={cn(

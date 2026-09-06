@@ -20,6 +20,7 @@ export function SortButton({ sort, onToggle, className }: SortButtonProps) {
 
   return (
     <Button
+      data-testid="library-sort"
       variant="ghost"
       size="sm"
       onClick={onToggle}

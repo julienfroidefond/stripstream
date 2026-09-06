@@ -45,7 +45,7 @@ test.describe('Home streaming + changement de connexion', () => {
     // du ProviderSwitcher affiche la connexion active ("Stub …").
     const sidebar = page.locator('#sidebar');
     await expect(sidebar).toHaveClass(/translate-x-0/, { timeout: 10_000 });
-    const trigger = sidebar.getByRole('button').filter({ hasText: /stub/i }).first();
+    const trigger = sidebar.getByTestId('provider-switcher');
     await expect(trigger).toBeVisible({ timeout: 15_000 });
     return trigger;
   }
@@ -69,7 +69,7 @@ test.describe('Home streaming + changement de connexion', () => {
     await trigger.click();
 
     // Cliquer sur "Stub B" dans la liste déroulante
-    await page.locator('#sidebar').getByRole('button').filter({ hasText: /stub b/i }).first().click();
+    await page.locator('#sidebar').getByTestId('provider-switch-komga-stub-b').click();
 
     // Une transition App Router conserve normalement l'ancien arbre visible.
     // Notre état client doit donc remplacer immédiatement la home par son skeleton.
@@ -77,7 +77,7 @@ test.describe('Home streaming + changement de connexion', () => {
 
     // La connexion active devient Stub B (le trigger affiche désormais B)
     await expect(
-      page.locator('#sidebar').getByRole('button').filter({ hasText: /stub b/i }).first()
+      page.locator('#sidebar').getByTestId('provider-switcher')
     ).toBeVisible({ timeout: 15_000 });
 
     await expect(page.getByText('BD-B (Tome 1)').first()).toBeVisible({ timeout: 15_000 });

@@ -123,6 +123,7 @@ export const ControlButtons = memo(function ControlButtons({
         />
         {isFullscreenAvailable && (
           <IconButton
+            data-testid="reader-close"
             variant="ghost"
             size="icon"
             icon={isFullscreen ? Minimize2 : Maximize2}
@@ -212,6 +213,7 @@ export const ControlButtons = memo(function ControlButtons({
         </div>
         {onClose && (
           <IconButton
+            data-testid="reader-close"
             variant="ghost"
             size="icon"
             icon={X}
@@ -229,6 +231,7 @@ export const ControlButtons = memo(function ControlButtons({
       {/* Bouton précédent */}
       {currentPage > 1 && (
         <IconButton
+          data-testid="reader-previous-page"
           variant="ghost"
           size="icon"
           icon={ChevronLeft}
@@ -250,6 +253,7 @@ export const ControlButtons = memo(function ControlButtons({
       {/* Bouton suivant */}
       {currentPage < totalPages && (
         <IconButton
+          data-testid="reader-next-page"
           variant="ghost"
           size="icon"
           icon={ChevronRight}

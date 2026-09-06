@@ -25,7 +25,7 @@ test.describe('Library browsing', () => {
 
   test('changes sorting without leaving the library', async ({ page }) => {
     const path = new URL(page.url()).pathname;
-    const sort = page.getByRole('button', { name: /sort|tri|title|titre|latest|récent/i }).first();
+    const sort = page.getByTestId('library-sort').first();
     await expect(sort).toBeVisible();
     await sort.click();
 

@@ -43,19 +43,19 @@ test.describe('Reader against the deterministic Komga fixture', () => {
     await expect(page.getByAltText('Page 1')).toBeVisible({ timeout: 15_000 });
     await page.getByAltText('Page 1').click({ position: { x: 10, y: 10 } });
 
-    const next = page.getByRole('button', { name: /next page|page suivante/i });
+    const next = page.getByTestId('reader-next-page');
     await expect(next).toBeVisible();
     await next.click();
     await expect(page.getByAltText('Page 2')).toBeVisible({ timeout: 10_000 });
 
-    const doublePage = page.getByRole('button', { name: /double page/i });
+    const doublePage = page.getByTestId('reader-toggle-double-page');
     const doublePageLabel = await doublePage.getAttribute('aria-label');
     if (/enable|activer/i.test(doublePageLabel ?? '')) {
       await doublePage.click();
     }
     await expect(page.getByAltText('Page 3')).toBeVisible({ timeout: 10_000 });
 
-    const direction = page.getByRole('button', { name: /direction/i });
+    const direction = page.getByTestId('reader-toggle-direction');
     const initialDirectionLabel = await direction.getAttribute('aria-label');
     await direction.click();
     await expect(direction).not.toHaveAttribute('aria-label', initialDirectionLabel ?? '');
@@ -72,17 +72,17 @@ test.describe('Reader against the deterministic Komga fixture', () => {
     await expect(page.getByAltText('Page 1')).toBeVisible({ timeout: 15_000 });
     await page.getByAltText('Page 1').click({ position: { x: 10, y: 10 } });
 
-    await page.getByRole('button', { name: /thumbnails|vignettes/i }).click();
+    await page.getByTestId('reader-thumbnails').click();
     await expect(page.locator('#thumbnails-container')).toBeVisible();
     await expect(page.locator('#thumbnail-1')).toBeVisible();
     await page.locator('#thumbnail-10').click();
     const lastPage = page.getByRole('img', { name: 'Page 10', exact: true });
     await expect(lastPage).toBeVisible({ timeout: 10_000 });
     await lastPage.click({ position: { x: 10, y: 10 } });
-    await page.getByRole('button', { name: /thumbnails|vignettes/i }).click();
+    await page.getByTestId('reader-thumbnails').click();
     await expect(page.locator('#thumbnails-container')).toBeHidden();
 
-    await page.getByRole('button', { name: /information|info/i }).click({ force: true });
+    await page.getByTestId('reader-info').click({ force: true });
     await expect(page.getByRole('dialog')).toBeVisible();
     await page.getByRole('button', { name: /close|fermer/i }).first().click();
 
