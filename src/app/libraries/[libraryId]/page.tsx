@@ -1,5 +1,5 @@
 import { PreferencesService } from "@/lib/services/preferences.service";
-import { getProvider } from "@/lib/providers/provider.factory";
+import { getProvider, getActiveProviderType } from "@/lib/providers/provider.factory";
 import { LibraryClientWrapper } from "./LibraryClientWrapper";
 import { LibraryContent } from "./LibraryContent";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
@@ -39,8 +39,14 @@ export default async function LibraryPage({ params, searchParams }: PageProps) {
     const provider = await getProvider();
     if (!provider) redirect("/settings");
 
+    const providerType = await getActiveProviderType();
+    const canSortByRating = providerType === "stripstream";
+    // Si l'utilisateur a sauvegardé "community_score" puis basculé sur Komga
+    // (qui ne supporte pas ce tri), on retombe sur le tri par titre.
+    const safeSort = !canSortByRating && effectiveSort === "community_score" ? "title" : effectiveSort;
+
     const [seriesPage, library] = await Promise.all([
-      provider.getSeries(libraryId, String(currentPage), effectivePageSize, unreadOnly, search, effectiveSort, effectiveMissing === true),
+      provider.getSeries(libraryId, String(currentPage), effectivePageSize, unreadOnly, search, safeSort, effectiveMissing === true),
       provider.getLibraryById(libraryId),
     ]);
 
@@ -55,8 +61,9 @@ export default async function LibraryPage({ params, searchParams }: PageProps) {
           preferences={preferences}
           unreadOnly={unreadOnly}
           pageSize={effectivePageSize}
-          sort={effectiveSort}
+          sort={safeSort}
           hasMissing={effectiveMissing === true}
+          canSortByRating={canSortByRating}
         />
       </LibraryClientWrapper>
     );

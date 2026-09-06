@@ -17,14 +17,26 @@ import { IconButton } from "@/components/ui/icon-button";
 import logger from "@/lib/logger";
 import { addToFavorites, removeFromFavorites } from "@/app/actions/favorites";
 import { useAnonymous } from "@/contexts/AnonymousContext";
+import { SeriesRatingControl } from "./SeriesRatingControl";
+import type { NormalizedProviderRating } from "@/lib/providers/types";
 
 interface SeriesHeaderProps {
   series: NormalizedSeries;
   refreshSeries: (seriesId: string) => Promise<{ success: boolean; error?: string }>;
   initialIsFavorite: boolean;
+  canRate?: boolean;
+  initialRating?: number | null;
+  providerRatings?: NormalizedProviderRating[];
 }
 
-export const SeriesHeader = ({ series, refreshSeries, initialIsFavorite }: SeriesHeaderProps) => {
+export const SeriesHeader = ({
+  series,
+  refreshSeries,
+  initialIsFavorite,
+  canRate = false,
+  initialRating = null,
+  providerRatings = [],
+}: SeriesHeaderProps) => {
   const router = useRouter();
   const { toast } = useToast();
   const { isAnonymous } = useAnonymous();
@@ -208,6 +220,13 @@ export const SeriesHeader = ({ series, refreshSeries, initialIsFavorite }: Serie
                 <StatusBadge status="warning" icon={BookX}>
                   {t("series.header.missing", { count: series.missingCount })}
                 </StatusBadge>
+              )}
+              {canRate && !isAnonymous && (
+                <SeriesRatingControl
+                  seriesId={series.id}
+                  initialRating={initialRating}
+                  providerRatings={providerRatings}
+                />
               )}
               <IconButton
                 data-testid={isFavorite ? "series-favorite-remove" : "series-favorite-add"}

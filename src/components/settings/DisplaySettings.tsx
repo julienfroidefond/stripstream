@@ -9,11 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Image as ImageIcon, Filter, Grid, ArrowUpDown, Eye, EyeOff } from "lucide-react";
 import logger from "@/lib/logger";
 
-type SortOrder = "title" | "latest";
+type SortOrder = "title" | "latest" | "community_score";
 
 const SORT_ORDERS: { value: SortOrder; labelKey: string }[] = [
   { value: "title", labelKey: "series.filters.sortTitle" },
   { value: "latest", labelKey: "series.filters.sortLatest" },
+  { value: "community_score", labelKey: "series.filters.sortRating" },
 ];
 
 export function DisplaySettings() {

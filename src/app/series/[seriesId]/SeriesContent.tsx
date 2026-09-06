@@ -5,7 +5,7 @@ import { SeriesHeader } from "@/components/series/SeriesHeader";
 import { Container } from "@/components/ui/container";
 import { RelatedSeriesRow } from "@/components/series/RelatedSeriesRow";
 import { useRefresh } from "@/contexts/RefreshContext";
-import type { NormalizedBooksPage, NormalizedMissingBook, NormalizedSeries } from "@/lib/providers/types";
+import type { NormalizedBooksPage, NormalizedMissingBook, NormalizedSeries, NormalizedProviderRating } from "@/lib/providers/types";
 import type { UserPreferences } from "@/types/preferences";
 
 interface SeriesContentProps {
@@ -18,6 +18,9 @@ interface SeriesContentProps {
   initialIsFavorite: boolean;
   missingBooks: NormalizedMissingBook[];
   relatedSeries?: NormalizedSeries[];
+  canRate?: boolean;
+  initialRating?: number | null;
+  providerRatings?: NormalizedProviderRating[];
 }
 
 export function SeriesContent({
@@ -30,6 +33,9 @@ export function SeriesContent({
   initialIsFavorite,
   missingBooks,
   relatedSeries = [],
+  canRate = false,
+  initialRating = null,
+  providerRatings = [],
 }: SeriesContentProps) {
   const { refreshSeries } = useRefresh();
 
@@ -39,6 +45,9 @@ export function SeriesContent({
         series={series}
         refreshSeries={refreshSeries || (async () => ({ success: false }))}
         initialIsFavorite={initialIsFavorite}
+        canRate={canRate}
+        initialRating={initialRating}
+        providerRatings={providerRatings}
       />
       <Container>
         <PaginatedBookGrid

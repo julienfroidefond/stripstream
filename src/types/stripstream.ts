@@ -106,6 +106,19 @@ export interface StripstreamUpdateReadingProgressRequest {
   current_page?: number | null;
 }
 
+export interface StripstreamProviderRating {
+  provider: string;
+  rating: number;
+  rating_scale: number;
+  rating_count: number | null;
+}
+
+export interface StripstreamSeriesRatingsResponse {
+  user_rating: number | null;
+  anilist_pulled_rating: number | null;
+  provider_ratings: StripstreamProviderRating[];
+}
+
 export interface StripstreamSeriesMetadata {
   authors: string[];
   genres: string[];

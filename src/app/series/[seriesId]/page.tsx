@@ -1,5 +1,5 @@
 import { PreferencesService } from "@/lib/services/preferences.service";
-import { getProvider } from "@/lib/providers/provider.factory";
+import { getProvider, getActiveProviderType } from "@/lib/providers/provider.factory";
 
 import { FavoriteService } from "@/lib/services/favorite.service";
 import { SeriesClientWrapper } from "./SeriesClientWrapper";
@@ -34,7 +34,10 @@ export default async function SeriesPage({ params, searchParams }: PageProps) {
     const provider = await getProvider();
     if (!provider) redirect("/settings");
 
-    const [booksPage, series, isFavorite, missingBooks, relatedSeries] = await Promise.all([
+    const providerType = await getActiveProviderType();
+    const canRate = providerType === "stripstream";
+
+    const [booksPage, series, isFavorite, missingBooks, relatedSeries, rating] = await Promise.all([
       provider.getBooks({
         seriesName: seriesId,
         cursor: String(currentPage),
@@ -45,6 +48,7 @@ export default async function SeriesPage({ params, searchParams }: PageProps) {
       FavoriteService.isFavorite(seriesId),
       provider.getMissingBooks(seriesId),
       provider.getRelatedSeries(seriesId).catch(() => []),
+      canRate ? provider.getSeriesRating(seriesId).catch(() => null) : Promise.resolve(null),
     ]);
 
     if (!series) throw new AppError(ERROR_CODES.SERIES.FETCH_ERROR);
@@ -61,6 +65,9 @@ export default async function SeriesPage({ params, searchParams }: PageProps) {
           initialIsFavorite={isFavorite}
           missingBooks={missingBooks}
           relatedSeries={relatedSeries}
+          canRate={canRate}
+          initialRating={rating?.userRating ?? null}
+          providerRatings={rating?.providerRatings ?? []}
         />
       </SeriesClientWrapper>
     );

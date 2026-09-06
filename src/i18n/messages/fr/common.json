@@ -331,6 +331,7 @@
       "compact": "Affichage compact",
       "sortTitle": "Titre",
       "sortLatest": "Récentes",
+      "sortRating": "Note",
       "missing": "Manquants",
       "hideMissing": "Manquants",
       "showMissing": "Manquants"
@@ -360,6 +361,14 @@
         "ended": "Terminé",
         "hiatus": "En pause",
         "cancelled": "Annulé"
+      },
+      "rating": {
+        "label": "Ma note",
+        "saved": "Note enregistrée",
+        "deleted": "Note supprimée",
+        "error": "Erreur lors de la notation",
+        "clear": "Supprimer ma note",
+        "empty": "Non noté"
       }
     }
   },
@@ -499,6 +508,8 @@
     "LIBRARY_SCAN_ERROR": "Erreur lors de l'analyse de la bibliothèque",
     "SERIES_FETCH_ERROR": "Erreur lors de la récupération des séries",
     "SERIES_NO_BOOKS_FOUND": "Aucun livre trouvé dans la série",
+    "SERIES_RATING_ERROR": "Erreur lors de l'enregistrement de la note",
+    "SERIES_RATING_NOT_SUPPORTED": "La notation des séries n'est pas disponible avec ce fournisseur",
     "BOOK_NOT_FOUND": "Livre introuvable",
     "BOOK_FETCH_ERROR": "Erreur lors de la récupération du livre",
     "BOOK_PROGRESS_UPDATE_ERROR": "Erreur lors de la mise à jour de la progression",

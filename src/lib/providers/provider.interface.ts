@@ -7,6 +7,7 @@ import type {
   NormalizedSeriesPage,
   NormalizedBooksPage,
   NormalizedMissingBook,
+  NormalizedSeriesRating,
 } from "./types";
 import type { HomeData, HomeDeferredData, HomePrimaryData } from "@/types/home";
 import type { StripstreamReadingList } from "@/types/stripstream";
@@ -46,6 +47,11 @@ export interface IMediaProvider {
   getReadProgress(bookId: string): Promise<NormalizedReadProgress | null>;
   saveReadProgress(bookId: string, page: number | null, completed: boolean): Promise<void>;
   resetReadProgress(bookId: string): Promise<void>;
+
+  // ── Series rating (Stripstream only; Komga returns null / throws not-supported) ──
+  getSeriesRating(seriesId: string): Promise<NormalizedSeriesRating | null>;
+  setSeriesRating(seriesId: string, rating: number): Promise<void>;
+  deleteSeriesRating(seriesId: string): Promise<void>;
 
   // ── Admin / utility ──────────────────────────────────────────────────────
   scanLibrary(libraryId: string): Promise<void>;

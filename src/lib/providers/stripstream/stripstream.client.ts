@@ -148,7 +148,9 @@ export class StripstreamClient {
         });
       }
 
-      return response.json();
+      // 204 No Content (PUT/DELETE rating, scan, …) ou corps vide : pas de JSON à parser.
+      const text = await response.text();
+      return (text === "" ? null : JSON.parse(text)) as T;
     } catch (error) {
       if (isDebug) {
         logger.error(

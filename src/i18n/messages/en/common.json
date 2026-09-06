@@ -326,6 +326,7 @@
       "compact": "Compact",
       "sortTitle": "Title",
       "sortLatest": "Latest",
+      "sortRating": "Rating",
       "missing": "Missing",
       "hideMissing": "Missing",
       "showMissing": "Missing"
@@ -357,6 +358,14 @@
         "ended": "Completed",
         "hiatus": "On hiatus",
         "cancelled": "Cancelled"
+      },
+      "rating": {
+        "label": "My rating",
+        "saved": "Rating saved",
+        "deleted": "Rating removed",
+        "error": "Could not save rating",
+        "clear": "Remove my rating",
+        "empty": "Not rated"
       }
     }
   },
@@ -496,6 +505,8 @@
     "LIBRARY_SCAN_ERROR": "Error scanning library",
     "SERIES_FETCH_ERROR": "Error fetching series",
     "SERIES_NO_BOOKS_FOUND": "No books found in series",
+    "SERIES_RATING_ERROR": "Error saving rating",
+    "SERIES_RATING_NOT_SUPPORTED": "Series rating is not available with this provider",
     "BOOK_NOT_FOUND": "Book not found",
     "BOOK_FETCH_ERROR": "Error fetching book",
     "BOOK_PROGRESS_UPDATE_ERROR": "Error updating reading progress",

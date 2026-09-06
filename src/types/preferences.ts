@@ -12,7 +12,7 @@ export interface BackgroundPreferences {
 export type FitMode = "fit" | "width" | "height" | "original";
 export type ReadingDirection = "ltr" | "rtl";
 export type ReaderBackground = "default" | "black" | "white" | "cream";
-export type SortOrder = "title" | "latest";
+export type SortOrder = "title" | "latest" | "community_score";
 
 export interface UserPreferences {
   showThumbnails: boolean;

@@ -8,6 +8,7 @@ import type {
   NormalizedSeriesPage,
   NormalizedBooksPage,
   NormalizedMissingBook,
+  NormalizedSeriesRating,
 } from "../types";
 import type { HomeData, HomeDeferredData, HomePrimaryData } from "@/types/home";
 import type { StripstreamReadingList } from "@/types/stripstream";
@@ -321,6 +322,21 @@ export class KomgaProvider implements IMediaProvider {
     if (!response.ok) {
       throw new AppError(ERROR_CODES.BOOK.PROGRESS_UPDATE_ERROR);
     }
+  }
+
+  // Komga ne gère pas la notation de séries — l'UI est masquée côté page
+  // (getActiveProviderType() === "stripstream"). Ces méthodes ne devraient
+  // jamais être appelées en pratique.
+  async getSeriesRating(_seriesId: string): Promise<NormalizedSeriesRating | null> {
+    return null;
+  }
+
+  async setSeriesRating(_seriesId: string, _rating: number): Promise<void> {
+    throw new AppError(ERROR_CODES.SERIES.RATING_NOT_SUPPORTED);
+  }
+
+  async deleteSeriesRating(_seriesId: string): Promise<void> {
+    throw new AppError(ERROR_CODES.SERIES.RATING_NOT_SUPPORTED);
   }
 
   async search(query: string, limit = 6): Promise<NormalizedSearchResult[]> {

@@ -56,6 +56,20 @@ export interface NormalizedMissingBook {
   coverUrl: string | null;
 }
 
+export interface NormalizedProviderRating {
+  provider: string;
+  rating: number;
+  ratingScale: number;
+  ratingCount: number | null;
+}
+
+export interface NormalizedSeriesRating {
+  /** User rating on the 1-10 half-star scale, or null if unrated. */
+  userRating: number | null;
+  /** Aggregate ratings from linked metadata providers (AniList, MangaDex, …), read-only. */
+  providerRatings: NormalizedProviderRating[];
+}
+
 export interface NormalizedSearchResult {
   id: string;
   title: string;

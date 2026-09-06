@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslate } from "@/hooks/useTranslate";
-import { ArrowDownAZ, ArrowDownWideNarrow } from "lucide-react";
+import { ArrowDownAZ, ArrowDownWideNarrow, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -14,9 +14,15 @@ interface SortButtonProps {
 export function SortButton({ sort, onToggle, className }: SortButtonProps) {
   const { t } = useTranslate();
   const isLatest = sort === "latest";
+  const isRating = sort === "community_score";
 
-  const label = isLatest ? t("series.filters.sortLatest") : t("series.filters.sortTitle");
-  const Icon = isLatest ? ArrowDownWideNarrow : ArrowDownAZ;
+  const label = isLatest
+    ? t("series.filters.sortLatest")
+    : isRating
+      ? t("series.filters.sortRating")
+      : t("series.filters.sortTitle");
+  const Icon = isLatest ? ArrowDownWideNarrow : isRating ? Star : ArrowDownAZ;
+  const isActive = isLatest || isRating;
 
   return (
     <Button
@@ -27,7 +33,7 @@ export function SortButton({ sort, onToggle, className }: SortButtonProps) {
       title={label}
       className={cn(
         "h-9 rounded-full border px-3 text-xs font-medium backdrop-blur-sm sm:text-sm",
-        isLatest
+        isActive
           ? "border-primary/40 bg-primary/15 text-primary hover:bg-primary/20"
           : "border-border/60 bg-background/40 hover:bg-accent/40",
         className

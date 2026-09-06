@@ -14,6 +14,7 @@ interface LibraryContentProps {
   pageSize: number;
   sort: string;
   hasMissing: boolean;
+  canSortByRating?: boolean;
 }
 
 export function LibraryContent({
@@ -25,6 +26,7 @@ export function LibraryContent({
   pageSize,
   sort,
   hasMissing,
+  canSortByRating = false,
 }: LibraryContentProps) {
   return (
     <>
@@ -46,6 +48,7 @@ export function LibraryContent({
           initialViewMode={preferences.displayMode.viewMode || "grid"}
           sort={sort}
           hasMissing={hasMissing}
+          canSortByRating={canSortByRating}
         />
       </Container>
     </>

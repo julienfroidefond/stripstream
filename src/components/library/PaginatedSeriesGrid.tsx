@@ -29,6 +29,7 @@ interface PaginatedSeriesGridProps {
   initialViewMode: "grid" | "list";
   sort: string;
   hasMissing: boolean;
+  canSortByRating?: boolean;
 }
 
 export function PaginatedSeriesGrid({
@@ -43,6 +44,7 @@ export function PaginatedSeriesGrid({
   initialViewMode,
   sort: initialSort,
   hasMissing: initialHasMissing,
+  canSortByRating = false,
 }: PaginatedSeriesGridProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -155,11 +157,17 @@ export function PaginatedSeriesGrid({
   }, [showMissing, updateUrlParams, persistPreferences]);
 
   const handleSortToggle = useCallback(async () => {
-    const nextSort = currentSort === "title" ? "latest" : "title";
+    // Cycle : title → latest → (community_score si Stripstream) → title
+    const nextSort = (() => {
+      if (currentSort === "title") return "latest";
+      if (currentSort === "latest") return canSortByRating ? "community_score" : "title";
+      // currentSort === "community_score"
+      return "title";
+    })();
     setCurrentSort(nextSort);
     await updateUrlParams({ page: "1", sort: nextSort === "title" ? null : nextSort });
-    await persistPreferences({ defaultSortOrder: nextSort as "title" | "latest" });
-  }, [currentSort, updateUrlParams, persistPreferences]);
+    await persistPreferences({ defaultSortOrder: nextSort as "title" | "latest" | "community_score" });
+  }, [currentSort, canSortByRating, updateUrlParams, persistPreferences]);
 
   const handleViewModeToggle = useCallback(
     async (nextViewMode: "grid" | "list") => {

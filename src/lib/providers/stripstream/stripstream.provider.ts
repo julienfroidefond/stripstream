@@ -9,6 +9,7 @@ import type {
   NormalizedSeriesPage,
   NormalizedBooksPage,
   NormalizedMissingBook,
+  NormalizedSeriesRating,
 } from "../types";
 import type { HomeData, HomeDeferredData, HomePrimaryData } from "@/types/home";
 import { StripstreamClient } from "./stripstream.client";
@@ -30,8 +31,9 @@ import type {
   StripstreamRecommendedSeriesItem,
   StripstreamReadingList,
   StripstreamReadingListDetail,
+  StripstreamSeriesRatingsResponse,
 } from "@/types/stripstream";
-import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, SERIES_BOOKS_CACHE_TAG, BOOK_CACHE_TAG } from "@/constants/cacheConstants";
+import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, SERIES_BOOKS_CACHE_TAG, BOOK_CACHE_TAG, SERIES_RATING_CACHE_TAG } from "@/constants/cacheConstants";
 
 const CACHE_TTL_LONG = 300;
 const CACHE_TTL_MED = 120;
@@ -401,6 +403,40 @@ export class StripstreamProvider implements IMediaProvider {
     await this.client.fetch<unknown>(`books/${bookId}/progress`, undefined, {
       method: "PATCH",
       body: JSON.stringify({ status: "unread", current_page: null }),
+    });
+  }
+
+  async getSeriesRating(seriesId: string): Promise<NormalizedSeriesRating | null> {
+    try {
+      const response = await this.client.fetch<StripstreamSeriesRatingsResponse>(
+        `series/${seriesId}/ratings`,
+        undefined,
+        { revalidate: CACHE_TTL_SHORT, tags: [SERIES_RATING_CACHE_TAG, `series-rating:${seriesId}`] }
+      );
+      return {
+        userRating: response.user_rating,
+        providerRatings: response.provider_ratings.map((p) => ({
+          provider: p.provider,
+          rating: p.rating,
+          ratingScale: p.rating_scale,
+          ratingCount: p.rating_count,
+        })),
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  async setSeriesRating(seriesId: string, rating: number): Promise<void> {
+    await this.client.fetch<unknown>(`series/${seriesId}/rating`, undefined, {
+      method: "PUT",
+      body: JSON.stringify({ rating }),
+    });
+  }
+
+  async deleteSeriesRating(seriesId: string): Promise<void> {
+    await this.client.fetch<unknown>(`series/${seriesId}/rating`, undefined, {
+      method: "DELETE",
     });
   }
 

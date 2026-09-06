@@ -59,6 +59,8 @@ export const ERROR_MESSAGES: Record<string, string> = {
   // Series
   [ERROR_CODES.SERIES.FETCH_ERROR]: "📖 Error fetching series",
   [ERROR_CODES.SERIES.NO_BOOKS_FOUND]: "📚 No books found in series",
+  [ERROR_CODES.SERIES.RATING_ERROR]: "⭐️ Error saving series rating",
+  [ERROR_CODES.SERIES.RATING_NOT_SUPPORTED]: "⭐️ Series rating is not available with this provider",
 
   // Book
   [ERROR_CODES.BOOK.NOT_FOUND]: "📕 Book not found",
