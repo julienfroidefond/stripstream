@@ -22,6 +22,8 @@ import type { NormalizedBook, NormalizedSeries } from "@/lib/providers/types";
 import type { HomePrimaryData } from "@/types/home";
 import type { StripstreamReadingList } from "@/types/stripstream";
 
+const HOMEPAGE_RECOMMENDATION_LIMIT = 8;
+
 export default function HomePage() {
   return (
     <HomeClientWrapper>
@@ -48,7 +50,7 @@ async function HomeStreamingContent() {
     const recentlyReadPromise = provider.getHomeRecentlyRead().catch(() => []);
     const recommendationsPromise = isAnonymous
       ? Promise.resolve([])
-      : provider.getRecommendations().catch(() => []);
+      : provider.getRecommendations(HOMEPAGE_RECOMMENDATION_LIMIT).catch(() => []);
 
     return (
         <div className="space-y-10 pb-2">
