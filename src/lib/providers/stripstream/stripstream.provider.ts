@@ -543,6 +543,29 @@ export class StripstreamProvider implements IMediaProvider {
     }
   }
 
+  async getFavorites(): Promise<NormalizedSeries[]> {
+    const favorites = await this.client.fetch<StripstreamSeriesItem[]>("favorites", undefined, {
+      revalidate: CACHE_TTL_MED,
+      tags: ["favorites"],
+    });
+    return favorites.map(StripstreamAdapter.toNormalizedSeries);
+  }
+
+  async isFavorite(seriesId: string): Promise<boolean> {
+    return this.client.fetch<boolean>(`series/${seriesId}/favorite`, undefined, {
+      revalidate: CACHE_TTL_MED,
+      tags: ["favorites"],
+    });
+  }
+
+  async addToFavorites(seriesId: string): Promise<void> {
+    await this.client.fetch<unknown>(`series/${seriesId}/favorite`, undefined, { method: "PUT" });
+  }
+
+  async removeFromFavorites(seriesId: string): Promise<void> {
+    await this.client.fetch<unknown>(`series/${seriesId}/favorite`, undefined, { method: "DELETE" });
+  }
+
   async getRelatedSeries(seriesId: string, limit = 10): Promise<NormalizedSeries[]> {
     try {
       const items = await this.client.fetch<StripstreamRelatedSeriesItem[]>(
