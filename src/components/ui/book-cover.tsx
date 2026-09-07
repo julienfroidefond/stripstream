@@ -51,6 +51,22 @@ const getReadingStatusInfo = (
 };
 
 export function BookCover({
+  offlineStatus,
+  ...props
+}: BookCoverProps) {
+  if (offlineStatus) {
+    return <BookCoverContent {...props} isAccessible={offlineStatus.isAccessible} />;
+  }
+
+  return <BookCoverWithOfflineStatus {...props} />;
+}
+
+function BookCoverWithOfflineStatus(props: Omit<BookCoverProps, "offlineStatus">) {
+  const { isAccessible } = useBookOfflineStatus(props.book.id);
+  return <BookCoverContent {...props} isAccessible={isAccessible} />;
+}
+
+function BookCoverContent({
   book,
   alt,
   className,
@@ -59,10 +75,10 @@ export function BookCover({
   showControls = true,
   showOverlay = true,
   overlayVariant = "default",
-}: BookCoverProps) {
+  isAccessible,
+}: Omit<BookCoverProps, "offlineStatus"> & { isAccessible: boolean }) {
   const { t } = useTranslate();
   const { isAnonymous } = useAnonymous();
-  const { isAccessible } = useBookOfflineStatus(book.id);
 
   const isCompleted = isAnonymous ? false : (book.readProgress?.completed || false);
 

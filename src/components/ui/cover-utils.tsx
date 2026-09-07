@@ -14,6 +14,8 @@ export interface BookCoverProps extends BaseCoverProps {
   showControls?: boolean;
   showOverlay?: boolean;
   overlayVariant?: "default" | "home";
+  /** Allows a parent that already checks offline availability to reuse its result. */
+  offlineStatus?: { isAccessible: boolean };
 }
 
 export interface SeriesCoverProps extends BaseCoverProps {

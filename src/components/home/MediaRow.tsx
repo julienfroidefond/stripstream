@@ -84,53 +84,68 @@ interface MediaCardProps {
 }
 
 const MediaCard = memo(function MediaCard({ item, onClick }: MediaCardProps) {
+  return isSeries(item) ? (
+    <SeriesMediaCard series={item} onClick={onClick} />
+  ) : (
+    <BookMediaCard book={item} onClick={onClick} />
+  );
+});
+
+const SeriesMediaCard = memo(function SeriesMediaCard({
+  series,
+  onClick,
+}: {
+  series: NormalizedSeries;
+  onClick: (item: NormalizedSeries | NormalizedBook) => void;
+}) {
   const { t } = useTranslate();
   const { isAnonymous } = useAnonymous();
-  const isSeriesItem = isSeries(item);
-  const { isAccessible } = useBookOfflineStatus(isSeriesItem ? "" : item.id);
-
-  const title = isSeriesItem
-    ? item.name
-    : item.title ||
-      (item.number ? t("navigation.volume", { number: item.number }) : "");
-
-  const handleClick = () => {
-    // Pour les séries, toujours autoriser le clic
-    // Pour les livres, vérifier si accessible
-    if (isSeriesItem || isAccessible) {
-      onClick(item);
-    }
-  };
 
   return (
     <Card
-      onClick={handleClick}
+      onClick={() => onClick(series)}
+      className="group relative flex w-[188px] flex-shrink-0 flex-col overflow-hidden rounded-xl border border-border/60 bg-card/85 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-card hover:shadow-md sm:w-[200px] cursor-pointer"
+    >
+      <div className="relative aspect-[2/3] bg-muted overflow-hidden">
+        <SeriesCover series={series} alt={`Couverture de ${series.name}`} isAnonymous={isAnonymous} />
+        <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+          <h3 className="font-medium text-sm text-white line-clamp-2">{series.name}</h3>
+          <p className="text-xs text-white/80 mt-1">
+            {t("series.books", { count: series.bookCount })}
+          </p>
+        </div>
+      </div>
+    </Card>
+  );
+});
+
+const BookMediaCard = memo(function BookMediaCard({
+  book,
+  onClick,
+}: {
+  book: NormalizedBook;
+  onClick: (item: NormalizedSeries | NormalizedBook) => void;
+}) {
+  const { t } = useTranslate();
+  const { isAccessible } = useBookOfflineStatus(book.id);
+  const title = book.title || (book.number ? t("navigation.volume", { number: book.number }) : "");
+
+  return (
+    <Card
+      onClick={() => isAccessible && onClick(book)}
       className={cn(
         "group relative flex w-[188px] flex-shrink-0 flex-col overflow-hidden rounded-xl border border-border/60 bg-card/85 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-card hover:shadow-md sm:w-[200px]",
-        !isSeriesItem && !isAccessible ? "cursor-not-allowed" : "cursor-pointer"
+        isAccessible ? "cursor-pointer" : "cursor-not-allowed"
       )}
     >
       <div className="relative aspect-[2/3] bg-muted overflow-hidden">
-        {isSeriesItem ? (
-          <>
-            <SeriesCover series={item} alt={`Couverture de ${title}`} isAnonymous={isAnonymous} />
-            <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-              <h3 className="font-medium text-sm text-white line-clamp-2">{title}</h3>
-              <p className="text-xs text-white/80 mt-1">
-                {t("series.books", { count: item.bookCount })}
-              </p>
-            </div>
-          </>
-        ) : (
-          <>
-            <BookCover
-              book={item}
-              alt={`Couverture de ${title}`}
-              showControls={false}
-              overlayVariant="home"
-            />
-          </>
-        )}
+        <BookCover
+          book={book}
+          alt={`Couverture de ${title}`}
+          showControls={false}
+          overlayVariant="home"
+          offlineStatus={{ isAccessible }}
+        />
       </div>
     </Card>
   );
