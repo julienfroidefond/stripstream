@@ -82,6 +82,10 @@ export class FavoriteService {
   static async isFavorite(seriesId: string): Promise<boolean> {
     try {
       const ctx = await this.getActiveContext();
+      if (ctx.provider === "stripstream") {
+        const provider = await getProvider();
+        return provider ? provider.isFavorite(seriesId) : false;
+      }
       return await cachedIsFavorite(ctx.userId, ctx.provider, ctx.configId, seriesId);
     } catch (error) {
       logger.error({ err: error, seriesId }, "Erreur lors de la vérification du favori");
@@ -92,6 +96,12 @@ export class FavoriteService {
   static async addToFavorites(seriesId: string): Promise<void> {
     try {
       const ctx = await this.getActiveContext();
+      if (ctx.provider === "stripstream") {
+        const provider = await getProvider();
+        if (!provider) throw new AppError(ERROR_CODES.FAVORITE.ADD_ERROR);
+        await provider.addToFavorites(seriesId);
+        return;
+      }
       if (ctx.configId === null) {
         throw new AppError(ERROR_CODES.FAVORITE.ADD_ERROR);
       }
@@ -135,6 +145,12 @@ export class FavoriteService {
   static async removeFromFavorites(seriesId: string): Promise<void> {
     try {
       const ctx = await this.getActiveContext();
+      if (ctx.provider === "stripstream") {
+        const provider = await getProvider();
+        if (!provider) throw new AppError(ERROR_CODES.FAVORITE.DELETE_ERROR);
+        await provider.removeFromFavorites(seriesId);
+        return;
+      }
       if (ctx.configId === null) return;
 
       const where =
@@ -149,6 +165,10 @@ export class FavoriteService {
 
   static async getAllFavoriteIds(): Promise<string[]> {
     const ctx = await this.getActiveContext();
+    if (ctx.provider === "stripstream") {
+      const provider = await getProvider();
+      return provider ? (await provider.getFavorites()).map((series) => series.id) : [];
+    }
     return cachedFavoriteIds(ctx.userId, ctx.provider, ctx.configId);
   }
 
@@ -163,9 +183,16 @@ export class FavoriteService {
     requestPathname?: string;
   }): Promise<NormalizedSeries[]> {
     try {
+      const ctx = await this.getActiveContext();
+      const activeProvider = await getProvider();
+
+      if (ctx.provider === "stripstream") {
+        return activeProvider ? await activeProvider.getFavorites() : [];
+      }
+
       const [favoriteIds, provider] = await Promise.all([
         FavoriteService.getAllFavoriteIds(),
-        getProvider(),
+        Promise.resolve(activeProvider),
       ]);
 
       if (favoriteIds.length === 0 || !provider) {

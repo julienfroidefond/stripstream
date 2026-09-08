@@ -607,6 +607,22 @@ export class KomgaProvider implements IMediaProvider {
     return [];
   }
 
+  async getFavorites(): Promise<NormalizedSeries[]> {
+    return [];
+  }
+
+  async isFavorite(_seriesId: string): Promise<boolean> {
+    return false;
+  }
+
+  async addToFavorites(_seriesId: string): Promise<void> {
+    throw new Error("Favorites are managed locally for Komga");
+  }
+
+  async removeFromFavorites(_seriesId: string): Promise<void> {
+    throw new Error("Favorites are managed locally for Komga");
+  }
+
   async testConnection(): Promise<{ ok: boolean; error?: string }> {
     try {
       await this.fetch<KomgaLibrary[]>("libraries");

@@ -61,6 +61,12 @@ export interface IMediaProvider {
   getRelatedSeries(seriesId: string, limit?: number): Promise<NormalizedSeries[]>;
   getRecommendations(limit?: number): Promise<NormalizedSeries[]>;
 
+  // ── Favorites ────────────────────────────────────────────────────────────
+  getFavorites(): Promise<NormalizedSeries[]>;
+  isFavorite(seriesId: string): Promise<boolean>;
+  addToFavorites(seriesId: string): Promise<void>;
+  removeFromFavorites(seriesId: string): Promise<void>;
+
   // ── Search ───────────────────────────────────────────────────────────────
   search(query: string, limit?: number): Promise<NormalizedSearchResult[]>;
 
