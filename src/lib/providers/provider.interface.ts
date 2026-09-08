@@ -34,10 +34,10 @@ export interface IMediaProvider {
   getMissingBooks(seriesId: string): Promise<NormalizedMissingBook[]>;
 
   // ── Home ─────────────────────────────────────────────────────────────────
-  getHomeContinueReadingData(): Promise<Pick<HomePrimaryData, "ongoingBooks" | "onDeck">>;
-  getHomeOngoingSeries(): Promise<NormalizedSeries[]>;
-  getHomeLatestSeries(): Promise<NormalizedSeries[]>;
-  getHomeRecentlyRead(): Promise<NormalizedBook[]>;
+  getHomeContinueReadingData(limit?: number): Promise<Pick<HomePrimaryData, "ongoingBooks" | "onDeck">>;
+  getHomeOngoingSeries(limit?: number): Promise<NormalizedSeries[]>;
+  getHomeLatestSeries(limit?: number): Promise<NormalizedSeries[]>;
+  getHomeRecentlyRead(limit?: number): Promise<NormalizedBook[]>;
   getHomeReadingLists(): Promise<StripstreamReadingList[]>;
   getHomePrimaryData(): Promise<HomePrimaryData>;
   getHomeDeferredData(): Promise<HomeDeferredData>;

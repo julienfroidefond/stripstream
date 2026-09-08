@@ -613,6 +613,8 @@
   "navigation": {
     "scrollLeft": "Défiler vers la gauche",
     "scrollRight": "Défiler vers la droite",
+    "loadMore": "Voir plus",
+    "loading": "Chargement…",
     "volume": "Tome {number}"
   },
   "common": {

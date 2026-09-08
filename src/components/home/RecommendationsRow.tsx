@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, memo } from "react";
+import { useState, useCallback, memo, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Wand2, UserRound, Tag, Building2, Sparkles, Bookmark, ArrowRight, LayoutGrid, GalleryHorizontal } from "lucide-react";
 import { AnimatePresence, motion, type PanInfo } from "framer-motion";
@@ -13,6 +13,7 @@ import { useAnonymous } from "@/contexts/AnonymousContext";
 import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
 import type { NormalizedSeries } from "@/lib/providers/types";
+import { loadHomeFeed } from "@/app/actions/home";
 
 const REASON_CONFIG: Record<string, { icon: LucideIcon; className: string }> = {
   same_reading_list: { icon: Bookmark,  className: "bg-amber-600/90 text-white" },
@@ -22,6 +23,7 @@ const REASON_CONFIG: Record<string, { icon: LucideIcon; className: string }> = {
 };
 
 const SWIPE_THRESHOLD = 60;
+const ITEMS_PER_PAGE = 8;
 
 const slideVariants = {
   enter: (dir: number) => ({ x: dir > 0 ? 80 : -80, opacity: 0 }),
@@ -38,6 +40,17 @@ interface RecommendationsRowProps {
 
 export function RecommendationsRow({ series }: RecommendationsRowProps) {
   const { t } = useTranslate();
+  const [loadedSeries, setLoadedSeries] = useState(series.slice(0, ITEMS_PER_PAGE));
+  const [hasMore, setHasMore] = useState(series.length > ITEMS_PER_PAGE);
+  const [isPending, startTransition] = useTransition();
+
+  const handleLoadMore = () => {
+    startTransition(async () => {
+      const result = await loadHomeFeed("recommendations", loadedSeries.length);
+      setLoadedSeries(result.items as NormalizedSeries[]);
+      setHasMore(result.hasMore);
+    });
+  };
 
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     if (typeof window === "undefined") return "hero";
@@ -75,7 +88,22 @@ export function RecommendationsRow({ series }: RecommendationsRowProps) {
       }
     >
       {viewMode === "hero" ? (
-        <RecommendationHero series={series} />
+        <>
+          <RecommendationHero series={loadedSeries} />
+          {hasMore && (
+            <div className="flex justify-center">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleLoadMore}
+                disabled={isPending}
+              >
+                {isPending ? t("navigation.loading") : t("navigation.loadMore")}
+              </Button>
+            </div>
+          )}
+        </>
       ) : (
         <ScrollContainer
           showArrows={true}
@@ -83,9 +111,19 @@ export function RecommendationsRow({ series }: RecommendationsRowProps) {
           arrowLeftLabel={t("navigation.scrollLeft")}
           arrowRightLabel={t("navigation.scrollRight")}
         >
-          {series.map((s) => (
+          {loadedSeries.map((s) => (
             <RecommendationCard key={s.id} series={s} />
           ))}
+          {hasMore && (
+            <button
+              type="button"
+              onClick={handleLoadMore}
+              disabled={isPending}
+              className="flex min-h-[282px] w-[150px] flex-shrink-0 items-center justify-center rounded-xl border border-dashed border-border/70 bg-card/40 px-4 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/50 hover:bg-card hover:text-foreground sm:min-h-[300px]"
+            >
+              {isPending ? t("navigation.loading") : t("navigation.loadMore")}
+            </button>
+          )}
         </ScrollContainer>
       )}
     </Section>

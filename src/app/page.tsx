@@ -22,7 +22,7 @@ import type { NormalizedBook, NormalizedSeries } from "@/lib/providers/types";
 import type { HomePrimaryData } from "@/types/home";
 import type { StripstreamReadingList } from "@/types/stripstream";
 
-const HOMEPAGE_RECOMMENDATION_LIMIT = 8;
+const HOMEPAGE_INITIAL_QUERY_LIMIT = 9;
 
 export default function HomePage() {
   return (
@@ -42,15 +42,15 @@ async function HomeStreamingContent() {
     const preferences = await PreferencesService.getPreferences().catch(() => null);
     const isAnonymous = preferences?.anonymousMode ?? false;
 
-    const continueReadingPromise = provider.getHomeContinueReadingData().catch(() => null);
-    const ongoingPromise = provider.getHomeOngoingSeries().catch(() => []);
+    const continueReadingPromise = provider.getHomeContinueReadingData(HOMEPAGE_INITIAL_QUERY_LIMIT).catch(() => null);
+    const ongoingPromise = provider.getHomeOngoingSeries(HOMEPAGE_INITIAL_QUERY_LIMIT).catch(() => []);
     const favoritesPromise = FavoriteService.listFavorites().catch(() => []);
     const readingListsPromise = provider.getHomeReadingLists().catch(() => []);
-    const latestSeriesPromise = provider.getHomeLatestSeries().catch(() => []);
-    const recentlyReadPromise = provider.getHomeRecentlyRead().catch(() => []);
+    const latestSeriesPromise = provider.getHomeLatestSeries(HOMEPAGE_INITIAL_QUERY_LIMIT).catch(() => []);
+    const recentlyReadPromise = provider.getHomeRecentlyRead(HOMEPAGE_INITIAL_QUERY_LIMIT).catch(() => []);
     const recommendationsPromise = isAnonymous
       ? Promise.resolve([])
-      : provider.getRecommendations(HOMEPAGE_RECOMMENDATION_LIMIT).catch(() => []);
+        : provider.getRecommendations(HOMEPAGE_INITIAL_QUERY_LIMIT).catch(() => []);
 
     return (
         <div className="space-y-10 pb-2">
@@ -156,6 +156,7 @@ async function OngoingSection({ ongoingPromise, isAnonymous }: OngoingSectionPro
       titleKey="home.sections.continue_series"
       items={ongoing}
       iconName="LibraryBig"
+      feed="ongoing"
     />
   );
 }
@@ -169,6 +170,7 @@ async function FavoritesSection({ favoritesPromise }: { favoritesPromise: Promis
       titleKey="home.sections.favorites"
       items={favorites}
       iconName="Heart"
+      feed="favorites"
     />
   );
 }
@@ -197,6 +199,7 @@ async function LatestSeriesSection({
       titleKey="home.sections.latest_series"
       items={latestSeries}
       iconName="Sparkles"
+      feed="latest-series"
     />
   );
 }
@@ -214,6 +217,7 @@ async function RecentlyReadSection({
       titleKey="home.sections.recently_added"
       items={recentlyRead}
       iconName="History"
+      feed="recently-read"
     />
   );
 }

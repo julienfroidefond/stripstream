@@ -462,13 +462,13 @@ export class KomgaProvider implements IMediaProvider {
     };
   }
 
-  async getHomeContinueReadingData(): Promise<Pick<HomePrimaryData, "ongoingBooks" | "onDeck">> {
+  async getHomeContinueReadingData(limit = 10): Promise<Pick<HomePrimaryData, "ongoingBooks" | "onDeck">> {
     return unstable_cache(
       async () => {
         const results = await Promise.allSettled([
           this.fetch<LibraryResponse<KomgaBook>>(
             "books/list",
-            { page: "0", size: "10", sort: "readProgress.readDate,desc" },
+            { page: "0", size: String(limit), sort: "readProgress.readDate,desc" },
             {
               method: "POST",
               body: JSON.stringify({
@@ -478,7 +478,7 @@ export class KomgaProvider implements IMediaProvider {
           ),
           this.fetch<LibraryResponse<KomgaBook>>(
             "books/ondeck",
-            { page: "0", size: "10", media_status: "READY" }
+            { page: "0", size: String(limit), media_status: "READY" }
           ),
         ]);
 
@@ -499,17 +499,17 @@ export class KomgaProvider implements IMediaProvider {
           onDeck: (onDeck.content || []).map(KomgaAdapter.toNormalizedBook),
         };
       },
-      ["komga-home-continue-reading", this.config.authHeader],
+      ["komga-home-continue-reading", this.config.authHeader, String(limit)],
       { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] }
     )();
   }
 
-  async getHomeOngoingSeries(): Promise<NormalizedSeries[]> {
+  async getHomeOngoingSeries(limit = 10): Promise<NormalizedSeries[]> {
     return unstable_cache(
       async () => {
         const ongoing = await this.fetch<LibraryResponse<KomgaSeries>>(
           "series/list",
-          { page: "0", size: "10", sort: "readDate,desc" },
+          { page: "0", size: String(limit), sort: "readDate,desc" },
           {
             method: "POST",
             body: JSON.stringify({
@@ -520,37 +520,37 @@ export class KomgaProvider implements IMediaProvider {
 
         return (ongoing.content || []).map(KomgaAdapter.toNormalizedSeries);
       },
-      ["komga-home-ongoing-series", this.config.authHeader],
+      ["komga-home-ongoing-series", this.config.authHeader, String(limit)],
       { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] }
     )();
   }
 
-  async getHomeLatestSeries(): Promise<NormalizedSeries[]> {
+  async getHomeLatestSeries(limit = 10): Promise<NormalizedSeries[]> {
     return unstable_cache(
       async () => {
         const latestSeries = await this.fetch<LibraryResponse<KomgaSeries>>(
           "series/latest",
-          { page: "0", size: "10", media_status: "READY" }
+          { page: "0", size: String(limit), media_status: "READY" }
         );
 
         return (latestSeries.content || []).map(KomgaAdapter.toNormalizedSeries);
       },
-      ["komga-home-latest-series", this.config.authHeader],
+      ["komga-home-latest-series", this.config.authHeader, String(limit)],
       { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] }
     )();
   }
 
-  async getHomeRecentlyRead(): Promise<NormalizedBook[]> {
+  async getHomeRecentlyRead(limit = 10): Promise<NormalizedBook[]> {
     return unstable_cache(
       async () => {
         const recentlyRead = await this.fetch<LibraryResponse<KomgaBook>>(
           "books/latest",
-          { page: "0", size: "10", media_status: "READY" }
+          { page: "0", size: String(limit), media_status: "READY" }
         );
 
         return (recentlyRead.content || []).map(KomgaAdapter.toNormalizedBook);
       },
-      ["komga-home-recently-read", this.config.authHeader],
+      ["komga-home-recently-read", this.config.authHeader, String(limit)],
       { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] }
     )();
   }

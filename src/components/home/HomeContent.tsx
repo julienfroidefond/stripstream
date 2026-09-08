@@ -67,6 +67,7 @@ export function HomePrimaryContent({ data, isAnonymous = false }: HomePrimaryCon
           titleKey="home.sections.continue_series"
           items={data.ongoing}
           iconName="LibraryBig"
+          feed="ongoing"
         />
       )}
 
@@ -76,6 +77,7 @@ export function HomePrimaryContent({ data, isAnonymous = false }: HomePrimaryCon
           items={data.favorites}
           iconName="Heart"
           testId="home-favorites"
+          feed="favorites"
         />
       )}
     </>
@@ -94,6 +96,7 @@ export function HomeDeferredContent({ data, isAnonymous = false }: HomeDeferredC
           titleKey="home.sections.latest_series"
           items={data.latestSeries}
           iconName="Sparkles"
+          feed="latest-series"
         />
       )}
 
@@ -102,6 +105,7 @@ export function HomeDeferredContent({ data, isAnonymous = false }: HomeDeferredC
           titleKey="home.sections.recently_added"
           items={data.recentlyRead}
           iconName="History"
+          feed="recently-read"
         />
       )}
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, type PanInfo } from "framer-motion";
 import { ArrowRight, BookOpen } from "lucide-react";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ClientOfflineBookService } from "@/lib/services/client-offlinebook.service";
 import { useTranslate } from "@/hooks/useTranslate";
 import { cn } from "@/lib/utils";
+import { loadHomeFeed } from "@/app/actions/home";
 
 interface ContinueReadingHeroProps {
   books: NormalizedBook[];
@@ -16,6 +17,7 @@ interface ContinueReadingHeroProps {
 }
 
 const SWIPE_THRESHOLD = 60;
+const ITEMS_PER_PAGE = 8;
 
 const slideVariants = {
   enter: (dir: number) => ({ x: dir > 0 ? 80 : -80, opacity: 0 }),
@@ -28,14 +30,25 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
   const { t } = useTranslate();
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState(0);
+  const [loadedBooks, setLoadedBooks] = useState(books.slice(0, ITEMS_PER_PAGE));
+  const [hasMore, setHasMore] = useState(books.length > ITEMS_PER_PAGE);
+  const [isPending, startTransition] = useTransition();
 
-  const total = books.length;
+  const total = loadedBooks.length;
   const hasMany = total > 1;
   const safeIndex = total > 0 ? ((index % total) + total) % total : 0;
 
   if (total === 0) return null;
 
-  const book = books[safeIndex];
+  const book = loadedBooks[safeIndex];
+
+  const handleLoadMore = () => {
+    startTransition(async () => {
+      const result = await loadHomeFeed("continue-reading", loadedBooks.length);
+      setLoadedBooks(result.items as NormalizedBook[]);
+      setHasMore(result.hasMore);
+    });
+  };
   const target = book.seriesId?.trim() ?? "";
   const targetLower = target.toLowerCase();
   const matchedSeries =
@@ -199,7 +212,7 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
             aria-label={t("home.hero.label")}
             className="mt-4 flex items-center justify-center gap-2"
           >
-            {books.map((b, i) => (
+            {loadedBooks.map((b, i) => (
               <button
                 key={b.id}
                 role="tab"
@@ -214,6 +227,19 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
                 )}
               />
             ))}
+          </div>
+        )}
+        {hasMore && (
+          <div className="mt-4 flex justify-center">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleLoadMore}
+              disabled={isPending}
+            >
+              {isPending ? t("navigation.loading") : t("navigation.loadMore")}
+            </Button>
           </div>
         )}
       </div>

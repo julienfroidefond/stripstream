@@ -322,11 +322,11 @@ export class StripstreamProvider implements IMediaProvider {
     };
   }
 
-  async getHomeContinueReadingData(): Promise<Pick<HomePrimaryData, "ongoingBooks" | "onDeck">> {
+  async getHomeContinueReadingData(limit = 20): Promise<Pick<HomePrimaryData, "ongoingBooks" | "onDeck">> {
     const homeOpts = { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] };
     const ongoingBooks = await this.client.fetch<StripstreamBookItem[]>(
       "books/ongoing",
-      { limit: "20" },
+      { limit: String(limit) },
       homeOpts
     );
 
@@ -336,33 +336,33 @@ export class StripstreamProvider implements IMediaProvider {
     };
   }
 
-  async getHomeOngoingSeries(): Promise<NormalizedSeries[]> {
+  async getHomeOngoingSeries(limit = 20): Promise<NormalizedSeries[]> {
     const homeOpts = { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] };
     const ongoingSeries = await this.client.fetch<StripstreamSeriesItem[]>(
       "series/ongoing",
-      { limit: "20" },
+      { limit: String(limit) },
       homeOpts
     );
 
     return ongoingSeries.map(StripstreamAdapter.toNormalizedSeries);
   }
 
-  async getHomeLatestSeries(): Promise<NormalizedSeries[]> {
+  async getHomeLatestSeries(limit = 10): Promise<NormalizedSeries[]> {
     const homeOpts = { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] };
     const latestSeries = await this.client.fetch<StripstreamSeriesPage>(
       "series",
-      { sort: "latest", limit: "10", has_books: "true" },
+      { sort: "latest", limit: String(limit), has_books: "true" },
       homeOpts
     );
 
     return latestSeries.items.map(StripstreamAdapter.toNormalizedSeries);
   }
 
-  async getHomeRecentlyRead(): Promise<NormalizedBook[]> {
+  async getHomeRecentlyRead(limit = 10): Promise<NormalizedBook[]> {
     const homeOpts = { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] };
     const booksPage = await this.client.fetch<StripstreamBooksPage>(
       "books",
-      { sort: "latest", limit: "10" },
+      { sort: "latest", limit: String(limit) },
       homeOpts
     );
 

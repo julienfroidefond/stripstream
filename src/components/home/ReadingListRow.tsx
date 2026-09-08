@@ -1,20 +1,34 @@
 "use client";
 
-import { memo, useCallback } from "react";
+import { memo, useCallback, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Bookmark, BookMarked } from "lucide-react";
 import { ScrollContainer } from "@/components/ui/scroll-container";
 import { Section } from "@/components/ui/section";
 import { useTranslate } from "@/hooks/useTranslate";
 import type { StripstreamReadingList } from "@/types/stripstream";
+import { loadHomeFeed } from "@/app/actions/home";
 
 interface ReadingListRowProps {
   lists: StripstreamReadingList[];
 }
 
+const ITEMS_PER_PAGE = 8;
+
 export function ReadingListRow({ lists }: ReadingListRowProps) {
   const router = useRouter();
   const { t } = useTranslate();
+  const [loadedLists, setLoadedLists] = useState(lists.slice(0, ITEMS_PER_PAGE));
+  const [hasMore, setHasMore] = useState(lists.length > ITEMS_PER_PAGE);
+  const [isPending, startTransition] = useTransition();
+
+  const handleLoadMore = () => {
+    startTransition(async () => {
+      const result = await loadHomeFeed("reading-lists", loadedLists.length);
+      setLoadedLists(result.items as StripstreamReadingList[]);
+      setHasMore(result.hasMore);
+    });
+  };
 
   const handleOpenList = useCallback(
     (id: string) => {
@@ -39,13 +53,23 @@ export function ReadingListRow({ lists }: ReadingListRowProps) {
         arrowLeftLabel={t("navigation.scrollLeft")}
         arrowRightLabel={t("navigation.scrollRight")}
       >
-        {lists.map((list) => (
+        {loadedLists.map((list) => (
           <ReadingListCard
             key={list.id}
             list={list}
             onClick={handleOpenList}
           />
         ))}
+        {hasMore && (
+          <button
+            type="button"
+            onClick={handleLoadMore}
+            disabled={isPending}
+            className="flex min-h-[282px] w-[150px] flex-shrink-0 items-center justify-center rounded-xl border border-dashed border-border/70 bg-card/40 px-4 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/50 hover:bg-card hover:text-foreground sm:min-h-[300px]"
+          >
+            {isPending ? t("navigation.loading") : t("navigation.loadMore")}
+          </button>
+        )}
       </ScrollContainer>
     </Section>
   );

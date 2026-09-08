@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback } from "react";
+import { memo, useCallback, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { NormalizedBook, NormalizedSeries } from "@/lib/providers/types";
 import { BookCover } from "../ui/book-cover";
@@ -13,6 +13,9 @@ import { Card } from "@/components/ui/card";
 import { useBookOfflineStatus } from "@/hooks/useBookOfflineStatus";
 import { cn } from "@/lib/utils";
 import { useAnonymous } from "@/contexts/AnonymousContext";
+import { loadHomeFeed, type HomeFeed } from "@/app/actions/home";
+
+const ITEMS_PER_PAGE = 8;
 
 interface MediaRowProps {
   titleKey: string;
@@ -20,6 +23,7 @@ interface MediaRowProps {
   iconName?: string;
   featuredHeader?: boolean;
   testId?: string;
+  feed: HomeFeed;
 }
 
 const iconMap = {
@@ -35,10 +39,20 @@ function isSeries(item: NormalizedSeries | NormalizedBook): item is NormalizedSe
   return "bookCount" in item;
 }
 
-export function MediaRow({ titleKey, items, iconName, featuredHeader = false, testId }: MediaRowProps) {
+export function MediaRow({ titleKey, items, iconName, featuredHeader = false, testId, feed }: MediaRowProps) {
   const router = useRouter();
   const { t } = useTranslate();
+  const [loadedItems, setLoadedItems] = useState(items.slice(0, ITEMS_PER_PAGE));
+  const [hasMore, setHasMore] = useState(items.length > ITEMS_PER_PAGE);
+  const [isPending, startTransition] = useTransition();
   const icon = iconName ? iconMap[iconName as keyof typeof iconMap] : undefined;
+  const handleLoadMore = () => {
+    startTransition(async () => {
+      const result = await loadHomeFeed(feed, loadedItems.length);
+      setLoadedItems(result.items as (NormalizedSeries | NormalizedBook)[]);
+      setHasMore(result.hasMore);
+    });
+  };
 
   const onItemClick = useCallback(
     (item: NormalizedSeries | NormalizedBook) => {
@@ -70,9 +84,19 @@ export function MediaRow({ titleKey, items, iconName, featuredHeader = false, te
         arrowLeftLabel={t("navigation.scrollLeft")}
         arrowRightLabel={t("navigation.scrollRight")}
       >
-        {items.map((item) => (
+        {loadedItems.map((item) => (
           <MediaCard key={item.id} item={item} onClick={onItemClick} />
         ))}
+        {hasMore && (
+          <button
+            type="button"
+            onClick={handleLoadMore}
+            disabled={isPending}
+            className="flex min-h-[282px] w-[150px] flex-shrink-0 items-center justify-center rounded-xl border border-dashed border-border/70 bg-card/40 px-4 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/50 hover:bg-card hover:text-foreground sm:min-h-[300px]"
+          >
+            {isPending ? t("navigation.loading") : t("navigation.loadMore")}
+          </button>
+        )}
       </ScrollContainer>
     </Section>
   );
