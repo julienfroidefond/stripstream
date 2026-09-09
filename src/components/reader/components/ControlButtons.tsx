@@ -123,7 +123,7 @@ export const ControlButtons = memo(function ControlButtons({
         />
         {isFullscreenAvailable && (
           <IconButton
-            data-testid="reader-close"
+            data-testid="reader-toggle-fullscreen"
             variant="ghost"
             size="icon"
             icon={isFullscreen ? Minimize2 : Maximize2}

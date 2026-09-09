@@ -90,7 +90,8 @@ export function Header({
               tooltip={t("header.search.placeholder")}
             />
             <IconButton
-              onClick={toggleAnonymous}
+              data-testid="anonymous-mode-toggle"
+              onClick={() => void toggleAnonymous()}
               variant="ghost"
               size="icon"
               icon={isAnonymous ? EyeOff : Eye}

@@ -2,6 +2,7 @@
 
 import { revalidateTag } from "next/cache";
 import { getProvider } from "@/lib/providers/provider.factory";
+import { PreferencesService } from "@/lib/services/preferences.service";
 import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, SERIES_BOOKS_CACHE_TAG } from "@/constants/cacheConstants";
 import { AppError } from "@/utils/errors";
 
@@ -27,6 +28,11 @@ export async function updateReadProgress(
   seriesId?: string | null
 ): Promise<{ success: boolean; message: string }> {
   try {
+    const preferences = await PreferencesService.getPreferences();
+    if (preferences.anonymousMode) {
+      return { success: true, message: "Progression ignorée en mode anonyme" };
+    }
+
     const provider = await getProvider();
     if (!provider) return { success: false, message: "Provider non configuré" };
 

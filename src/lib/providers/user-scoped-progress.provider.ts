@@ -2,12 +2,12 @@ import type { IMediaProvider } from "./provider.interface";
 import type { NormalizedBook, NormalizedBooksPage } from "./types";
 
 /**
- * Namespaces browser-only reading position by authenticated app user. Reading
- * state itself remains owned by the configured provider (Stripstream/Komga),
- * which is also what powers the home continuation sections.
+ * Namespaces browser-only reading position by authenticated app user and
+ * connection. Reading state itself remains owned by the configured provider
+ * (Stripstream/Komga), which is also what powers the home continuation sections.
  */
-export function withUserScopedProgress(provider: IMediaProvider, userId: number): IMediaProvider {
-  const scopeBook = (book: NormalizedBook): NormalizedBook => ({ ...book, readProgressScope: String(userId) });
+export function withUserScopedProgress(provider: IMediaProvider, scope: string): IMediaProvider {
+  const scopeBook = (book: NormalizedBook): NormalizedBook => ({ ...book, readProgressScope: scope });
 
   return new Proxy(provider, {
     get(target, property, receiver) {

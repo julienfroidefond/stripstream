@@ -23,6 +23,7 @@ const securityHeaders = [
 ];
 
 const nextConfig = {
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   experimental: {
     // Keep dynamic page segments in the client router cache for the same
     // duration as the home provider data. Revisiting the home page during a

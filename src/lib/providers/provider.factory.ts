@@ -1,4 +1,3 @@
-import { cache } from "react";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-utils";
 import { getActiveConnection } from "@/lib/active-connection";
@@ -7,7 +6,7 @@ import type { IMediaProvider } from "./provider.interface";
 import type { StripstreamReadingListDetail } from "@/types/stripstream";
 import { withUserScopedProgress } from "./user-scoped-progress.provider";
 
-export const getProvider = cache(async (): Promise<IMediaProvider | null> => {
+export async function getProvider(): Promise<IMediaProvider | null> {
   const user = await getCurrentUser();
   if (!user) return null;
 
@@ -23,7 +22,10 @@ export const getProvider = cache(async (): Promise<IMediaProvider | null> => {
     );
     if (resolved) {
       const { StripstreamProvider } = await import("./stripstream/stripstream.provider");
-      return withUserScopedProgress(new StripstreamProvider(resolved.url, resolved.token), userId);
+      return withUserScopedProgress(
+        new StripstreamProvider(resolved.url, resolved.token),
+        `${userId}:stripstream:${activeConnection.configId ?? "default"}`
+      );
     }
   }
 
@@ -31,11 +33,14 @@ export const getProvider = cache(async (): Promise<IMediaProvider | null> => {
     const config = await resolveActiveKomgaConfig(userId, activeConnection.configId);
     if (!config) return null;
     const { KomgaProvider } = await import("./komga/komga.provider");
-    return withUserScopedProgress(new KomgaProvider(config.url, config.authHeader), userId);
+    return withUserScopedProgress(
+      new KomgaProvider(config.url, config.authHeader),
+      `${userId}:komga:${activeConnection.configId ?? "default"}`
+    );
   }
 
   return null;
-});
+}
 
 export async function getActiveProviderType(): Promise<string | null> {
   const user = await getCurrentUser();

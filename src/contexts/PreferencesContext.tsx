@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { ERROR_CODES } from "../constants/errorCodes";
 import { AppError } from "../utils/errors";
@@ -28,6 +28,7 @@ export function PreferencesProvider({
   const [preferences, setPreferences] = useState<UserPreferences>(
     initialPreferences || defaultPreferences
   );
+  const hasSyncedAuthenticatedPreferences = useRef(false);
   const isLoading = false;
 
   // Check if we have valid initial preferences from server
@@ -35,14 +36,20 @@ export function PreferencesProvider({
     initialPreferences && Object.keys(initialPreferences).length > 0;
 
   useEffect(() => {
-    if (status === "authenticated" && hasValidInitialPreferences) {
+    if (
+      status === "authenticated" &&
+      hasValidInitialPreferences &&
+      !hasSyncedAuthenticatedPreferences.current
+    ) {
       setPreferences(initialPreferences);
+      hasSyncedAuthenticatedPreferences.current = true;
       return;
     }
 
     if (status === "unauthenticated") {
       // Reset to defaults when user logs out
       setPreferences(defaultPreferences);
+      hasSyncedAuthenticatedPreferences.current = false;
     }
   }, [status, hasValidInitialPreferences, initialPreferences]);
 

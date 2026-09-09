@@ -14,10 +14,15 @@ export async function updatePreferences(
   try {
     const updatedPreferences = await PreferencesService.updatePreferences(newPreferences);
 
-    // Invalider les pages qui utilisent les préférences
-    revalidatePath("/");
-    revalidatePath("/libraries");
-    revalidatePath("/series");
+    // Le mode anonyme est piloté immédiatement par le contexte client. Une
+    // revalidation ici pourrait réinjecter pendant la transition les
+    // préférences initiales de la page et faire clignoter le bouton à l'état
+    // précédent.
+    if (!(Object.keys(newPreferences).length === 1 && newPreferences.anonymousMode !== undefined)) {
+      revalidatePath("/");
+      revalidatePath("/libraries");
+      revalidatePath("/series");
+    }
 
     return { success: true, message: "Préférences mises à jour", data: updatedPreferences };
   } catch (error) {

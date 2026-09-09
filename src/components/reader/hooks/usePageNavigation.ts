@@ -27,19 +27,15 @@ export function usePageNavigation({
   const { isAnonymous } = useAnonymous();
   const isAnonymousRef = useRef(isAnonymous);
 
-  useEffect(() => {
-    isAnonymousRef.current = isAnonymous;
-  }, [isAnonymous]);
-
   const [currentPage, setCurrentPage] = useState(() => {
-    const saved = ClientOfflineBookService.getCurrentPage(book);
+    const saved = isAnonymous ? 0 : ClientOfflineBookService.getCurrentPage(book);
     const initial = saved < 1 ? 1 : saved;
     console.debug(`[reader/nav] init bookId=${book.id} savedPage=${saved} startPage=${initial} total=${pages.length}`);
     return initial;
   });
   const [showEndMessage, setShowEndMessage] = useState(false);
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const currentPageRef = useRef(currentPage);
+  const lastTrackablePageRef = useRef<number | null>(isAnonymous ? null : currentPage);
   // Refs miroir de book/pages.length pour le sync au démontage uniquement.
   // Ne PAS mettre ces valeurs dans les deps du cleanup effect : le sync appelle
   // une server action qui revalide le path, ce qui crée une boucle infinie.
@@ -47,8 +43,18 @@ export function usePageNavigation({
   const pagesLengthRef = useRef(pages.length);
 
   useEffect(() => {
-    currentPageRef.current = currentPage;
-  }, [currentPage]);
+    isAnonymousRef.current = isAnonymous;
+
+    // Une synchronisation déjà programmée avant l'activation du mode anonyme
+    // ne doit jamais repartir plus tard (notamment après avoir quitté ce mode).
+    if (isAnonymous) {
+      if (syncTimeoutRef.current) {
+        clearTimeout(syncTimeoutRef.current);
+        syncTimeoutRef.current = null;
+      }
+      lastTrackablePageRef.current = null;
+    }
+  }, [isAnonymous]);
 
   useEffect(() => {
     bookRef.current = book;
@@ -60,12 +66,11 @@ export function usePageNavigation({
   const syncReadProgress = useCallback(
     async (targetBook: NormalizedBook, totalPages: number, page: number) => {
       console.debug(`[reader/nav] sync bookId=${targetBook.id} page=${page}/${totalPages} anonymous=${isAnonymousRef.current}`);
+      if (isAnonymousRef.current) return;
       try {
         ClientOfflineBookService.setCurrentPage(targetBook, page);
-        if (!isAnonymousRef.current) {
-          const completed = page === totalPages;
-          await updateReadProgress(targetBook.id, page, completed, targetBook.seriesId);
-        }
+        const completed = page === totalPages;
+        await updateReadProgress(targetBook.id, page, completed, targetBook.seriesId);
       } catch (error) {
         console.error(`[reader/nav] sync error bookId=${targetBook.id} page=${page}`, error);
       }
@@ -94,8 +99,10 @@ export function usePageNavigation({
       if (page >= 1 && page <= pages.length) {
         console.debug(`[reader/nav] navigate ${currentPage} → ${page} bookId=${book.id}`);
         setCurrentPage(page);
-        ClientOfflineBookService.setCurrentPage(book, page);
-        debouncedSync(page);
+        if (!isAnonymousRef.current) {
+          lastTrackablePageRef.current = page;
+          debouncedSync(page);
+        }
       } else {
         console.warn(`[reader/nav] navigate out of bounds page=${page} total=${pages.length}`);
       }
@@ -138,12 +145,15 @@ export function usePageNavigation({
   // de l'unmount, sans introduire de boucle de revalidation.
   useEffect(() => {
     return () => {
-      console.debug(`[reader/nav] unmount final sync bookId=${bookRef.current.id} page=${currentPageRef.current}/${pagesLengthRef.current}`);
+      const lastTrackablePage = lastTrackablePageRef.current;
+      console.debug(`[reader/nav] unmount final sync bookId=${bookRef.current.id} page=${lastTrackablePage ?? "none"}/${pagesLengthRef.current}`);
       if (syncTimeoutRef.current) {
         clearTimeout(syncTimeoutRef.current);
         syncTimeoutRef.current = null;
       }
-      syncReadProgress(bookRef.current, pagesLengthRef.current, currentPageRef.current);
+      if (lastTrackablePage !== null) {
+        syncReadProgress(bookRef.current, pagesLengthRef.current, lastTrackablePage);
+      }
     };
   }, [syncReadProgress]);
 
