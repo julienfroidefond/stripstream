@@ -37,6 +37,7 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
   const total = loadedBooks.length;
   const hasMany = total > 1;
   const safeIndex = total > 0 ? ((index % total) + total) % total : 0;
+  const showLoadMore = hasMore && safeIndex === total - 1;
 
   if (total === 0) return null;
 
@@ -206,40 +207,42 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
           </motion.div>
         </AnimatePresence>
 
-        {hasMany && (
-          <div
-            role="tablist"
-            aria-label={t("home.hero.label")}
-            className="mt-4 flex items-center justify-center gap-2"
-          >
-            {loadedBooks.map((b, i) => (
-              <button
-                key={b.id}
-                role="tab"
-                aria-selected={i === safeIndex}
-                aria-label={`${i + 1} / ${total}`}
-                onClick={() => goTo(i, i > safeIndex ? 1 : -1)}
-                className={cn(
-                  "h-1.5 rounded-full transition-all duration-300",
-                  i === safeIndex
-                    ? "w-8 bg-gradient-to-r from-primary to-fuchsia-500"
-                    : "w-2 bg-muted-foreground/40 hover:bg-muted-foreground/60"
-                )}
-              />
-            ))}
-          </div>
-        )}
-        {hasMore && (
-          <div className="mt-4 flex justify-center">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleLoadMore}
-              disabled={isPending}
-            >
-              {isPending ? t("navigation.loading") : t("navigation.loadMore")}
-            </Button>
+        {(hasMany || showLoadMore) && (
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+            {hasMany && (
+              <div
+                role="tablist"
+                aria-label={t("home.hero.label")}
+                className="flex items-center justify-center gap-2"
+              >
+                {loadedBooks.map((b, i) => (
+                  <button
+                    key={b.id}
+                    role="tab"
+                    aria-selected={i === safeIndex}
+                    aria-label={`${i + 1} / ${total}`}
+                    onClick={() => goTo(i, i > safeIndex ? 1 : -1)}
+                    className={cn(
+                      "h-1.5 rounded-full transition-all duration-300",
+                      i === safeIndex
+                        ? "w-8 bg-gradient-to-r from-primary to-fuchsia-500"
+                        : "w-2 bg-muted-foreground/40 hover:bg-muted-foreground/60"
+                    )}
+                  />
+                ))}
+              </div>
+            )}
+            {showLoadMore && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleLoadMore}
+                disabled={isPending}
+              >
+                {isPending ? t("navigation.loading") : t("navigation.loadMore")}
+              </Button>
+            )}
           </div>
         )}
       </div>

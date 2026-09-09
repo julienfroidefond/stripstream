@@ -88,22 +88,12 @@ export function RecommendationsRow({ series }: RecommendationsRowProps) {
       }
     >
       {viewMode === "hero" ? (
-        <>
-          <RecommendationHero series={loadedSeries} />
-          {hasMore && (
-            <div className="flex justify-center">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleLoadMore}
-                disabled={isPending}
-              >
-                {isPending ? t("navigation.loading") : t("navigation.loadMore")}
-              </Button>
-            </div>
-          )}
-        </>
+        <RecommendationHero
+          series={loadedSeries}
+          hasMore={hasMore}
+          isPending={isPending}
+          onLoadMore={handleLoadMore}
+        />
       ) : (
         <ScrollContainer
           showArrows={true}
@@ -132,7 +122,14 @@ export function RecommendationsRow({ series }: RecommendationsRowProps) {
 
 /* ── Hero (swipeable, one at a time) ───────────────────────────────────────── */
 
-function RecommendationHero({ series }: { series: NormalizedSeries[] }) {
+interface RecommendationHeroProps {
+  series: NormalizedSeries[];
+  hasMore: boolean;
+  isPending: boolean;
+  onLoadMore: () => void;
+}
+
+function RecommendationHero({ series, hasMore, isPending, onLoadMore }: RecommendationHeroProps) {
   const router = useRouter();
   const { t } = useTranslate();
   const { isAnonymous } = useAnonymous();
@@ -142,6 +139,7 @@ function RecommendationHero({ series }: { series: NormalizedSeries[] }) {
   const total = series.length;
   const hasMany = total > 1;
   const safeIndex = total > 0 ? ((index % total) + total) % total : 0;
+  const showLoadMore = hasMore && safeIndex === total - 1;
   const s = series[safeIndex];
 
   const goTo = (target: number, dir: number) => {
@@ -262,23 +260,38 @@ function RecommendationHero({ series }: { series: NormalizedSeries[] }) {
           </motion.div>
         </AnimatePresence>
 
-        {hasMany && (
-          <div role="tablist" className="mt-4 flex items-center justify-center gap-2">
-            {series.map((item, i) => (
-              <button
-                key={item.id}
-                role="tab"
-                aria-selected={i === safeIndex}
-                aria-label={`${i + 1} / ${total}`}
-                onClick={() => goTo(i, i > safeIndex ? 1 : -1)}
-                className={cn(
-                  "h-1.5 rounded-full transition-all duration-300",
-                  i === safeIndex
-                    ? "w-8 bg-gradient-to-r from-primary to-fuchsia-500"
-                    : "w-2 bg-muted-foreground/40 hover:bg-muted-foreground/60"
-                )}
-              />
-            ))}
+        {(hasMany || showLoadMore) && (
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+            {hasMany && (
+              <div role="tablist" className="flex items-center justify-center gap-2">
+                {series.map((item, i) => (
+                  <button
+                    key={item.id}
+                    role="tab"
+                    aria-selected={i === safeIndex}
+                    aria-label={`${i + 1} / ${total}`}
+                    onClick={() => goTo(i, i > safeIndex ? 1 : -1)}
+                    className={cn(
+                      "h-1.5 rounded-full transition-all duration-300",
+                      i === safeIndex
+                        ? "w-8 bg-gradient-to-r from-primary to-fuchsia-500"
+                        : "w-2 bg-muted-foreground/40 hover:bg-muted-foreground/60"
+                    )}
+                  />
+                ))}
+              </div>
+            )}
+            {showLoadMore && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={onLoadMore}
+                disabled={isPending}
+              >
+                {isPending ? t("navigation.loading") : t("navigation.loadMore")}
+              </Button>
+            )}
           </div>
         )}
       </div>
