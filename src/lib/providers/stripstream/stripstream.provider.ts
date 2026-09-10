@@ -33,7 +33,7 @@ import type {
   StripstreamReadingListDetail,
   StripstreamSeriesRatingsResponse,
 } from "@/types/stripstream";
-import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, SERIES_BOOKS_CACHE_TAG, BOOK_CACHE_TAG, SERIES_RATING_CACHE_TAG } from "@/constants/cacheConstants";
+import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, SERIES_BOOKS_CACHE_TAG, SERIES_RATING_CACHE_TAG } from "@/constants/cacheConstants";
 
 const CACHE_TTL_LONG = 300;
 const CACHE_TTL_MED = 120;
@@ -247,8 +247,11 @@ export class StripstreamProvider implements IMediaProvider {
   }
 
   async getBook(bookId: string): Promise<NormalizedBook> {
+    // The reader must always resume from the current provider-side position.
+    // Keeping this response in Next's data cache could show a stale page after
+    // a progress update on another device.
     const book = await this.client.fetch<StripstreamBookDetails>(`books/${bookId}`, undefined, {
-      tags: [`${BOOK_CACHE_TAG}:${bookId}`],
+      cache: "no-store",
     });
     return StripstreamAdapter.toNormalizedBookDetails(book);
   }

@@ -43,8 +43,6 @@ export interface NormalizedBook {
   pageCount: number;
   thumbnailUrl: string;
   readProgress: NormalizedReadProgress | null;
-  /** Browser storage namespace for progress; set from the authenticated app user. */
-  readProgressScope?: string;
   volumeType?: string | null;
   /** Optional per-book summary (Komga-rich, Stripstream usually absent). */
   summary?: string | null;

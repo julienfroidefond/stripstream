@@ -3,7 +3,6 @@
 import { BookCheck, Loader2 } from "lucide-react";
 import { Button } from "./button";
 import { useToast } from "./use-toast";
-import { ClientOfflineBookService } from "@/lib/services/client-offlinebook.service";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import logger from "@/lib/logger";
@@ -32,8 +31,6 @@ export function MarkAsReadButton({
     e.stopPropagation(); // Empêcher la propagation au parent
     setIsLoading(true);
     try {
-      ClientOfflineBookService.removeCurrentPageById(bookId);
-      
       const result = await updateReadProgress(bookId, pagesCount, true);
 
       if (!result.success) {

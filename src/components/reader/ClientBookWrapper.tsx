@@ -5,14 +5,12 @@ import dynamic from "next/dynamic";
 import { Loader2 } from "lucide-react";
 import type { NormalizedBook } from "@/lib/providers/types";
 import { useRouter } from "next/navigation";
-import { useAnonymous } from "@/contexts/AnonymousContext";
 
 // Chargement différé du lecteur lourd (uniquement quand on ouvre le reader).
 const BookReader = dynamic(() => import("./BookReader").then((m) => m.BookReader), {
   ssr: false,
   loading: () => null,
 });
-import { ClientOfflineBookService } from "@/lib/services/client-offlinebook.service";
 import type { ReaderInfo } from "./types";
 
 interface ClientBookWrapperProps {
@@ -25,13 +23,9 @@ interface ClientBookWrapperProps {
 
 export function ClientBookWrapper({ book, pages, nextBook, readerInfo, onRefresh }: ClientBookWrapperProps) {
   const router = useRouter();
-  const { isAnonymous } = useAnonymous();
   const [isClosing, setIsClosing] = useState(false);
 
-  const handleCloseReader = (currentPage: number) => {
-    if (!isAnonymous) {
-      ClientOfflineBookService.setCurrentPage(book, currentPage);
-    }
+  const handleCloseReader = (_currentPage: number) => {
     setIsClosing(true);
     router.back();
   };

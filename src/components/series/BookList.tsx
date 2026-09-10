@@ -7,7 +7,6 @@ import { useTranslate } from "@/hooks/useTranslate";
 import { cn } from "@/lib/utils";
 import { useBookOfflineStatus } from "@/hooks/useBookOfflineStatus";
 import { formatDate } from "@/lib/utils";
-import { ClientOfflineBookService } from "@/lib/services/client-offlinebook.service";
 import { Progress } from "@/components/ui/progress";
 import { FileText, BookX } from "lucide-react";
 import { MarkAsReadButton } from "@/components/ui/mark-as-read-button";
@@ -42,7 +41,7 @@ const BookListItem = memo(function BookListItem({ book, onBookClick, onSuccess, 
 
   const isRead = isAnonymous ? false : (book.readProgress?.completed || false);
   const hasReadProgress = isAnonymous ? false : book.readProgress !== null;
-  const currentPage = isAnonymous ? 0 : ClientOfflineBookService.getCurrentPage(book);
+  const currentPage = isAnonymous ? 0 : (book.readProgress?.page ?? 0);
   const totalPages = book.pageCount;
   const progressPercentage = totalPages > 0 ? (currentPage / totalPages) * 100 : 0;
 

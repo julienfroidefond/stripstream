@@ -288,7 +288,11 @@ export class KomgaProvider implements IMediaProvider {
 
   async getBook(bookId: string): Promise<NormalizedBook> {
     const [book, pages] = await Promise.all([
-      this.fetch<KomgaBook>(`books/${bookId}`, undefined, { revalidate: CACHE_TTL_SHORT }),
+      // The reader starts at this position. It must come from Komga on every
+      // visit: the read-progress mutation invalidates app caches, but this
+      // provider request has no tag of its own and a TTL can otherwise resume
+      // a stale page after a reload.
+      this.fetch<KomgaBook>(`books/${bookId}`, undefined, { cache: "no-store" }),
       this.fetch<{ number: number }[]>(`books/${bookId}/pages`, undefined, {
         revalidate: CACHE_TTL_SHORT,
       }),

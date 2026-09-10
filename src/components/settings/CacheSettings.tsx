@@ -6,7 +6,6 @@ import { useToast } from "@/components/ui/use-toast";
 import { useServiceWorker } from "@/contexts/ServiceWorkerContext";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -17,7 +16,6 @@ import {
   Trash2,
   RefreshCw,
   HardDrive,
-  Image as ImageIcon,
   BookOpen,
   CheckCircle2,
   XCircle,
@@ -29,7 +27,6 @@ import {
 
 interface CacheStats {
   static: { size: number; entries: number };
-  images: { size: number; entries: number };
   books: { size: number; entries: number };
   total: number;
 }
@@ -39,7 +36,7 @@ interface CacheEntry {
   size: number;
 }
 
-type CacheType = "static" | "images" | "books";
+type CacheType = "static" | "books";
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return "0 B";
@@ -225,7 +222,7 @@ export function CacheSettings() {
     loadStats();
   }, [loadStats]);
 
-  const handleClearCache = async (cacheType: "all" | "static" | "images") => {
+  const handleClearCache = async (cacheType: "all" | "static") => {
     setClearingCache(cacheType);
     try {
       const success = await clearCache(cacheType);
@@ -295,10 +292,6 @@ export function CacheSettings() {
     }
   };
 
-  // Calculer le pourcentage du cache utilisé (basé sur 100MB limite images)
-  const maxCacheSize = 100 * 1024 * 1024; // 100MB
-  const usagePercent = stats ? Math.min((stats.images.size / maxCacheSize) * 100, 100) : 0;
-
   if (!isSupported) {
     return (
       <Card>
@@ -361,17 +354,11 @@ export function CacheSettings() {
           />
         </div>
 
-        {/* Barre de progression globale */}
+        {/* Taille totale des caches gérés par le Service Worker */}
         {stats && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">{t("settings.cache.totalStorage")}</span>
-              <span className="font-mono font-medium">{formatBytes(stats.total)}</span>
-            </div>
-            <Progress value={usagePercent} className="h-2" />
-            <p className="text-xs text-muted-foreground text-right">
-              {t("settings.cache.imagesQuota", { used: Math.round(usagePercent) })}
-            </p>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">{t("settings.cache.totalStorage")}</span>
+            <span className="font-mono font-medium">{formatBytes(stats.total)}</span>
           </div>
         )}
 
@@ -388,17 +375,6 @@ export function CacheSettings() {
                 description={t("settings.cache.staticDesc")}
                 onClear={() => handleClearCache("static")}
                 isClearing={clearingCache === "static"}
-                onLoadEntries={handleLoadEntries}
-              />
-              <CacheItem
-                icon={<ImageIcon className="h-4 w-4" />}
-                label={t("settings.cache.images")}
-                size={stats.images.size}
-                entries={stats.images.entries}
-                cacheType="images"
-                description={t("settings.cache.imagesDesc")}
-                onClear={() => handleClearCache("images")}
-                isClearing={clearingCache === "images"}
                 onLoadEntries={handleLoadEntries}
               />
               <CacheItem

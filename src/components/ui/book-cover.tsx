@@ -2,7 +2,6 @@
 
 import { ProgressBar } from "./progress-bar";
 import type { BookCoverProps } from "./cover-utils";
-import { ClientOfflineBookService } from "@/lib/services/client-offlinebook.service";
 import { MarkAsReadButton } from "./mark-as-read-button";
 import { MarkAsUnreadButton } from "./mark-as-unread-button";
 import { BookOfflineButton } from "./book-offline-button";
@@ -32,7 +31,7 @@ const getReadingStatusInfo = (
     };
   }
 
-  const currentPage = ClientOfflineBookService.getCurrentPage(book);
+  const currentPage = book.readProgress?.page ?? 0;
 
   if (currentPage > 0) {
     return {
@@ -82,7 +81,7 @@ function BookCoverContent({
 
   const isCompleted = isAnonymous ? false : (book.readProgress?.completed || false);
 
-  const currentPage = isAnonymous ? 0 : ClientOfflineBookService.getCurrentPage(book);
+  const currentPage = isAnonymous ? 0 : (book.readProgress?.page ?? 0);
   const totalPages = book.pageCount;
   const showProgress = Boolean(!isAnonymous && showProgressUi && totalPages > 0 && currentPage > 0 && !isCompleted);
 

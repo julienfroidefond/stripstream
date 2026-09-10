@@ -5,7 +5,6 @@ import { BookCover } from "@/components/ui/book-cover";
 import { Progress } from "@/components/ui/progress";
 import { useAnonymous } from "@/contexts/AnonymousContext";
 import type { NormalizedBook } from "@/lib/providers/types";
-import { ClientOfflineBookService } from "@/lib/services/client-offlinebook.service";
 import type { ReaderInfo } from "../types";
 import { useTranslation } from "react-i18next";
 
@@ -13,6 +12,7 @@ interface ReaderInfoDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   book: NormalizedBook;
+  currentPage: number;
   readerInfo?: ReaderInfo | null;
 }
 
@@ -20,6 +20,7 @@ export function ReaderInfoDialog({
   open,
   onOpenChange,
   book,
+  currentPage,
   readerInfo,
 }: ReaderInfoDialogProps) {
   const { t } = useTranslation();
@@ -28,7 +29,7 @@ export function ReaderInfoDialog({
   const volumeLabel = book.number
     ? t("navigation.volume", { number: book.number })
     : book.title;
-  const currentReadingPage = isAnonymous ? 0 : ClientOfflineBookService.getCurrentPage(book);
+  const currentReadingPage = isAnonymous ? 0 : currentPage;
   const readingProgressValue = book.pageCount > 0
     ? Math.round((currentReadingPage / book.pageCount) * 100)
     : 0;

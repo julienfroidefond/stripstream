@@ -1,35 +1,10 @@
 import { expect, test } from '@playwright/test';
 import { PrismaClient } from '@prisma/client';
-import type { IMediaProvider } from '@/lib/providers/provider.interface';
-import { withUserScopedProgress } from '@/lib/providers/user-scoped-progress.provider';
 
 const hasIsolatedDatabase = Boolean(process.env.E2E_DATABASE_URL);
 const email = 'e2e-reader@test.local';
 const streamEmail = 'e2e-stream@test.local';
 const password = 'E2eStrong!123';
-
-test('namespaces local reading progress by user and active connection', async () => {
-  const book = {
-    id: 'book-a',
-    libraryId: 'library-a',
-    title: 'Book A',
-    number: null,
-    seriesId: 'series-a',
-    volume: 1,
-    pageCount: 10,
-    thumbnailUrl: '/cover.jpg',
-    readProgress: null,
-  };
-  const provider = {
-    getBook: async () => book,
-  } as unknown as IMediaProvider;
-
-  const connectionA = withUserScopedProgress(provider, '1:stripstream:1');
-  const connectionB = withUserScopedProgress(provider, '1:stripstream:2');
-
-  expect((await connectionA.getBook('book-a')).readProgressScope).toBe('1:stripstream:1');
-  expect((await connectionB.getBook('book-a')).readProgressScope).toBe('1:stripstream:2');
-});
 
 async function signIn(page: import('@playwright/test').Page, accountEmail = email) {
   await page.goto('/login');

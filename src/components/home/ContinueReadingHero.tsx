@@ -6,7 +6,6 @@ import { AnimatePresence, motion, type PanInfo } from "framer-motion";
 import { ArrowRight, BookOpen } from "lucide-react";
 import type { NormalizedBook, NormalizedSeries } from "@/lib/providers/types";
 import { Button } from "@/components/ui/button";
-import { ClientOfflineBookService } from "@/lib/services/client-offlinebook.service";
 import { useTranslate } from "@/hooks/useTranslate";
 import { cn } from "@/lib/utils";
 import { loadHomeFeed } from "@/app/actions/home";
@@ -71,7 +70,7 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
     if (author) return author;
     return null;
   })();
-  const currentPage = ClientOfflineBookService.getCurrentPage(book);
+  const currentPage = book.readProgress?.page ?? 0;
   const totalPages = book.pageCount;
   const hasProgress = currentPage > 0 && totalPages > 0;
   const percent = hasProgress ? Math.min(100, Math.round((currentPage / totalPages) * 100)) : 0;

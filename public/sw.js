@@ -1,15 +1,14 @@
-// StripStream Service Worker - v3.2
-// Strategy: static assets + images only. HTML/RSC are never cached to prevent stale-page white screens.
+// StripStream Service Worker - v3.3
+// Strategy: static assets and explicitly downloaded books. HTML/RSC and images
+// use the browser's normal HTTP cache.
 
 // Bump this when a deployed client bundle must no longer be served from the
 // static cache (for example after a reader layout correction).
-const VERSION = "v3.2";
+const VERSION = "v3.3";
 const STATIC_CACHE = `stripstream-static-${VERSION}`;
-const IMAGES_CACHE = `stripstream-images-${VERSION}`;
 const BOOKS_CACHE = "stripstream-books"; // Never version — managed by DownloadManager
 
 const OFFLINE_PAGE = "/offline.html";
-const IMAGES_CACHE_MAX_ENTRIES = 500;
 
 // ============================================================================
 // Request Detection
@@ -19,21 +18,11 @@ function isNextStaticResource(url) {
   return url.includes("/_next/static/");
 }
 
-function isImageRequest(url) {
-  return url.includes("/api/komga/images/") || url.includes("/api/stripstream/images/");
-}
-
 function isBookPageRequest(url) {
   return (
     (url.includes("/api/komga/images/books/") || url.includes("/api/komga/books/")) &&
     url.includes("/pages/")
   );
-}
-
-function shouldCacheResponse(response) {
-  if (!response || !response.ok) return false;
-  const cacheControl = response.headers.get("Cache-Control") || "";
-  return !/no-store|private/i.test(cacheControl);
 }
 
 async function getOfflineFallbackResponse() {
@@ -77,15 +66,6 @@ async function getCacheSize(cacheName) {
   return totalSize;
 }
 
-async function trimCache(cacheName, maxEntries) {
-  const cache = await caches.open(cacheName);
-  const keys = await cache.keys();
-  if (keys.length > maxEntries) {
-    const toDelete = keys.slice(0, keys.length - maxEntries);
-    await Promise.all(toDelete.map((key) => cache.delete(key)));
-  }
-}
-
 // ============================================================================
 // Cache Strategies
 // ============================================================================
@@ -108,33 +88,6 @@ async function cacheFirstStrategy(request, cacheName, options = {}) {
     }
     throw error;
   }
-}
-
-// Multiple home rows can reference the same cover before the first response
-// has reached Cache Storage. Share that first network request so the image
-// proxy and the upstream provider only receive it once.
-const pendingImageRequests = new Map();
-
-async function deduplicatedImageCacheFirstStrategy(request) {
-  const cache = await caches.open(IMAGES_CACHE);
-  const cached = await cache.match(request);
-  if (cached) return cached;
-
-  let pending = pendingImageRequests.get(request.url);
-  if (!pending) {
-    pending = fetch(request)
-      .then(async (response) => {
-        if (shouldCacheResponse(response)) {
-          await cache.put(request, response.clone());
-          trimCache(IMAGES_CACHE, IMAGES_CACHE_MAX_ENTRIES);
-        }
-        return response;
-      })
-      .finally(() => pendingImageRequests.delete(request.url));
-    pendingImageRequests.set(request.url, pending);
-  }
-
-  return pending.then((response) => response.clone());
 }
 
 // ============================================================================
@@ -164,7 +117,7 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
       const cacheNames = await caches.keys();
-      const currentCaches = [STATIC_CACHE, IMAGES_CACHE, BOOKS_CACHE];
+      const currentCaches = [STATIC_CACHE, BOOKS_CACHE];
       const toDelete = cacheNames.filter(
         (name) => name.startsWith("stripstream-") && !currentCaches.includes(name)
       );
@@ -189,28 +142,24 @@ self.addEventListener("message", async (event) => {
   switch (type) {
     case "GET_CACHE_STATS": {
       try {
-        const [staticSize, imagesSize, booksSize] = await Promise.all([
+        const [staticSize, booksSize] = await Promise.all([
           getCacheSize(STATIC_CACHE),
-          getCacheSize(IMAGES_CACHE),
           getCacheSize(BOOKS_CACHE),
         ]);
-        const [staticCache, imagesCache, booksCache] = await Promise.all([
+        const [staticCache, booksCache] = await Promise.all([
           caches.open(STATIC_CACHE),
-          caches.open(IMAGES_CACHE),
           caches.open(BOOKS_CACHE),
         ]);
-        const [staticKeys, imagesKeys, booksKeys] = await Promise.all([
+        const [staticKeys, booksKeys] = await Promise.all([
           staticCache.keys(),
-          imagesCache.keys(),
           booksCache.keys(),
         ]);
         event.source.postMessage({
           type: "CACHE_STATS",
           payload: {
             static: { size: staticSize, entries: staticKeys.length },
-            images: { size: imagesSize, entries: imagesKeys.length },
             books: { size: booksSize, entries: booksKeys.length },
-            total: staticSize + imagesSize + booksSize,
+            total: staticSize + booksSize,
           },
         });
       } catch (error) {
@@ -227,7 +176,6 @@ self.addEventListener("message", async (event) => {
         const cacheType = payload?.cacheType || "all";
         const cachesToClear = [];
         if (cacheType === "all" || cacheType === "static") cachesToClear.push(STATIC_CACHE);
-        if (cacheType === "all" || cacheType === "images") cachesToClear.push(IMAGES_CACHE);
         // BOOKS_CACHE is never cleared here — managed by DownloadManager
 
         await Promise.all(
@@ -264,9 +212,6 @@ self.addEventListener("message", async (event) => {
         switch (cacheType) {
           case "static":
             cacheName = STATIC_CACHE;
-            break;
-          case "images":
-            cacheName = IMAGES_CACHE;
             break;
           case "books":
             cacheName = BOOKS_CACHE;
@@ -331,14 +276,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Route 3: immutable thumbnails/covers → cache-first. Revalidating these on
-  // every home visit defeats the session cache and reloads every carousel.
-  if (isImageRequest(url.href)) {
-    event.respondWith(deduplicatedImageCacheFirstStrategy(request));
-    return;
-  }
-
-  // Route 4: Navigation → network only, offline fallback if network fails
+  // Route 3: Navigation → network only, offline fallback if network fails
   // HTML and RSC payloads are intentionally NOT cached to avoid stale-page white screens after deploys.
   if (request.mode === "navigate") {
     event.respondWith(fetch(request).catch(() => getOfflineFallbackResponse()));

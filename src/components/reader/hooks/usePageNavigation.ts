@@ -1,7 +1,6 @@
 /* eslint-disable no-console */
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ClientOfflineBookService } from "@/lib/services/client-offlinebook.service";
 import type { NormalizedBook } from "@/lib/providers/types";
 import { updateReadProgress } from "@/app/actions/read-progress";
 import { useAnonymous } from "@/contexts/AnonymousContext";
@@ -28,7 +27,7 @@ export function usePageNavigation({
   const isAnonymousRef = useRef(isAnonymous);
 
   const [currentPage, setCurrentPage] = useState(() => {
-    const saved = isAnonymous ? 0 : ClientOfflineBookService.getCurrentPage(book);
+    const saved = isAnonymous ? 0 : (book.readProgress?.page ?? 0);
     const initial = saved < 1 ? 1 : saved;
     console.debug(`[reader/nav] init bookId=${book.id} savedPage=${saved} startPage=${initial} total=${pages.length}`);
     return initial;
@@ -68,7 +67,6 @@ export function usePageNavigation({
       console.debug(`[reader/nav] sync bookId=${targetBook.id} page=${page}/${totalPages} anonymous=${isAnonymousRef.current}`);
       if (isAnonymousRef.current) return;
       try {
-        ClientOfflineBookService.setCurrentPage(targetBook, page);
         const completed = page === totalPages;
         await updateReadProgress(targetBook.id, page, completed, targetBook.seriesId);
       } catch (error) {

@@ -3,7 +3,6 @@
 import { BookX, Loader2 } from "lucide-react";
 import { Button } from "./button";
 import { useToast } from "./use-toast";
-import { ClientOfflineBookService } from "@/lib/services/client-offlinebook.service";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import logger from "@/lib/logger";
@@ -29,9 +28,6 @@ export function MarkAsUnreadButton({ bookId, onSuccess, className }: MarkAsUnrea
       if (!result.success) {
         throw new Error(result.message);
       }
-
-      // On supprime la page courante du localStorage seulement après que l'API a répondu
-      ClientOfflineBookService.removeCurrentPageById(bookId);
 
       toast({
         title: t("books.actions.markAsUnread.success.title"),

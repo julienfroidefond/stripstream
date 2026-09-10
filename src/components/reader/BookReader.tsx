@@ -19,6 +19,7 @@ export const BookReader = memo(function BookReader(props: BookReaderProps) {
         open={s.showInfo}
         onOpenChange={s.onInfoOpenChange}
         book={props.book}
+        currentPage={s.currentPage}
         readerInfo={props.readerInfo}
       />
 

@@ -4,7 +4,6 @@ import { getActiveConnection } from "@/lib/active-connection";
 import { getResolvedStripstreamConfig } from "./stripstream/stripstream-config-resolver";
 import type { IMediaProvider } from "./provider.interface";
 import type { StripstreamReadingListDetail } from "@/types/stripstream";
-import { withUserScopedProgress } from "./user-scoped-progress.provider";
 
 export async function getProvider(): Promise<IMediaProvider | null> {
   const user = await getCurrentUser();
@@ -22,10 +21,7 @@ export async function getProvider(): Promise<IMediaProvider | null> {
     );
     if (resolved) {
       const { StripstreamProvider } = await import("./stripstream/stripstream.provider");
-      return withUserScopedProgress(
-        new StripstreamProvider(resolved.url, resolved.token),
-        `${userId}:stripstream:${activeConnection.configId ?? "default"}`
-      );
+      return new StripstreamProvider(resolved.url, resolved.token);
     }
   }
 
@@ -33,10 +29,7 @@ export async function getProvider(): Promise<IMediaProvider | null> {
     const config = await resolveActiveKomgaConfig(userId, activeConnection.configId);
     if (!config) return null;
     const { KomgaProvider } = await import("./komga/komga.provider");
-    return withUserScopedProgress(
-      new KomgaProvider(config.url, config.authHeader),
-      `${userId}:komga:${activeConnection.configId ?? "default"}`
-    );
+    return new KomgaProvider(config.url, config.authHeader);
   }
 
   return null;
