@@ -4,11 +4,22 @@ import { memo } from "react";
 import type { NormalizedSeries } from "@/lib/providers/types";
 import { communityScoreToTen } from "@/lib/providers/ratings";
 import { SeriesCover } from "@/components/ui/series-cover";
+import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
 import { useTranslate } from "@/hooks/useTranslate";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
-import { BookOpen, Calendar, Tag, User, CircleDot, CircleCheck, CirclePause, CircleX, Star } from "lucide-react";
+import {
+  BookOpen,
+  Calendar,
+  Tag,
+  User,
+  CircleDot,
+  CircleCheck,
+  CirclePause,
+  CircleX,
+  Star,
+} from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { useAnonymous } from "@/contexts/AnonymousContext";
 
@@ -22,7 +33,6 @@ interface SeriesListItemProps {
   isCompact?: boolean;
 }
 
-// Utility function to get reading status info
 const getReadingStatusInfo = (
   series: NormalizedSeries,
   t: (key: string, options?: { [key: string]: string | number }) => string
@@ -64,7 +74,43 @@ const seriesStatusMap = {
   cancelled: { className: "bg-red-500/10 text-red-500", icon: CircleX },
 } as const;
 
-const SeriesListItem = memo(function SeriesListItem({ series, isCompact = false }: SeriesListItemProps) {
+const RatingBadge = ({
+  value,
+  compact,
+  label,
+}: {
+  value: number;
+  compact?: boolean;
+  label: string;
+}) => (
+  <Badge
+    variant="secondary"
+    className={cn(
+      "pointer-events-none shrink-0 gap-1 border-yellow-500/20 bg-yellow-500/10 text-yellow-600 transition-colors dark:text-yellow-400",
+      compact ? "px-1.5 py-0.5 text-[11px]" : "px-2 py-0.5 text-xs"
+    )}
+    title={label}
+  >
+    <Star
+      className={cn(
+        "fill-yellow-500 text-yellow-500",
+        compact ? "h-2.5 w-2.5" : "h-3 w-3"
+      )}
+      aria-hidden="true"
+    />
+    <span className="tabular-nums font-semibold">{value.toFixed(1)}</span>
+    {!compact && (
+      <span className="font-normal text-yellow-600/70 dark:text-yellow-400/70">
+        /10
+      </span>
+    )}
+  </Badge>
+);
+
+const SeriesListItem = memo(function SeriesListItem({
+  series,
+  isCompact = false,
+}: SeriesListItemProps) {
   const router = useRouter();
   const { t } = useTranslate();
   const { isAnonymous } = useAnonymous();
@@ -73,81 +119,89 @@ const SeriesListItem = memo(function SeriesListItem({ series, isCompact = false 
     router.push(`/series/${series.id}`);
   };
 
-  const isCompleted = isAnonymous ? false : series.bookCount === series.booksReadCount;
+  const isCompleted = isAnonymous
+    ? false
+    : series.bookCount === series.booksReadCount;
   const progressPercentage =
     series.bookCount > 0 ? (series.booksReadCount / series.bookCount) * 100 : 0;
 
   const statusInfo = isAnonymous ? null : getReadingStatusInfo(series, t);
-  const seriesStatusEntry = series.seriesStatus ? seriesStatusMap[series.seriesStatus as keyof typeof seriesStatusMap] : null;
+  const seriesStatusEntry = series.seriesStatus
+    ? seriesStatusMap[series.seriesStatus as keyof typeof seriesStatusMap]
+    : null;
   const displayRating = communityScoreToTen(series.communityScore);
 
   if (isCompact) {
     return (
       <div
         className={cn(
-          "group relative flex cursor-pointer gap-3 rounded-lg border border-border/60 bg-background/35 p-2 transition-colors hover:bg-accent/35",
+          "group relative flex cursor-pointer gap-3 rounded-xl border border-border/60 bg-card/40 p-2.5 transition-all duration-200 hover:border-border hover:bg-accent/30 hover:shadow-sm",
           isCompleted && "opacity-75"
         )}
         onClick={handleClick}
       >
-        {/* Couverture compacte */}
-        <div className="relative w-12 h-16 sm:w-14 sm:h-20 flex-shrink-0 rounded overflow-hidden bg-muted">
+        <div className="relative aspect-[2/3] w-12 shrink-0 overflow-hidden rounded-lg bg-muted shadow-sm sm:w-14">
           <SeriesCover
             series={series}
             alt={t("series.coverAlt", { title: series.name })}
-            className="w-full h-full"
+            className="h-full w-full"
             isAnonymous={isAnonymous}
           />
         </div>
 
-        {/* Contenu compact */}
-        <div className="flex-1 min-w-0 flex flex-col gap-1 justify-center">
-          {/* Titre et statut */}
-          <div className="flex items-center justify-between gap-2">
-            <h3 className="font-medium text-sm sm:text-base line-clamp-1 hover:text-primary transition-colors flex-1 min-w-0">
+        <div className="flex min-w-0 flex-1 flex-col justify-between py-0.5">
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="line-clamp-1 text-sm font-semibold transition-colors group-hover:text-primary sm:text-base">
               {series.name}
             </h3>
-            <div className="flex items-center gap-1.5 flex-shrink-0">
+            <div className="flex shrink-0 items-center gap-1.5">
               {displayRating !== null && (
-                <span
-                  className="flex items-center gap-1 text-xs font-medium text-yellow-600 dark:text-yellow-400"
-                  title={t("series.filters.sortRating")}
-                >
-                  <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" aria-hidden="true" />
-                  <span className="tabular-nums">{displayRating.toFixed(1)}</span>
-                </span>
+                <RatingBadge
+                  value={displayRating}
+                  compact
+                  label={t("series.filters.sortRating")}
+                />
               )}
-              <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="hidden items-center gap-1.5 opacity-0 transition-opacity group-hover:opacity-100 sm:flex">
                 {seriesStatusEntry && (
-                  <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1", seriesStatusEntry.className)}>
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "gap-1 border-current/20 px-1.5 py-0.5 text-[11px] font-medium backdrop-blur-sm",
+                      seriesStatusEntry.className
+                    )}
+                  >
                     <seriesStatusEntry.icon className="h-3 w-3" />
                     {t(`series.status.${series.seriesStatus}`)}
-                  </span>
+                  </Badge>
                 )}
                 {statusInfo && (
-                  <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium", statusInfo.className)}>
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "border-current/20 px-1.5 py-0.5 text-[11px] font-medium backdrop-blur-sm",
+                      statusInfo.className
+                    )}
+                  >
                     {statusInfo.label}
-                  </span>
+                  </Badge>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Métadonnées minimales */}
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <BookOpen className="h-3 w-3" />
-              <span>
-                {series.bookCount === 1
-                  ? t("series.book", { count: 1 })
-                  : t("series.books", { count: series.bookCount })}
-              </span>
-            </div>
+            <span className="inline-flex items-center gap-1">
+              <BookOpen className="h-3.5 w-3.5" />
+              {series.bookCount === 1
+                ? t("series.book", { count: 1 })
+                : t("series.books", { count: series.bookCount })}
+            </span>
             {series.authors && series.authors.length > 0 && (
-              <div className="flex items-center gap-1 hidden sm:flex">
-                <User className="h-3 w-3" />
+              <span className="hidden items-center gap-1 sm:inline-flex">
+                <User className="h-3.5 w-3.5" />
                 <span className="line-clamp-1">{series.authors[0].name}</span>
-              </div>
+              </span>
             )}
           </div>
         </div>
@@ -158,126 +212,122 @@ const SeriesListItem = memo(function SeriesListItem({ series, isCompact = false 
   return (
     <div
       className={cn(
-        "group relative flex cursor-pointer gap-4 rounded-xl border border-border/60 bg-background/35 p-4 transition-all duration-200 hover:bg-accent/35 hover:shadow-sm",
+        "group relative flex cursor-pointer gap-4 rounded-xl border border-border/60 bg-card/40 p-3 transition-all duration-200 hover:border-border hover:bg-accent/30 hover:shadow-sm sm:p-4",
         isCompleted && "opacity-75"
       )}
       onClick={handleClick}
     >
-      {/* Couverture */}
-      <div className="relative w-20 h-28 sm:w-24 sm:h-36 flex-shrink-0 rounded overflow-hidden bg-muted">
+      <div className="relative aspect-[2/3] w-20 shrink-0 overflow-hidden rounded-lg bg-muted shadow-sm sm:w-24">
         <SeriesCover
           series={series}
           alt={t("series.coverAlt", { title: series.name })}
-          className="w-full h-full"
+          className="h-full w-full"
           isAnonymous={isAnonymous}
         />
       </div>
 
-      {/* Contenu */}
-      <div className="flex-1 min-w-0 flex flex-col gap-2">
-        {/* Titre */}
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-base sm:text-lg line-clamp-2 hover:text-primary transition-colors">
-              {series.name}
-            </h3>
-          </div>
-
-          {/* Badges de statut */}
-          <div className="flex items-center gap-1.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-            {seriesStatusEntry && (
-              <span className={cn("px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1", seriesStatusEntry.className)}>
-                <seriesStatusEntry.icon className="h-3 w-3" />
-                {t(`series.status.${series.seriesStatus}`)}
-              </span>
+      <div className="flex min-w-0 flex-1 flex-col gap-2">
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="line-clamp-2 text-base font-semibold transition-colors group-hover:text-primary sm:text-lg">
+            {series.name}
+          </h3>
+          <div className="flex shrink-0 items-center gap-1.5">
+            {displayRating !== null && (
+              <RatingBadge
+                value={displayRating}
+                label={t("series.filters.sortRating")}
+              />
             )}
-            {statusInfo && (
-              <span className={cn("px-2 py-1 rounded-full text-xs font-medium", statusInfo.className)}>
-                {statusInfo.label}
-              </span>
-            )}
+            <div className="hidden items-center gap-1.5 opacity-0 transition-opacity group-hover:opacity-100 sm:flex">
+              {seriesStatusEntry && (
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "gap-1 border-current/20 px-2 py-0.5 text-xs font-medium backdrop-blur-sm",
+                    seriesStatusEntry.className
+                  )}
+                >
+                  <seriesStatusEntry.icon className="h-3 w-3" />
+                  {t(`series.status.${series.seriesStatus}`)}
+                </Badge>
+              )}
+              {statusInfo && (
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "border-current/20 px-2 py-0.5 text-xs font-medium backdrop-blur-sm",
+                    statusInfo.className
+                  )}
+                >
+                  {statusInfo.label}
+                </Badge>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Résumé */}
         {series.summary && (
-          <p className="text-sm text-muted-foreground line-clamp-2 hidden sm:block">
+          <p className="line-clamp-2 hidden text-sm text-muted-foreground sm:block">
             {series.summary}
           </p>
         )}
 
-        {/* Métadonnées */}
-        <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
-          {/* Nombre de livres */}
-          <div className="flex items-center gap-1">
-            <BookOpen className="h-3 w-3" />
-            <span>
-              {series.bookCount === 1
-                ? t("series.book", { count: 1 })
-                : t("series.books", { count: series.bookCount })}
-            </span>
-          </div>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
+          <span className="inline-flex items-center gap-1">
+            <BookOpen className="h-3.5 w-3.5" />
+            {series.bookCount === 1
+              ? t("series.book", { count: 1 })
+              : t("series.books", { count: series.bookCount })}
+          </span>
 
-          {/* Auteurs */}
           {series.authors && series.authors.length > 0 && (
-            <div className="flex items-center gap-1">
-              <User className="h-3 w-3" />
+            <span className="inline-flex items-center gap-1">
+              <User className="h-3.5 w-3.5" />
               <span className="line-clamp-1">
                 {series.authors.map((a) => a.name).join(", ")}
               </span>
-            </div>
+            </span>
           )}
 
-          {/* Date de création */}
           {series.createdAt && (
-            <div className="flex items-center gap-1">
-              <Calendar className="h-3 w-3" />
-              <span>{formatDate(series.createdAt)}</span>
-            </div>
+            <span className="inline-flex items-center gap-1">
+              <Calendar className="h-3.5 w-3.5" />
+              {formatDate(series.createdAt)}
+            </span>
           )}
 
-          {/* Genres */}
           {series.genres && series.genres.length > 0 && (
-            <div className="flex items-center gap-1">
-              <Tag className="h-3 w-3" />
+            <span className="inline-flex items-center gap-1">
+              <Tag className="h-3.5 w-3.5" />
               <span className="line-clamp-1">
                 {series.genres.slice(0, 3).join(", ")}
                 {series.genres.length > 3 && ` +${series.genres.length - 3}`}
               </span>
-            </div>
+            </span>
           )}
 
-          {/* Tags */}
           {series.tags && series.tags.length > 0 && (
-            <div className="flex items-center gap-1">
-              <Tag className="h-3 w-3" />
+            <span className="inline-flex items-center gap-1">
+              <Tag className="h-3.5 w-3.5" />
               <span className="line-clamp-1">
                 {series.tags.slice(0, 3).join(", ")}
                 {series.tags.length > 3 && ` +${series.tags.length - 3}`}
               </span>
-            </div>
-          )}
-
-          {/* Note provider (normalisée /10) */}
-          {displayRating !== null && (
-            <div className="flex items-center gap-1 text-yellow-600 dark:text-yellow-400">
-              <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" aria-hidden="true" />
-              <span className="font-medium tabular-nums">{displayRating.toFixed(1)}</span>
-              <span className="text-muted-foreground">/10</span>
-              <span className="text-muted-foreground">· {t("series.filters.sortRating")}</span>
-            </div>
+            </span>
           )}
         </div>
 
-        {/* Barre de progression */}
-        {!isAnonymous && series.bookCount > 0 && !isCompleted && series.booksReadCount > 0 && (
-          <div className="space-y-1">
-            <Progress value={progressPercentage} className="h-2" />
-            <p className="text-xs text-muted-foreground">
-              {Math.round(progressPercentage)}% {t("series.completed")}
-            </p>
-          </div>
-        )}
+        {!isAnonymous &&
+          series.bookCount > 0 &&
+          !isCompleted &&
+          series.booksReadCount > 0 && (
+            <div className="mt-auto space-y-1">
+              <Progress value={progressPercentage} className="h-1.5" />
+              <p className="text-[11px] text-muted-foreground">
+                {Math.round(progressPercentage)}% {t("series.completed")}
+              </p>
+            </div>
+          )}
       </div>
     </div>
   );
@@ -288,16 +338,20 @@ export function SeriesList({ series, isCompact = false }: SeriesListProps) {
 
   if (!series.length) {
     return (
-      <div className="text-center p-8">
+      <div className="p-8 text-center">
         <p className="text-muted-foreground">{t("series.empty")}</p>
       </div>
     );
   }
 
   return (
-    <div className={cn("space-y-2", isCompact && "space-y-1")}>
+    <div className={cn("space-y-3", isCompact && "space-y-2")}>
       {series.map((seriesItem) => (
-        <SeriesListItem key={seriesItem.id} series={seriesItem} isCompact={isCompact} />
+        <SeriesListItem
+          key={seriesItem.id}
+          series={seriesItem}
+          isCompact={isCompact}
+        />
       ))}
     </div>
   );
