@@ -93,6 +93,8 @@ export class StripstreamAdapter {
       startYear: series.start_year ?? null,
       missingCount: series.missing_count ?? null,
       seriesStatus: series.series_status ?? null,
+      communityScore: series.community_score ?? null,
+      userRating: series.user_rating ?? null,
     };
   }
 

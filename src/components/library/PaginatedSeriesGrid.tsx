@@ -247,7 +247,7 @@ export function PaginatedSeriesGrid({
       </div>
 
       {viewMode === "grid" ? (
-        <SeriesGrid series={series} isCompact={isCompact} />
+        <SeriesGrid series={series} isCompact={isCompact} showRating={currentSort === "community_score"} />
       ) : (
         <SeriesList series={series} isCompact={isCompact} />
       )}

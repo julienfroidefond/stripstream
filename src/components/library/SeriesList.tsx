@@ -2,12 +2,13 @@
 
 import { memo } from "react";
 import type { NormalizedSeries } from "@/lib/providers/types";
+import { communityScoreToTen } from "@/lib/providers/ratings";
 import { SeriesCover } from "@/components/ui/series-cover";
 import { useRouter } from "next/navigation";
 import { useTranslate } from "@/hooks/useTranslate";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
-import { BookOpen, Calendar, Tag, User, CircleDot, CircleCheck, CirclePause, CircleX } from "lucide-react";
+import { BookOpen, Calendar, Tag, User, CircleDot, CircleCheck, CirclePause, CircleX, Star } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { useAnonymous } from "@/contexts/AnonymousContext";
 
@@ -78,6 +79,7 @@ const SeriesListItem = memo(function SeriesListItem({ series, isCompact = false 
 
   const statusInfo = isAnonymous ? null : getReadingStatusInfo(series, t);
   const seriesStatusEntry = series.seriesStatus ? seriesStatusMap[series.seriesStatus as keyof typeof seriesStatusMap] : null;
+  const displayRating = communityScoreToTen(series.communityScore);
 
   if (isCompact) {
     return (
@@ -105,18 +107,29 @@ const SeriesListItem = memo(function SeriesListItem({ series, isCompact = false 
             <h3 className="font-medium text-sm sm:text-base line-clamp-1 hover:text-primary transition-colors flex-1 min-w-0">
               {series.name}
             </h3>
-            <div className="flex items-center gap-1.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-              {seriesStatusEntry && (
-                <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1", seriesStatusEntry.className)}>
-                  <seriesStatusEntry.icon className="h-3 w-3" />
-                  {t(`series.status.${series.seriesStatus}`)}
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              {displayRating !== null && (
+                <span
+                  className="flex items-center gap-1 text-xs font-medium text-yellow-600 dark:text-yellow-400"
+                  title={t("series.filters.sortRating")}
+                >
+                  <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" aria-hidden="true" />
+                  <span className="tabular-nums">{displayRating.toFixed(1)}</span>
                 </span>
               )}
-              {statusInfo && (
-                <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium", statusInfo.className)}>
-                  {statusInfo.label}
-                </span>
-              )}
+              <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                {seriesStatusEntry && (
+                  <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1", seriesStatusEntry.className)}>
+                    <seriesStatusEntry.icon className="h-3 w-3" />
+                    {t(`series.status.${series.seriesStatus}`)}
+                  </span>
+                )}
+                {statusInfo && (
+                  <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium", statusInfo.className)}>
+                    {statusInfo.label}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
@@ -242,6 +255,16 @@ const SeriesListItem = memo(function SeriesListItem({ series, isCompact = false 
                 {series.tags.slice(0, 3).join(", ")}
                 {series.tags.length > 3 && ` +${series.tags.length - 3}`}
               </span>
+            </div>
+          )}
+
+          {/* Note provider (normalisée /10) */}
+          {displayRating !== null && (
+            <div className="flex items-center gap-1 text-yellow-600 dark:text-yellow-400">
+              <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" aria-hidden="true" />
+              <span className="font-medium tabular-nums">{displayRating.toFixed(1)}</span>
+              <span className="text-muted-foreground">/10</span>
+              <span className="text-muted-foreground">· {t("series.filters.sortRating")}</span>
             </div>
           )}
         </div>

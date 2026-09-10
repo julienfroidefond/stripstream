@@ -31,6 +31,13 @@ export interface NormalizedSeries {
   matchReasons?: string[];
   /** For recommendations: names of recently-read series that triggered this recommendation. */
   becauseOf?: string[];
+  /**
+   * Aggregate community rating on the API-native 0-5 scale (Stripstream only).
+   * Rendered as /10 on cards via `communityScoreToTen` to match the series page.
+   */
+  communityScore?: number | null;
+  /** Current user's own half-star rating (1-10), null when unrated (Stripstream only). */
+  userRating?: number | null;
 }
 
 export interface NormalizedBook {

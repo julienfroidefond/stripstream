@@ -108,6 +108,9 @@ const stripstreamSeriesItem = {
   authors: ['E2E Author'],
   description: 'E2E Stripstream series summary',
   start_year: 2020,
+  // Échelle API 0-5 (moyenne providers). Affiché ×2 → 8.4/10 sur les cards.
+  community_score: 4.2,
+  user_rating: null,
 };
 
 const stripstreamSeriesMetadata = {

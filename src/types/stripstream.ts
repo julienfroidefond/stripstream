@@ -68,6 +68,13 @@ export interface StripstreamSeriesItem {
   authors?: string[] | null;
   description?: string | null;
   start_year?: number | null;
+  /**
+   * Aggregate community rating on the 0-5 scale — average of approved providers
+   * (`provider_rating / provider_rating_scale * 5`). Displayed as /10 by doubling.
+   */
+  community_score?: number | null;
+  /** Current user's own half-star rating (1-10), null when unrated. */
+  user_rating?: number | null;
 }
 
 export interface StripstreamSeriesLookup {
