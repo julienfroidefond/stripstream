@@ -14,7 +14,6 @@ const Toaster = dynamic(() => import("@/components/ui/toaster").then((m) => m.To
 });
 import { NetworkStatus } from "../ui/NetworkStatus";
 import { usePreferences } from "@/contexts/PreferencesContext";
-import { ServiceWorkerProvider } from "@/contexts/ServiceWorkerContext";
 import { defaultPreferences } from "@/types/preferences";
 import logger from "@/lib/logger";
 import { getRandomBookFromLibraries } from "@/app/actions/library";
@@ -161,57 +160,55 @@ export default function ClientLayout({
 
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <ServiceWorkerProvider>
-        {hasCustomBackground && <div className="fixed inset-0 -z-10" style={backgroundStyle} />}
-        {!hasCustomBackground && (
-          <>
-            <div className="pointer-events-none fixed inset-0 -z-10 bg-[linear-gradient(180deg,hsl(var(--background)/0.99)_0%,hsl(var(--background)/0.94)_42%,hsl(var(--background))_100%)]" />
-            <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(70%_45%_at_12%_0%,hsl(var(--primary)/0.16),transparent_62%),radial-gradient(58%_38%_at_88%_8%,hsl(190_86%_56%/0.14),transparent_65%),radial-gradient(50%_34%_at_50%_100%,hsl(334_72%_62%/0.1),transparent_70%)]" />
-            <div className="pointer-events-none fixed inset-0 -z-10 bg-[repeating-linear-gradient(0deg,hsl(var(--foreground)/0.02)_0_1px,transparent_1px_24px),repeating-linear-gradient(90deg,hsl(var(--foreground)/0.015)_0_1px,transparent_1px_30px)]" />
-          </>
+      {hasCustomBackground && <div className="fixed inset-0 -z-10" style={backgroundStyle} />}
+      {!hasCustomBackground && (
+        <>
+          <div className="pointer-events-none fixed inset-0 -z-10 bg-[linear-gradient(180deg,hsl(var(--background)/0.99)_0%,hsl(var(--background)/0.94)_42%,hsl(var(--background))_100%)]" />
+          <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(70%_45%_at_12%_0%,hsl(var(--primary)/0.16),transparent_62%),radial-gradient(58%_38%_at_88%_8%,hsl(190_86%_56%/0.14),transparent_65%),radial-gradient(50%_34%_at_50%_100%,hsl(334_72%_62%/0.1),transparent_70%)]" />
+          <div className="pointer-events-none fixed inset-0 -z-10 bg-[repeating-linear-gradient(0deg,hsl(var(--foreground)/0.02)_0_1px,transparent_1px_24px),repeating-linear-gradient(90deg,hsl(var(--foreground)/0.015)_0_1px,transparent_1px_30px)]" />
+        </>
+      )}
+      <div
+        className="relative min-h-screen"
+        style={
+          hasCustomBackground
+            ? { backgroundColor: `rgba(var(--background-rgb, 255, 255, 255), ${contentOpacity})` }
+            : undefined
+        }
+      >
+        {!isPublicRoute && (
+          <Header
+            onToggleSidebar={handleToggleSidebar}
+            onRefreshBackground={fetchRandomBook}
+            showRefreshBackground={preferences.background.type === "komga-random"}
+          />
         )}
-        <div
-          className="relative min-h-screen"
-          style={
-            hasCustomBackground
-              ? { backgroundColor: `rgba(var(--background-rgb, 255, 255, 255), ${contentOpacity})` }
-              : undefined
-          }
-        >
-          {!isPublicRoute && (
-            <Header
-              onToggleSidebar={handleToggleSidebar}
-              onRefreshBackground={fetchRandomBook}
-              showRefreshBackground={preferences.background.type === "komga-random"}
-            />
-          )}
-          {!isPublicRoute && (
-            <Sidebar
-              isOpen={isSidebarOpen}
-              onClose={handleCloseSidebar}
-              userIsAdmin={userIsAdmin}
-              favoritesSlot={sidebarFavorites}
-              librariesSlot={sidebarLibraries}
-              connectionsSlot={sidebarConnections}
-              favoritesSkeleton={sidebarFavoritesSkeleton}
-              librariesSkeleton={sidebarLibrariesSkeleton}
-              connectionsSkeleton={sidebarConnectionsSkeleton}
-            />
-          )}
-          {!isPublicRoute && isSidebarOpen && (
-            <button
-              type="button"
-              aria-label="Fermer la navigation"
-              className="fixed inset-0 top-[calc(4rem+env(safe-area-inset-top,0px))] z-20 bg-black/35 backdrop-blur-[1px] transition-opacity lg:hidden"
-              onClick={handleCloseSidebar}
-            />
-          )}
-          <main className={!isPublicRoute ? "pt-safe" : ""}>{children}</main>
-          <InstallPWA />
-          <Toaster />
-          <NetworkStatus />
-        </div>
-      </ServiceWorkerProvider>
+        {!isPublicRoute && (
+          <Sidebar
+            isOpen={isSidebarOpen}
+            onClose={handleCloseSidebar}
+            userIsAdmin={userIsAdmin}
+            favoritesSlot={sidebarFavorites}
+            librariesSlot={sidebarLibraries}
+            connectionsSlot={sidebarConnections}
+            favoritesSkeleton={sidebarFavoritesSkeleton}
+            librariesSkeleton={sidebarLibrariesSkeleton}
+            connectionsSkeleton={sidebarConnectionsSkeleton}
+          />
+        )}
+        {!isPublicRoute && isSidebarOpen && (
+          <button
+            type="button"
+            aria-label="Fermer la navigation"
+            className="fixed inset-0 top-[calc(4rem+env(safe-area-inset-top,0px))] z-20 bg-black/35 backdrop-blur-[1px] transition-opacity lg:hidden"
+            onClick={handleCloseSidebar}
+          />
+        )}
+        <main className={!isPublicRoute ? "pt-safe" : ""}>{children}</main>
+        <InstallPWA />
+        <Toaster />
+        <NetworkStatus />
+      </div>
     </ThemeProvider>
   );
 }

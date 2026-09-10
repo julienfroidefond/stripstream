@@ -112,20 +112,6 @@ export function AdminSkeleton() {
   );
 }
 
-export function DownloadsSkeleton() {
-  return (
-    <main className="mx-auto max-w-screen-2xl px-2 py-8 sm:px-6 lg:px-8">
-      <div className="space-y-7">
-        <PageHeading />
-        <Skeleton className="h-10 w-72 max-w-full rounded-lg" />
-        <div className="space-y-3">
-          {Array.from({ length: 4 }).map((_, index) => <Skeleton key={index} className="h-24 rounded-xl" />)}
-        </div>
-      </div>
-    </main>
-  );
-}
-
 export function SettingsSkeleton() {
   return (
     <main className="container mx-auto px-4 py-8">

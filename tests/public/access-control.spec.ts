@@ -5,7 +5,6 @@ const protectedRoutes = [
   '/settings',
   '/account',
   '/admin',
-  '/downloads',
   '/libraries/library-id?sort=latest&page=2',
   '/series/series-id',
   '/books/book-id',

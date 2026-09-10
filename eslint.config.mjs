@@ -88,7 +88,6 @@ export default defineConfig([
       "src/components/ui/cover-client.tsx",
       "src/components/series/BookGrid.tsx",
       "src/components/series/BookList.tsx",
-      "src/contexts/ServiceWorkerContext.tsx",
       "src/hooks/useNetworkStatus.ts",
     ],
     rules: {

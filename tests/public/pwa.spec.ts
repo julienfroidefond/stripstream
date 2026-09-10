@@ -11,16 +11,4 @@ test.describe('Public PWA resources', () => {
     expect(manifest.start_url).toBeTruthy();
     expect(manifest.icons?.length).toBeGreaterThan(0);
   });
-
-  test('serves the offline fallback and service worker', async ({ request }) => {
-    const [offline, worker] = await Promise.all([
-      request.get('/offline.html'),
-      request.get('/sw.js'),
-    ]);
-
-    expect(offline.status()).toBe(200);
-    expect(await offline.text()).toContain('<html');
-    expect(worker.status()).toBe(200);
-    expect(worker.headers()['content-type']).toMatch(/javascript/);
-  });
 });

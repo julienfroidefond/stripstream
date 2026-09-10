@@ -9,7 +9,6 @@ import { DisplaySettings } from "./DisplaySettings";
 import { ConnectionsSettings } from "./ConnectionsSettings";
 import { BackgroundSettings } from "./BackgroundSettings";
 import { AdvancedSettings } from "./AdvancedSettings";
-import { CacheSettings } from "./CacheSettings";
 import { ReaderSettings } from "./ReaderSettings";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Monitor, Network, BookOpen } from "lucide-react";
@@ -83,7 +82,6 @@ export function ClientSettings({
               stripstreamConfigs={stripstreamConfigs}
             />
             <AdvancedSettings />
-            <CacheSettings />
           </TabsContent>
         </Tabs>
       </div>

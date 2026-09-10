@@ -72,7 +72,7 @@ The reader holds blob URLs for fetched pages — eviction is mandatory when navi
 
 ### LocalStorage scoping
 
-Anything user-specific stored in `localStorage` must be scoped (otherwise user A and user B on the same device share state). `ClientOfflineBookService` resolves `book.thumbnailUrl` against `window.location.origin` and uses that origin as the scope.
+Anything user-specific stored in `localStorage` must be scoped (otherwise user A and user B on the same device share state).
 
 **Known limitation**: thumbnail URLs are relative proxy paths (`/api/komga/...`), so the resolved origin is always the current Stripstream deployment. Two accounts on the *same* Stripstream still share localStorage keys for read progress — fixing this requires threading a per-user/config token through the client (not done yet). Other keys (e.g. reading direction) are still global today — note this when adding new client storage.
 
@@ -96,16 +96,11 @@ PRAGMA foreign_keys=ON;
 
 Don't let Prisma auto-generate when changing constraints — it will lose data. Hand-write the SQL, preserve rows in `INSERT ... SELECT`, and make the migration idempotent so re-runs in dev/prod are no-ops. Migrations are applied automatically via `prisma migrate deploy` on prod boot.
 
-### PWA service worker
+### PWA / offline
 
-`public/sw.js` is a hand-written SW (no Workbox/Serwist generation). Routing strategies live there:
-- Book pages (`/api/.../pages/...`) → manual cache only (managed by `DownloadManager`), never auto-cached via SWR.
-- Next.js RSC payloads → SWR in `PAGES_CACHE`.
-- `/_next/static/` → cache-first.
-- Image proxy (covers, thumbnails) → SWR with `IMAGES_CACHE_MAX_ENTRIES = 500`.
-- Navigations → network-first with offline-page fallback.
+Offline reading and the service worker were removed. There is **no** `public/sw.js`, no Cache Storage usage, and no book-download feature. All pages, API data and images are fetched from the network (Next.js/native HTTP caching only).
 
-The `VERSION` constant at the top is the cache namespace — **bump it when SW logic changes** (caches are namespaced by version and old ones are deleted on `activate`). Forgetting the bump means clients keep serving stale caches.
+The web app manifest (`public/manifest.json`) and `InstallPWA` are kept so the app can still be installed as a PWA shell, but nothing is cached for offline use.
 
 ### Rate limiting
 
@@ -126,7 +121,6 @@ The `VERSION` constant at the top is the cache namespace — **bump it when SW l
 - `project-intelligence/audit-2026-04-30.md` — audit + status of fixed/pending items
 - `prisma/schema.prisma` — data model (multi-config + favorites scoping)
 - `prisma/migrations/` — examples of the manual rebuild pattern (`20260429000000_multi_config`, `20260505000000_dedupe_favorites`)
-- `public/sw.js` — PWA cache strategies + `VERSION` constant to bump when changing SW logic
 - `src/lib/providers/` — provider abstraction (start here for backend questions)
 - `src/app/actions/` — all server-side mutations
 - `src/i18n/messages/{fr,en}/common.json` — copy + error messages

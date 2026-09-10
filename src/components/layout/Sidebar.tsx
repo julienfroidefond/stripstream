@@ -4,14 +4,13 @@ import {
   Home,
   Settings,
   LogOut,
-  Download,
   User,
   Shield,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
-import { useCallback, useMemo, Suspense } from "react";
+import { useCallback, Suspense } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useTranslate } from "@/hooks/useTranslate";
 import { NavButton } from "@/components/ui/nav-button";
@@ -78,22 +77,6 @@ export function Sidebar({
     [pathname, router, onClose]
   );
 
-  const mainNavItems = useMemo(
-    () => [
-      {
-        title: t("sidebar.home"),
-        href: "/",
-        icon: Home,
-      },
-      {
-        title: t("sidebar.downloads"),
-        href: "/downloads",
-        icon: Download,
-      },
-    ],
-    [t]
-  );
-
   return (
     <SidebarNavContext.Provider value={handleLinkClick}>
       <aside
@@ -118,22 +101,12 @@ export function Sidebar({
         </div>
 
         <div className="relative z-10 flex-1 space-y-4 overflow-y-auto px-3 py-4">
-          <div className="rounded-xl border border-border/50 bg-background/30 p-2">
-            <div className="space-y-1">
-              <h2 className="mb-2 px-3 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                {t("sidebar.navigation")}
-              </h2>
-              {mainNavItems.map((item) => (
-                <NavButton
-                  key={item.href}
-                  icon={item.icon}
-                  label={item.title}
-                  active={pathname === item.href}
-                  onClick={() => handleLinkClick(item.href)}
-                />
-              ))}
-            </div>
-          </div>
+          <NavButton
+            icon={Home}
+            label={t("sidebar.home")}
+            active={pathname === "/"}
+            onClick={() => handleLinkClick("/")}
+          />
 
           {/* Favoris — streamé */}
           <Suspense fallback={favoritesSkeleton}>{favoritesSlot}</Suspense>

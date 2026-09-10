@@ -132,26 +132,9 @@ Les logs affichent le type de TTL utilisé :
 - Headers `X-Cache` si configurés
 - Onglet "Timing" pour détails
 
-#### Application → Cache Storage
+#### Application → Cache Storage / Service Workers
 
-Inspectez le cache du Service Worker :
-
-- `stripstream-cache-v1` : Ressources statiques
-- `stripstream-images-v1` : Images (covers + pages)
-
-Actions disponibles :
-
-- ✅ Voir le contenu de chaque cache
-- 🔍 Chercher une URL spécifique
-- 🗑️ Supprimer des entrées
-- 🧹 Vider complètement un cache
-
-#### Application → Service Workers
-
-- État du Service Worker
-- "Unregister" pour le désactiver
-- "Update" pour forcer une mise à jour
-- Console pour voir les logs SW
+Il n'y a plus de Service Worker ni de Cache Storage : le mode hors-ligne a été retiré. Le navigateur gère uniquement son cache HTTP natif (voir l'onglet Network ci-dessus).
 
 ### 2. API de monitoring
 

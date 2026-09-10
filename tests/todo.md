@@ -11,12 +11,11 @@ scenarios remain candidates for later work.
 - [x] Reach the final page and show the end-of-book dialog.
 - [ ] Return to the series from the end-of-book dialog.
 
-## 2. Offline and PWA
+## 2. PWA
 
-- [ ] Download a book locally.
-- [ ] Open the downloaded book without network access.
-- [ ] Remove a local download.
-- [ ] Verify the offline fallback and downloaded-book state.
+- [x] Serve a valid web app manifest.
+
+> Offline reading (service worker, `offline.html`, local book downloads) was removed and is out of scope.
 
 ## 3. Persistent settings
 

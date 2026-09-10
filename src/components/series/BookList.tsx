@@ -5,13 +5,11 @@ import { BookCover } from "@/components/ui/book-cover";
 import { memo, useCallback } from "react";
 import { useTranslate } from "@/hooks/useTranslate";
 import { cn } from "@/lib/utils";
-import { useBookOfflineStatus } from "@/hooks/useBookOfflineStatus";
 import { formatDate } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 import { FileText, BookX } from "lucide-react";
 import { MarkAsReadButton } from "@/components/ui/mark-as-read-button";
 import { MarkAsUnreadButton } from "@/components/ui/mark-as-unread-button";
-import { BookOfflineButton } from "@/components/ui/book-offline-button";
 import { useAnonymous } from "@/contexts/AnonymousContext";
 import { useRouter } from "next/navigation";
 
@@ -32,10 +30,8 @@ interface BookListItemProps {
 const BookListItem = memo(function BookListItem({ book, onBookClick, onSuccess, isCompact = false }: BookListItemProps) {
   const { t } = useTranslate();
   const { isAnonymous } = useAnonymous();
-  const { isAccessible } = useBookOfflineStatus(book.id);
 
   const handleClick = () => {
-    if (!isAccessible) return;
     onBookClick(book);
   };
 
@@ -84,18 +80,10 @@ const BookListItem = memo(function BookListItem({ book, onBookClick, onSuccess, 
 
   if (isCompact) {
     return (
-      <div
-        className={cn(
-          "group relative flex gap-3 p-2 rounded-lg border bg-card hover:bg-accent/50 transition-colors",
-          !isAccessible && "opacity-60"
-        )}
-      >
+      <div className="group relative flex gap-3 rounded-lg border bg-card p-2 transition-colors hover:bg-accent/50">
         {/* Couverture compacte */}
         <div
-          className={cn(
-            "relative w-12 h-16 sm:w-14 sm:h-20 flex-shrink-0 rounded overflow-hidden bg-muted",
-            isAccessible && "cursor-pointer"
-          )}
+          className="relative w-12 h-16 sm:w-14 sm:h-20 flex-shrink-0 cursor-pointer rounded overflow-hidden bg-muted"
           onClick={handleClick}
         >
           <BookCover
@@ -112,10 +100,7 @@ const BookListItem = memo(function BookListItem({ book, onBookClick, onSuccess, 
           {/* Titre et statut */}
           <div className="flex items-center justify-between gap-2">
             <h3
-              className={cn(
-                "font-medium text-sm sm:text-base line-clamp-1 flex-1 min-w-0",
-                isAccessible && "cursor-pointer hover:text-primary transition-colors"
-              )}
+              className="line-clamp-1 min-w-0 flex-1 cursor-pointer text-sm font-medium transition-colors hover:text-primary sm:text-base"
               onClick={handleClick}
             >
               {title}
@@ -150,18 +135,10 @@ const BookListItem = memo(function BookListItem({ book, onBookClick, onSuccess, 
   }
 
   return (
-    <div
-      className={cn(
-        "group relative flex gap-4 p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors",
-        !isAccessible && "opacity-60"
-      )}
-    >
+    <div className="group relative flex gap-4 rounded-lg border bg-card p-4 transition-colors hover:bg-accent/50">
       {/* Couverture */}
       <div
-        className={cn(
-          "relative w-20 h-28 sm:w-24 sm:h-36 flex-shrink-0 rounded overflow-hidden bg-muted",
-          isAccessible && "cursor-pointer"
-        )}
+        className="relative w-20 h-28 sm:w-24 sm:h-36 flex-shrink-0 cursor-pointer rounded overflow-hidden bg-muted"
         onClick={handleClick}
       >
         <BookCover
@@ -179,10 +156,7 @@ const BookListItem = memo(function BookListItem({ book, onBookClick, onSuccess, 
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
             <h3
-              className={cn(
-                "font-semibold text-base sm:text-lg line-clamp-2",
-                isAccessible && "cursor-pointer hover:text-primary transition-colors"
-              )}
+              className="line-clamp-2 cursor-pointer text-base font-semibold transition-colors hover:text-primary sm:text-lg"
               onClick={handleClick}
             >
               {title}
@@ -246,7 +220,6 @@ const BookListItem = memo(function BookListItem({ book, onBookClick, onSuccess, 
               className="text-xs"
             />
           )}
-          <BookOfflineButton book={book} className="text-xs" />
         </div>
       </div>
     </div>

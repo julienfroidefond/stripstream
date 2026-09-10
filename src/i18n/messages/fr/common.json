@@ -69,9 +69,7 @@
   },
   "sidebar": {
     "connection": "Connexion",
-    "navigation": "Navigation",
     "home": "Accueil",
-    "downloads": "Téléchargements",
     "account": "Mon compte",
     "favorites": {
       "title": "Favoris",
@@ -214,40 +212,6 @@
       "testing": "Test...",
       "cancel": "Annuler",
       "confirmDelete": "Supprimer la connexion \"{{name}}\" ?"
-    },
-    "cache": {
-      "title": "Cache et stockage",
-      "description": "Gérez le cache local pour une expérience hors-ligne optimale.",
-      "notSupported": "Le cache hors-ligne n'est pas supporté par votre navigateur.",
-      "initializing": "Initialisation...",
-      "totalStorage": "Stockage total",
-      "visitablePages": "{count} pages visitables hors ligne",
-      "static": "Ressources statiques",
-      "staticDesc": "Scripts, styles et assets Next.js",
-      "pages": "Pages visitées",
-      "pagesDesc": "Pages et données de navigation disponibles hors ligne",
-      "api": "Données API",
-      "apiDesc": "Métadonnées des séries, livres et bibliothèques",
-      "books": "Livres hors-ligne",
-      "booksDesc": "Pages téléchargées manuellement",
-      "clearAll": "Vider tout le cache",
-      "cleared": "Cache vidé",
-      "clearedDesc": "Le cache a été vidé avec succès",
-      "clearError": "Erreur lors du vidage du cache",
-      "unavailable": "Statistiques du cache non disponibles",
-      "reinstall": "Réinstaller le Service Worker",
-      "reinstallError": "Erreur lors de la réinstallation du Service Worker",
-      "devServiceWorker": {
-        "label": "Service Worker",
-        "description": "Active ou désactive le Service Worker. Par défaut : désactivé en dev et en prod. Un rechargement est appliqué.",
-        "saved": "Préférence Service Worker mise à jour",
-        "error": "Impossible de mettre à jour la préférence Service Worker"
-      },
-      "entry": "entrée",
-      "entries": "entrées",
-      "loadingEntries": "Chargement des entrées...",
-      "noEntries": "Aucune entrée dans ce cache",
-      "loadError": "Erreur lors du chargement des entrées"
     }
   },
   "library": {
@@ -380,8 +344,7 @@
       "unread": "Non lu",
       "read": "Lu",
       "readDate": "Lu le {{date}}",
-      "progress": "Page {{current}}/{{total}}",
-      "offline": "Indisponible hors ligne"
+      "progress": "Page {{current}}/{{total}}"
     },
     "pages": "page",
     "pages_plural": "pages",
@@ -422,50 +385,6 @@
           "update": "Erreur lors de la mise à jour"
         }
       }
-    }
-  },
-  "downloads": {
-    "page": {
-      "title": "Téléchargements",
-      "description": "Gérez vos livres disponibles hors ligne"
-    },
-    "tabs": {
-      "all": "Tous ({count})",
-      "downloading": "En cours ({count})",
-      "available": "Disponibles ({count})",
-      "error": "Erreurs ({count})"
-    },
-    "empty": {
-      "all": "Aucun livre téléchargé",
-      "downloading": "Aucun téléchargement en cours",
-      "available": "Aucun livre disponible hors ligne",
-      "error": "Aucune erreur"
-    },
-    "actions": {
-      "retryAll": "Tout relancer",
-      "retry": "Réessayer",
-      "delete": "Supprimer"
-    },
-    "status": {
-      "downloading": "En cours de téléchargement",
-      "available": "Disponible hors ligne",
-      "error": "Erreur de téléchargement",
-      "idle": "Non téléchargé"
-    },
-    "toast": {
-      "deleted": "Livre supprimé",
-      "deletedDesc": "Le livre n'est plus disponible hors ligne",
-      "error": "Erreur",
-      "errorDesc": "Une erreur est survenue lors de la suppression",
-      "retryAll": "Relance des téléchargements",
-      "retryAllDesc": "{count} téléchargement(s) relancé(s)",
-      "retryDesc": "Le téléchargement va reprendre depuis le début",
-      "retry": "Téléchargement relancé"
-    },
-    "info": {
-      "size": "{size} Mo",
-      "pages": "{current}/{total} pages",
-      "totalPages": "{count} pages"
     }
   },
   "errors": {

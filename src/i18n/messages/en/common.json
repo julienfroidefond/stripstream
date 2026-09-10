@@ -69,9 +69,7 @@
   },
   "sidebar": {
     "connection": "Connection",
-    "navigation": "Navigation",
     "home": "Home",
-    "downloads": "Downloads",
     "account": "My Account",
     "favorites": {
       "title": "Favorites",
@@ -209,40 +207,6 @@
       "testing": "Testing...",
       "cancel": "Cancel",
       "confirmDelete": "Delete connection \"{{name}}\"?"
-    },
-    "cache": {
-      "title": "Cache & Storage",
-      "description": "Manage local cache for optimal offline experience.",
-      "notSupported": "Offline cache is not supported by your browser.",
-      "initializing": "Initializing...",
-      "totalStorage": "Total storage",
-      "visitablePages": "{count} pages available offline",
-      "static": "Static resources",
-      "staticDesc": "Next.js scripts, styles and assets",
-      "pages": "Visited pages",
-      "pagesDesc": "Pages and navigation data available offline",
-      "api": "API data",
-      "apiDesc": "Series, books and library metadata",
-      "books": "Offline books",
-      "booksDesc": "Manually downloaded pages",
-      "clearAll": "Clear all cache",
-      "cleared": "Cache cleared",
-      "clearedDesc": "Cache has been cleared successfully",
-      "clearError": "Error clearing cache",
-      "unavailable": "Cache statistics unavailable",
-      "reinstall": "Reinstall Service Worker",
-      "reinstallError": "Error reinstalling Service Worker",
-      "devServiceWorker": {
-        "label": "Service Worker",
-        "description": "Enable or disable the Service Worker. Defaults: disabled in dev and prod. A reload is applied.",
-        "saved": "Service Worker preference updated",
-        "error": "Failed to update Service Worker preference"
-      },
-      "entry": "entry",
-      "entries": "entries",
-      "loadingEntries": "Loading entries...",
-      "noEntries": "No entries in this cache",
-      "loadError": "Error loading entries"
     }
   },
   "library": {
@@ -377,8 +341,7 @@
       "unread": "Unread",
       "read": "Read",
       "readDate": "Read on {{date}}",
-      "progress": "Page {{current}}/{{total}}",
-      "offline": "Unavailable offline"
+      "progress": "Page {{current}}/{{total}}"
     },
     "pages": "page",
     "pages_plural": "pages",
@@ -419,50 +382,6 @@
           "update": "Error updating status"
         }
       }
-    }
-  },
-  "downloads": {
-    "page": {
-      "title": "Downloads",
-      "description": "Manage your offline available books"
-    },
-    "tabs": {
-      "all": "All ({count})",
-      "downloading": "Downloading ({count})",
-      "available": "Available ({count})",
-      "error": "Errors ({count})"
-    },
-    "empty": {
-      "all": "No downloaded books",
-      "downloading": "No downloads in progress",
-      "available": "No books available offline",
-      "error": "No errors"
-    },
-    "actions": {
-      "retryAll": "Retry all",
-      "retry": "Retry",
-      "delete": "Delete"
-    },
-    "status": {
-      "downloading": "Downloading",
-      "available": "Available offline",
-      "error": "Download error",
-      "idle": "Not downloaded"
-    },
-    "toast": {
-      "deleted": "Book deleted",
-      "deletedDesc": "The book is no longer available offline",
-      "error": "Error",
-      "errorDesc": "An error occurred while deleting",
-      "retryAll": "Retrying downloads",
-      "retryAllDesc": "{count} download(s) restarted",
-      "retryDesc": "Download will start from the beginning",
-      "retry": "Download restarted"
-    },
-    "info": {
-      "size": "{size} MB",
-      "pages": "{current}/{total} pages",
-      "totalPages": "{count} pages"
     }
   },
   "errors": {

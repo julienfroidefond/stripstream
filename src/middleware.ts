@@ -89,6 +89,6 @@ export const config = {
      * 4. /images/* (inside public directory)
      * 5. Static files (manifest.json, favicon.ico, etc.)
      */
-    "/((?!api/auth|api/health|_next/static|_next/image|fonts|images|manifest.json|favicon|sitemap.xml|sw.js|offline.html).*)",
+    "/((?!api/auth|api/health|_next/static|_next/image|fonts|images|manifest.json|favicon|sitemap.xml).*)",
   ],
 };

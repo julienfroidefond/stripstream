@@ -5,7 +5,6 @@ import { BookCover } from "@/components/ui/book-cover";
 import { memo, useCallback } from "react";
 import { useTranslate } from "@/hooks/useTranslate";
 import { cn } from "@/lib/utils";
-import { useBookOfflineStatus } from "@/hooks/useBookOfflineStatus";
 import { BookX } from "lucide-react";
 
 interface BookGridProps {
@@ -54,11 +53,8 @@ const MissingBookCard = memo(function MissingBookCard({ book, isCompact }: { boo
 
 const BookCard = memo(function BookCard({ book, onBookClick, onSuccess, isCompact }: BookCardProps) {
   const { t } = useTranslate();
-  const { isAccessible } = useBookOfflineStatus(book.id);
 
   const handleClick = () => {
-    // Ne pas permettre le clic si le livre n'est pas accessible
-    if (!isAccessible) return;
     onBookClick(book);
   };
 
@@ -66,16 +62,12 @@ const BookCard = memo(function BookCard({ book, onBookClick, onSuccess, isCompac
     <div
       className={cn(
         "group relative aspect-[2/3] overflow-hidden rounded-lg bg-muted",
-        isCompact ? "hover:scale-105 transition-transform" : "",
-        !isAccessible ? "cursor-not-allowed" : ""
+        isCompact ? "hover:scale-105 transition-transform" : ""
       )}
     >
       <div
         onClick={handleClick}
-        className={cn(
-          "w-full h-full hover:opacity-100 transition-all",
-          isAccessible ? "cursor-pointer" : "cursor-not-allowed"
-        )}
+        className="w-full h-full cursor-pointer hover:opacity-100 transition-all"
       >
         <BookCover
           book={book}

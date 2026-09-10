@@ -10,7 +10,6 @@ import { ScrollContainer } from "@/components/ui/scroll-container";
 import { Section } from "@/components/ui/section";
 import { History, Sparkles, Clock, LibraryBig, BookOpen, Heart } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { useBookOfflineStatus } from "@/hooks/useBookOfflineStatus";
 import { cn } from "@/lib/utils";
 import { useAnonymous } from "@/contexts/AnonymousContext";
 import { loadHomeFeed, type HomeFeed } from "@/app/actions/home";
@@ -151,16 +150,12 @@ const BookMediaCard = memo(function BookMediaCard({
   onClick: (item: NormalizedSeries | NormalizedBook) => void;
 }) {
   const { t } = useTranslate();
-  const { isAccessible } = useBookOfflineStatus(book.id);
   const title = book.title || (book.number ? t("navigation.volume", { number: book.number }) : "");
 
   return (
     <Card
-      onClick={() => isAccessible && onClick(book)}
-      className={cn(
-        "group relative flex w-[188px] flex-shrink-0 flex-col overflow-hidden rounded-xl border border-border/60 bg-card/85 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-card hover:shadow-md sm:w-[200px]",
-        isAccessible ? "cursor-pointer" : "cursor-not-allowed"
-      )}
+      onClick={() => onClick(book)}
+      className="group relative flex w-[188px] flex-shrink-0 cursor-pointer flex-col overflow-hidden rounded-xl border border-border/60 bg-card/85 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-card hover:shadow-md sm:w-[200px]"
     >
       <div className="relative aspect-[2/3] bg-muted overflow-hidden">
         <BookCover
@@ -168,7 +163,6 @@ const BookMediaCard = memo(function BookMediaCard({
           alt={`Couverture de ${title}`}
           showControls={false}
           overlayVariant="home"
-          offlineStatus={{ isAccessible }}
         />
       </div>
     </Card>

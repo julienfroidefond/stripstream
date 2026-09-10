@@ -4,11 +4,8 @@ import { ProgressBar } from "./progress-bar";
 import type { BookCoverProps } from "./cover-utils";
 import { MarkAsReadButton } from "./mark-as-read-button";
 import { MarkAsUnreadButton } from "./mark-as-unread-button";
-import { BookOfflineButton } from "./book-offline-button";
 import { useTranslate } from "@/hooks/useTranslate";
 import { formatDate } from "@/lib/utils";
-import { useBookOfflineStatus } from "@/hooks/useBookOfflineStatus";
-import { WifiOff } from "lucide-react";
 import { useAnonymous } from "@/contexts/AnonymousContext";
 
 // Fonction utilitaire pour obtenir les informations de statut de lecture
@@ -49,20 +46,8 @@ const getReadingStatusInfo = (
   };
 };
 
-export function BookCover({
-  offlineStatus,
-  ...props
-}: BookCoverProps) {
-  if (offlineStatus) {
-    return <BookCoverContent {...props} isAccessible={offlineStatus.isAccessible} />;
-  }
-
-  return <BookCoverWithOfflineStatus {...props} />;
-}
-
-function BookCoverWithOfflineStatus(props: Omit<BookCoverProps, "offlineStatus">) {
-  const { isAccessible } = useBookOfflineStatus(props.book.id);
-  return <BookCoverContent {...props} isAccessible={isAccessible} />;
+export function BookCover(props: BookCoverProps) {
+  return <BookCoverContent {...props} />;
 }
 
 function BookCoverContent({
@@ -74,8 +59,7 @@ function BookCoverContent({
   showControls = true,
   showOverlay = true,
   overlayVariant = "default",
-  isAccessible,
-}: Omit<BookCoverProps, "offlineStatus"> & { isAccessible: boolean }) {
+}: BookCoverProps) {
   const { t } = useTranslate();
   const { isAnonymous } = useAnonymous();
 
@@ -89,9 +73,6 @@ function BookCoverContent({
   const isRead = isAnonymous ? false : (book.readProgress?.completed || false);
   const hasReadProgress = isAnonymous ? false : (book.readProgress !== null || currentPage > 0);
 
-  // Détermine si le livre doit être grisé (non accessible hors ligne)
-  const isUnavailable = !isAccessible;
-
   const handleMarkAsRead = () => {
     onSuccess?.(book, "read");
   };
@@ -102,7 +83,7 @@ function BookCoverContent({
 
   return (
     <>
-      <div className={`relative w-full h-full ${isUnavailable ? "opacity-40 grayscale" : ""}`}>
+      <div className="relative w-full h-full">
         <img
           src={book.thumbnailUrl.trim()}
           alt={alt || t("books.defaultCoverAlt")}
@@ -116,15 +97,6 @@ function BookCoverContent({
             .join(" ")}
         />
         {showProgress && <ProgressBar progress={currentPage} total={totalPages} type="book" />}
-        {/* Badge hors ligne si non accessible */}
-        {isUnavailable && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="bg-destructive/90 backdrop-blur-md text-destructive-foreground px-3 py-1.5 rounded-full flex items-center gap-2 text-xs font-medium shadow-lg">
-              <WifiOff className="h-3 w-3" />
-              <span>{t("books.status.offline")}</span>
-            </div>
-          </div>
-        )}
       </div>
       {/* Overlay avec les contrôles */}
       {(showControls || showOverlay) && (
@@ -148,10 +120,6 @@ function BookCoverContent({
                   className="bg-white/90 hover:bg-white text-black shadow-sm"
                 />
               )}
-              <BookOfflineButton
-                book={book}
-                className="bg-white/90 hover:bg-white text-black shadow-sm"
-              />
             </div>
           )}
           {showOverlay && overlayVariant === "default" && (
