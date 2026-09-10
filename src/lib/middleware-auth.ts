@@ -7,6 +7,10 @@ export async function getAuthSession(request: NextRequest) {
     const token = await getToken({
       req: request,
       secret: process.env.NEXTAUTH_SECRET,
+      // Auth.js issues the `__Secure-` session cookie in production. Tell
+      // getToken to look for that same cookie instead of its non-secure
+      // development default.
+      secureCookie: process.env.NODE_ENV === "production",
     });
 
     if (!token) {
