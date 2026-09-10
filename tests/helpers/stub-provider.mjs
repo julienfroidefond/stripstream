@@ -332,7 +332,12 @@ const server = http.createServer((req, res) => {
     return send(paged(currentBooks()));
   }
 
-  // GET image and thumbnail fixtures used by the reader and its thumbnails.
+  // GET image and thumbnail fixtures used by the reader and home carousels.
+  m = path.match(/^\/api\/v1\/(?:books|series)\/([^/]+)\/thumbnail$/);
+  if (m && req.method === 'GET') {
+    return sendImage(res, 1);
+  }
+
   m = path.match(/^\/api\/v1\/books\/([^/]+)\/pages\/(\d+)(?:\/thumbnail)?$/);
   if (m && req.method === 'GET') {
     return sendImage(res, Number(m[2]) + 1);

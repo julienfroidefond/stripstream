@@ -1,6 +1,35 @@
 import { expect, test } from '@playwright/test';
 import { hasE2eCredentials, signIn } from '../helpers/auth';
 
+type ImagePerformanceSample = {
+  resources: Array<{ name: string; duration: number; transferSize: number }>;
+  layoutShift: number;
+};
+
+async function collectImagePerformance(page: import('@playwright/test').Page): Promise<ImagePerformanceSample> {
+  await page.waitForFunction(() => {
+    const images = Array.from(document.images).filter((image) =>
+      (image.src.includes('/api/komga/images/') || image.src.includes('/api/stripstream/images/')) &&
+      image.getBoundingClientRect().top < window.innerHeight &&
+      image.getBoundingClientRect().bottom > 0
+    );
+    return images.some((image) => image.complete && image.naturalWidth > 0);
+  });
+
+  return page.evaluate(() => {
+    const resources = performance
+      .getEntriesByType('resource')
+      .filter((entry): entry is PerformanceResourceTiming =>
+        entry instanceof PerformanceResourceTiming &&
+        (entry.name.includes('/api/komga/images/') || entry.name.includes('/api/stripstream/images/'))
+      )
+      .map(({ name, duration, transferSize }) => ({ name, duration, transferSize }));
+
+    const layoutShift = (window as Window & { __e2eImageLayoutShift?: number }).__e2eImageLayoutShift ?? 0;
+    return { resources, layoutShift };
+  });
+}
+
 test.describe('Home functional journeys', () => {
   test.skip(!hasE2eCredentials, 'Local E2E account unavailable');
 
@@ -37,6 +66,49 @@ test.describe('Home functional journeys', () => {
     await expect(resume).toBeVisible({ timeout: 15_000 });
     await resume.click();
     await expect(page).toHaveURL(/\/books\/book-a/);
+  });
+
+  test('keeps carousel images stable and reuses the HTTP cache after a reload', async ({ page }, testInfo) => {
+    await page.addInitScript(() => {
+      const target = window as Window & { __e2eImageLayoutShift?: number };
+      target.__e2eImageLayoutShift = 0;
+      new PerformanceObserver((list) => {
+        for (const entry of list.getEntries() as PerformanceEntry[]) {
+          const shift = entry as PerformanceEntry & { hadRecentInput?: boolean; value?: number };
+          if (!shift.hadRecentInput) target.__e2eImageLayoutShift! += shift.value ?? 0;
+        }
+      }).observe({ type: 'layout-shift', buffered: true });
+    });
+
+    await signIn(page);
+    await page.evaluate(() => {
+      performance.clearResourceTimings();
+      (window as Window & { __e2eImageLayoutShift?: number }).__e2eImageLayoutShift = 0;
+    });
+    await page.goto('/');
+    const cold = await collectImagePerformance(page);
+    expect(cold.resources.length).toBeGreaterThan(0);
+    expect(cold.layoutShift).toBe(0);
+
+    await page.evaluate(() => {
+      performance.clearResourceTimings();
+      (window as Window & { __e2eImageLayoutShift?: number }).__e2eImageLayoutShift = 0;
+    });
+    await page.reload();
+    const warm = await collectImagePerformance(page);
+
+    expect(warm.resources.length).toBeGreaterThan(0);
+    expect(warm.resources.every((resource) => resource.transferSize === 0)).toBe(true);
+    expect(warm.layoutShift).toBe(0);
+
+    await testInfo.attach('image-performance.json', {
+      body: JSON.stringify({ cold, warm }, null, 2),
+      contentType: 'application/json',
+    });
+    testInfo.annotations.push({
+      type: 'image-performance',
+      description: JSON.stringify({ cold, warm }),
+    });
   });
 
   test('shows reading lists on the home page and opens one', async ({ page }) => {
