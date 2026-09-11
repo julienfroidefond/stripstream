@@ -1,10 +1,14 @@
 import { defineConfig, devices } from '@playwright/test';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 const e2ePort = process.env.E2E_PORT ?? '3000';
 const baseURL = process.env.E2E_BASE_URL ?? `http://127.0.0.1:${e2ePort}`;
 const startsLocalServer = !process.env.E2E_BASE_URL;
+const e2eServerMode = process.env.E2E_SERVER_MODE === 'dev' ? 'dev' : 'production';
+const e2eDistDir = '.next-e2e';
+const e2eBuildIdPath = join(__dirname, e2eDistDir, 'BUILD_ID');
 // Always use a local, throwaway database by default. A caller may override it
 // with another local SQLite URL, but E2E never needs a production account.
 const defaultE2eDbUrl = `file:${join(tmpdir(), `stripstream-e2e-${process.pid}.db`)}`;
@@ -15,6 +19,44 @@ process.env.E2E_DATABASE_URL = e2eDbUrlRaw;
 const e2eDbUrl = e2eDbUrlRaw && e2eDbUrlRaw.startsWith('file:./')
   ? `file:${__dirname}/prisma/${e2eDbUrlRaw.slice('file:./'.length)}`
   : e2eDbUrlRaw;
+
+// Playwright démarre le webServer avant `globalSetup` : un build manquant doit
+// échouer au chargement de la config, avant que le serveur ne soit lancé.
+function assertE2eProductionBuild(): void {
+  if (!existsSync(e2eBuildIdPath)) {
+    throw new Error(
+      [
+        '',
+        '====================================================================',
+        `[e2e] Missing production build: ${e2eBuildIdPath} does not exist.`,
+        '[e2e] The E2E suite starts a `next start` production server by default.',
+        '[e2e] Run `pnpm test:e2e:build` first, or set E2E_SERVER_MODE=dev',
+        '[e2e] to fall back to `next dev` (no build required).',
+        '====================================================================',
+        '',
+      ].join('\n')
+    );
+  }
+
+  const buildId = readFileSync(e2eBuildIdPath, 'utf8').trim();
+  const builtAt = statSync(e2eBuildIdPath).mtime.toISOString();
+  console.warn(
+    [
+      '',
+      '====================================================================',
+      `[e2e] Reusing existing production build: ${e2eDistDir}/BUILD_ID`,
+      `[e2e] BUILD_ID: ${buildId}`,
+      `[e2e] Built at: ${builtAt}`,
+      '[e2e] Rerun `pnpm test:e2e:build` after any src/ change.',
+      '====================================================================',
+      '',
+    ].join('\n')
+  );
+}
+
+if (startsLocalServer && e2eServerMode === 'production') {
+  assertE2eProductionBuild();
+}
 
 export default defineConfig({
   testDir: './tests',
@@ -40,7 +82,10 @@ export default defineConfig({
         {
           // Appeler Next directement évite que Corepack tente de télécharger
           // et vérifier une autre copie de pnpm pendant le démarrage E2E.
-          command: './node_modules/.bin/next dev',
+          command:
+            e2eServerMode === 'production'
+              ? './node_modules/.bin/next start'
+              : './node_modules/.bin/next dev',
           url: baseURL,
           // The E2E environment (including the local auth throttle mode) must
           // be applied to every run; never reuse a server started elsewhere.
@@ -48,6 +93,9 @@ export default defineConfig({
           timeout: 120_000,
           env: {
             ...process.env,
+            ...(e2eServerMode === 'production'
+              ? { NODE_ENV: 'production', NEXT_DIST_DIR: e2eDistDir }
+              : { NODE_ENV: 'development' }),
             NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET ?? 'stripstream-e2e-local-secret',
             NEXTAUTH_URL: baseURL,
             E2E_TEST_MODE: '1',

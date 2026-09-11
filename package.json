@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit",
     "knip": "knip",
     "test:e2e": "playwright test",
+    "test:e2e:build": "NEXT_DIST_DIR=.next-e2e next build",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:report": "playwright show-report",
     "test:e2e:timings": "node scripts/e2e-report.mjs",

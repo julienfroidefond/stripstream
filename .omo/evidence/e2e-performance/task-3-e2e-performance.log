@@ -1,0 +1,97 @@
+======================================================================
+TASK 3 — Wire the E2E suite to a production build (build + happy run + banner)
+Repo: /Users/julienfroidefond/Sites/stripstream
+Date (UTC): 2026-09-11
+Chosen branch: PRODUCTION — e2eServerMode defaults to production; E2E_SERVER_MODE=dev is the fallback
+======================================================================
+
+[1] BUILD — pnpm test:e2e:build
+Command: pnpm test:e2e:build   =>   NEXT_DIST_DIR=.next-e2e next build
+Result: BUILD_EXIT=0  DURATION=10s
+Artifact: .next-e2e/BUILD_ID
+BUILD_ID: enHlcVxwZodBrmcuCOk0V
+BUILD_ID mtime (UTC): 2026-09-11T11:07:41.828Z   (local stat: 2026-09-11T13:07:41 CEST = UTC+2)
+
+--- key build output ---
+
+> stripstream@1.23.2 test:e2e:build /Users/julienfroidefond/Sites/stripstream
+> NEXT_DIST_DIR=.next-e2e next build
+
+  Creating an optimized production build ...
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+Browserslist: browsers data (caniuse-lite) is 11 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+✓ Compiled successfully in 3.7s
+✓ Generating static pages using 9 workers (6/6) in 55.5ms
+
+--- build output tail (route table) ---
+├ ƒ /api/komga/images/series/[seriesId]/first-page
+├ ƒ /api/komga/images/series/[seriesId]/thumbnail
+├ ƒ /api/provider/search
+├ ƒ /api/stripstream/images/books/[bookId]/pages/[pageNumber]
+├ ƒ /api/stripstream/images/books/[bookId]/thumbnail
+├ ƒ /api/stripstream/search
+├ ƒ /books/[bookId]
+├ ƒ /libraries/[libraryId]
+├ ƒ /login
+├ ƒ /reading-lists/[id]
+├ ƒ /series/[seriesId]
+└ ƒ /settings
+
+
+ƒ Proxy (Middleware)
+
+ƒ  (Dynamic)  server-rendered on demand
+
+
+[2] HAPPY RUN — pnpm exec playwright test tests/public/access-control.spec.ts --reporter=line
+
+Env: DEBUG=pw:webserver (captures webServer stdout); reuseExistingServer=false in playwright.config.ts
+
+Result: HAPPY_EXIT=0  DURATION=63s  (tests: 10 passed (5.3s))
+
+
+
+--- build guard banner emitted at config load (reused build: BUILD_ID + mtime) ---
+
+====================================================================
+[e2e] Reusing existing production build: .next-e2e/BUILD_ID
+[e2e] BUILD_ID: enHlcVxwZodBrmcuCOk0V
+[e2e] Built at: 2026-09-11T11:07:41.828Z
+[e2e] Rerun `pnpm test:e2e:build` after any src/ change.
+====================================================================
+
+
+--- webServer proof: no pre-existing server (ECONNREFUSED), then ./node_modules/.bin/next start ---
+2026-09-11T11:07:52.617Z pw:webserver HTTP GET: http://127.0.0.1:3000/
+2026-09-11T11:07:52.625Z pw:webserver Error while checking if http://127.0.0.1:3000/ is available: connect ECONNREFUSED 127.0.0.1:3000
+2026-09-11T11:07:52.625Z pw:webserver Starting WebServer process ./node_modules/.bin/next start...
+2026-09-11T11:07:52.626Z pw:webserver Process started
+2026-09-11T11:07:52.626Z pw:webserver Waiting for availability...
+[WebServer] ▲ Next.js 16.1.6
+
+[WebServer] - Local:         http://localhost:3000
+[WebServer] - Network:       http://127.11.78.2:3000
+[WebServer] 
+[WebServer] ✓ Starting...
+
+[WebServer] ⚠ "next start" does not work with "output: standalone" configuration. Use "node .next/standalone/server.js" instead.
+
+[WebServer] ✓ Ready in 105ms
+
+2026-09-11T11:07:52.980Z pw:webserver HTTP GET: http://127.0.0.1:3000/
+2026-09-11T11:07:53.087Z pw:webserver HTTP Status: 200
+2026-09-11T11:07:53.087Z pw:webserver WebServer available
+
+--- test result ---
+  10 passed (5.3s)
+
+[3] DEV FALLBACK PRESERVED — guard bypassed when E2E_SERVER_MODE=dev
+
+Command: E2E_SERVER_MODE=dev pnpm exec playwright test --list
+
+Result: DEV_LIST_EXIT=0 (no guard throw; config loads with the dev branch selectable)
+  [chromium] › reader/reader.spec.ts:42:7 › Reader › opens reader information without navigating away
+Total: 61 tests in 20 files

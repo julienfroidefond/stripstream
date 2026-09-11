@@ -11,6 +11,7 @@
 
 # next.js
 /.next/
+/.next-e2e/
 /out/
 
 # production
@@ -56,9 +57,11 @@ mongo-keyfile
 prisma/data/
 *.db
 *.sqlite
-*.sqlite3 
+*.sqlite3
 
 temp/
 # Playwright auth state
 .auth/
 .env.local
+
+.opencode
