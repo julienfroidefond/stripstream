@@ -17,7 +17,7 @@ COPY package.json pnpm-lock.yaml ./
 COPY prisma ./prisma
 
 # Copy configuration files
-COPY tsconfig.json .eslintrc.json next.config.js ./
+COPY tsconfig.json eslint.config.mjs next.config.js ./
 COPY tailwind.config.ts postcss.config.js ./
 
 # Install dependencies with pnpm using cache mount for store
