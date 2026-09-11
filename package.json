@@ -15,6 +15,7 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:report": "playwright show-report",
+    "test:e2e:timings": "node scripts/e2e-report.mjs",
     "icons": "node scripts/generate-icons.js",
     "postinstall": "prisma generate",
     "prepare": "husky"
