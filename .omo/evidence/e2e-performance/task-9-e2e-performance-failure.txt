@@ -1,0 +1,414 @@
+=== Task 9 failure QA (temporary break, reverted afterwards) ===
+File: tests/public/access-control.spec.ts:22 — expected pathname /login -> /login-broken
+Command: pnpm exec playwright test tests/public/access-control.spec.ts --project=read-only --no-deps --reporter=line
+Expectation: non-zero exit while the assertion is broken
+Note: the first attempt hit a port conflict (8444/8445) from a concurrent external
+Playwright session in another worktree; this file records the clean retry.
+
+
+====================================================================
+[e2e] Reusing existing production build: .next-e2e/BUILD_ID
+[e2e] BUILD_ID: cH8MAXl__8FBQpY_AXst9
+[e2e] Built at: 2026-09-11T12:40:12.788Z
+[e2e] Rerun `pnpm test:e2e:build` after any src/ change.
+====================================================================
+
+[WebServer] ⚠ "next start" does not work with "output: standalone" configuration. Use "node .next/standalone/server.js" instead.
+
+[WebServer] [stub-provider] instance A on :8444
+
+[WebServer] [stub-provider] instance B on :8445
+
+Environment variables loaded from .env
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": SQLite database "stripstream-e2e-88713.db" at "file:/var/folders/tv/w9jn7q0d08j8hl7_y9_bggxm0000gn/T/stripstream-e2e-88713.db"
+
+SQLite database stripstream-e2e-88713.db created at file:/var/folders/tv/w9jn7q0d08j8hl7_y9_bggxm0000gn/T/stripstream-e2e-88713.db
+
+8 migrations found in prisma/migrations
+
+Applying migration `20260311203728_init`
+Applying migration `20260322200000_add_anonymous_mode`
+Applying migration `20260429000000_multi_config`
+Applying migration `20260505000000_dedupe_favorites`
+Applying migration `20260520000000_add_reader_display_prefs`
+Applying migration `20260902140000_user_scoped_read_progress`
+Applying migration `20260903220000_add_reader_background`
+Applying migration `20260909000000_remove_read_progress`
+
+The following migration(s) have been applied:
+
+migrations/
+  └─ 20260311203728_init/
+    └─ migration.sql
+  └─ 20260322200000_add_anonymous_mode/
+    └─ migration.sql
+  └─ 20260429000000_multi_config/
+    └─ migration.sql
+  └─ 20260505000000_dedupe_favorites/
+    └─ migration.sql
+  └─ 20260520000000_add_reader_display_prefs/
+    └─ migration.sql
+  └─ 20260902140000_user_scoped_read_progress/
+    └─ migration.sql
+  └─ 20260903220000_add_reader_background/
+    └─ migration.sql
+  └─ 20260909000000_remove_read_progress/
+    └─ migration.sql
+      
+All migrations have been successfully applied.
+[setup] e2e users seeded (e2e-stream@test.local, e2e-reader@test.local), active Stub A (1/3), B=2
+
+Running 10 tests using 4 workers
+
+
+====================================================================
+[e2e] Reusing existing production build: .next-e2e/BUILD_ID
+[e2e] BUILD_ID: cH8MAXl__8FBQpY_AXst9
+[e2e] Built at: 2026-09-11T12:40:12.788Z
+[e2e] Rerun `pnpm test:e2e:build` after any src/ change.
+====================================================================
+
+
+
+====================================================================
+[e2e] Reusing existing production build: .next-e2e/BUILD_ID
+[e2e] BUILD_ID: cH8MAXl__8FBQpY_AXst9
+[e2e] Built at: 2026-09-11T12:40:12.788Z
+[e2e] Rerun `pnpm test:e2e:build` after any src/ change.
+====================================================================
+
+
+[1/10] [read-only] › tests/public/access-control.spec.ts:18:9 › Access control › redirects / to sign in and preserves the destination
+[2/10] [read-only] › tests/public/access-control.spec.ts:18:9 › Access control › redirects /admin to sign in and preserves the destination
+
+====================================================================
+[e2e] Reusing existing production build: .next-e2e/BUILD_ID
+[e2e] BUILD_ID: cH8MAXl__8FBQpY_AXst9
+[e2e] Built at: 2026-09-11T12:40:12.788Z
+[e2e] Rerun `pnpm test:e2e:build` after any src/ change.
+====================================================================
+
+
+
+====================================================================
+[e2e] Reusing existing production build: .next-e2e/BUILD_ID
+[e2e] BUILD_ID: cH8MAXl__8FBQpY_AXst9
+[e2e] Built at: 2026-09-11T12:40:12.788Z
+[e2e] Rerun `pnpm test:e2e:build` after any src/ change.
+====================================================================
+
+
+[3/10] [read-only] › tests/public/access-control.spec.ts:18:9 › Access control › redirects /settings to sign in and preserves the destination
+[4/10] [read-only] › tests/public/access-control.spec.ts:18:9 › Access control › redirects /account to sign in and preserves the destination
+  1) [read-only] › tests/public/access-control.spec.ts:18:9 › Access control › redirects /settings to sign in and preserves the destination 
+
+    Error: expect(page).toHaveURL(expected) failed
+
+    Expected: predicate to succeed
+    Received: "http://127.0.0.1:3000/login?from=%2Fsettings"
+    Timeout:  5000ms
+
+
+      19 |       await page.goto(route);
+      20 |
+    > 21 |       await expect(page).toHaveURL((url) => {
+         |                          ^
+      22 |         return url.pathname === '/login-broken' && url.searchParams.get('from') === route;
+      23 |       });
+      24 |       await expect(page.locator('form')).toBeVisible();
+        at /Users/julienfroidefond/Sites/stripstream/tests/public/access-control.spec.ts:21:26
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/public-access-control-Acce-4784a-d-preserves-the-destination-read-only/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/public-access-control-Acce-4784a-d-preserves-the-destination-read-only/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/public-access-control-Acce-4784a-d-preserves-the-destination-read-only/error-context.md
+
+
+  2) [read-only] › tests/public/access-control.spec.ts:18:9 › Access control › redirects /admin to sign in and preserves the destination 
+
+    Error: expect(page).toHaveURL(expected) failed
+
+    Expected: predicate to succeed
+    Received: "http://127.0.0.1:3000/login?from=%2Fadmin"
+    Timeout:  5000ms
+
+
+      19 |       await page.goto(route);
+      20 |
+    > 21 |       await expect(page).toHaveURL((url) => {
+         |                          ^
+      22 |         return url.pathname === '/login-broken' && url.searchParams.get('from') === route;
+      23 |       });
+      24 |       await expect(page.locator('form')).toBeVisible();
+        at /Users/julienfroidefond/Sites/stripstream/tests/public/access-control.spec.ts:21:26
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/public-access-control-Acce-f0c8c-d-preserves-the-destination-read-only/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/public-access-control-Acce-f0c8c-d-preserves-the-destination-read-only/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/public-access-control-Acce-f0c8c-d-preserves-the-destination-read-only/error-context.md
+
+
+  3) [read-only] › tests/public/access-control.spec.ts:18:9 › Access control › redirects /account to sign in and preserves the destination 
+
+    Error: expect(page).toHaveURL(expected) failed
+
+    Expected: predicate to succeed
+    Received: "http://127.0.0.1:3000/login?from=%2Faccount"
+    Timeout:  5000ms
+
+
+      19 |       await page.goto(route);
+      20 |
+    > 21 |       await expect(page).toHaveURL((url) => {
+         |                          ^
+      22 |         return url.pathname === '/login-broken' && url.searchParams.get('from') === route;
+      23 |       });
+      24 |       await expect(page.locator('form')).toBeVisible();
+        at /Users/julienfroidefond/Sites/stripstream/tests/public/access-control.spec.ts:21:26
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/public-access-control-Acce-2da53-d-preserves-the-destination-read-only/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/public-access-control-Acce-2da53-d-preserves-the-destination-read-only/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/public-access-control-Acce-2da53-d-preserves-the-destination-read-only/error-context.md
+
+
+  4) [read-only] › tests/public/access-control.spec.ts:18:9 › Access control › redirects / to sign in and preserves the destination 
+
+    Error: expect(page).toHaveURL(expected) failed
+
+    Expected: predicate to succeed
+    Received: "http://127.0.0.1:3000/login?from=%2F"
+    Timeout:  5000ms
+
+
+      19 |       await page.goto(route);
+      20 |
+    > 21 |       await expect(page).toHaveURL((url) => {
+         |                          ^
+      22 |         return url.pathname === '/login-broken' && url.searchParams.get('from') === route;
+      23 |       });
+      24 |       await expect(page.locator('form')).toBeVisible();
+        at /Users/julienfroidefond/Sites/stripstream/tests/public/access-control.spec.ts:21:26
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/public-access-control-Acce-105f2-d-preserves-the-destination-read-only/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/public-access-control-Acce-105f2-d-preserves-the-destination-read-only/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/public-access-control-Acce-105f2-d-preserves-the-destination-read-only/error-context.md
+
+
+
+====================================================================
+[e2e] Reusing existing production build: .next-e2e/BUILD_ID
+[e2e] BUILD_ID: cH8MAXl__8FBQpY_AXst9
+[e2e] Built at: 2026-09-11T12:40:12.788Z
+[e2e] Rerun `pnpm test:e2e:build` after any src/ change.
+====================================================================
+
+
+[5/10] [read-only] › tests/public/access-control.spec.ts:18:9 › Access control › redirects /libraries/library-id?sort=latest&page=2 to sign in and preserves the destination
+
+====================================================================
+[e2e] Reusing existing production build: .next-e2e/BUILD_ID
+[e2e] BUILD_ID: cH8MAXl__8FBQpY_AXst9
+[e2e] Built at: 2026-09-11T12:40:12.788Z
+[e2e] Rerun `pnpm test:e2e:build` after any src/ change.
+====================================================================
+
+
+[6/10] [read-only] › tests/public/access-control.spec.ts:18:9 › Access control › redirects /series/series-id to sign in and preserves the destination
+
+====================================================================
+[e2e] Reusing existing production build: .next-e2e/BUILD_ID
+[e2e] BUILD_ID: cH8MAXl__8FBQpY_AXst9
+[e2e] Built at: 2026-09-11T12:40:12.788Z
+[e2e] Rerun `pnpm test:e2e:build` after any src/ change.
+====================================================================
+
+
+[7/10] [read-only] › tests/public/access-control.spec.ts:18:9 › Access control › redirects /books/book-id to sign in and preserves the destination
+
+====================================================================
+[e2e] Reusing existing production build: .next-e2e/BUILD_ID
+[e2e] BUILD_ID: cH8MAXl__8FBQpY_AXst9
+[e2e] Built at: 2026-09-11T12:40:12.788Z
+[e2e] Rerun `pnpm test:e2e:build` after any src/ change.
+====================================================================
+
+
+[8/10] [read-only] › tests/public/access-control.spec.ts:18:9 › Access control › redirects /reading-lists/list-id to sign in and preserves the destination
+  5) [read-only] › tests/public/access-control.spec.ts:18:9 › Access control › redirects /libraries/library-id?sort=latest&page=2 to sign in and preserves the destination 
+
+    Error: expect(page).toHaveURL(expected) failed
+
+    Expected: predicate to succeed
+    Received: "http://127.0.0.1:3000/login?from=%2Flibraries%2Flibrary-id%3Fsort%3Dlatest%26page%3D2"
+    Timeout:  5000ms
+
+
+      19 |       await page.goto(route);
+      20 |
+    > 21 |       await expect(page).toHaveURL((url) => {
+         |                          ^
+      22 |         return url.pathname === '/login-broken' && url.searchParams.get('from') === route;
+      23 |       });
+      24 |       await expect(page.locator('form')).toBeVisible();
+        at /Users/julienfroidefond/Sites/stripstream/tests/public/access-control.spec.ts:21:26
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/public-access-control-Acce-5763c-d-preserves-the-destination-read-only/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/public-access-control-Acce-5763c-d-preserves-the-destination-read-only/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/public-access-control-Acce-5763c-d-preserves-the-destination-read-only/error-context.md
+
+
+  6) [read-only] › tests/public/access-control.spec.ts:18:9 › Access control › redirects /books/book-id to sign in and preserves the destination 
+
+    Error: expect(page).toHaveURL(expected) failed
+
+    Expected: predicate to succeed
+    Received: "http://127.0.0.1:3000/login?from=%2Fbooks%2Fbook-id"
+    Timeout:  5000ms
+
+
+      19 |       await page.goto(route);
+      20 |
+    > 21 |       await expect(page).toHaveURL((url) => {
+         |                          ^
+      22 |         return url.pathname === '/login-broken' && url.searchParams.get('from') === route;
+      23 |       });
+      24 |       await expect(page.locator('form')).toBeVisible();
+        at /Users/julienfroidefond/Sites/stripstream/tests/public/access-control.spec.ts:21:26
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/public-access-control-Acce-3d1bf-d-preserves-the-destination-read-only/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/public-access-control-Acce-3d1bf-d-preserves-the-destination-read-only/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/public-access-control-Acce-3d1bf-d-preserves-the-destination-read-only/error-context.md
+
+
+  7) [read-only] › tests/public/access-control.spec.ts:18:9 › Access control › redirects /series/series-id to sign in and preserves the destination 
+
+    Error: expect(page).toHaveURL(expected) failed
+
+    Expected: predicate to succeed
+    Received: "http://127.0.0.1:3000/login?from=%2Fseries%2Fseries-id"
+    Timeout:  5000ms
+
+
+      19 |       await page.goto(route);
+      20 |
+    > 21 |       await expect(page).toHaveURL((url) => {
+         |                          ^
+      22 |         return url.pathname === '/login-broken' && url.searchParams.get('from') === route;
+      23 |       });
+      24 |       await expect(page.locator('form')).toBeVisible();
+        at /Users/julienfroidefond/Sites/stripstream/tests/public/access-control.spec.ts:21:26
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/public-access-control-Acce-9ee55-d-preserves-the-destination-read-only/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/public-access-control-Acce-9ee55-d-preserves-the-destination-read-only/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/public-access-control-Acce-9ee55-d-preserves-the-destination-read-only/error-context.md
+
+
+  8) [read-only] › tests/public/access-control.spec.ts:18:9 › Access control › redirects /reading-lists/list-id to sign in and preserves the destination 
+
+    Error: expect(page).toHaveURL(expected) failed
+
+    Expected: predicate to succeed
+    Received: "http://127.0.0.1:3000/login?from=%2Freading-lists%2Flist-id"
+    Timeout:  5000ms
+
+
+      19 |       await page.goto(route);
+      20 |
+    > 21 |       await expect(page).toHaveURL((url) => {
+         |                          ^
+      22 |         return url.pathname === '/login-broken' && url.searchParams.get('from') === route;
+      23 |       });
+      24 |       await expect(page.locator('form')).toBeVisible();
+        at /Users/julienfroidefond/Sites/stripstream/tests/public/access-control.spec.ts:21:26
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/public-access-control-Acce-3f0c8-d-preserves-the-destination-read-only/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/public-access-control-Acce-3f0c8-d-preserves-the-destination-read-only/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/public-access-control-Acce-3f0c8-d-preserves-the-destination-read-only/error-context.md
+
+
+
+====================================================================
+[e2e] Reusing existing production build: .next-e2e/BUILD_ID
+[e2e] BUILD_ID: cH8MAXl__8FBQpY_AXst9
+[e2e] Built at: 2026-09-11T12:40:12.788Z
+[e2e] Rerun `pnpm test:e2e:build` after any src/ change.
+====================================================================
+
+
+
+====================================================================
+[e2e] Reusing existing production build: .next-e2e/BUILD_ID
+[e2e] BUILD_ID: cH8MAXl__8FBQpY_AXst9
+[e2e] Built at: 2026-09-11T12:40:12.788Z
+[e2e] Rerun `pnpm test:e2e:build` after any src/ change.
+====================================================================
+
+
+[9/10] [read-only] › tests/public/access-control.spec.ts:41:7 › Access control › keeps authentication and health endpoints public
+[10/10] [read-only] › tests/public/access-control.spec.ts:28:7 › Access control › returns a structured 401 for a protected API route
+  8 failed
+    [read-only] › tests/public/access-control.spec.ts:18:9 › Access control › redirects / to sign in and preserves the destination 
+    [read-only] › tests/public/access-control.spec.ts:18:9 › Access control › redirects /settings to sign in and preserves the destination 
+    [read-only] › tests/public/access-control.spec.ts:18:9 › Access control › redirects /account to sign in and preserves the destination 
+    [read-only] › tests/public/access-control.spec.ts:18:9 › Access control › redirects /admin to sign in and preserves the destination 
+    [read-only] › tests/public/access-control.spec.ts:18:9 › Access control › redirects /libraries/library-id?sort=latest&page=2 to sign in and preserves the destination 
+    [read-only] › tests/public/access-control.spec.ts:18:9 › Access control › redirects /series/series-id to sign in and preserves the destination 
+    [read-only] › tests/public/access-control.spec.ts:18:9 › Access control › redirects /books/book-id to sign in and preserves the destination 
+    [read-only] › tests/public/access-control.spec.ts:18:9 › Access control › redirects /reading-lists/list-id to sign in and preserves the destination 
+  2 passed (15.2s)
+
+FAILURE_RUN_EXIT=1 (expected non-zero)
+
+--- REVERT ---
+Reverted line 22 to '/login'.
+hash before break: d4eb17579c2a47aa68ac4352dbb320993ec4ecb9f5d153f6fd10c2f999b1ed7a
+hash after  revert: d4eb17579c2a47aa68ac4352dbb320993ec4ecb9f5d153f6fd10c2f999b1ed7a
+MATCH: YES
+git diff --exit-code -- tests/public/access-control.spec.ts: clean (exit 0)

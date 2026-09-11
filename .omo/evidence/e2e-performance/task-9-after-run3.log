@@ -1,0 +1,249 @@
+
+> stripstream@1.23.4 test:e2e /Users/julienfroidefond/Sites/stripstream
+> pnpm test:e2e:build && playwright test
+
+
+> stripstream@1.23.4 test:e2e:build /Users/julienfroidefond/Sites/stripstream
+> NEXT_DIST_DIR=.next-e2e next build
+
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+- Experiments (use with caution):
+  · staleTimes
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+Browserslist: browsers data (caniuse-lite) is 11 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+✓ Compiled successfully in 3.1s
+  Running TypeScript ...
+  Collecting page data using 9 workers ...
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+  Generating static pages using 9 workers (0/6) ...
+  Generating static pages using 9 workers (1/6) 
+  Generating static pages using 9 workers (2/6) 
+  Generating static pages using 9 workers (4/6) 
+✓ Generating static pages using 9 workers (6/6) in 48.6ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ƒ /
+├ ƒ /_not-found
+├ ƒ /account
+├ ƒ /admin
+├ ƒ /api/auth/[...nextauth]
+├ ƒ /api/komga/books/[bookId]/pages/[pageNumber]
+├ ƒ /api/komga/images/books/[bookId]/pages/[pageNumber]
+├ ƒ /api/komga/images/books/[bookId]/pages/[pageNumber]/thumbnail
+├ ƒ /api/komga/images/books/[bookId]/thumbnail
+├ ƒ /api/komga/images/series/[seriesId]/first-page
+├ ƒ /api/komga/images/series/[seriesId]/thumbnail
+├ ƒ /api/provider/search
+├ ƒ /api/stripstream/images/books/[bookId]/pages/[pageNumber]
+├ ƒ /api/stripstream/images/books/[bookId]/thumbnail
+├ ƒ /api/stripstream/search
+├ ƒ /books/[bookId]
+├ ƒ /libraries/[libraryId]
+├ ƒ /login
+├ ƒ /reading-lists/[id]
+├ ƒ /series/[seriesId]
+└ ƒ /settings
+
+
+ƒ Proxy (Middleware)
+
+ƒ  (Dynamic)  server-rendered on demand
+
+
+====================================================================
+[e2e] Reusing existing production build: .next-e2e/BUILD_ID
+[e2e] BUILD_ID: cH8MAXl__8FBQpY_AXst9
+[e2e] Built at: 2026-09-11T12:40:12.788Z
+[e2e] Rerun `pnpm test:e2e:build` after any src/ change.
+====================================================================
+
+[WebServer] ⚠ "next start" does not work with "output: standalone" configuration. Use "node .next/standalone/server.js" instead.
+[WebServer] [stub-provider] instance A on :8444
+[WebServer] [stub-provider] instance B on :8445
+Environment variables loaded from .env
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": SQLite database "stripstream-e2e-83308.db" at "file:/var/folders/tv/w9jn7q0d08j8hl7_y9_bggxm0000gn/T/stripstream-e2e-83308.db"
+
+SQLite database stripstream-e2e-83308.db created at file:/var/folders/tv/w9jn7q0d08j8hl7_y9_bggxm0000gn/T/stripstream-e2e-83308.db
+
+8 migrations found in prisma/migrations
+
+Applying migration `20260311203728_init`
+Applying migration `20260322200000_add_anonymous_mode`
+Applying migration `20260429000000_multi_config`
+Applying migration `20260505000000_dedupe_favorites`
+Applying migration `20260520000000_add_reader_display_prefs`
+Applying migration `20260902140000_user_scoped_read_progress`
+Applying migration `20260903220000_add_reader_background`
+Applying migration `20260909000000_remove_read_progress`
+
+The following migration(s) have been applied:
+
+migrations/
+  └─ 20260311203728_init/
+    └─ migration.sql
+  └─ 20260322200000_add_anonymous_mode/
+    └─ migration.sql
+  └─ 20260429000000_multi_config/
+    └─ migration.sql
+  └─ 20260505000000_dedupe_favorites/
+    └─ migration.sql
+  └─ 20260520000000_add_reader_display_prefs/
+    └─ migration.sql
+  └─ 20260902140000_user_scoped_read_progress/
+    └─ migration.sql
+  └─ 20260903220000_add_reader_background/
+    └─ migration.sql
+  └─ 20260909000000_remove_read_progress/
+    └─ migration.sql
+      
+All migrations have been successfully applied.
+[setup] e2e users seeded (e2e-stream@test.local, e2e-reader@test.local), active Stub A (1/3), B=2
+
+Running 63 tests using 4 workers
+
+
+====================================================================
+[e2e] Reusing existing production build: .next-e2e/BUILD_ID
+[e2e] BUILD_ID: cH8MAXl__8FBQpY_AXst9
+[e2e] Built at: 2026-09-11T12:40:12.788Z
+[e2e] Rerun `pnpm test:e2e:build` after any src/ change.
+====================================================================
+
+  ✓   1 [setup] › tests/setup/auth.setup.ts:12:5 › authenticate as the stream account (1.4s)
+  ✓   2 [setup] › tests/setup/auth.setup.ts:18:5 › authenticate as the reader account (1.3s)
+
+====================================================================
+[e2e] Reusing existing production build: .next-e2e/BUILD_ID
+[e2e] BUILD_ID: cH8MAXl__8FBQpY_AXst9
+[e2e] Built at: 2026-09-11T12:40:12.788Z
+[e2e] Rerun `pnpm test:e2e:build` after any src/ change.
+====================================================================
+
+
+====================================================================
+[e2e] Reusing existing production build: .next-e2e/BUILD_ID
+[e2e] BUILD_ID: cH8MAXl__8FBQpY_AXst9
+[e2e] Built at: 2026-09-11T12:40:12.788Z
+[e2e] Rerun `pnpm test:e2e:build` after any src/ change.
+====================================================================
+
+
+====================================================================
+[e2e] Reusing existing production build: .next-e2e/BUILD_ID
+[e2e] BUILD_ID: cH8MAXl__8FBQpY_AXst9
+[e2e] Built at: 2026-09-11T12:40:12.788Z
+[e2e] Rerun `pnpm test:e2e:build` after any src/ change.
+====================================================================
+
+
+====================================================================
+[e2e] Reusing existing production build: .next-e2e/BUILD_ID
+[e2e] BUILD_ID: cH8MAXl__8FBQpY_AXst9
+[e2e] Built at: 2026-09-11T12:40:12.788Z
+[e2e] Rerun `pnpm test:e2e:build` after any src/ change.
+====================================================================
+
+  ✓   3 [read-only] › tests/account/admin-authorization.spec.ts:11:7 › Admin authorization › only exposes the dashboard to an administrator (641ms)
+  ✓   5 [read-only] › tests/account/account.spec.ts:13:7 › Account › shows the signed-in profile without exposing password values (689ms)
+  ✓   4 [read-only] › tests/account/account.spec.ts:23:7 › Account › rejects a short new password before contacting the server (723ms)
+  ✓   6 [read-only] › tests/account/account.spec.ts:34:7 › Account › rejects mismatching new passwords before contacting the server (1.0s)
+  ✓   8 [read-only] › tests/account/session.spec.ts:28:7 › Session lifecycle after app suspension › redirects a restored protected screen when its session expired in the background (819ms)
+  ✓   9 [read-only] › tests/account/settings.spec.ts:13:7 › Settings › exposes all settings sections with real controls (811ms)
+  ✓   7 [read-only] › tests/account/session.spec.ts:11:7 › Session lifecycle › signs out and protects the application again (900ms)
+  ✓  10 [read-only] › tests/account/settings.spec.ts:28:7 › Settings › remembers the active tab after a reload (1.0s)
+  ✓  11 [read-only] › tests/public/access-control.spec.ts:18:9 › Access control › redirects / to sign in and preserves the destination (572ms)
+  ✓  13 [read-only] › tests/public/access-control.spec.ts:18:9 › Access control › redirects /account to sign in and preserves the destination (673ms)
+  ✓  12 [read-only] › tests/public/access-control.spec.ts:18:9 › Access control › redirects /settings to sign in and preserves the destination (680ms)
+  ✓  14 [read-only] › tests/public/access-control.spec.ts:18:9 › Access control › redirects /admin to sign in and preserves the destination (530ms)
+  ✓  15 [read-only] › tests/public/access-control.spec.ts:18:9 › Access control › redirects /libraries/library-id?sort=latest&page=2 to sign in and preserves the destination (481ms)
+  ✓  19 [read-only] › tests/public/access-control.spec.ts:28:7 › Access control › returns a structured 401 for a protected API route (14ms)
+  ✓  20 [read-only] › tests/public/access-control.spec.ts:41:7 › Access control › keeps authentication and health endpoints public (33ms)
+  ✓  16 [read-only] › tests/public/access-control.spec.ts:18:9 › Access control › redirects /series/series-id to sign in and preserves the destination (591ms)
+  ✓  17 [read-only] › tests/public/access-control.spec.ts:18:9 › Access control › redirects /books/book-id to sign in and preserves the destination (604ms)
+  ✓  18 [read-only] › tests/public/access-control.spec.ts:18:9 › Access control › redirects /reading-lists/list-id to sign in and preserves the destination (494ms)
+  ✓  21 [read-only] › tests/public/authentication.spec.ts:11:7 › Authentication › shows an accessible, empty sign-in form (530ms)
+  ✓  25 [read-only] › tests/public/pwa.spec.ts:6:7 › Public PWA resources › serves a valid web app manifest (22ms)
+  ✓  23 [read-only] › tests/public/authentication.spec.ts:42:7 › Authentication › honours a registration tab deep link (544ms)
+  ✓  26 [read-only] › tests/public/responsive.spec.ts:12:7 › login page renders at mobile-portrait (375x667) (253ms)
+  ✓  27 [read-only] › tests/public/responsive.spec.ts:12:7 › login page renders at tablet-portrait (768x1024) (304ms)
+  ✓  28 [read-only] › tests/public/responsive.spec.ts:12:7 › login page renders at desktop (1280x800) (371ms)
+  ✓  24 [read-only] › tests/public/authentication.spec.ts:48:7 › Authentication › changes the interface language (874ms)
+  ✓  29 [read-only] › tests/public/responsive.spec.ts:27:5 › no horizontal overflow at mobile width (251ms)
+  ✓  22 [read-only] › tests/public/authentication.spec.ts:27:7 › Authentication › switches to registration and validates matching passwords client-side (1.5s)
+
+====================================================================
+[e2e] Reusing existing production build: .next-e2e/BUILD_ID
+[e2e] BUILD_ID: cH8MAXl__8FBQpY_AXst9
+[e2e] Built at: 2026-09-11T12:40:12.788Z
+[e2e] Rerun `pnpm test:e2e:build` after any src/ change.
+====================================================================
+
+  ✓  30 [mutating] › tests/home/home.spec.ts:59:7 › Home functional journeys › shows continue reading and resumes the last viewed page (2.2s)
+  ✓  31 [mutating] › tests/home/home.spec.ts:83:7 › Home functional journeys › keeps carousel images stable and reuses the HTTP cache after a reload (354ms)
+  ✓  32 [mutating] › tests/home/home.spec.ts:135:7 › Home functional journeys › shows reading lists on the home page and opens one (657ms)
+  ✓  33 [mutating] › tests/integrations/mutations.spec.ts:16:7 › Mutations on the isolated E2E account › persists reader preferences after a reload (412ms)
+  ✓  34 [mutating] › tests/integrations/mutations.spec.ts:35:7 › Mutations on the isolated E2E account › creates, edits, and deletes a Komga connection (1.2s)
+  ✓  35 [mutating] › tests/integrations/streaming.spec.ts:32:7 › Home streaming + changement de connexion › affiche la home streamée avec les données de la connexion active (270ms)
+  ✓  36 [mutating] › tests/integrations/streaming.spec.ts:41:7 › Home streaming + changement de connexion › change de connexion, affiche le fallback, puis les données de la nouvelle home (1.6s)
+  ✓  37 [mutating] › tests/library/authenticated-navigation.spec.ts:9:7 › Authenticated navigation › opens the main application navigation (254ms)
+  ✓  38 [mutating] › tests/library/authenticated-navigation.spec.ts:17:7 › Authenticated navigation › opens settings and switches between every section (305ms)
+  ✓  39 [mutating] › tests/library/authenticated-navigation.spec.ts:30:7 › Authenticated navigation › discovers a real library and exercises search when data exists (280ms)
+  ✓  40 [mutating] › tests/library/authenticated-navigation.spec.ts:39:7 › Authenticated navigation › opens a real series and book when the provider has content (1.0s)
+  ✓  41 [mutating] › tests/library/favorites-reading-lists.spec.ts:10:7 › Favorites and reading lists › adds and removes a series favorite, including persistence after reload (408ms)
+  ✓  42 [mutating] › tests/library/favorites-reading-lists.spec.ts:32:7 › Favorites and reading lists › opens a deterministic reading list through the Stripstream connection (400ms)
+  ✓  43 [mutating] › tests/library/library.spec.ts:18:7 › Library browsing › synchronizes search with the URL and can clear it (1.4s)
+  ✓  44 [mutating] › tests/library/library.spec.ts:27:7 › Library browsing › changes sorting without leaving the library (359ms)
+  ✓  45 [mutating] › tests/library/library.spec.ts:36:7 › Library browsing › toggles unread and missing filters through the URL (638ms)
+  -  46 [mutating] › tests/library/library.spec.ts:50:7 › Library browsing › navigates between library pages when the result set spans pages
+  -  47 [mutating] › tests/library/library.spec.ts:63:7 › Library browsing › opens a real series card when content exists
+  ✓  48 [mutating] › tests/library/reading-status.spec.ts:11:7 › Reading statuses › marks a book read and unread from the series card (528ms)
+  ✓  49 [mutating] › tests/library/reading-status.spec.ts:52:7 › Reading statuses › marks a book read when reaching its last reader page (1.8s)
+  ✓  50 [mutating] › tests/library/series-rating.spec.ts:10:7 › Series rating (Stripstream) › sets, persists, then clears a series rating on the Stripstream connection (885ms)
+  ✓  51 [mutating] › tests/library/series-rating.spec.ts:51:7 › Series rating (Stripstream) › hides the rating control on the Komga connection (228ms)
+  ✓  52 [mutating] › tests/library/series-sort.spec.ts:10:7 › Library sort by rating (Stripstream) › cycles three sort states including community_score on Stripstream (659ms)
+  ✓  53 [mutating] › tests/library/series-sort.spec.ts:35:7 › Library sort by rating (Stripstream) › cycles only two sort states on Komga (no community_score) (477ms)
+  ✓  54 [mutating] › tests/public/security.spec.ts:12:7 › Security headers › sends security headers on public pages (10ms)
+  ✓  55 [mutating] › tests/public/security.spec.ts:23:7 › Security headers › sends security headers on a protected route redirect (3ms)
+[WebServer] [auth][error] CredentialsSignin: Read more at https://errors.authjs.dev#credentialssignin
+[WebServer]     at id (/Users/julienfroidefond/Sites/stripstream/.next-e2e/server/chunks/[root-of-the-server]__0a2929e8._.js:408:40808)
+[WebServer]     at async ix (/Users/julienfroidefond/Sites/stripstream/.next-e2e/server/chunks/[root-of-the-server]__0a2929e8._.js:408:50233)
+[WebServer]     at async i_ (/Users/julienfroidefond/Sites/stripstream/.next-e2e/server/chunks/[root-of-the-server]__0a2929e8._.js:408:54483)
+[WebServer]     at async rW.do (/Users/julienfroidefond/Sites/stripstream/node_modules/.pnpm/next@16.1.6_@babel+core@7.29.0_@playwright+test@1.62.1_react-dom@19.2.4_react@19.2.4__react@19.2.4/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.prod.js:5:20169)
+[WebServer]     at async rW.handle (/Users/julienfroidefond/Sites/stripstream/node_modules/.pnpm/next@16.1.6_@babel+core@7.29.0_@playwright+test@1.62.1_react-dom@19.2.4_react@19.2.4__react@19.2.4/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.prod.js:5:24949)
+[WebServer]     at async o (/Users/julienfroidefond/Sites/stripstream/.next-e2e/server/chunks/[root-of-the-server]__4c62b073._.js:1:13076)
+[WebServer]     at async rW.handleResponse (/Users/julienfroidefond/Sites/stripstream/node_modules/.pnpm/next@16.1.6_@babel+core@7.29.0_@playwright+test@1.62.1_react-dom@19.2.4_react@19.2.4__react@19.2.4/node_modules/next/dist/compiled/next-server/app-route-turbo.runtime.prod.js:1:104149)
+[WebServer]     at async i (/Users/julienfroidefond/Sites/stripstream/.next-e2e/server/chunks/[root-of-the-server]__4c62b073._.js:1:14117)
+[WebServer]     at async Module.H (/Users/julienfroidefond/Sites/stripstream/.next-e2e/server/chunks/[root-of-the-server]__4c62b073._.js:1:15195)
+[WebServer]     at async NextNodeServer.renderToResponseWithComponentsImpl (/Users/julienfroidefond/Sites/stripstream/node_modules/.pnpm/next@16.1.6_@babel+core@7.29.0_@playwright+test@1.62.1_react-dom@19.2.4_react@19.2.4__react@19.2.4/node_modules/next/dist/server/base-server.js:1442:9)
+  ✓  56 [mutating] › tests/public/security.spec.ts:36:7 › Rate limiting › rejects invalid credentials and stays on login (1.2s)
+  ✓  57 [mutating] › tests/public/security.spec.ts:47:7 › Rate limiting › blocks registration after too many attempts (7.1s)
+  ✓  58 [mutating] › tests/reader/reader-stub.spec.ts:41:7 › Reader against the deterministic Komga fixture › loads pages, navigates, switches spread direction, and syncs progress (2.9s)
+  ✓  59 [mutating] › tests/reader/reader-stub.spec.ts:83:7 › Reader against the deterministic Komga fixture › opens thumbnails and reader information, then shows the end-of-book dialog (2.7s)
+  ✓  60 [mutating] › tests/reader/reader-stub.spec.ts:108:7 › Reader against the deterministic Komga fixture › does not attribute anonymous reading progress to the current account (4.0s)
+  ✓  61 [mutating] › tests/reader/reader-stub.spec.ts:180:7 › Reader against the deterministic Komga fixture › keeps reading statuses separate across two users and two connections (11.5s)
+  ✓  62 [mutating] › tests/reader/reader.spec.ts:19:7 › Reader › offers page, direction, display and information controls (994ms)
+  ✓  63 [mutating] › tests/reader/reader.spec.ts:27:7 › Reader › opens reader information without navigating away (1.0s)
+
+  2 skipped
+  61 passed (58.5s)
+real 65.23
+user 93.31
+sys 13.84

@@ -29,7 +29,15 @@ test.describe('Session lifecycle after app suspension', () => {
     context,
     page,
   }) => {
+    // SessionResumeGuard is a client effect: wait for hydration, observable via
+    // the SessionProvider's initial /api/auth/session response (its child effect
+    // attaches the resume listener first). Without this, a loaded page can look
+    // ready while a synthetic visibilitychange still lands before the guard.
+    const hydrated = page.waitForResponse((response) =>
+      response.url().includes('/api/auth/session'),
+    );
     await page.goto('/');
+    await hydrated;
     await expect(page.getByRole('main').first()).toBeVisible();
 
     await context.clearCookies({ name: /(?:authjs|next-auth)\.session-token/ });
