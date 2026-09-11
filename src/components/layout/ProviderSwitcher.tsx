@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback, useMemo } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ChevronDown, Loader2, Server, Settings } from "lucide-react";
 import {
@@ -36,7 +35,6 @@ interface ProviderSwitcherProps {
 }
 
 export function ProviderSwitcher({ komgaConfigs, stripstreamConfigs }: ProviderSwitcherProps) {
-  const router = useRouter();
   const { toast } = useToast();
   const { t } = useTranslate();
   const [isOpen, setIsOpen] = useState(false);
@@ -81,9 +79,12 @@ export function ProviderSwitcher({ komgaConfigs, stripstreamConfigs }: ProviderS
         if (!result.success) {
           setIsOpen(true);
         } else {
-          // The server action sets the active-connection cookies and revalidates
-          // the home route. Refresh so the current view settles on the new data.
-          router.refresh();
+          // The active connection is stored in an HTTP-only cookie. A client
+          // router refresh can retain streamed RSC segments generated for the
+          // previous cookie, notably in development. Reload the current route
+          // so every server component is rendered from the newly selected
+          // connection.
+          window.location.reload();
         }
       } catch {
         setIsOpen(true);
@@ -91,7 +92,7 @@ export function ProviderSwitcher({ komgaConfigs, stripstreamConfigs }: ProviderS
         setBusyKey(null);
       }
     },
-    [busyKey, router, toast, t]
+    [busyKey, toast, t]
   );
 
   // Pas de connexion configurée → bouton qui mène vers les paramètres

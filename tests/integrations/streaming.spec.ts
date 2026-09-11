@@ -84,9 +84,8 @@ test.describe('Home streaming + changement de connexion', () => {
       page.locator('#sidebar').getByTestId('provider-switcher')
     ).toContainText('Stub B', { timeout: 15_000 });
 
-    // Recharge pour rendre la home de la nouvelle connexion : le contenu streamé
-    // n'est pas re-rendu par un routeur.refresh() en dev.
-    await page.reload();
+    // Le changement de connexion recharge automatiquement la route courante,
+    // qui doit alors être rendue avec les données de Stub B.
     await expect(page.getByText('BD-B (Tome 1)').first()).toBeVisible({ timeout: 15_000 });
   });
 });

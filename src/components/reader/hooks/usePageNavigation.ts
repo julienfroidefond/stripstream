@@ -34,6 +34,7 @@ export function usePageNavigation({
   });
   const [showEndMessage, setShowEndMessage] = useState(false);
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const finalSyncRef = useRef<{ bookId: string; page: number } | null>(null);
   const lastTrackablePageRef = useRef<number | null>(isAnonymous ? null : currentPage);
   // Refs miroir de book/pages.length pour le sync au démontage uniquement.
   // Ne PAS mettre ces valeurs dans les deps du cleanup effect : le sync appelle
@@ -107,6 +108,7 @@ export function usePageNavigation({
               clearTimeout(syncTimeoutRef.current);
               syncTimeoutRef.current = null;
             }
+            finalSyncRef.current = { bookId: book.id, page };
             void syncReadProgress(book, pages.length, page);
           } else {
             debouncedSync(page);
@@ -161,6 +163,14 @@ export function usePageNavigation({
         syncTimeoutRef.current = null;
       }
       if (lastTrackablePage !== null) {
+        const finalSync = finalSyncRef.current;
+        if (
+          finalSync?.bookId === bookRef.current.id &&
+          finalSync.page === lastTrackablePage &&
+          lastTrackablePage === pagesLengthRef.current
+        ) {
+          return;
+        }
         syncReadProgress(bookRef.current, pagesLengthRef.current, lastTrackablePage);
       }
     };

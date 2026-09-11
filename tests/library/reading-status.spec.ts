@@ -47,12 +47,15 @@ test.describe('Reading statuses', () => {
       await markRead.click();
     }
 
-    await expect(markRead).toBeEnabled({ timeout: 15_000 });
+    // Le succès remplace l'action disponible : le bouton "marquer comme lu"
+    // ne doit pas redevenir activable après son clic.
+    await expect(markUnread).toBeVisible({ timeout: 15_000 });
     await page.reload();
     await expect(markUnread).toBeVisible({ timeout: 15_000 });
     await expect(page.getByTestId('mark-as-unread').first()).toBeVisible();
 
     await page.getByTestId('mark-as-unread').first().click();
+    await expect(markRead).toBeVisible({ timeout: 15_000 });
     await page.reload();
     await expect(page.getByText(/unread|non lu/i).first()).toBeVisible();
   });
