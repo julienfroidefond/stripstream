@@ -111,8 +111,15 @@ test.describe('Home functional journeys', () => {
     await page.reload();
     const warm = await collectImagePerformance(page);
 
+    const coldResourceNames = new Set(cold.resources.map((resource) => resource.name));
+    const reusedResources = warm.resources.filter((resource) => coldResourceNames.has(resource.name));
+
     expect(warm.resources.length).toBeGreaterThan(0);
-    expect(warm.resources.every((resource) => resource.transferSize === 0)).toBe(true);
+    // Covers below the fold use `loading="lazy"`, so the reloaded document can
+    // request images the cold pass never fetched; only the images already
+    // loaded before reload must be served from the HTTP cache.
+    expect(reusedResources.length).toBeGreaterThan(0);
+    expect(reusedResources.every((resource) => resource.transferSize === 0)).toBe(true);
     expect(warm.layoutShift).toBe(0);
 
     await testInfo.attach('image-performance.json', {
