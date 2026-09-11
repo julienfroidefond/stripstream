@@ -1,0 +1,14 @@
+{
+  "schema_version": 2,
+  "active_work_id": null,
+  "works": {
+    "e2e-performance": {
+      "work_id": "e2e-performance",
+      "active_plan": ".omo/plans/e2e-performance.md",
+      "plan_name": "e2e-performance",
+      "session_ids": ["codex:ses_f70eb634cffeq9hdPNr3Nr4WE6"],
+      "status": "completed",
+      "worktree_path": null
+    }
+  }
+}

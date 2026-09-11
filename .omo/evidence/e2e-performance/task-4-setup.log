@@ -1,0 +1,65 @@
+
+====================================================================
+[e2e] Reusing existing production build: .next-e2e/BUILD_ID
+[e2e] BUILD_ID: enHlcVxwZodBrmcuCOk0V
+[e2e] Built at: 2026-09-11T11:07:41.828Z
+[e2e] Rerun `pnpm test:e2e:build` after any src/ change.
+====================================================================
+
+[WebServer] ⚠ "next start" does not work with "output: standalone" configuration. Use "node .next/standalone/server.js" instead.
+[WebServer] [stub-provider] instance A on :8444
+[WebServer] [stub-provider] instance B on :8445
+Environment variables loaded from .env
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": SQLite database "stripstream-e2e-61690.db" at "file:/var/folders/tv/w9jn7q0d08j8hl7_y9_bggxm0000gn/T/stripstream-e2e-61690.db"
+
+SQLite database stripstream-e2e-61690.db created at file:/var/folders/tv/w9jn7q0d08j8hl7_y9_bggxm0000gn/T/stripstream-e2e-61690.db
+
+8 migrations found in prisma/migrations
+
+Applying migration `20260311203728_init`
+Applying migration `20260322200000_add_anonymous_mode`
+Applying migration `20260429000000_multi_config`
+Applying migration `20260505000000_dedupe_favorites`
+Applying migration `20260520000000_add_reader_display_prefs`
+Applying migration `20260902140000_user_scoped_read_progress`
+Applying migration `20260903220000_add_reader_background`
+Applying migration `20260909000000_remove_read_progress`
+
+The following migration(s) have been applied:
+
+migrations/
+  └─ 20260311203728_init/
+    └─ migration.sql
+  └─ 20260322200000_add_anonymous_mode/
+    └─ migration.sql
+  └─ 20260429000000_multi_config/
+    └─ migration.sql
+  └─ 20260505000000_dedupe_favorites/
+    └─ migration.sql
+  └─ 20260520000000_add_reader_display_prefs/
+    └─ migration.sql
+  └─ 20260902140000_user_scoped_read_progress/
+    └─ migration.sql
+  └─ 20260903220000_add_reader_background/
+    └─ migration.sql
+  └─ 20260909000000_remove_read_progress/
+    └─ migration.sql
+      
+All migrations have been successfully applied.
+[setup] e2e users seeded (e2e-stream@test.local, e2e-reader@test.local), active Stub A (1/3), B=2
+
+Running 2 tests using 1 worker
+
+
+====================================================================
+[e2e] Reusing existing production build: .next-e2e/BUILD_ID
+[e2e] BUILD_ID: enHlcVxwZodBrmcuCOk0V
+[e2e] Built at: 2026-09-11T11:07:41.828Z
+[e2e] Rerun `pnpm test:e2e:build` after any src/ change.
+====================================================================
+
+  ✓  1 [setup] › tests/setup/auth.setup.ts:12:5 › authenticate as the stream account (1.7s)
+  ✓  2 [setup] › tests/setup/auth.setup.ts:18:5 › authenticate as the reader account (1.4s)
+
+  2 passed (6.1s)

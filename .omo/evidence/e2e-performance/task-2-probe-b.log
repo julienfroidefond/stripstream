@@ -1,0 +1,8 @@
+LOGIN_REDIRECT_URL=http://127.0.0.1:3018/
+COOKIES=[{"name":"NEXT_LOCALE","domain":"127.0.0.1","path":"/","secure":false,"httpOnly":false,"sameSite":"Lax"},{"name":"__Host-authjs.csrf-token","domain":"127.0.0.1","path":"/","secure":true,"httpOnly":true,"sameSite":"Lax"},{"name":"__Secure-authjs.callback-url","domain":"127.0.0.1","path":"/","secure":true,"httpOnly":true,"sameSite":"Lax"},{"name":"__Secure-authjs.session-token","domain":"127.0.0.1","path":"/","secure":true,"httpOnly":true,"sameSite":"Lax"}]
+ACCOUNT_URL=http://127.0.0.1:3018/account
+ACCOUNT_STATUS=200
+ACCOUNT_HEADING_VISIBLE=true
+AFTER_CLEAR_URL=http://127.0.0.1:3018/login?from=%2Faccount
+AFTER_CLEAR_STATUS=200
+AFTER_CLEAR_REDIRECTED_TO_LOGIN=true

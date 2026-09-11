@@ -1,0 +1,63 @@
+Listing tests:
+  [chromium] › account/account.spec.ts:12:7 › Account › shows the signed-in profile without exposing password values
+  [chromium] › account/account.spec.ts:22:7 › Account › rejects a short new password before contacting the server
+  [chromium] › account/account.spec.ts:33:7 › Account › rejects mismatching new passwords before contacting the server
+  [chromium] › account/admin-authorization.spec.ts:9:7 › Admin authorization › only exposes the dashboard to an administrator
+  [chromium] › account/session.spec.ts:9:7 › Session lifecycle › signs out and protects the application again
+  [chromium] › account/session.spec.ts:27:7 › Session lifecycle after app suspension › redirects a restored protected screen when its session expired in the background
+  [chromium] › account/settings.spec.ts:12:7 › Settings › exposes all settings sections with real controls
+  [chromium] › account/settings.spec.ts:27:7 › Settings › remembers the active tab after a reload
+  [chromium] › home/home.spec.ts:57:7 › Home functional journeys › shows continue reading and resumes the last viewed page
+  [chromium] › home/home.spec.ts:71:7 › Home functional journeys › keeps carousel images stable and reuses the HTTP cache after a reload
+  [chromium] › home/home.spec.ts:114:7 › Home functional journeys › shows reading lists on the home page and opens one
+  [chromium] › integrations/mutations.spec.ts:34:7 › Mutations on the isolated E2E account › persists reader preferences after a reload
+  [chromium] › integrations/mutations.spec.ts:53:7 › Mutations on the isolated E2E account › creates, edits, and deletes a Komga connection
+  [chromium] › integrations/streaming.spec.ts:53:7 › Home streaming + changement de connexion › affiche la home streamée avec les données de la connexion active
+  [chromium] › integrations/streaming.spec.ts:63:7 › Home streaming + changement de connexion › change de connexion, affiche le fallback, puis les données de la nouvelle home
+  [chromium] › library/authenticated-navigation.spec.ts:11:7 › Authenticated navigation › opens the main application navigation
+  [chromium] › library/authenticated-navigation.spec.ts:19:7 › Authenticated navigation › opens settings and switches between every section
+  [chromium] › library/authenticated-navigation.spec.ts:32:7 › Authenticated navigation › discovers a real library and exercises search when data exists
+  [chromium] › library/authenticated-navigation.spec.ts:41:7 › Authenticated navigation › opens a real series and book when the provider has content
+  [chromium] › library/favorites-reading-lists.spec.ts:24:7 › Favorites and reading lists › adds and removes a series favorite, including persistence after reload
+  [chromium] › library/favorites-reading-lists.spec.ts:47:7 › Favorites and reading lists › opens a deterministic reading list through the Stripstream connection
+  [chromium] › library/library.spec.ts:17:7 › Library browsing › synchronizes search with the URL and can clear it
+  [chromium] › library/library.spec.ts:26:7 › Library browsing › changes sorting without leaving the library
+  [chromium] › library/library.spec.ts:35:7 › Library browsing › toggles unread and missing filters through the URL
+  [chromium] › library/library.spec.ts:49:7 › Library browsing › navigates between library pages when the result set spans pages
+  [chromium] › library/library.spec.ts:62:7 › Library browsing › opens a real series card when content exists
+  [chromium] › library/reading-status.spec.ts:25:7 › Reading statuses › marks a book read and unread from the series card
+  [chromium] › library/reading-status.spec.ts:63:7 › Reading statuses › marks a book read when reaching its last reader page
+  [chromium] › library/series-rating.spec.ts:8:7 › Series rating (Stripstream) › sets, persists, then clears a series rating on the Stripstream connection
+  [chromium] › library/series-rating.spec.ts:50:7 › Series rating (Stripstream) › hides the rating control on the Komga connection
+  [chromium] › library/series-sort.spec.ts:8:7 › Library sort by rating (Stripstream) › cycles three sort states including community_score on Stripstream
+  [chromium] › library/series-sort.spec.ts:34:7 › Library sort by rating (Stripstream) › cycles only two sort states on Komga (no community_score)
+  [chromium] › public/access-control.spec.ts:16:9 › Access control › redirects / to sign in and preserves the destination
+  [chromium] › public/access-control.spec.ts:16:9 › Access control › redirects /settings to sign in and preserves the destination
+  [chromium] › public/access-control.spec.ts:16:9 › Access control › redirects /account to sign in and preserves the destination
+  [chromium] › public/access-control.spec.ts:16:9 › Access control › redirects /admin to sign in and preserves the destination
+  [chromium] › public/access-control.spec.ts:16:9 › Access control › redirects /libraries/library-id?sort=latest&page=2 to sign in and preserves the destination
+  [chromium] › public/access-control.spec.ts:16:9 › Access control › redirects /series/series-id to sign in and preserves the destination
+  [chromium] › public/access-control.spec.ts:16:9 › Access control › redirects /books/book-id to sign in and preserves the destination
+  [chromium] › public/access-control.spec.ts:16:9 › Access control › redirects /reading-lists/list-id to sign in and preserves the destination
+  [chromium] › public/access-control.spec.ts:26:7 › Access control › returns a structured 401 for a protected API route
+  [chromium] › public/access-control.spec.ts:39:7 › Access control › keeps authentication and health endpoints public
+  [chromium] › public/authentication.spec.ts:9:7 › Authentication › shows an accessible, empty sign-in form
+  [chromium] › public/authentication.spec.ts:25:7 › Authentication › switches to registration and validates matching passwords client-side
+  [chromium] › public/authentication.spec.ts:40:7 › Authentication › honours a registration tab deep link
+  [chromium] › public/authentication.spec.ts:46:7 › Authentication › changes the interface language
+  [chromium] › public/pwa.spec.ts:4:7 › Public PWA resources › serves a valid web app manifest
+  [chromium] › public/responsive.spec.ts:10:7 › login page renders at mobile-portrait (375x667)
+  [chromium] › public/responsive.spec.ts:10:7 › login page renders at tablet-portrait (768x1024)
+  [chromium] › public/responsive.spec.ts:10:7 › login page renders at desktop (1280x800)
+  [chromium] › public/responsive.spec.ts:25:5 › no horizontal overflow at mobile width
+  [chromium] › public/security.spec.ts:10:7 › Security headers › sends security headers on public pages
+  [chromium] › public/security.spec.ts:21:7 › Security headers › sends security headers on a protected route redirect
+  [chromium] › public/security.spec.ts:34:7 › Rate limiting › rejects invalid credentials and stays on login
+  [chromium] › public/security.spec.ts:45:7 › Rate limiting › blocks registration after too many attempts
+  [chromium] › reader/reader-stub.spec.ts:54:7 › Reader against the deterministic Komga fixture › loads pages, navigates, switches spread direction, and syncs progress
+  [chromium] › reader/reader-stub.spec.ts:86:7 › Reader against the deterministic Komga fixture › opens thumbnails and reader information, then shows the end-of-book dialog
+  [chromium] › reader/reader-stub.spec.ts:112:7 › Reader against the deterministic Komga fixture › does not attribute anonymous reading progress to the current account
+  [chromium] › reader/reader-stub.spec.ts:156:7 › Reader against the deterministic Komga fixture › keeps reading statuses separate across two users and two connections
+  [chromium] › reader/reader.spec.ts:34:7 › Reader › offers page, direction, display and information controls
+  [chromium] › reader/reader.spec.ts:42:7 › Reader › opens reader information without navigating away
+Total: 61 tests in 20 files

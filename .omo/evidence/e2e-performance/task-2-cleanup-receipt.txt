@@ -1,0 +1,86 @@
+=== CLEANUP 2026-09-11T11:03:05Z ===
+--- tracked-file status BEFORE cleanup (should match baseline) ---
+ M .gitignore
+A  .omo/plans/e2e-performance.md
+ M tsconfig.json
+?? .next-e2e/
+?? .omo/boulder.json
+?? .omo/drafts/
+?? .omo/evidence/e2e-performance/task-2-build-attempt1.log
+?? .omo/evidence/e2e-performance/task-2-build-evidence.txt
+?? .omo/evidence/e2e-performance/task-2-cleanup-receipt.txt
+?? .omo/evidence/e2e-performance/task-2-e2e-performance.log
+?? .omo/evidence/e2e-performance/task-2-env-baseline.txt
+?? .omo/evidence/e2e-performance/task-2-home-json.log
+?? .omo/evidence/e2e-performance/task-2-pids.txt
+?? .omo/evidence/e2e-performance/task-2-probe-b.log
+?? .omo/evidence/e2e-performance/task-2-server.log
+?? .omo/evidence/e2e-performance/task-2-stub-8444.log
+?? .omo/evidence/e2e-performance/task-2-stub-8445.log
+?? .omo/evidence/e2e-performance/task-2-warm-image.txt
+?? .omo/run-continuation/
+?? .omo/start-work/
+--- kill PIDs ---
+killed 42473
+killed 42477
+killed 42480
+--- rm temp db ---
+removed spike db + journal
+--- rm .next-e2e ---
+removed .next-e2e
+--- lsof listening (expect empty) ---
+LSOF_EMPTY
+--- pgrep next start|stub-provider (expect empty) ---
+PGREP_EMPTY
+--- git status AFTER cleanup ---
+ M .gitignore
+A  .omo/plans/e2e-performance.md
+ M tsconfig.json
+?? .omo/boulder.json
+?? .omo/drafts/
+?? .omo/evidence/e2e-performance/task-2-build-attempt1.log
+?? .omo/evidence/e2e-performance/task-2-build-evidence.txt
+?? .omo/evidence/e2e-performance/task-2-cleanup-receipt.txt
+?? .omo/evidence/e2e-performance/task-2-e2e-performance.log
+?? .omo/evidence/e2e-performance/task-2-env-baseline.txt
+?? .omo/evidence/e2e-performance/task-2-home-json.log
+?? .omo/evidence/e2e-performance/task-2-pids.txt
+?? .omo/evidence/e2e-performance/task-2-probe-b.log
+?? .omo/evidence/e2e-performance/task-2-server.log
+?? .omo/evidence/e2e-performance/task-2-stub-8444.log
+?? .omo/evidence/e2e-performance/task-2-stub-8445.log
+?? .omo/evidence/e2e-performance/task-2-warm-image.txt
+?? .omo/run-continuation/
+?? .omo/start-work/
+
+=== POST-CLEANUP CORRECTION 2026-09-11T11:03:21Z ===
+FINDING: the first 'next build' with NEXT_DIST_DIR=.next-e2e auto-mutated the TRACKED tsconfig.json
+by appending '.next-e2e/types/**/*.ts' and '.next-e2e/dev/types/**/*.ts' to compilerOptions.include.
+It was NOT edited by hand; Next.js did it. Reverted with: git checkout -- tsconfig.json
+--- diff that was reverted (from git diff at cleanup time) ---
+ .gitignore | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+--- final git status (matches pre-spike baseline) ---
+ M .gitignore
+A  .omo/plans/e2e-performance.md
+?? .omo/boulder.json
+?? .omo/drafts/
+?? .omo/evidence/e2e-performance/task-2-build-attempt1.log
+?? .omo/evidence/e2e-performance/task-2-build-evidence.txt
+?? .omo/evidence/e2e-performance/task-2-cleanup-receipt.txt
+?? .omo/evidence/e2e-performance/task-2-e2e-performance.log
+?? .omo/evidence/e2e-performance/task-2-env-baseline.txt
+?? .omo/evidence/e2e-performance/task-2-home-json.log
+?? .omo/evidence/e2e-performance/task-2-pids.txt
+?? .omo/evidence/e2e-performance/task-2-probe-b.log
+?? .omo/evidence/e2e-performance/task-2-server.log
+?? .omo/evidence/e2e-performance/task-2-stub-8444.log
+?? .omo/evidence/e2e-performance/task-2-stub-8445.log
+?? .omo/evidence/e2e-performance/task-2-warm-image.txt
+?? .omo/run-continuation/
+?? .omo/start-work/
+--- confirm tsconfig clean ---
+tsconfig.json CLEAN vs HEAD
+--- ports/pgrep re-check ---
+LSOF_EMPTY
+PGREP_EMPTY

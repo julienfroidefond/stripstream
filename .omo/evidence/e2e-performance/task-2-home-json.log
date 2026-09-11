@@ -1,0 +1,216 @@
+Environment variables loaded from .env
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": SQLite database "stripstream-e2e-spike.db" at "file:/tmp/stripstream-e2e-spike.db"
+
+8 migrations found in prisma/migrations
+
+
+No pending migrations to apply.
+[setup] e2e users seeded (e2e-stream@test.local, e2e-reader@test.local), active Stub A (5/7), B=6
+{
+  "config": {
+    "argv": [
+      "/Users/julienfroidefond/.nvm/versions/node/v24.17.0/bin/node",
+      "/Users/julienfroidefond/Sites/stripstream/node_modules/@playwright/test/cli.js",
+      "test",
+      "tests/home/home.spec.ts",
+      "--reporter=json"
+    ],
+    "configFile": "/Users/julienfroidefond/Sites/stripstream/playwright.config.ts",
+    "rootDir": "/Users/julienfroidefond/Sites/stripstream/tests",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": "/Users/julienfroidefond/Sites/stripstream/tests/global-setup.ts",
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/julienfroidefond/Sites/stripstream/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/Users/julienfroidefond/Sites/stripstream/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.62.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "home/home.spec.ts",
+      "file": "home/home.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Home functional journeys",
+          "file": "home/home.spec.ts",
+          "line": 33,
+          "column": 6,
+          "specs": [
+            {
+              "title": "shows continue reading and resumes the last viewed page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3463,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-11T11:02:46.770Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4a9efd0c7e3d35a97a8d-e8deb7dfc15b67aa7d6f",
+              "file": "home/home.spec.ts",
+              "line": 57,
+              "column": 7
+            },
+            {
+              "title": "keeps carousel images stable and reuses the HTTP cache after a reload",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [
+                    {
+                      "type": "image-performance",
+                      "description": "{\"cold\":{\"resources\":[{\"name\":\"http://127.0.0.1:3018/api/komga/images/books/book-a/thumbnail\",\"duration\":0,\"transferSize\":0},{\"name\":\"http://127.0.0.1:3018/api/komga/images/series/series-a/thumbnail\",\"duration\":0,\"transferSize\":0},{\"name\":\"http://127.0.0.1:3018/api/komga/images/series/series-a-2/thumbnail\",\"duration\":0,\"transferSize\":0},{\"name\":\"http://127.0.0.1:3018/api/komga/images/series/series-a-3/thumbnail\",\"duration\":0,\"transferSize\":0},{\"name\":\"http://127.0.0.1:3018/api/komga/images/series/series-a-4/thumbnail\",\"duration\":0,\"transferSize\":0},{\"name\":\"http://127.0.0.1:3018/api/komga/images/series/series-a-5/thumbnail\",\"duration\":0,\"transferSize\":0},{\"name\":\"http://127.0.0.1:3018/api/komga/images/series/series-a-6/thumbnail\",\"duration\":0,\"transferSize\":0}],\"layoutShift\":0},\"warm\":{\"resources\":[{\"name\":\"http://127.0.0.1:3018/api/komga/images/books/book-a/thumbnail\",\"duration\":0,\"transferSize\":0},{\"name\":\"http://127.0.0.1:3018/api/komga/images/series/series-a/thumbnail\",\"duration\":0,\"transferSize\":0},{\"name\":\"http://127.0.0.1:3018/api/komga/images/series/series-a-2/thumbnail\",\"duration\":0,\"transferSize\":0},{\"name\":\"http://127.0.0.1:3018/api/komga/images/series/series-a-3/thumbnail\",\"duration\":0,\"transferSize\":0},{\"name\":\"http://127.0.0.1:3018/api/komga/images/series/series-a-4/thumbnail\",\"duration\":0,\"transferSize\":0},{\"name\":\"http://127.0.0.1:3018/api/komga/images/series/series-a-5/thumbnail\",\"duration\":0,\"transferSize\":0},{\"name\":\"http://127.0.0.1:3018/api/komga/images/series/series-a-6/thumbnail\",\"duration\":0,\"transferSize\":0},{\"name\":\"http://127.0.0.1:3018/api/komga/images/series/series-a-7/thumbnail\",\"duration\":0,\"transferSize\":0},{\"name\":\"http://127.0.0.1:3018/api/komga/images/series/series-a-8/thumbnail\",\"duration\":0,\"transferSize\":0}],\"layoutShift\":0}}"
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1458,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-11T11:02:50.459Z",
+                      "annotations": [
+                        {
+                          "type": "image-performance",
+                          "description": "{\"cold\":{\"resources\":[{\"name\":\"http://127.0.0.1:3018/api/komga/images/books/book-a/thumbnail\",\"duration\":0,\"transferSize\":0},{\"name\":\"http://127.0.0.1:3018/api/komga/images/series/series-a/thumbnail\",\"duration\":0,\"transferSize\":0},{\"name\":\"http://127.0.0.1:3018/api/komga/images/series/series-a-2/thumbnail\",\"duration\":0,\"transferSize\":0},{\"name\":\"http://127.0.0.1:3018/api/komga/images/series/series-a-3/thumbnail\",\"duration\":0,\"transferSize\":0},{\"name\":\"http://127.0.0.1:3018/api/komga/images/series/series-a-4/thumbnail\",\"duration\":0,\"transferSize\":0},{\"name\":\"http://127.0.0.1:3018/api/komga/images/series/series-a-5/thumbnail\",\"duration\":0,\"transferSize\":0},{\"name\":\"http://127.0.0.1:3018/api/komga/images/series/series-a-6/thumbnail\",\"duration\":0,\"transferSize\":0}],\"layoutShift\":0},\"warm\":{\"resources\":[{\"name\":\"http://127.0.0.1:3018/api/komga/images/books/book-a/thumbnail\",\"duration\":0,\"transferSize\":0},{\"name\":\"http://127.0.0.1:3018/api/komga/images/series/series-a/thumbnail\",\"duration\":0,\"transferSize\":0},{\"name\":\"http://127.0.0.1:3018/api/komga/images/series/series-a-2/thumbnail\",\"duration\":0,\"transferSize\":0},{\"name\":\"http://127.0.0.1:3018/api/komga/images/series/series-a-3/thumbnail\",\"duration\":0,\"transferSize\":0},{\"name\":\"http://127.0.0.1:3018/api/komga/images/series/series-a-4/thumbnail\",\"duration\":0,\"transferSize\":0},{\"name\":\"http://127.0.0.1:3018/api/komga/images/series/series-a-5/thumbnail\",\"duration\":0,\"transferSize\":0},{\"name\":\"http://127.0.0.1:3018/api/komga/images/series/series-a-6/thumbnail\",\"duration\":0,\"transferSize\":0},{\"name\":\"http://127.0.0.1:3018/api/komga/images/series/series-a-7/thumbnail\",\"duration\":0,\"transferSize\":0},{\"name\":\"http://127.0.0.1:3018/api/komga/images/series/series-a-8/thumbnail\",\"duration\":0,\"transferSize\":0}],\"layoutShift\":0}}"
+                        }
+                      ],
+                      "attachments": [
+                        {
+                          "name": "image-performance.json",
+                          "contentType": "application/json",
+                          "body": "ewogICJjb2xkIjogewogICAgInJlc291cmNlcyI6IFsKICAgICAgewogICAgICAgICJuYW1lIjogImh0dHA6Ly8xMjcuMC4wLjE6MzAxOC9hcGkva29tZ2EvaW1hZ2VzL2Jvb2tzL2Jvb2stYS90aHVtYm5haWwiLAogICAgICAgICJkdXJhdGlvbiI6IDAsCiAgICAgICAgInRyYW5zZmVyU2l6ZSI6IDAKICAgICAgfSwKICAgICAgewogICAgICAgICJuYW1lIjogImh0dHA6Ly8xMjcuMC4wLjE6MzAxOC9hcGkva29tZ2EvaW1hZ2VzL3Nlcmllcy9zZXJpZXMtYS90aHVtYm5haWwiLAogICAgICAgICJkdXJhdGlvbiI6IDAsCiAgICAgICAgInRyYW5zZmVyU2l6ZSI6IDAKICAgICAgfSwKICAgICAgewogICAgICAgICJuYW1lIjogImh0dHA6Ly8xMjcuMC4wLjE6MzAxOC9hcGkva29tZ2EvaW1hZ2VzL3Nlcmllcy9zZXJpZXMtYS0yL3RodW1ibmFpbCIsCiAgICAgICAgImR1cmF0aW9uIjogMCwKICAgICAgICAidHJhbnNmZXJTaXplIjogMAogICAgICB9LAogICAgICB7CiAgICAgICAgIm5hbWUiOiAiaHR0cDovLzEyNy4wLjAuMTozMDE4L2FwaS9rb21nYS9pbWFnZXMvc2VyaWVzL3Nlcmllcy1hLTMvdGh1bWJuYWlsIiwKICAgICAgICAiZHVyYXRpb24iOiAwLAogICAgICAgICJ0cmFuc2ZlclNpemUiOiAwCiAgICAgIH0sCiAgICAgIHsKICAgICAgICAibmFtZSI6ICJodHRwOi8vMTI3LjAuMC4xOjMwMTgvYXBpL2tvbWdhL2ltYWdlcy9zZXJpZXMvc2VyaWVzLWEtNC90aHVtYm5haWwiLAogICAgICAgICJkdXJhdGlvbiI6IDAsCiAgICAgICAgInRyYW5zZmVyU2l6ZSI6IDAKICAgICAgfSwKICAgICAgewogICAgICAgICJuYW1lIjogImh0dHA6Ly8xMjcuMC4wLjE6MzAxOC9hcGkva29tZ2EvaW1hZ2VzL3Nlcmllcy9zZXJpZXMtYS01L3RodW1ibmFpbCIsCiAgICAgICAgImR1cmF0aW9uIjogMCwKICAgICAgICAidHJhbnNmZXJTaXplIjogMAogICAgICB9LAogICAgICB7CiAgICAgICAgIm5hbWUiOiAiaHR0cDovLzEyNy4wLjAuMTozMDE4L2FwaS9rb21nYS9pbWFnZXMvc2VyaWVzL3Nlcmllcy1hLTYvdGh1bWJuYWlsIiwKICAgICAgICAiZHVyYXRpb24iOiAwLAogICAgICAgICJ0cmFuc2ZlclNpemUiOiAwCiAgICAgIH0KICAgIF0sCiAgICAibGF5b3V0U2hpZnQiOiAwCiAgfSwKICAid2FybSI6IHsKICAgICJyZXNvdXJjZXMiOiBbCiAgICAgIHsKICAgICAgICAibmFtZSI6ICJodHRwOi8vMTI3LjAuMC4xOjMwMTgvYXBpL2tvbWdhL2ltYWdlcy9ib29rcy9ib29rLWEvdGh1bWJuYWlsIiwKICAgICAgICAiZHVyYXRpb24iOiAwLAogICAgICAgICJ0cmFuc2ZlclNpemUiOiAwCiAgICAgIH0sCiAgICAgIHsKICAgICAgICAibmFtZSI6ICJodHRwOi8vMTI3LjAuMC4xOjMwMTgvYXBpL2tvbWdhL2ltYWdlcy9zZXJpZXMvc2VyaWVzLWEvdGh1bWJuYWlsIiwKICAgICAgICAiZHVyYXRpb24iOiAwLAogICAgICAgICJ0cmFuc2ZlclNpemUiOiAwCiAgICAgIH0sCiAgICAgIHsKICAgICAgICAibmFtZSI6ICJodHRwOi8vMTI3LjAuMC4xOjMwMTgvYXBpL2tvbWdhL2ltYWdlcy9zZXJpZXMvc2VyaWVzLWEtMi90aHVtYm5haWwiLAogICAgICAgICJkdXJhdGlvbiI6IDAsCiAgICAgICAgInRyYW5zZmVyU2l6ZSI6IDAKICAgICAgfSwKICAgICAgewogICAgICAgICJuYW1lIjogImh0dHA6Ly8xMjcuMC4wLjE6MzAxOC9hcGkva29tZ2EvaW1hZ2VzL3Nlcmllcy9zZXJpZXMtYS0zL3RodW1ibmFpbCIsCiAgICAgICAgImR1cmF0aW9uIjogMCwKICAgICAgICAidHJhbnNmZXJTaXplIjogMAogICAgICB9LAogICAgICB7CiAgICAgICAgIm5hbWUiOiAiaHR0cDovLzEyNy4wLjAuMTozMDE4L2FwaS9rb21nYS9pbWFnZXMvc2VyaWVzL3Nlcmllcy1hLTQvdGh1bWJuYWlsIiwKICAgICAgICAiZHVyYXRpb24iOiAwLAogICAgICAgICJ0cmFuc2ZlclNpemUiOiAwCiAgICAgIH0sCiAgICAgIHsKICAgICAgICAibmFtZSI6ICJodHRwOi8vMTI3LjAuMC4xOjMwMTgvYXBpL2tvbWdhL2ltYWdlcy9zZXJpZXMvc2VyaWVzLWEtNS90aHVtYm5haWwiLAogICAgICAgICJkdXJhdGlvbiI6IDAsCiAgICAgICAgInRyYW5zZmVyU2l6ZSI6IDAKICAgICAgfSwKICAgICAgewogICAgICAgICJuYW1lIjogImh0dHA6Ly8xMjcuMC4wLjE6MzAxOC9hcGkva29tZ2EvaW1hZ2VzL3Nlcmllcy9zZXJpZXMtYS02L3RodW1ibmFpbCIsCiAgICAgICAgImR1cmF0aW9uIjogMCwKICAgICAgICAidHJhbnNmZXJTaXplIjogMAogICAgICB9LAogICAgICB7CiAgICAgICAgIm5hbWUiOiAiaHR0cDovLzEyNy4wLjAuMTozMDE4L2FwaS9rb21nYS9pbWFnZXMvc2VyaWVzL3Nlcmllcy1hLTcvdGh1bWJuYWlsIiwKICAgICAgICAiZHVyYXRpb24iOiAwLAogICAgICAgICJ0cmFuc2ZlclNpemUiOiAwCiAgICAgIH0sCiAgICAgIHsKICAgICAgICAibmFtZSI6ICJodHRwOi8vMTI3LjAuMC4xOjMwMTgvYXBpL2tvbWdhL2ltYWdlcy9zZXJpZXMvc2VyaWVzLWEtOC90aHVtYm5haWwiLAogICAgICAgICJkdXJhdGlvbiI6IDAsCiAgICAgICAgInRyYW5zZmVyU2l6ZSI6IDAKICAgICAgfQogICAgXSwKICAgICJsYXlvdXRTaGlmdCI6IDAKICB9Cn0="
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4a9efd0c7e3d35a97a8d-85460f6c522a29b1f515",
+              "file": "home/home.spec.ts",
+              "line": 71,
+              "column": 7
+            },
+            {
+              "title": "shows reading lists on the home page and opens one",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1786,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-11T11:02:51.922Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4a9efd0c7e3d35a97a8d-1979f946aefea2c7eb0a",
+              "file": "home/home.spec.ts",
+              "line": 114,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-09-11T11:02:45.884Z",
+    "duration": 7861.165,
+    "expected": 3,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

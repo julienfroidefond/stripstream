@@ -1,0 +1,7 @@
+=== listeners on 3000/8444/8445 (LISTEN) ===
+=== pgrep next start / stub-provider ===
+=== .next-e2e kept (gitignored) ===
+-rw-r--r--@ 1 julienfroidefond  staff  21 Sep 11 13:07 .next-e2e/BUILD_ID
+184M	.next-e2e
+=== git check-ignore ===
+.gitignore:14:/.next-e2e/	.next-e2e/BUILD_ID
