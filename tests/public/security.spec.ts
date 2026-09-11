@@ -46,42 +46,38 @@ test.describe('Rate limiting', () => {
 
   test('blocks registration after too many attempts', async ({ page }) => {
     // Rate-limit register : 5 tentatives/min par email.
-    // Pour déclencher le rate-limit serveur, il faut des tentatives qui atteignent
-    // AuthServerService.registerUser. Un mot de passe fort + email déjà existant
-    // échoue au check d'existence (après le rate-limit check) → compte dans le compteur.
+    // Le premier register crée le compte (puis redirige hors de /login) ; les
+    // tentatives suivantes échouent (email déjà existant) et consomment le quota
+    // jusqu'à ce que le serveur bloque l'email. On synchronise sur l'issue visible
+    // côté client (navigation ou alerte d'erreur) plutôt que sur la réponse du
+    // Server Action, dont l'événement réseau n'est pas garanti.
     const email = `reg-ratelimit-${Date.now()}@test.local`;
-    const registerAction = (p: import('@playwright/test').Page) =>
-      p.waitForResponse(
-        (r) => r.request().method() === 'POST' && !!r.request().headers()['next-action']
-      );
-
-    // 1er register : crée le user (succès)
-    await page.goto('/login?tab=register');
-    await page.getByLabel(/email/i).fill(email);
-    await page.getByLabel('Password', { exact: true }).fill('StrongPass123!');
-    await page.getByLabel(/confirm password|mot de passe/i).fill('StrongPass123!');
-    const firstRegister = registerAction(page);
-    await page.getByRole('button', { name: /sign up|s'inscrire/i }).click();
-    await firstRegister;
-
-    // Re-tenter 5 fois le même email (existe déjà → échec serveur, compte dans le rate-limit)
-    for (let i = 0; i < 5; i++) {
-      await page.goto('/login?tab=register');
+    const submit = () => page.getByRole('button', { name: /sign up|s'inscrire/i });
+    const fillRegisterForm = async () => {
       await page.getByLabel(/email/i).fill(email);
       await page.getByLabel('Password', { exact: true }).fill('StrongPass123!');
       await page.getByLabel(/confirm password|mot de passe/i).fill('StrongPass123!');
-      const attempt = registerAction(page);
-      await page.getByRole('button', { name: /sign up|s'inscrire/i }).click();
-      await attempt;
+    };
+
+    // 1er register : succès + connexion automatique (navigation hors de /login)
+    await page.goto('/login?tab=register');
+    await fillRegisterForm();
+    await submit().click();
+    await expect(page).not.toHaveURL(/\/login(?:\?|$)/, { timeout: 20_000 });
+
+    // 5 tentatives supplémentaires : rejetées par le serveur et comptabilisées
+    for (let i = 0; i < 5; i++) {
+      await page.goto('/login?tab=register');
+      await fillRegisterForm();
+      await submit().click();
+      await expect(page.getByRole('alert')).toBeVisible({ timeout: 15_000 });
     }
 
-    // La tentative suivante doit être bloquée par le rate-limit
+    // La tentative suivante est bloquée : la demande est rejetée et on reste sur /login
     await page.goto('/login?tab=register');
-    await page.getByLabel(/email/i).fill(email);
-    await page.getByLabel('Password', { exact: true }).fill('StrongPass123!');
-    await page.getByLabel(/confirm password|mot de passe/i).fill('StrongPass123!');
-    await page.getByRole('button', { name: /sign up|s'inscrire/i }).click();
-
+    await fillRegisterForm();
+    await submit().click();
+    await expect(page.getByRole('alert')).toBeVisible({ timeout: 15_000 });
     await expect(page).toHaveURL(/\/login/);
   });
 });
