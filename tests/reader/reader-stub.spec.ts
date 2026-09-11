@@ -11,12 +11,13 @@ async function signIn(page: import('@playwright/test').Page, accountEmail = emai
   const form = page.locator('form').first();
   const emailInput = form.locator('#email');
   const passwordInput = form.locator('#password');
-  await expect(emailInput).toBeEditable();
-  await expect(passwordInput).toBeEditable();
-  await emailInput.fill(accountEmail);
-  await passwordInput.fill(password);
-  await expect(emailInput).toHaveValue(accountEmail);
-  await expect(passwordInput).toHaveValue(password);
+  await expect
+    .poll(async () => {
+      await emailInput.fill(accountEmail);
+      await passwordInput.fill(password);
+      return `${await emailInput.inputValue()}|${await passwordInput.inputValue()}`;
+    })
+    .toBe(`${accountEmail}|${password}`);
   await form.getByRole('button', { name: /sign in|se connecter/i }).click();
   await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
 }
@@ -53,7 +54,7 @@ test.describe('Reader against the deterministic Komga fixture', () => {
   test.skip(!hasIsolatedDatabase, 'Local E2E database unavailable');
   test.describe.configure({ timeout: 90_000 });
 
-  test('loads pages, navigates, switches spread direction, and syncs progress', async ({ page }) => {
+  test('loads pages, navigates, switches spread direction, and syncs progress', async ({ page, request }) => {
     await page.goto('/books/book-a');
 
     // The reader intentionally resumes at the last page seen. Normalize the
@@ -79,7 +80,18 @@ test.describe('Reader against the deterministic Komga fixture', () => {
     await direction.click();
     await expect(direction).not.toHaveAttribute('aria-label', initialDirectionLabel ?? '');
 
-    await page.waitForTimeout(800); // debounce de synchronisation vers le provider
+    // The synced mutation is a Server Action; assert the resulting provider
+    // state (book-a resumes at page 2) instead of a debounce sleep.
+    await expect
+      .poll(
+        () =>
+          request
+            .get('http://127.0.0.1:8444/api/v1/books/book-a')
+            .then((r) => r.json())
+            .then((j) => j.readProgress?.page),
+        { timeout: 10_000 }
+      )
+      .toBe(2);
     await page.reload();
     await expect(page.getByAltText('Page 2')).toBeVisible({ timeout: 15_000 });
   });
@@ -112,7 +124,7 @@ test.describe('Reader against the deterministic Komga fixture', () => {
   test('does not attribute anonymous reading progress to the current account', async ({ page, request }) => {
     await request.delete('http://127.0.0.1:8444/api/v1/books/book-a/read-progress');
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await expect(page.getByRole('main').first()).toBeVisible();
     await page.evaluate(() => localStorage.clear());
     await page.goto('/series/series-a');
     const anonymousToggle = page.getByTestId('anonymous-mode-toggle');
@@ -127,7 +139,21 @@ test.describe('Reader against the deterministic Komga fixture', () => {
     await page.goto('/books/book-a');
     await goToPage(page, 6);
     await expect(page.getByRole('img', { name: 'Page 6', exact: true })).toBeVisible();
-    await page.waitForTimeout(800);
+    // Anonymous mode must not persist progress: cover the debounce window with a
+    // minimum-duration poll that fails if any write appears (readProgress only
+    // stays null while no sync happened).
+    const writeWindowStartedAt = Date.now();
+    await expect
+      .poll(
+        async () => {
+          const body = await request
+            .get('http://127.0.0.1:8444/api/v1/books/book-a')
+            .then((r) => r.json());
+          return Date.now() - writeWindowStartedAt >= 800 && body.readProgress === null;
+        },
+        { timeout: 8_000, intervals: [100] }
+      )
+      .toBe(true);
 
     const providerBook = await request.get('http://127.0.0.1:8444/api/v1/books/book-a');
     expect(providerBook.ok()).toBe(true);
@@ -138,7 +164,21 @@ test.describe('Reader against the deterministic Komga fixture', () => {
     await expect(closeReader).toBeVisible();
     await closeReader.click();
     await expect(page).toHaveURL(/\/series\/series-a$/);
-    await page.waitForLoadState('networkidle');
+    // Closing in anonymous mode must not persist a final sync: same
+    // minimum-duration null poll, which also lets the series page hydrate
+    // before the toggle is clicked.
+    const closeWindowStartedAt = Date.now();
+    await expect
+      .poll(
+        async () => {
+          const body = await request
+            .get('http://127.0.0.1:8444/api/v1/books/book-a')
+            .then((r) => r.json());
+          return Date.now() - closeWindowStartedAt >= 800 && body.readProgress === null;
+        },
+        { timeout: 8_000, intervals: [100] }
+      )
+      .toBe(true);
     await anonymousToggle.click();
     await expect(anonymousToggle).toHaveAccessibleName(
       /anonymous mode disabled|mode anonyme désactivé/i
@@ -176,14 +216,32 @@ test.describe('Reader against the deterministic Komga fixture', () => {
       await userA.goto('/books/book-a');
       await goToPage(userA, 6);
       await expect(userA.getByRole('img', { name: 'Page 6', exact: true })).toBeVisible();
-      await userA.waitForTimeout(800);
+      await expect
+        .poll(
+          () =>
+            request
+              .get('http://127.0.0.1:8444/api/v1/books/book-a')
+              .then((r) => r.json())
+              .then((j) => j.readProgress?.page),
+          { timeout: 10_000 }
+        )
+        .toBe(6);
 
       await signIn(userB, email);
       await userB.evaluate(() => localStorage.clear());
       await userB.goto('/books/book-b');
       await goToPage(userB, 4);
       await expect(userB.getByRole('img', { name: 'Page 4', exact: true })).toBeVisible();
-      await userB.waitForTimeout(800);
+      await expect
+        .poll(
+          () =>
+            request
+              .get('http://127.0.0.1:8445/api/v1/books/book-b')
+              .then((r) => r.json())
+              .then((j) => j.readProgress?.page),
+          { timeout: 10_000 }
+        )
+        .toBe(4);
 
       const progressA = await request.get('http://127.0.0.1:8444/api/v1/books/book-a');
       const progressB = await request.get('http://127.0.0.1:8445/api/v1/books/book-b');

@@ -56,11 +56,22 @@ test.describe('Home functional journeys', () => {
     await expect(connection.getByRole('radio')).toBeChecked({ timeout: 15_000 });
   }
 
-  test('shows continue reading and resumes the last viewed page', async ({ page }) => {
+  test('shows continue reading and resumes the last viewed page', async ({ page, request }) => {
     await page.goto('/books/book-a');
     await goToReaderPage(page, 2);
     await expect(page.locator('img[alt="Page 2"]')).toBeVisible({ timeout: 10_000 });
-    await page.waitForTimeout(800);
+    // The sync mutation is a Server Action; assert the resulting provider state
+    // (page 2) instead of waiting on a debounce sleep.
+    await expect
+      .poll(
+        () =>
+          request
+            .get('http://127.0.0.1:8444/api/v1/books/book-a')
+            .then((r) => r.json())
+            .then((j) => j.readProgress?.page),
+        { timeout: 10_000 }
+      )
+      .toBe(2);
 
     await page.goto(`/?e2e_refresh=${Date.now()}`);
     const resume = page.getByTestId('home-resume-reading').first();

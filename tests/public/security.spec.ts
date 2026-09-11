@@ -50,14 +50,19 @@ test.describe('Rate limiting', () => {
     // AuthServerService.registerUser. Un mot de passe fort + email déjà existant
     // échoue au check d'existence (après le rate-limit check) → compte dans le compteur.
     const email = `reg-ratelimit-${Date.now()}@test.local`;
+    const registerAction = (p: import('@playwright/test').Page) =>
+      p.waitForResponse(
+        (r) => r.request().method() === 'POST' && !!r.request().headers()['next-action']
+      );
 
     // 1er register : crée le user (succès)
     await page.goto('/login?tab=register');
     await page.getByLabel(/email/i).fill(email);
     await page.getByLabel('Password', { exact: true }).fill('StrongPass123!');
     await page.getByLabel(/confirm password|mot de passe/i).fill('StrongPass123!');
+    const firstRegister = registerAction(page);
     await page.getByRole('button', { name: /sign up|s'inscrire/i }).click();
-    await page.waitForTimeout(1500);
+    await firstRegister;
 
     // Re-tenter 5 fois le même email (existe déjà → échec serveur, compte dans le rate-limit)
     for (let i = 0; i < 5; i++) {
@@ -65,8 +70,9 @@ test.describe('Rate limiting', () => {
       await page.getByLabel(/email/i).fill(email);
       await page.getByLabel('Password', { exact: true }).fill('StrongPass123!');
       await page.getByLabel(/confirm password|mot de passe/i).fill('StrongPass123!');
+      const attempt = registerAction(page);
       await page.getByRole('button', { name: /sign up|s'inscrire/i }).click();
-      await page.waitForTimeout(400);
+      await attempt;
     }
 
     // La tentative suivante doit être bloquée par le rate-limit

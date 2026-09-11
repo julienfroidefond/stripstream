@@ -7,29 +7,6 @@ import { expect, test } from '@playwright/test';
  */
 const hasInfra = Boolean(process.env.E2E_DATABASE_URL);
 
-const EMAIL = 'e2e-stream@test.local';
-const PASSWORD = 'E2eStrong!123';
-
-async function signIn(page: import('@playwright/test').Page) {
-  await page.goto('/login');
-  // Le LoginForm (onglet actif par défaut) est le premier <form> du DOM.
-  // RegisterForm partage les ids #email/#password mais est rendu après.
-  const loginForm = page.locator('form').first();
-  const emailInput = loginForm.locator('#email');
-  const passwordInput = loginForm.locator('#password');
-
-  // L'hydratation peut re-monter le formulaire et vider les champs remplis
-  // trop tôt : on attend la stabilité, on remplit, et on vérifie chaque valeur.
-  await page.waitForLoadState('networkidle');
-  await emailInput.fill(EMAIL);
-  await expect(emailInput).toHaveValue(EMAIL);
-  await passwordInput.fill(PASSWORD);
-  await expect(passwordInput).toHaveValue(PASSWORD);
-  await loginForm.getByRole('button', { name: /sign in|se connecter/i }).click();
-  // La redirection vers / streame les sections : la navigation peut dépasser 15s en dev
-  await expect(page).not.toHaveURL(/\/login(?:\?|$)/, { timeout: 30_000 });
-}
-
 test.use({ storageState: 'tests/.auth/stream.json' });
 
 test.describe('Home streaming + changement de connexion', () => {

@@ -30,7 +30,7 @@ test.describe('Reading statuses', () => {
     const komgaConnection = page.getByTestId('connection-komga-stub-a');
     await expect(komgaConnection).toBeVisible();
     await komgaConnection.getByText('Stub A', { exact: true }).click();
-    await page.waitForTimeout(500);
+    await expect(komgaConnection.getByRole('radio')).toBeChecked();
     await page.goto('/series/series-a');
 
     const markRead = page.getByTestId('mark-as-read').first();
@@ -41,8 +41,12 @@ test.describe('Reading statuses', () => {
       // The fixture can retain progress when another serial scenario has
       // already touched the same book; normalize it to unread first.
       await expect(markUnread).toBeVisible({ timeout: 15_000 });
-      await markUnread.click();
       await expect(markUnread).toBeEnabled({ timeout: 15_000 });
+      const unreadAction = page.waitForResponse(
+        (r) => r.request().method() === 'POST' && !!r.request().headers()['next-action']
+      );
+      await markUnread.click();
+      await unreadAction;
       await page.reload();
       await expect(markRead).toBeVisible({ timeout: 15_000 });
       await markRead.click();
