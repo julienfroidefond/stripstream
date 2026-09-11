@@ -1,12 +1,13 @@
 import { expect, test } from '@playwright/test';
-import { hasE2eCredentials, signIn } from '../helpers/auth';
+import { hasE2eCredentials } from '../helpers/auth';
 import { activateStripstreamConnection } from '../helpers/stripstream-connection';
+
+test.use({ storageState: 'tests/.auth/stream.json' });
 
 test.describe('Library sort by rating (Stripstream)', () => {
   test.skip(!hasE2eCredentials, 'Local E2E account unavailable');
 
   test('cycles three sort states including community_score on Stripstream', async ({ page }) => {
-    await signIn(page);
     await activateStripstreamConnection(page);
 
     // Forcer le tri initial à "title" : un test antérieur (library.spec) peut avoir
@@ -32,7 +33,6 @@ test.describe('Library sort by rating (Stripstream)', () => {
   });
 
   test('cycles only two sort states on Komga (no community_score)', async ({ page }) => {
-    await signIn(page);
     // La connexion active par défaut est Komga ("Stub A").
     // Forcer le tri initial à "title" pour rester déterministe (cf. test Stripstream).
     await page.goto('/libraries/lib-a?sort=title');

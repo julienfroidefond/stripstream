@@ -1,13 +1,14 @@
 import { expect, test } from '@playwright/test';
-import { hasE2eCredentials, signIn } from '../helpers/auth';
+import { hasE2eCredentials } from '../helpers/auth';
 
 const expectsAdmin = process.env.E2E_USER_IS_ADMIN === 'true';
+
+test.use({ storageState: 'tests/.auth/stream.json' });
 
 test.describe('Admin authorization', () => {
   test.skip(!hasE2eCredentials, 'Local E2E account unavailable');
 
   test('only exposes the dashboard to an administrator', async ({ page }) => {
-    await signIn(page);
     await page.goto('/admin');
 
     if (expectsAdmin) {

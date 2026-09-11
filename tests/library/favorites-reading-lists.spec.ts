@@ -18,11 +18,12 @@ async function signIn(page: import('@playwright/test').Page) {
   await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
 }
 
+test.use({ storageState: 'tests/.auth/stream.json' });
+
 test.describe('Favorites and reading lists', () => {
   test.skip(!hasIsolatedDatabase, 'Local E2E database unavailable');
 
   test('adds and removes a series favorite, including persistence after reload', async ({ page }) => {
-    await signIn(page);
     await page.goto('/series/series-a');
 
     const add = page.getByTestId('series-favorite-add').first();
@@ -45,7 +46,6 @@ test.describe('Favorites and reading lists', () => {
   });
 
   test('opens a deterministic reading list through the Stripstream connection', async ({ page }) => {
-    await signIn(page);
     await page.goto('/settings');
     await page.getByRole('tab', { name: /connection/i }).click();
     const listsConnection = page.getByTestId('connection-stripstream-stub-lists');

@@ -23,11 +23,12 @@ async function signInReader(page: import('@playwright/test').Page) {
   await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
 }
 
+test.use({ storageState: 'tests/.auth/reader.json' });
+
 test.describe('Reader', () => {
   test.skip(!hasE2eCredentials, 'Local E2E account unavailable');
 
   test.beforeEach(async ({ page }) => {
-    await signInReader(page);
     await openFirstBook(page);
   });
 

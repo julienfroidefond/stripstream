@@ -1,12 +1,13 @@
 import { expect, test } from '@playwright/test';
-import { hasE2eCredentials, signIn } from '../helpers/auth';
+import { hasE2eCredentials } from '../helpers/auth';
 import { activateStripstreamConnection } from '../helpers/stripstream-connection';
+
+test.use({ storageState: 'tests/.auth/stream.json' });
 
 test.describe('Series rating (Stripstream)', () => {
   test.skip(!hasE2eCredentials, 'Local E2E account unavailable');
 
   test('sets, persists, then clears a series rating on the Stripstream connection', async ({ page }) => {
-    await signIn(page);
     await activateStripstreamConnection(page);
 
     await page.goto('/series/series-a');
@@ -48,7 +49,6 @@ test.describe('Series rating (Stripstream)', () => {
   });
 
   test('hides the rating control on the Komga connection', async ({ page }) => {
-    await signIn(page);
     // La connexion active par défaut est Komga ("Stub A").
     await page.goto('/series/series-a');
     await expect(page).toHaveURL(/\/series\/series-a/);

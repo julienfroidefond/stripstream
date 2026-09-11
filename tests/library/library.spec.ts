@@ -1,16 +1,17 @@
 import { expect, test } from '@playwright/test';
-import { hasE2eCredentials, signIn } from '../helpers/auth';
+import { hasE2eCredentials } from '../helpers/auth';
 
 async function openFirstLibrary(page: import('@playwright/test').Page) {
   await page.goto('/libraries/lib-a');
   await expect(page).toHaveURL(/\/libraries\/lib-a/);
 }
 
+test.use({ storageState: 'tests/.auth/stream.json' });
+
 test.describe('Library browsing', () => {
   test.skip(!hasE2eCredentials, 'Local E2E account unavailable');
 
   test.beforeEach(async ({ page }) => {
-    await signIn(page);
     await openFirstLibrary(page);
   });
 
