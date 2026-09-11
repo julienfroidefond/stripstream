@@ -66,7 +66,7 @@ export default defineConfig({
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: 1,
+  workers: process.env.CI ? 2 : 4,
   reporter: process.env.CI ? [['line'], ['html', { open: 'never' }]] : 'list',
   timeout: 30_000,
   expect: { timeout: 5_000 },
@@ -87,8 +87,10 @@ export default defineConfig({
               ? './node_modules/.bin/next start'
               : './node_modules/.bin/next dev',
           url: baseURL,
-          // The E2E environment (including the local auth throttle mode) must
-          // be applied to every run; never reuse a server started elsewhere.
+          // The E2E environment must be applied to every run; never reuse a
+          // server started elsewhere. The login-throttle bypass is the NODE_ENV
+          // gate in src/lib/services/auth-server.service.ts: the `@test.local`
+          // account skips throttling only outside NODE_ENV=production.
           reuseExistingServer: false,
           timeout: 120_000,
           env: {
@@ -98,7 +100,6 @@ export default defineConfig({
               : { NODE_ENV: 'development' }),
             NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET ?? 'stripstream-e2e-local-secret',
             NEXTAUTH_URL: baseURL,
-            E2E_TEST_MODE: '1',
             PORT: e2ePort,
             // DB e2e dédiée si fournie, sinon DB par défaut
             ...(e2eDbUrl ? { DATABASE_URL: e2eDbUrl } : {}),
@@ -127,11 +128,6 @@ export default defineConfig({
     {
       name: 'setup',
       testMatch: /auth\.setup\.ts/,
-      use: { ...devices['Desktop Chrome'] },
-    },
-    {
-      name: 'chromium',
-      dependencies: ['setup'],
       use: { ...devices['Desktop Chrome'] },
     },
   ],

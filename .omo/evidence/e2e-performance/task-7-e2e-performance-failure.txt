@@ -1,0 +1,31 @@
+=== TASK 7 FAILURE QA — tracked-file deletion guard ===
+date_utc: 2026-09-11T11:58:38Z
+purpose: prove the precondition used before deleting prisma/e2e*.db — a tracked file
+         is protected by `git ls-files --error-unmatch` (exit 0) while an untracked
+         stale artifact fails the check (exit 1) and is therefore safe to delete.
+
+--- [A] TRACKED file is protected: git ls-files --error-unmatch package.json ---
+package.json
+exit=0 (0 = tracked; deletion would be caught by git status as " D")
+
+--- [B] UNTRACKED stale artifact: git ls-files --error-unmatch prisma/e2e.db ---
+error: pathspec 'prisma/e2e.db' did not match any file(s) known to git
+Did you forget to 'git add'?
+exit=1 (1 = untracked; `rm` is safe)
+
+--- [C] UNTRACKED stale artifact: git ls-files --error-unmatch prisma/e2e-runtime.db ---
+error: pathspec 'prisma/e2e-runtime.db' did not match any file(s) known to git
+Did you forget to 'git add'?
+exit=1 (1 = untracked; `rm` is safe)
+
+--- [D] control: another tracked file ---
+prisma/schema.prisma
+exit=0
+
+--- [E] post-deletion state: no tracked deletion remains ---
+exit=1 (1 = no " D" entries)
+ls: prisma/e2e-runtime.db: No such file or directory
+ls: prisma/e2e.db: No such file or directory
+ls-exit=1
+
+=== CONCLUSION: guard demonstrated; only untracked *.db files were removed, no tracked path lost. ===
