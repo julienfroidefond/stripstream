@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
 
+test.use({ storageState: { cookies: [], origins: [] } });
+
 const VIEWPORTS = [
   { name: 'mobile-portrait', width: 375, height: 667 },
   { name: 'tablet-portrait', width: 768, height: 1024 },

@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 
+test.use({ storageState: { cookies: [], origins: [] } });
+
 /**
  * Tests e2e pour les corrections de sécurité (audit-perf-quality).
  * Testables sans compte ni contenu provider — vérifient les régressions

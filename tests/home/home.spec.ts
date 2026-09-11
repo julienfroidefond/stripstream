@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { hasE2eCredentials, signIn } from '../helpers/auth';
+import { hasE2eCredentials } from '../helpers/auth';
 
 type ImagePerformanceSample = {
   resources: Array<{ name: string; duration: number; transferSize: number }>;
@@ -30,6 +30,8 @@ async function collectImagePerformance(page: import('@playwright/test').Page): P
   });
 }
 
+test.use({ storageState: 'tests/.auth/stream.json' });
+
 test.describe('Home functional journeys', () => {
   test.skip(!hasE2eCredentials, 'Local E2E account unavailable');
 
@@ -55,7 +57,6 @@ test.describe('Home functional journeys', () => {
   }
 
   test('shows continue reading and resumes the last viewed page', async ({ page }) => {
-    await signIn(page);
     await page.goto('/books/book-a');
     await goToReaderPage(page, 2);
     await expect(page.locator('img[alt="Page 2"]')).toBeVisible({ timeout: 10_000 });
@@ -80,7 +81,9 @@ test.describe('Home functional journeys', () => {
       }).observe({ type: 'layout-shift', buffered: true });
     });
 
-    await signIn(page);
+    // storageState only injects cookies; navigate so the init script below and
+    // the resource-timing reset run against a real document.
+    await page.goto('/');
     await page.evaluate(() => {
       performance.clearResourceTimings();
       (window as Window & { __e2eImageLayoutShift?: number }).__e2eImageLayoutShift = 0;
@@ -112,7 +115,6 @@ test.describe('Home functional journeys', () => {
   });
 
   test('shows reading lists on the home page and opens one', async ({ page }) => {
-    await signIn(page);
     await selectConnection(page, 'Stub Lists');
     await page.goto('/');
 

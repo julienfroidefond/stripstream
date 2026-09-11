@@ -1,13 +1,14 @@
 import { expect, test } from '@playwright/test';
-import { hasE2eCredentials, signIn } from '../helpers/auth';
+import { hasE2eCredentials } from '../helpers/auth';
 
 const hasIsolatedDatabase = Boolean(process.env.E2E_DATABASE_URL);
+
+test.use({ storageState: 'tests/.auth/stream.json' });
 
 test.describe('Session lifecycle', () => {
   test.skip(!hasE2eCredentials, 'Local E2E account unavailable');
 
   test('signs out and protects the application again', async ({ page }) => {
-    await signIn(page);
     await page.goto('/');
 
     const sidebarTrigger = page.getByRole('button', { name: /menu|navigation/i }).first();
@@ -28,7 +29,6 @@ test.describe('Session lifecycle after app suspension', () => {
     context,
     page,
   }) => {
-    await signIn(page);
     await page.goto('/');
     await expect(page.getByRole('main').first()).toBeVisible();
 

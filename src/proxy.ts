@@ -11,7 +11,7 @@ const publicApiRoutes = ["/api/auth/register", "/api/komga/test"];
 const locales = ["fr", "en"];
 const defaultLocale = "fr";
 
-export default async function middleware(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const requestPath = `${pathname}${request.nextUrl.search}`;
   const forwardedHeaders = new Headers(request.headers);

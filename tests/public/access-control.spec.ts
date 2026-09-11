@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 
+test.use({ storageState: { cookies: [], origins: [] } });
+
 const protectedRoutes = [
   '/',
   '/settings',

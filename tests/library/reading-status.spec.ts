@@ -18,12 +18,13 @@ async function signIn(page: import('@playwright/test').Page) {
   await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
 }
 
+test.use({ storageState: 'tests/.auth/stream.json' });
+
 test.describe('Reading statuses', () => {
   test.skip(!hasIsolatedDatabase, 'Local E2E database unavailable');
   test.describe.configure({ mode: 'serial' });
 
   test('marks a book read and unread from the series card', async ({ page }) => {
-    await signIn(page);
     await page.goto('/settings');
     await page.getByRole('tab', { name: /connection/i }).click();
     const komgaConnection = page.getByTestId('connection-komga-stub-a');
@@ -61,7 +62,6 @@ test.describe('Reading statuses', () => {
   });
 
   test('marks a book read when reaching its last reader page', async ({ page }) => {
-    await signIn(page);
     await page.goto('/books/book-a');
     const currentPage = page.locator('img[alt^="Page "]').first();
     await expect(currentPage).toBeVisible({ timeout: 15_000 });

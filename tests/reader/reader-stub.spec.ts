@@ -47,12 +47,13 @@ async function getConnectionId(accountEmail: string, connectionName: string) {
   }
 }
 
+test.use({ storageState: 'tests/.auth/reader.json' });
+
 test.describe('Reader against the deterministic Komga fixture', () => {
   test.skip(!hasIsolatedDatabase, 'Local E2E database unavailable');
   test.describe.configure({ timeout: 90_000 });
 
   test('loads pages, navigates, switches spread direction, and syncs progress', async ({ page }) => {
-    await signIn(page);
     await page.goto('/books/book-a');
 
     // The reader intentionally resumes at the last page seen. Normalize the
@@ -84,7 +85,6 @@ test.describe('Reader against the deterministic Komga fixture', () => {
   });
 
   test('opens thumbnails and reader information, then shows the end-of-book dialog', async ({ page }) => {
-    await signIn(page);
     await page.goto('/books/book-a');
     await goToPage(page, 1);
     await expect(page.getByAltText('Page 1')).toBeVisible({ timeout: 15_000 });
@@ -111,7 +111,7 @@ test.describe('Reader against the deterministic Komga fixture', () => {
 
   test('does not attribute anonymous reading progress to the current account', async ({ page, request }) => {
     await request.delete('http://127.0.0.1:8444/api/v1/books/book-a/read-progress');
-    await signIn(page);
+    await page.goto('/');
     await page.waitForLoadState('networkidle');
     await page.evaluate(() => localStorage.clear());
     await page.goto('/series/series-a');
@@ -162,13 +162,14 @@ test.describe('Reader against the deterministic Komga fixture', () => {
     const userA = await browser.newPage();
     const userB = await browser.newPage();
     try {
+      const baseURL = test.info().project.use.baseURL!;
       await userA.context().addCookies([
-        { name: 'stripstream-active-provider', value: 'komga', url: 'http://127.0.0.1:3017' },
-        { name: 'stripstream-active-komga-config', value: String(connectionA), url: 'http://127.0.0.1:3017' },
+        { name: 'stripstream-active-provider', value: 'komga', url: baseURL },
+        { name: 'stripstream-active-komga-config', value: String(connectionA), url: baseURL },
       ]);
       await userB.context().addCookies([
-        { name: 'stripstream-active-provider', value: 'komga', url: 'http://127.0.0.1:3017' },
-        { name: 'stripstream-active-komga-config', value: String(connectionB), url: 'http://127.0.0.1:3017' },
+        { name: 'stripstream-active-provider', value: 'komga', url: baseURL },
+        { name: 'stripstream-active-komga-config', value: String(connectionB), url: baseURL },
       ]);
       await signIn(userA, streamEmail);
       await userA.evaluate(() => localStorage.clear());

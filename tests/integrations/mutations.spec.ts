@@ -23,13 +23,11 @@ async function openSettingsTab(page: import('@playwright/test').Page, name: RegE
   await page.getByRole('tab', { name }).click();
 }
 
+test.use({ storageState: 'tests/.auth/stream.json' });
+
 test.describe('Mutations on the isolated E2E account', () => {
   test.skip(!hasIsolatedDatabase, 'Local E2E database unavailable');
   test.describe.configure({ mode: 'serial' });
-
-  test.beforeEach(async ({ page }) => {
-    await signIn(page);
-  });
 
   test('persists reader preferences after a reload', async ({ page }) => {
     await openSettingsTab(page, /reading|lecture/i);

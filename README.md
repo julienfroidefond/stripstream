@@ -198,7 +198,7 @@ src/
 ├── i18n/               # Internationalization configuration
 ├── lib/                # Utilities and services
 ├── messages/           # Translation messages
-├── middleware.ts       # Next.js middleware
+├── proxy.ts            # Next.js proxy (ex-middleware)
 ├── styles/             # Global styles
 ├── types/              # TypeScript type definitions
 └── utils/              # Helper functions and utilities

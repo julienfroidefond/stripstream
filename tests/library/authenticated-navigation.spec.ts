@@ -1,12 +1,10 @@
 import { expect, test } from '@playwright/test';
-import { hasE2eCredentials, signIn } from '../helpers/auth';
+import { hasE2eCredentials } from '../helpers/auth';
+
+test.use({ storageState: 'tests/.auth/stream.json' });
 
 test.describe('Authenticated navigation', () => {
   test.skip(!hasE2eCredentials, 'Local E2E account unavailable');
-
-  test.beforeEach(async ({ page }) => {
-    await signIn(page);
-  });
 
   test('opens the main application navigation', async ({ page }) => {
     await page.goto('/');

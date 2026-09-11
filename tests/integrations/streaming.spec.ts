@@ -30,6 +30,8 @@ async function signIn(page: import('@playwright/test').Page) {
   await expect(page).not.toHaveURL(/\/login(?:\?|$)/, { timeout: 30_000 });
 }
 
+test.use({ storageState: 'tests/.auth/stream.json' });
+
 test.describe('Home streaming + changement de connexion', () => {
   test.skip(!hasInfra, 'Local E2E infrastructure unavailable');
   // Le premier chargement compile les routes + streame les sections : plus long en dev.
@@ -51,7 +53,6 @@ test.describe('Home streaming + changement de connexion', () => {
   }
 
   test('affiche la home streamée avec les données de la connexion active', async ({ page }) => {
-    await signIn(page);
     await page.goto('/', { waitUntil: 'domcontentloaded' });
 
     // La home stream : le contenu principal apparaît sans attendre la sidebar
@@ -61,7 +62,6 @@ test.describe('Home streaming + changement de connexion', () => {
   });
 
   test('change de connexion, affiche le fallback, puis les données de la nouvelle home', async ({ page }) => {
-    await signIn(page);
     await page.goto('/', { waitUntil: 'domcontentloaded' });
 
     // Attendre que la home de la connexion active (Stub A) ait fini de streamer

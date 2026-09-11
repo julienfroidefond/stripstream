@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 
+test.use({ storageState: { cookies: [], origins: [] } });
+
 test.describe('Authentication', () => {
   test.beforeEach(async ({ context, page }) => {
     await context.addCookies([{ name: 'NEXT_LOCALE', value: 'en', url: test.info().project.use.baseURL! }]);
