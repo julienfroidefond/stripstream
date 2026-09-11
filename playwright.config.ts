@@ -130,5 +130,45 @@ export default defineConfig({
       testMatch: /auth\.setup\.ts/,
       use: { ...devices['Desktop Chrome'] },
     },
+    {
+      // Strictly read-only journeys: they never persist preferences, ratings,
+      // favorites, reading progress, or provider connections. Proven by the
+      // E2E_STUB_READONLY guard plus the DB hash check in global setup.
+      name: 'read-only',
+      dependencies: ['setup'],
+      fullyParallel: true,
+      workers: process.env.CI ? 2 : 4,
+      testMatch: [
+        '**/public/access-control.spec.ts',
+        '**/public/authentication.spec.ts',
+        '**/public/pwa.spec.ts',
+        '**/public/responsive.spec.ts',
+        '**/account/**/*.spec.ts',
+      ],
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      // Mutating journeys run strictly after read-only, serialized on one
+      // worker so a test cannot change another test's active connection,
+      // preferences, or read state.
+      name: 'mutating',
+      dependencies: ['setup', 'read-only'],
+      fullyParallel: false,
+      workers: 1,
+      testMatch: [
+        '**/public/security.spec.ts',
+        '**/integrations/**/*.spec.ts',
+        '**/home/**/*.spec.ts',
+        '**/library/library.spec.ts',
+        '**/library/authenticated-navigation.spec.ts',
+        '**/library/favorites-reading-lists.spec.ts',
+        '**/library/reading-status.spec.ts',
+        '**/library/series-rating.spec.ts',
+        '**/library/series-sort.spec.ts',
+        '**/reader/reader.spec.ts',
+        '**/reader/reader-stub.spec.ts',
+      ],
+      use: { ...devices['Desktop Chrome'] },
+    },
   ],
 });

@@ -1,0 +1,138 @@
+
+====================================================================
+[e2e] Reusing existing production build: .next-e2e/BUILD_ID
+[e2e] BUILD_ID: d_YL44dyU8GzbnsVMY7hK
+[e2e] Built at: 2026-09-11T12:02:22.371Z
+[e2e] Rerun `pnpm test:e2e:build` after any src/ change.
+====================================================================
+
+[WebServer] ⚠ "next start" does not work with "output: standalone" configuration. Use "node .next/standalone/server.js" instead.
+
+[WebServer] [stub-provider] instance A on :8444
+
+[WebServer] [stub-provider] instance B on :8445
+
+Environment variables loaded from .env
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": SQLite database "stripstream-e2e-failure.db" at "file:/tmp/stripstream-e2e-failure.db"
+
+SQLite database stripstream-e2e-failure.db created at file:/tmp/stripstream-e2e-failure.db
+
+8 migrations found in prisma/migrations
+
+Applying migration `20260311203728_init`
+Applying migration `20260322200000_add_anonymous_mode`
+Applying migration `20260429000000_multi_config`
+Applying migration `20260505000000_dedupe_favorites`
+Applying migration `20260520000000_add_reader_display_prefs`
+Applying migration `20260902140000_user_scoped_read_progress`
+Applying migration `20260903220000_add_reader_background`
+Applying migration `20260909000000_remove_read_progress`
+
+The following migration(s) have been applied:
+
+migrations/
+  └─ 20260311203728_init/
+    └─ migration.sql
+  └─ 20260322200000_add_anonymous_mode/
+    └─ migration.sql
+  └─ 20260429000000_multi_config/
+    └─ migration.sql
+  └─ 20260505000000_dedupe_favorites/
+    └─ migration.sql
+  └─ 20260520000000_add_reader_display_prefs/
+    └─ migration.sql
+  └─ 20260902140000_user_scoped_read_progress/
+    └─ migration.sql
+  └─ 20260903220000_add_reader_background/
+    └─ migration.sql
+  └─ 20260909000000_remove_read_progress/
+    └─ migration.sql
+      
+All migrations have been successfully applied.
+[setup] wrote DB hash 6aa4a7afa301af6def06791a77ce9c1843df253f7bb37508b337d9411de83eef to /Users/julienfroidefond/Sites/stripstream/.omo/evidence/e2e-performance/task-8-db-before-failure.sha
+[setup] e2e users seeded (e2e-stream@test.local, e2e-reader@test.local), active Stub A (1/3), B=2
+
+Running 34 tests using 4 workers
+
+
+====================================================================
+[e2e] Reusing existing production build: .next-e2e/BUILD_ID
+[e2e] BUILD_ID: d_YL44dyU8GzbnsVMY7hK
+[e2e] Built at: 2026-09-11T12:02:22.371Z
+[e2e] Rerun `pnpm test:e2e:build` after any src/ change.
+====================================================================
+
+
+[1/34] [setup] › tests/setup/auth.setup.ts:12:5 › authenticate as the stream account
+[2/34] [setup] › tests/setup/auth.setup.ts:18:5 › authenticate as the reader account
+
+====================================================================
+[e2e] Reusing existing production build: .next-e2e/BUILD_ID
+[e2e] BUILD_ID: d_YL44dyU8GzbnsVMY7hK
+[e2e] Built at: 2026-09-11T12:02:22.371Z
+[e2e] Rerun `pnpm test:e2e:build` after any src/ change.
+====================================================================
+
+
+
+====================================================================
+[e2e] Reusing existing production build: .next-e2e/BUILD_ID
+[e2e] BUILD_ID: d_YL44dyU8GzbnsVMY7hK
+[e2e] Built at: 2026-09-11T12:02:22.371Z
+[e2e] Rerun `pnpm test:e2e:build` after any src/ change.
+====================================================================
+
+
+[3/34] [read-only] › tests/account/account.spec.ts:34:7 › Account › rejects mismatching new passwords before contacting the server
+
+====================================================================
+[e2e] Reusing existing production build: .next-e2e/BUILD_ID
+[e2e] BUILD_ID: d_YL44dyU8GzbnsVMY7hK
+[e2e] Built at: 2026-09-11T12:02:22.371Z
+[e2e] Rerun `pnpm test:e2e:build` after any src/ change.
+====================================================================
+
+
+
+====================================================================
+[e2e] Reusing existing production build: .next-e2e/BUILD_ID
+[e2e] BUILD_ID: d_YL44dyU8GzbnsVMY7hK
+[e2e] Built at: 2026-09-11T12:02:22.371Z
+[e2e] Rerun `pnpm test:e2e:build` after any src/ change.
+====================================================================
+
+
+[4/34] [read-only] › tests/account/account.spec.ts:13:7 › Account › shows the signed-in profile without exposing password values
+[5/34] [read-only] › tests/account/admin-authorization.spec.ts:11:7 › Admin authorization › only exposes the dashboard to an administrator
+[6/34] [read-only] › tests/account/account.spec.ts:23:7 › Account › rejects a short new password before contacting the server
+[7/34] [read-only] › tests/account/session.spec.ts:11:7 › Session lifecycle › signs out and protects the application again
+[8/34] [read-only] › tests/account/session.spec.ts:28:7 › Session lifecycle after app suspension › redirects a restored protected screen when its session expired in the background
+[9/34] [read-only] › tests/account/settings.spec.ts:13:7 › Settings › exposes all settings sections with real controls
+[10/34] [read-only] › tests/account/settings.spec.ts:28:7 › Settings › remembers the active tab after a reload
+[11/34] [read-only] › tests/library/library.spec.ts:18:7 › Library browsing › synchronizes search with the URL and can clear it
+[12/34] [read-only] › tests/library/library.spec.ts:27:7 › Library browsing › changes sorting without leaving the library
+[13/34] [read-only] › tests/library/library.spec.ts:36:7 › Library browsing › toggles unread and missing filters through the URL
+[14/34] [read-only] › tests/library/library.spec.ts:50:7 › Library browsing › navigates between library pages when the result set spans pages
+[15/34] [read-only] › tests/library/library.spec.ts:63:7 › Library browsing › opens a real series card when content exists
+[16/34] [read-only] › tests/public/access-control.spec.ts:18:9 › Access control › redirects / to sign in and preserves the destination
+[17/34] [read-only] › tests/public/access-control.spec.ts:18:9 › Access control › redirects /settings to sign in and preserves the destination
+[18/34] [read-only] › tests/public/access-control.spec.ts:18:9 › Access control › redirects /account to sign in and preserves the destination
+[19/34] [read-only] › tests/public/access-control.spec.ts:18:9 › Access control › redirects /admin to sign in and preserves the destination
+[20/34] [read-only] › tests/public/access-control.spec.ts:18:9 › Access control › redirects /libraries/library-id?sort=latest&page=2 to sign in and preserves the destination
+[21/34] [read-only] › tests/public/access-control.spec.ts:18:9 › Access control › redirects /series/series-id to sign in and preserves the destination
+[22/34] [read-only] › tests/public/access-control.spec.ts:18:9 › Access control › redirects /books/book-id to sign in and preserves the destination
+[23/34] [read-only] › tests/public/access-control.spec.ts:18:9 › Access control › redirects /reading-lists/list-id to sign in and preserves the destination
+[24/34] [read-only] › tests/public/access-control.spec.ts:28:7 › Access control › returns a structured 401 for a protected API route
+[25/34] [read-only] › tests/public/access-control.spec.ts:41:7 › Access control › keeps authentication and health endpoints public
+[26/34] [read-only] › tests/public/authentication.spec.ts:11:7 › Authentication › shows an accessible, empty sign-in form
+[27/34] [read-only] › tests/public/authentication.spec.ts:27:7 › Authentication › switches to registration and validates matching passwords client-side
+[28/34] [read-only] › tests/public/authentication.spec.ts:42:7 › Authentication › honours a registration tab deep link
+[29/34] [read-only] › tests/public/authentication.spec.ts:48:7 › Authentication › changes the interface language
+[30/34] [read-only] › tests/public/pwa.spec.ts:6:7 › Public PWA resources › serves a valid web app manifest
+[31/34] [read-only] › tests/public/responsive.spec.ts:12:7 › login page renders at mobile-portrait (375x667)
+[32/34] [read-only] › tests/public/responsive.spec.ts:12:7 › login page renders at tablet-portrait (768x1024)
+[33/34] [read-only] › tests/public/responsive.spec.ts:12:7 › login page renders at desktop (1280x800)
+[34/34] [read-only] › tests/public/responsive.spec.ts:27:5 › no horizontal overflow at mobile width
+  2 skipped
+  32 passed (13.6s)

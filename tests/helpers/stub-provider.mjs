@@ -6,8 +6,22 @@
  * Usage : node tests/helpers/stub-provider.mjs <port>
  */
 import http from 'node:http';
+import { appendFileSync } from 'node:fs';
 
 const port = Number(process.argv[2] || 8444);
+
+// When E2E_STUB_READONLY=1, read-only journeys must not reach any writer.
+// GET is always a read; the two list endpoints are POST-based read queries
+// used legitimately by the application. Everything else is blocked.
+const readonlyGuardEnabled = process.env.E2E_STUB_READONLY === '1';
+const readonlyLogPath = process.env.E2E_STUB_LOG;
+const READ_QUERY_POST_PATHS = new Set(['/api/v1/books/list', '/api/v1/series/list']);
+
+function isReadOperation(method, path) {
+  if (method === 'GET') return true;
+  if (method === 'POST' && READ_QUERY_POST_PATHS.has(path)) return true;
+  return false;
+}
 // Instances distinctes : chaque connexion pointe vers un port différent
 // pour simuler deux serveurs Komga avec des données différentes.
 const instance = port === 8445 ? 'B' : 'A';
@@ -189,6 +203,15 @@ const server = http.createServer((req, res) => {
   res.setHeader('Content-Type', 'application/json');
   const url = new URL(req.url, `http://localhost:${port}`);
   const path = url.pathname;
+
+  if (readonlyGuardEnabled && !isReadOperation(req.method, path)) {
+    if (readonlyLogPath) {
+      appendFileSync(readonlyLogPath, `${req.method} ${url.pathname}${url.search}\n`);
+    }
+    res.statusCode = 403;
+    res.end(JSON.stringify({ error: 'read-only guard blocked write', method: req.method, path }));
+    return;
+  }
 
   const send = (data, status = 200) => {
     setTimeout(() => {

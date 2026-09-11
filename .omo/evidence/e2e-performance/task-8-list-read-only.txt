@@ -1,0 +1,39 @@
+
+====================================================================
+[e2e] Reusing existing production build: .next-e2e/BUILD_ID
+[e2e] BUILD_ID: d_YL44dyU8GzbnsVMY7hK
+[e2e] Built at: 2026-09-11T12:02:22.371Z
+[e2e] Rerun `pnpm test:e2e:build` after any src/ change.
+====================================================================
+
+Listing tests:
+  [setup] › setup/auth.setup.ts:12:5 › authenticate as the stream account
+  [setup] › setup/auth.setup.ts:18:5 › authenticate as the reader account
+  [read-only] › account/account.spec.ts:13:7 › Account › shows the signed-in profile without exposing password values
+  [read-only] › account/account.spec.ts:23:7 › Account › rejects a short new password before contacting the server
+  [read-only] › account/account.spec.ts:34:7 › Account › rejects mismatching new passwords before contacting the server
+  [read-only] › account/admin-authorization.spec.ts:11:7 › Admin authorization › only exposes the dashboard to an administrator
+  [read-only] › account/session.spec.ts:11:7 › Session lifecycle › signs out and protects the application again
+  [read-only] › account/session.spec.ts:28:7 › Session lifecycle after app suspension › redirects a restored protected screen when its session expired in the background
+  [read-only] › account/settings.spec.ts:13:7 › Settings › exposes all settings sections with real controls
+  [read-only] › account/settings.spec.ts:28:7 › Settings › remembers the active tab after a reload
+  [read-only] › public/access-control.spec.ts:18:9 › Access control › redirects / to sign in and preserves the destination
+  [read-only] › public/access-control.spec.ts:18:9 › Access control › redirects /settings to sign in and preserves the destination
+  [read-only] › public/access-control.spec.ts:18:9 › Access control › redirects /account to sign in and preserves the destination
+  [read-only] › public/access-control.spec.ts:18:9 › Access control › redirects /admin to sign in and preserves the destination
+  [read-only] › public/access-control.spec.ts:18:9 › Access control › redirects /libraries/library-id?sort=latest&page=2 to sign in and preserves the destination
+  [read-only] › public/access-control.spec.ts:18:9 › Access control › redirects /series/series-id to sign in and preserves the destination
+  [read-only] › public/access-control.spec.ts:18:9 › Access control › redirects /books/book-id to sign in and preserves the destination
+  [read-only] › public/access-control.spec.ts:18:9 › Access control › redirects /reading-lists/list-id to sign in and preserves the destination
+  [read-only] › public/access-control.spec.ts:28:7 › Access control › returns a structured 401 for a protected API route
+  [read-only] › public/access-control.spec.ts:41:7 › Access control › keeps authentication and health endpoints public
+  [read-only] › public/authentication.spec.ts:11:7 › Authentication › shows an accessible, empty sign-in form
+  [read-only] › public/authentication.spec.ts:27:7 › Authentication › switches to registration and validates matching passwords client-side
+  [read-only] › public/authentication.spec.ts:42:7 › Authentication › honours a registration tab deep link
+  [read-only] › public/authentication.spec.ts:48:7 › Authentication › changes the interface language
+  [read-only] › public/pwa.spec.ts:6:7 › Public PWA resources › serves a valid web app manifest
+  [read-only] › public/responsive.spec.ts:12:7 › login page renders at mobile-portrait (375x667)
+  [read-only] › public/responsive.spec.ts:12:7 › login page renders at tablet-portrait (768x1024)
+  [read-only] › public/responsive.spec.ts:12:7 › login page renders at desktop (1280x800)
+  [read-only] › public/responsive.spec.ts:27:5 › no horizontal overflow at mobile width
+Total: 29 tests in 9 files

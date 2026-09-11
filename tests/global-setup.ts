@@ -1,6 +1,8 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 export default async function globalSetup() {
@@ -78,5 +80,20 @@ export default async function globalSetup() {
   });
 
   await prisma.$disconnect();
+
+  const hashFile = process.env.E2E_DB_HASH_FILE;
+  if (hashFile) {
+    const dbPath = url.slice('file:'.length);
+    let dbContents: Buffer;
+    try {
+      dbContents = readFileSync(dbPath);
+    } catch {
+      throw new Error(`[e2e] Cannot hash SQLite database: ${dbPath} does not exist`);
+    }
+    const digest = createHash('sha256').update(dbContents).digest('hex');
+    writeFileSync(hashFile, `${digest}\n`);
+    console.warn(`[setup] wrote DB hash ${digest} to ${hashFile}`);
+  }
+
   console.warn(`[setup] e2e users seeded (${email}, ${readerEmail}), active Stub A (${configA.id}/${readerConfigA.id}), B=${configB.id}`);
 }

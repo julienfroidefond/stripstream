@@ -1,0 +1,73 @@
+
+====================================================================
+[e2e] Reusing existing production build: .next-e2e/BUILD_ID
+[e2e] BUILD_ID: d_YL44dyU8GzbnsVMY7hK
+[e2e] Built at: 2026-09-11T12:02:22.371Z
+[e2e] Rerun `pnpm test:e2e:build` after any src/ change.
+====================================================================
+
+Listing tests:
+  [setup] › setup/auth.setup.ts:12:5 › authenticate as the stream account
+  [setup] › setup/auth.setup.ts:18:5 › authenticate as the reader account
+  [read-only] › account/account.spec.ts:13:7 › Account › shows the signed-in profile without exposing password values
+  [read-only] › account/account.spec.ts:23:7 › Account › rejects a short new password before contacting the server
+  [read-only] › account/account.spec.ts:34:7 › Account › rejects mismatching new passwords before contacting the server
+  [read-only] › account/admin-authorization.spec.ts:11:7 › Admin authorization › only exposes the dashboard to an administrator
+  [read-only] › account/session.spec.ts:11:7 › Session lifecycle › signs out and protects the application again
+  [read-only] › account/session.spec.ts:28:7 › Session lifecycle after app suspension › redirects a restored protected screen when its session expired in the background
+  [read-only] › account/settings.spec.ts:13:7 › Settings › exposes all settings sections with real controls
+  [read-only] › account/settings.spec.ts:28:7 › Settings › remembers the active tab after a reload
+  [read-only] › public/access-control.spec.ts:18:9 › Access control › redirects / to sign in and preserves the destination
+  [read-only] › public/access-control.spec.ts:18:9 › Access control › redirects /settings to sign in and preserves the destination
+  [read-only] › public/access-control.spec.ts:18:9 › Access control › redirects /account to sign in and preserves the destination
+  [read-only] › public/access-control.spec.ts:18:9 › Access control › redirects /admin to sign in and preserves the destination
+  [read-only] › public/access-control.spec.ts:18:9 › Access control › redirects /libraries/library-id?sort=latest&page=2 to sign in and preserves the destination
+  [read-only] › public/access-control.spec.ts:18:9 › Access control › redirects /series/series-id to sign in and preserves the destination
+  [read-only] › public/access-control.spec.ts:18:9 › Access control › redirects /books/book-id to sign in and preserves the destination
+  [read-only] › public/access-control.spec.ts:18:9 › Access control › redirects /reading-lists/list-id to sign in and preserves the destination
+  [read-only] › public/access-control.spec.ts:28:7 › Access control › returns a structured 401 for a protected API route
+  [read-only] › public/access-control.spec.ts:41:7 › Access control › keeps authentication and health endpoints public
+  [read-only] › public/authentication.spec.ts:11:7 › Authentication › shows an accessible, empty sign-in form
+  [read-only] › public/authentication.spec.ts:27:7 › Authentication › switches to registration and validates matching passwords client-side
+  [read-only] › public/authentication.spec.ts:42:7 › Authentication › honours a registration tab deep link
+  [read-only] › public/authentication.spec.ts:48:7 › Authentication › changes the interface language
+  [read-only] › public/pwa.spec.ts:6:7 › Public PWA resources › serves a valid web app manifest
+  [read-only] › public/responsive.spec.ts:12:7 › login page renders at mobile-portrait (375x667)
+  [read-only] › public/responsive.spec.ts:12:7 › login page renders at tablet-portrait (768x1024)
+  [read-only] › public/responsive.spec.ts:12:7 › login page renders at desktop (1280x800)
+  [read-only] › public/responsive.spec.ts:27:5 › no horizontal overflow at mobile width
+  [mutating] › home/home.spec.ts:59:7 › Home functional journeys › shows continue reading and resumes the last viewed page
+  [mutating] › home/home.spec.ts:83:7 › Home functional journeys › keeps carousel images stable and reuses the HTTP cache after a reload
+  [mutating] › home/home.spec.ts:128:7 › Home functional journeys › shows reading lists on the home page and opens one
+  [mutating] › integrations/mutations.spec.ts:16:7 › Mutations on the isolated E2E account › persists reader preferences after a reload
+  [mutating] › integrations/mutations.spec.ts:35:7 › Mutations on the isolated E2E account › creates, edits, and deletes a Komga connection
+  [mutating] › integrations/streaming.spec.ts:32:7 › Home streaming + changement de connexion › affiche la home streamée avec les données de la connexion active
+  [mutating] › integrations/streaming.spec.ts:41:7 › Home streaming + changement de connexion › change de connexion, affiche le fallback, puis les données de la nouvelle home
+  [mutating] › library/authenticated-navigation.spec.ts:9:7 › Authenticated navigation › opens the main application navigation
+  [mutating] › library/authenticated-navigation.spec.ts:17:7 › Authenticated navigation › opens settings and switches between every section
+  [mutating] › library/authenticated-navigation.spec.ts:30:7 › Authenticated navigation › discovers a real library and exercises search when data exists
+  [mutating] › library/authenticated-navigation.spec.ts:39:7 › Authenticated navigation › opens a real series and book when the provider has content
+  [mutating] › library/favorites-reading-lists.spec.ts:10:7 › Favorites and reading lists › adds and removes a series favorite, including persistence after reload
+  [mutating] › library/favorites-reading-lists.spec.ts:32:7 › Favorites and reading lists › opens a deterministic reading list through the Stripstream connection
+  [mutating] › library/library.spec.ts:18:7 › Library browsing › synchronizes search with the URL and can clear it
+  [mutating] › library/library.spec.ts:27:7 › Library browsing › changes sorting without leaving the library
+  [mutating] › library/library.spec.ts:36:7 › Library browsing › toggles unread and missing filters through the URL
+  [mutating] › library/library.spec.ts:50:7 › Library browsing › navigates between library pages when the result set spans pages
+  [mutating] › library/library.spec.ts:63:7 › Library browsing › opens a real series card when content exists
+  [mutating] › library/reading-status.spec.ts:11:7 › Reading statuses › marks a book read and unread from the series card
+  [mutating] › library/reading-status.spec.ts:52:7 › Reading statuses › marks a book read when reaching its last reader page
+  [mutating] › library/series-rating.spec.ts:10:7 › Series rating (Stripstream) › sets, persists, then clears a series rating on the Stripstream connection
+  [mutating] › library/series-rating.spec.ts:51:7 › Series rating (Stripstream) › hides the rating control on the Komga connection
+  [mutating] › library/series-sort.spec.ts:10:7 › Library sort by rating (Stripstream) › cycles three sort states including community_score on Stripstream
+  [mutating] › library/series-sort.spec.ts:35:7 › Library sort by rating (Stripstream) › cycles only two sort states on Komga (no community_score)
+  [mutating] › public/security.spec.ts:12:7 › Security headers › sends security headers on public pages
+  [mutating] › public/security.spec.ts:23:7 › Security headers › sends security headers on a protected route redirect
+  [mutating] › public/security.spec.ts:36:7 › Rate limiting › rejects invalid credentials and stays on login
+  [mutating] › public/security.spec.ts:47:7 › Rate limiting › blocks registration after too many attempts
+  [mutating] › reader/reader-stub.spec.ts:41:7 › Reader against the deterministic Komga fixture › loads pages, navigates, switches spread direction, and syncs progress
+  [mutating] › reader/reader-stub.spec.ts:83:7 › Reader against the deterministic Komga fixture › opens thumbnails and reader information, then shows the end-of-book dialog
+  [mutating] › reader/reader-stub.spec.ts:108:7 › Reader against the deterministic Komga fixture › does not attribute anonymous reading progress to the current account
+  [mutating] › reader/reader-stub.spec.ts:180:7 › Reader against the deterministic Komga fixture › keeps reading statuses separate across two users and two connections
+  [mutating] › reader/reader.spec.ts:19:7 › Reader › offers page, direction, display and information controls
+  [mutating] › reader/reader.spec.ts:27:7 › Reader › opens reader information without navigating away
+Total: 63 tests in 21 files
