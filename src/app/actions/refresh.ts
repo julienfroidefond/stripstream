@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, BOOK_CACHE_TAG } from "@/constants/cacheConstants";
 
 export type RefreshScope = "home" | "library" | "series" | "book";
@@ -12,11 +12,11 @@ export type RefreshScope = "home" | "library" | "series" | "book";
 export async function revalidateForRefresh(scope: RefreshScope, id: string): Promise<void> {
   switch (scope) {
     case "home":
-      revalidateTag(HOME_CACHE_TAG, "max");
+      updateTag(HOME_CACHE_TAG);
       revalidatePath("/");
       break;
     case "library":
-      revalidateTag(LIBRARY_SERIES_CACHE_TAG, "max");
+      updateTag(LIBRARY_SERIES_CACHE_TAG);
       revalidatePath(`/libraries/${id}`);
       revalidatePath("/libraries");
       break;
@@ -25,7 +25,7 @@ export async function revalidateForRefresh(scope: RefreshScope, id: string): Pro
       revalidatePath("/series");
       break;
     case "book":
-      revalidateTag(`${BOOK_CACHE_TAG}:${id}`, "max");
+      updateTag(`${BOOK_CACHE_TAG}:${id}`);
       revalidatePath(`/books/${id}`);
       break;
     default:

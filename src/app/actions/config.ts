@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-utils";
 import { AppError } from "@/utils/errors";
@@ -44,13 +44,17 @@ async function requireUserId(): Promise<number> {
   return parseInt(user.id, 10);
 }
 
+function expireProviderCaches() {
+  updateTag(HOME_CACHE_TAG);
+  updateTag(LIBRARY_SERIES_CACHE_TAG);
+  updateTag(SERIES_BOOKS_CACHE_TAG);
+  updateTag(FAVORITES_CACHE_TAG);
+}
+
 function revalidateConnectionCaches() {
   revalidatePath("/settings");
   revalidatePath("/");
-  revalidateTag(HOME_CACHE_TAG, "max");
-  revalidateTag(LIBRARY_SERIES_CACHE_TAG, "max");
-  revalidateTag(SERIES_BOOKS_CACHE_TAG, "max");
-  revalidateTag(FAVORITES_CACHE_TAG, "max");
+  expireProviderCaches();
 }
 
 export async function testKomgaConnection(
@@ -252,9 +256,10 @@ export async function setActiveKomgaConfig(
 
     await setActiveConnection("komga", id);
 
-    // Refresh the page segment for the new cookie, but keep provider data warm:
-    // cache keys are already scoped to the selected connection.
-    revalidatePath("/");
+    // Expire provider caches and revalidate the home segment so the action
+    // response itself carries the newly active connection's data. The client
+    // also calls router.refresh() to settle the view.
+    revalidateConnectionCaches();
     return { success: true, message: `Komga actif : ${config.name}` };
   } catch {
     return { success: false, message: "Erreur lors du changement de config" };

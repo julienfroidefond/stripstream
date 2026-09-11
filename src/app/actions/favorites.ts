@@ -1,14 +1,14 @@
 "use server";
 
-import { revalidateTag } from "next/cache";
+import { updateTag } from "next/cache";
 import { FavoriteService } from "@/lib/services/favorite.service";
 import { AppError } from "@/utils/errors";
 import { FAVORITES_CACHE_TAG, HOME_CACHE_TAG } from "@/constants/cacheConstants";
 
 function revalidateFavoritesCaches() {
-  revalidateTag(FAVORITES_CACHE_TAG, "max");
+  updateTag(FAVORITES_CACHE_TAG);
   // La home affiche les favoris → invalider aussi pour que la liste soit à jour.
-  revalidateTag(HOME_CACHE_TAG, "max");
+  updateTag(HOME_CACHE_TAG);
 }
 
 export async function addToFavorites(

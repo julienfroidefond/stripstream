@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ChevronDown, Loader2, Server, Settings } from "lucide-react";
 import {
@@ -35,6 +36,7 @@ interface ProviderSwitcherProps {
 }
 
 export function ProviderSwitcher({ komgaConfigs, stripstreamConfigs }: ProviderSwitcherProps) {
+  const router = useRouter();
   const { toast } = useToast();
   const { t } = useTranslate();
   const [isOpen, setIsOpen] = useState(false);
@@ -78,6 +80,10 @@ export function ProviderSwitcher({ komgaConfigs, stripstreamConfigs }: ProviderS
         });
         if (!result.success) {
           setIsOpen(true);
+        } else {
+          // The server action sets the active-connection cookies and revalidates
+          // the home route. Refresh so the current view settles on the new data.
+          router.refresh();
         }
       } catch {
         setIsOpen(true);
@@ -85,7 +91,7 @@ export function ProviderSwitcher({ komgaConfigs, stripstreamConfigs }: ProviderS
         setBusyKey(null);
       }
     },
-    [busyKey, toast, t]
+    [busyKey, router, toast, t]
   );
 
   // Pas de connexion configurée → bouton qui mène vers les paramètres

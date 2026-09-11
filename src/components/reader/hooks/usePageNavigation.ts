@@ -99,13 +99,24 @@ export function usePageNavigation({
         setCurrentPage(page);
         if (!isAnonymousRef.current) {
           lastTrackablePageRef.current = page;
-          debouncedSync(page);
+          if (page === pages.length) {
+            // Reaching the last page completes the book: persist immediately
+            // instead of waiting for the debounce, which a hard navigation
+            // (reload, closing the tab, page.goto) would cancel before it fires.
+            if (syncTimeoutRef.current) {
+              clearTimeout(syncTimeoutRef.current);
+              syncTimeoutRef.current = null;
+            }
+            void syncReadProgress(book, pages.length, page);
+          } else {
+            debouncedSync(page);
+          }
         }
       } else {
         console.warn(`[reader/nav] navigate out of bounds page=${page} total=${pages.length}`);
       }
     },
-    [currentPage, pages.length, debouncedSync, book]
+    [currentPage, pages.length, debouncedSync, book, syncReadProgress]
   );
 
   const handlePreviousPage = useCallback(() => {

@@ -144,6 +144,8 @@ const stripstreamBookItem = {
 
 // Store de notation en mémoire (reset au démarrage du stub) — clé: seriesId.
 const stripstreamRatings = new Map();
+// Store de favoris Stripstream en mémoire (reset au démarrage du stub).
+const stripstreamFavorites = new Set();
 
 function stripstreamSeriesPage() {
   // 31 séries pour exercer la pagination, comme le fixture Komga.
@@ -267,6 +269,33 @@ const server = http.createServer((req, res) => {
   }
   if (ss && req.method === 'DELETE') {
     stripstreamRatings.delete(ss[1]);
+    res.statusCode = 204;
+    res.end();
+    return;
+  }
+
+  // GET /favorites · GET|PUT|DELETE /series/{id}/favorite
+  if (path === '/favorites' && req.method === 'GET') {
+    return send(
+      [...stripstreamFavorites].map((id) => ({
+        ...stripstreamSeriesItem,
+        series_id: id,
+        name: id === 'series-a' ? seriesName : id,
+      }))
+    );
+  }
+  ss = path.match(/^\/series\/([^/]+)\/favorite$/);
+  if (ss && req.method === 'GET') {
+    return send(stripstreamFavorites.has(ss[1]));
+  }
+  if (ss && req.method === 'PUT') {
+    stripstreamFavorites.add(ss[1]);
+    res.statusCode = 204;
+    res.end();
+    return;
+  }
+  if (ss && req.method === 'DELETE') {
+    stripstreamFavorites.delete(ss[1]);
     res.statusCode = 204;
     res.end();
     return;

@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidateTag } from "next/cache";
+import { updateTag } from "next/cache";
 import { getProvider } from "@/lib/providers/provider.factory";
 import { SERIES_RATING_CACHE_TAG } from "@/constants/cacheConstants";
 import { AppError } from "@/utils/errors";
@@ -13,7 +13,7 @@ import logger from "@/lib/logger";
  * Ciblage granulaire : seul le tag per-id est invalidé (pas de tag global).
  */
 function revalidateRatingCache(seriesId: string) {
-  revalidateTag(`${SERIES_RATING_CACHE_TAG}:${seriesId}`, "max");
+  updateTag(`${SERIES_RATING_CACHE_TAG}:${seriesId}`);
 }
 
 export async function setSeriesRating(

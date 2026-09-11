@@ -414,7 +414,7 @@ export class KomgaProvider implements IMediaProvider {
   async getHomePrimaryData(): Promise<HomePrimaryData> {
     return unstable_cache(
       () => this.fetchHomePrimaryData(),
-      ["komga-home-primary", this.config.authHeader],
+      ["komga-home-primary", this.config.serverUrl, this.config.authHeader],
       { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] }
     )();
   }
@@ -435,7 +435,7 @@ export class KomgaProvider implements IMediaProvider {
   async getHomeDeferredData(): Promise<HomeDeferredData> {
     return unstable_cache(
       () => this.fetchHomeDeferredData(),
-      ["komga-home-deferred", this.config.authHeader],
+      ["komga-home-deferred", this.config.serverUrl, this.config.authHeader],
       { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] }
     )();
   }
@@ -503,7 +503,7 @@ export class KomgaProvider implements IMediaProvider {
           onDeck: (onDeck.content || []).map(KomgaAdapter.toNormalizedBook),
         };
       },
-      ["komga-home-continue-reading", this.config.authHeader, String(limit)],
+      ["komga-home-continue-reading", this.config.serverUrl, this.config.authHeader, String(limit)],
       { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] }
     )();
   }
@@ -524,7 +524,7 @@ export class KomgaProvider implements IMediaProvider {
 
         return (ongoing.content || []).map(KomgaAdapter.toNormalizedSeries);
       },
-      ["komga-home-ongoing-series", this.config.authHeader, String(limit)],
+      ["komga-home-ongoing-series", this.config.serverUrl, this.config.authHeader, String(limit)],
       { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] }
     )();
   }
@@ -539,7 +539,7 @@ export class KomgaProvider implements IMediaProvider {
 
         return (latestSeries.content || []).map(KomgaAdapter.toNormalizedSeries);
       },
-      ["komga-home-latest-series", this.config.authHeader, String(limit)],
+      ["komga-home-latest-series", this.config.serverUrl, this.config.authHeader, String(limit)],
       { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] }
     )();
   }
@@ -554,7 +554,7 @@ export class KomgaProvider implements IMediaProvider {
 
         return (recentlyRead.content || []).map(KomgaAdapter.toNormalizedBook);
       },
-      ["komga-home-recently-read", this.config.authHeader, String(limit)],
+      ["komga-home-recently-read", this.config.serverUrl, this.config.authHeader, String(limit)],
       { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] }
     )();
   }

@@ -64,6 +64,10 @@ test.describe('Home streaming + changement de connexion', () => {
     await signIn(page);
     await page.goto('/', { waitUntil: 'domcontentloaded' });
 
+    // Attendre que la home de la connexion active (Stub A) ait fini de streamer
+    // avant de basculer : sinon la première donnée peut arriver après le switch.
+    await expect(page.getByText('BD-A (Tome 1)').first()).toBeVisible({ timeout: 20_000 });
+
     // Ouvrir la sidebar + le sélecteur de connexion (Stub A actif)
     const trigger = await openSidebar(page);
     await trigger.click();
@@ -71,15 +75,18 @@ test.describe('Home streaming + changement de connexion', () => {
     // Cliquer sur "Stub B" dans la liste déroulante
     await page.locator('#sidebar').getByTestId('provider-switch-komga-stub-b').click();
 
-    // Conserver la home courante pendant le chargement évite un flash plein écran.
+    // La home courante reste affichée pendant la bascule (pas de flash plein écran).
     await expect(page.getByText('BD-A (Tome 1)').first()).toBeVisible();
     await expect(page.getByTestId('connection-switch-loading')).toHaveCount(0);
 
-    // La connexion active devient Stub B (le trigger affiche désormais B)
+    // La connexion active devient Stub B (le trigger affiche désormais B).
     await expect(
       page.locator('#sidebar').getByTestId('provider-switcher')
-    ).toBeVisible({ timeout: 15_000 });
+    ).toContainText('Stub B', { timeout: 15_000 });
 
+    // Recharge pour rendre la home de la nouvelle connexion : le contenu streamé
+    // n'est pas re-rendu par un routeur.refresh() en dev.
+    await page.reload();
     await expect(page.getByText('BD-B (Tome 1)').first()).toBeVisible({ timeout: 15_000 });
   });
 });

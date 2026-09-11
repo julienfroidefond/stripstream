@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidateTag } from "next/cache";
+import { updateTag } from "next/cache";
 import { getProvider } from "@/lib/providers/provider.factory";
 import { PreferencesService } from "@/lib/services/preferences.service";
 import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, SERIES_BOOKS_CACHE_TAG } from "@/constants/cacheConstants";
@@ -12,12 +12,12 @@ import { AppError } from "@/utils/errors";
  * au lieu d'invalider toutes les listes de livres → meilleur hit rate.
  */
 function revalidateReadCaches(seriesId?: string | null) {
-  revalidateTag(HOME_CACHE_TAG, "max");
-  revalidateTag(LIBRARY_SERIES_CACHE_TAG, "max");
+  updateTag(HOME_CACHE_TAG);
+  updateTag(LIBRARY_SERIES_CACHE_TAG);
   if (seriesId) {
-    revalidateTag(`series-books:${seriesId}`, "max");
+    updateTag(`series-books:${seriesId}`);
   } else {
-    revalidateTag(SERIES_BOOKS_CACHE_TAG, "max");
+    updateTag(SERIES_BOOKS_CACHE_TAG);
   }
 }
 
