@@ -43,9 +43,6 @@ next-env.d.ts
 .cache
 debug-logs
 
-# MongoDB
-mongo-keyfile
-
 # Environment variables
 .env
 .env.local

@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 test.use({ storageState: { cookies: [], origins: [] } });
 
 /**
- * Tests e2e pour les corrections de sécurité (audit-perf-quality).
+ * Tests e2e pour les corrections de sécurité (headers HTTP et rate-limit login/register).
  * Testables sans compte ni contenu provider — vérifient les régressions
  * des CRITICAL C1 (security headers) et C3 (rate-limit login/register).
  */
