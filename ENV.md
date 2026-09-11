@@ -1,37 +1,58 @@
-# Variables d'environnement requises
+# Variables d'environnement
 
-## Production (.env)
+Référence complète des variables reconnues par Stripstream. Le modèle à copier
+est `.env.example` (`cp .env.example .env`).
+
+## Requises (lues par le code de l'application)
 
 ```env
-# Database Configuration (SQLite)
+# Base de données SQLite utilisée par Prisma (voir prisma/schema.prisma).
+# Le chemin relatif est résolu depuis le dossier prisma/ (emplacement de
+# prisma/schema.prisma) : file:./data/stripstream.db pointe donc vers
+# prisma/data/stripstream.db.
 DATABASE_URL=file:./data/stripstream.db
 
-# Prisma Data Path (optional - default: ./prisma/data)
-# Chemin sur l'hôte où seront stockées les données Prisma (base de données SQLite)
-# PRISMA_DATA_PATH=./prisma/data
+# OBLIGATOIRE. Clé de chiffrement des sessions/JWT NextAuth.
+# Générer avec : openssl rand -base64 32
+NEXTAUTH_SECRET=
 
-# NextAuth Configuration
-NEXTAUTH_SECRET=your-secret-key-here-generate-with-openssl-rand-base64-32
+# URL publique de base de l'application (utilisée par NextAuth pour les callbacks).
 # Si derrière un reverse proxy HTTPS, utiliser l'URL HTTPS publique :
 NEXTAUTH_URL=https://ton-domaine.com
 # Sinon en local :
-# NEXTAUTH_URL=http://localhost:3020
+# NEXTAUTH_URL=http://localhost:3000
+```
 
-# Admin User (optional - default password for julienfroidefond@gmail.com)
-ADMIN_DEFAULT_PASSWORD=Admin@2025
+## Optionnelles (lues par le code de l'application)
 
-# Cache Debug (optional - logs cache operations)
-# CACHE_DEBUG=true
+```env
+# "development" | "production" | "test" (défaut : development).
+# NODE_ENV=production
 
-# Komga Debug (optional - logs all requests to Komga and disables artificial delays)
-# KOMGA_DEBUG=true
+# Mot de passe du compte admin créé par scripts/init-db.mjs
+# (également utilisé au build par docker-compose).
+# ADMIN_DEFAULT_PASSWORD=Admin@2025
 
-# Komga Request Queue (optional - max concurrent requests to Komga, default: 5)
-# Augmenter à 10-20 pour du local avec des gros fichiers CBZ
+# Journaux de debug (1/true pour activer).
+# CACHE_DEBUG=false
+# KOMGA_DEBUG=false
+# STRIPSTREAM_DEBUG=false
+
+# Fallback du Librarian Stripstream, utilisé quand l'utilisateur n'a pas
+# enregistré d'URL/token en base.
+# STRIPSTREAM_URL=https://librarian.example.com
+# STRIPSTREAM_TOKEN=stl_xxxx_xxxxxxxx
+```
+
+## Docker / Compose uniquement
+
+Définies par `docker-compose.yml` ; non lues directement par le code de
+l'application.
+
+```env
+# AUTH_TRUST_HOST=true
 # KOMGA_MAX_CONCURRENT_REQUESTS=5
-
-# Node Environment
-NODE_ENV=production
+# PRISMA_DATA_PATH=./prisma/data
 ```
 
 ## Génération du secret NextAuth
@@ -42,4 +63,9 @@ openssl rand -base64 32
 
 ## Développement
 
-Pour le développement, les variables sont définies directement dans `docker-compose.dev.yml`.
+Pour le développement, les variables sont définies directement dans
+`docker-compose.yml` (ou dans un fichier `.env` copié depuis `.env.example`).
+La CLI Prisma et les scripts autonomes (`init-db.mjs`, etc.) lisent `.env` ;
+c'est donc le fichier à utiliser pour `prisma migrate` et `init-db`. Après avoir
+créé `.env`, exécuter `pnpm prisma generate` : le client généré à l'installation
+par `pnpm install` précède `.env` et ne lit donc pas `DATABASE_URL`.

@@ -1,6 +1,6 @@
 # Stripstream
 
-A modern web application for reading digital comics, built with Next.js 14 and the Komga API.
+A modern web application for reading digital comics, built with Next.js 16, React 19, Tailwind CSS and a multi-provider backend (Komga and Stripstream).
 
 ## 📸 Capture
 
@@ -26,15 +26,17 @@ A modern web application for reading digital comics, built with Next.js 14 and t
 
 ## 🚀 Technologies
 
-- [Next.js](https://nextjs.org/)
-- [React](https://reactjs.org/)
+- [Next.js](https://nextjs.org/) 16 (App Router, React Server Components)
+- [React](https://reactjs.org/) 19
 - [TypeScript](https://www.typescriptlang.org/)
 - [Tailwind CSS](https://tailwindcss.com/)
 - [Shadcn/ui](https://ui.shadcn.com/)
+- [Prisma](https://www.prisma.io/) with SQLite
 - [Docker](https://www.docker.com/)
 
 ## 📦 Major features
 
+- Multi-provider library access, configured per user: Komga and Stripstream
 - Synchronize with Komga : read progress, series list, books list
 - Reader
   - Right to left
@@ -46,7 +48,7 @@ A modern web application for reading digital comics, built with Next.js 14 and t
   - Thumbnail view : carousel of pages
   - Handling touch and key events
 - Language : english / french
-- Favorites : local only, not synchronized with Komga
+- Favorites : saved server-side in SQLite per user, provider config and series (not synced to Komga)
 - UI
   - Dark / light mode
   - Responsive design
@@ -56,20 +58,17 @@ A modern web application for reading digital comics, built with Next.js 14 and t
 - books list
   - Pagination
   - Mark as read / mark as unread buttons
-  - Download button
 - Series list
   - Pagination
   - search
-- Server caching for all ressources and TTL in settings
+- Server-side caching for all resources, with per-resource TTLs
 - PWA
-  - Download locally in storage books
-  - Offline mode
+  - Installable app shell (web manifest and install prompt)
 - Settings to configure the application
-  - Komga configuration
-  - Cache and TTLs
+  - Provider connections (Komga / Stripstream)
   - Default filter
   - Thumbnail with first page high quality or thumbnails
-  - Debug mode (show Komga API / next / mongo requests and responses timings)
+  - Reader preferences (prefetch count, and more)
 
 ## 🛠 Prerequisites
 
@@ -97,10 +96,43 @@ pnpm install
 3. Copy the example environment file and adjust it to your needs
 
 ```bash
-cp .env.example .env.local
+cp .env.example .env
 ```
 
-4. Start the development server
+The example documents the required `DATABASE_URL` (SQLite), the NextAuth values
+(`NEXTAUTH_SECRET`, `NEXTAUTH_URL`) and the optional debug flags
+(`CACHE_DEBUG`, `KOMGA_DEBUG`, `STRIPSTREAM_DEBUG`). See `ENV.md` for the full
+reference.
+
+4. Regenerate the Prisma client
+
+`pnpm install` runs `prisma generate` from its postinstall hook before `.env`
+exists, so the generated client is not pointed at `DATABASE_URL`. Regenerate it
+now that the file is in place:
+
+```bash
+pnpm prisma generate
+```
+
+5. Apply the database migrations
+
+The schema is not created by the seed script. On a fresh database, apply the
+migrations first:
+
+```bash
+pnpm prisma migrate deploy
+```
+
+Use `pnpm prisma migrate dev --name <name>` while developing to create a new
+migration and apply it.
+
+6. Seed the admin user
+
+```bash
+pnpm init-db
+```
+
+7. Start the development server
 
 ```bash
 pnpm dev
@@ -163,9 +195,36 @@ The application will be accessible at `http://localhost:3000`
 
 - `pnpm dev` - Starts the development server
 - `pnpm build` - Creates a production build
-- `pnpm start` - Runs the production version
-- `pnpm lint` - Checks code with ESLint
-- `./docker-push.sh [tag]` - Build and push Docker image to DockerHub (default tag: `latest`)
+- `pnpm start` - Runs the production server
+- `pnpm start:prod` - Seeds the admin user, then runs the production server (apply migrations first)
+- `pnpm init-db` - Seeds the admin user (run after applying migrations)
+- `pnpm reset-admin-password` - Resets the admin credentials
+- `pnpm lint` - Checks code with ESLint (must pass with 0 warnings)
+- `pnpm typecheck` - Runs the TypeScript compiler (`tsc --noEmit`)
+- `pnpm knip` - Detects unused files, dependencies and exports
+- `pnpm test:e2e` - Builds the E2E bundle, then runs the Playwright suite
+- `pnpm test:e2e:run` - Runs Playwright against an existing build
+- `pnpm test:e2e:build` - Builds the app for E2E into `.next-e2e`
+- `pnpm test:e2e:read-only` - Runs the read-only Playwright project
+- `pnpm test:e2e:mutating` - Runs the mutating Playwright project
+- `pnpm test:e2e:ui` - Opens the interactive Playwright UI
+- `pnpm test:e2e:report` - Shows the last Playwright report
+- `pnpm test:e2e:timings` - Prints the E2E timing report
+- `pnpm icons` - Generates the PWA icons and splash screens
+- `pnpm postinstall` - Generates the Prisma client (runs automatically)
+- `pnpm prepare` - Installs the Husky git hooks (runs automatically)
+
+### Database Migrations
+
+The schema lives in `prisma/schema.prisma`. Create and apply a migration with:
+
+```bash
+pnpm prisma migrate dev --name <name>
+```
+
+Prisma reads `DATABASE_URL` (and the other variables it needs) from `.env`.
+It does not read the local env file used by Next.js development, so keep these
+values in `.env`.
 
 ### Docker Push Script
 
@@ -183,25 +242,27 @@ The `docker-push.sh` script automates building and pushing the Docker image to D
 
 ## 🌐 Komga API
 
-The application uses the Komga API for comic book management. The API documentation is available here:
+Stripstream talks to either Komga or the Stripstream Librarian backend, and this
+section documents the Komga provider only. The Komga API reference is available
+here:
 [Komga API Documentation](https://cloud.julienfroidefond.com/swagger-ui/index.html#/)
 
 ## 🏗 Project Structure
 
 ```
 src/
-├── app/                 # Next.js pages and routes
+├── app/                 # Next.js pages, route handlers and server actions
 ├── components/          # Reusable React components
-├── constants/          # Application constants
-├── contexts/           # React contexts
-├── hooks/              # Custom React hooks
-├── i18n/               # Internationalization configuration
-├── lib/                # Utilities and services
-├── messages/           # Translation messages
-├── proxy.ts            # Next.js proxy (ex-middleware)
-├── styles/             # Global styles
-├── types/              # TypeScript type definitions
-└── utils/              # Helper functions and utilities
+├── constants/           # Application constants
+├── contexts/            # React contexts
+├── hooks/               # Custom React hooks
+├── i18n/                # Internationalization configuration
+│   └── messages/        # Translation dictionaries (en, fr)
+├── lib/                 # Utilities, services and media providers
+├── proxy.ts             # Next.js proxy (ex-middleware)
+├── styles/              # Global styles
+├── types/               # TypeScript type definitions
+└── utils/               # Helper functions and utilities
 
 docs/                   # Project documentation
 scripts/                # Utility scripts
@@ -221,7 +282,8 @@ public/                 # Static assets
 - Use TypeScript for all new code
 - Use Tailwind classes for styling
 - Implement accessibility features
-- Update devbook.md for any significant changes
+- Run `pnpm lint` (0 warnings) and `pnpm typecheck` before opening a Pull Request
+- For significant changes, update the relevant documentation: `AGENTS.md` for repository and agent conventions, and `docs/architecture.md` for the system reference
 - Follow the project's code style (enforced by ESLint and Prettier)
 
 ## 📄 License

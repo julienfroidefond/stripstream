@@ -30,9 +30,10 @@ For quick debugging you can skip the build and fall back to the dev server:
 E2E_SERVER_MODE=dev pnpm test:e2e:run
 ```
 
-In the dev-fallback branch `test:e2e` should be used with no build step
-(`playwright test` only); in this repository the production branch is wired, so
-`pnpm test:e2e` builds and then runs.
+In this repository the production branch is wired: `pnpm test:e2e` always
+rebuilds first (`pnpm test:e2e:build && playwright test`). To reuse the existing
+`.next-e2e` build without rebuilding, run `pnpm test:e2e:run`. To skip the build
+entirely and run against the dev server, run `E2E_SERVER_MODE=dev pnpm test:e2e:run`.
 
 ## Commands
 
