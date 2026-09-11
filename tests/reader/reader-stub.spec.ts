@@ -1,26 +1,10 @@
 import { expect, test } from '@playwright/test';
 import { PrismaClient } from '@prisma/client';
+import { signIn } from '../helpers/auth';
 
 const hasIsolatedDatabase = Boolean(process.env.E2E_DATABASE_URL);
 const email = 'e2e-reader@test.local';
 const streamEmail = 'e2e-stream@test.local';
-const password = 'E2eStrong!123';
-
-async function signIn(page: import('@playwright/test').Page, accountEmail = email) {
-  await page.goto('/login');
-  const form = page.locator('form').first();
-  const emailInput = form.locator('#email');
-  const passwordInput = form.locator('#password');
-  await expect
-    .poll(async () => {
-      await emailInput.fill(accountEmail);
-      await passwordInput.fill(password);
-      return `${await emailInput.inputValue()}|${await passwordInput.inputValue()}`;
-    })
-    .toBe(`${accountEmail}|${password}`);
-  await form.getByRole('button', { name: /sign in|se connecter/i }).click();
-  await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
-}
 
 async function goToPage(page: import('@playwright/test').Page, pageNumber: number) {
   await page.locator('img[alt^="Page "]').first().click({ position: { x: 10, y: 10 } });
@@ -211,7 +195,7 @@ test.describe('Reader against the deterministic Komga fixture', () => {
         { name: 'stripstream-active-provider', value: 'komga', url: baseURL },
         { name: 'stripstream-active-komga-config', value: String(connectionB), url: baseURL },
       ]);
-      await signIn(userA, streamEmail);
+      await signIn(userA, { email: streamEmail });
       await userA.evaluate(() => localStorage.clear());
       await userA.goto('/books/book-a');
       await goToPage(userA, 6);
@@ -227,7 +211,7 @@ test.describe('Reader against the deterministic Komga fixture', () => {
         )
         .toBe(6);
 
-      await signIn(userB, email);
+      await signIn(userB, { email });
       await userB.evaluate(() => localStorage.clear());
       await userB.goto('/books/book-b');
       await goToPage(userB, 4);

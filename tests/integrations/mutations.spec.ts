@@ -1,22 +1,6 @@
 import { expect, test } from '@playwright/test';
 
 const hasIsolatedDatabase = Boolean(process.env.E2E_DATABASE_URL);
-const email = 'e2e-stream@test.local';
-const password = 'E2eStrong!123';
-
-async function signIn(page: import('@playwright/test').Page) {
-  await page.goto('/login');
-  const form = page.locator('form').first();
-  const emailInput = form.locator('#email');
-  const passwordInput = form.locator('#password');
-  await expect(emailInput).toBeEditable();
-  await emailInput.fill(email);
-  await passwordInput.fill(password);
-  await expect(emailInput).toHaveValue(email);
-  await expect(passwordInput).toHaveValue(password);
-  await form.getByRole('button', { name: /sign in|se connecter/i }).click();
-  await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
-}
 
 async function openSettingsTab(page: import('@playwright/test').Page, name: RegExp) {
   await page.goto('/settings');

@@ -1,26 +1,10 @@
 import { expect, test } from '@playwright/test';
 
 const hasE2eCredentials = Boolean(process.env.E2E_DATABASE_URL);
-const readerEmail = 'e2e-reader@test.local';
-const readerPassword = 'E2eStrong!123';
 
 async function openFirstBook(page: import('@playwright/test').Page) {
   await page.goto('/books/book-a');
   await expect(page).toHaveURL(/\/books\/book-a/);
-}
-
-async function signInReader(page: import('@playwright/test').Page) {
-  await page.goto('/login');
-  const form = page.locator('form').first();
-  const email = form.locator('#email');
-  const password = form.locator('#password');
-  await expect(email).toBeEditable();
-  await email.fill(readerEmail);
-  await password.fill(readerPassword);
-  await expect(email).toHaveValue(readerEmail);
-  await expect(password).toHaveValue(readerPassword);
-  await form.getByRole('button', { name: /sign in|se connecter/i }).click();
-  await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
 }
 
 test.use({ storageState: 'tests/.auth/reader.json' });
