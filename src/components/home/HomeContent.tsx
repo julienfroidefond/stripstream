@@ -1,26 +1,6 @@
-import { useMemo } from "react";
-import { MediaRow } from "./MediaRow";
-import { ContinueReadingHero } from "./ContinueReadingHero";
-import { RecommendationsRow } from "./RecommendationsRow";
-import { ReadingListRow } from "./ReadingListRow";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { HomeData, HomeDeferredData, HomePrimaryData } from "@/types/home";
-import { Bookmark, History, Sparkles, Wand2, type LucideIcon } from "lucide-react";
-
-interface HomeContentProps {
-  data: HomeData;
-  isAnonymous?: boolean;
-}
-
-interface HomePrimaryContentProps {
-  data: HomePrimaryData & Pick<HomeData, "favorites">;
-  isAnonymous?: boolean;
-}
-
-interface HomeDeferredContentProps {
-  data: HomeDeferredData;
-  isAnonymous?: boolean;
-}
+import type { HomeData, HomePrimaryData } from "@/types/home";
+import type { LucideIcon } from "lucide-react";
 
 export function getContinueReading(data: Pick<HomePrimaryData, "ongoingBooks" | "onDeck">) {
   // Merge onDeck (next unread per series) and ongoingBooks (currently reading),
@@ -51,80 +31,6 @@ export function getSeriesPool(
     seen.add(s.id);
     return true;
   });
-}
-
-export function HomePrimaryContent({ data, isAnonymous = false }: HomePrimaryContentProps) {
-  const continueReading = useMemo(() => getContinueReading(data), [data]);
-  const showHero = !isAnonymous && continueReading.length > 0;
-  const seriesPool = useMemo(() => getSeriesPool(data), [data]);
-
-  return (
-    <>
-      {showHero && <ContinueReadingHero books={continueReading} series={seriesPool} />}
-
-      {!isAnonymous && data.ongoing && data.ongoing.length > 0 && (
-        <MediaRow
-          titleKey="home.sections.continue_series"
-          items={data.ongoing}
-          iconName="LibraryBig"
-          feed="ongoing"
-        />
-      )}
-
-      {data.favorites && data.favorites.length > 0 && (
-        <MediaRow
-          titleKey="home.sections.favorites"
-          items={data.favorites}
-          iconName="Heart"
-          testId="home-favorites"
-          feed="favorites"
-        />
-      )}
-    </>
-  );
-}
-
-export function HomeDeferredContent({ data, isAnonymous = false }: HomeDeferredContentProps) {
-  return (
-    <>
-      {data.readingLists && data.readingLists.length > 0 && (
-        <ReadingListRow lists={data.readingLists} />
-      )}
-
-      {data.latestSeries && data.latestSeries.length > 0 && (
-        <MediaRow
-          titleKey="home.sections.latest_series"
-          items={data.latestSeries}
-          iconName="Sparkles"
-          feed="latest-series"
-        />
-      )}
-
-      {data.recentlyRead && data.recentlyRead.length > 0 && (
-        <MediaRow
-          titleKey="home.sections.recently_added"
-          items={data.recentlyRead}
-          iconName="History"
-          feed="recently-read"
-        />
-      )}
-
-      {!isAnonymous && data.recommendations && data.recommendations.length > 0 && (
-        <RecommendationsRow series={data.recommendations} />
-      )}
-    </>
-  );
-}
-
-export function HomeDeferredContentSkeleton() {
-  return (
-    <>
-      <HomeCarouselSkeleton icon={Bookmark} />
-      <HomeCarouselSkeleton icon={Sparkles} />
-      <HomeCarouselSkeleton icon={History} />
-      <HomeCarouselSkeleton icon={Wand2} />
-    </>
-  );
 }
 
 export function HomeCarouselSkeleton({ icon: Icon }: { icon: LucideIcon }) {
@@ -158,14 +64,5 @@ export function HomeHeroSkeleton() {
         </div>
       </div>
     </section>
-  );
-}
-
-export function HomeContent({ data, isAnonymous = false }: HomeContentProps) {
-  return (
-    <div className="space-y-10 pb-2">
-      <HomePrimaryContent data={data} isAnonymous={isAnonymous} />
-      <HomeDeferredContent data={data} isAnonymous={isAnonymous} />
-    </div>
   );
 }

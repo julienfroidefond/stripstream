@@ -9,15 +9,6 @@ export interface ReaderInfo {
   totalInSeries: number | null;
 }
 
-export interface PageCache {
-  [pageNumber: number]: {
-    blob: Blob;
-    url: string;
-    timestamp: number;
-    loading?: Promise<void>;
-  };
-}
-
 export interface BookReaderProps {
   book: NormalizedBook;
   pages: number[];
@@ -68,12 +59,4 @@ export interface ControlButtonsProps {
   onToggleThumbnails: () => void;
   readerBackground: ReaderBackground;
   onReaderBackgroundChange: (background: ReaderBackground) => void;
-}
-
-export interface UsePageNavigationProps {
-  book: NormalizedBook;
-  pages: number[];
-  isDoublePage: boolean;
-  onClose?: () => void;
-  direction: "ltr" | "rtl";
 }

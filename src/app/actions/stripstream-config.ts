@@ -4,7 +4,6 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-utils";
 import { StripstreamProvider } from "@/lib/providers/stripstream/stripstream.provider";
-import { getResolvedStripstreamConfig } from "@/lib/providers/stripstream/stripstream-config-resolver";
 import { AppError } from "@/utils/errors";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import {
@@ -18,7 +17,6 @@ import { getActiveConnection, setActiveConnection } from "@/lib/active-connectio
 
 const TEST_CONNECTION_LIMIT = 5;
 const TEST_CONNECTION_WINDOW_MS = 30_000;
-import type { ProviderType } from "@/lib/providers/types";
 
 export interface StripstreamConfigSummary {
   id: number;
@@ -232,86 +230,3 @@ export async function setActiveStripstreamConfig(
   }
 }
 
-/**
- * Définit le type de provider actif (komga ou stripstream).
- */
-export async function setActiveProvider(
-  provider: ProviderType
-): Promise<{ success: boolean; message: string }> {
-  try {
-    const userId = await requireUserId();
-
-    if (provider === "komga") {
-      const config = await prisma.komgaConfig.findFirst({
-        where: { userId },
-        orderBy: { createdAt: "asc" },
-        select: { id: true },
-      });
-      if (!config) {
-        return { success: false, message: "Komga n'est pas encore configuré" };
-      }
-      await setActiveConnection("komga", config.id);
-    } else if (provider === "stripstream") {
-      const config = await prisma.stripstreamConfig.findFirst({
-        where: { userId },
-        orderBy: { createdAt: "asc" },
-        select: { id: true },
-      });
-      if (!config) {
-        return { success: false, message: "Stripstream n'est pas encore configuré" };
-      }
-      await setActiveConnection("stripstream", config.id);
-    }
-
-    revalidateConnectionCaches();
-    return {
-      success: true,
-      message: `Provider actif : ${provider === "komga" ? "Komga" : "Stripstream Librarian"}`,
-    };
-  } catch (error) {
-    if (error instanceof AppError) {
-      return { success: false, message: error.message };
-    }
-    return { success: false, message: "Erreur lors du changement de provider" };
-  }
-}
-
-export async function getActiveProvider(): Promise<ProviderType> {
-  try {
-    const user = await getCurrentUser();
-    if (!user) return "komga";
-    const userId = parseInt(user.id, 10);
-
-    return (await getActiveConnection(userId)).provider;
-  } catch {
-    return "komga";
-  }
-}
-
-export async function getProvidersStatus(): Promise<{
-  komgaConfigured: boolean;
-  stripstreamConfigured: boolean;
-  activeProvider: ProviderType;
-}> {
-  try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return { komgaConfigured: false, stripstreamConfigured: false, activeProvider: "komga" };
-    }
-    const userId = parseInt(user.id, 10);
-
-    const [activeConnection, komgaConfig, stripstreamResolved] = await Promise.all([
-      getActiveConnection(userId),
-      prisma.komgaConfig.findFirst({ where: { userId }, select: { id: true } }),
-      getResolvedStripstreamConfig(userId),
-    ]);
-
-    return {
-      komgaConfigured: !!komgaConfig,
-      stripstreamConfigured: !!stripstreamResolved,
-      activeProvider: activeConnection.provider,
-    };
-  } catch {
-    return { komgaConfigured: false, stripstreamConfigured: false, activeProvider: "komga" };
-  }
-}

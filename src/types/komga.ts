@@ -16,18 +16,6 @@ export interface KomgaConfig extends KomgaConfigData {
 }
 
 // Types liés à l'API Komga
-export interface KomgaUser {
-  id: string;
-  email: string;
-  roles: KomgaRole[];
-  sharedAllLibraries: boolean;
-  sharedLibrariesIds: string[];
-  authenticated: boolean;
-  authorities: string[];
-}
-
-export type KomgaRole = "ROLE_ADMIN" | "ROLE_USER";
-
 export interface KomgaLibrary {
   id: string;
   name: string;
@@ -126,9 +114,4 @@ export interface BookMetadata {
   tags: string[];
   releaseDate: string;
   isbn: string;
-}
-
-export interface KomgaBookWithPages {
-  book: KomgaBook;
-  pages: number[];
 }

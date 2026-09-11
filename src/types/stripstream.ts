@@ -108,11 +108,6 @@ export interface StripstreamReadingProgressResponse {
   last_read_at?: string | null;
 }
 
-export interface StripstreamUpdateReadingProgressRequest {
-  status: "unread" | "reading" | "read";
-  current_page?: number | null;
-}
-
 export interface StripstreamProviderRating {
   provider: string;
   rating: number;

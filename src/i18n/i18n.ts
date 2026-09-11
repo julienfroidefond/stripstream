@@ -46,5 +46,3 @@ if (!i18n.isInitialized) {
   i18n.addResourceBundle("fr", "common", frCommon, true, true);
   i18n.addResourceBundle("en", "common", enCommon, true, true);
 }
-
-export default i18n;

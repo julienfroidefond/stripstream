@@ -113,5 +113,3 @@ export function SeriesRatingControl({
     </div>
   );
 }
-
-export default SeriesRatingControl;
