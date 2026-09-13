@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth-utils";
+import { getActiveConnection } from "@/lib/active-connection";
 import { getResolvedStripstreamConfig } from "@/lib/providers/stripstream/stripstream-config-resolver";
 import { StripstreamClient } from "@/lib/providers/stripstream/stripstream.client";
 import { ERROR_CODES } from "@/constants/errorCodes";
@@ -22,7 +23,14 @@ export async function GET(
     }
 
     const userId = parseInt(user.id, 10);
-    const config = await getResolvedStripstreamConfig(userId);
+    const activeConnection = await getActiveConnection(userId);
+    if (activeConnection.provider !== "stripstream") {
+      throw new AppError(ERROR_CODES.STRIPSTREAM.MISSING_CONFIG);
+    }
+    const config = await getResolvedStripstreamConfig(
+      userId,
+      activeConnection.configId ?? undefined
+    );
     if (!config) {
       throw new AppError(ERROR_CODES.STRIPSTREAM.MISSING_CONFIG);
     }
@@ -39,6 +47,8 @@ export async function GET(
     const headers: Record<string, string> = {
       "Content-Type": contentType,
       "Cache-Control": "public, max-age=86400",
+      // The same path may resolve to a different Librarian after a connection switch.
+      Vary: "Cookie",
     };
     if (contentLength) headers["Content-Length"] = contentLength;
 

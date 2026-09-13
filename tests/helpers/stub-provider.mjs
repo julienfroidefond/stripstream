@@ -341,6 +341,12 @@ const server = http.createServer((req, res) => {
     return sendImage(res, 1);
   }
 
+  // GET /books/{id}/pages/{page} (Stripstream reader pages, 1-based)
+  ss = path.match(/^\/books\/([^/]+)\/pages\/(\d+)$/);
+  if (ss && req.method === 'GET') {
+    return sendImage(res, Number(ss[2]));
+  }
+
   // GET /metadata/links?series_id=...
   if (path === '/metadata/links' && req.method === 'GET') {
     return send([]);

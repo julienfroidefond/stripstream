@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { createHash } from "node:crypto";
 import { getCurrentUser } from "@/lib/auth-utils";
+import { getActiveConnection } from "@/lib/active-connection";
 import { getResolvedStripstreamConfig } from "@/lib/providers/stripstream/stripstream-config-resolver";
 import { StripstreamClient } from "@/lib/providers/stripstream/stripstream.client";
 import { AppError } from "@/utils/errors";
@@ -23,7 +24,14 @@ export async function GET(
     }
 
     const userId = parseInt(user.id, 10);
-    const config = await getResolvedStripstreamConfig(userId);
+    const activeConnection = await getActiveConnection(userId);
+    if (activeConnection.provider !== "stripstream") {
+      throw new AppError(ERROR_CODES.STRIPSTREAM.MISSING_CONFIG);
+    }
+    const config = await getResolvedStripstreamConfig(
+      userId,
+      activeConnection.configId ?? undefined
+    );
     if (!config) {
       throw new AppError(ERROR_CODES.STRIPSTREAM.MISSING_CONFIG);
     }
@@ -47,6 +55,9 @@ export async function GET(
       headers: {
         "Content-Type": contentType,
         "Cache-Control": "public, max-age=2592000, immutable",
+        // The bytes depend on the authenticated browser's active connection.
+        // Keep browser cache entries isolated when a user switches provider/config.
+        Vary: "Cookie",
       },
     });
   } catch (error) {

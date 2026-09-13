@@ -78,6 +78,14 @@ export default async function globalSetup() {
       token: 'e2e-stripstream-token',
     },
   });
+  await prisma.stripstreamConfig.create({
+    data: {
+      userId: user.id,
+      name: 'Stub Lists B',
+      url: 'http://127.0.0.1:8445',
+      token: 'e2e-stripstream-token',
+    },
+  });
 
   await prisma.$disconnect();
 
