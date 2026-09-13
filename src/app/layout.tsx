@@ -15,7 +15,6 @@ import { SidebarFavorites } from "@/components/layout/SidebarFavorites";
 import { SidebarLibraries } from "@/components/layout/SidebarLibraries";
 import { SidebarConnections } from "@/components/layout/SidebarConnections";
 import { SidebarSectionSkeleton } from "@/components/layout/SidebarSectionSkeleton";
-import logger from "@/lib/logger";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -65,19 +64,18 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const locale = cookieStore.get("NEXT_LOCALE")?.value || "fr";
 
   // Uniquement l'utilisateur (auth DB, rapide) — PAS les données de la connexion.
-  const currentUser = await import("@/lib/auth-utils")
-    .then((m) => m.getCurrentUser())
-    .catch(() => null);
+  const [currentUser, loadedPreferences] = await Promise.all([
+    import("@/lib/auth-utils")
+      .then((m) => m.getCurrentUser())
+      .catch(() => null),
+    PreferencesService.getPreferences().catch(() => null),
+  ]);
   const userIsAdmin = currentUser?.roles.includes("ROLE_ADMIN") ?? false;
 
   // Préférences : nécessaires au contexte client (fond, iso), lecture DB locale.
   let preferences: UserPreferences = defaultPreferences;
-  try {
-    if (currentUser) {
-      preferences = (await PreferencesService.getPreferences()) ?? defaultPreferences;
-    }
-  } catch (error) {
-    logger.warn({ err: error }, "Failed to load preferences in root layout");
+  if (currentUser) {
+    preferences = loadedPreferences ?? defaultPreferences;
   }
 
   return (
