@@ -43,8 +43,6 @@ export async function GET(
 
     const cacheHeaders = new Headers({
       "Cache-Control": "public, max-age=86400",
-      // The same path may resolve to a different Librarian after a connection switch.
-      Vary: "Cookie",
     });
     for (const header of ["etag", "last-modified"]) {
       const value = response.headers.get(header);

@@ -58,9 +58,6 @@ export async function GET(
 
     const headers = new Headers({
       "Cache-Control": "public, max-age=2592000, immutable",
-      // The bytes depend on the authenticated browser's active connection.
-      // Keep browser cache entries isolated when a user switches provider/config.
-      Vary: "Cookie",
     });
     if (etag) headers.set("ETag", etag);
     if (lastModified) headers.set("Last-Modified", lastModified);

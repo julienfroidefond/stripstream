@@ -56,7 +56,6 @@ export async function GET(
     const headers = new Headers();
     headers.set("Content-Type", contentType);
     headers.set("Cache-Control", "public, max-age=31536000"); // Cache for 1 year
-    headers.set("Vary", "Cookie");
 
     return new NextResponse(clonedBuffer, {
       status: 200,

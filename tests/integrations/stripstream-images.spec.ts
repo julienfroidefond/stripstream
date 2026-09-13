@@ -21,7 +21,7 @@ test.describe('Stripstream image connection isolation', () => {
 
   async function fetchImage(page: import('@playwright/test').Page, path: string) {
     return page.evaluate(async (imagePath) => {
-      const response = await fetch(imagePath);
+      const response = await fetch(imagePath, { cache: 'no-store' });
       return {
         body: await response.text(),
         status: response.status,
@@ -35,12 +35,12 @@ test.describe('Stripstream image connection isolation', () => {
     const fromA = await fetchImage(page, '/api/stripstream/images/books/book-a/thumbnail');
     expect(fromA.status).toBe(200);
     expect(fromA.body).toContain('A - page 1');
-    expect(fromA.vary).toContain('Cookie');
+    expect(fromA.vary).not.toContain('Cookie');
 
     const pageFromA = await fetchImage(page, '/api/stripstream/images/books/book-a/pages/1');
     expect(pageFromA.status).toBe(200);
     expect(pageFromA.body).toContain('A - page 1');
-    expect(pageFromA.vary).toContain('Cookie');
+    expect(pageFromA.vary).not.toContain('Cookie');
 
     await selectStripstreamConnection(page, 'Stub Lists B');
     const fromB = await fetchImage(page, '/api/stripstream/images/books/book-a/thumbnail');

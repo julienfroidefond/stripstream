@@ -45,7 +45,6 @@ export class KomgaImageService {
 
       const responseHeaders = new Headers({
         "Cache-Control": `public, max-age=${cacheMaxAge}, immutable`,
-        Vary: "Cookie",
       });
       for (const header of ["content-type", "content-length", "etag", "last-modified"]) {
         const value = response.headers.get(header);
