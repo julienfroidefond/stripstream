@@ -39,18 +39,28 @@ export async function GET(
     const path = `books/${bookId}/pages/${pageNumber}${queryString ? `?${queryString}` : ""}`;
 
     const client = new StripstreamClient(config.url, config.token);
-    const response = await client.fetchImage(path);
+    const response = await client.fetchImage(path, request.headers);
+
+    const cacheHeaders = new Headers({
+      "Cache-Control": "public, max-age=86400",
+      // The same path may resolve to a different Librarian after a connection switch.
+      Vary: "Cookie",
+    });
+    for (const header of ["etag", "last-modified"]) {
+      const value = response.headers.get(header);
+      if (value) cacheHeaders.set(header, value);
+    }
+
+    if (response.status === 304) {
+      return new NextResponse(null, { status: 304, headers: cacheHeaders });
+    }
 
     const contentType = response.headers.get("content-type") ?? "image/jpeg";
     const contentLength = response.headers.get("content-length");
 
-    const headers: Record<string, string> = {
-      "Content-Type": contentType,
-      "Cache-Control": "public, max-age=86400",
-      // The same path may resolve to a different Librarian after a connection switch.
-      Vary: "Cookie",
-    };
-    if (contentLength) headers["Content-Length"] = contentLength;
+    const headers = new Headers(cacheHeaders);
+    headers.set("Content-Type", contentType);
+    if (contentLength) headers.set("Content-Length", contentLength);
 
     return new NextResponse(response.body, { headers });
   } catch (error) {

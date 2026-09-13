@@ -172,17 +172,24 @@ export class StripstreamClient {
     }
   }
 
-  async fetchImage(path: string): Promise<Response> {
+  async fetchImage(path: string, conditionalHeaders?: HeadersInit): Promise<Response> {
     const url = this.buildUrl(path);
     const headers = new Headers({
       Authorization: `Bearer ${this.token}`,
       Accept: "image/webp, image/jpeg, image/png, */*",
     });
+    if (conditionalHeaders) {
+      const requestHeaders = new Headers(conditionalHeaders);
+      for (const header of ["if-none-match", "if-modified-since"]) {
+        const value = requestHeaders.get(header);
+        if (value) headers.set(header, value);
+      }
+    }
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), IMAGE_TIMEOUT_MS);
     try {
       const response = await fetch(url, { headers, signal: controller.signal });
-      if (!response.ok) {
+      if (!response.ok && response.status !== 304) {
         throw new AppError(ERROR_CODES.IMAGE.FETCH_ERROR, { status: response.status });
       }
       return response;
