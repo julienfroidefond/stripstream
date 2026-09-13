@@ -1,11 +1,12 @@
 import prisma from "@/lib/prisma";
+import { cache } from "react";
 import { getCurrentUser } from "@/lib/auth-utils";
 import { getActiveConnection } from "@/lib/active-connection";
 import { getResolvedStripstreamConfig } from "./stripstream/stripstream-config-resolver";
 import type { IMediaProvider } from "./provider.interface";
 import type { StripstreamReadingListDetail } from "@/types/stripstream";
 
-export async function getProvider(): Promise<IMediaProvider | null> {
+export const getProvider = cache(async (): Promise<IMediaProvider | null> => {
   const user = await getCurrentUser();
   if (!user) return null;
 
@@ -33,7 +34,7 @@ export async function getProvider(): Promise<IMediaProvider | null> {
   }
 
   return null;
-}
+});
 
 export async function getActiveProviderType(): Promise<string | null> {
   const user = await getCurrentUser();

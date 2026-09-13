@@ -1,7 +1,8 @@
 import { auth } from "@/lib/auth";
+import { cache } from "react";
 import type { UserData } from "@/lib/services/auth-server.service";
 
-export async function getCurrentUser(): Promise<UserData | null> {
+export const getCurrentUser = cache(async (): Promise<UserData | null> => {
   const session = await auth();
 
   if (!session?.user) {
@@ -14,7 +15,7 @@ export async function getCurrentUser(): Promise<UserData | null> {
     roles: session.user.roles,
     authenticated: true,
   };
-}
+});
 
 export async function isAdmin(): Promise<boolean> {
   const user = await getCurrentUser();

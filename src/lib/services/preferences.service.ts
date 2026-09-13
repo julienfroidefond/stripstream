@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import { cache } from "react";
 import { getCurrentUser } from "../auth-utils";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
@@ -17,9 +18,9 @@ export class PreferencesService {
     return user;
   }
 
-  static async getPreferences(): Promise<UserPreferences> {
+  static getPreferences = cache(async (): Promise<UserPreferences> => {
     try {
-      const user = await this.getCurrentUser();
+      const user = await PreferencesService.getCurrentUser();
       const userId = parseInt(user.id, 10);
 
       const preferences = await prisma.preferences.findUnique({
@@ -62,7 +63,7 @@ export class PreferencesService {
       }
       throw new AppError(ERROR_CODES.PREFERENCES.FETCH_ERROR, {}, error);
     }
-  }
+  });
 
   static async updatePreferences(preferences: Partial<UserPreferences>): Promise<UserPreferences> {
     try {

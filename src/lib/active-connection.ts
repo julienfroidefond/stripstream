@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { cache } from "react";
 import prisma from "@/lib/prisma";
 import type { ProviderType } from "@/lib/providers/types";
 
@@ -21,7 +22,7 @@ function parseConfigId(value: string | undefined): number | null {
  * Resolves the connection selected by this browser. The database remains the
  * source of connection details, but not of the active selection.
  */
-export async function getActiveConnection(userId: number): Promise<ActiveConnection> {
+export const getActiveConnection = cache(async (userId: number): Promise<ActiveConnection> => {
   const cookieStore = await cookies();
   const provider = cookieStore.get(ACTIVE_PROVIDER_COOKIE)?.value as ProviderType | undefined;
   const configId = parseConfigId(
@@ -64,7 +65,7 @@ export async function getActiveConnection(userId: number): Promise<ActiveConnect
   if (komgaConfig) return { provider: "komga", configId: komgaConfig.id };
   if (stripstreamConfig) return { provider: "stripstream", configId: stripstreamConfig.id };
   return { provider: "komga", configId: null };
-}
+});
 
 export async function setActiveConnection(
   provider: ProviderType,

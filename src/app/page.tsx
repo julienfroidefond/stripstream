@@ -36,10 +36,12 @@ export default function HomePage() {
 
 async function HomeStreamingContent() {
   try {
-    const provider = await getProvider();
+    const [provider, preferences] = await Promise.all([
+      getProvider(),
+      PreferencesService.getPreferences().catch(() => null),
+    ]);
     if (!provider) redirect("/settings");
 
-    const preferences = await PreferencesService.getPreferences().catch(() => null);
     const isAnonymous = preferences?.anonymousMode ?? false;
 
     const continueReadingPromise = provider.getHomeContinueReadingData(HOMEPAGE_INITIAL_QUERY_LIMIT).catch(() => null);
