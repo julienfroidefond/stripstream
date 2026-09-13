@@ -27,13 +27,18 @@ class RequestDeduplicationService {
     // Créer une nouvelle promesse pour cette requête
     const promise = fetcher()
       .then((result) => {
-        // Nettoyer après le succès
-        this.pendingRequests.delete(key);
+        // Nettoyer uniquement si cette entrée est toujours la nôtre. Le
+        // timeout peut avoir supprimé cette promesse puis une nouvelle
+        // requête peut avoir réutilisé la même clé entre-temps.
+        if (this.pendingRequests.get(key) === promise) {
+          this.pendingRequests.delete(key);
+        }
         return result;
       })
       .catch((error) => {
-        // Nettoyer après l'erreur
-        this.pendingRequests.delete(key);
+        if (this.pendingRequests.get(key) === promise) {
+          this.pendingRequests.delete(key);
+        }
         throw error;
       });
 
@@ -42,7 +47,9 @@ class RequestDeduplicationService {
 
     // Timeout de sécurité pour éviter les fuites mémoire
     setTimeout(() => {
-      if (this.pendingRequests.has(key)) {
+      // Ne pas supprimer une requête plus récente qui aurait remplacé cette
+      // entrée après l'expiration de la précédente.
+      if (this.pendingRequests.get(key) === promise) {
         this.pendingRequests.delete(key);
       }
     }, ttl);
