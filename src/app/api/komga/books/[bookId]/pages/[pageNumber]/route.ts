@@ -31,7 +31,11 @@ export async function GET(
     // Utiliser la déduplication pour éviter les requêtes dupliquées vers Komga
     // Si plusieurs clients demandent la même page simultanément, une seule requête est faite
     // On lit le buffer et les headers dans la déduplication pour pouvoir les partager
-    const deduplicationKey = `book-page:${bookIdParam}:${pageNumber}`;
+    // The same book/page id can exist on multiple Komga connections. Keep
+    // in-flight requests isolated by the browser's active connection cookie;
+    // the image service resolves the matching credentials separately.
+    const activeConfigKey = request.cookies.get("stripstream-active-komga-config")?.value ?? "default";
+    const deduplicationKey = `book-page:${activeConfigKey}:${bookIdParam}:${pageNumber}`;
     const { buffer, contentType } = await requestDeduplicationService.deduplicate(
       deduplicationKey,
       async () => {
@@ -52,6 +56,7 @@ export async function GET(
     const headers = new Headers();
     headers.set("Content-Type", contentType);
     headers.set("Cache-Control", "public, max-age=31536000"); // Cache for 1 year
+    headers.set("Vary", "Cookie");
 
     return new NextResponse(clonedBuffer, {
       status: 200,
