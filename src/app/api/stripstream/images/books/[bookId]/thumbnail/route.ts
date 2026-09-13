@@ -12,7 +12,7 @@ import { requestDeduplicationService } from "@/lib/services/request-deduplicatio
 import logger from "@/lib/logger";
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ bookId: string }> }
 ) {
   try {
@@ -39,27 +39,35 @@ export async function GET(
     const connectionKey = createHash("sha256")
       .update(`${config.url}\0${config.token}`)
       .digest("hex");
-    const { buffer, contentType } = await requestDeduplicationService.deduplicate(
-      `stripstream-thumbnail:${connectionKey}:${bookId}`,
+    const validator = request.headers.get("if-none-match") ?? request.headers.get("if-modified-since") ?? "none";
+    const validatorKey = createHash("sha256").update(validator).digest("hex");
+    const { buffer, contentType, etag, lastModified, status } = await requestDeduplicationService.deduplicate(
+      `stripstream-thumbnail:${connectionKey}:${bookId}:${validatorKey}`,
       async () => {
         const client = new StripstreamClient(config.url, config.token);
-        const response = await client.fetchImage(`books/${bookId}/thumbnail`);
+        const response = await client.fetchImage(`books/${bookId}/thumbnail`, request.headers);
         return {
           buffer: await response.arrayBuffer(),
           contentType: response.headers.get("content-type") ?? "image/jpeg",
+          etag: response.headers.get("etag"),
+          lastModified: response.headers.get("last-modified"),
+          status: response.status,
         };
       }
     );
 
-    return new NextResponse(buffer.slice(0), {
-      headers: {
-        "Content-Type": contentType,
-        "Cache-Control": "public, max-age=2592000, immutable",
-        // The bytes depend on the authenticated browser's active connection.
-        // Keep browser cache entries isolated when a user switches provider/config.
-        Vary: "Cookie",
-      },
+    const headers = new Headers({
+      "Cache-Control": "public, max-age=2592000, immutable",
+      // The bytes depend on the authenticated browser's active connection.
+      // Keep browser cache entries isolated when a user switches provider/config.
+      Vary: "Cookie",
     });
+    if (etag) headers.set("ETag", etag);
+    if (lastModified) headers.set("Last-Modified", lastModified);
+    if (status === 304) return new NextResponse(null, { status: 304, headers });
+
+    headers.set("Content-Type", contentType);
+    return new NextResponse(buffer, { headers });
   } catch (error) {
     if (isConnectionError(error)) {
       logger.warn({ err: error }, "Stripstream thumbnail fetch error (provider unreachable)");
