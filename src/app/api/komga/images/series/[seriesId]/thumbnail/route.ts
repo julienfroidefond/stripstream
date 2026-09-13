@@ -13,7 +13,7 @@ export async function GET(
 ) {
   try {
     const seriesId: string = (await params).seriesId;
-    const response = await KomgaSeriesService.getCover(seriesId);
+    const response = await KomgaSeriesService.getCover(seriesId, request.headers);
     return response;
   } catch (error) {
     logger.error({ err: error }, "Erreur lors de la récupération de la miniature de la série");

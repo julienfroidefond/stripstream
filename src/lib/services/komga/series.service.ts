@@ -34,15 +34,15 @@ export class KomgaSeriesService {
     return data.content[0].id;
   }
 
-  static async getCover(seriesId: string): Promise<Response> {
+  static async getCover(seriesId: string, conditionalHeaders?: HeadersInit): Promise<Response> {
     try {
       const preferences = await PreferencesService.getPreferences();
       if (preferences.showThumbnails) {
-        return KomgaImageService.streamImage(`series/${seriesId}/thumbnail`);
+        return KomgaImageService.streamImage(`series/${seriesId}/thumbnail`, undefined, conditionalHeaders);
       }
       const firstBookId = await KomgaSeriesService.getFirstBook(seriesId);
       // Première page du premier livre (zero_based=true → page 0)
-      return KomgaImageService.streamImage(`books/${firstBookId}/pages/0?zero_based=true`);
+      return KomgaImageService.streamImage(`books/${firstBookId}/pages/0?zero_based=true`, undefined, conditionalHeaders);
     } catch (error) {
       logger.error({ err: error }, "Erreur lors de la récupération de la couverture de la série");
       throw new AppError(ERROR_CODES.SERIES.FETCH_ERROR, {}, error);

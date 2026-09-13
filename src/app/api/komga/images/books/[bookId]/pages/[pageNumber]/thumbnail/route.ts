@@ -29,7 +29,9 @@ export async function GET(
     }
 
     return await KomgaImageService.streamImage(
-      `books/${bookId}/pages/${pageNumber}/thumbnail?zero_based=true`
+      `books/${bookId}/pages/${pageNumber}/thumbnail?zero_based=true`,
+      undefined,
+      request.headers
     );
   } catch (error) {
     logger.error({ err: error }, "Erreur lors de la récupération de la miniature de la page:");

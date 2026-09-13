@@ -17,7 +17,9 @@ export async function GET(
     // pageNumber est 1-based côté client, l'API Komga zero_based attend 0-based
     const adjusted = parseInt(pageNumber) - 1;
     return await KomgaImageService.streamImage(
-      `books/${bookId}/pages/${adjusted}?zero_based=true`
+      `books/${bookId}/pages/${adjusted}?zero_based=true`,
+      undefined,
+      request.headers
     );
   } catch (error) {
     logger.error({ err: error }, "Erreur lors de la récupération de la page du livre:");

@@ -10,14 +10,14 @@ import { AppError } from "../../../utils/errors";
  * routes via `KomgaImageService.streamImage`.
  */
 export class KomgaBookService {
-  static async getCover(bookId: string): Promise<Response> {
+  static async getCover(bookId: string, conditionalHeaders?: HeadersInit): Promise<Response> {
     try {
       const preferences = await PreferencesService.getPreferences();
       if (preferences.showThumbnails) {
-        return KomgaImageService.streamImage(`books/${bookId}/thumbnail`);
+        return KomgaImageService.streamImage(`books/${bookId}/thumbnail`, undefined, conditionalHeaders);
       }
       // Première page (zero_based=true → page 0 = première)
-      return KomgaImageService.streamImage(`books/${bookId}/pages/0?zero_based=true`);
+      return KomgaImageService.streamImage(`books/${bookId}/pages/0?zero_based=true`, undefined, conditionalHeaders);
     } catch (error) {
       throw new AppError(ERROR_CODES.BOOK.PAGES_FETCH_ERROR, {}, error);
     }

@@ -18,7 +18,8 @@ const IMAGE_CACHE_MAX_AGE = 2592000;
 export class KomgaImageService {
   static async streamImage(
     path: string,
-    cacheMaxAge: number = IMAGE_CACHE_MAX_AGE
+    cacheMaxAge: number = IMAGE_CACHE_MAX_AGE,
+    conditionalHeaders?: HeadersInit
   ): Promise<Response> {
     try {
       const config = await ConfigDBService.getConfig();
@@ -29,17 +30,31 @@ export class KomgaImageService {
         Authorization: `Basic ${config.authHeader}`,
         Accept: "image/jpeg, image/png, image/gif, image/webp, */*",
       });
+      if (conditionalHeaders) {
+        const requestHeaders = new Headers(conditionalHeaders);
+        for (const header of ["if-none-match", "if-modified-since"]) {
+          const value = requestHeaders.get(header);
+          if (value) headers.set(header, value);
+        }
+      }
 
       const response = await fetch(url, { headers });
-      if (!response.ok) throw new AppError(ERROR_CODES.IMAGE.FETCH_ERROR, { status: response.status });
+      if (!response.ok && response.status !== 304) {
+        throw new AppError(ERROR_CODES.IMAGE.FETCH_ERROR, { status: response.status });
+      }
+
+      const responseHeaders = new Headers({
+        "Cache-Control": `public, max-age=${cacheMaxAge}, immutable`,
+        Vary: "Cookie",
+      });
+      for (const header of ["content-type", "content-length", "etag", "last-modified"]) {
+        const value = response.headers.get(header);
+        if (value) responseHeaders.set(header, value);
+      }
 
       return new Response(response.body, {
         status: response.status,
-        headers: {
-          "Content-Type": response.headers.get("content-type") || "image/jpeg",
-          "Content-Length": response.headers.get("content-length") || "",
-          "Cache-Control": `public, max-age=${cacheMaxAge}, immutable`,
-        },
+        headers: responseHeaders,
       });
     } catch (error) {
       logger.error({ err: error }, "Erreur lors du streaming de l'image");

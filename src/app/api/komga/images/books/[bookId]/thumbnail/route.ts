@@ -14,7 +14,7 @@ export async function GET(
   try {
     const bookId: string = (await params).bookId;
 
-    const response = await KomgaBookService.getCover(bookId);
+    const response = await KomgaBookService.getCover(bookId, request.headers);
     return response;
   } catch (error) {
     logger.error({ err: error }, "Erreur lors de la récupération de la miniature du livre:");
