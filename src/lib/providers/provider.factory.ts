@@ -36,13 +36,13 @@ export const getProvider = cache(async (): Promise<IMediaProvider | null> => {
   return null;
 });
 
-export async function getActiveProviderType(): Promise<string | null> {
+export const getActiveProviderType = cache(async (): Promise<string | null> => {
   const user = await getCurrentUser();
   if (!user) return null;
 
   const userId = parseInt(user.id, 10);
   return (await getActiveConnection(userId)).provider;
-}
+});
 
 /**
  * Fetches the detail of a reading list (Stripstream-only feature).
