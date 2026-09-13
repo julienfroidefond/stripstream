@@ -61,15 +61,29 @@
       "discover": "Découvrir"
     },
     "reading_lists": {
+      "title": "Listes de lecture",
+      "description": "Retrouvez vos sélections et leur avancement de lecture.",
       "series_count": "{{count}} série",
       "series_count_plural": "{{count}} séries",
       "back": "Retour à l'accueil",
-      "empty": "Cette liste est vide"
+      "empty": "Cette liste est vide",
+      "search": "Rechercher une liste...",
+      "unavailable": "Les listes de lecture sont disponibles avec une connexion Stripstream Librarian.",
+      "no_results": "Aucune liste ne correspond",
+      "no_results_hint": "Modifiez votre recherche ou votre filtre.",
+      "filters": {
+        "title": "Filtrer les listes",
+        "all": "Toutes",
+        "unread": "Non lues",
+        "reading": "En cours",
+        "read": "Lues"
+      }
     }
   },
   "sidebar": {
     "connection": "Connexion",
     "home": "Accueil",
+    "readingLists": "Listes de lecture",
     "account": "Mon compte",
     "favorites": {
       "title": "Favoris",

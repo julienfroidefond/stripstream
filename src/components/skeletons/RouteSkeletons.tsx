@@ -84,6 +84,19 @@ export function ReadingListSkeleton() {
   );
 }
 
+export function ReadingListsSkeleton() {
+  return (
+    <main className="mx-auto max-w-screen-2xl space-y-8 px-2 py-8 sm:px-6 lg:px-8">
+      <div className="flex items-center gap-3">
+        <Skeleton className="h-11 w-11 rounded-xl" />
+        <div className="space-y-2"><Skeleton className="h-8 w-52" /><Skeleton className="h-5 w-72" /></div>
+      </div>
+      <div className="flex gap-3 rounded-2xl border border-border/60 p-3"><Skeleton className="h-10 flex-1" /><Skeleton className="h-10 w-60" /></div>
+      <CoverGrid count={12} />
+    </main>
+  );
+}
+
 export function AccountSkeleton() {
   return (
     <main className="container mx-auto px-4 py-8">

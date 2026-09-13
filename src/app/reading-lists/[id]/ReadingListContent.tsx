@@ -1,10 +1,13 @@
 "use client";
 
-import Link from "next/link";
-import { ArrowLeft, Bookmark, BookMarked } from "lucide-react";
+import { ArrowLeft, Book, BookMarked, BookOpen, Bookmark } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { SeriesGrid } from "@/components/library/SeriesGrid";
 import { Container } from "@/components/ui/container";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { useAnonymous } from "@/contexts/AnonymousContext";
 import { useTranslate } from "@/hooks/useTranslate";
+import { StripstreamAdapter } from "@/lib/providers/stripstream/stripstream.adapter";
 import type { StripstreamReadingListDetail } from "@/types/stripstream";
 
 interface ReadingListContentProps {
@@ -14,7 +17,25 @@ interface ReadingListContentProps {
 export function ReadingListContent({ detail }: ReadingListContentProps) {
   const router = useRouter();
   const { t } = useTranslate();
+  const { isAnonymous } = useAnonymous();
   const firstBookId = detail.items[0]?.first_book_id ?? null;
+  const series = detail.items.map(StripstreamAdapter.toNormalizedReadingListSeries);
+  const totalBooks = detail.items.reduce((total, item) => total + item.book_count, 0);
+  const readBooks = detail.items.reduce((total, item) => total + item.books_read_count, 0);
+  const allSeriesRead =
+    detail.items.length > 0 &&
+    detail.items.every((item) => item.book_count > 0 && item.books_read_count >= item.book_count);
+  const readingStatus = isAnonymous || totalBooks === 0
+    ? null
+    : allSeriesRead
+      ? { label: t("series.header.status.read"), status: "success" as const, icon: BookMarked }
+      : readBooks > 0
+        ? {
+            label: t("series.header.status.progress", { read: readBooks, total: totalBooks }),
+            status: "reading" as const,
+            icon: BookOpen,
+          }
+        : { label: t("series.header.status.unread"), status: "unread" as const, icon: Book };
 
   return (
     <>
@@ -57,9 +78,19 @@ export function ReadingListContent({ detail }: ReadingListContentProps) {
               {detail.description && (
                 <p className="line-clamp-2 text-sm text-white/70">{detail.description}</p>
               )}
-              <p className="text-sm text-white/60">
-                {t("home.reading_lists.series_count", { count: detail.items.length })}
-              </p>
+              <div className="flex flex-wrap items-center gap-2 text-sm text-white/60">
+                <p>{t("home.reading_lists.series_count", { count: detail.items.length })}</p>
+                {readingStatus && (
+                  <StatusBadge
+                    data-testid="reading-list-status"
+                    status={readingStatus.status}
+                    icon={readingStatus.icon}
+                    className="border-white/20 bg-white/10 text-white"
+                  >
+                    {readingStatus.label}
+                  </StatusBadge>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -70,39 +101,7 @@ export function ReadingListContent({ detail }: ReadingListContentProps) {
           <p className="py-12 text-center text-muted-foreground">{t("home.reading_lists.empty")}</p>
         ) : (
           <div className="py-8">
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-              {detail.items.map((item) => (
-                <Link
-                  key={item.id}
-                  href={`/series/${item.id}`}
-                  className="group flex flex-col overflow-hidden rounded-xl border border-border/60 bg-card/85 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-card hover:shadow-md"
-                >
-                  <div className="relative aspect-[2/3] w-full overflow-hidden bg-muted">
-                    {item.first_book_id ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={`/api/stripstream/images/books/${item.first_book_id}/thumbnail`}
-                        alt={item.name}
-                        loading="lazy"
-                        className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                      />
-                    ) : (
-                      <div className="absolute inset-0 flex items-center justify-center bg-muted">
-                        <BookMarked className="h-10 w-10 text-muted-foreground/30" />
-                      </div>
-                    )}
-                    <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/80 via-black/30 to-transparent p-2.5 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                      <p className="line-clamp-2 text-xs font-semibold text-white">{item.name}</p>
-                      <p className="mt-0.5 text-[10px] text-white/70">{item.library_name}</p>
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-0.5 px-2 py-2">
-                    <span className="line-clamp-1 text-sm font-medium leading-tight">{item.name}</span>
-                    <span className="truncate text-xs text-muted-foreground">{item.library_name}</span>
-                  </div>
-                </Link>
-              ))}
-            </div>
+            <SeriesGrid series={series} />
           </div>
         )}
       </Container>

@@ -220,6 +220,10 @@ export interface StripstreamReadingList {
   name: string;
   description: string | null;
   series_count: number;
+  /** Total books across every series in the list. */
+  book_count: number;
+  /** Books read by the current user across the list. */
+  books_read_count: number;
   preview_covers: string[];
   created_at: string;
   updated_at: string;
@@ -233,6 +237,10 @@ export interface StripstreamReadingListItem {
   library_id: string;
   library_name: string;
   position: number;
+  /** Total books in the series, supplied by Stripstream Librarian. */
+  book_count: number;
+  /** Books read by the current user, supplied by Stripstream Librarian. */
+  books_read_count: number;
 }
 
 export interface StripstreamReadingListDetail {

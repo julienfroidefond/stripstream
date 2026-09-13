@@ -6,6 +6,8 @@ import { Bookmark, BookMarked } from "lucide-react";
 import { ScrollContainer } from "@/components/ui/scroll-container";
 import { Section } from "@/components/ui/section";
 import { useTranslate } from "@/hooks/useTranslate";
+import { useAnonymous } from "@/contexts/AnonymousContext";
+import { cn } from "@/lib/utils";
 import type { StripstreamReadingList } from "@/types/stripstream";
 import { loadHomeFeed } from "@/app/actions/home";
 
@@ -82,14 +84,20 @@ interface ReadingListCardProps {
 
 const ReadingListCard = memo(function ReadingListCard({ list, onClick }: ReadingListCardProps) {
   const { t } = useTranslate();
+  const { isAnonymous } = useAnonymous();
   const firstCover = list.preview_covers[0];
+  const isCompleted =
+    !isAnonymous && list.book_count > 0 && list.books_read_count >= list.book_count;
 
   return (
     <button
       type="button"
       data-testid={`home-reading-list-${list.id}`}
       onClick={() => onClick(list.id)}
-      className="group relative flex w-[160px] flex-shrink-0 flex-col gap-1.5 sm:w-[188px]"
+      className={cn(
+        "group relative flex w-[160px] flex-shrink-0 flex-col gap-1.5 transition-opacity sm:w-[188px]",
+        isCompleted && "opacity-70"
+      )}
     >
       {/* Cover */}
       <div className="relative aspect-[2/3] w-full overflow-hidden rounded-xl border border-border/60 bg-muted shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">

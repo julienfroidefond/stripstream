@@ -138,6 +138,7 @@ test.describe('Home functional journeys', () => {
 
     const list = page.getByTestId('home-reading-list-list-a').first();
     await expect(list).toBeVisible({ timeout: 15_000 });
+    await expect(list).toHaveClass(/opacity-70/);
     await list.click();
     await expect(page).toHaveURL(/\/reading-lists\/list-a/);
     await expect(page.getByRole('heading', { name: 'E2E Reading List' })).toBeVisible();

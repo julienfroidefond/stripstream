@@ -76,6 +76,8 @@ const readingList = {
   name: 'E2E Reading List',
   description: 'A deterministic reading list for browser tests.',
   series_count: 1,
+  book_count: 3,
+  books_read_count: 3,
   preview_covers: ['book-a'],
   created_at: '2026-01-01T00:00:00.000Z',
   updated_at: '2026-01-01T00:00:00.000Z',
@@ -92,6 +94,8 @@ const readingListDetail = {
       library_id: 'lib-a',
       library_name: libName,
       position: 1,
+      book_count: 3,
+      books_read_count: 3,
     },
   ],
 };

@@ -2,6 +2,7 @@
 
 import {
   Home,
+  Bookmark,
   Settings,
   LogOut,
   User,
@@ -106,6 +107,12 @@ export function Sidebar({
             label={t("sidebar.home")}
             active={pathname === "/"}
             onClick={() => handleLinkClick("/")}
+          />
+          <NavButton
+            icon={Bookmark}
+            label={t("sidebar.readingLists")}
+            active={pathname === "/reading-lists" || pathname.startsWith("/reading-lists/")}
+            onClick={() => handleLinkClick("/reading-lists")}
           />
 
           {/* Favoris — streamé */}
