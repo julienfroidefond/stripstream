@@ -10,7 +10,7 @@ import { ContinueReadingHero } from "@/components/home/ContinueReadingHero";
 import { HomeClientWrapper } from "@/components/home/HomeClientWrapper";
 import { MediaRow } from "@/components/home/MediaRow";
 import { ReadingListRow } from "@/components/home/ReadingListRow";
-import { RecommendationsRow } from "@/components/home/RecommendationsRow";
+import { DeferredRecommendations } from "@/components/home/DeferredRecommendations";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
@@ -50,10 +50,6 @@ async function HomeStreamingContent() {
     const readingListsPromise = provider.getHomeReadingLists().catch(() => []);
     const latestSeriesPromise = provider.getHomeLatestSeries(HOMEPAGE_INITIAL_QUERY_LIMIT).catch(() => []);
     const recentlyReadPromise = provider.getHomeRecentlyRead(HOMEPAGE_INITIAL_QUERY_LIMIT).catch(() => []);
-    const recommendationsPromise = isAnonymous
-      ? Promise.resolve([])
-        : provider.getRecommendations(HOMEPAGE_INITIAL_QUERY_LIMIT).catch(() => []);
-
     return (
         <div className="space-y-10 pb-2">
           <Suspense fallback={<HomeHeroSkeleton />}>
@@ -85,10 +81,7 @@ async function HomeStreamingContent() {
           </Suspense>
 
           <Suspense fallback={<HomeCarouselSkeleton icon={Wand2} />}>
-            <RecommendationsSection
-              recommendationsPromise={recommendationsPromise}
-              isAnonymous={isAnonymous}
-            />
+            <DeferredRecommendations isAnonymous={isAnonymous} />
           </Suspense>
         </div>
     );
@@ -222,23 +215,6 @@ async function RecentlyReadSection({
       feed="recently-read"
     />
   );
-}
-
-interface RecommendationsSectionProps {
-  recommendationsPromise: Promise<NormalizedSeries[]>;
-  isAnonymous: boolean;
-}
-
-async function RecommendationsSection({
-  recommendationsPromise,
-  isAnonymous,
-}: RecommendationsSectionProps) {
-  if (isAnonymous) return null;
-
-  const recommendations = await recommendationsPromise;
-  if (recommendations.length === 0) return null;
-
-  return <RecommendationsRow series={recommendations} />;
 }
 
 function HomePageSkeleton() {
