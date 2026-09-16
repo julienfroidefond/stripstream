@@ -221,8 +221,6 @@ export function useImageLoader({
       const hasBlobUrl = imageBlobUrlsRef.current[key];
       if (hasDimensions && hasBlobUrl) return;
 
-      if (imageErrorsRef.current[key]) return;
-
       const existingPromise = loadingPromisesRef.current.get(key);
       if (existingPromise) return existingPromise;
 
