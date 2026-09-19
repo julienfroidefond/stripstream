@@ -24,6 +24,18 @@ import type { StripstreamReadingList } from "@/types/stripstream";
 
 const HOMEPAGE_INITIAL_QUERY_LIMIT = 9;
 
+interface HomeFeedState<T> {
+  data: T;
+  failed: boolean;
+}
+
+function settleHomeFeed<T>(promise: Promise<T>, fallback: T): Promise<HomeFeedState<T>> {
+  return promise.then(
+    (data) => ({ data, failed: false }),
+    () => ({ data: fallback, failed: true })
+  );
+}
+
 export default function HomePage() {
   return (
     <HomeClientWrapper>
@@ -44,46 +56,69 @@ async function HomeStreamingContent() {
 
     const isAnonymous = preferences?.anonymousMode ?? false;
 
-    const continueReadingPromise = provider.getHomeContinueReadingData(HOMEPAGE_INITIAL_QUERY_LIMIT).catch(() => null);
-    const ongoingPromise = provider.getHomeOngoingSeries(HOMEPAGE_INITIAL_QUERY_LIMIT).catch(() => []);
+    const continueReadingPromise = settleHomeFeed(
+      provider.getHomeContinueReadingData(HOMEPAGE_INITIAL_QUERY_LIMIT),
+      null
+    );
+    const ongoingPromise = settleHomeFeed(
+      provider.getHomeOngoingSeries(HOMEPAGE_INITIAL_QUERY_LIMIT),
+      []
+    );
     const favoritesPromise = FavoriteService.listFavorites().catch(() => []);
-    const readingListsPromise = provider.getHomeReadingLists().catch(() => []);
-    const latestSeriesPromise = provider.getHomeLatestSeries(HOMEPAGE_INITIAL_QUERY_LIMIT).catch(() => []);
-    const recentlyReadPromise = provider.getHomeRecentlyRead(HOMEPAGE_INITIAL_QUERY_LIMIT).catch(() => []);
+    const readingListsPromise = settleHomeFeed(provider.getHomeReadingLists(), []);
+    const latestSeriesPromise = settleHomeFeed(
+      provider.getHomeLatestSeries(HOMEPAGE_INITIAL_QUERY_LIMIT),
+      []
+    );
+    const recentlyReadPromise = settleHomeFeed(
+      provider.getHomeRecentlyRead(HOMEPAGE_INITIAL_QUERY_LIMIT),
+      []
+    );
     return (
-        <div className="space-y-10 pb-2">
-          <Suspense fallback={<HomeHeroSkeleton />}>
-            <ContinueReadingSection
-              continueReadingPromise={continueReadingPromise}
-              ongoingPromise={ongoingPromise}
-              isAnonymous={isAnonymous}
-            />
-          </Suspense>
+      <div className="space-y-10 pb-2">
+        <Suspense fallback={null}>
+          <HomeProviderErrorState
+            feedPromises={[
+              continueReadingPromise,
+              ongoingPromise,
+              readingListsPromise,
+              latestSeriesPromise,
+              recentlyReadPromise,
+            ]}
+          />
+        </Suspense>
+        <Suspense fallback={<HomeHeroSkeleton />}>
+          <ContinueReadingSection
+            continueReadingPromise={continueReadingPromise}
+            ongoingPromise={ongoingPromise}
+            isAnonymous={isAnonymous}
+          />
+        </Suspense>
 
-          <Suspense fallback={<HomeCarouselSkeleton icon={LibraryBig} />}>
-            <OngoingSection ongoingPromise={ongoingPromise} isAnonymous={isAnonymous} />
-          </Suspense>
+        <Suspense fallback={<HomeCarouselSkeleton icon={LibraryBig} />}>
+          <OngoingSection ongoingPromise={ongoingPromise} isAnonymous={isAnonymous} />
+        </Suspense>
 
-          <Suspense fallback={<HomeCarouselSkeleton icon={Heart} />}>
-            <FavoritesSection favoritesPromise={favoritesPromise} />
-          </Suspense>
+        <Suspense fallback={<HomeCarouselSkeleton icon={Heart} />}>
+          <FavoritesSection favoritesPromise={favoritesPromise} />
+        </Suspense>
 
-          <Suspense fallback={<HomeCarouselSkeleton icon={Bookmark} />}>
-            <ReadingListsSection readingListsPromise={readingListsPromise} />
-          </Suspense>
+        <Suspense fallback={<HomeCarouselSkeleton icon={Bookmark} />}>
+          <ReadingListsSection readingListsPromise={readingListsPromise} />
+        </Suspense>
 
-          <Suspense fallback={<HomeCarouselSkeleton icon={Sparkles} />}>
-            <LatestSeriesSection latestSeriesPromise={latestSeriesPromise} />
-          </Suspense>
+        <Suspense fallback={<HomeCarouselSkeleton icon={Sparkles} />}>
+          <LatestSeriesSection latestSeriesPromise={latestSeriesPromise} />
+        </Suspense>
 
-          <Suspense fallback={<HomeCarouselSkeleton icon={History} />}>
-            <RecentlyReadSection recentlyReadPromise={recentlyReadPromise} />
-          </Suspense>
+        <Suspense fallback={<HomeCarouselSkeleton icon={History} />}>
+          <RecentlyReadSection recentlyReadPromise={recentlyReadPromise} />
+        </Suspense>
 
-          <Suspense fallback={<HomeCarouselSkeleton icon={Wand2} />}>
-            <DeferredRecommendations isAnonymous={isAnonymous} />
-          </Suspense>
-        </div>
+        <Suspense fallback={<HomeCarouselSkeleton icon={Wand2} />}>
+          <DeferredRecommendations isAnonymous={isAnonymous} />
+        </Suspense>
+      </div>
     );
   } catch (error) {
     if (error instanceof AppError && (
@@ -104,8 +139,10 @@ async function HomeStreamingContent() {
 }
 
 interface ContinueReadingSectionProps {
-  continueReadingPromise: Promise<Pick<HomePrimaryData, "ongoingBooks" | "onDeck"> | null>;
-  ongoingPromise: Promise<NormalizedSeries[]>;
+  continueReadingPromise: Promise<
+    HomeFeedState<Pick<HomePrimaryData, "ongoingBooks" | "onDeck"> | null>
+  >;
+  ongoingPromise: Promise<HomeFeedState<NormalizedSeries[]>>;
   isAnonymous: boolean;
 }
 
@@ -116,10 +153,12 @@ async function ContinueReadingSection({
 }: ContinueReadingSectionProps) {
   if (isAnonymous) return null;
 
-  const [continueReadingData, ongoing] = await Promise.all([
+  const [continueReadingState, ongoingState] = await Promise.all([
     continueReadingPromise,
     ongoingPromise,
   ]);
+  const continueReadingData = continueReadingState.data;
+  const ongoing = ongoingState.data;
 
   if (!continueReadingData) return null;
 
@@ -136,14 +175,14 @@ async function ContinueReadingSection({
 }
 
 interface OngoingSectionProps {
-  ongoingPromise: Promise<NormalizedSeries[]>;
+  ongoingPromise: Promise<HomeFeedState<NormalizedSeries[]>>;
   isAnonymous: boolean;
 }
 
 async function OngoingSection({ ongoingPromise, isAnonymous }: OngoingSectionProps) {
   if (isAnonymous) return null;
 
-  const ongoing = await ongoingPromise;
+  const ongoing = (await ongoingPromise).data;
   if (ongoing.length === 0) return null;
 
   return (
@@ -173,9 +212,9 @@ async function FavoritesSection({ favoritesPromise }: { favoritesPromise: Promis
 async function ReadingListsSection({
   readingListsPromise,
 }: {
-  readingListsPromise: Promise<StripstreamReadingList[]>;
+  readingListsPromise: Promise<HomeFeedState<StripstreamReadingList[]>>;
 }) {
-  const readingLists = await readingListsPromise;
+  const readingLists = (await readingListsPromise).data;
   if (readingLists.length === 0) return null;
 
   return <ReadingListRow lists={readingLists} />;
@@ -184,9 +223,9 @@ async function ReadingListsSection({
 async function LatestSeriesSection({
   latestSeriesPromise,
 }: {
-  latestSeriesPromise: Promise<NormalizedSeries[]>;
+  latestSeriesPromise: Promise<HomeFeedState<NormalizedSeries[]>>;
 }) {
-  const latestSeries = await latestSeriesPromise;
+  const latestSeries = (await latestSeriesPromise).data;
   if (latestSeries.length === 0) return null;
 
   return (
@@ -202,9 +241,9 @@ async function LatestSeriesSection({
 async function RecentlyReadSection({
   recentlyReadPromise,
 }: {
-  recentlyReadPromise: Promise<NormalizedBook[]>;
+  recentlyReadPromise: Promise<HomeFeedState<NormalizedBook[]>>;
 }) {
-  const recentlyRead = await recentlyReadPromise;
+  const recentlyRead = (await recentlyReadPromise).data;
   if (recentlyRead.length === 0) return null;
 
   return (
@@ -214,6 +253,21 @@ async function RecentlyReadSection({
       iconName="History"
       feed="recently-read"
     />
+  );
+}
+
+async function HomeProviderErrorState({
+  feedPromises,
+}: {
+  feedPromises: Promise<HomeFeedState<unknown>>[];
+}) {
+  const states = await Promise.all(feedPromises);
+  if (!states.every((state) => state.failed)) return null;
+
+  return (
+    <main className="container mx-auto px-4 pt-8">
+      <ErrorMessage errorCode={ERROR_CODES.HOME.FETCH_ERROR} />
+    </main>
   );
 }
 
