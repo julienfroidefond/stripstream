@@ -61,4 +61,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   secret: process.env.NEXTAUTH_SECRET,
   trustHost: true,
   useSecureCookies: process.env.NODE_ENV === "production",
+  logger: {
+    error(error) {
+      logger.error({ err: error }, "NextAuth error");
+    },
+    warn(code) {
+      logger.warn({ code }, "NextAuth warning");
+    },
+  },
 });

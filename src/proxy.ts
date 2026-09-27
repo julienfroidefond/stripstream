@@ -11,6 +11,20 @@ const publicApiRoutes = ["/api/auth/register", "/api/komga/test"];
 const locales = ["fr", "en"];
 const defaultLocale = "fr";
 
+// Cookies de session Auth.js (dev + prod sécurisé), fragments `.0`, `.1`… inclus
+const SESSION_COOKIE_PREFIXES = ["next-auth.session-token", "__Secure-next-auth.session-token"];
+
+// Supprime un cookie de session indéchiffrable (secret ou format JWT changé après
+// une mise à jour) pour que l'application se rétablisse d'elle-même.
+const clearStaleSessionCookies = (request: NextRequest, response: NextResponse): NextResponse => {
+  for (const { name } of request.cookies.getAll()) {
+    if (SESSION_COOKIE_PREFIXES.some((prefix) => name.startsWith(prefix))) {
+      response.cookies.delete(name);
+    }
+  }
+  return response;
+};
+
 export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const requestPath = `${pathname}${request.nextUrl.search}`;
@@ -61,7 +75,7 @@ export default async function proxy(request: NextRequest) {
 
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("from", requestPath);
-    return NextResponse.redirect(loginUrl);
+    return clearStaleSessionCookies(request, NextResponse.redirect(loginUrl));
   }
 
   // Définir le cookie de langue si nécessaire
