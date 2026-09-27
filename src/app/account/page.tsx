@@ -1,6 +1,8 @@
 import { UserProfileCard } from "@/components/account/UserProfileCard";
 import { ChangePasswordForm } from "@/components/account/ChangePasswordForm";
+import { ReadingStatsCard } from "@/components/account/ReadingStatsCard";
 import { UserService } from "@/lib/services/user.service";
+import { getReadingStats } from "@/lib/services/reading-stats.service";
 import { redirect } from "next/navigation";
 import logger from "@/lib/logger";
 
@@ -8,9 +10,10 @@ export const dynamic = "force-dynamic";
 
 export default async function AccountPage() {
   try {
-    const [profile, stats] = await Promise.all([
+    const [profile, stats, readingStats] = await Promise.all([
       UserService.getUserProfile(),
       UserService.getUserStats(),
+      getReadingStats(),
     ]);
 
     return (
@@ -27,6 +30,8 @@ export default async function AccountPage() {
             <UserProfileCard profile={{ ...profile, stats }} />
             <ChangePasswordForm username={profile.email} />
           </div>
+
+          <ReadingStatsCard stats={readingStats} />
         </div>
       </div>
     );

@@ -14,6 +14,7 @@ test.describe('Account', () => {
     await expect(page.getByRole('heading', { name: 'Mon compte' })).toBeVisible();
     await expect(page.getByText(e2eEmail!, { exact: true })).toBeVisible();
     await expect(page.getByText('Informations du compte')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Statistiques de lecture' })).toBeVisible();
 
     for (const input of await page.locator('input[type="password"]').all()) {
       await expect(input).toHaveValue('');
