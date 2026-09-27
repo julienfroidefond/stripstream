@@ -9,6 +9,7 @@ import type {
   NormalizedBooksPage,
   NormalizedMissingBook,
   NormalizedSeriesRating,
+  NormalizedReadingStats,
 } from "../types";
 import type { HomeData, HomeDeferredData, HomePrimaryData } from "@/types/home";
 import type { StripstreamReadingList } from "@/types/stripstream";
@@ -28,7 +29,7 @@ import type { KomgaBook, KomgaSeries, KomgaLibrary } from "@/types/komga";
 import type { LibraryResponse } from "@/types/library";
 import type { AuthConfig } from "@/types/auth";
 import logger from "@/lib/logger";
-import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, SERIES_BOOKS_CACHE_TAG } from "@/constants/cacheConstants";
+import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, SERIES_BOOKS_CACHE_TAG, STATS_CACHE_TAG } from "@/constants/cacheConstants";
 import { unstable_cache } from "next/cache";
 
 type KomgaCondition = Record<string, unknown>;
@@ -601,6 +602,47 @@ export class KomgaProvider implements IMediaProvider {
     } catch {
       return null;
     }
+  }
+
+  async getReadingStats(): Promise<NormalizedReadingStats> {
+    const [libraries, totalSeries, totalBooks, booksRead, booksInProgress, booksUnread] =
+      await Promise.all([
+        this.fetch<KomgaLibrary[]>("libraries", undefined, { tags: [STATS_CACHE_TAG] }),
+        this.countEntries("series/list"),
+        this.countEntries("books/list"),
+        this.countEntries("books/list", "READ"),
+        this.countEntries("books/list", "IN_PROGRESS"),
+        this.countEntries("books/list", "UNREAD"),
+      ]);
+
+    return {
+      totalSeries,
+      totalBooks,
+      booksRead,
+      booksInProgress,
+      booksUnread,
+      libraries: libraries.map((library) => ({
+        id: library.id,
+        name: library.name,
+        bookCount: library.booksCount,
+        booksReadCount: library.booksReadCount ?? 0,
+      })),
+    };
+  }
+
+  private async countEntries(
+    endpoint: "books/list" | "series/list",
+    readStatus?: "READ" | "IN_PROGRESS" | "UNREAD"
+  ): Promise<number> {
+    const condition: KomgaCondition = readStatus
+      ? { readStatus: { operator: "is", value: readStatus } }
+      : {};
+    const response = await this.fetch<LibraryResponse<unknown>>(
+      endpoint,
+      { page: "0", size: "1" },
+      { method: "POST", body: JSON.stringify({ condition }), tags: [STATS_CACHE_TAG] }
+    );
+    return response.totalElements;
   }
 
   async getRelatedSeries(_seriesId: string, _limit?: number): Promise<NormalizedSeries[]> {

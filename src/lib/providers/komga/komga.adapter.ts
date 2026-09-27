@@ -52,6 +52,7 @@ export class KomgaAdapter {
       id: library.id,
       name: library.name,
       bookCount: library.booksCount,
+      booksReadCount: library.booksReadCount,
     };
   }
 }

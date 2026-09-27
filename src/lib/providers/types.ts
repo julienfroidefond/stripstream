@@ -10,6 +10,24 @@ export interface NormalizedLibrary {
   id: string;
   name: string;
   bookCount: number;
+  /** Books the current user has finished in this library. Optional: providers that cannot supply it omit it. */
+  booksReadCount?: number;
+}
+
+export interface NormalizedLibraryReadingStats {
+  id: string;
+  name: string;
+  bookCount: number;
+  booksReadCount: number;
+}
+
+export interface NormalizedReadingStats {
+  totalSeries: number;
+  totalBooks: number;
+  booksRead: number;
+  booksInProgress: number;
+  booksUnread: number;
+  libraries: NormalizedLibraryReadingStats[];
 }
 
 export interface NormalizedSeries {

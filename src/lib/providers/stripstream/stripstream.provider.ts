@@ -10,6 +10,7 @@ import type {
   NormalizedBooksPage,
   NormalizedMissingBook,
   NormalizedSeriesRating,
+  NormalizedReadingStats,
 } from "../types";
 import type { HomeData, HomeDeferredData, HomePrimaryData } from "@/types/home";
 import { StripstreamClient } from "./stripstream.client";
@@ -33,7 +34,7 @@ import type {
   StripstreamReadingListDetail,
   StripstreamSeriesRatingsResponse,
 } from "@/types/stripstream";
-import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, SERIES_BOOKS_CACHE_TAG, SERIES_RATING_CACHE_TAG } from "@/constants/cacheConstants";
+import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, SERIES_BOOKS_CACHE_TAG, SERIES_RATING_CACHE_TAG, STATS_CACHE_TAG } from "@/constants/cacheConstants";
 
 const CACHE_TTL_LONG = 300;
 const CACHE_TTL_MED = 120;
@@ -461,6 +462,59 @@ export class StripstreamProvider implements IMediaProvider {
     } catch {
       return null;
     }
+  }
+
+  async getReadingStats(): Promise<NormalizedReadingStats> {
+    const [libraries, totalSeries, totalBooks, statusCounts] = await Promise.all([
+      this.client.fetch<StripstreamLibraryResponse[]>("libraries", undefined, {
+        tags: [STATS_CACHE_TAG],
+      }),
+      this.countEntries("series"),
+      this.countEntries("books"),
+      this.countBooksByStatus(),
+    ]);
+
+    const libraryStats = await Promise.all(
+      libraries.map(async (library) => ({
+        id: library.id,
+        name: library.name,
+        bookCount: library.book_count,
+        booksReadCount: await this.countEntries("books", {
+          library_id: library.id,
+          reading_status: "read",
+        }),
+      }))
+    );
+
+    return {
+      totalSeries,
+      totalBooks,
+      booksRead: statusCounts.read,
+      booksInProgress: statusCounts.reading,
+      booksUnread: statusCounts.unread,
+      libraries: libraryStats,
+    };
+  }
+
+  private async countBooksByStatus(): Promise<{ read: number; reading: number; unread: number }> {
+    const [read, reading, unread] = await Promise.all([
+      this.countEntries("books", { reading_status: "read" }),
+      this.countEntries("books", { reading_status: "reading" }),
+      this.countEntries("books", { reading_status: "unread" }),
+    ]);
+    return { read, reading, unread };
+  }
+
+  private async countEntries(
+    endpoint: "books" | "series",
+    params: Record<string, string> = {}
+  ): Promise<number> {
+    const response = await this.client.fetch<{ total: number }>(
+      endpoint,
+      { limit: "1", ...params },
+      { tags: [STATS_CACHE_TAG] }
+    );
+    return response.total;
   }
 
   async search(query: string, limit = 6): Promise<NormalizedSearchResult[]> {

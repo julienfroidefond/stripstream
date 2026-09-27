@@ -8,6 +8,7 @@ import type {
   NormalizedBooksPage,
   NormalizedMissingBook,
   NormalizedSeriesRating,
+  NormalizedReadingStats,
 } from "./types";
 import type { HomeData, HomeDeferredData, HomePrimaryData } from "@/types/home";
 import type { StripstreamReadingList } from "@/types/stripstream";
@@ -56,6 +57,9 @@ export interface IMediaProvider {
   // ── Admin / utility ──────────────────────────────────────────────────────
   scanLibrary(libraryId: string): Promise<void>;
   getRandomBook(libraryIds?: string[]): Promise<string | null>;
+
+  // ── Reading statistics (active connection) ───────────────────────────────
+  getReadingStats(): Promise<NormalizedReadingStats>;
 
   // ── Related / recommended series ─────────────────────────────────────────
   getRelatedSeries(seriesId: string, limit?: number): Promise<NormalizedSeries[]>;
