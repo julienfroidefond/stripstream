@@ -3,7 +3,7 @@
 import { updateTag } from "next/cache";
 import { getProvider } from "@/lib/providers/provider.factory";
 import { PreferencesService } from "@/lib/services/preferences.service";
-import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, SERIES_BOOKS_CACHE_TAG } from "@/constants/cacheConstants";
+import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, SERIES_BOOKS_CACHE_TAG, STATS_CACHE_TAG } from "@/constants/cacheConstants";
 import { AppError } from "@/utils/errors";
 
 /**
@@ -14,6 +14,7 @@ import { AppError } from "@/utils/errors";
 function revalidateReadCaches(seriesId?: string | null) {
   updateTag(HOME_CACHE_TAG);
   updateTag(LIBRARY_SERIES_CACHE_TAG);
+  updateTag(STATS_CACHE_TAG);
   if (seriesId) {
     updateTag(`series-books:${seriesId}`);
   } else {
