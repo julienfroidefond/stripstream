@@ -28,7 +28,9 @@ if (!i18n.isInitialized) {
         escapeValue: false, // React gère déjà l'échappement
       },
       detection: {
-        order: ["cookie", "localStorage", "navigator"],
+        // Pas de détection `navigator` : le serveur ne peut pas la lire et son
+        // repli sur `fallbackLng` provoquerait un décalage d'hydratation client.
+        order: ["cookie", "localStorage"],
         lookupCookie: "NEXT_LOCALE",
         caches: ["cookie"],
         cookieOptions: {

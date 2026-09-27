@@ -6,20 +6,12 @@ import "@/i18n/i18n";
 
 export function I18nProvider({ children, locale }: PropsWithChildren<{ locale: string }>) {
   const { i18n } = useTranslate();
-  // Synchroniser la langue avec celle du cookie côté client
-  if (typeof window !== "undefined") {
-    const localeCookie = document.cookie.split("; ").find((row) => row.startsWith("NEXT_LOCALE="));
 
-    if (localeCookie) {
-      const locale = localeCookie.split("=")[1];
-      if (i18n.language !== locale) {
-        i18n.changeLanguage(locale);
-      }
-    }
-  } else {
-    if (i18n.language !== locale) {
-      i18n.changeLanguage(locale);
-    }
+  // La locale provient du serveur (cookie NEXT_LOCALE ou défaut) et est identique
+  // lors de l'hydratation. On l'applique des deux côtés pour garantir un rendu
+  // serveur/client cohérent, quel que soit le cookie ou la langue du navigateur.
+  if (i18n.language !== locale) {
+    i18n.changeLanguage(locale);
   }
 
   return <>{children}</>;
