@@ -1,0 +1,56 @@
+Environment variables loaded from .env
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": SQLite database "stripstream-e2e-spike.db" at "file:/tmp/stripstream-e2e-spike.db"
+
+SQLite database stripstream-e2e-spike.db created at file:/tmp/stripstream-e2e-spike.db
+
+8 migrations found in prisma/migrations
+
+Applying migration `20260311203728_init`
+Applying migration `20260322200000_add_anonymous_mode`
+Applying migration `20260429000000_multi_config`
+Applying migration `20260505000000_dedupe_favorites`
+Applying migration `20260520000000_add_reader_display_prefs`
+Applying migration `20260902140000_user_scoped_read_progress`
+Applying migration `20260903220000_add_reader_background`
+Applying migration `20260909000000_remove_read_progress`
+
+The following migration(s) have been applied:
+
+migrations/
+  └─ 20260311203728_init/
+    └─ migration.sql
+  └─ 20260322200000_add_anonymous_mode/
+    └─ migration.sql
+  └─ 20260429000000_multi_config/
+    └─ migration.sql
+  └─ 20260505000000_dedupe_favorites/
+    └─ migration.sql
+  └─ 20260520000000_add_reader_display_prefs/
+    └─ migration.sql
+  └─ 20260902140000_user_scoped_read_progress/
+    └─ migration.sql
+  └─ 20260903220000_add_reader_background/
+    └─ migration.sql
+  └─ 20260909000000_remove_read_progress/
+    └─ migration.sql
+      
+All migrations have been successfully applied.
+[setup] e2e users seeded (e2e-stream@test.local, e2e-reader@test.local), active Stub A (1/3), B=2
+
+Running 12 tests using 1 worker
+
+[1/12] [chromium] › tests/account/account.spec.ts:12:7 › Account › shows the signed-in profile without exposing password values
+[2/12] [chromium] › tests/account/account.spec.ts:22:7 › Account › rejects a short new password before contacting the server
+[3/12] [chromium] › tests/account/account.spec.ts:33:7 › Account › rejects mismatching new passwords before contacting the server
+[4/12] [chromium] › tests/home/home.spec.ts:57:7 › Home functional journeys › shows continue reading and resumes the last viewed page
+[5/12] [chromium] › tests/home/home.spec.ts:71:7 › Home functional journeys › keeps carousel images stable and reuses the HTTP cache after a reload
+[6/12] [chromium] › tests/home/home.spec.ts:114:7 › Home functional journeys › shows reading lists on the home page and opens one
+[7/12] [chromium] › tests/integrations/streaming.spec.ts:53:7 › Home streaming + changement de connexion › affiche la home streamée avec les données de la connexion active
+[8/12] [chromium] › tests/integrations/streaming.spec.ts:63:7 › Home streaming + changement de connexion › change de connexion, affiche le fallback, puis les données de la nouvelle home
+[9/12] [chromium] › tests/reader/reader-stub.spec.ts:54:7 › Reader against the deterministic Komga fixture › loads pages, navigates, switches spread direction, and syncs progress
+[10/12] [chromium] › tests/reader/reader-stub.spec.ts:86:7 › Reader against the deterministic Komga fixture › opens thumbnails and reader information, then shows the end-of-book dialog
+[11/12] [chromium] › tests/reader/reader-stub.spec.ts:112:7 › Reader against the deterministic Komga fixture › does not attribute anonymous reading progress to the current account
+[12/12] [chromium] › tests/reader/reader-stub.spec.ts:156:7 › Reader against the deterministic Komga fixture › keeps reading statuses separate across two users and two connections
+  12 passed (46.1s)
+PLAYWRIGHT_EXIT=0

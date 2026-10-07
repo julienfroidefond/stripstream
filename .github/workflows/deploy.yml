@@ -1,0 +1,144 @@
+name: Build & Push
+
+# Builds and pushes the Docker image on a GitHub-hosted runner, then deploys it
+# on the Mac mini through the self-hosted runner (job `deploy`).
+#
+# This replaces the former Gitea pipeline (.gitea/workflows/deploy.yml):
+# GitHub is now the single deployment path.
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  REGISTRY: docker.io
+  OWNER: julienfroidefond32
+  PLATFORMS: linux/amd64
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    outputs:
+      deploy: ${{ steps.detect.outputs.deploy }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Keep the parent commit available for the changed-files detection below.
+          fetch-depth: 2
+
+      - name: Resolve version & decide whether to build
+        id: detect
+        run: |
+          set -euo pipefail
+          v=$(node -p "require('./package.json').version")
+          sha=$(git rev-parse --short HEAD)
+          echo "VERSION=$v" >> "$GITHUB_ENV"
+          echo "SHA=$sha" >> "$GITHUB_ENV"
+          echo "Detected version: $v ($sha)"
+
+          # Skip non-runtime commits (chore, docs, style, test, ci, build) — the
+          # same types the post-commit auto-bump hook ignores. Spares a build
+          # when only tooling, docs or formatting changed. Always build on a
+          # manual run or when there is no parent commit (first push / force-push).
+          build=true
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] \
+            || ! git rev-parse --verify --quiet HEAD~1 >/dev/null; then
+            build=true
+          else
+            msg=$(git log -1 --pretty=%s)
+            case "$msg" in
+              chore*|docs*|style*|test*|ci*|build*) build=false ;;
+            esac
+            # Dependency updates use the `chore` type (e.g. `chore(deps): ...`)
+            # but still change the runtime image, so never skip a `deps` commit.
+            if printf '%s' "$msg" | grep -qE '^[a-z]+\(deps(-dev)?\)!?:'; then
+              build=true
+            fi
+            if [ "$build" = false ]; then
+              echo "Non-runtime commit ('$msg') — build skipped."
+            fi
+          fi
+          echo "deploy=$build" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to DockerHub
+        if: steps.detect.outputs.deploy == 'true'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build & push
+        if: steps.detect.outputs.deploy == 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: ${{ env.PLATFORMS }}
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/stripstream:latest
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/stripstream:${{ env.VERSION }}
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/stripstream:${{ env.VERSION }}-${{ env.SHA }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.OWNER }}/stripstream:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.OWNER }}/stripstream:buildcache,mode=max
+
+  # Runs on the Mac mini (self-hosted runner, OrbStack). Pulls the image that was
+  # just pushed and restarts the stripstream stack from the local docker-stack
+  # checkout. The image is public, so no registry login is needed here.
+  #
+  # Guarded on the repository so a fork can never reach the self-hosted runner,
+  # and only reachable from a push to main / a manual dispatch (the workflow has
+  # no pull_request trigger).
+  deploy:
+    name: Deploy to Mac mini
+    needs: build-and-push
+    if: >-
+      needs.build-and-push.outputs.deploy == 'true' &&
+      github.repository == 'julienfroidefond/stripstream'
+    runs-on: [self-hosted, mac-mini]
+    steps:
+      - name: Pull image & restart stripstream
+        run: |
+          set -euo pipefail
+          # OrbStack's docker CLI ignores DOCKER_CONFIG (and --config) and always
+          # uses the macOS keychain credential helper declared in
+          # ~/.docker/config.json, which is unreachable from the runner's
+          # non-interactive launchd session. The image deployed here is public,
+          # so shadow the helper with a stub that reports "no credentials" and
+          # let the pull run anonymously.
+          #
+          # The message MUST go to stdout: Docker's credential client treats the
+          # stdout string "credentials not found in native keychain" as "no
+          # credentials" and falls back to an anonymous pull. On stderr Docker
+          # only sees an empty stdout + a non-zero exit and fails the pull with
+          # "error getting credentials - err: exit status 1, out: ``".
+          HELPER_DIR="$(mktemp -d)"
+          printf '#!/bin/sh\ncase "$1" in\n  get) echo "credentials not found in native keychain"; exit 1 ;;\n  store) cat >/dev/null; exit 0 ;;\n  erase) exit 0 ;;\n  list) echo "{}"; exit 0 ;;\nesac\nexit 0\n' > "$HELPER_DIR/docker-credential-osxkeychain"
+          chmod +x "$HELPER_DIR/docker-credential-osxkeychain"
+          export PATH="$HELPER_DIR:$PATH"
+
+          cd /Users/julienfroidefond/Sites/docker-stack
+
+          echo "Pulling julienfroidefond32/stripstream:latest"
+          docker pull julienfroidefond32/stripstream:latest
+
+          BUILDKIT_PROGRESS=plain ./scripts/stack.sh up stripstream
+
+      - name: Prune old local images
+        run: |
+          set -euo pipefail
+          docker image prune -f || true
+          old=$(docker images --format '{{.Repository}}:{{.Tag}}' \
+            | grep '^julienfroidefond32/stripstream:' \
+            | grep -vE ':(latest|buildcache)$' || true)
+          if [ -n "$old" ]; then
+            echo "$old" | while IFS= read -r img; do docker rmi -f "$img" || true; done
+          fi

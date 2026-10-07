@@ -1,0 +1,554 @@
+{
+  "language": {
+    "select": "Changer la langue",
+    "fr": "Français",
+    "en": "Anglais"
+  },
+  "layout": {
+    "errors": {
+      "title": "Erreur de chargement",
+      "libraries": "Impossible de charger les bibliothèques. Vérifie ta connexion ou réessaie plus tard.",
+      "favorites": "Impossible de charger les favoris."
+    }
+  },
+  "login": {
+    "title": "Bienvenue sur StripStream",
+    "subtitle": "Connectez-vous ou créez un compte pour commencer",
+    "tabs": {
+      "login": "Connexion",
+      "register": "Inscription"
+    },
+    "description": "Profitez de vos BD, mangas et comics préférés avec une expérience de lecture moderne et fluide.",
+    "form": {
+      "email": "Email",
+      "password": "Mot de passe",
+      "confirmPassword": "Confirmer le mot de passe",
+      "remember": "Se souvenir de moi",
+      "submit": {
+        "login": "Se connecter",
+        "register": "S'inscrire",
+        "loading": {
+          "login": "Connexion en cours...",
+          "register": "Inscription en cours..."
+        }
+      }
+    }
+  },
+  "home": {
+    "hero": {
+      "title": "Bienvenue sur StripStream",
+      "subtitle": "Votre bibliothèque numérique pour lire vos BD, mangas et comics préférés.",
+      "coverAlt": "Couverture de {title}",
+      "label": "Reprendre la lecture",
+      "resume": "Reprendre",
+      "start": "Commencer",
+      "tomeLabel": "Tome {{number}}",
+      "page": "Page {{current}} / {{total}}"
+    },
+    "title": "Accueil",
+    "sections": {
+      "favorites": "Séries favorites",
+      "continue_series": "Continuer la série",
+      "continue_reading": "Continuer la lecture",
+      "up_next": "À suivre",
+      "latest_series": "Dernières séries",
+      "recently_added": "Ajouts récents",
+      "recommendations": "Pour vous",
+      "reading_lists": "Mes listes"
+    },
+    "recommendations": {
+      "because": "Parce que vous aimez",
+      "discover": "Découvrir"
+    },
+    "reading_lists": {
+      "title": "Listes de lecture",
+      "description": "Retrouvez vos sélections et leur avancement de lecture.",
+      "series_count": "{{count}} série",
+      "series_count_plural": "{{count}} séries",
+      "back": "Retour à l'accueil",
+      "empty": "Cette liste est vide",
+      "search": "Rechercher une liste...",
+      "unavailable": "Les listes de lecture sont disponibles avec une connexion Stripstream Librarian.",
+      "no_results": "Aucune liste ne correspond",
+      "no_results_hint": "Modifiez votre recherche ou votre filtre.",
+      "filters": {
+        "title": "Filtrer les listes",
+        "all": "Toutes",
+        "unread": "Non lues",
+        "reading": "En cours",
+        "read": "Lues"
+      }
+    }
+  },
+  "sidebar": {
+    "connection": "Connexion",
+    "home": "Accueil",
+    "readingLists": "Listes de lecture",
+    "account": "Mon compte",
+    "favorites": {
+      "title": "Favoris",
+      "empty": "Aucun favori",
+      "loading": "Chargement..."
+    },
+    "libraries": {
+      "title": "Bibliothèques",
+      "empty": "Aucune bibliothèque",
+      "loading": "Chargement...",
+      "refresh": "Rafraîchir les bibliothèques"
+    },
+    "settings": {
+      "title": "Configuration",
+      "preferences": "Préférences"
+    },
+    "admin": "Administration",
+    "logout": "Se déconnecter"
+  },
+  "settings": {
+    "title": "Préférences",
+    "tabs": {
+      "display": "Affichage",
+      "reading": "Lecture",
+      "connection": "Connexion"
+    },
+    "display": {
+      "title": "Préférences d'affichage",
+      "description": "Personnalisez l'affichage de votre bibliothèque.",
+      "thumbnails": {
+        "label": "Afficher les vignettes",
+        "description": "Utiliser les vignettes au lieu des premières pages pour l'affichage des séries"
+      },
+      "unreadFilter": {
+        "label": "Filtre \"À lire\" par défaut",
+        "description": "Afficher uniquement les séries non lues par défaut"
+      }
+    },
+    "background": {
+      "title": "Arrière-plan",
+      "description": "Personnalisez l'arrière-plan de votre application.",
+      "type": {
+        "label": "Type d'arrière-plan",
+        "default": "Par défaut",
+        "gradient": "Dégradé",
+        "image": "Image personnalisée"
+      },
+      "gradient": {
+        "label": "Choisir un dégradé"
+      },
+      "image": {
+        "label": "URL de l'image",
+        "description": "Entrez l'URL d'une image (HTTPS recommandé)",
+        "save": "Enregistrer"
+      }
+    },
+    "advanced": {
+      "title": "Paramètres avancés",
+      "description": "Configurez les paramètres avancés de performance et de fiabilité.",
+      "save": "Enregistrer les paramètres",
+      "prefetchCount": {
+        "label": "Préchargement du lecteur",
+        "description": "Nombre de pages à précharger dans le lecteur (0-20)"
+      }
+    },
+    "error": {
+      "title": "Erreur",
+      "message": "Une erreur est survenue lors de la mise à jour des préférences"
+    },
+    "messages": {
+      "configSaved": "Préférences enregistrées"
+    },
+    "komga": {
+      "messages": {
+        "configSaved": "Préférences enregistrées"
+      }
+    },
+    "reader": {
+      "title": "Lecteur",
+      "description": "Personnalisez l'expérience de lecture.",
+      "experience": {
+        "title": "Expérience de lecture",
+        "description": "Personnalisez le lecteur pour votre confort."
+      },
+      "readingDirection": {
+        "label": "Sens de lecture",
+        "description": "Choisissez le sens de lecture (gauche à droite ou droite à gauche)."
+      },
+      "background": {
+        "label": "Fond de lecture",
+        "description": "Choisissez la couleur de fond du lecteur."
+      },
+      "doublePage": {
+        "label": "Mode double page",
+        "description": "Afficher deux pages côte à côte (utile en paysage)."
+      },
+      "library": {
+        "title": "Affichage de la bibliothèque",
+        "description": "Personnalisez l'affichage de vos séries."
+      },
+      "sortOrder": {
+        "label": "Tri par défaut",
+        "placeholder": "Sélectionner un tri",
+        "description": "Ordre d'affichage des séries dans les bibliothèques."
+      },
+      "showMissing": {
+        "label": "Afficher les tomes manquants",
+        "description": "Afficher les tomes manquants dans les séries."
+      },
+      "hideMissing": {
+        "label": "Masquer les tomes manquants",
+        "description": "Masquer les tomes manquants dans les séries."
+      }
+    },
+    "connections": {
+      "title": "Mes connexions",
+      "description": "Gère tes connexions Komga et Stripstream Librarian. Active celle que tu veux utiliser.",
+      "addTitle": "Ajouter une connexion",
+      "addDescription": "Choisis le type, donne-lui un nom et renseigne les identifiants.",
+      "editTitle": "Modifier la connexion",
+      "editDescription": "Mets à jour les identifiants ou le nom de cette connexion.",
+      "type": "Type",
+      "name": "Nom",
+      "komgaNamePlaceholder": "Ex : Komga maison",
+      "stripstreamNamePlaceholder": "Ex : Stripstream perso",
+      "serverUrl": "URL du serveur",
+      "username": "Identifiant",
+      "password": "Mot de passe",
+      "token": "Token API",
+      "editHint": "laisser vide pour conserver l'actuel",
+      "active": "Active",
+      "activate": "Activer",
+      "edit": "Modifier",
+      "delete": "Supprimer",
+      "empty": "Aucune connexion configurée. Ajoute-en une pour commencer.",
+      "add": "Ajouter une connexion",
+      "save": "Sauvegarder",
+      "saving": "Sauvegarde...",
+      "test": "Tester",
+      "testing": "Test...",
+      "cancel": "Annuler",
+      "confirmDelete": "Supprimer la connexion \"{{name}}\" ?"
+    }
+  },
+  "library": {
+    "empty": "Aucune bibliothèque disponible",
+    "coverAlt": "Couverture de {name}",
+    "status": {
+      "available": "Disponible",
+      "unavailable": "Non disponible"
+    },
+    "lastUpdated": "Dernière mise à jour : {date}",
+    "refresh": {
+      "button": "Rafraîchir la bibliothèque",
+      "success": {
+        "title": "Bibliothèque rafraîchie",
+        "description": "La bibliothèque a été rafraîchie avec succès"
+      },
+      "error": {
+        "title": "Erreur",
+        "description": "Une erreur est survenue"
+      }
+    },
+    "scan": {
+      "button": "Analyser la bibliothèque",
+      "buttonLabel": "Analyser",
+      "success": {
+        "title": "Analyse lancée",
+        "description": "La bibliothèque est en cours d'analyse"
+      },
+      "complete": {
+        "title": "Analyse terminée",
+        "description": "La bibliothèque a été analysée et mise à jour"
+      },
+      "error": {
+        "title": "Erreur",
+        "description": "Une erreur est survenue lors de l'analyse de la bibliothèque",
+        "refresh": "Une erreur est survenue lors de la mise à jour des données"
+      }
+    },
+    "header": {
+      "series": "{{count}} série",
+      "series_plural": "{{count}} séries",
+      "books": "{{count}} livre",
+      "books_plural": "{{count}} livres",
+      "unavailable": "Cette bibliothèque est actuellement indisponible",
+      "coverAlt": "Couverture de {{name}}"
+    }
+  },
+  "series": {
+    "related": "Séries similaires",
+    "matchReasons": {
+      "same_author": "Même auteur",
+      "same_genre": "Même genre",
+      "same_publisher": "Même éditeur",
+      "same_reading_list": "Même liste de lecture"
+    },
+    "empty": "Aucune série disponible",
+    "coverAlt": "Couverture de {title}",
+    "status": {
+      "noBooks": "Pas de tomes",
+      "read": "Lu",
+      "unread": "Non lu",
+      "progress": "{read}/{total}",
+      "ongoing": "En cours",
+      "ended": "Terminé",
+      "hiatus": "En pause",
+      "cancelled": "Annulé"
+    },
+    "book": "tome",
+    "books": "{count} tomes",
+    "books_plural": "{count} tomes",
+    "completed": "complété",
+    "filters": {
+      "title": "Filtres",
+      "showAll": "Afficher tout",
+      "unread": "À lire",
+      "search": "Rechercher une série...",
+      "normal": "Affichage normal",
+      "compact": "Affichage compact",
+      "sortTitle": "Titre",
+      "sortLatest": "Récentes",
+      "sortRating": "Note",
+      "missing": "Manquants",
+      "hideMissing": "Manquants",
+      "showMissing": "Manquants"
+    },
+    "display": {
+      "showing": "{start}-{end} sur {total}",
+      "page": "Page {current} sur {total}"
+    },
+    "header": {
+      "coverAlt": "Couverture de {{title}}",
+      "books": "{{count}} tome",
+      "books_plural": "{{count}} tomes",
+      "status": {
+        "read": "Lu",
+        "unread": "Non lu",
+        "progress": "{{read}}/{{total}}"
+      },
+      "favorite": {
+        "add": "Ajouté aux favoris",
+        "remove": "Retiré des favoris"
+      },
+      "showMore": "Voir plus",
+      "showLess": "Voir moins",
+      "missing": "{{count}} manquant(s)",
+      "seriesStatus": {
+        "ongoing": "En cours",
+        "ended": "Terminé",
+        "hiatus": "En pause",
+        "cancelled": "Annulé"
+      },
+      "rating": {
+        "label": "Ma note",
+        "saved": "Note enregistrée",
+        "deleted": "Note supprimée",
+        "error": "Erreur lors de la notation",
+        "clear": "Supprimer ma note",
+        "empty": "Non noté"
+      }
+    }
+  },
+  "books": {
+    "empty": "Aucun tome disponible",
+    "special": "Hors-série",
+    "missing": "{{count}} tome(s) manquant(s)",
+    "missingLabel": "Manquant",
+    "coverAlt": "Couverture de {{title}}",
+    "defaultCoverAlt": "Image de couverture",
+    "status": {
+      "unread": "Non lu",
+      "read": "Lu",
+      "readDate": "Lu le {{date}}",
+      "progress": "Page {{current}}/{{total}}"
+    },
+    "pages": "page",
+    "pages_plural": "pages",
+    "completed": "complété",
+    "display": {
+      "showing": "Affichage des tomes {start} à {end} sur {total}",
+      "page": "Page {current} sur {total}",
+      "grid": "Vue grille",
+      "list": "Vue liste"
+    },
+    "filters": {
+      "showAll": "Afficher tout",
+      "unread": "À lire"
+    },
+    "loading": "Chargement...",
+    "actions": {
+      "markAsRead": {
+        "button": "Marquer comme lu",
+        "success": {
+          "title": "Succès",
+          "description": "Le tome a été marqué comme lu"
+        },
+        "error": {
+          "title": "Erreur",
+          "description": "Impossible de marquer le tome comme lu",
+          "update": "Erreur lors de la mise à jour"
+        }
+      },
+      "markAsUnread": {
+        "button": "Marquer comme non lu",
+        "success": {
+          "title": "Succès",
+          "description": "Le tome a été marqué comme non lu"
+        },
+        "error": {
+          "title": "Erreur",
+          "description": "Impossible de marquer le tome comme non lu",
+          "update": "Erreur lors de la mise à jour"
+        }
+      }
+    }
+  },
+  "errors": {
+    "MONGODB_MISSING_URI": "URI MongoDB manquante",
+    "MONGODB_CONNECTION_FAILED": "Erreur lors de la connexion à MongoDB",
+    "AUTH_UNAUTHENTICATED": "Non authentifié",
+    "AUTH_INVALID_CREDENTIALS": "Identifiants invalides",
+    "AUTH_PASSWORD_NOT_STRONG": "Le mot de passe n'est pas assez fort",
+    "AUTH_PASSWORD_MISMATCH": "Les mots de passe ne correspondent pas",
+    "AUTH_EMAIL_EXISTS": "Cette adresse email existe déjà",
+    "AUTH_INVALID_USER_DATA": "Données utilisateur invalides",
+    "AUTH_LOGOUT_ERROR": "Erreur lors de la déconnexion",
+    "AUTH_LOGIN_ERROR": "Erreur lors de la connexion",
+    "AUTH_REGISTER_ERROR": "Erreur lors de l'inscription",
+    "KOMGA_MISSING_CONFIG": "Configuration Komga manquante",
+    "KOMGA_MISSING_CREDENTIALS": "Identifiants Komga manquants",
+    "KOMGA_CONNECTION_ERROR": "Erreur de connexion au serveur Komga",
+    "KOMGA_HTTP_ERROR": "Erreur HTTP lors de la communication avec Komga",
+    "KOMGA_UNAUTHORIZED": "Identifiants Komga invalides (HTTP 401). Mets à jour le nom d'utilisateur ou le mot de passe dans tes connexions.",
+    "KOMGA_FORBIDDEN": "Accès Komga refusé (HTTP 403). Vérifie les permissions de ton compte.",
+    "KOMGA_NOT_FOUND": "Ressource Komga introuvable (HTTP 404). L'URL du serveur est peut-être incorrecte.",
+    "KOMGA_SERVER_ERROR": "Le serveur Komga rencontre un problème (HTTP 5xx). Réessaie plus tard.",
+    "KOMGA_SERVER_UNREACHABLE": "Serveur Komga inaccessible",
+    "STRIPSTREAM_MISSING_CONFIG": "Configuration Stripstream Librarian manquante",
+    "STRIPSTREAM_CONNECTION_ERROR": "Erreur de connexion à Stripstream Librarian",
+    "STRIPSTREAM_HTTP_ERROR": "Erreur HTTP lors de la communication avec Stripstream Librarian",
+    "STRIPSTREAM_UNAUTHORIZED": "Token Stripstream invalide ou expiré (HTTP 401). Mets à jour le token dans tes connexions.",
+    "STRIPSTREAM_FORBIDDEN": "Accès Stripstream refusé (HTTP 403). Vérifie les permissions du token.",
+    "STRIPSTREAM_NOT_FOUND": "Ressource Stripstream introuvable (HTTP 404). L'URL du serveur est peut-être incorrecte.",
+    "STRIPSTREAM_SERVER_ERROR": "Le serveur Stripstream rencontre un problème (HTTP 5xx). Réessaie plus tard.",
+    "CONFIG_SAVE_ERROR": "Erreur lors de la sauvegarde de la configuration",
+    "CONFIG_FETCH_ERROR": "Erreur lors de la récupération de la configuration",
+    "CONFIG_TTL_SAVE_ERROR": "Erreur lors de la sauvegarde des TTL",
+    "CONFIG_TTL_FETCH_ERROR": "Erreur lors de la récupération des TTL",
+    "LIBRARY_NOT_FOUND": "Bibliothèque introuvable",
+    "LIBRARY_FETCH_ERROR": "Erreur lors de la récupération de la bibliothèque",
+    "LIBRARY_SCAN_ERROR": "Erreur lors de l'analyse de la bibliothèque",
+    "SERIES_FETCH_ERROR": "Erreur lors de la récupération des séries",
+    "SERIES_NO_BOOKS_FOUND": "Aucun livre trouvé dans la série",
+    "SERIES_RATING_ERROR": "Erreur lors de l'enregistrement de la note",
+    "SERIES_RATING_NOT_SUPPORTED": "La notation des séries n'est pas disponible avec ce fournisseur",
+    "BOOK_NOT_FOUND": "Livre introuvable",
+    "BOOK_FETCH_ERROR": "Erreur lors de la récupération du livre",
+    "BOOK_PROGRESS_UPDATE_ERROR": "Erreur lors de la mise à jour de la progression",
+    "BOOK_PROGRESS_DELETE_ERROR": "Erreur lors de la suppression de la progression",
+    "BOOK_PAGES_FETCH_ERROR": "Erreur lors de la récupération des pages du livre",
+    "BOOK_DOWNLOAD_CANCELLED": "Téléchargement du livre annulé",
+    "FAVORITE_ADD_ERROR": "Erreur lors de l'ajout aux favoris",
+    "FAVORITE_DELETE_ERROR": "Erreur lors de la suppression des favoris",
+    "FAVORITE_FETCH_ERROR": "Erreur lors de la récupération des favoris",
+    "FAVORITE_UPDATE_ERROR": "Erreur lors de la mise à jour des favoris",
+    "FAVORITE_NETWORK_ERROR": "Erreur réseau lors de l'accès aux favoris",
+    "FAVORITE_SERVER_ERROR": "Erreur serveur lors de l'accès aux favoris",
+    "FAVORITE_STATUS_CHECK_ERROR": "Erreur lors de la vérification du statut des favoris",
+    "PREFERENCES_FETCH_ERROR": "Erreur lors de la récupération des préférences",
+    "PREFERENCES_UPDATE_ERROR": "Erreur lors de la mise à jour des préférences",
+    "PREFERENCES_CONTEXT_ERROR": "Erreur de contexte des préférences",
+    "UI_TABS_TRIGGER_ERROR": "Erreur lors du déclenchement des onglets",
+    "UI_TABS_CONTENT_ERROR": "Erreur lors du chargement du contenu des onglets",
+    "IMAGE_FETCH_ERROR": "Erreur lors de la récupération de l'image",
+    "HOME_FETCH_ERROR": "Erreur lors de la récupération de l'accueil",
+    "MIDDLEWARE_UNAUTHORIZED": "Non autorisé",
+    "MIDDLEWARE_INVALID_TOKEN": "Jeton d'authentification invalide",
+    "MIDDLEWARE_INVALID_SESSION": "Session invalide",
+    "CLIENT_FETCH_ERROR": "Erreur lors de la récupération des données",
+    "CLIENT_NETWORK_ERROR": "Erreur réseau",
+    "CLIENT_REQUEST_FAILED": "La requête a échoué",
+    "GENERIC_ERROR": "Une erreur est survenue"
+  },
+  "reader": {
+    "controls": {
+      "doublePage": {
+        "enable": "Activer le mode double page",
+        "disable": "Désactiver le mode double page"
+      },
+      "direction": {
+        "current": "Changer le sens de lecture (actuellement de {{direction}})",
+        "ltr": "gauche à droite",
+        "rtl": "droite à gauche"
+      },
+      "fullscreen": {
+        "enter": "Plein écran",
+        "exit": "Quitter le plein écran"
+      },
+      "thumbnails": {
+        "show": "Afficher les vignettes",
+        "hide": "Masquer les vignettes"
+      },
+      "background": {
+        "title": "Fond de lecture",
+        "default": "Défaut",
+        "black": "Noir",
+        "white": "Blanc",
+        "cream": "Crème"
+      },
+      "fitMode": {
+        "current": "Affichage : {{mode}}",
+        "fit": "page entière",
+        "width": "largeur",
+        "height": "hauteur",
+        "original": "taille originale"
+      },
+      "info": "Informations du tome",
+      "close": "Fermer",
+      "previousPage": "Page précédente",
+      "nextPage": "Page suivante",
+      "refresh": "Recharger le livre"
+    },
+    "info": {
+      "positionValue": "Tome {{current}} sur {{total}}",
+      "positionCurrentOnly": "Tome {{current}}",
+      "progressValue": "{{progress}}% de la série",
+      "readingProgressValue": "Page {{current}} sur {{total}}",
+      "description": "Description",
+      "noDescription": "Aucune description disponible pour ce tome.",
+      "notAvailable": "Non disponible"
+    },
+    "endOfSeries": "Fin de la série",
+    "endOfSeriesMessage": "Vous avez terminé tous les tomes de cette série !",
+    "backToSeries": "Retourner à la série"
+  },
+  "header": {
+    "toggleSidebar": "Afficher/masquer le menu latéral",
+    "toggleTheme": "Changer le thème",
+    "anonymousMode": "Mode anonyme",
+    "anonymousModeOn": "Mode anonyme activé",
+    "anonymousModeOff": "Mode anonyme désactivé",
+    "search": {
+      "placeholder": "Rechercher séries et tomes...",
+      "empty": "Aucun résultat",
+      "series": "Séries",
+      "books": "Tomes",
+      "openSeries": "Ouvrir la série {{title}}",
+      "openBook": "Ouvrir le tome {{title}}"
+    },
+    "providerSwitcher": {
+      "title": "Connexion active",
+      "manage": "Gérer les connexions",
+      "empty": "Configurer une connexion"
+    }
+  },
+  "navigation": {
+    "scrollLeft": "Défiler vers la gauche",
+    "scrollRight": "Défiler vers la droite",
+    "loadMore": "Voir plus",
+    "loading": "Chargement…",
+    "volume": "Tome {number}"
+  },
+  "common": {
+    "retry": "Réessayer",
+    "error": "Erreur"
+  }
+}

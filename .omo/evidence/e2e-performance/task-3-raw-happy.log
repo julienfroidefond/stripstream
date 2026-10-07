@@ -1,0 +1,127 @@
+
+====================================================================
+[e2e] Reusing existing production build: .next-e2e/BUILD_ID
+[e2e] BUILD_ID: enHlcVxwZodBrmcuCOk0V
+[e2e] Built at: 2026-09-11T11:07:41.828Z
+[e2e] Rerun `pnpm test:e2e:build` after any src/ change.
+====================================================================
+
+2026-09-11T11:07:52.617Z pw:webserver HTTP GET: http://127.0.0.1:3000/
+2026-09-11T11:07:52.625Z pw:webserver Error while checking if http://127.0.0.1:3000/ is available: connect ECONNREFUSED 127.0.0.1:3000
+2026-09-11T11:07:52.625Z pw:webserver Starting WebServer process ./node_modules/.bin/next start...
+2026-09-11T11:07:52.626Z pw:webserver Process started
+2026-09-11T11:07:52.626Z pw:webserver Waiting for availability...
+2026-09-11T11:07:52.626Z pw:webserver HTTP GET: http://127.0.0.1:3000/
+2026-09-11T11:07:52.627Z pw:webserver Error while checking if http://127.0.0.1:3000/ is available: connect ECONNREFUSED 127.0.0.1:3000
+2026-09-11T11:07:52.627Z pw:webserver Waiting 100ms
+2026-09-11T11:07:52.729Z pw:webserver HTTP GET: http://127.0.0.1:3000/
+2026-09-11T11:07:52.730Z pw:webserver Error while checking if http://127.0.0.1:3000/ is available: connect ECONNREFUSED 127.0.0.1:3000
+2026-09-11T11:07:52.730Z pw:webserver Waiting 250ms
+[WebServer] ▲ Next.js 16.1.6
+
+[WebServer] - Local:         http://localhost:3000
+[WebServer] - Network:       http://127.11.78.2:3000
+[WebServer] 
+[WebServer] ✓ Starting...
+
+[WebServer] ⚠ "next start" does not work with "output: standalone" configuration. Use "node .next/standalone/server.js" instead.
+
+[WebServer] ✓ Ready in 105ms
+
+2026-09-11T11:07:52.980Z pw:webserver HTTP GET: http://127.0.0.1:3000/
+2026-09-11T11:07:53.087Z pw:webserver HTTP Status: 200
+2026-09-11T11:07:53.087Z pw:webserver WebServer available
+2026-09-11T11:07:53.088Z pw:webserver HTTP GET: http://127.0.0.1:8444/api/v1/libraries
+2026-09-11T11:07:53.089Z pw:webserver Error while checking if http://127.0.0.1:8444/api/v1/libraries is available: connect ECONNREFUSED 127.0.0.1:8444
+2026-09-11T11:07:53.089Z pw:webserver Starting WebServer process node tests/helpers/stub-provider.mjs 8444...
+2026-09-11T11:07:53.089Z pw:webserver Process started
+2026-09-11T11:07:53.089Z pw:webserver Waiting for availability...
+2026-09-11T11:07:53.089Z pw:webserver HTTP GET: http://127.0.0.1:8444/api/v1/libraries
+2026-09-11T11:07:53.090Z pw:webserver Error while checking if http://127.0.0.1:8444/api/v1/libraries is available: connect ECONNREFUSED 127.0.0.1:8444
+2026-09-11T11:07:53.090Z pw:webserver Waiting 100ms
+[WebServer] [stub-provider] instance A on :8444
+
+2026-09-11T11:07:53.191Z pw:webserver HTTP GET: http://127.0.0.1:8444/api/v1/libraries
+2026-09-11T11:07:53.196Z pw:webserver HTTP Status: 200
+2026-09-11T11:07:53.196Z pw:webserver WebServer available
+2026-09-11T11:07:53.196Z pw:webserver HTTP GET: http://127.0.0.1:8445/api/v1/libraries
+2026-09-11T11:07:53.197Z pw:webserver Error while checking if http://127.0.0.1:8445/api/v1/libraries is available: connect ECONNREFUSED 127.0.0.1:8445
+2026-09-11T11:07:53.197Z pw:webserver Starting WebServer process node tests/helpers/stub-provider.mjs 8445...
+2026-09-11T11:07:53.197Z pw:webserver Process started
+2026-09-11T11:07:53.197Z pw:webserver Waiting for availability...
+2026-09-11T11:07:53.197Z pw:webserver HTTP GET: http://127.0.0.1:8445/api/v1/libraries
+2026-09-11T11:07:53.198Z pw:webserver Error while checking if http://127.0.0.1:8445/api/v1/libraries is available: connect ECONNREFUSED 127.0.0.1:8445
+2026-09-11T11:07:53.198Z pw:webserver Waiting 100ms
+[WebServer] [stub-provider] instance B on :8445
+
+2026-09-11T11:07:53.300Z pw:webserver HTTP GET: http://127.0.0.1:8445/api/v1/libraries
+2026-09-11T11:07:54.056Z pw:webserver HTTP Status: 200
+2026-09-11T11:07:54.057Z pw:webserver WebServer available
+Environment variables loaded from .env
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": SQLite database "stripstream-e2e-51102.db" at "file:/var/folders/tv/w9jn7q0d08j8hl7_y9_bggxm0000gn/T/stripstream-e2e-51102.db"
+
+SQLite database stripstream-e2e-51102.db created at file:/var/folders/tv/w9jn7q0d08j8hl7_y9_bggxm0000gn/T/stripstream-e2e-51102.db
+
+8 migrations found in prisma/migrations
+
+Applying migration `20260311203728_init`
+Applying migration `20260322200000_add_anonymous_mode`
+Applying migration `20260429000000_multi_config`
+Applying migration `20260505000000_dedupe_favorites`
+Applying migration `20260520000000_add_reader_display_prefs`
+Applying migration `20260902140000_user_scoped_read_progress`
+Applying migration `20260903220000_add_reader_background`
+Applying migration `20260909000000_remove_read_progress`
+
+The following migration(s) have been applied:
+
+migrations/
+  └─ 20260311203728_init/
+    └─ migration.sql
+  └─ 20260322200000_add_anonymous_mode/
+    └─ migration.sql
+  └─ 20260429000000_multi_config/
+    └─ migration.sql
+  └─ 20260505000000_dedupe_favorites/
+    └─ migration.sql
+  └─ 20260520000000_add_reader_display_prefs/
+    └─ migration.sql
+  └─ 20260902140000_user_scoped_read_progress/
+    └─ migration.sql
+  └─ 20260903220000_add_reader_background/
+    └─ migration.sql
+  └─ 20260909000000_remove_read_progress/
+    └─ migration.sql
+      
+All migrations have been successfully applied.
+[setup] e2e users seeded (e2e-stream@test.local, e2e-reader@test.local), active Stub A (1/3), B=2
+
+Running 10 tests using 1 worker
+
+
+====================================================================
+[e2e] Reusing existing production build: .next-e2e/BUILD_ID
+[e2e] BUILD_ID: enHlcVxwZodBrmcuCOk0V
+[e2e] Built at: 2026-09-11T11:07:41.828Z
+[e2e] Rerun `pnpm test:e2e:build` after any src/ change.
+====================================================================
+
+
+[1/10] [chromium] › tests/public/access-control.spec.ts:16:9 › Access control › redirects / to sign in and preserves the destination
+[2/10] [chromium] › tests/public/access-control.spec.ts:16:9 › Access control › redirects /settings to sign in and preserves the destination
+[3/10] [chromium] › tests/public/access-control.spec.ts:16:9 › Access control › redirects /account to sign in and preserves the destination
+[4/10] [chromium] › tests/public/access-control.spec.ts:16:9 › Access control › redirects /admin to sign in and preserves the destination
+[5/10] [chromium] › tests/public/access-control.spec.ts:16:9 › Access control › redirects /libraries/library-id?sort=latest&page=2 to sign in and preserves the destination
+[6/10] [chromium] › tests/public/access-control.spec.ts:16:9 › Access control › redirects /series/series-id to sign in and preserves the destination
+[7/10] [chromium] › tests/public/access-control.spec.ts:16:9 › Access control › redirects /books/book-id to sign in and preserves the destination
+[8/10] [chromium] › tests/public/access-control.spec.ts:16:9 › Access control › redirects /reading-lists/list-id to sign in and preserves the destination
+[9/10] [chromium] › tests/public/access-control.spec.ts:26:7 › Access control › returns a structured 401 for a protected API route
+[10/10] [chromium] › tests/public/access-control.spec.ts:39:7 › Access control › keeps authentication and health endpoints public
+2026-09-11T11:07:57.870Z pw:webserver Terminating the WebServer
+2026-09-11T11:07:57.872Z pw:webserver Terminated the WebServer
+2026-09-11T11:07:57.872Z pw:webserver Terminating the WebServer
+2026-09-11T11:07:57.874Z pw:webserver Terminated the WebServer
+2026-09-11T11:07:57.874Z pw:webserver Terminating the WebServer
+2026-09-11T11:07:57.879Z pw:webserver Terminated the WebServer
+  10 passed (5.3s)

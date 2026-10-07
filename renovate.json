@@ -1,6 +1,73 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:recommended"
+    "config:recommended",
+    ":dependencyDashboard",
+    ":timezone(Europe/Paris)",
+    "schedule:weekly"
+  ],
+  "rangeStrategy": "bump",
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 6am on monday"]
+  },
+  "prHourlyLimit": 4,
+  "prConcurrentLimit": 8,
+  "packageRules": [
+    {
+      "groupName": "Radix UI",
+      "matchPackageNames": ["/^@radix-ui//"]
+    },
+    {
+      "groupName": "i18next",
+      "matchPackageNames": [
+        "i18next",
+        "react-i18next",
+        "i18next-browser-languagedetector"
+      ]
+    },
+    {
+      "groupName": "Lint, types & tooling",
+      "matchPackageNames": [
+        "eslint",
+        "eslint-config-next",
+        "eslint-plugin-unused-imports",
+        "@typescript-eslint/**",
+        "@types/node",
+        "@types/react",
+        "@types/react-dom",
+        "typescript",
+        "knip"
+      ]
+    },
+    {
+      "groupName": "Playwright",
+      "matchPackageNames": ["@playwright/test"]
+    },
+    {
+      "description": "Framework/runtime deps stay manual even on minor/patch",
+      "matchPackageNames": [
+        "next",
+        "react",
+        "react-dom",
+        "@prisma/client",
+        "prisma",
+        "sharp"
+      ],
+      "automerge": false
+    },
+    {
+      "description": "Major updates are reviewed by hand, never auto-merged",
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true,
+      "automerge": false,
+      "labels": ["deps:major"]
+    },
+    {
+      "description": "Safe by default: patches, and non-framework minors",
+      "matchUpdateTypes": ["patch", "minor", "digest"],
+      "matchPackageNames": ["!next", "!react", "!react-dom", "!@prisma/client", "!prisma", "!sharp"],
+      "automerge": true
+    }
   ]
 }

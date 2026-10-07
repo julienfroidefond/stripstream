@@ -1,0 +1,747 @@
+{
+  "config": {
+    "argv": [
+      "/Users/julienfroidefond/.nvm/versions/node/v24.17.0/bin/node",
+      "/Users/julienfroidefond/Sites/stripstream/node_modules/@playwright/test/cli.js",
+      "test",
+      "tests/reader/reader-stub.spec.ts",
+      "tests/reader/reader.spec.ts",
+      "tests/library/reading-status.spec.ts",
+      "tests/library/favorites-reading-lists.spec.ts",
+      "tests/integrations/mutations.spec.ts",
+      "tests/integrations/streaming.spec.ts",
+      "--reporter=json"
+    ],
+    "configFile": "/Users/julienfroidefond/Sites/stripstream/playwright.config.ts",
+    "rootDir": "/Users/julienfroidefond/Sites/stripstream/tests",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": "/Users/julienfroidefond/Sites/stripstream/tests/global-setup.ts",
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/julienfroidefond/Sites/stripstream/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "setup",
+        "name": "setup",
+        "testDir": "/Users/julienfroidefond/Sites/stripstream/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "/auth\\.setup\\.ts/"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/julienfroidefond/Sites/stripstream/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/Users/julienfroidefond/Sites/stripstream/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.62.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "setup/auth.setup.ts",
+      "file": "setup/auth.setup.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "authenticate as the stream account",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "setup",
+              "projectName": "setup",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1629,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-11T11:43:04.103Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e717b06d8d484d1cd946-92cc667a1ce765789a68",
+          "file": "setup/auth.setup.ts",
+          "line": 12,
+          "column": 5
+        },
+        {
+          "title": "authenticate as the reader account",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "setup",
+              "projectName": "setup",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1465,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-11T11:43:05.982Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e717b06d8d484d1cd946-6d6b071b27352028ebcd",
+          "file": "setup/auth.setup.ts",
+          "line": 18,
+          "column": 5
+        }
+      ]
+    },
+    {
+      "title": "integrations/mutations.spec.ts",
+      "file": "integrations/mutations.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Mutations on the isolated E2E account",
+          "file": "integrations/mutations.spec.ts",
+          "line": 12,
+          "column": 6,
+          "specs": [
+            {
+              "title": "persists reader preferences after a reload",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 604,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-11T11:43:07.673Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "a93f43aab2977db7a86f-d877b625b4c09cacf0ff",
+              "file": "integrations/mutations.spec.ts",
+              "line": 16,
+              "column": 7
+            },
+            {
+              "title": "creates, edits, and deletes a Komga connection",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1300,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-11T11:43:08.372Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "a93f43aab2977db7a86f-dcbe137539528282ed0c",
+              "file": "integrations/mutations.spec.ts",
+              "line": 35,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "integrations/streaming.spec.ts",
+      "file": "integrations/streaming.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Home streaming + changement de connexion",
+          "file": "integrations/streaming.spec.ts",
+          "line": 12,
+          "column": 6,
+          "specs": [
+            {
+              "title": "affiche la home streamée avec les données de la connexion active",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 150000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 300,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-11T11:43:09.681Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "a01825022f23aec1ed62-3a04e4878290b95a76e1",
+              "file": "integrations/streaming.spec.ts",
+              "line": 32,
+              "column": 7
+            },
+            {
+              "title": "change de connexion, affiche le fallback, puis les données de la nouvelle home",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 150000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1571,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-11T11:43:09.985Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "a01825022f23aec1ed62-7d8e2a2a99c24fcf56b4",
+              "file": "integrations/streaming.spec.ts",
+              "line": 41,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "library/favorites-reading-lists.spec.ts",
+      "file": "library/favorites-reading-lists.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Favorites and reading lists",
+          "file": "library/favorites-reading-lists.spec.ts",
+          "line": 7,
+          "column": 6,
+          "specs": [
+            {
+              "title": "adds and removes a series favorite, including persistence after reload",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 407,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-11T11:43:11.562Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "530a0d4dfa62ab1a4260-485a0b52af5706e96eb6",
+              "file": "library/favorites-reading-lists.spec.ts",
+              "line": 10,
+              "column": 7
+            },
+            {
+              "title": "opens a deterministic reading list through the Stripstream connection",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 423,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-11T11:43:11.973Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "530a0d4dfa62ab1a4260-66f4bd973c50c1c91211",
+              "file": "library/favorites-reading-lists.spec.ts",
+              "line": 32,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "library/reading-status.spec.ts",
+      "file": "library/reading-status.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Reading statuses",
+          "file": "library/reading-status.spec.ts",
+          "line": 7,
+          "column": 6,
+          "specs": [
+            {
+              "title": "marks a book read and unread from the series card",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 674,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-11T11:43:12.402Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "1f7a096876f688765fbb-9dc24f168a6388a28eed",
+              "file": "library/reading-status.spec.ts",
+              "line": 11,
+              "column": 7
+            },
+            {
+              "title": "marks a book read when reaching its last reader page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1696,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-11T11:43:13.079Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "1f7a096876f688765fbb-53b69ef6ea9b0358b80a",
+              "file": "library/reading-status.spec.ts",
+              "line": 52,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "reader/reader-stub.spec.ts",
+      "file": "reader/reader-stub.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Reader against the deterministic Komga fixture",
+          "file": "reader/reader-stub.spec.ts",
+          "line": 37,
+          "column": 6,
+          "specs": [
+            {
+              "title": "loads pages, navigates, switches spread direction, and syncs progress",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2891,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-11T11:43:14.792Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f3416c956819d4d89d3b-97c230ede14cb74e7dbe",
+              "file": "reader/reader-stub.spec.ts",
+              "line": 41,
+              "column": 7
+            },
+            {
+              "title": "opens thumbnails and reader information, then shows the end-of-book dialog",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2683,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-11T11:43:17.686Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f3416c956819d4d89d3b-41eacd9d95ae620092e1",
+              "file": "reader/reader-stub.spec.ts",
+              "line": 83,
+              "column": 7
+            },
+            {
+              "title": "does not attribute anonymous reading progress to the current account",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4054,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-11T11:43:20.373Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f3416c956819d4d89d3b-7eda7c207bbdff10efe8",
+              "file": "reader/reader-stub.spec.ts",
+              "line": 108,
+              "column": 7
+            },
+            {
+              "title": "keeps reading statuses separate across two users and two connections",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 11474,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-11T11:43:24.432Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f3416c956819d4d89d3b-ed7ea86655a6c3d68861",
+              "file": "reader/reader-stub.spec.ts",
+              "line": 180,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "reader/reader.spec.ts",
+      "file": "reader/reader.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Reader",
+          "file": "reader/reader.spec.ts",
+          "line": 12,
+          "column": 6,
+          "specs": [
+            {
+              "title": "offers page, direction, display and information controls",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1024,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-11T11:43:35.911Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "01d128b472d1f1c46947-d8d870f97d1b52b6e4d4",
+              "file": "reader/reader.spec.ts",
+              "line": 19,
+              "column": 7
+            },
+            {
+              "title": "opens reader information without navigating away",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1063,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-11T11:43:36.940Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "01d128b472d1f1c46947-77f10aefb878976a90ac",
+              "file": "reader/reader.spec.ts",
+              "line": 27,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-09-11T11:43:01.587Z",
+    "duration": 36458.015,
+    "expected": 16,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

@@ -1,0 +1,37 @@
+Task 8 — FAILURE PROOF: a known writer in `read-only` changes the DB hash
+=========================================================================
+Temporary change: added '**/library/library.spec.ts' to the `read-only`
+testMatch (it persists defaultSortOrder / showMissingBooks), then reran the
+SAME happy-proof command:
+
+  E2E_STUB_READONLY=1 \
+  E2E_STUB_LOG=<abs>/.omo/evidence/e2e-performance/task-8-stub-failure.log \
+  E2E_DB_HASH_FILE=<abs>/.omo/evidence/e2e-performance/task-8-db-before-failure.sha \
+  E2E_DATABASE_URL=file:/tmp/stripstream-e2e-failure.db \
+  pnpm exec playwright test --project=read-only --reporter=line
+
+Result (raw log: task-8-failure-run.log):
+
+  Running 34 tests using 4 workers
+    2 skipped
+    32 passed (13.6s)
+  exit=0 (the library test itself passes — the violation is the DB write)
+
+DB hash recorded by global setup (before tests):
+  6aa4a7afa301af6def06791a77ce9c1843df253f7bb37508b337d9411de83eef
+
+DB hash after the run (shasum -a 256 /tmp/stripstream-e2e-failure.db):
+  d61ccaa31eb1ce6f71cab8caa3686f8d23bfe49b6969fa50e053beef48a30f89
+
+HASH MISMATCH -> the read-only project DID write when a writer was included.
+This proves the unchanged hash in the happy proof is a real signal, not a
+misconfigured check.
+
+Stub blocked-operations log (task-8-stub-failure.log): ABSENT.
+library.spec.ts writes to the application SQLite DB through preferences, not to
+the provider stub, so the read-only guard was not triggered. The DB hash
+mismatch is the decisive evidence for this failure scenario.
+
+RESTORE: the temporary `**/library/library.spec.ts` entry was removed from the
+`read-only` testMatch. Confirmed restored to exactly the step-1 list (see
+task-8-e2e-performance.md, "Config restored").

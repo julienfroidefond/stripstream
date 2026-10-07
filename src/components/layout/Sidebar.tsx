@@ -1,135 +1,167 @@
-import { BookOpen, Home, Library, Settings, LogOut } from "lucide-react";
-import Link from "next/link";
+"use client";
+
+import {
+  Home,
+  Bookmark,
+  Settings,
+  LogOut,
+  User,
+  Shield,
+} from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { authService } from "@/lib/services/auth.service";
-import { useEffect, useState } from "react";
-import { KomgaLibrary } from "@/types/komga";
+import { signOut } from "next-auth/react";
+import { useCallback, Suspense } from "react";
+import { useToast } from "@/components/ui/use-toast";
+import { useTranslate } from "@/hooks/useTranslate";
+import { NavButton } from "@/components/ui/nav-button";
+import { SidebarNavContext } from "@/components/layout/SidebarNavContext";
+import logger from "@/lib/logger";
 
 interface SidebarProps {
   isOpen: boolean;
+  onClose: () => void;
+  userIsAdmin?: boolean;
+  // Slots serveur streamés
+  favoritesSlot?: React.ReactNode;
+  librariesSlot?: React.ReactNode;
+  connectionsSlot?: React.ReactNode;
+  favoritesSkeleton?: React.ReactNode;
+  librariesSkeleton?: React.ReactNode;
+  connectionsSkeleton?: React.ReactNode;
 }
 
-export function Sidebar({ isOpen }: SidebarProps) {
+export function Sidebar({
+  isOpen,
+  onClose,
+  userIsAdmin = false,
+  favoritesSlot,
+  librariesSlot,
+  connectionsSlot,
+  favoritesSkeleton,
+  librariesSkeleton,
+  connectionsSkeleton,
+}: SidebarProps) {
+  const { t } = useTranslate();
   const pathname = usePathname();
   const router = useRouter();
-  const [libraries, setLibraries] = useState<KomgaLibrary[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchLibraries = async () => {
-      try {
-        const response = await fetch("/api/komga/libraries");
-        if (!response.ok) {
-          throw new Error("Erreur lors de la récupération des bibliothèques");
-        }
-        const data = await response.json();
-        setLibraries(data);
-      } catch (error) {
-        console.error("Erreur:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const { toast } = useToast();
 
-    fetchLibraries();
-  }, []);
-
-  const handleLogout = () => {
-    authService.logout();
-    router.push("/login");
+  const handleLogout = async () => {
+    try {
+      await signOut({ callbackUrl: "/login" });
+      onClose();
+    } catch (error) {
+      logger.error({ err: error }, "Erreur lors de la déconnexion:");
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la déconnexion",
+        variant: "destructive",
+      });
+    }
   };
 
-  const navigation = [
-    {
-      name: "Accueil",
-      href: "/",
-      icon: Home,
+  const handleLinkClick = useCallback(
+    async (path: string) => {
+      if (pathname === path) {
+        onClose();
+        return;
+      }
+      window.dispatchEvent(new Event("navigationStart"));
+      router.push(path);
+      onClose();
+      // On attend que la page soit chargée
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      window.dispatchEvent(new Event("navigationComplete"));
     },
-  ];
+    [pathname, router, onClose]
+  );
 
   return (
-    <aside
-      className={cn(
-        "fixed left-0 top-14 z-30 h-[calc(100vh-3.5rem)] w-64 border-r border-border/40",
-        "bg-background/80 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60",
-        "transition-transform duration-300 ease-in-out flex flex-col",
-        isOpen ? "translate-x-0" : "-translate-x-full"
-      )}
-      id="sidebar"
-    >
-      <div className="flex-1 space-y-4 py-4 overflow-y-auto">
-        <div className="px-3 py-2">
-          <div className="space-y-1">
-            <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">Navigation</h2>
-            {navigation.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "flex items-center rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
-                  pathname === item.href ? "bg-accent" : "transparent"
-                )}
-              >
-                <item.icon className="mr-2 h-4 w-4" />
-                {item.name}
-              </Link>
-            ))}
-          </div>
+    <SidebarNavContext.Provider value={handleLinkClick}>
+      <aside
+        className={cn(
+          "fixed left-0 top-[calc(4rem+env(safe-area-inset-top,0px))] z-30 h-[calc(100vh-4rem-env(safe-area-inset-top,0px))] w-72 border-r border-primary/30",
+          "bg-background/70 shadow-sm backdrop-blur-xl supports-[backdrop-filter]:bg-background/65",
+          "transition-transform duration-300 ease-in-out flex flex-col",
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+        id="sidebar"
+      >
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(160deg,hsl(var(--primary)/0.12)_0%,hsl(192_85%_55%/0.08)_32%,transparent_58%),linear-gradient(332deg,hsl(338_82%_62%/0.06)_0%,transparent_42%),repeating-linear-gradient(135deg,hsl(var(--foreground)/0.02)_0_1px,transparent_1px_11px)]" />
+        <div className="pointer-events-none absolute inset-0 z-0">
+          <div
+            className="hidden h-full w-full bg-center bg-no-repeat opacity-[0.1] [background-size:260%] dark:block"
+            style={{ backgroundImage: "url('/images/logostripstream.png')" }}
+          />
+          <div
+            className="h-full w-full bg-center bg-no-repeat opacity-[0.12] [background-size:260%] dark:hidden"
+            style={{ backgroundImage: "url('/images/logostripstream-white.png')" }}
+          />
         </div>
 
-        <div className="px-3 py-2">
-          <div className="space-y-1">
-            <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">Bibliothèques</h2>
-            {isLoading ? (
-              <div className="px-3 py-2 text-sm text-muted-foreground">Chargement...</div>
-            ) : libraries.length === 0 ? (
-              <div className="px-3 py-2 text-sm text-muted-foreground">Aucune bibliothèque</div>
-            ) : (
-              libraries.map((library) => (
-                <Link
-                  key={library.id}
-                  href={`/libraries/${library.id}`}
-                  className={cn(
-                    "flex items-center rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
-                    pathname === `/libraries/${library.id}` ? "bg-accent" : "transparent"
-                  )}
-                >
-                  <Library className="mr-2 h-4 w-4" />
-                  {library.name}
-                </Link>
-              ))
-            )}
-          </div>
-        </div>
+        <div className="relative z-10 flex-1 space-y-4 overflow-y-auto px-3 py-4">
+          <NavButton
+            icon={Home}
+            label={t("sidebar.home")}
+            active={pathname === "/"}
+            onClick={() => handleLinkClick("/")}
+          />
+          <NavButton
+            icon={Bookmark}
+            label={t("sidebar.readingLists")}
+            active={pathname === "/reading-lists" || pathname.startsWith("/reading-lists/")}
+            onClick={() => handleLinkClick("/reading-lists")}
+          />
 
-        <div className="px-3 py-2">
-          <div className="space-y-1">
-            <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">Configuration</h2>
-            <Link
-              href="/settings"
-              className={cn(
-                "flex items-center rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
-                pathname === "/settings" ? "bg-accent" : "transparent"
+          {/* Favoris — streamé */}
+          <Suspense fallback={favoritesSkeleton}>{favoritesSlot}</Suspense>
+
+          {/* Bibliothèques — streamé */}
+          <Suspense fallback={librariesSkeleton}>{librariesSlot}</Suspense>
+
+          {/* Connexions — streamé */}
+          <Suspense fallback={connectionsSkeleton}>{connectionsSlot}</Suspense>
+
+          <div className="rounded-xl border border-border/50 bg-background/30 p-2">
+            <div className="space-y-1">
+              <h2 className="mb-2 px-3 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                {t("sidebar.settings.title")}
+              </h2>
+              <NavButton
+                icon={User}
+                label={t("sidebar.account")}
+                active={pathname === "/account"}
+                onClick={() => handleLinkClick("/account")}
+              />
+              <NavButton
+                icon={Settings}
+                label={t("sidebar.settings.preferences")}
+                active={pathname === "/settings"}
+                onClick={() => handleLinkClick("/settings")}
+              />
+              {userIsAdmin && (
+                <NavButton
+                  icon={Shield}
+                  label={t("sidebar.admin")}
+                  active={pathname === "/admin"}
+                  onClick={() => handleLinkClick("/admin")}
+                />
               )}
-            >
-              <Settings className="mr-2 h-4 w-4" />
-              Préférences
-            </Link>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Bouton de déconnexion */}
-      <div className="p-3 border-t border-border/40">
-        <button
-          onClick={handleLogout}
-          className="flex w-full items-center rounded-lg px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 hover:text-destructive"
-        >
-          <LogOut className="mr-2 h-4 w-4" />
-          Se déconnecter
-        </button>
-      </div>
-    </aside>
+        <div className="relative border-t border-border/50 bg-background/30 p-3">
+          <NavButton
+            icon={LogOut}
+            label={t("sidebar.logout")}
+            onClick={handleLogout}
+            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+          />
+        </div>
+      </aside>
+    </SidebarNavContext.Provider>
   );
 }

@@ -1,0 +1,6 @@
+COLD resources=7 allTransferSizeZero=true layoutShift=0
+WARM resources=9 allTransferSizeZero=true layoutShift=0
+WARM transferSizes=[0,0,0,0,0,0,0,0,0]
+COLD resources=7 allTransferSizeZero=true layoutShift=0
+WARM resources=9 allTransferSizeZero=true layoutShift=0
+WARM transferSizes=[0,0,0,0,0,0,0,0,0]

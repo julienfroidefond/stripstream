@@ -1,0 +1,154 @@
+=== TASK 7 HAPPY EVIDENCE — hygiene cleanup ===
+date_utc: 2026-09-11T11:58:21Z
+pwd: /Users/julienfroidefond/Sites/stripstream
+
+--- [1] rg -n "E2E_TEST_MODE" . (visible tree; hidden dirs skipped by rg) ---
+exit=1 (1 = NO MATCHES; expected)
+
+--- [2] git grep -n "E2E_TEST_MODE" (all tracked files, scope proof) ---
+exit=1 (1 = NO MATCHES in tracked files)
+
+--- [2b] rg hidden/no-ignore probe (proof rg DOES search this tree; only .omo prose + stale node_modules jiti cache contain the string) ---
+./node_modules/.cache/jiti/stripstream-playwright.config.ac325205.mjs:53:      E2E_TEST_MODE: '1',
+./.omo/drafts/e2e-performance.md:67:- Config morte | `E2E_TEST_MODE=1` injecté mais non référencé sous `src/` ; à retirer si un scan confirme l'absence d'usage | Supprime une fausse promesse | Oui
+./.omo/drafts/e2e-performance.md:99:- Hygiène : `E2E_TEST_MODE` (si confirmé mort), `prisma/e2e*.db`, `tests/README.md`.
+./.omo/drafts/e2e-performance.md:116:- Minors traités : dossier `.auth/`, `.next-e2e/` gitignore, commentaire `E2E_TEST_MODE` corrigé, budget de logins, `reader-stub` logins documentés.
+./.omo/plans/e2e-performance.md:31:- Hygiene: dead `E2E_TEST_MODE` removed with corrected comment; untracked `prisma/e2e*.db` removed; `.next-e2e/` ignored; test helper consolidated.
+./.omo/plans/e2e-performance.md:148:  What to do: (a) Remove the dead `E2E_TEST_MODE: '1'` injection (`playwright.config.ts:53`) and correct the stale comment: the real login-throttle bypass is the `NODE_ENV` gate at `src/lib/services/auth-server.service.ts:88`. (b) Delete `prisma/e2e.db` and `prisma/e2e-runtime.db` only if `git ls-files` confirms untracked (`*.db` ignored at `.gitignore:57`).   (c) Remove the leftover `chromium` project (`playwright.config.ts:78-80`) and move `use: { ...devices['Desktop Chrome'] }` onto the read-only/mutating projects in tâche 8 - otherwise bare runs collect every spec twice. (d) Raise/remove the global `workers: 1` (`playwright.config.ts:27`): set `workers: process.env.CI ? 2 : 4`, because Playwright resolves `actualWorkers = min(global, per-project)` — leaving `1` makes `read-only.workers: 4` inert. Keep `mutating.workers: 1`. (e) Add `/.next-e2e/` to `.gitignore`.
+./.omo/plans/e2e-performance.md:152:  Acceptance criteria: `rg -n "E2E_TEST_MODE" .` returns no matches; stale DBs gone (or documented tracked); no `chromium` project remains; global `workers` is no longer `1` (raised to `CI ? 2 : 4` or removed) and `mutating.workers: 1` exists; `.next-e2e` ignored.
+./.omo/plans/e2e-performance.md:184:  What to do: assert `rg -n "waitForTimeout|networkidle" tests` empty; `rg -n "async function signIn" tests` returns only `tests/helpers/auth.ts`; `rg -n "E2E_TEST_MODE" .` empty; `git diff --name-only` contains no `src/` path; `.auth/` and `.next-e2e/` are not tracked (`git status --porcelain`); `--project=read-only --list`/`--project=mutating --list` enumerate exactly the 20 baseline specs (plus `setup`/dependency suites); global `workers` is not `1`.
+./.omo/evidence/e2e-performance/task-7-e2e-performance.txt:5:--- [1] rg -n "E2E_TEST_MODE" . (visible tree; hidden dirs skipped by rg) ---
+./.omo/evidence/e2e-performance/task-7-e2e-performance.txt:8:--- [2] git grep -n "E2E_TEST_MODE" (all tracked files, scope proof) ---
+./.omo/evidence/e2e-performance/task-7-e2e-performance.txt:12:./node_modules/.cache/jiti/stripstream-playwright.config.ac325205.mjs:53:      E2E_TEST_MODE: '1',
+./.omo/evidence/e2e-performance/task-7-e2e-performance.txt:13:./.omo/drafts/e2e-performance.md:67:- Config morte | `E2E_TEST_MODE=1` injecté mais non référencé sous `src/` ; à retirer si un scan confirme l'absence d'usage | Supprime une fausse promesse | Oui
+./.omo/evidence/e2e-performance/task-7-e2e-performance.txt:14:./.omo/drafts/e2e-performance.md:99:- Hygiène : `E2E_TEST_MODE` (si confirmé mort), `prisma/e2e*.db`, `tests/README.md`.
+./.omo/evidence/e2e-performance/task-7-e2e-performance.txt:15:./.omo/drafts/e2e-performance.md:116:- Minors traités : dossier `.auth/`, `.next-e2e/` gitignore, commentaire `E2E_TEST_MODE` corrigé, budget de logins, `reader-stub` logins documentés.
+./.omo/evidence/e2e-performance/task-7-e2e-performance.txt:16:./.omo/plans/e2e-performance.md:31:- Hygiene: dead `E2E_TEST_MODE` removed with corrected comment; untracked `prisma/e2e*.db` removed; `.next-e2e/` ignored; test helper consolidated.
+./.omo/evidence/e2e-performance/task-7-e2e-performance.txt:17:./.omo/plans/e2e-performance.md:148:  What to do: (a) Remove the dead `E2E_TEST_MODE: '1'` injection (`playwright.config.ts:53`) and correct the stale comment: the real login-throttle bypass is the `NODE_ENV` gate at `src/lib/services/auth-server.service.ts:88`. (b) Delete `prisma/e2e.db` and `prisma/e2e-runtime.db` only if `git ls-files` confirms untracked (`*.db` ignored at `.gitignore:57`).   (c) Remove the leftover `chromium` project (`playwright.config.ts:78-80`) and move `use: { ...devices['Desktop Chrome'] }` onto the read-only/mutating projects in tâche 8 - otherwise bare runs collect every spec twice. (d) Raise/remove the global `workers: 1` (`playwright.config.ts:27`): set `workers: process.env.CI ? 2 : 4`, because Playwright resolves `actualWorkers = min(global, per-project)` — leaving `1` makes `read-only.workers: 4` inert. Keep `mutating.workers: 1`. (e) Add `/.next-e2e/` to `.gitignore`.
+./.omo/evidence/e2e-performance/task-7-e2e-performance.txt:18:./.omo/plans/e2e-performance.md:152:  Acceptance criteria: `rg -n "E2E_TEST_MODE" .` returns no matches; stale DBs gone (or documented tracked); no `chromium` project remains; global `workers` is no longer `1` (raised to `CI ? 2 : 4` or removed) and `mutating.workers: 1` exists; `.next-e2e` ignored.
+./.omo/evidence/e2e-performance/task-7-e2e-performance.txt:19:./.omo/plans/e2e-performance.md:184:  What to do: assert `rg -n "waitForTimeout|networkidle" tests` empty; `rg -n "async function signIn" tests` returns only `tests/helpers/auth.ts`; `rg -n "E2E_TEST_MODE" .` empty; `git diff --name-only` contains no `src/` path; `.auth/` and `.next-e2e/` are not tracked (`git status --porcelain`); `--project=read-only --list`/`--project=mutating --list` enumerate exactly the 20 baseline specs (plus `setup`/dependency suites); global `workers` is not `1`.
+exit=0
+
+--- [3] ls prisma/e2e.db prisma/e2e-runtime.db (must be gone) ---
+ls: prisma/e2e-runtime.db: No such file or directory
+ls: prisma/e2e.db: No such file or directory
+exit=1
+
+--- [3b] ls prisma/dev.db (must remain) ---
+-rw-r--r--@ 1 julienfroidefond  staff  0 Mar 29 22:45 prisma/dev.db
+exit=0
+
+--- [3c] git ls-files prisma | rg '\.db' (no tracked db deleted) ---
+exit=1 (1 = no tracked .db — expected)
+
+--- [3d] git status --porcelain | rg '^ D' (no tracked deletion) ---
+exit=1 (1 = none — expected)
+
+--- [3e] tracked changes only (grep -v ??), and prisma/migrations untouched ---
+ M playwright.config.ts
+exit=0
+9
+ tracked migration files (unchanged)
+
+--- [4] grep -n "name: 'chromium'" playwright.config.ts (must be empty) ---
+exit=1 (1 = no chromium project — expected)
+
+--- [4b] setup project remains ---
+129:      name: 'setup',
+exit=0
+
+--- [5] workers (global must be CI ? 2 : 4) ---
+69:  workers: process.env.CI ? 2 : 4,
+exit=0
+
+--- [6] .gitignore: /.next-e2e/ and .auth/ ---
+14:/.next-e2e/
+exit=0
+64:.auth/
+exit=0
+
+--- [6b] git check-ignore -v (stale_state: both paths can never be committed) ---
+.gitignore:14:/.next-e2e/	.next-e2e/
+.gitignore:64:.auth/	.auth/
+exit=0
+--- [6c] git ls-files | rg ".auth/|.next-e2e" (not tracked) ---
+exit=1 (1 = not tracked — expected)
+
+--- [7] MUST-NOT regressions: env keys still present ---
+6:const e2ePort = process.env.E2E_PORT ?? '3000';
+7:const baseURL = process.env.E2E_BASE_URL ?? `http://127.0.0.1:${e2ePort}`;
+8:const startsLocalServer = !process.env.E2E_BASE_URL;
+9:const e2eServerMode = process.env.E2E_SERVER_MODE === 'dev' ? 'dev' : 'production';
+15:const e2eDbUrlRaw = process.env.E2E_DATABASE_URL ?? defaultE2eDbUrl;
+16:process.env.E2E_DATABASE_URL = e2eDbUrlRaw;
+33:        '[e2e] Run `pnpm test:e2e:build` first, or set E2E_SERVER_MODE=dev',
+91:          // server started elsewhere. The login-throttle bypass is the NODE_ENV
+93:          // account skips throttling only outside NODE_ENV=production.
+99:              ? { NODE_ENV: 'production', NEXT_DIST_DIR: e2eDistDir }
+100:              : { NODE_ENV: 'development' }),
+exit=0
+
+--- [8] git diff (only E2E_TEST_MODE removal, comment fix, chromium removal, workers) ---
+diff --git a/playwright.config.ts b/playwright.config.ts
+index 6b0123a..f353439 100644
+--- a/playwright.config.ts
++++ b/playwright.config.ts
+@@ -66,7 +66,7 @@ export default defineConfig({
+   fullyParallel: false,
+   forbidOnly: !!process.env.CI,
+   retries: process.env.CI ? 2 : 0,
+-  workers: 1,
++  workers: process.env.CI ? 2 : 4,
+   reporter: process.env.CI ? [['line'], ['html', { open: 'never' }]] : 'list',
+   timeout: 30_000,
+   expect: { timeout: 5_000 },
+@@ -87,8 +87,10 @@ export default defineConfig({
+               ? './node_modules/.bin/next start'
+               : './node_modules/.bin/next dev',
+           url: baseURL,
+-          // The E2E environment (including the local auth throttle mode) must
+-          // be applied to every run; never reuse a server started elsewhere.
++          // The E2E environment must be applied to every run; never reuse a
++          // server started elsewhere. The login-throttle bypass is the NODE_ENV
++          // gate in src/lib/services/auth-server.service.ts: the `@test.local`
++          // account skips throttling only outside NODE_ENV=production.
+           reuseExistingServer: false,
+           timeout: 120_000,
+           env: {
+@@ -98,7 +100,6 @@ export default defineConfig({
+               : { NODE_ENV: 'development' }),
+             NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET ?? 'stripstream-e2e-local-secret',
+             NEXTAUTH_URL: baseURL,
+-            E2E_TEST_MODE: '1',
+             PORT: e2ePort,
+             // DB e2e dédiée si fournie, sinon DB par défaut
+             ...(e2eDbUrl ? { DATABASE_URL: e2eDbUrl } : {}),
+@@ -129,10 +130,5 @@ export default defineConfig({
+       testMatch: /auth\.setup\.ts/,
+       use: { ...devices['Desktop Chrome'] },
+     },
+-    {
+-      name: 'chromium',
+-      dependencies: ['setup'],
+-      use: { ...devices['Desktop Chrome'] },
+-    },
+   ],
+ });
+exit=0
+
+--- [9] pnpm typecheck ---
+
+> stripstream@1.23.4 typecheck /Users/julienfroidefond/Sites/stripstream
+> tsc --noEmit
+
+TYPECHECK_EXIT=0
+
+--- [10] pnpm lint ---
+
+> stripstream@1.23.4 lint /Users/julienfroidefond/Sites/stripstream
+> eslint .
+
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+LINT_EXIT=0
+
+=== END TASK 7 HAPPY EVIDENCE ===

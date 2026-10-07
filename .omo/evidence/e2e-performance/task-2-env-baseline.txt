@@ -1,0 +1,13 @@
+=== BASELINE GIT STATUS 2026-09-11T11:00:30Z ===
+ M .gitignore
+A  .omo/plans/e2e-performance.md
+?? .omo/boulder.json
+?? .omo/drafts/
+?? .omo/evidence/e2e-performance/task-2-env-baseline.txt
+?? .omo/run-continuation/
+?? .omo/start-work/
+=== GIT REV ===
+61be428aaa3b92807f58a656b3750bcd080357e2
+=== node/pnpm ===
+v24.17.0
+Version 1.62.1

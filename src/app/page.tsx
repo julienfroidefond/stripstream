@@ -1,81 +1,286 @@
-"use client";
+import { Suspense } from "react";
+import { getProvider } from "@/lib/providers/provider.factory";
+import {
+  getContinueReading,
+  getSeriesPool,
+  HomeCarouselSkeleton,
+  HomeHeroSkeleton,
+} from "@/components/home/HomeContent";
+import { ContinueReadingHero } from "@/components/home/ContinueReadingHero";
+import { HomeClientWrapper } from "@/components/home/HomeClientWrapper";
+import { MediaRow } from "@/components/home/MediaRow";
+import { ReadingListRow } from "@/components/home/ReadingListRow";
+import { DeferredRecommendations } from "@/components/home/DeferredRecommendations";
+import { ErrorMessage } from "@/components/ui/ErrorMessage";
+import { ERROR_CODES } from "@/constants/errorCodes";
+import { AppError } from "@/utils/errors";
+import { FavoriteService } from "@/lib/services/favorite.service";
+import { PreferencesService } from "@/lib/services/preferences.service";
+import { redirect } from "next/navigation";
+import { Bookmark, Heart, History, LibraryBig, Sparkles, Wand2 } from "lucide-react";
+import type { NormalizedBook, NormalizedSeries } from "@/lib/providers/types";
+import type { HomePrimaryData } from "@/types/home";
+import type { StripstreamReadingList } from "@/types/stripstream";
 
-import { HomeContent } from "@/components/home/HomeContent";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { KomgaBook, KomgaSeries } from "@/types/komga";
+const HOMEPAGE_INITIAL_QUERY_LIMIT = 9;
 
-interface HomeData {
-  ongoing: KomgaSeries[];
-  recentlyRead: KomgaBook[];
-  onDeck: KomgaBook[];
+interface HomeFeedState<T> {
+  data: T;
+  failed: boolean;
+}
+
+function settleHomeFeed<T>(promise: Promise<T>, fallback: T): Promise<HomeFeedState<T>> {
+  return promise.then(
+    (data) => ({ data, failed: false }),
+    () => ({ data: fallback, failed: true })
+  );
 }
 
 export default function HomePage() {
-  const router = useRouter();
-  const [data, setData] = useState<HomeData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  return (
+    <HomeClientWrapper>
+      <Suspense fallback={<HomePageSkeleton />}>
+        <HomeStreamingContent />
+      </Suspense>
+    </HomeClientWrapper>
+  );
+}
 
-  useEffect(() => {
-    const fetchHomeData = async () => {
-      try {
-        const response = await fetch("/api/komga/home");
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || `Erreur ${response.status}`);
-        }
+async function HomeStreamingContent() {
+  try {
+    const [provider, preferences] = await Promise.all([
+      getProvider(),
+      PreferencesService.getPreferences().catch(() => null),
+    ]);
+    if (!provider) redirect("/settings");
 
-        const jsonData = await response.json();
-        // Transformer les données pour correspondre à l'interface HomeData
-        setData({
-          ongoing: jsonData.ongoing || [],
-          recentlyRead: jsonData.recentlyRead || [],
-          onDeck: jsonData.onDeck || [],
-        });
-      } catch (error) {
-        console.error("Erreur lors de la récupération des données:", error);
-        setError(error instanceof Error ? error.message : "Une erreur est survenue");
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    const isAnonymous = preferences?.anonymousMode ?? false;
 
-    fetchHomeData();
-  }, []);
-
-  if (isLoading) {
+    const continueReadingPromise = settleHomeFeed(
+      provider.getHomeContinueReadingData(HOMEPAGE_INITIAL_QUERY_LIMIT),
+      null
+    );
+    const ongoingPromise = settleHomeFeed(
+      provider.getHomeOngoingSeries(HOMEPAGE_INITIAL_QUERY_LIMIT),
+      []
+    );
+    const favoritesPromise = FavoriteService.listFavorites().catch(() => []);
+    const readingListsPromise = settleHomeFeed(provider.getHomeReadingLists(), []);
+    const latestSeriesPromise = settleHomeFeed(
+      provider.getHomeLatestSeries(HOMEPAGE_INITIAL_QUERY_LIMIT),
+      []
+    );
+    const recentlyReadPromise = settleHomeFeed(
+      provider.getHomeRecentlyRead(HOMEPAGE_INITIAL_QUERY_LIMIT),
+      []
+    );
     return (
-      <main className="container mx-auto px-4 py-8 space-y-12">
-        <div className="h-[500px] -mx-4 sm:-mx-8 lg:-mx-14 bg-muted animate-pulse" />
-        <div className="space-y-12">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="space-y-4">
-              <div className="h-8 w-48 bg-muted rounded animate-pulse" />
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                {[...Array(6)].map((_, j) => (
-                  <div key={j} className="aspect-[2/3] bg-muted rounded animate-pulse" />
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
+      <div className="space-y-10 pb-2">
+        <Suspense fallback={null}>
+          <HomeProviderErrorState
+            feedPromises={[
+              continueReadingPromise,
+              ongoingPromise,
+              readingListsPromise,
+              latestSeriesPromise,
+              recentlyReadPromise,
+            ]}
+          />
+        </Suspense>
+        <Suspense fallback={<HomeHeroSkeleton />}>
+          <ContinueReadingSection
+            continueReadingPromise={continueReadingPromise}
+            ongoingPromise={ongoingPromise}
+            isAnonymous={isAnonymous}
+          />
+        </Suspense>
+
+        <Suspense fallback={<HomeCarouselSkeleton icon={LibraryBig} />}>
+          <OngoingSection ongoingPromise={ongoingPromise} isAnonymous={isAnonymous} />
+        </Suspense>
+
+        <Suspense fallback={<HomeCarouselSkeleton icon={Heart} />}>
+          <FavoritesSection favoritesPromise={favoritesPromise} />
+        </Suspense>
+
+        <Suspense fallback={<HomeCarouselSkeleton icon={Bookmark} />}>
+          <ReadingListsSection readingListsPromise={readingListsPromise} />
+        </Suspense>
+
+        <Suspense fallback={<HomeCarouselSkeleton icon={Sparkles} />}>
+          <LatestSeriesSection latestSeriesPromise={latestSeriesPromise} />
+        </Suspense>
+
+        <Suspense fallback={<HomeCarouselSkeleton icon={History} />}>
+          <RecentlyReadSection recentlyReadPromise={recentlyReadPromise} />
+        </Suspense>
+
+        <Suspense fallback={<HomeCarouselSkeleton icon={Wand2} />}>
+          <DeferredRecommendations isAnonymous={isAnonymous} />
+        </Suspense>
+      </div>
+    );
+  } catch (error) {
+    if (error instanceof AppError && (
+      error.code === ERROR_CODES.KOMGA.MISSING_CONFIG ||
+      error.code === ERROR_CODES.STRIPSTREAM.MISSING_CONFIG
+    )) {
+      redirect("/settings");
+    }
+
+    const errorCode = error instanceof AppError ? error.code : ERROR_CODES.HOME.FETCH_ERROR;
+
+    return (
+      <main className="container mx-auto px-4 py-8">
+        <ErrorMessage errorCode={errorCode} />
       </main>
     );
   }
+}
 
-  if (error) {
-    return (
-      <main className="container mx-auto px-4 py-8 space-y-12">
-        <div className="rounded-md bg-destructive/15 p-4">
-          <p className="text-sm text-destructive">{error}</p>
-        </div>
-      </main>
-    );
-  }
+interface ContinueReadingSectionProps {
+  continueReadingPromise: Promise<
+    HomeFeedState<Pick<HomePrimaryData, "ongoingBooks" | "onDeck"> | null>
+  >;
+  ongoingPromise: Promise<HomeFeedState<NormalizedSeries[]>>;
+  isAnonymous: boolean;
+}
 
-  if (!data) return null;
-  console.log("PAGE", data);
+async function ContinueReadingSection({
+  continueReadingPromise,
+  ongoingPromise,
+  isAnonymous,
+}: ContinueReadingSectionProps) {
+  if (isAnonymous) return null;
 
-  return <HomeContent data={data} />;
+  const [continueReadingState, ongoingState] = await Promise.all([
+    continueReadingPromise,
+    ongoingPromise,
+  ]);
+  const continueReadingData = continueReadingState.data;
+  const ongoing = ongoingState.data;
+
+  if (!continueReadingData) return null;
+
+  const continueReading = getContinueReading(continueReadingData);
+  if (continueReading.length === 0) return null;
+
+  const seriesPool = getSeriesPool({
+    heroSeries: [],
+    ongoing,
+    favorites: [],
+  });
+
+  return <ContinueReadingHero books={continueReading} series={seriesPool} />;
+}
+
+interface OngoingSectionProps {
+  ongoingPromise: Promise<HomeFeedState<NormalizedSeries[]>>;
+  isAnonymous: boolean;
+}
+
+async function OngoingSection({ ongoingPromise, isAnonymous }: OngoingSectionProps) {
+  if (isAnonymous) return null;
+
+  const ongoing = (await ongoingPromise).data;
+  if (ongoing.length === 0) return null;
+
+  return (
+    <MediaRow
+      titleKey="home.sections.continue_series"
+      items={ongoing}
+      iconName="LibraryBig"
+      feed="ongoing"
+    />
+  );
+}
+
+async function FavoritesSection({ favoritesPromise }: { favoritesPromise: Promise<NormalizedSeries[]> }) {
+  const favorites = await favoritesPromise;
+  if (favorites.length === 0) return null;
+
+  return (
+    <MediaRow
+      titleKey="home.sections.favorites"
+      items={favorites}
+      iconName="Heart"
+      feed="favorites"
+    />
+  );
+}
+
+async function ReadingListsSection({
+  readingListsPromise,
+}: {
+  readingListsPromise: Promise<HomeFeedState<StripstreamReadingList[]>>;
+}) {
+  const readingLists = (await readingListsPromise).data;
+  if (readingLists.length === 0) return null;
+
+  return <ReadingListRow lists={readingLists} />;
+}
+
+async function LatestSeriesSection({
+  latestSeriesPromise,
+}: {
+  latestSeriesPromise: Promise<HomeFeedState<NormalizedSeries[]>>;
+}) {
+  const latestSeries = (await latestSeriesPromise).data;
+  if (latestSeries.length === 0) return null;
+
+  return (
+    <MediaRow
+      titleKey="home.sections.latest_series"
+      items={latestSeries}
+      iconName="Sparkles"
+      feed="latest-series"
+    />
+  );
+}
+
+async function RecentlyReadSection({
+  recentlyReadPromise,
+}: {
+  recentlyReadPromise: Promise<HomeFeedState<NormalizedBook[]>>;
+}) {
+  const recentlyRead = (await recentlyReadPromise).data;
+  if (recentlyRead.length === 0) return null;
+
+  return (
+    <MediaRow
+      titleKey="home.sections.recently_added"
+      items={recentlyRead}
+      iconName="History"
+      feed="recently-read"
+    />
+  );
+}
+
+async function HomeProviderErrorState({
+  feedPromises,
+}: {
+  feedPromises: Promise<HomeFeedState<unknown>>[];
+}) {
+  const states = await Promise.all(feedPromises);
+  if (!states.every((state) => state.failed)) return null;
+
+  return (
+    <main className="container mx-auto px-4 pt-8">
+      <ErrorMessage errorCode={ERROR_CODES.HOME.FETCH_ERROR} />
+    </main>
+  );
+}
+
+function HomePageSkeleton() {
+  return (
+    <div className="space-y-10 pb-2">
+      <HomeHeroSkeleton />
+      <HomeCarouselSkeleton icon={LibraryBig} />
+      <HomeCarouselSkeleton icon={Heart} />
+      <HomeCarouselSkeleton icon={Bookmark} />
+      <HomeCarouselSkeleton icon={Sparkles} />
+      <HomeCarouselSkeleton icon={History} />
+      <HomeCarouselSkeleton icon={Wand2} />
+    </div>
+  );
 }

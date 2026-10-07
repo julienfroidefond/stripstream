@@ -1,135 +1,170 @@
 "use client";
 
-import { KomgaBook, KomgaSeries } from "@/types/komga";
-import { ChevronLeft, ChevronRight, ImageOff } from "lucide-react";
-import Image from "next/image";
-import { useRef, useState } from "react";
+import { memo, useCallback, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import type { NormalizedBook, NormalizedSeries } from "@/lib/providers/types";
+import { BookCover } from "../ui/book-cover";
+import { SeriesCover } from "../ui/series-cover";
+import { useTranslate } from "@/hooks/useTranslate";
+import { ScrollContainer } from "@/components/ui/scroll-container";
+import { Section } from "@/components/ui/section";
+import { History, Sparkles, Clock, LibraryBig, BookOpen, Heart } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { useAnonymous } from "@/contexts/AnonymousContext";
+import { loadHomeFeed, type HomeFeed } from "@/app/actions/home";
+
+const ITEMS_PER_PAGE = 8;
 
 interface MediaRowProps {
-  title: string;
-  items: (KomgaSeries | KomgaBook)[];
-  onItemClick?: (item: KomgaSeries | KomgaBook) => void;
+  titleKey: string;
+  items: (NormalizedSeries | NormalizedBook)[];
+  iconName?: string;
+  featuredHeader?: boolean;
+  testId?: string;
+  feed: HomeFeed;
 }
 
-export function MediaRow({ title, items, onItemClick }: MediaRowProps) {
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [showLeftArrow, setShowLeftArrow] = useState(false);
-  const [showRightArrow, setShowRightArrow] = useState(true);
+const iconMap = {
+  LibraryBig,
+  BookOpen,
+  Clock,
+  Sparkles,
+  History,
+  Heart,
+};
 
-  const handleScroll = () => {
-    if (!scrollContainerRef.current) return;
+function isSeries(item: NormalizedSeries | NormalizedBook): item is NormalizedSeries {
+  return "bookCount" in item;
+}
 
-    const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
-    setShowLeftArrow(scrollLeft > 0);
-    setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10);
+export function MediaRow({ titleKey, items, iconName, featuredHeader = false, testId, feed }: MediaRowProps) {
+  const router = useRouter();
+  const { t } = useTranslate();
+  const [loadedItems, setLoadedItems] = useState(items.slice(0, ITEMS_PER_PAGE));
+  const [hasMore, setHasMore] = useState(items.length > ITEMS_PER_PAGE);
+  const [isPending, startTransition] = useTransition();
+  const icon = iconName ? iconMap[iconName as keyof typeof iconMap] : undefined;
+  const handleLoadMore = () => {
+    startTransition(async () => {
+      const result = await loadHomeFeed(feed, loadedItems.length);
+      setLoadedItems(result.items as (NormalizedSeries | NormalizedBook)[]);
+      setHasMore(result.hasMore);
+    });
   };
 
-  const scroll = (direction: "left" | "right") => {
-    if (!scrollContainerRef.current) return;
-
-    const scrollAmount = direction === "left" ? -400 : 400;
-    scrollContainerRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
-  };
+  const onItemClick = useCallback(
+    (item: NormalizedSeries | NormalizedBook) => {
+      const path = isSeries(item) ? `/series/${item.id}` : `/books/${item.id}`;
+      router.push(path);
+    },
+    [router]
+  );
 
   if (!items.length) return null;
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-2xl font-bold tracking-tight">{title}</h2>
-      <div className="relative">
-        {/* Bouton de défilement gauche */}
-        {showLeftArrow && (
+    <Section
+      data-testid={testId}
+      title={t(titleKey)}
+      icon={icon}
+      className="space-y-5"
+      headerClassName={cn("border-b border-border/50 pb-2", featuredHeader && "border-primary/25")}
+      titleClassName={
+        featuredHeader
+          ? "bg-gradient-to-r from-primary via-cyan-500 to-fuchsia-500 bg-clip-text text-transparent"
+          : undefined
+      }
+      iconClassName={featuredHeader ? "text-primary" : undefined}
+    >
+      <ScrollContainer
+        showArrows={true}
+        scrollAmount={400}
+        arrowLeftLabel={t("navigation.scrollLeft")}
+        arrowRightLabel={t("navigation.scrollRight")}
+      >
+        {loadedItems.map((item) => (
+          <MediaCard key={item.id} item={item} onClick={onItemClick} />
+        ))}
+        {hasMore && (
           <button
-            onClick={() => scroll("left")}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-background/90 shadow-md border transition-opacity"
-            aria-label="Défiler vers la gauche"
+            type="button"
+            onClick={handleLoadMore}
+            disabled={isPending}
+            className="flex min-h-[282px] w-[150px] flex-shrink-0 items-center justify-center rounded-xl border border-dashed border-border/70 bg-card/40 px-4 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/50 hover:bg-card hover:text-foreground sm:min-h-[300px]"
           >
-            <ChevronLeft className="h-6 w-6" />
+            {isPending ? t("navigation.loading") : t("navigation.loadMore")}
           </button>
         )}
-
-        {/* Conteneur défilant */}
-        <div
-          ref={scrollContainerRef}
-          onScroll={handleScroll}
-          className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth pb-4"
-        >
-          {items.map((item) => (
-            <MediaCard key={item.id} item={item} onClick={() => onItemClick?.(item)} />
-          ))}
-        </div>
-
-        {/* Bouton de défilement droit */}
-        {showRightArrow && (
-          <button
-            onClick={() => scroll("right")}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-background/90 shadow-md border transition-opacity"
-            aria-label="Défiler vers la droite"
-          >
-            <ChevronRight className="h-6 w-6" />
-          </button>
-        )}
-      </div>
-    </div>
+      </ScrollContainer>
+    </Section>
   );
 }
 
 interface MediaCardProps {
-  item: KomgaSeries | KomgaBook;
-  onClick?: () => void;
+  item: NormalizedSeries | NormalizedBook;
+  onClick: (item: NormalizedSeries | NormalizedBook) => void;
 }
 
-function MediaCard({ item, onClick }: MediaCardProps) {
-  const [imageError, setImageError] = useState(false);
+const MediaCard = memo(function MediaCard({ item, onClick }: MediaCardProps) {
+  return isSeries(item) ? (
+    <SeriesMediaCard series={item} onClick={onClick} />
+  ) : (
+    <BookMediaCard book={item} onClick={onClick} />
+  );
+});
 
-  // Déterminer si c'est une série ou un livre
-  const isSeries = "booksCount" in item;
-  const title = isSeries
-    ? item.metadata.title
-    : item.metadata.title || `Tome ${item.metadata.number}`;
-
-  const handleClick = () => {
-    console.log("MediaCard - handleClick:", {
-      itemType: isSeries ? "series" : "book",
-      itemId: item.id,
-      itemTitle: title,
-    });
-    onClick?.();
-  };
+const SeriesMediaCard = memo(function SeriesMediaCard({
+  series,
+  onClick,
+}: {
+  series: NormalizedSeries;
+  onClick: (item: NormalizedSeries | NormalizedBook) => void;
+}) {
+  const { t } = useTranslate();
+  const { isAnonymous } = useAnonymous();
 
   return (
-    <button
-      onClick={handleClick}
-      className="flex-shrink-0 w-[200px] relative flex flex-col rounded-lg border bg-card text-card-foreground shadow-sm hover:bg-accent hover:text-accent-foreground transition-colors overflow-hidden"
+    <Card
+      onClick={() => onClick(series)}
+      className="group relative flex w-[188px] flex-shrink-0 flex-col overflow-hidden rounded-xl border border-border/60 bg-card/85 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-card hover:shadow-md sm:w-[200px] cursor-pointer"
     >
-      {/* Image de couverture */}
-      <div className="relative aspect-[2/3] bg-muted">
-        {!imageError ? (
-          <Image
-            src={`/api/komga/images/${isSeries ? "series" : "books"}/${item.id}/thumbnail`}
-            alt={`Couverture de ${title}`}
-            fill
-            className="object-cover"
-            sizes="200px"
-            onError={() => setImageError(true)}
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <ImageOff className="w-12 h-12" />
-          </div>
-        )}
-
-        {/* Overlay avec les informations au survol */}
-        <div className="absolute inset-0 bg-black/60 opacity-0 hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3">
-          <h3 className="font-medium text-sm text-white line-clamp-2">{title}</h3>
-          {isSeries && (
-            <p className="text-xs text-white/80 mt-1">
-              {item.booksCount} tome{item.booksCount > 1 ? "s" : ""}
-            </p>
-          )}
+      <div className="relative aspect-[2/3] bg-muted overflow-hidden">
+        <SeriesCover series={series} alt={`Couverture de ${series.name}`} isAnonymous={isAnonymous} />
+        <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+          <h3 className="font-medium text-sm text-white line-clamp-2">{series.name}</h3>
+          <p className="text-xs text-white/80 mt-1">
+            {t("series.books", { count: series.bookCount })}
+          </p>
         </div>
       </div>
-    </button>
+    </Card>
   );
-}
+});
+
+const BookMediaCard = memo(function BookMediaCard({
+  book,
+  onClick,
+}: {
+  book: NormalizedBook;
+  onClick: (item: NormalizedSeries | NormalizedBook) => void;
+}) {
+  const { t } = useTranslate();
+  const title = book.title || (book.number ? t("navigation.volume", { number: book.number }) : "");
+
+  return (
+    <Card
+      onClick={() => onClick(book)}
+      className="group relative flex w-[188px] flex-shrink-0 cursor-pointer flex-col overflow-hidden rounded-xl border border-border/60 bg-card/85 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-card hover:shadow-md sm:w-[200px]"
+    >
+      <div className="relative aspect-[2/3] bg-muted overflow-hidden">
+        <BookCover
+          book={book}
+          alt={`Couverture de ${title}`}
+          showControls={false}
+          overlayVariant="home"
+        />
+      </div>
+    </Card>
+  );
+});

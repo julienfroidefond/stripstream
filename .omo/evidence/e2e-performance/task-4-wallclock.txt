@@ -1,0 +1,1 @@
+pnpm exec playwright test --reporter=json >  2>   77.70s user 13.91s system 120% cpu 1:15.87 total

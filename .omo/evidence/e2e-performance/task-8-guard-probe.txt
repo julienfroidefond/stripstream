@@ -1,0 +1,28 @@
+Task 8 — runtime read-only guard positive/negative controls (isolated, no suite run)
+====================================================================================
+Positive control (E2E_STUB_READONLY=1 E2E_STUB_LOG=/tmp/task8-guard.log, stub on :8450):
+
+GET  /api/v1/libraries                          -> 200
+POST /api/v1/books/list (allowed read query)    -> 200
+POST /api/v1/series/list (allowed read query)   -> 200
+PATCH /api/v1/books/book-a/read-progress        -> 403
+PUT  /series/series-a/rating                    -> 403
+POST /libraries/lib-a/scan                      -> 403
+
+Blocked-operations log contents:
+PATCH /api/v1/books/book-a/read-progress
+PUT /series/series-a/rating
+POST /libraries/lib-a/scan
+
+Negative control (env unset, stub on :8451):
+PATCH /api/v1/books/book-a/read-progress        -> 200
+
+Conclusion: GET and the two read-query POSTs are allowed; every writer
+(PATCH progress, PUT/DELETE rating/favorite, POST scan, …) is blocked with 403
+and appended to E2E_STUB_LOG. With the env var unset the stub behaves normally.
+
+Env inheritance proof (why the guard is live during a Playwright run):
+node_modules/.pnpm/playwright@1.62.1/.../playwright/lib/runner/index.js:858-862
+  env: { ...DEFAULT_ENVIRONMENT_VARIABLES, ...process.env, ...this._options.env }
+=> webServer stub processes inherit E2E_STUB_READONLY / E2E_STUB_LOG from the
+   Playwright process. No leftover listeners on 8450/8451 after the probe.

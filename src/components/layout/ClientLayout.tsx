@@ -1,13 +1,130 @@
 "use client";
 
 import { ThemeProvider } from "next-themes";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
-import { Toaster } from "@/components/ui/toaster";
+import dynamic from "next/dynamic";
+import { InstallPWA } from "../ui/InstallPWA";
+import { usePathname } from "next/navigation";
 
-export default function ClientLayout({ children }: { children: React.ReactNode }) {
+// Toaster chargé paresseusement (il n'est utile que lorsque des toasts apparaissent).
+const Toaster = dynamic(() => import("@/components/ui/toaster").then((m) => m.Toaster), {
+  ssr: false,
+});
+import { NetworkStatus } from "../ui/NetworkStatus";
+import { usePreferences } from "@/contexts/PreferencesContext";
+import { defaultPreferences } from "@/types/preferences";
+import logger from "@/lib/logger";
+import { getRandomBookFromLibraries } from "@/app/actions/library";
+
+// Routes qui ne nécessitent pas d'authentification
+const publicRoutes = ["/login", "/register"];
+
+interface ClientLayoutProps {
+  children: React.ReactNode;
+  userIsAdmin?: boolean;
+  // Slots serveur streamés pour la sidebar (Suspense géré côté Sidebar)
+  sidebarFavorites?: React.ReactNode;
+  sidebarLibraries?: React.ReactNode;
+  sidebarConnections?: React.ReactNode;
+  sidebarFavoritesSkeleton?: React.ReactNode;
+  sidebarLibrariesSkeleton?: React.ReactNode;
+  sidebarConnectionsSkeleton?: React.ReactNode;
+}
+
+export default function ClientLayout({
+  children,
+  userIsAdmin = false,
+  sidebarFavorites,
+  sidebarLibraries,
+  sidebarConnections,
+  sidebarFavoritesSkeleton,
+  sidebarLibrariesSkeleton,
+  sidebarConnectionsSkeleton,
+}: ClientLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [randomBookThumbnailUrl, setRandomBookThumbnailUrl] = useState<string | null>(null);
+  const pathname = usePathname();
+  const { preferences } = usePreferences();
+  const prevLibraryIdsRef = useRef<string>("");
+
+  const backgroundType = preferences.background.type;
+  const komgaLibraries = preferences.background.komgaLibraries;
+
+  // Stabiliser libraryIds - ne change que si le contenu change vraiment
+  const libraryIdsString = useMemo(() => {
+    const newIds = komgaLibraries?.join(",") || "";
+    if (newIds !== prevLibraryIdsRef.current) {
+      prevLibraryIdsRef.current = newIds;
+    }
+    return prevLibraryIdsRef.current;
+  }, [komgaLibraries]);
+
+  // Récupérer un book aléatoire pour le background
+  const fetchRandomBook = useCallback(async () => {
+    if (backgroundType === "komga-random" && libraryIdsString) {
+      setRandomBookThumbnailUrl(null);
+      try {
+        const libraryIds = libraryIdsString.split(",").filter(Boolean);
+        const result = await getRandomBookFromLibraries(libraryIds);
+
+        if (result.success && result.thumbnailUrl) {
+          setRandomBookThumbnailUrl(result.thumbnailUrl);
+        }
+      } catch (error) {
+        logger.error({ err: error }, "Erreur lors de la récupération d'un book aléatoire:");
+      }
+    }
+  }, [backgroundType, libraryIdsString]);
+
+  useEffect(() => {
+    if (backgroundType === "komga-random" && libraryIdsString) {
+      fetchRandomBook();
+    }
+  }, [backgroundType, libraryIdsString, fetchRandomBook]);
+
+  const backgroundStyle = useMemo(() => {
+    const bg = preferences.background;
+    const blur = bg.blur || 0;
+
+    if (bg.type === "gradient" && bg.gradient) {
+      return {
+        backgroundImage: bg.gradient,
+        filter: blur > 0 ? `blur(${blur}px)` : undefined,
+      };
+    }
+
+    if (bg.type === "image" && bg.imageUrl) {
+      return {
+        backgroundImage: `url(${bg.imageUrl})`,
+        backgroundSize: "cover" as const,
+        backgroundPosition: "center" as const,
+        backgroundRepeat: "no-repeat" as const,
+        filter: blur > 0 ? `blur(${blur}px)` : undefined,
+      };
+    }
+
+    if (bg.type === "komga-random" && randomBookThumbnailUrl) {
+      return {
+        backgroundImage: `url(${randomBookThumbnailUrl})`,
+        backgroundSize: "cover" as const,
+        backgroundPosition: "top center" as const,
+        backgroundRepeat: "no-repeat" as const,
+        filter: blur > 0 ? `blur(${blur}px)` : undefined,
+      };
+    }
+
+    return {};
+  }, [preferences.background, randomBookThumbnailUrl]);
+
+  const handleCloseSidebar = useCallback(() => {
+    setIsSidebarOpen(false);
+  }, []);
+
+  const handleToggleSidebar = useCallback(() => {
+    setIsSidebarOpen((prev) => !prev);
+  }, []);
 
   // Gestionnaire pour fermer la barre latérale lors d'un clic en dehors
   useEffect(() => {
@@ -21,7 +138,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         toggleButton &&
         !toggleButton.contains(event.target as Node)
       ) {
-        setIsSidebarOpen(false);
+        handleCloseSidebar();
       }
     };
 
@@ -32,15 +149,65 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isSidebarOpen]);
+  }, [isSidebarOpen, handleCloseSidebar]);
+
+  // Ne pas afficher le header et la sidebar sur les routes publiques et le reader
+  const isPublicRoute = publicRoutes.includes(pathname) || pathname.startsWith("/books/");
+
+  const hasCustomBackground = Object.keys(backgroundStyle).length > 0;
+  const contentOpacity =
+    (preferences.background.opacity ?? defaultPreferences.background.opacity ?? 10) / 100;
 
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <div className="relative min-h-screen">
-        <Header onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
-        <Sidebar isOpen={isSidebarOpen} />
-        <main className="container pt-4 md:pt-8">{children}</main>
+      {hasCustomBackground && <div className="fixed inset-0 -z-10" style={backgroundStyle} />}
+      {!hasCustomBackground && (
+        <>
+          <div className="pointer-events-none fixed inset-0 -z-10 bg-[linear-gradient(180deg,hsl(var(--background)/0.99)_0%,hsl(var(--background)/0.94)_42%,hsl(var(--background))_100%)]" />
+          <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(70%_45%_at_12%_0%,hsl(var(--primary)/0.16),transparent_62%),radial-gradient(58%_38%_at_88%_8%,hsl(190_86%_56%/0.14),transparent_65%),radial-gradient(50%_34%_at_50%_100%,hsl(334_72%_62%/0.1),transparent_70%)]" />
+          <div className="pointer-events-none fixed inset-0 -z-10 bg-[repeating-linear-gradient(0deg,hsl(var(--foreground)/0.02)_0_1px,transparent_1px_24px),repeating-linear-gradient(90deg,hsl(var(--foreground)/0.015)_0_1px,transparent_1px_30px)]" />
+        </>
+      )}
+      <div
+        className="relative min-h-screen"
+        style={
+          hasCustomBackground
+            ? { backgroundColor: `rgba(var(--background-rgb, 255, 255, 255), ${contentOpacity})` }
+            : undefined
+        }
+      >
+        {!isPublicRoute && (
+          <Header
+            onToggleSidebar={handleToggleSidebar}
+            onRefreshBackground={fetchRandomBook}
+            showRefreshBackground={preferences.background.type === "komga-random"}
+          />
+        )}
+        {!isPublicRoute && (
+          <Sidebar
+            isOpen={isSidebarOpen}
+            onClose={handleCloseSidebar}
+            userIsAdmin={userIsAdmin}
+            favoritesSlot={sidebarFavorites}
+            librariesSlot={sidebarLibraries}
+            connectionsSlot={sidebarConnections}
+            favoritesSkeleton={sidebarFavoritesSkeleton}
+            librariesSkeleton={sidebarLibrariesSkeleton}
+            connectionsSkeleton={sidebarConnectionsSkeleton}
+          />
+        )}
+        {!isPublicRoute && isSidebarOpen && (
+          <button
+            type="button"
+            aria-label="Fermer la navigation"
+            className="fixed inset-0 top-[calc(4rem+env(safe-area-inset-top,0px))] z-20 bg-black/35 backdrop-blur-[1px] transition-opacity lg:hidden"
+            onClick={handleCloseSidebar}
+          />
+        )}
+        <main className={!isPublicRoute ? "pt-safe" : ""}>{children}</main>
+        <InstallPWA />
         <Toaster />
+        <NetworkStatus />
       </div>
     </ThemeProvider>
   );

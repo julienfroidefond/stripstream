@@ -1,15 +1,21 @@
-export interface KomgaUser {
+// Types liés à la configuration
+export interface User {
   id: string;
   email: string;
-  roles: KomgaRole[];
-  sharedAllLibraries: boolean;
-  sharedLibrariesIds: string[];
-  authenticated: boolean;
-  authorities: string[];
 }
 
-export type KomgaRole = "ROLE_ADMIN" | "ROLE_USER";
+export interface KomgaConfigData {
+  url: string;
+  username: string;
+  password?: string | null;
+  authHeader: string;
+}
 
+export interface KomgaConfig extends KomgaConfigData {
+  userId: number;
+}
+
+// Types liés à l'API Komga
 export interface KomgaLibrary {
   id: string;
   name: string;
@@ -17,6 +23,8 @@ export interface KomgaLibrary {
   importLastModified: string;
   lastModified: string;
   unavailable: boolean;
+  booksCount: number;
+  booksReadCount: number;
 }
 
 export interface KomgaSeries {
@@ -30,8 +38,12 @@ export interface KomgaSeries {
   booksCount: number;
   booksReadCount: number;
   booksUnreadCount: number;
+  booksInProgressCount: number;
   metadata: SeriesMetadata;
   booksMetadata: BooksMetadata;
+  deleted: boolean;
+  oneshot: boolean;
+  favorite: boolean;
 }
 
 export interface SeriesMetadata {
@@ -72,6 +84,7 @@ export interface KomgaBook {
   id: string;
   seriesId: string;
   seriesTitle: string;
+  libraryId: string;
   name: string;
   url: string;
   number: number;
@@ -83,6 +96,7 @@ export interface KomgaBook {
   media: BookMedia;
   metadata: BookMetadata;
   readProgress: ReadProgress | null;
+  deleted: boolean;
 }
 
 export interface BookMedia {

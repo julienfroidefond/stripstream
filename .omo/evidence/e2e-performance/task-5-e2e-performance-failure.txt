@@ -1,0 +1,54 @@
+# Task 5 — Failure QA: the hard-wait grep guard is real
+
+Guard command:
+
+```sh
+rg -n "waitForTimeout|networkidle" tests
+```
+
+Acceptance: the command MUST return no matches (rg exit 1). This probes that the
+guard actually detects a reintroduced hard wait rather than passing vacuously.
+
+## State 1 — clean repository (expected: no matches)
+
+Temporary injection removed; specs/helpers as committed.
+
+```text
+$ rg -n "waitForTimeout|networkidle" tests
+$ echo "rg-exit=$?"
+rg-exit=1
+```
+
+No output, exit `1` → guard passes.
+
+## State 2 — temporary injection (expected: match → guard fails)
+
+Inserted exactly `await page.waitForTimeout(1);` into the
+`no horizontal overflow at mobile width` test in
+`tests/public/responsive.spec.ts` (immediately after `await page.goto('/login');`).
+
+```text
+$ rg -n "waitForTimeout|networkidle" tests
+tests/public/responsive.spec.ts:30:  await page.waitForTimeout(1);
+$ echo "rg-exit=$?"
+rg-exit=0
+```
+
+One match, exit `0` → guard fails, proving it detects hard waits.
+
+## State 3 — injection removed (final state, expected: no matches)
+
+```text
+$ rg -n "waitForTimeout|networkidle" tests
+$ echo "rg-exit=$?"
+rg-exit=1
+```
+
+No output, exit `1` → repository returned to the clean, guard-passing state.
+`git diff --stat tests/public/responsive.spec.ts` shows only the intended
+web-first changes (12 insertions / 2 deletions), not the temporary line.
+
+## Conclusion
+
+The guard is real and non-vacuous: it is silent on the final tree and fires on a
+single reintroduced `waitForTimeout`. The temporary injection was fully removed.

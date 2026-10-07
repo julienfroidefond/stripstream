@@ -1,0 +1,62 @@
+"use client";
+
+import { BookX, Loader2 } from "lucide-react";
+import { Button } from "./button";
+import { useToast } from "./use-toast";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import logger from "@/lib/logger";
+import { deleteReadProgress } from "@/app/actions/read-progress";
+
+interface MarkAsUnreadButtonProps {
+  bookId: string;
+  onSuccess?: () => void;
+  className?: string;
+}
+
+export function MarkAsUnreadButton({ bookId, onSuccess, className }: MarkAsUnreadButtonProps) {
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+  const { t } = useTranslation();
+
+  const handleMarkAsUnread = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Empêcher la propagation au parent
+    setIsLoading(true);
+    try {
+      const result = await deleteReadProgress(bookId);
+
+      if (!result.success) {
+        throw new Error(result.message);
+      }
+
+      toast({
+        title: t("books.actions.markAsUnread.success.title"),
+        description: t("books.actions.markAsUnread.success.description"),
+      });
+      onSuccess?.();
+    } catch (error) {
+      logger.error({ err: error }, "Erreur lors de la mise à jour du progresseur de lecture:");
+      toast({
+        title: t("books.actions.markAsUnread.error.title"),
+        description: t("books.actions.markAsUnread.error.description"),
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <Button
+      data-testid="mark-as-unread"
+      variant="ghost"
+      size="icon"
+      onClick={handleMarkAsUnread}
+      className={`h-8 w-8 p-0 rounded-br-lg rounded-tl-lg ${className}`}
+      disabled={isLoading}
+      aria-label={t("books.actions.markAsUnread.button")}
+    >
+      {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <BookX className="h-5 w-5" />}
+    </Button>
+  );
+}

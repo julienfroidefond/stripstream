@@ -2,12 +2,16 @@
 /node_modules
 /.pnp
 .pnp.js
+/.pnpm-store/
 
 # testing
 /coverage
+/playwright-report/
+/test-results/
 
 # next.js
 /.next/
+/.next-e2e/
 /out/
 
 # production
@@ -34,4 +38,27 @@ next-env.d.ts
 
 # IDE
 .idea
-.vscode 
+.vscode
+
+.cache
+debug-logs
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Database
+prisma/data/
+*.db
+*.sqlite
+*.sqlite3
+
+temp/
+# Playwright auth state
+.auth/
+.env.local
+
+.opencode

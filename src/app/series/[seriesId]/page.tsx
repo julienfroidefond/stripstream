@@ -1,92 +1,91 @@
-import { cookies } from "next/headers";
-import { PaginatedBookGrid } from "@/components/series/PaginatedBookGrid";
-import { SeriesHeader } from "@/components/series/SeriesHeader";
-import { KomgaSeries, KomgaBook } from "@/types/komga";
+import { PreferencesService } from "@/lib/services/preferences.service";
+import { getProvider, getActiveProviderType } from "@/lib/providers/provider.factory";
+
+import { FavoriteService } from "@/lib/services/favorite.service";
+import { SeriesClientWrapper } from "./SeriesClientWrapper";
+import { SeriesContent } from "./SeriesContent";
+import { ErrorMessage } from "@/components/ui/ErrorMessage";
+import { AppError } from "@/utils/errors";
+import { ERROR_CODES } from "@/constants/errorCodes";
+import type { UserPreferences } from "@/types/preferences";
+import { redirect } from "next/navigation";
+import { normalizeGridPageSize } from "@/lib/pageSize";
 
 interface PageProps {
-  params: { seriesId: string };
-  searchParams: { page?: string; unread?: string };
+  params: Promise<{ seriesId: string }>;
+  searchParams: Promise<{ page?: string; unread?: string; size?: string }>;
 }
 
-const PAGE_SIZE = 24;
+const DEFAULT_PAGE_SIZE = 30;
 
 export default async function SeriesPage({ params, searchParams }: PageProps) {
-  const currentPage = searchParams.page ? parseInt(searchParams.page) : 1;
-  const unreadOnly = searchParams.unread === "true";
+  const [{ seriesId }, { page, size, unread }] = await Promise.all([params, searchParams]);
+  const currentPage = page ? parseInt(page) : 1;
+  const preferences: UserPreferences = await PreferencesService.getPreferences();
+  const isCompact = preferences.displayMode?.compact ?? false;
 
-  const configCookie = cookies().get("komgaCredentials");
-  if (!configCookie) {
-    throw new Error("Configuration Komga manquante");
-  }
+  const unreadOnly = unread !== undefined ? unread === "true" : preferences.showOnlyUnread;
+  const effectivePageSize = normalizeGridPageSize(
+    size ? parseInt(size) : preferences.displayMode?.itemsPerPage || DEFAULT_PAGE_SIZE,
+    isCompact
+  );
 
   try {
-    const config = JSON.parse(atob(configCookie.value));
-    if (!config.serverUrl || !config.credentials?.username || !config.credentials?.password) {
-      throw new Error("Configuration Komga invalide ou incomplète");
-    }
+    const provider = await getProvider();
+    if (!provider) redirect("/settings");
 
-    const credentials = `${config.credentials.username}:${config.credentials.password}`;
-    const auth = Buffer.from(credentials).toString("base64");
+    const providerType = await getActiveProviderType();
+    const canRate = providerType === "stripstream";
 
-    // Paramètres de pagination
-    const pageIndex = currentPage - 1; // L'API Komga utilise un index base 0
-
-    // Appels API parallèles pour les détails de la série et les tomes
-    const [seriesResponse, booksResponse] = await Promise.all([
-      // Détails de la série
-      fetch(`${config.serverUrl}/api/v1/series/${params.seriesId}`, {
-        headers: {
-          Authorization: `Basic ${auth}`,
-          Accept: "application/json",
-        },
-        next: { revalidate: 300 },
+    const [booksPage, series, isFavorite, missingBooks, relatedSeries, rating] = await Promise.all([
+      provider.getBooks({
+        seriesName: seriesId,
+        cursor: String(currentPage),
+        limit: effectivePageSize,
+        unreadOnly,
       }),
-      // Liste des tomes avec pagination et filtre
-      fetch(
-        `${config.serverUrl}/api/v1/series/${
-          params.seriesId
-        }/books?page=${pageIndex}&size=${PAGE_SIZE}&sort=metadata.numberSort,asc${
-          unreadOnly ? "&read_status=UNREAD&read_status=IN_PROGRESS" : ""
-        }`,
-        {
-          headers: {
-            Authorization: `Basic ${auth}`,
-            Accept: "application/json",
-          },
-          next: { revalidate: 300 },
-        }
-      ),
+      provider.getSeriesById(seriesId),
+      FavoriteService.isFavorite(seriesId),
+      provider.getMissingBooks(seriesId),
+      provider.getRelatedSeries(seriesId).catch(() => []),
+      canRate ? provider.getSeriesRating(seriesId).catch(() => null) : Promise.resolve(null),
     ]);
 
-    if (!seriesResponse.ok || !booksResponse.ok) {
-      throw new Error("Erreur lors de la récupération des données");
-    }
-
-    const [series, books] = await Promise.all([seriesResponse.json(), booksResponse.json()]);
+    if (!series) throw new AppError(ERROR_CODES.SERIES.FETCH_ERROR);
 
     return (
-      <div className="container py-8 space-y-8">
-        <SeriesHeader series={series} serverUrl={config.serverUrl} />
-        <PaginatedBookGrid
-          books={books.content || []}
-          serverUrl={config.serverUrl}
+      <SeriesClientWrapper seriesId={seriesId}>
+        <SeriesContent
+          series={series}
+          books={booksPage}
           currentPage={currentPage}
-          totalPages={books.totalPages}
-          totalElements={books.totalElements}
-          pageSize={PAGE_SIZE}
+          preferences={preferences}
+          unreadOnly={unreadOnly}
+          pageSize={effectivePageSize}
+          initialIsFavorite={isFavorite}
+          missingBooks={missingBooks}
+          relatedSeries={relatedSeries}
+          canRate={canRate}
+          initialRating={rating?.userRating ?? null}
+          providerRatings={rating?.providerRatings ?? []}
         />
-      </div>
+      </SeriesClientWrapper>
     );
   } catch (error) {
+    if (
+      error instanceof AppError &&
+      (error.code === ERROR_CODES.KOMGA.MISSING_CONFIG ||
+        error.code === ERROR_CODES.STRIPSTREAM.MISSING_CONFIG)
+    ) {
+      redirect("/settings");
+    }
+
+    const errorCode = error instanceof AppError ? error.code : ERROR_CODES.BOOK.PAGES_FETCH_ERROR;
+
     return (
-      <div className="container py-8 space-y-8">
-        <h1 className="text-3xl font-bold">Série</h1>
-        <div className="rounded-md bg-destructive/15 p-4">
-          <p className="text-sm text-destructive">
-            {error instanceof Error ? error.message : "Erreur lors de la récupération de la série"}
-          </p>
-        </div>
-      </div>
+      <main className="container mx-auto px-4 py-8">
+        <ErrorMessage errorCode={errorCode} />
+      </main>
     );
   }
 }

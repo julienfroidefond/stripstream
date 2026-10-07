@@ -12,7 +12,7 @@ type ToasterToast = ToastProps & {
   action?: ToastActionElement;
 };
 
-const actionTypes = {
+const _actionTypes = {
   ADD_TOAST: "ADD_TOAST",
   UPDATE_TOAST: "UPDATE_TOAST",
   DISMISS_TOAST: "DISMISS_TOAST",
@@ -26,7 +26,7 @@ function genId() {
   return count.toString();
 }
 
-type ActionType = typeof actionTypes;
+type ActionType = typeof _actionTypes;
 
 type Action =
   | {
@@ -137,6 +137,12 @@ type Toast = Omit<ToasterToast, "id">;
 function toast({ ...props }: Toast) {
   const id = genId();
 
+  // Ensure all toasts have a close button and duration
+  const enhancedProps = {
+    ...props,
+    duration: props.duration || 5000,
+  };
+
   const update = (props: ToasterToast) =>
     dispatch({
       type: "UPDATE_TOAST",
@@ -147,10 +153,10 @@ function toast({ ...props }: Toast) {
   dispatch({
     type: "ADD_TOAST",
     toast: {
-      ...props,
+      ...enhancedProps,
       id,
       open: true,
-      onOpenChange: (open) => {
+      onOpenChange: (open: boolean) => {
         if (!open) dismiss();
       },
     },

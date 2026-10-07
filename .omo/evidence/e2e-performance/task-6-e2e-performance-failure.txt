@@ -1,0 +1,33 @@
+Task 6 — Failure QA: the shared signIn helper's types are enforced by pnpm typecheck
+Date (UTC): 2026-09-11T11:49:48Z
+Repo: /Users/julienfroidefond/Sites/stripstream
+
+Injection: tests/reader/reader-stub.spec.ts — temporary call with a wrong email type:
+  await signIn(userA, { email: 123 });
+(Note: the plan's literal example '123 as unknown as never' would NOT fail typecheck,
+ because 'never' is assignable to 'string'. A raw number is the real invalid argument.)
+
+$ pnpm typecheck
+
+> stripstream@1.23.3 typecheck /Users/julienfroidefond/Sites/stripstream
+> tsc --noEmit
+
+tests/reader/reader-stub.spec.ts(198,29): error TS2322: Type 'number' is not assignable to type 'string'.
+ ELIFECYCLE  Command failed with exit code 2.
+exit=2
+
+LSP diagnostic observed at injection time:
+  tests/reader/reader-stub.spec.ts:198:29 ERROR Type 'number' is not assignable to type 'string'.
+
+--- REVERT: restored 'await signIn(userA, { email: streamEmail });' ---
+
+$ git diff --stat tests/reader/reader-stub.spec.ts
+ tests/reader/reader-stub.spec.ts | 22 +++-------------------
+ 1 file changed, 3 insertions(+), 19 deletions(-)
+
+$ pnpm typecheck
+
+> stripstream@1.23.3 typecheck /Users/julienfroidefond/Sites/stripstream
+> tsc --noEmit
+
+exit=0

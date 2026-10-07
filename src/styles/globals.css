@@ -2,67 +2,121 @@
 @tailwind components;
 @tailwind utilities;
 
+html,
+body {
+  overscroll-behavior: none;
+}
+
+/* Bloque le zoom partout sauf reader */
+body.no-pinch-zoom,
+body.no-pinch-zoom * {
+  touch-action: pan-x pan-y;
+}
+
+/* Ajout des règles pour gérer le safe-area-inset sur iOS
+@supports (padding-top: env(safe-area-inset-top)) {
+  body {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  header.sticky {
+    padding-top: env(safe-area-inset-top);
+    height: calc(3.5rem + env(safe-area-inset-top)); 
+  }
+} */
+
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 36 33% 97%;
+    --background-rgb: 249, 246, 241;
+    --foreground: 222 33% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 222 33% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 222 33% 15%;
 
-    --primary: 222.2 47.4% 11.2%;
+    --primary: 198 78% 37%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 36 30% 92%;
+    --secondary-foreground: 222 33% 15%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 36 24% 90%;
+    --muted-foreground: 220 13% 40%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 198 52% 90%;
+    --accent-foreground: 222 33% 15%;
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 2 72% 48%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 32 18% 84%;
+    --input: 32 18% 84%;
+    --ring: 198 78% 37%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
+
+    --surface-1: 0 0% 100%;
+    --surface-2: 34 27% 94%;
+    --elevation-1: 0 1px 2px 0 rgb(23 32 46 / 0.06);
+    --elevation-2: 0 8px 24px -8px rgb(23 32 46 / 0.18);
+
+    --chart-1: 198 78% 37%;
+    --chart-2: 38 92% 50%;
+    --chart-3: 220 13% 65%;
+    --chart-4: 152 55% 42%;
+    --chart-5: 340 65% 55%;
+
+    --font-ui: "Avenir Next", "Segoe UI", "Noto Sans", sans-serif;
+    --font-display: "Baskerville", "Times New Roman", serif;
+    --duration-fast: 120ms;
+    --duration-base: 200ms;
+    --duration-slow: 320ms;
+    --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 222 35% 10%;
+    --background-rgb: 17, 24, 38;
+    --foreground: 38 20% 92%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 221 31% 13%;
+    --card-foreground: 38 20% 92%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 221 31% 13%;
+    --popover-foreground: 38 20% 92%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 194 76% 62%;
+    --primary-foreground: 220 39% 11%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 221 22% 20%;
+    --secondary-foreground: 38 20% 92%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 220 17% 24%;
+    --muted-foreground: 218 17% 72%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 210 34% 24%;
+    --accent-foreground: 38 20% 92%;
 
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 2 76% 58%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --border: 219 18% 25%;
+    --input: 219 18% 25%;
+    --ring: 194 76% 62%;
+
+    --surface-1: 221 31% 13%;
+    --surface-2: 221 24% 17%;
+    --elevation-1: 0 1px 2px 0 rgb(2 8 18 / 0.35);
+    --elevation-2: 0 12px 30px -12px rgb(2 8 18 / 0.55);
+
+    --chart-1: 194 76% 62%;
+    --chart-2: 38 90% 60%;
+    --chart-3: 218 17% 58%;
+    --chart-4: 152 55% 55%;
+    --chart-5: 340 70% 66%;
   }
 }
 
@@ -70,7 +124,72 @@
   * {
     @apply border-border;
   }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-ui);
+  }
+
+}
+
+/* Empêche le zoom automatique iOS sur les inputs (hors @layer pour surcharger text-sm) */
+@supports (-webkit-touch-callout: none) {
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
+@layer utilities {
+  .hide-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+  }
+
+  /* Classe utilitaire pour le padding-top avec safe-area-inset */
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0);
+  }
+
+  /* Glassmorphism utilities */
+  .glass {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .glass-strong {
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
+  /* Fade-in animation */
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.3s ease-in forwards;
+  }
+
+  @keyframes loader-slide {
+    0% {
+      transform: translateX(-120%);
+    }
+    100% {
+      transform: translateX(320%);
+    }
+  }
+
+  .animate-loader-slide {
+    animation: loader-slide 1.25s ease-in-out infinite;
   }
 }

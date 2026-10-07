@@ -1,0 +1,42 @@
+======================================================================
+TASK 3 — FAILURE: missing .next-e2e/BUILD_ID must block the run (fast, loud, before server boot)
+Repo: /Users/julienfroidefond/Sites/stripstream
+Date (UTC): 2026-09-11
+======================================================================
+
+Precondition: no listener on 3000/8444/8445 (lsof empty).
+Step 1: mv .next-e2e/BUILD_ID /tmp/task3-BUILD_ID.bak
+Step 2: pnpm exec playwright test tests/public/access-control.spec.ts --reporter=line
+Result: FAILURE_EXIT=1  DURATION=1s (fast fail at config load; no webServer started)
+
+--- raw stdout/stderr ---
+Error: 
+====================================================================
+[e2e] Missing production build: /Users/julienfroidefond/Sites/stripstream/.next-e2e/BUILD_ID does not exist.
+[e2e] The E2E suite starts a `next start` production server by default.
+[e2e] Run `pnpm test:e2e:build` first, or set E2E_SERVER_MODE=dev
+[e2e] to fall back to `next dev` (no build required).
+====================================================================
+
+    at assertE2eProductionBuild (/Users/julienfroidefond/Sites/stripstream/playwright.config.ts:27:11)
+    at Object.<anonymous> (/Users/julienfroidefond/Sites/stripstream/playwright.config.ts:58:3)
+    at Module._compile (node:internal/modules/cjs/loader:1854:14)
+    at Object.<anonymous> (node:internal/modules/cjs/loader:1985:10)
+    at Module.load (node:internal/modules/cjs/loader:1577:32)
+    at Module._load (node:internal/modules/cjs/loader:1379:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.require (node:internal/modules/cjs/loader:1600:12)
+    at require (node:internal/modules/helpers:153:16)
+    at requireOrImport (/Users/julienfroidefond/Sites/stripstream/node_modules/.pnpm/playwright@1.62.1/node_modules/playwright/lib/common/index.js:1138:18)
+    at loadUserConfig (/Users/julienfroidefond/Sites/stripstream/node_modules/.pnpm/playwright@1.62.1/node_modules/playwright/lib/common/index.js:1323:52)
+    at loadConfig (/Users/julienfroidefond/Sites/stripstream/node_modules/.pnpm/playwright@1.62.1/node_modules/playwright/lib/common/index.js:1330:28)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at Object.loadConfigFromFile (/Users/julienfroidefond/Sites/stripstream/node_modules/.pnpm/playwright@1.62.1/node_modules/playwright/lib/common/index.js:1546:10)
+    at runTests (/Users/julienfroidefond/Sites/stripstream/node_modules/.pnpm/playwright@1.62.1/node_modules/playwright/lib/cli/testActions.js:46:18)
+    at _Command.<anonymous> (/Users/julienfroidefond/Sites/stripstream/node_modules/.pnpm/playwright@1.62.1/node_modules/playwright/lib/program.js:55:7)
+--- end raw ---
+
+Step 3 (restore): mv /tmp/task3-BUILD_ID.bak .next-e2e/BUILD_ID
+RESTORED_BUILD_ID=enHlcVxwZodBrmcuCOk0V (matches pre-move content; tree usable again)
+
+Guard message instructs the user to run `pnpm test:e2e:build`; typo-free and explicit.

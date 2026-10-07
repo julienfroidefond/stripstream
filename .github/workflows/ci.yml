@@ -1,0 +1,53 @@
+name: CI
+
+# Quality gate for pull requests: ESLint (0 warnings), strict TypeScript and a
+# production build — the minimum quality gate documented in AGENTS.md.
+#
+# Pull requests only. The merge to `main` is validated by the image build inside
+# the deploy pipeline (.github/workflows/deploy.yml), so this workflow
+# deliberately does not duplicate it. The corollary is that
+# `Quality (lint · typecheck · build)` MUST be configured as a required status
+# check on the protected branch, otherwise a PR could be merged without ever
+# being validated. Use `workflow_dispatch` below to run it on demand.
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # Husky's `prepare` hook is meaningless (and noisy) on CI.
+  HUSKY: 0
+
+jobs:
+  quality:
+    name: Quality (lint · typecheck · build)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      # `postinstall` runs `prisma generate`, so the generated client is ready
+      # before lint/typecheck/build.
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Build
+        run: pnpm build

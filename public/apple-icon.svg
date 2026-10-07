@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fond carré -->
+  <rect width="32" height="32" fill="#4F46E5"/>
+  
+  <!-- Lettre S stylisée -->
+  <path 
+    d="M21 12C21 10.3431 19.6569 9 18 9H14C12.3431 9 11 10.3431 11 12V12.5C11 14.1569 12.3431 15.5 14 15.5H18C19.6569 15.5 21 16.8431 21 18.5V19C21 20.6569 19.6569 22 18 22H14C12.3431 22 11 20.6569 11 19" 
+    stroke="white" 
+    stroke-width="3" 
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  
+  <!-- Points décoratifs -->
+  <circle cx="11" cy="24" r="1.5" fill="white"/>
+  <circle cx="21" cy="8" r="1.5" fill="white"/>
+</svg> 

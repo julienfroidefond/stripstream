@@ -1,0 +1,5 @@
+
+> stripstream@1.23.2 lint /Users/julienfroidefond/Sites/stripstream
+> eslint .
+
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
