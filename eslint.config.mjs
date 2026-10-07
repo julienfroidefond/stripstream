@@ -98,6 +98,22 @@ export default defineConfig([
     },
   },
   {
+    // setState intentionnel dans un effet : synchronisation avec des props SSR
+    // (AdminContent, ClientBookPage), la session (PreferencesContext),
+    // l'orientation (useDoublePageMode) ou la recherche (GlobalSearch).
+    // Signalé par eslint-plugin-react-hooks 7.1 lors de la montée de deps.
+    files: [
+      "src/components/admin/AdminContent.tsx",
+      "src/components/layout/GlobalSearch.tsx",
+      "src/components/reader/ClientBookPage.tsx",
+      "src/components/reader/hooks/useDoublePageMode.ts",
+      "src/contexts/PreferencesContext.tsx",
+    ],
+    rules: {
+      "react-hooks/set-state-in-effect": "off",
+    },
+  },
+  {
     // URLs proxy Komga/Stripstream déjà thumbnailées côté provider :
     // l'optimizer next/image ajouterait un round-trip sans gain réel.
     files: [

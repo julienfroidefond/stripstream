@@ -54,9 +54,9 @@ test.describe('Rate limiting', () => {
     const email = `reg-ratelimit-${Date.now()}@test.local`;
     const submit = () => page.getByRole('button', { name: /sign up|s'inscrire/i });
     const fillRegisterForm = async () => {
-      await page.getByLabel(/email/i).fill(email);
-      await page.getByLabel('Password', { exact: true }).fill('StrongPass123!');
-      await page.getByLabel(/confirm password|mot de passe/i).fill('StrongPass123!');
+      await page.locator('#email').fill(email);
+      await page.locator('#password').fill('StrongPass123!');
+      await page.locator('#confirmPassword').fill('StrongPass123!');
     };
 
     // 1er register : succès + connexion automatique (navigation hors de /login)
@@ -70,7 +70,7 @@ test.describe('Rate limiting', () => {
       await page.goto('/login?tab=register');
       await fillRegisterForm();
       await submit().click();
-      await expect(page.getByRole('alert')).toBeVisible({ timeout: 15_000 });
+      await expect(page.locator('form [role="alert"]')).toBeVisible({ timeout: 15_000 });
     }
 
     // La tentative suivante est bloquée : la demande est rejetée et on reste sur /login

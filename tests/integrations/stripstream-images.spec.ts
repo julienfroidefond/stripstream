@@ -10,7 +10,7 @@ test.describe('Stripstream image connection isolation', () => {
 
   async function selectStripstreamConnection(page: import('@playwright/test').Page, name: string) {
     await page.goto('/settings');
-    await page.getByRole('tab', { name: /connection/i }).click();
+    await page.getByRole('tab', { name: /connection|connexion/i }).click();
     const connection = page.getByTestId(
       `connection-stripstream-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
     );

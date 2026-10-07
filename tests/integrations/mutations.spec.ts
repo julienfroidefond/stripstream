@@ -33,7 +33,7 @@ test.describe('Mutations on the isolated E2E account', () => {
   });
 
   test('creates, edits, and deletes a Komga connection', async ({ page }) => {
-    await openSettingsTab(page, /connection/i);
+    await openSettingsTab(page, /connection|connexion/i);
     await page.getByTestId('connection-add').click();
 
     await page.locator('#conn-name').fill('E2E mutable connection');

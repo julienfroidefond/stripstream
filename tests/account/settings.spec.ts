@@ -21,12 +21,12 @@ test.describe('Settings', () => {
       'true',
     );
 
-    await page.getByRole('tab', { name: /connection/i }).click();
+    await page.getByRole('tab', { name: /connection|connexion/i }).click();
     await expect(page.getByRole('button', { name: /add connection|ajouter/i })).toBeVisible();
   });
 
   test('remembers the active tab after a reload', async ({ page }) => {
-    const connectionTab = page.getByRole('tab', { name: /connection/i });
+    const connectionTab = page.getByRole('tab', { name: /connection|connexion/i });
     await connectionTab.click();
     await page.reload();
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ClientBookWrapper } from "./ClientBookWrapper";
 import { BookSkeleton } from "@/components/skeletons/BookSkeleton";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
@@ -21,23 +21,7 @@ export function ClientBookPage({ bookId, initialData, initialError }: ClientBook
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<ReaderData | null>(null);
 
-  // Use SSR data if available
-  useEffect(() => {
-    if (initialData) {
-      setData(initialData);
-      setLoading(false);
-      return;
-    }
-    if (initialError) {
-      setError(initialError);
-      setLoading(false);
-      return;
-    }
-    fetchBookData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bookId, initialData, initialError]);
-
-  const fetchBookData = async () => {
+  const fetchBookData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -54,7 +38,22 @@ export function ClientBookPage({ bookId, initialData, initialError }: ClientBook
     } finally {
       setLoading(false);
     }
-  };
+  }, [bookId]);
+
+  // Use SSR data if available
+  useEffect(() => {
+    if (initialData) {
+      setData(initialData);
+      setLoading(false);
+      return;
+    }
+    if (initialError) {
+      setError(initialError);
+      setLoading(false);
+      return;
+    }
+    fetchBookData();
+  }, [bookId, initialData, initialError, fetchBookData]);
 
   const handleRetry = () => {
     fetchBookData();

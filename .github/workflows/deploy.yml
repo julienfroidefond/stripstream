@@ -55,6 +55,11 @@ jobs:
             case "$msg" in
               chore*|docs*|style*|test*|ci*|build*) build=false ;;
             esac
+            # Dependency updates use the `chore` type (e.g. `chore(deps): ...`)
+            # but still change the runtime image, so never skip a `deps` commit.
+            if printf '%s' "$msg" | grep -qE '^[a-z]+\(deps(-dev)?\)!?:'; then
+              build=true
+            fi
             if [ "$build" = false ]; then
               echo "Non-runtime commit ('$msg') — build skipped."
             fi
