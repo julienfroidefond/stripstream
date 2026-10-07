@@ -144,6 +144,19 @@ The web app manifest (`public/manifest.json`) and `InstallPWA` are kept so the a
   - screenshots or a short video for UI updates,
   - verification steps/commands run.
 
+## CI/CD
+GitHub Actions is the single deployment path (the former Gitea pipeline has been retired).
+- `.github/workflows/ci.yml` — PR-only quality gate: `pnpm install --frozen-lockfile`, `pnpm lint`,
+  `pnpm typecheck`, `pnpm build`. Its `Quality (lint · typecheck · build)` check is required on `main`.
+- `.github/workflows/deploy.yml` — on push to `main` (or manual dispatch) it builds the image on a
+  GitHub-hosted runner and pushes `latest`, `<version>` and `<version>-<sha>` to Docker Hub
+  (`julienfroidefond32/stripstream`, registry cache tag `buildcache`), then deploys on the self-hosted
+  `mac-mini` runner: `docker pull` + `./scripts/stack.sh up stripstream` from
+  `/Users/julienfroidefond/Sites/docker-stack`. Commits prefixed `chore|docs|style|test|ci|build`
+  skip the build (same types the auto-bump hook ignores).
+- The version comes from `package.json` (auto-bumped by `.husky/post-commit` from the Conventional
+  Commit type); the short SHA is appended to the image tag.
+
 ## Security & Configuration Tips
 - Never commit secrets; use `.env` based on `.env.example`.
 - Validate Komga and auth-related config through settings flows before merging.
