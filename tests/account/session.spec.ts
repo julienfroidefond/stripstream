@@ -13,7 +13,7 @@ test.describe('Session lifecycle', () => {
 
     const sidebarTrigger = page.getByRole('button', { name: /menu|navigation/i }).first();
     if (await sidebarTrigger.isVisible()) await sidebarTrigger.click();
-    const signOut = page.getByRole('button', { name: /sign out|déconnexion/i });
+    const signOut = page.getByRole('button', { name: /sign out|déconnecter/i });
     await signOut.evaluate((element) => (element as HTMLButtonElement).click());
 
     await expect(page).toHaveURL(/\/login/);
