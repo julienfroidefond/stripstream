@@ -10,7 +10,7 @@ test.describe('Reading statuses', () => {
 
   test('marks a book read and unread from the series card', async ({ page }) => {
     await page.goto('/settings');
-    await page.getByRole('tab', { name: /connection/i }).click();
+    await page.getByRole('tab', { name: /connection|connexion/i }).click();
     const komgaConnection = page.getByTestId('connection-komga-stub-a');
     await expect(komgaConnection).toBeVisible();
     await komgaConnection.getByText('Stub A', { exact: true }).click();
@@ -63,7 +63,7 @@ test.describe('Reading statuses', () => {
     await expect(lastPage).toBeVisible({ timeout: 10_000 });
     await lastPage.click({ position: { x: 10, y: 10 } });
     await page.getByRole('button', { name: /thumbnails|vignettes/i }).click({ force: true });
-    const directionLabel = await page.getByRole('button', { name: /direction/i }).getAttribute('aria-label');
+    const directionLabel = await page.getByRole('button', { name: /direction|sens/i }).getAttribute('aria-label');
     await page.keyboard.press(/right to left|droite (?:à|vers) gauche|rtl/i.test(directionLabel ?? '') ? 'ArrowLeft' : 'ArrowRight');
     await expect(page.getByRole('dialog')).toBeVisible();
 

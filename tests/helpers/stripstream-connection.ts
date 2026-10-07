@@ -7,7 +7,7 @@ import { expect, Page } from '@playwright/test';
  */
 export async function activateStripstreamConnection(page: Page) {
   await page.goto('/settings');
-  await page.getByRole('tab', { name: /connection/i }).click();
+  await page.getByRole('tab', { name: /connection|connexion/i }).click();
   const listsConnection = page.getByTestId('connection-stripstream-stub-lists');
   await expect(listsConnection).toBeVisible();
   await listsConnection.getByText('Stub Lists', { exact: true }).click();

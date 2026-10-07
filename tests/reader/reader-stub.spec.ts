@@ -54,7 +54,7 @@ test.describe('Reader against the deterministic Komga fixture', () => {
 
     const doublePage = page.getByTestId('reader-toggle-double-page');
     const doublePageLabel = await doublePage.getAttribute('aria-label');
-    if (/enable|activer/i.test(doublePageLabel ?? '')) {
+    if (/^(enable|activer)/i.test(doublePageLabel ?? '')) {
       await doublePage.click();
     }
     await expect(page.getByAltText('Page 3')).toBeVisible({ timeout: 10_000 });
@@ -100,7 +100,7 @@ test.describe('Reader against the deterministic Komga fixture', () => {
     await expect(page.getByRole('dialog')).toBeVisible();
     await page.getByRole('button', { name: /close|fermer/i }).first().click();
 
-    const directionLabel = await page.getByRole('button', { name: /direction/i }).getAttribute('aria-label');
+    const directionLabel = await page.getByRole('button', { name: /direction|sens/i }).getAttribute('aria-label');
     await page.keyboard.press(/right to left|droite (?:à|vers) gauche|rtl/i.test(directionLabel ?? '') ? 'ArrowLeft' : 'ArrowRight');
     await expect(page.getByRole('dialog')).toBeVisible();
   });

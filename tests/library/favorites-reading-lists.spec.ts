@@ -31,7 +31,7 @@ test.describe('Favorites and reading lists', () => {
 
   test('opens a deterministic reading list through the Stripstream connection', async ({ page }) => {
     await page.goto('/settings');
-    await page.getByRole('tab', { name: /connection/i }).click();
+    await page.getByRole('tab', { name: /connection|connexion/i }).click();
     const listsConnection = page.getByTestId('connection-stripstream-stub-lists');
     await expect(listsConnection).toBeVisible();
     await listsConnection.getByText('Stub Lists', { exact: true }).click();
@@ -45,17 +45,17 @@ test.describe('Favorites and reading lists', () => {
 
   test('filters dedicated reading lists by reading status', async ({ page }) => {
     await page.goto('/settings');
-    await page.getByRole('tab', { name: /connection/i }).click();
+    await page.getByRole('tab', { name: /connection|connexion/i }).click();
     const listsConnection = page.getByTestId('connection-stripstream-stub-lists');
     await listsConnection.getByText('Stub Lists', { exact: true }).click();
     await expect(listsConnection.getByRole('radio')).toBeChecked({ timeout: 15_000 });
 
     await page.goto('/reading-lists');
-    await expect(page.getByTestId('reading-lists-page')).toBeVisible();
-    await expect(page.getByTestId('reading-list-card-list-a')).toBeVisible();
+    await expect(page.getByTestId('reading-lists-page').first()).toBeVisible();
+    await expect(page.getByTestId('reading-list-card-list-a').first()).toBeVisible();
 
     await page.getByTestId('reading-list-filter-read').click();
-    await expect(page.getByTestId('reading-list-card-list-a')).toBeVisible();
+    await expect(page.getByTestId('reading-list-card-list-a').first()).toBeVisible();
 
     await page.getByTestId('reading-list-search').fill('inconnue');
     await expect(page.getByTestId('reading-list-filter-empty')).toBeVisible();
