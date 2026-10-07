@@ -109,8 +109,14 @@ jobs:
           # non-interactive launchd session. The image deployed here is public,
           # so shadow the helper with a stub that reports "no credentials" and
           # let the pull run anonymously.
+          #
+          # The message MUST go to stdout: Docker's credential client treats the
+          # stdout string "credentials not found in native keychain" as "no
+          # credentials" and falls back to an anonymous pull. On stderr Docker
+          # only sees an empty stdout + a non-zero exit and fails the pull with
+          # "error getting credentials - err: exit status 1, out: ``".
           HELPER_DIR="$(mktemp -d)"
-          printf '#!/bin/sh\ncase "$1" in\n  get) echo "credentials not found in native keychain" >&2; exit 1 ;;\n  store) cat >/dev/null; exit 0 ;;\n  erase) exit 0 ;;\n  list) echo "{}"; exit 0 ;;\nesac\nexit 0\n' > "$HELPER_DIR/docker-credential-osxkeychain"
+          printf '#!/bin/sh\ncase "$1" in\n  get) echo "credentials not found in native keychain"; exit 1 ;;\n  store) cat >/dev/null; exit 0 ;;\n  erase) exit 0 ;;\n  list) echo "{}"; exit 0 ;;\nesac\nexit 0\n' > "$HELPER_DIR/docker-credential-osxkeychain"
           chmod +x "$HELPER_DIR/docker-credential-osxkeychain"
           export PATH="$HELPER_DIR:$PATH"
 
