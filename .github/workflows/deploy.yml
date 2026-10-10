@@ -27,7 +27,7 @@ jobs:
       deploy: ${{ steps.detect.outputs.deploy }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           # Keep the parent commit available for the changed-files detection below.
           fetch-depth: 2
