@@ -2,22 +2,22 @@
 
 import { useEffect } from "react";
 import type { PropsWithChildren } from "react";
-import { useTranslate } from "@/hooks/useTranslate";
+import i18n from "i18next";
 import "@/i18n/i18n";
 
 export function I18nProvider({ children, locale }: PropsWithChildren<{ locale: string }>) {
-  const { i18n } = useTranslate();
-
-  // La locale serveur (cookie NEXT_LOCALE ou défaut) fait autorité au chargement
-  // et à chaque changement propagé par le serveur (navigation). On l'applique dans
-  // un effet dépendant de `locale` pour ne PAS écraser un changement manuel du
-  // LanguageSelector : celui-ci modifie i18n sans changer la prop `locale`, donc
-  // ré-appliquer la locale serveur à chaque render annulerait la sélection.
+  // On lit directement l'instance i18next (import de module, identité stable)
+  // plutôt que `useTranslation().i18n` : depuis react-i18next 17, le hook renvoie
+  // un nouveau wrapper à chaque changement de langue. Utilisé comme dépendance
+  // d'effet, ce wrapper relancerait la synchronisation juste après un choix
+  // manuel et réappliquerait la locale serveur (cookie), annulant la sélection.
+  // Dépendre uniquement de `locale` garantit qu'on ne synchronise que lorsque la
+  // valeur serveur change réellement (chargement initial, navigation).
   useEffect(() => {
     if (i18n.language !== locale) {
       i18n.changeLanguage(locale);
     }
-  }, [i18n, locale]);
+  }, [locale]);
 
   return <>{children}</>;
 }
