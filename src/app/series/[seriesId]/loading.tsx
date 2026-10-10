@@ -8,7 +8,7 @@ export default function SeriesLoading() {
         <div className="relative container mx-auto px-4 py-8">
           <div className="flex flex-col md:flex-row gap-6 items-center md:items-start w-full">
             {/* Cover */}
-            <OptimizedSkeleton className="w-[180px] aspect-[2/3] rounded-lg flex-shrink-0" />
+            <OptimizedSkeleton className="w-[180px] aspect-2/3 rounded-lg shrink-0" />
 
             {/* Info */}
             <div className="flex-1 space-y-4 text-center md:text-left w-full max-w-xl">
@@ -40,7 +40,7 @@ export default function SeriesLoading() {
         {/* Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
           {Array.from({ length: 20 }).map((_, i) => (
-            <OptimizedSkeleton key={i} className="aspect-[2/3] w-full rounded-lg" />
+            <OptimizedSkeleton key={i} className="aspect-2/3 w-full rounded-lg" />
           ))}
         </div>
 

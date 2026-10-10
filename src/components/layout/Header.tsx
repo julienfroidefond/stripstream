@@ -37,9 +37,9 @@ export function Header({
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-primary/30 bg-background/70 shadow-sm backdrop-blur-xl supports-[backdrop-filter]:bg-background/65 pt-safe relative overflow-visible">
+    <header className="sticky top-0 z-50 w-full border-b border-primary/30 bg-background/70 shadow-xs backdrop-blur-xl supports-backdrop-filter:bg-background/65 pt-safe relative overflow-visible">
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(112deg,hsl(var(--primary)/0.24)_0%,hsl(192_85%_55%/0.2)_30%,transparent_56%),linear-gradient(248deg,hsl(338_82%_62%/0.16)_0%,transparent_46%),repeating-linear-gradient(135deg,hsl(var(--foreground)/0.03)_0_1px,transparent_1px_11px)]" />
-      <div className="container relative flex h-16 max-w-screen-2xl items-center">
+      <div className="container relative flex h-16 max-w-(--breakpoint-2xl) items-center">
         <IconButton
           variant="ghost"
           size="icon"
@@ -53,7 +53,7 @@ export function Header({
         <div className="mr-2 flex items-center md:mr-4">
           <a className="mr-2 flex items-center md:mr-6" href="/">
             <span className="inline-flex flex-col leading-none">
-              <span className="bg-gradient-to-r from-primary via-cyan-500 to-fuchsia-500 bg-clip-text text-base font-bold tracking-[0.06em] text-transparent sm:text-lg sm:tracking-[0.08em]">
+              <span className="bg-linear-to-r from-primary via-cyan-500 to-fuchsia-500 bg-clip-text text-base font-bold tracking-[0.06em] text-transparent sm:text-lg sm:tracking-[0.08em]">
                 StripStream
               </span>
               <span className="mt-1 hidden text-[10px] font-medium uppercase tracking-[0.22em] text-foreground/70 sm:inline">
@@ -101,7 +101,7 @@ export function Header({
             <LanguageSelector />
             <button
               onClick={toggleTheme}
-              className="rounded-full p-2 transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="rounded-full p-2 transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               aria-label={t("header.toggleTheme")}
             >
               <div className="relative flex h-5 w-5 items-center">

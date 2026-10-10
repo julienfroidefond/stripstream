@@ -110,20 +110,20 @@ function BookCoverContent({
                   pagesCount={book.pageCount}
                   isRead={isRead}
                   onSuccess={() => handleMarkAsRead()}
-                  className="bg-white/90 hover:bg-white text-black shadow-sm"
+                  className="bg-white/90 hover:bg-white text-black shadow-xs"
                 />
               )}
               {!isAnonymous && hasReadProgress && (
                 <MarkAsUnreadButton
                   bookId={book.id}
                   onSuccess={() => handleMarkAsUnread()}
-                  className="bg-white/90 hover:bg-white text-black shadow-sm"
+                  className="bg-white/90 hover:bg-white text-black shadow-xs"
                 />
               )}
             </div>
           )}
           {showOverlay && overlayVariant === "default" && (
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-4 space-y-2 translate-y-full group-hover:translate-y-0 transition-transform duration-200">
+            <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/60 to-transparent p-4 space-y-2 translate-y-full group-hover:translate-y-0 transition-transform duration-200">
               <p className="text-sm font-medium text-white text-left line-clamp-2">
                 {book.title ||
                   (book.number

@@ -143,7 +143,7 @@ export const SeriesHeader = ({
         <SeriesCover
           series={series}
           alt={t("series.header.coverAlt", { title: series.name })}
-          className="blur-sm scale-105 brightness-50"
+          className="blur-xs scale-105 brightness-50"
           showProgressUi={false}
         />
       </div>
@@ -152,7 +152,7 @@ export const SeriesHeader = ({
       <div className="relative container mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row gap-6 items-center md:items-start w-full">
           {/* Image principale */}
-          <div className="relative w-[180px] aspect-[2/3] rounded-lg overflow-hidden shadow-lg bg-muted/80 backdrop-blur-md flex-shrink-0">
+          <div className="relative w-[180px] aspect-2/3 rounded-lg overflow-hidden shadow-lg bg-muted/80 backdrop-blur-md shrink-0">
             <SeriesCover
               series={series}
               alt={t("series.header.coverAlt", { title: series.name })}
@@ -165,13 +165,13 @@ export const SeriesHeader = ({
             <h1 className="text-2xl md:text-3xl font-bold">{series.name}</h1>
             {authorsText && (
               <p className="text-white/70 text-sm flex items-center gap-1 justify-center md:justify-start">
-                <User className="h-3.5 w-3.5 flex-shrink-0" />
+                <User className="h-3.5 w-3.5 shrink-0" />
                 {authorsText}
               </p>
             )}
             {series.startYear != null && (
               <p className="text-white/70 text-sm flex items-center gap-1 justify-center md:justify-start">
-                <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
+                <Calendar className="h-3.5 w-3.5 shrink-0" />
                 {series.startYear}
               </p>
             )}
@@ -180,7 +180,7 @@ export const SeriesHeader = ({
                 {series.genres.map((genre) => (
                   <span
                     key={genre}
-                    className="px-2 py-0.5 rounded-full text-xs font-medium bg-white/10 text-white/80 backdrop-blur-sm border border-white/20"
+                    className="px-2 py-0.5 rounded-full text-xs font-medium bg-white/10 text-white/80 backdrop-blur-xs border border-white/20"
                   >
                     {genre}
                   </span>

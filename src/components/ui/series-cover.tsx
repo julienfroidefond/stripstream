@@ -40,12 +40,12 @@ export function SeriesCover({
           .join(" ")}
       />
       {showProgressUi && statusStyle && series.seriesStatus && (
-        <div className={`absolute top-1.5 left-1.5 flex items-center rounded-full ${statusStyle.bg} p-0.5 text-white shadow-md backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity`}>
+        <div className={`absolute top-1.5 left-1.5 flex items-center rounded-full ${statusStyle.bg} p-0.5 text-white shadow-md backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity`}>
           <statusStyle.icon className="h-3.5 w-3.5" />
         </div>
       )}
       {showProgressUi && missingCount != null && missingCount > 0 && (
-        <div className="absolute top-1.5 right-1.5 flex items-center gap-0.5 rounded-full bg-orange-500/90 px-1.5 py-0.5 text-white shadow-md backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute top-1.5 right-1.5 flex items-center gap-0.5 rounded-full bg-orange-500/90 px-1.5 py-0.5 text-white shadow-md backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity">
           <BookX className="h-3 w-3" />
           <span className="text-[10px] font-bold leading-none">{missingCount}</span>
         </div>

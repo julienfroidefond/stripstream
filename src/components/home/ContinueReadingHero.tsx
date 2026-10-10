@@ -96,7 +96,7 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
       className={cn(
         "relative overflow-hidden rounded-2xl border border-border/40",
         // Mobile : couverture en fond avec dégradé discret
-        "bg-card/60 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.5)] backdrop-blur-sm",
+        "bg-card/60 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.5)] backdrop-blur-xs",
         // Desktop : fond uni, mise en page côte-à-côte
         "sm:bg-card/60"
       )}
@@ -110,9 +110,9 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
           src={book.thumbnailUrl}
           alt=""
           aria-hidden="true"
-          className="h-full w-full object-cover object-top opacity-35 blur-sm scale-105"
+          className="h-full w-full object-cover object-top opacity-35 blur-xs scale-105"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-card/90 via-card/60 to-card/30" />
+        <div className="absolute inset-0 bg-linear-to-t from-card/90 via-card/60 to-card/30" />
       </div>
 
       <div className="relative overflow-hidden px-5 py-5 sm:px-7 sm:py-7">
@@ -135,7 +135,7 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
             <button
               type="button"
               onClick={handleResume}
-              className="group/cover relative mx-auto block aspect-[2/3] w-[170px] flex-shrink-0 overflow-hidden rounded-xl border border-border/60 shadow-lg shadow-black/40 transition-transform duration-200 hover:-translate-y-0.5 sm:mx-0 sm:w-[180px]"
+              className="group/cover relative mx-auto block aspect-2/3 w-[170px] shrink-0 overflow-hidden rounded-xl border border-border/60 shadow-lg shadow-black/40 transition-transform duration-200 hover:-translate-y-0.5 sm:mx-0 sm:w-[180px]"
               aria-label={t("home.hero.resume")}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -180,7 +180,7 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
                 <div className="space-y-1.5">
                   <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted/60">
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-primary via-cyan-500 to-fuchsia-500 transition-[width] duration-500"
+                      className="h-full rounded-full bg-linear-to-r from-primary via-cyan-500 to-fuchsia-500 transition-[width] duration-500"
                       style={{ width: `${percent}%` }}
                     />
                   </div>
@@ -196,7 +196,7 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
                   data-testid="home-resume-reading"
                   onClick={handleResume}
                   size="lg"
-                  className="gap-2 bg-gradient-to-r from-indigo-600 via-purple-600 to-fuchsia-600 font-semibold text-white shadow-lg shadow-indigo-900/30 hover:from-indigo-500 hover:via-purple-500 hover:to-fuchsia-500 hover:text-white"
+                  className="gap-2 bg-linear-to-r from-indigo-600 via-purple-600 to-fuchsia-600 font-semibold text-white shadow-lg shadow-indigo-900/30 hover:from-indigo-500 hover:via-purple-500 hover:to-fuchsia-500 hover:text-white"
                 >
                   {hasProgress ? t("home.hero.resume") : t("home.hero.start")}
                   <ArrowRight className="h-4 w-4" />
@@ -224,7 +224,7 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
                     className={cn(
                       "h-1.5 rounded-full transition-all duration-300",
                       i === safeIndex
-                        ? "w-8 bg-gradient-to-r from-primary to-fuchsia-500"
+                        ? "w-8 bg-linear-to-r from-primary to-fuchsia-500"
                         : "w-2 bg-muted-foreground/40 hover:bg-muted-foreground/60"
                     )}
                   />

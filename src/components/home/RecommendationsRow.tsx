@@ -109,7 +109,7 @@ export function RecommendationsRow({ series }: RecommendationsRowProps) {
               type="button"
               onClick={handleLoadMore}
               disabled={isPending}
-              className="flex min-h-[282px] w-[150px] flex-shrink-0 items-center justify-center rounded-xl border border-dashed border-border/70 bg-card/40 px-4 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/50 hover:bg-card hover:text-foreground sm:min-h-[300px]"
+              className="flex min-h-[282px] w-[150px] shrink-0 items-center justify-center rounded-xl border border-dashed border-border/70 bg-card/40 px-4 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/50 hover:bg-card hover:text-foreground sm:min-h-[300px]"
             >
               {isPending ? t("navigation.loading") : t("navigation.loadMore")}
             </button>
@@ -163,7 +163,7 @@ function RecommendationHero({ series, hasMore, isPending, onLoadMore }: Recommen
 
   return (
     <section
-      className="relative overflow-hidden rounded-2xl border border-border/40 bg-card/60 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.5)] backdrop-blur-sm sm:bg-card/60"
+      className="relative overflow-hidden rounded-2xl border border-border/40 bg-card/60 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.5)] backdrop-blur-xs sm:bg-card/60"
       aria-roledescription="carousel"
     >
       {/* Mobile: blurred cover bg */}
@@ -173,9 +173,9 @@ function RecommendationHero({ series, hasMore, isPending, onLoadMore }: Recommen
           alt=""
           isAnonymous={isAnonymous}
           showProgressUi={false}
-          className="h-full w-full object-cover object-top opacity-35 blur-sm scale-105"
+          className="h-full w-full object-cover object-top opacity-35 blur-xs scale-105"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-card/90 via-card/60 to-card/30" />
+        <div className="absolute inset-0 bg-linear-to-t from-card/90 via-card/60 to-card/30" />
       </div>
 
       <div className="relative overflow-hidden px-5 py-5 sm:px-7 sm:py-7">
@@ -198,7 +198,7 @@ function RecommendationHero({ series, hasMore, isPending, onLoadMore }: Recommen
             <button
               type="button"
               onClick={() => router.push(`/series/${s.id}`)}
-              className="group/cover relative mx-auto block aspect-[2/3] w-[170px] flex-shrink-0 overflow-hidden rounded-xl border border-border/60 shadow-lg shadow-black/40 transition-transform duration-200 hover:-translate-y-0.5 sm:mx-0 sm:w-[180px]"
+              className="group/cover relative mx-auto block aspect-2/3 w-[170px] shrink-0 overflow-hidden rounded-xl border border-border/60 shadow-lg shadow-black/40 transition-transform duration-200 hover:-translate-y-0.5 sm:mx-0 sm:w-[180px]"
             >
               <SeriesCover
                 series={s}
@@ -234,7 +234,7 @@ function RecommendationHero({ series, hasMore, isPending, onLoadMore }: Recommen
                       <span
                         key={reason}
                         className={cn(
-                          "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium shadow backdrop-blur-sm",
+                          "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium shadow-sm backdrop-blur-xs",
                           config?.className ?? "bg-black/50 text-white"
                         )}
                       >
@@ -250,7 +250,7 @@ function RecommendationHero({ series, hasMore, isPending, onLoadMore }: Recommen
                 <Button
                   onClick={() => router.push(`/series/${s.id}`)}
                   size="lg"
-                  className="gap-2 bg-gradient-to-r from-indigo-600 via-purple-600 to-fuchsia-600 font-semibold text-white shadow-lg shadow-indigo-900/30 hover:from-indigo-500 hover:via-purple-500 hover:to-fuchsia-500 hover:text-white"
+                  className="gap-2 bg-linear-to-r from-indigo-600 via-purple-600 to-fuchsia-600 font-semibold text-white shadow-lg shadow-indigo-900/30 hover:from-indigo-500 hover:via-purple-500 hover:to-fuchsia-500 hover:text-white"
                 >
                   {t("home.recommendations.discover")}
                   <ArrowRight className="h-4 w-4" />
@@ -274,7 +274,7 @@ function RecommendationHero({ series, hasMore, isPending, onLoadMore }: Recommen
                     className={cn(
                       "h-1.5 rounded-full transition-all duration-300",
                       i === safeIndex
-                        ? "w-8 bg-gradient-to-r from-primary to-fuchsia-500"
+                        ? "w-8 bg-linear-to-r from-primary to-fuchsia-500"
                         : "w-2 bg-muted-foreground/40 hover:bg-muted-foreground/60"
                     )}
                   />
@@ -310,12 +310,12 @@ const RecommendationCard = memo(function RecommendationCard({ series: s }: { ser
     <button
       type="button"
       onClick={() => router.push(`/series/${s.id}`)}
-      className="group relative flex w-[160px] flex-shrink-0 flex-col gap-1.5 sm:w-[188px]"
+      className="group relative flex w-[160px] shrink-0 flex-col gap-1.5 sm:w-[188px]"
     >
-      <div className="relative aspect-[2/3] w-full overflow-hidden rounded-xl border border-border/60 bg-muted shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+      <div className="relative aspect-2/3 w-full overflow-hidden rounded-xl border border-border/60 bg-muted shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
         <SeriesCover series={s} alt={s.name} isAnonymous={isAnonymous} showProgressUi={false} />
 
-        <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/80 via-black/30 to-transparent p-2.5 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+        <div className="absolute inset-0 flex flex-col justify-end bg-linear-to-t from-black/80 via-black/30 to-transparent p-2.5 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
           <p className="line-clamp-2 text-left text-xs font-semibold text-white">{s.name}</p>
         </div>
 
@@ -329,7 +329,7 @@ const RecommendationCard = memo(function RecommendationCard({ series: s }: { ser
                   key={reason}
                   title={t(`series.matchReasons.${reason}` as Parameters<typeof t>[0]) ?? reason}
                   className={cn(
-                    "flex h-6 w-6 items-center justify-center rounded-full shadow backdrop-blur-sm",
+                    "flex h-6 w-6 items-center justify-center rounded-full shadow-sm backdrop-blur-xs",
                     config?.className ?? "bg-black/70 text-white"
                   )}
                 >

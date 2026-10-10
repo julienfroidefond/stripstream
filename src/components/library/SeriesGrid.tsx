@@ -84,9 +84,9 @@ const SeriesGridItem = memo(function SeriesGridItem({
     <button
       onClick={() => onOpen(series.id)}
       className={cn(
-        "group relative aspect-[2/3] overflow-hidden rounded-xl border border-border/60 bg-card/80 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
+        "group relative aspect-2/3 overflow-hidden rounded-xl border border-border/60 bg-card/80 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
         !isAnonymous && series.bookCount === series.booksReadCount && "opacity-50",
-        isCompact && "aspect-[3/4]"
+        isCompact && "aspect-3/4"
       )}
     >
       <SeriesCover
@@ -96,14 +96,14 @@ const SeriesGridItem = memo(function SeriesGridItem({
       />
       {displayRating !== null && (
         <div
-          className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-black/70 px-2 py-1 text-xs font-medium text-yellow-300 backdrop-blur-sm shadow-sm"
+          className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-black/70 px-2 py-1 text-xs font-medium text-yellow-300 backdrop-blur-xs shadow-xs"
           title={t("series.filters.sortRating")}
         >
           <Star className="h-3 w-3 fill-yellow-300" aria-hidden="true" />
           <span className="tabular-nums">{displayRating.toFixed(1)}</span>
         </div>
       )}
-      <div className="absolute inset-x-0 bottom-0 translate-y-full space-y-2 bg-gradient-to-t from-black via-black/75 to-transparent p-4 transition-transform duration-200 group-hover:translate-y-0">
+      <div className="absolute inset-x-0 bottom-0 translate-y-full space-y-2 bg-linear-to-t from-black via-black/75 to-transparent p-4 transition-transform duration-200 group-hover:translate-y-0">
         <h3 className="font-medium text-sm text-white line-clamp-2">{series.name}</h3>
         <div className="flex items-center gap-2 flex-wrap">
           {seriesStatusEntry && (

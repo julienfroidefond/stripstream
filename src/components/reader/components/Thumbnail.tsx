@@ -119,7 +119,7 @@ export const Thumbnail = memo(forwardRef<HTMLButtonElement, ThumbnailProps>(
         id={`thumbnail-${pageNumber}`}
         onClick={() => onPageChange(pageNumber)}
         className={cn(
-          "relative flex-shrink-0 rounded-md overflow-hidden transition-all cursor-pointer snap-center",
+          "relative shrink-0 rounded-md overflow-hidden transition-all cursor-pointer snap-center",
           currentPage === pageNumber
             ? "h-48 w-36 ring-2 ring-primary z-10"
             : "h-40 w-28 opacity-80 hover:opacity-100 hover:scale-105",
@@ -145,7 +145,7 @@ export const Thumbnail = memo(forwardRef<HTMLButtonElement, ThumbnailProps>(
             <span className="text-sm text-muted-foreground">Erreur</span>
           </div>
         )}
-        <div className="absolute bottom-0 inset-x-0 h-8 bg-gradient-to-t from-black/60 to-transparent flex items-center justify-center">
+        <div className="absolute bottom-0 inset-x-0 h-8 bg-linear-to-t from-black/60 to-transparent flex items-center justify-center">
           <span className="text-sm text-white font-medium">{pageNumber}</span>
         </div>
       </button>

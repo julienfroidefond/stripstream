@@ -25,7 +25,7 @@ const MissingBookCard = memo(function MissingBookCard({ book, isCompact }: { boo
   return (
     <div
       className={cn(
-        "group relative aspect-[2/3] overflow-hidden rounded-lg border border-dashed border-orange-500/40 bg-muted/50 opacity-60",
+        "group relative aspect-2/3 overflow-hidden rounded-lg border border-dashed border-orange-500/40 bg-muted/50 opacity-60",
         isCompact ? "" : ""
       )}
     >
@@ -41,7 +41,7 @@ const MissingBookCard = memo(function MissingBookCard({ book, isCompact }: { boo
           <BookX className="h-8 w-8 text-orange-500/40" />
         </div>
       )}
-      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+      <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 to-transparent p-2">
         <p className="text-xs text-orange-300 font-medium truncate">{book.title}</p>
       </div>
       <div className="absolute top-1.5 right-1.5 rounded-full bg-orange-500/90 p-0.5">
@@ -61,7 +61,7 @@ const BookCard = memo(function BookCard({ book, onBookClick, onSuccess, isCompac
   return (
     <div
       className={cn(
-        "group relative aspect-[2/3] overflow-hidden rounded-lg bg-muted",
+        "group relative aspect-2/3 overflow-hidden rounded-lg bg-muted",
         isCompact ? "hover:scale-105 transition-transform" : ""
       )}
     >

@@ -30,7 +30,7 @@ export function ReaderContainer({ children, onContainerClick, background }: Read
     <div
       ref={readerRef}
       className={cn(
-        "reader-zoom-enabled fixed inset-0 z-50 overflow-hidden backdrop-blur-sm",
+        "reader-zoom-enabled fixed inset-0 z-50 overflow-hidden backdrop-blur-xs",
         backgroundClassNames[background]
       )}
       onClick={handleContainerClick}

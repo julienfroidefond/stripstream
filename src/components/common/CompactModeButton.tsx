@@ -36,7 +36,7 @@ function CompactModeButtonBase({
       onClick={handleClick}
       title={label}
       className={cn(
-        "h-9 rounded-full border border-border/60 bg-background/40 px-3 text-xs font-medium backdrop-blur-sm hover:bg-accent/40 sm:text-sm",
+        "h-9 rounded-full border border-border/60 bg-background/40 px-3 text-xs font-medium backdrop-blur-xs hover:bg-accent/40 sm:text-sm",
         className
       )}
     >

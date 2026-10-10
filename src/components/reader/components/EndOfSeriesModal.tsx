@@ -16,7 +16,7 @@ export function EndOfSeriesModal({ show, onClose, currentPage }: EndOfSeriesModa
       role="dialog"
       aria-modal="true"
       aria-labelledby="end-of-series-title"
-      className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm z-50"
+      className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-xs z-50"
     >
       <div className="bg-background/80 backdrop-blur-md border rounded-lg shadow-lg p-6 max-w-md text-center">
         <h3 id="end-of-series-title" className="text-lg font-semibold mb-2">{t("reader.endOfSeries")}</h3>

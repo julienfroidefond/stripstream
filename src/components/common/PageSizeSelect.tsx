@@ -39,7 +39,7 @@ function PageSizeSelectBase({
     <Select value={normalizeGridPageSize(value, isCompact).toString()} onValueChange={handleChange}>
       <SelectTrigger
         className={cn(
-          "h-9 w-[96px] rounded-full border border-border/60 bg-background/40 text-xs font-medium backdrop-blur-sm sm:text-sm",
+          "h-9 w-[96px] rounded-full border border-border/60 bg-background/40 text-xs font-medium backdrop-blur-xs sm:text-sm",
           className
         )}
       >

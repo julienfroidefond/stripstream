@@ -549,7 +549,7 @@ function TypeButton({
       onClick={onClick}
       className={cn(
         "flex flex-col gap-0.5 rounded-lg border p-3 text-left transition-colors",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
         selected ? "border-primary bg-primary/10" : "border-border hover:bg-muted/50"
       )}
     >
@@ -582,7 +582,7 @@ function FieldRow({
 }
 
 const inputClass =
-  "flex h-9 w-full rounded-md border border-input bg-background/70 backdrop-blur-md px-3 py-1 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
+  "flex h-9 w-full rounded-md border border-input bg-background/70 backdrop-blur-md px-3 py-1 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
 
 const btnPrimary =
   "inline-flex h-9 items-center justify-center rounded-md bg-primary/90 backdrop-blur-md px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/80 disabled:pointer-events-none disabled:opacity-50";

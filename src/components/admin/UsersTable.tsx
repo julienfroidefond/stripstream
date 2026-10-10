@@ -30,7 +30,7 @@ export function UsersTable({ users, onUserUpdated }: UsersTableProps) {
 
   return (
     <>
-      <div className="rounded-lg border bg-card/70 backdrop-blur-md shadow-sm">
+      <div className="rounded-lg border bg-card/70 backdrop-blur-md shadow-xs">
         <Table>
           <TableHeader>
             <TableRow>

@@ -109,7 +109,7 @@ export function InstallPWA() {
     <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 z-50">
       <div className="bg-card/80 backdrop-blur-md border shadow-lg rounded-lg p-4 max-w-sm mx-auto sm:mx-0">
         <div className="flex items-start gap-4">
-          <Download className="h-6 w-6 flex-shrink-0 text-primary" />
+          <Download className="h-6 w-6 shrink-0 text-primary" />
           <div className="flex-1">
             <h3 className="font-medium mb-1">Installer StripStream</h3>
             <p className="text-sm text-muted-foreground mb-3">

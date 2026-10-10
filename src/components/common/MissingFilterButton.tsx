@@ -24,7 +24,7 @@ export function MissingFilterButton({ active, onToggle, className }: MissingFilt
       onClick={onToggle}
       title={label}
       className={cn(
-        "h-9 rounded-full border px-3 text-xs font-medium backdrop-blur-sm sm:text-sm",
+        "h-9 rounded-full border px-3 text-xs font-medium backdrop-blur-xs sm:text-sm",
         active
           ? "border-orange-500/40 bg-orange-500/15 text-orange-500 hover:bg-orange-500/20"
           : "border-border/60 bg-background/40 hover:bg-accent/40",

@@ -74,7 +74,7 @@ export function ReadingListsContent({ lists, isStripstream }: ReadingListsConten
         </div>
       </header>
 
-      <div className="flex flex-col gap-3 rounded-2xl border border-border/60 bg-card/45 p-3 shadow-sm sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-3 rounded-2xl border border-border/60 bg-card/45 p-3 shadow-xs sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -118,7 +118,7 @@ export function ReadingListsContent({ lists, isStripstream }: ReadingListsConten
                 onClick={() => router.push(`/reading-lists/${list.id}`)}
                 className={cn("group flex flex-col gap-2 text-left transition-opacity", isCompleted && "opacity-70")}
               >
-                <div className="relative aspect-[2/3] overflow-hidden rounded-xl border border-border/60 bg-muted shadow-sm transition-all duration-200 group-hover:-translate-y-0.5 group-hover:shadow-md">
+                <div className="relative aspect-2/3 overflow-hidden rounded-xl border border-border/60 bg-muted shadow-xs transition-all duration-200 group-hover:-translate-y-0.5 group-hover:shadow-md">
                   {firstCover ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={`/api/stripstream/images/books/${firstCover}/thumbnail`} alt={list.name} loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
@@ -128,12 +128,12 @@ export function ReadingListsContent({ lists, isStripstream }: ReadingListsConten
                   {!isAnonymous && (
                     <StatusBadge
                       status={status === "read" ? "success" : status === "reading" ? "reading" : "unread"}
-                      className="absolute right-2 top-2 border-background/50 bg-background/85 px-1.5 py-0.5 text-[10px] shadow-sm backdrop-blur"
+                      className="absolute right-2 top-2 border-background/50 bg-background/85 px-1.5 py-0.5 text-[10px] shadow-xs backdrop-blur-sm"
                     >
                       {t(`home.reading_lists.filters.${status}`)}
                     </StatusBadge>
                   )}
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent p-3 pt-10 opacity-0 transition-opacity group-hover:opacity-100">
+                  <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/85 via-black/35 to-transparent p-3 pt-10 opacity-0 transition-opacity group-hover:opacity-100">
                     <p className="line-clamp-2 text-sm font-semibold text-white">{list.name}</p>
                   </div>
                 </div>

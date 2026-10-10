@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 const containerVariants = cva("mx-auto px-2 sm:px-6 lg:px-8", {
   variants: {
     size: {
-      default: "max-w-screen-2xl",
+      default: "max-w-(--breakpoint-2xl)",
       narrow: "max-w-4xl",
       wide: "max-w-screen-3xl",
       full: "max-w-full",
