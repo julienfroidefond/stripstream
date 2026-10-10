@@ -156,6 +156,11 @@ GitHub Actions is the single deployment path (the former Gitea pipeline has been
   skip the build (same types the auto-bump hook ignores).
 - The version comes from `package.json` (auto-bumped by `.husky/post-commit` from the Conventional
   Commit type); the short SHA is appended to the image tag.
+- `.github/dependabot.yml` — dependency automation (npm/pnpm, GitHub Actions, Docker). Minor/patch
+  updates are grouped by family and auto-merged once the `Quality` check passes, via
+  `.github/workflows/dependabot-auto-merge.yml`; majors and the framework/runtime deps (`next`,
+  `react`, `react-dom`, `@prisma/client`, `prisma`, `sharp`) stay manual. Dependabot replaces the
+  former Renovate setup — do not re-add `renovate.json` alongside it, or you will get duplicate PRs.
 
 ## Security & Configuration Tips
 - Never commit secrets; use `.env` based on `.env.example`.

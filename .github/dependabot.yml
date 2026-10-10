@@ -1,0 +1,116 @@
+# Dependabot configuration for Stripstream.
+#
+# This replaces the former Renovate setup (renovate.json). Dependabot runs
+# natively on GitHub and reads pnpm-lock.yaml through the "npm" ecosystem.
+#
+# Policy
+#   - minor/patch updates are grouped by family and can be auto-merged once the
+#     required "Quality (lint · typecheck · build)" check passes (see
+#     .github/workflows/dependabot-auto-merge.yml);
+#   - major updates always land as their own PR and are reviewed by hand;
+#   - framework/runtime deps (next, react, react-dom, @prisma/client, prisma,
+#     sharp) never enter the auto-merged group.
+
+version: 2
+
+updates:
+  # ---- JavaScript / TypeScript dependencies (package.json + pnpm-lock.yaml) ----
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Paris"
+    open-pull-requests-limit: 8
+    versioning-strategy: increase-if-necessary
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(dev-deps)"
+    groups:
+      radix-ui:
+        patterns:
+          - "@radix-ui/*"
+        update-types:
+          - "minor"
+          - "patch"
+      i18next:
+        patterns:
+          - "i18next"
+          - "react-i18next"
+          - "i18next-browser-languagedetector"
+        update-types:
+          - "minor"
+          - "patch"
+      lint-types-tooling:
+        patterns:
+          - "eslint"
+          - "eslint-config-next"
+          - "eslint-plugin-unused-imports"
+          - "@typescript-eslint/*"
+          - "@types/node"
+          - "@types/react"
+          - "@types/react-dom"
+          - "typescript"
+          - "knip"
+        update-types:
+          - "minor"
+          - "patch"
+      playwright:
+        patterns:
+          - "@playwright/test"
+        update-types:
+          - "minor"
+          - "patch"
+      # Catch-all: minor/patch of everything not handled above, except the
+      # framework/runtime deps which stay as individual PRs for manual review.
+      minor-and-patch:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "next"
+          - "react"
+          - "react-dom"
+          - "@prisma/client"
+          - "prisma"
+          - "sharp"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # ---- GitHub Actions used by the CI / deploy workflows ----
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Paris"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "ci(deps)"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # ---- Dockerfile base image (node:24-alpine) ----
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Paris"
+    labels:
+      - "dependencies"
+      - "docker"
+    commit-message:
+      prefix: "chore(deps)"

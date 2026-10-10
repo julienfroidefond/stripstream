@@ -1,0 +1,58 @@
+name: Dependabot auto-merge
+
+# Queues a squash auto-merge on Dependabot minor/patch updates. The merge only
+# happens once the required "Quality (lint · typecheck · build)" check passes.
+#
+# Prerequisites (repository settings):
+#   - "Allow auto-merge" must be enabled;
+#   - "Quality (lint · typecheck · build)" is a required status check on `main`.
+#
+# Framework/runtime deps (next, react, react-dom, @prisma/client, prisma, sharp)
+# are never auto-merged, and neither are major updates — those stay manual.
+#
+# We use `pull_request_target` because workflows triggered by Dependabot on
+# `pull_request` get a read-only GITHUB_TOKEN and cannot enable auto-merge. The
+# job never checks out or runs code from the pull request, so it is safe.
+
+on: pull_request_target
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    if: >
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.repository == 'julienfroidefond/stripstream'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Queue auto-merge for safe minor/patch updates
+        if: >
+          steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
+          steps.metadata.outputs.update-type == 'version-update:semver-minor'
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEPS: ${{ steps.metadata.outputs.dependency-names }}
+        run: |
+          set -euo pipefail
+          frameworks="next react react-dom @prisma/client prisma sharp"
+          skip=0
+          for fw in $frameworks; do
+            case ",${DEPS// /}," in
+              *",${fw},"*) skip=1 ;;
+            esac
+          done
+          if [ "$skip" -eq 1 ]; then
+            echo "Framework/runtime dependency in '${DEPS}' — leaving the PR for manual review."
+            exit 0
+          fi
+          echo "Enabling auto-merge (squash) for '${DEPS}'."
+          gh pr merge --auto --squash "$PR_URL"
