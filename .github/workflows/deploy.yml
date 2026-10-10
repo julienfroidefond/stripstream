@@ -78,7 +78,7 @@ jobs:
 
       - name: Build & push
         if: steps.detect.outputs.deploy == 'true'
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           platforms: ${{ env.PLATFORMS }}
