@@ -65,12 +65,12 @@ const SeriesListItem = memo(function SeriesListItem({ series, isCompact = false 
       type="button"
       onClick={() => router.push(`/series/${series.id}`)}
       className={cn(
-        "group relative flex w-full items-stretch gap-3 overflow-hidden rounded-2xl border border-border/60 bg-card/45 p-2.5 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:bg-card hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:gap-4 sm:p-3",
+        "group relative flex w-full items-stretch gap-3 overflow-hidden rounded-2xl border border-border/60 bg-card/45 p-2.5 text-left shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:bg-card hover:shadow-md focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring sm:gap-4 sm:p-3",
         !isCompact && "sm:p-4",
         isCompleted && "opacity-70"
       )}
     >
-      <div className={cn("relative aspect-[3/2] shrink-0 overflow-hidden rounded-xl bg-muted shadow-sm", isCompact ? "w-16 sm:w-[4.5rem]" : "w-24 sm:w-28")}>
+      <div className={cn("relative aspect-3/2 shrink-0 overflow-hidden rounded-xl bg-muted shadow-xs", isCompact ? "w-16 sm:w-18" : "w-24 sm:w-28")}>
         <SeriesCover
           series={series}
           alt={t("series.coverAlt", { title: series.name })}
@@ -78,7 +78,7 @@ const SeriesListItem = memo(function SeriesListItem({ series, isCompact = false 
           showProgressUi={false}
         />
         {rating !== null && (
-          <span className="absolute bottom-1 left-1 inline-flex items-center gap-1 rounded-md bg-black/75 px-1.5 py-0.5 text-[10px] font-bold text-amber-300 shadow-sm backdrop-blur-sm sm:hidden">
+          <span className="absolute bottom-1 left-1 inline-flex items-center gap-1 rounded-md bg-black/75 px-1.5 py-0.5 text-[10px] font-bold text-amber-300 shadow-xs backdrop-blur-xs sm:hidden">
             <Star className="h-2.5 w-2.5 fill-current" />{rating.toFixed(1)}
           </span>
         )}

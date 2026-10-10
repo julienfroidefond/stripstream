@@ -44,7 +44,7 @@ export function HomeCarouselSkeleton({ icon: Icon }: { icon: LucideIcon }) {
         {Array.from({ length: 5 }).map((_, index) => (
           <Skeleton
             key={index}
-            className="aspect-[2/3] w-[188px] flex-shrink-0 rounded-xl sm:w-[200px]"
+            className="aspect-2/3 w-[188px] shrink-0 rounded-xl sm:w-[200px]"
           />
         ))}
       </div>
@@ -54,9 +54,9 @@ export function HomeCarouselSkeleton({ icon: Icon }: { icon: LucideIcon }) {
 
 export function HomeHeroSkeleton() {
   return (
-    <section className="overflow-hidden rounded-2xl border border-border/40 bg-card/60 px-5 py-5 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.5)] backdrop-blur-sm sm:px-7 sm:py-7">
+    <section className="overflow-hidden rounded-2xl border border-border/40 bg-card/60 px-5 py-5 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.5)] backdrop-blur-xs sm:px-7 sm:py-7">
       <div className="grid gap-6 sm:grid-cols-[180px_minmax(0,1fr)] sm:items-center">
-        <Skeleton className="mx-auto aspect-[2/3] w-[180px] rounded-2xl sm:mx-0" />
+        <Skeleton className="mx-auto aspect-2/3 w-[180px] rounded-2xl sm:mx-0" />
         <div className="space-y-4">
           <Skeleton className="h-8 w-3/5" />
           <Skeleton className="h-16 w-full" />

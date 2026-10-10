@@ -94,9 +94,9 @@ export const NavigationBar = ({
             onTouchEnd={handleTouchEnd}
             ref={thumbnailsContainerRef}
           >
-            <div className="w-[calc(50vw-18rem)] flex-shrink-0" />
+            <div className="w-[calc(50vw-18rem)] shrink-0" />
             {thumbnails}
-            <div className="w-[calc(50vw-18rem)] flex-shrink-0" />
+            <div className="w-[calc(50vw-18rem)] shrink-0" />
           </div>
 
             {showControls && (

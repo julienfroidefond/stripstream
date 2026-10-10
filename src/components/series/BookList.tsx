@@ -83,7 +83,7 @@ const BookListItem = memo(function BookListItem({ book, onBookClick, onSuccess, 
       <div className="group relative flex gap-3 rounded-lg border bg-card p-2 transition-colors hover:bg-accent/50">
         {/* Couverture compacte */}
         <div
-          className="relative w-12 h-16 sm:w-14 sm:h-20 flex-shrink-0 cursor-pointer rounded overflow-hidden bg-muted"
+          className="relative w-12 h-16 sm:w-14 sm:h-20 shrink-0 cursor-pointer rounded overflow-hidden bg-muted"
           onClick={handleClick}
         >
           <BookCover
@@ -108,7 +108,7 @@ const BookListItem = memo(function BookListItem({ book, onBookClick, onSuccess, 
             {!isAnonymous && (
               <span
                 className={cn(
-                  "px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0",
+                  "px-2 py-0.5 rounded-full text-xs font-medium shrink-0",
                   statusInfo.className
                 )}
               >
@@ -138,7 +138,7 @@ const BookListItem = memo(function BookListItem({ book, onBookClick, onSuccess, 
     <div className="group relative flex gap-4 rounded-lg border bg-card p-4 transition-colors hover:bg-accent/50">
       {/* Couverture */}
       <div
-        className="relative w-20 h-28 sm:w-24 sm:h-36 flex-shrink-0 cursor-pointer rounded overflow-hidden bg-muted"
+        className="relative w-20 h-28 sm:w-24 sm:h-36 shrink-0 cursor-pointer rounded overflow-hidden bg-muted"
         onClick={handleClick}
       >
         <BookCover
@@ -172,7 +172,7 @@ const BookListItem = memo(function BookListItem({ book, onBookClick, onSuccess, 
           {!isAnonymous && (
             <span
               className={cn(
-                "px-2 py-1 rounded-full text-xs font-medium flex-shrink-0",
+                "px-2 py-1 rounded-full text-xs font-medium shrink-0",
                 statusInfo.className
               )}
             >
@@ -260,7 +260,7 @@ export function BookList({ books, onBookClick, isCompact = false, onRefresh }: B
               "group relative flex gap-3 p-2 rounded-lg border border-dashed border-orange-500/40 bg-muted/30 opacity-60",
             )}
           >
-            <div className="relative w-12 h-16 sm:w-14 sm:h-20 flex-shrink-0 rounded overflow-hidden bg-muted/50">
+            <div className="relative w-12 h-16 sm:w-14 sm:h-20 shrink-0 rounded overflow-hidden bg-muted/50">
               {book.thumbnailUrl ? (
                 <img src={book.thumbnailUrl} alt={book.title} loading="lazy" className="w-full h-full object-cover rounded opacity-50" />
               ) : (
@@ -271,7 +271,7 @@ export function BookList({ books, onBookClick, isCompact = false, onRefresh }: B
             </div>
             <div className="flex-1 min-w-0 flex items-center gap-2">
               <span className="font-medium text-sm text-orange-400 truncate">{book.title}</span>
-              <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-orange-500/10 text-orange-500 flex-shrink-0">
+              <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-orange-500/10 text-orange-500 shrink-0">
                 {t("books.missingLabel")}
               </span>
             </div>

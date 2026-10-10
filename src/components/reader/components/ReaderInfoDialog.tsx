@@ -63,8 +63,8 @@ export function ReaderInfoDialog({
 
         <div className="space-y-5">
           <section className="flex gap-4 rounded-2xl border border-border/60 bg-muted/20 p-4 max-[520px]:flex-col">
-            <div className="relative mx-auto w-24 shrink-0 self-start overflow-hidden rounded-xl border border-border/60 shadow-sm sm:w-28 md:w-36 max-[520px]:mx-0">
-              <div className="aspect-[2/3] w-full">
+            <div className="relative mx-auto w-24 shrink-0 self-start overflow-hidden rounded-xl border border-border/60 shadow-xs sm:w-28 md:w-36 max-[520px]:mx-0">
+              <div className="aspect-2/3 w-full">
                 <BookCover
                   book={book}
                   alt={book.title}

@@ -35,7 +35,7 @@ export const SearchInput = ({ placeholder, testId }: SearchInputProps) => {
   }, 300);
 
   return (
-    <div className="relative w-full rounded-2xl border border-border/60 bg-[linear-gradient(140deg,hsl(var(--background)/0.72),hsl(var(--background)/0.5))] px-1 shadow-sm backdrop-blur-sm transition-colors focus-within:border-primary/40 focus-within:ring-2 focus-within:ring-ring/30 sm:max-w-2xl">
+    <div className="relative w-full rounded-2xl border border-border/60 bg-[linear-gradient(140deg,hsl(var(--background)/0.72),hsl(var(--background)/0.5))] px-1 shadow-xs backdrop-blur-xs transition-colors focus-within:border-primary/40 focus-within:ring-2 focus-within:ring-ring/30 sm:max-w-2xl">
       <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
       <Input
         data-testid={testId}

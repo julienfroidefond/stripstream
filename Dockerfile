@@ -18,7 +18,7 @@ COPY prisma ./prisma
 
 # Copy configuration files
 COPY tsconfig.json eslint.config.mjs next.config.js ./
-COPY tailwind.config.ts postcss.config.js ./
+COPY postcss.config.js ./
 COPY prisma.config.ts ./
 
 # Install dependencies with pnpm using cache mount for store

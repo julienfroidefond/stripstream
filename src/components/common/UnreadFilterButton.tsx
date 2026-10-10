@@ -28,7 +28,7 @@ export function UnreadFilterButton({
       onClick={onToggle}
       title={label}
       className={cn(
-        "h-9 rounded-full border px-3 text-xs font-medium backdrop-blur-sm sm:text-sm",
+        "h-9 rounded-full border px-3 text-xs font-medium backdrop-blur-xs sm:text-sm",
         showOnlyUnread
           ? "border-primary/40 bg-primary/15 text-primary hover:bg-primary/20"
           : "border-border/60 bg-background/40 hover:bg-accent/40",

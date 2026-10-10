@@ -29,7 +29,7 @@ import {
 import type { ReaderBackground } from "@/types/preferences";
 
 const readerBackgroundOptions: { value: ReaderBackground; className: string }[] = [
-  { value: "default", className: "bg-gradient-to-br from-primary/70 via-background to-cyan-400/50" },
+  { value: "default", className: "bg-linear-to-br from-primary/70 via-background to-cyan-400/50" },
   { value: "black", className: "bg-[#09090b]" },
   { value: "white", className: "border border-black/20 bg-white" },
   { value: "cream", className: "bg-[#f4ead8]" },

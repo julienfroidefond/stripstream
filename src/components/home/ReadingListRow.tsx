@@ -67,7 +67,7 @@ export function ReadingListRow({ lists }: ReadingListRowProps) {
             type="button"
             onClick={handleLoadMore}
             disabled={isPending}
-            className="flex min-h-[282px] w-[150px] flex-shrink-0 items-center justify-center rounded-xl border border-dashed border-border/70 bg-card/40 px-4 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/50 hover:bg-card hover:text-foreground sm:min-h-[300px]"
+            className="flex min-h-[282px] w-[150px] shrink-0 items-center justify-center rounded-xl border border-dashed border-border/70 bg-card/40 px-4 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/50 hover:bg-card hover:text-foreground sm:min-h-[300px]"
           >
             {isPending ? t("navigation.loading") : t("navigation.loadMore")}
           </button>
@@ -95,12 +95,12 @@ const ReadingListCard = memo(function ReadingListCard({ list, onClick }: Reading
       data-testid={`home-reading-list-${list.id}`}
       onClick={() => onClick(list.id)}
       className={cn(
-        "group relative flex w-[160px] flex-shrink-0 flex-col gap-1.5 transition-opacity sm:w-[188px]",
+        "group relative flex w-[160px] shrink-0 flex-col gap-1.5 transition-opacity sm:w-[188px]",
         isCompleted && "opacity-70"
       )}
     >
       {/* Cover */}
-      <div className="relative aspect-[2/3] w-full overflow-hidden rounded-xl border border-border/60 bg-muted shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+      <div className="relative aspect-2/3 w-full overflow-hidden rounded-xl border border-border/60 bg-muted shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
         {firstCover ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -116,7 +116,7 @@ const ReadingListCard = memo(function ReadingListCard({ list, onClick }: Reading
         )}
 
         {/* Hover overlay */}
-        <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/80 via-black/30 to-transparent p-2.5 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+        <div className="absolute inset-0 flex flex-col justify-end bg-linear-to-t from-black/80 via-black/30 to-transparent p-2.5 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
           <p className="line-clamp-2 text-left text-xs font-semibold text-white">{list.name}</p>
         </div>
       </div>

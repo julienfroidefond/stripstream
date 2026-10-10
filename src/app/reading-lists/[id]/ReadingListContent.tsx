@@ -48,14 +48,14 @@ export function ReadingListContent({ detail }: ReadingListContentProps) {
             src={`/api/stripstream/images/books/${firstBookId}/thumbnail`}
             alt=""
             aria-hidden="true"
-            className="absolute inset-0 h-full w-full object-cover blur-sm scale-105 brightness-50"
+            className="absolute inset-0 h-full w-full object-cover blur-xs scale-105 brightness-50"
           />
         )}
         {/* Fallback gradient when no cover */}
         {!firstBookId && (
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-primary/15 to-background" />
+          <div className="absolute inset-0 bg-linear-to-br from-primary/30 via-primary/15 to-background" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-background/60 via-transparent to-transparent" />
 
         <div className="relative container mx-auto px-4 pt-10 pb-8">
           <button
@@ -68,7 +68,7 @@ export function ReadingListContent({ detail }: ReadingListContentProps) {
           </button>
 
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-6">
-            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-white shadow-lg backdrop-blur-sm border border-white/20">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-white shadow-lg backdrop-blur-xs border border-white/20">
               <Bookmark className="h-8 w-8" />
             </div>
             <div className="space-y-1">

@@ -48,12 +48,12 @@ export function RelatedSeriesRow({ series }: RelatedSeriesRowProps) {
             key={s.id}
             type="button"
             onClick={() => router.push(`/series/${s.id}`)}
-            className="group relative aspect-[2/3] w-[160px] flex-shrink-0 overflow-hidden rounded-xl border border-border/60 bg-muted shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md sm:w-[188px]"
+            className="group relative aspect-2/3 w-[160px] shrink-0 overflow-hidden rounded-xl border border-border/60 bg-muted shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md sm:w-[188px]"
           >
             <SeriesCover series={s} alt={s.name} isAnonymous={isAnonymous} showProgressUi={false} />
 
             {/* hover overlay with title */}
-            <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/80 via-black/30 to-transparent p-3 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+            <div className="absolute inset-0 flex flex-col justify-end bg-linear-to-t from-black/80 via-black/30 to-transparent p-3 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
               <p className="line-clamp-2 text-left text-sm font-medium text-white">{s.name}</p>
             </div>
 
@@ -68,7 +68,7 @@ export function RelatedSeriesRow({ series }: RelatedSeriesRowProps) {
                       key={reason}
                       title={t(`series.matchReasons.${reason}` as Parameters<typeof t>[0]) ?? reason}
                       className={cn(
-                        "flex h-6 w-6 items-center justify-center rounded-full shadow backdrop-blur-sm",
+                        "flex h-6 w-6 items-center justify-center rounded-full shadow-sm backdrop-blur-xs",
                         config?.className ?? "bg-black/50 text-white"
                       )}
                     >

@@ -33,7 +33,7 @@ export function ClientBookWrapper({ book, pages, nextBook, readerInfo, onRefresh
   if (isClosing) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="flex items-center gap-3 rounded-full border border-border/60 bg-background/80 px-4 py-2 text-sm text-muted-foreground shadow-sm">
+        <div className="flex items-center gap-3 rounded-full border border-border/60 bg-background/80 px-4 py-2 text-sm text-muted-foreground shadow-xs">
           <Loader2 className="h-4 w-4 animate-spin" />
           <span>Fermeture du lecteur...</span>
         </div>

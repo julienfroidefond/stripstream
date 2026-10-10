@@ -73,7 +73,7 @@ export const PageInput = ({ currentPage, totalPages, onPageChange }: PageInputPr
             onChange={handleChange}
             className={cn(
               "w-12 bg-background/70 backdrop-blur-md text-center rounded-md py-1 px-2",
-              "focus:outline-none focus:ring-2",
+              "focus:outline-hidden focus:ring-2",
               "text-sm text-foreground",
               isValid || inputValue === ""
                 ? "focus:ring-primary"

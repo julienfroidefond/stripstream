@@ -4,7 +4,7 @@ function CoverGrid({ count = 10 }: { count?: number }) {
   return (
     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
       {Array.from({ length: count }).map((_, index) => (
-        <Skeleton key={index} className="aspect-[2/3] w-full rounded-xl" />
+        <Skeleton key={index} className="aspect-2/3 w-full rounded-xl" />
       ))}
     </div>
   );
@@ -37,9 +37,9 @@ export function LibrarySkeleton() {
           </div>
         </div>
       </div>
-      <main className="mx-auto max-w-screen-2xl px-2 py-8 sm:px-6 lg:px-8">
+      <main className="mx-auto max-w-(--breakpoint-2xl) px-2 py-8 sm:px-6 lg:px-8">
         <div className="space-y-8">
-          <div className="rounded-2xl border border-border/60 bg-background/40 p-4 shadow-sm sm:p-5">
+          <div className="rounded-2xl border border-border/60 bg-background/40 p-4 shadow-xs sm:p-5">
             <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div className="space-y-2">
                 <Skeleton className="h-3 w-20" />
@@ -77,7 +77,7 @@ export function ReadingListSkeleton() {
           </div>
         </div>
       </div>
-      <main className="mx-auto max-w-screen-2xl px-2 py-8 sm:px-6 lg:px-8">
+      <main className="mx-auto max-w-(--breakpoint-2xl) px-2 py-8 sm:px-6 lg:px-8">
         <CoverGrid />
       </main>
     </>
@@ -86,7 +86,7 @@ export function ReadingListSkeleton() {
 
 export function ReadingListsSkeleton() {
   return (
-    <main className="mx-auto max-w-screen-2xl space-y-8 px-2 py-8 sm:px-6 lg:px-8">
+    <main className="mx-auto max-w-(--breakpoint-2xl) space-y-8 px-2 py-8 sm:px-6 lg:px-8">
       <div className="flex items-center gap-3">
         <Skeleton className="h-11 w-11 rounded-xl" />
         <div className="space-y-2"><Skeleton className="h-8 w-52" /><Skeleton className="h-5 w-72" /></div>

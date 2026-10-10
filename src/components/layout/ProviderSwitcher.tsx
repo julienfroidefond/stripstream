@@ -114,7 +114,7 @@ export function ProviderSwitcher({ komgaConfigs, stripstreamConfigs }: ProviderS
         data-testid="provider-switcher"
         className={cn(
           "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
-          "hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          "hover:bg-accent hover:text-accent-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
         )}
         aria-label={t("header.providerSwitcher.title")}
       >
@@ -148,7 +148,7 @@ export function ProviderSwitcher({ komgaConfigs, stripstreamConfigs }: ProviderS
                 disabled={busyKey !== null}
                 className={cn(
                   "flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
                   "disabled:cursor-not-allowed",
                   conn.isActive
                     ? "bg-primary/15 text-primary font-medium"

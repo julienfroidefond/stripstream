@@ -1,7 +1,12 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+@import 'tw-animate-css';
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+  Global page behaviours. Kept outside of any @layer so they keep the same
+  precedence they had under Tailwind CSS v3 (unlayered styles win over layers).
+*/
 html,
 body {
   overscroll-behavior: none;
@@ -24,6 +29,111 @@ body.no-pinch-zoom * {
     height: calc(3.5rem + env(safe-area-inset-top)); 
   }
 } */
+
+/*
+  `container` used to come from theme.container in the v3 config
+  (center, padding 1rem / 2rem at sm, and ONLY a max-width at 2xl=1400px,
+  so it stayed fluid below 1400px). Tailwind v4 still emits its built-in
+  `container` with a max-width per breakpoint, so we explicitly reset
+  `max-width` to keep the previous fluid behaviour.
+*/
+@utility container {
+  width: 100%;
+  margin-inline: auto;
+  padding-inline: 1rem;
+  max-width: none;
+  @media (width >= 40rem) {
+    padding-inline: 2rem;
+  }
+  @media (width >= 1400px) {
+    max-width: 1400px;
+  }
+}
+
+@theme {
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+
+  --color-chart-1: hsl(var(--chart-1));
+  --color-chart-2: hsl(var(--chart-2));
+  --color-chart-3: hsl(var(--chart-3));
+  --color-chart-4: hsl(var(--chart-4));
+  --color-chart-5: hsl(var(--chart-5));
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
+  /* Project-specific animations (accordion/collapsible come from tw-animate-css). */
+  --animate-fade-in: fade-in 0.3s ease-in forwards;
+  --animate-loader-slide: loader-slide 1.25s ease-in-out infinite;
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes loader-slide {
+    0% {
+      transform: translateX(-120%);
+    }
+    100% {
+      transform: translateX(320%);
+    }
+  }
+}
+
+@utility hide-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+  &::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+  }
+}
+
+@utility pt-safe {
+  /* Classe utilitaire pour le padding-top avec safe-area-inset */
+  padding-top: env(safe-area-inset-top, 0);
+}
+
+/* Glassmorphism utilities */
+@utility glass {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+@utility glass-strong {
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
 
 @layer base {
   :root {
@@ -129,7 +239,6 @@ body.no-pinch-zoom * {
     @apply bg-background text-foreground antialiased;
     font-family: var(--font-ui);
   }
-
 }
 
 /* Empêche le zoom automatique iOS sur les inputs (hors @layer pour surcharger text-sm) */
@@ -138,58 +247,5 @@ body.no-pinch-zoom * {
   textarea,
   select {
     font-size: 16px !important;
-  }
-}
-
-@layer utilities {
-  .hide-scrollbar {
-    -ms-overflow-style: none; /* IE and Edge */
-    scrollbar-width: none; /* Firefox */
-  }
-  .hide-scrollbar::-webkit-scrollbar {
-    display: none; /* Chrome, Safari and Opera */
-  }
-
-  /* Classe utilitaire pour le padding-top avec safe-area-inset */
-  .pt-safe {
-    padding-top: env(safe-area-inset-top, 0);
-  }
-
-  /* Glassmorphism utilities */
-  .glass {
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-  }
-
-  .glass-strong {
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-  }
-
-  /* Fade-in animation */
-  @keyframes fade-in {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-
-  .animate-fade-in {
-    animation: fade-in 0.3s ease-in forwards;
-  }
-
-  @keyframes loader-slide {
-    0% {
-      transform: translateX(-120%);
-    }
-    100% {
-      transform: translateX(320%);
-    }
-  }
-
-  .animate-loader-slide {
-    animation: loader-slide 1.25s ease-in-out infinite;
   }
 }
