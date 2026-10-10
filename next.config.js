@@ -58,7 +58,14 @@ const nextConfig = {
     return config;
   },
   // Configuration pour améliorer la résolution DNS
-  serverExternalPackages: ["dns", "pino", "pino-pretty"],
+  // + modules natifs Prisma 7 (better-sqlite3) à ne pas bundler
+  serverExternalPackages: [
+    "dns",
+    "pino",
+    "pino-pretty",
+    "better-sqlite3",
+    "@prisma/adapter-better-sqlite3",
+  ],
   // Optimisations pour Docker dev
   turbopack: {
     rules: {

@@ -56,6 +56,9 @@ prisma/data/
 *.sqlite
 *.sqlite3
 
+# Prisma generated client (created by `prisma generate`)
+/src/generated/
+
 temp/
 # Playwright auth state
 .auth/

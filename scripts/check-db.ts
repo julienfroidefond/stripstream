@@ -1,11 +1,16 @@
-#!/usr/bin/env node
+#!/usr/bin/env tsx
 /**
  * Script pour vérifier le contenu de la base de données
  */
 
-import { PrismaClient } from "@prisma/client";
+import "dotenv/config";
+import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { PrismaClient } from "../src/generated/prisma/client";
 
-const prisma = new PrismaClient();
+const adapter = new PrismaBetterSqlite3({
+  url: process.env.DATABASE_URL ?? "file:./prisma/data/stripstream.db",
+});
+const prisma = new PrismaClient({ adapter });
 
 async function checkDatabase() {
   try {

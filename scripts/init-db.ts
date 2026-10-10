@@ -1,13 +1,18 @@
-#!/usr/bin/env node
+#!/usr/bin/env tsx
 /**
  * Script d'initialisation de la base de données SQLite
  * Exécuté au démarrage de l'application
  */
 
-import { PrismaClient } from "@prisma/client";
+import "dotenv/config";
+import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { PrismaClient } from "../src/generated/prisma/client";
 import bcrypt from "bcryptjs";
 
-const prisma = new PrismaClient();
+const adapter = new PrismaBetterSqlite3({
+  url: process.env.DATABASE_URL ?? "file:./prisma/data/stripstream.db",
+});
+const prisma = new PrismaClient({ adapter });
 
 const ADMIN_EMAIL = "julienfroidefond@gmail.com";
 const ADMIN_PASSWORD = process.env.ADMIN_DEFAULT_PASSWORD || "Admin@2025";
@@ -21,13 +26,16 @@ async function initializeAdminUser() {
 
     if (existingAdmin) {
       // Vérifier si l'utilisateur a le rôle admin
-      const hasAdminRole = existingAdmin.roles.includes("ROLE_ADMIN");
+      const currentRoles = Array.isArray(existingAdmin.roles)
+        ? existingAdmin.roles.filter((role): role is string => typeof role === "string")
+        : [];
+      const hasAdminRole = currentRoles.includes("ROLE_ADMIN");
 
       if (hasAdminRole) {
         console.log(`✅ Admin user ${ADMIN_EMAIL} already exists with admin role`);
       } else {
         // Ajouter le rôle admin
-        const updatedRoles = Array.from(new Set([...existingAdmin.roles, "ROLE_ADMIN"]));
+        const updatedRoles = Array.from(new Set([...currentRoles, "ROLE_ADMIN"]));
         await prisma.user.update({
           where: { email: ADMIN_EMAIL },
           data: { roles: updatedRoles },

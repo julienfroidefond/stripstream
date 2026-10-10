@@ -39,6 +39,12 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# prisma generated client (regenerated inside the image)
+src/generated
+
+# local development SQLite database (never bake runtime data into the image)
+prisma/data
+
 # IDE
 .idea
 .vscode
