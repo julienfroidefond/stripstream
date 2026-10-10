@@ -6,7 +6,7 @@ import { AppError } from "../../utils/errors";
 import type { UserPreferences, BackgroundPreferences } from "@/types/preferences";
 import { defaultPreferences } from "@/types/preferences";
 import type { User } from "@/types/komga";
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
 import { normalizeGridPageSize } from "@/lib/pageSize";
 
 export class PreferencesService {

@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
-import { PrismaClient } from '@prisma/client';
+import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
+import { PrismaClient } from '../../src/generated/prisma/client';
 import { signIn } from '../helpers/auth';
 
 const hasIsolatedDatabase = Boolean(process.env.E2E_DATABASE_URL);
@@ -20,7 +21,7 @@ async function getConnectionId(accountEmail: string, connectionName: string) {
   const databaseUrl = process.env.E2E_DATABASE_URL;
   if (!databaseUrl) throw new Error('E2E_DATABASE_URL is required');
 
-  const prisma = new PrismaClient({ datasources: { db: { url: databaseUrl } } });
+  const prisma = new PrismaClient({ adapter: new PrismaBetterSqlite3({ url: databaseUrl }) });
   try {
     const user = await prisma.user.findUniqueOrThrow({ where: { email: accountEmail } });
     const connection = await prisma.komgaConfig.findUniqueOrThrow({

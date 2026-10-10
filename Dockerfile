@@ -19,6 +19,7 @@ COPY prisma ./prisma
 # Copy configuration files
 COPY tsconfig.json eslint.config.mjs next.config.js ./
 COPY tailwind.config.ts postcss.config.js ./
+COPY prisma.config.ts ./
 
 # Install dependencies with pnpm using cache mount for store
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
@@ -53,10 +54,14 @@ COPY --from=builder /app/public ./public
 # Copy full node_modules for Prisma CLI (pnpm symlinks prevent cherry-picking)
 COPY --from=builder /app/node_modules ./node_modules
 
-# Copy prisma schema and init scripts
+# Copy prisma schema, config and init scripts
 COPY prisma ./prisma
 COPY --from=builder /app/scripts ./scripts
 COPY package.json ./
+COPY prisma.config.ts ./
+
+# Generated Prisma Client (imported by the tsx init script)
+COPY --from=builder /app/src/generated ./src/generated
 
 # Copy entrypoint script
 COPY docker-entrypoint.sh ./

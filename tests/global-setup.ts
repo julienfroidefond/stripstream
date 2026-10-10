@@ -1,4 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
+import { PrismaClient } from '../src/generated/prisma/client';
 import bcrypt from 'bcryptjs';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -23,7 +24,9 @@ export default async function globalSetup() {
     stdio: 'inherit',
   });
 
-  const prisma = new PrismaClient({ datasources: { db: { url } } });
+  // Prisma 7 requires an explicit driver adapter instead of `datasources`.
+  const adapter = new PrismaBetterSqlite3({ url });
+  const prisma = new PrismaClient({ adapter });
 
   const email = 'e2e-stream@test.local';
   const readerEmail = 'e2e-reader@test.local';

@@ -7,6 +7,7 @@ export default defineConfig([
   {
     ignores: [
       "temp/**",
+      "src/generated/**",
       ".next/**",
       ".next-e2e/**",
       "node_modules/**",
@@ -65,7 +66,7 @@ export default defineConfig([
     },
   },
   {
-    files: ["scripts/**/*.{js,mjs,cjs}"],
+    files: ["scripts/**/*.{js,mjs,cjs,ts}"],
     rules: {
       "no-console": "off",
       "@typescript-eslint/no-require-imports": "off",
