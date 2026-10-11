@@ -43,4 +43,24 @@ test.describe('Authenticated navigation', () => {
     await expect(page).toHaveURL(/\/books\/book-a/);
     await expect(page.locator('img[alt^="Page "]').first()).toBeVisible({ timeout: 15_000 });
   });
+
+  test('searches series and books through the global search', async ({ page }) => {
+    await page.goto('/');
+    const search = page.getByRole('searchbox');
+    await expect(search).toBeVisible();
+
+    // No match → the dropdown surfaces the localized empty state.
+    await search.fill('__e2e_no_match__');
+    await expect(page.getByText(/Aucun résultat|No results/i)).toBeVisible({ timeout: 10_000 });
+
+    // A real query hits /api/provider/search and returns both a series and a
+    // book; clicking the series result navigates to its detail page.
+    await search.fill('BD');
+    const seriesResult = page.getByRole('link', { name: /Ouvrir la série|Open series/i }).first();
+    await expect(seriesResult).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole('link', { name: /Ouvrir le tome|Open book/i }).first()).toBeVisible();
+
+    await seriesResult.click();
+    await expect(page).toHaveURL(/\/series\//);
+  });
 });

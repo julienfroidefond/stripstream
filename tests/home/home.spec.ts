@@ -145,4 +145,21 @@ test.describe('Home functional journeys', () => {
 
     await selectConnection(page, 'Stub A');
   });
+
+  test('degrades gracefully when one provider endpoint is down', async ({ page }) => {
+    // "Stub Partial" répond à `books/list` mais échoue (`503`) sur
+    // `books/ondeck`. `getHomeContinueReadingData` doit alors se rabattre sur
+    // l'endpoint survivant via `Promise.allSettled` : le hero continue-lecture
+    // s'affiche au lieu de disparaître, et aucune bannière d'erreur globale
+    // n'apparaît puisque les autres feeds restent sains.
+    await selectConnection(page, 'Stub Partial');
+    await page.goto('/');
+
+    await expect(page.getByTestId('home-continue-reading').first()).toBeVisible({ timeout: 15_000 });
+    await expect(
+      page.getByText(/Erreur lors de la récupération de l'accueil|Error fetching home page/i)
+    ).toHaveCount(0);
+
+    await selectConnection(page, 'Stub A');
+  });
 });

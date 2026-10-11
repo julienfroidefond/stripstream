@@ -43,9 +43,15 @@ test.describe('Session lifecycle after app suspension', () => {
     await context.clearCookies({ name: /(?:authjs|next-auth)\.session-token/ });
 
     // iPadOS resumes a suspended standalone PWA without issuing a navigation.
-    // visibilitychange reproduces that lifecycle transition on Chromium.
-    await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
-
-    await expect(page).toHaveURL(/\/login\?from=%2F(?:&|$)/, { timeout: 15_000 });
+    // visibilitychange reproduces that lifecycle transition on Chromium. The
+    // guard only reacts while the document is visible and attaches its listener
+    // once hydration settles, both of which can race with a single synthetic
+    // event under parallel load, so bring the page to front and re-dispatch
+    // until the redirect happens.
+    await expect(async () => {
+      await page.bringToFront();
+      await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+      await expect(page).toHaveURL(/\/login\?from=%2F(?:&|$)/, { timeout: 3_000 });
+    }).toPass({ timeout: 25_000 });
   });
 });

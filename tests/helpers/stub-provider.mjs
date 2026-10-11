@@ -25,6 +25,10 @@ function isReadOperation(method, path) {
 // Instances distinctes : chaque connexion pointe vers un port différent
 // pour simuler deux serveurs Komga avec des données différentes.
 const instance = port === 8445 ? 'B' : 'A';
+// Instance C (port 8446) : panne partielle volontaire. `books/ondeck` échoue
+// avec un 503 tandis que les autres endpoints restent sains, ce qui permet de
+// vérifier le fallback `Promise.allSettled` de la home.
+const failOndeck = port === 8446;
 const libName = instance === 'B' ? 'Bibliothèque B' : 'Bibliothèque A';
 const seriesName = instance === 'B' ? 'BD-B (Tome 1)' : 'BD-A (Tome 1)';
 const seriesId = instance === 'B' ? 'series-b' : 'series-a';
@@ -189,6 +193,27 @@ function paged(content, page = 0, size = 20) {
   };
 }
 
+// Lit et parse le corps JSON d'une requête POST. Les handlers existants lisaient
+// déjà le flux en streaming ; ce helper centralise le cas `fullTextSearch`.
+function readJsonBody(req) {
+  return new Promise((resolve) => {
+    let body = '';
+    req.on('data', (chunk) => { body += chunk; });
+    req.on('end', () => {
+      try { resolve(JSON.parse(body)); } catch { resolve({}); }
+    });
+  });
+}
+
+// Komga envoie `{ fullTextSearch }` pour la recherche globale. Les autres appels
+// (pagination, stats, continue-reading) envoient `{ condition }` sans ce champ et
+// ne doivent pas être filtrés.
+function filterByFullText(items, fullTextSearch, textOf) {
+  const query = String(fullTextSearch ?? '').trim().toLowerCase();
+  if (!query) return items;
+  return items.filter((item) => textOf(item).toLowerCase().includes(query));
+}
+
 function currentBooks() {
   return books.map((book) => ({ ...book, readProgress }));
 }
@@ -203,7 +228,7 @@ function sendImage(res, pageNumber) {
   res.end(svg);
 }
 
-const server = http.createServer((req, res) => {
+const server = http.createServer(async (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   const url = new URL(req.url, `http://localhost:${port}`);
   const path = url.pathname;
@@ -384,17 +409,32 @@ const server = http.createServer((req, res) => {
 
   // GET /api/v1/books/ondeck
   if (path === '/api/v1/books/ondeck' && req.method === 'GET') {
+    if (failOndeck) {
+      return send({ error: 'ondeck unavailable' }, 503);
+    }
     return send(paged(currentBooks()));
   }
 
-  // POST /api/v1/series/list (body: condition)
+  // POST /api/v1/series/list (body: condition | fullTextSearch)
   if (path === '/api/v1/series/list' && req.method === 'POST') {
-    return send(paged(series));
+    const payload = await readJsonBody(req);
+    const matched = filterByFullText(
+      series,
+      payload.fullTextSearch,
+      (s) => `${s.name} ${s.metadata?.title ?? ''}`
+    );
+    return send(paged(matched));
   }
 
-  // POST /api/v1/books/list (body: condition)
+  // POST /api/v1/books/list (body: condition | fullTextSearch)
   if (path === '/api/v1/books/list' && req.method === 'POST') {
-    return send(paged(currentBooks()));
+    const payload = await readJsonBody(req);
+    const matched = filterByFullText(
+      currentBooks(),
+      payload.fullTextSearch,
+      (b) => `${b.name} ${b.metadata?.title ?? ''}`
+    );
+    return send(paged(matched));
   }
 
   // GET image and thumbnail fixtures used by the reader and home carousels.
