@@ -38,9 +38,9 @@ test.describe('Favorites and reading lists', () => {
     await expect(listsConnection.getByRole('radio')).toBeChecked({ timeout: 15_000 });
 
     await page.goto('/reading-lists/list-a');
-    await expect(page.getByRole('heading', { name: 'E2E Reading List' })).toBeVisible();
-    await expect(page.getByRole('button', { name: /BD-A|series-a/i })).toBeVisible();
-    await expect(page.getByTestId('reading-list-status')).toHaveText(/Lu|Read/);
+    await expect(page.getByRole('heading', { name: 'E2E Reading List' }).first()).toBeVisible();
+    await expect(page.getByRole('button', { name: /BD-A|series-a/i }).first()).toBeVisible();
+    await expect(page.getByTestId('reading-list-status').first()).toHaveText(/Lu|Read/);
   });
 
   test('filters dedicated reading lists by reading status', async ({ page }) => {
@@ -54,10 +54,10 @@ test.describe('Favorites and reading lists', () => {
     await expect(page.getByTestId('reading-lists-page').first()).toBeVisible();
     await expect(page.getByTestId('reading-list-card-list-a').first()).toBeVisible();
 
-    await page.getByTestId('reading-list-filter-read').click();
+    await page.getByTestId('reading-list-filter-read').first().click();
     await expect(page.getByTestId('reading-list-card-list-a').first()).toBeVisible();
 
-    await page.getByTestId('reading-list-search').fill('inconnue');
-    await expect(page.getByTestId('reading-list-filter-empty')).toBeVisible();
+    await page.getByTestId('reading-list-search').first().fill('inconnue');
+    await expect(page.getByTestId('reading-list-filter-empty').first()).toBeVisible();
   });
 });
