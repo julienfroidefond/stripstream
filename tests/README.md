@@ -109,6 +109,15 @@ pnpm exec playwright test --project=read-only
 The run must be green, `E2E_STUB_LOG` must be empty (zero write attempts), and
 `shasum -a 256 /tmp/stripstream-e2e-ro.db` must equal the recorded hash.
 
+## Provider degradation fixture
+
+`tests/helpers/stub-provider.mjs` boots a third instance on port `8446`
+(seeded connection "Stub Partial"): `GET /api/v1/books/ondeck` returns `503`
+while every other endpoint stays healthy. `tests/home/home.spec.ts` uses it to
+prove the home degrades gracefully — `getHomeContinueReadingData` falls back to
+the surviving `books/list` call through `Promise.allSettled`, so the
+continue-reading hero still renders instead of failing the whole page.
+
 ## Timing harness
 
 `scripts/e2e-report.mjs` turns a Playwright JSON report into a stable summary:
@@ -130,7 +139,10 @@ Authenticated journeys use the local SQLite database and seeded accounts by
 default; no production or shared-development credentials are required.
 
 Set `E2E_USER_IS_ADMIN=true` when that account is expected to access the admin
-dashboard. Without it, the suite verifies that `/admin` redirects the user away.
+dashboard. When set, `global-setup.ts` seeds the stream account with
+`ROLE_ADMIN` and the dashboard content journey (stats cards, users table,
+manual refresh) runs; otherwise the suite only verifies that `/admin` redirects
+the user away.
 
 Authenticated tests discover real library, series, and book IDs from the UI. If
 the seeded account has no matching data, only the data-dependent scenario is

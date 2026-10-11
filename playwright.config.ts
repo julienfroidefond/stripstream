@@ -120,6 +120,15 @@ export default defineConfig({
                 reuseExistingServer: false,
                 timeout: 30_000,
               },
+              {
+                // Instance C : panne partielle. Répond à `books/list` mais
+                // renvoie 503 sur `books/ondeck` pour prouver que la home
+                // survit à l'échec d'un seul endpoint (Promise.allSettled).
+                command: 'node tests/helpers/stub-provider.mjs 8446',
+                url: 'http://127.0.0.1:8446/api/v1/libraries',
+                reuseExistingServer: false,
+                timeout: 30_000,
+              },
             ]
           : []),
       ]

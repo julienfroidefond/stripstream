@@ -37,8 +37,13 @@ export default async function globalSetup() {
   // scénarios mutables indépendants d'une exécution précédente. Les relations
   // du compte (préférences et connexions incluses) sont supprimées par cascade.
   await prisma.user.deleteMany({ where: { email: { in: [email, readerEmail] } } });
+  // `E2E_USER_IS_ADMIN=true` seeds the stream account as an administrator so the
+  // dashboard content journeys can run; otherwise the suite only proves the
+  // redirect-away path.
+  const streamRoles =
+    process.env.E2E_USER_IS_ADMIN === 'true' ? ['ROLE_USER', 'ROLE_ADMIN'] : ['ROLE_USER'];
   const user = await prisma.user.create({
-    data: { email, password: hashed, roles: ['ROLE_USER'] },
+    data: { email, password: hashed, roles: streamRoles },
   });
   const readerUser = await prisma.user.create({
     data: { email: readerEmail, password: hashed, roles: ['ROLE_USER'] },
@@ -56,6 +61,11 @@ export default async function globalSetup() {
     where: { userId_name: { userId: user.id, name: 'Stub B' } },
     update: { url: 'http://127.0.0.1:8445', authHeader: header },
     create: { userId: user.id, name: 'Stub B', url: 'http://127.0.0.1:8445', username: 'user', authHeader: header },
+  });
+  // Instance C : panne partielle (`books/ondeck` en 503) pour le test de
+  // dégradation gracieuse de la home.
+  await prisma.komgaConfig.create({
+    data: { userId: user.id, name: 'Stub Partial', url: 'http://127.0.0.1:8446', username: 'user', authHeader: header },
   });
 
   await prisma.user.update({
