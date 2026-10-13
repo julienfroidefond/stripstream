@@ -1,7 +1,8 @@
 name: CI
 
-# Quality gate for pull requests: ESLint (0 warnings), strict TypeScript and a
-# production build — the minimum quality gate documented in AGENTS.md.
+# Quality gate for pull requests: ESLint (0 warnings), strict TypeScript, the
+# Vitest unit suite and a production build — the minimum quality gate
+# documented in AGENTS.md.
 #
 # Pull requests only. The merge to `main` is validated by the image build inside
 # the deploy pipeline (.github/workflows/deploy.yml), so this workflow
@@ -48,6 +49,9 @@ jobs:
 
       - name: Typecheck
         run: pnpm typecheck
+
+      - name: Unit tests
+        run: pnpm test:unit
 
       - name: Build
         run: pnpm build

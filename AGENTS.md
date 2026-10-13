@@ -13,7 +13,7 @@ Canonical guide for engineers and coding agents working on Stripstream. Claude C
 - `prisma/`: SQLite schema, migrations, and seed artifacts.
 - `public/`: static files and PWA shell assets.
 - `scripts/`: maintenance scripts (DB init, admin password reset, icon generation).
-- `tests/`: Playwright E2E suite, organized by user-facing area.
+- `tests/`: Playwright E2E suite, organized by user-facing area. Unit tests are colocated with their source as `src/**/*.test.ts` (Vitest).
 - `docs/`: architecture, API, and Komga references.
 
 ## Build, Test, and Development Commands
@@ -23,13 +23,16 @@ Use `pnpm` (lockfile and `packageManager` are configured for it). All commands r
 - `pnpm start`: run production server.
 - `pnpm lint`: run ESLint across the repo. Must pass with 0 warnings.
 - `pnpm typecheck` or `pnpm -s tsc --noEmit`: strict TypeScript checks.
+- `pnpm test:unit`: run the Vitest unit suite (`pnpm test:unit:watch` for watch mode).
 - `pnpm init-db`: seed the admin user (run after applying migrations).
 - `pnpm reset-admin-password`: reset admin credentials.
 - `pnpm icons`: regenerate PWA icons and splash screens.
 - `pnpm prisma migrate deploy`: apply pending migrations (or `pnpm prisma migrate dev --name <n>` while developing).
 
 ## Testing Guidelines
-Playwright E2E is the only automated test suite. There is no unit-test runner.
+Two automated suites run side by side: **Vitest** for pure/unit logic and **Playwright** for user-facing E2E.
+- `pnpm test:unit`: Vitest unit suite. Tests live next to the source as `src/**/*.test.ts` and run in `node` by default (per-file `// @vitest-environment jsdom` opt-in for DOM hooks). Config: `vitest.config.ts`.
+- Put pure logic (adapters, helpers, parsers, rate-limiters) under unit tests; keep browser-only behaviour in E2E. Hooks that only need a DOM (no real network/paint) can opt in per-file with the `// @vitest-environment jsdom` docblock together with `@testing-library/react`; heavier browser flows stay in E2E.
 - `pnpm test:e2e`: build `.next-e2e` then run the full suite (`setup`, then `read-only`, then `mutating`).
 - `pnpm test:e2e:read-only`: run only read-only journeys (plus the `setup` dependency).
 - `pnpm test:e2e:mutating`: run only mutating journeys (plus `setup` and `read-only` dependencies).
@@ -37,7 +40,7 @@ Playwright E2E is the only automated test suite. There is no unit-test runner.
 - `pnpm test:e2e:run`, `test:e2e:build`, `test:e2e:report`, `test:e2e:timings`: rerun without rebuilding, build only, open the last report, and parse a JSON report.
 - Prerequisite once per machine: `pnpm exec playwright install chromium`.
 - `tests/README.md` is the reference for projects, execution order, auth state, the read-only runtime proof, and E2E environment variables.
-- Minimum quality gate for every change: `pnpm lint` (0 warnings) and `pnpm typecheck`.
+- Minimum quality gate for every change: `pnpm lint` (0 warnings), `pnpm typecheck` and `pnpm test:unit`.
 - For UI changes, smoke-test the affected routes (home, libraries, series, reader) in both themes.
 
 ## Architecture
