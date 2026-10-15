@@ -1,5 +1,10 @@
-import { Bookmark, Heart, History, LibraryBig, Sparkles, Wand2 } from "lucide-react";
-import { HomeCarouselSkeleton, HomeHeroSkeleton } from "@/components/home/HomeContent";
+import { Bookmark, Heart, History, LibraryBig, Sparkles } from "lucide-react";
+import {
+  HomeCarouselSkeleton,
+  HomeHeroSkeleton,
+  HomeReadingListSkeleton,
+  HomeRecommendationSkeleton,
+} from "@/components/home/HomeContent";
 import { Skeleton } from "@/components/ui/skeleton";
 
 /**
@@ -18,10 +23,10 @@ export default function AppLoading() {
           <HomeHeroSkeleton />
           <HomeCarouselSkeleton icon={LibraryBig} />
           <HomeCarouselSkeleton icon={Heart} />
-          <HomeCarouselSkeleton icon={Bookmark} />
+          <HomeReadingListSkeleton icon={Bookmark} />
           <HomeCarouselSkeleton icon={Sparkles} />
           <HomeCarouselSkeleton icon={History} />
-          <HomeCarouselSkeleton icon={Wand2} />
+          <HomeRecommendationSkeleton />
         </div>
       </div>
     </main>

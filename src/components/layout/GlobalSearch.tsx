@@ -121,7 +121,7 @@ export function GlobalSearch() {
           }}
           placeholder={t("header.search.placeholder")}
           aria-label={t("header.search.placeholder")}
-          className="h-10 rounded-full border-border/60 bg-background/65 pl-10 pr-10 text-sm shadow-xs focus-visible:ring-primary/40"
+          className="h-10 rounded-full border-border bg-surface-1 pl-10 pr-10 text-sm focus-visible:ring-primary/40"
         />
         {isLoading && (
           <div className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2">
@@ -131,8 +131,8 @@ export function GlobalSearch() {
       </form>
 
       {isOpen && query.trim().length >= MIN_QUERY_LENGTH && (
-        <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-xl backdrop-blur-xl">
-          <div className="max-h-104 overflow-y-auto p-2">
+        <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 overflow-hidden rounded-2xl border border-border bg-popover shadow-xl">{/* taste-skill-ignore: panneau déroulant (overlay) */}
+          <div className="max-h-[26rem] overflow-y-auto p-2">
             {seriesResults.length > 0 && (
               <div className="mb-2">
                 <div className="px-2 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">

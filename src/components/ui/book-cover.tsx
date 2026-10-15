@@ -16,7 +16,7 @@ const getReadingStatusInfo = (
   if (!book.readProgress) {
     return {
       label: t("books.status.unread"),
-      className: "bg-yellow-500/10 text-yellow-500",
+      className: "bg-amber-400/90 text-amber-950",
     };
   }
 
@@ -24,7 +24,7 @@ const getReadingStatusInfo = (
     const readDate = book.readProgress.lastReadAt ? formatDate(book.readProgress.lastReadAt) : null;
     return {
       label: readDate ? t("books.status.readDate", { date: readDate }) : t("books.status.read"),
-      className: "bg-green-500/10 text-green-500",
+      className: "bg-emerald-400/90 text-emerald-950",
     };
   }
 
@@ -36,13 +36,13 @@ const getReadingStatusInfo = (
         current: currentPage,
         total: book.pageCount,
       }),
-      className: "bg-blue-500/10 text-blue-500",
+      className: "bg-teal-400/90 text-teal-950",
     };
   }
 
   return {
     label: t("books.status.unread"),
-    className: "bg-yellow-500/10 text-yellow-500",
+    className: "bg-amber-400/90 text-amber-950",
   };
 };
 
@@ -110,20 +110,20 @@ function BookCoverContent({
                   pagesCount={book.pageCount}
                   isRead={isRead}
                   onSuccess={() => handleMarkAsRead()}
-                  className="bg-white/90 hover:bg-white text-black shadow-xs"
+                  className="bg-white/90 hover:bg-white text-black"
                 />
               )}
               {!isAnonymous && hasReadProgress && (
                 <MarkAsUnreadButton
                   bookId={book.id}
                   onSuccess={() => handleMarkAsUnread()}
-                  className="bg-white/90 hover:bg-white text-black shadow-xs"
+                  className="bg-white/90 hover:bg-white text-black"
                 />
               )}
             </div>
           )}
           {showOverlay && overlayVariant === "default" && (
-            <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/60 to-transparent p-4 space-y-2 translate-y-full group-hover:translate-y-0 transition-transform duration-200">
+            <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/60 to-transparent p-4 space-y-2 translate-y-full group-hover:translate-y-0 transition-transform duration-200">{/* taste-skill-ignore: scrim neutre au-dessus de la couverture */}
               <p className="text-sm font-medium text-white text-left line-clamp-2">
                 {book.title ||
                   (book.number

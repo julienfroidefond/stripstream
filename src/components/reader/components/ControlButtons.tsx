@@ -29,7 +29,7 @@ import {
 import type { ReaderBackground } from "@/types/preferences";
 
 const readerBackgroundOptions: { value: ReaderBackground; className: string }[] = [
-  { value: "default", className: "bg-linear-to-br from-primary/70 via-background to-cyan-400/50" },
+  { value: "default", className: "bg-background ring-1 ring-border" },
   { value: "black", className: "bg-[#09090b]" },
   { value: "white", className: "border border-black/20 bg-white" },
   { value: "cream", className: "bg-[#f4ead8]" },
@@ -77,7 +77,7 @@ export const ControlButtons = memo(function ControlButtons({
       {/* Boutons de contrôle */}
       <div
         className={cn(
-          "absolute left-1/2 top-4 z-30 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-border/60 bg-background/55 p-1.5 shadow-[0_8px_28px_-18px_rgba(0,0,0,0.75)] backdrop-blur-xl transition-all duration-300",
+          "absolute left-1/2 top-4 z-30 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-border bg-surface-2 p-1.5 transition-opacity duration-300",
           showControls ? "opacity-100" : "opacity-0 pointer-events-none"
         )}
         onClick={(e) => {
@@ -243,7 +243,7 @@ export const ControlButtons = memo(function ControlButtons({
           tooltip={t("reader.controls.previousPage")}
           iconClassName="h-8 w-8"
           className={cn(
-            "absolute top-1/2 z-20 -translate-y-1/2 rounded-full border border-border/60 bg-background/55 shadow-[0_8px_24px_-16px_rgba(0,0,0,0.75)] backdrop-blur-xl transition-all duration-300 hover:bg-background/70",
+            "absolute top-1/2 z-20 -translate-y-1/2 rounded-full border border-border bg-surface-2 transition-opacity duration-300 hover:bg-surface-3",
             "left-4",
             showControls ? "opacity-100" : "opacity-0 pointer-events-none"
           )}
@@ -265,7 +265,7 @@ export const ControlButtons = memo(function ControlButtons({
           tooltip={t("reader.controls.nextPage")}
           iconClassName="h-8 w-8"
           className={cn(
-            "absolute top-1/2 z-20 -translate-y-1/2 rounded-full border border-border/60 bg-background/55 shadow-[0_8px_24px_-16px_rgba(0,0,0,0.75)] backdrop-blur-xl transition-all duration-300 hover:bg-background/70",
+            "absolute top-1/2 z-20 -translate-y-1/2 rounded-full border border-border bg-surface-2 transition-opacity duration-300 hover:bg-surface-3",
             "right-4",
             showControls ? "opacity-100" : "opacity-0 pointer-events-none"
           )}

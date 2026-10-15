@@ -20,7 +20,7 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
         title={tooltip}
         {...props}
       >
-        <Icon className={cn("h-4 w-4", label && "mr-2", iconClassName)} />
+        <Icon className={cn("h-4 w-4", iconClassName)} />
         {label && <span>{label}</span>}
       </Button>
     );

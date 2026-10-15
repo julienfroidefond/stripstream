@@ -23,7 +23,7 @@ export async function GET(
 
     if (httpStatus === 404) {
       const seriesId: string = (await params).seriesId;
-      logger.info(`📷 Image not found for series: ${seriesId}`);
+      logger.info(`Image not found for series: ${seriesId}`);
       return NextResponse.json(
         {
           error: {

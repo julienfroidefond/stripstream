@@ -72,7 +72,7 @@ export const PageInput = ({ currentPage, totalPages, onPageChange }: PageInputPr
             value={inputValue}
             onChange={handleChange}
             className={cn(
-              "w-12 bg-background/70 backdrop-blur-md text-center rounded-md py-1 px-2",
+              "w-12 bg-surface-2 text-center rounded-md py-1 px-2",
               "focus:outline-hidden focus:ring-2",
               "text-sm text-foreground",
               isValid || inputValue === ""
@@ -88,7 +88,7 @@ export const PageInput = ({ currentPage, totalPages, onPageChange }: PageInputPr
             onClick={handleGoToPage}
             disabled={!isValid}
             data-action="goto"
-            className="p-1 rounded-md bg-background/70 backdrop-blur-md hover:bg-background/80 transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-background/70"
+            className="p-1 rounded-md bg-surface-2 hover:bg-surface-3 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             aria-label="Aller à cette page"
           >
             <ArrowRight className="h-4 w-4" />

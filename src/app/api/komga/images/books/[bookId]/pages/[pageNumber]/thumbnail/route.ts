@@ -43,7 +43,7 @@ export async function GET(
       const { bookId, pageNumber: pageNumberParam } = await params;
       const pageNumber: number = parseInt(pageNumberParam);
        
-      logger.info(`📷 Page ${pageNumber} thumbnail not found for book: ${bookId}`);
+      logger.info(`Page ${pageNumber} thumbnail not found for book: ${bookId}`);
       return NextResponse.json(
         {
           error: {

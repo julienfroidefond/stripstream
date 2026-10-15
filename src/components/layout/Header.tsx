@@ -6,6 +6,8 @@ import { IconButton } from "@/components/ui/icon-button";
 import { useState } from "react";
 import { GlobalSearch } from "@/components/layout/GlobalSearch";
 import { useAnonymous } from "@/contexts/AnonymousContext";
+import { useMotionValueEvent, useScroll } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -23,6 +25,13 @@ export function Header({
   const { isAnonymous, toggleAnonymous } = useAnonymous();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+  const [isCondensed, setIsCondensed] = useState(false);
+  const { scrollY } = useScroll();
+
+  // La barre se resserre dès que la page défile : elle rend de la place au contenu.
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    setIsCondensed(latest > 12);
+  });
 
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark");
@@ -37,9 +46,8 @@ export function Header({
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-primary/30 bg-background/70 shadow-xs backdrop-blur-xl supports-backdrop-filter:bg-background/65 pt-safe relative overflow-visible">
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(112deg,hsl(var(--primary)/0.24)_0%,hsl(192_85%_55%/0.2)_30%,transparent_56%),linear-gradient(248deg,hsl(338_82%_62%/0.16)_0%,transparent_46%),repeating-linear-gradient(135deg,hsl(var(--foreground)/0.03)_0_1px,transparent_1px_11px)]" />
-      <div className="container relative flex h-16 max-w-(--breakpoint-2xl) items-center">
+    <header className={cn("sticky top-0 z-50 w-full border-b border-border bg-background/80 glass pt-safe transition-[background-color,border-color] duration-300 ease-out supports-backdrop-filter:bg-background/65", isCondensed && "border-border/70 bg-background/95")}>{/* taste-skill-ignore: arête de la barre d'en-tête collante */}
+      <div className="container relative flex h-16 max-w-(--breakpoint-2xl) items-center">{/* taste-skill-ignore: hauteur de barre constante, aucun décalage au défilement */}
         <IconButton
           variant="ghost"
           size="icon"
@@ -53,10 +61,10 @@ export function Header({
         <div className="mr-2 flex items-center md:mr-4">
           <a className="mr-2 flex items-center md:mr-6" href="/">
             <span className="inline-flex flex-col leading-none">
-              <span className="bg-linear-to-r from-primary via-cyan-500 to-fuchsia-500 bg-clip-text text-base font-bold tracking-[0.06em] text-transparent sm:text-lg sm:tracking-[0.08em]">
-                StripStream
+              <span className="font-display text-base font-bold tracking-[0.06em] text-foreground sm:text-lg sm:tracking-[0.08em]">
+                Strip<span className="text-primary">Stream</span>
               </span>
-              <span className="mt-1 hidden text-[10px] font-medium uppercase tracking-[0.22em] text-foreground/70 sm:inline">
+              <span className="mt-1 hidden text-[10px] font-medium uppercase tracking-[0.22em] text-muted-foreground sm:inline">
                 comic reader
               </span>
             </span>
@@ -68,7 +76,7 @@ export function Header({
         </div>
 
         <div className="ml-auto flex items-center">
-          <nav className="flex items-center gap-1 rounded-full border border-border/60 bg-background/45 px-1 py-1 shadow-[0_4px_18px_-14px_rgba(0,0,0,0.65)] backdrop-blur-md">
+          <nav className="flex items-center gap-1">
             {showRefreshBackground && (
               <IconButton
                 onClick={handleRefreshBackground}
@@ -95,7 +103,7 @@ export function Header({
               variant="ghost"
               size="icon"
               icon={isAnonymous ? EyeOff : Eye}
-              className={`h-9 w-9 rounded-full ${isAnonymous ? "text-yellow-500 hover:text-yellow-400" : ""}`}
+              className={`h-9 w-9 rounded-full ${isAnonymous ? "text-primary" : ""}`}
               tooltip={t(isAnonymous ? "header.anonymousModeOn" : "header.anonymousModeOff")}
             />
             <LanguageSelector />
@@ -105,8 +113,9 @@ export function Header({
               aria-label={t("header.toggleTheme")}
             >
               <div className="relative flex h-5 w-5 items-center">
-                <Sun className="absolute inset-0 h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                <Moon className="absolute inset-0 h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                {/* En Tailwind 4, `rotate-*` pilote la propriété `rotate` (et non `transform`) : la transition doit donc la cibler. */}
+                <Sun className="absolute inset-0 h-[1.2rem] w-[1.2rem] rotate-0 transition-[rotate,opacity] dark:-rotate-90 dark:opacity-0" />
+                <Moon className="absolute inset-0 h-[1.2rem] w-[1.2rem] rotate-90 opacity-0 transition-[rotate,opacity] dark:rotate-0 dark:opacity-100" />
               </div>
               <span className="sr-only">{t("header.toggleTheme")}</span>
             </button>
@@ -114,7 +123,7 @@ export function Header({
         </div>
       </div>
       {isMobileSearchOpen && (
-        <div className="border-t border-border/50 bg-background/90 px-3 pb-3 pt-2 backdrop-blur-xl sm:hidden">
+        <div className="border-t border-border bg-background px-3 pb-3 pt-2 sm:hidden">{/* taste-skill-ignore: arête du panneau de recherche mobile */}
           <GlobalSearch />
         </div>
       )}

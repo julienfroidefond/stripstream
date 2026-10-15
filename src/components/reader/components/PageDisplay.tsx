@@ -40,7 +40,7 @@ function ErrorPlaceholder({ onRetry }: { onRetry: () => void }) {
           e.stopPropagation();
           onRetry();
         }}
-        className="flex items-center gap-2 rounded-full border border-border/60 bg-background/55 px-3 py-1.5 text-xs backdrop-blur-xl transition hover:bg-background/70"
+        className="flex items-center gap-2 rounded-full border border-border bg-surface-2 px-3 py-1.5 text-xs transition-colors hover:bg-surface-3"
       >
         <RotateCw className="h-3.5 w-3.5" />
         Réessayer
@@ -54,7 +54,7 @@ function imageClassNameFor(fitMode: FitMode, isLoading: boolean) {
     "cursor-pointer transition-opacity",
     fitMode === "fit" && "max-h-full max-w-full object-contain",
     fitMode === "width" && "w-full h-auto max-w-full",
-    fitMode === "height" && "h-[calc(100vh-2.5rem)] w-auto max-h-[calc(100vh-2.5rem)]",
+    fitMode === "height" && "h-[calc(100dvh-2.5rem)] w-auto max-h-[calc(100dvh-2.5rem)]",
     fitMode === "original" && "block",
     isLoading ? "opacity-0" : "opacity-100"
   );
@@ -94,10 +94,10 @@ export function PageDisplay({
     // Le lecteur est un overlay fixe : le spread doit se centrer par rapport au
     // viewport, jamais à un parent flex qui peut se réduire à son contenu.
     "relative flex w-screen min-w-screen max-w-none px-2 sm:px-4",
-    fitMode === "fit" && "h-[calc(100vh-2.5rem)] items-center justify-center",
-    fitMode === "width" && "min-h-[calc(100vh-2.5rem)] items-start justify-center",
-    fitMode === "height" && "h-[calc(100vh-2.5rem)] items-center min-w-full",
-    fitMode === "original" && "min-h-[calc(100vh-2.5rem)] items-start"
+    fitMode === "fit" && "h-[calc(100dvh-2.5rem)] items-center justify-center",
+    fitMode === "width" && "min-h-[calc(100dvh-2.5rem)] items-start justify-center",
+    fitMode === "height" && "h-[calc(100dvh-2.5rem)] items-center min-w-full",
+    fitMode === "original" && "min-h-[calc(100dvh-2.5rem)] items-start"
   );
 
   // En modes non-"fit", contenir l'image dans un wrapper auto-sizé pour ne pas

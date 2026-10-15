@@ -65,7 +65,7 @@ export function UserProfileCard({ profile }: UserProfileCardProps) {
           </div>
         </div>
 
-        <div className="pt-4 border-t">
+        <div className="pt-4">
           <p className="text-xs text-muted-foreground">
             Dernière mise à jour: {new Date(profile.updatedAt).toLocaleDateString("fr-FR")}
           </p>

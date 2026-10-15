@@ -190,7 +190,7 @@ function TypeBadge({ type }: { type: ConnectionType }) {
   const className =
     type === "komga"
       ? "bg-blue-500/15 text-blue-700 dark:text-blue-300"
-      : "bg-purple-500/15 text-purple-700 dark:text-purple-300";
+      : "bg-primary/15 text-primary";
   return (
     <span
       className={cn(

@@ -18,7 +18,8 @@ body.no-pinch-zoom * {
   touch-action: pan-x pan-y;
 }
 
-/* Ajout des règles pour gérer le safe-area-inset sur iOS
+/*
+  Ajout des règles pour gérer le safe-area-inset sur iOS
 @supports (padding-top: env(safe-area-inset-top)) {
   body {
     padding-top: env(safe-area-inset-top);
@@ -78,6 +79,11 @@ body.no-pinch-zoom * {
   --color-card: hsl(var(--card));
   --color-card-foreground: hsl(var(--card-foreground));
 
+  /* Une seule échelle de surfaces : la profondeur est tonale, pas ombrée. */
+  --color-surface-1: hsl(var(--surface-1));
+  --color-surface-2: hsl(var(--surface-2));
+  --color-surface-3: hsl(var(--surface-3));
+
   --color-chart-1: hsl(var(--chart-1));
   --color-chart-2: hsl(var(--chart-2));
   --color-chart-3: hsl(var(--chart-3));
@@ -88,9 +94,20 @@ body.no-pinch-zoom * {
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
 
+  /* UI en Geist, titres poster en Bricolage Grotesque (next/font pose les variables). */
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-bricolage), var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+
+  /* Courbe signature du langage de mouvement (EASE_PROJECTION côté framer-motion). */
+  --ease-projection: cubic-bezier(0.22, 1, 0.36, 1);
+
   /* Project-specific animations (accordion/collapsible come from tw-animate-css). */
   --animate-fade-in: fade-in 0.3s ease-in forwards;
   --animate-loader-slide: loader-slide 1.25s ease-in-out infinite;
+  --animate-reveal: reveal var(--duration-slow) cubic-bezier(0.16, 1, 0.3, 1) both;
+  /* Travelling du fond d'affiche : deux axes, durées premières entre elles. */
+  --animate-backdrop-pan: backdrop-pan 26s ease-in-out infinite;
+  --animate-backdrop-zoom: backdrop-zoom 18s ease-in-out infinite;
 
   @keyframes fade-in {
     from {
@@ -109,6 +126,47 @@ body.no-pinch-zoom * {
       transform: translateX(320%);
     }
   }
+
+  /* Entrée en scène : une seule fois, jamais en boucle. */
+  @keyframes reveal {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Fond d'affiche : travelling continu, en CSS pour ne dépendre d'aucun
+     montage JS. Deux axes sur deux éléments imbriqués — la translation sur le
+     parent, l'échelle sur l'enfant — avec des durées premières entre elles,
+     donc le fond ne repasse jamais par la même image : aucun cycle ne se lit.
+     Chaque boucle revient à sa valeur de départ, la reprise est invisible. */
+  @keyframes backdrop-pan {
+    0% {
+      transform: translate3d(-2.6%, 1.6%, 0);
+    }
+    50% {
+      transform: translate3d(2.6%, -1.6%, 0);
+    }
+    100% {
+      transform: translate3d(-2.6%, 1.6%, 0);
+    }
+  }
+
+  @keyframes backdrop-zoom {
+    0% {
+      transform: scale(1.08);
+    }
+    50% {
+      transform: scale(1.2);
+    }
+    100% {
+      transform: scale(1.08);
+    }
+  }
 }
 
 @utility hide-scrollbar {
@@ -124,63 +182,94 @@ body.no-pinch-zoom * {
   padding-top: env(safe-area-inset-top, 0);
 }
 
-/* Glassmorphism utilities */
+/* Une seule surface translucide dans toute l'app : la barre d'en-tête. */
 @utility glass {
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur-sm(14px) saturate(1.1); /* taste-skill-ignore: exception unique, en-tête */
+  -webkit-backdrop-filter: blur-sm(14px) saturate(1.1); /* taste-skill-ignore: exception unique, en-tête */
 }
 
-@utility glass-strong {
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+/* Grain : casse la platitude numérique sans image externe. */
+@utility grain {
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
 }
 
+/* Fond d'affiche : la vignette concentre la lumière au centre et fond les
+   bords dans la salle, pour que le flou ne ressemble pas à une tache. */
+@utility projection-vignette {
+  background: radial-gradient(115% 115% at 50% 42%, transparent 34%, rgba(0, 0, 0, 0.62) 100%); /* taste-skill-ignore: vignette de fond, pas un aplat décoratif */
+}
+
+/* Variante papier : en thème clair, le bandeau se fond dans la page. */
+@utility projection-vignette-paper {
+  background: radial-gradient(115% 115% at 50% 42%, transparent 30%, hsl(var(--background) / 0.9) 100%); /* taste-skill-ignore: vignette de fond, pas un aplat décoratif */
+}
+
+/* Halo de survol : la lumière suit le curseur sur une affiche.
+   La position est posée en JS via --glow-x / --glow-y. */
+@utility glow-layer {
+  background: radial-gradient(200px circle at var(--glow-x, 50%) var(--glow-y, 50%), hsl(var(--primary) / 0.16), transparent 72%); /* taste-skill-ignore: halo de survol, pas un aplat décoratif */
+}
+
+/*
+ * StripStream — "salle de projection".
+ * Sol quasi noir (jamais #000) teinté chaud, couvertures seules sources de
+ * lumière, un accent teal unique. Pas de dégradé décoratif, pas de verre
+ * (sauf la barre d'en-tête), pas d'ombre sur les éléments au repos : la
+ * profondeur vient du ton (surface-1/2/3) et de l'artwork.
+ */
 @layer base {
   :root {
-    --background: 36 33% 97%;
-    --background-rgb: 249, 246, 241;
-    --foreground: 222 33% 15%;
+    /* Papier chaud */
+    --background: 40 24% 96%;
+    --background-rgb: 247, 244, 239;
+    --foreground: 25 12% 11%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222 33% 15%;
+    --card: 40 30% 99%;
+    --card-foreground: 25 12% 11%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 33% 15%;
+    --popover: 40 32% 99%;
+    --popover-foreground: 25 12% 11%;
 
-    --primary: 198 78% 37%;
-    --primary-foreground: 210 40% 98%;
+    /* Une seule échelle de surfaces : la profondeur est tonale, pas ombrée. */
+    --surface-1: 40 30% 99%;
+    --surface-2: 38 20% 93%;
+    --surface-3: 36 16% 87%;
 
-    --secondary: 36 30% 92%;
-    --secondary-foreground: 222 33% 15%;
+    /* Un seul accent : teal. */
+    --primary: 191 78% 30%;
+    --primary-foreground: 40 40% 98%;
 
-    --muted: 36 24% 90%;
-    --muted-foreground: 220 13% 40%;
+    --secondary: 38 18% 91%;
+    --secondary-foreground: 25 12% 14%;
 
-    --accent: 198 52% 90%;
-    --accent-foreground: 222 33% 15%;
+    --muted: 38 18% 91%;
+    --muted-foreground: 28 9% 40%;
 
-    --destructive: 2 72% 48%;
-    --destructive-foreground: 210 40% 98%;
+    --accent: 189 34% 90%;
+    --accent-foreground: 191 60% 20%;
 
-    --border: 32 18% 84%;
-    --input: 32 18% 84%;
-    --ring: 198 78% 37%;
+    --destructive: 4 68% 46%;
+    --destructive-foreground: 40 40% 98%;
 
-    --radius: 0.75rem;
+    --border: 32 12% 85%;
+    --input: 32 12% 85%;
+    --ring: 191 78% 34%;
 
-    --surface-1: 0 0% 100%;
-    --surface-2: 34 27% 94%;
-    --elevation-1: 0 1px 2px 0 rgb(23 32 46 / 0.06);
-    --elevation-2: 0 8px 24px -8px rgb(23 32 46 / 0.18);
+    --radius: 0.625rem;
 
-    --chart-1: 198 78% 37%;
-    --chart-2: 38 92% 50%;
-    --chart-3: 220 13% 65%;
-    --chart-4: 152 55% 42%;
-    --chart-5: 340 65% 55%;
+    --chart-1: 191 78% 30%;
+    --chart-2: 32 84% 44%;
+    --chart-3: 28 9% 46%;
+    --chart-4: 152 48% 34%;
+    --chart-5: 340 54% 46%;
 
-    --font-ui: "Avenir Next", "Segoe UI", "Noto Sans", sans-serif;
-    --font-display: "Baskerville", "Times New Roman", serif;
     --duration-fast: 120ms;
     --duration-base: 200ms;
     --duration-slow: 320ms;
@@ -188,45 +277,46 @@ body.no-pinch-zoom * {
   }
 
   .dark {
-    --background: 222 35% 10%;
-    --background-rgb: 17, 24, 38;
-    --foreground: 38 20% 92%;
+    /* Encre chaude, jamais #000 */
+    --background: 30 7% 6%;
+    --background-rgb: 16, 14, 13;
+    --foreground: 40 14% 95%;
 
-    --card: 221 31% 13%;
-    --card-foreground: 38 20% 92%;
+    --card: 30 6% 9%;
+    --card-foreground: 40 14% 95%;
 
-    --popover: 221 31% 13%;
-    --popover-foreground: 38 20% 92%;
+    --popover: 30 7% 10%;
+    --popover-foreground: 40 14% 95%;
 
-    --primary: 194 76% 62%;
-    --primary-foreground: 220 39% 11%;
+    --surface-1: 30 6% 9%;
+    --surface-2: 30 5% 12%;
+    --surface-3: 30 5% 16%;
 
-    --secondary: 221 22% 20%;
-    --secondary-foreground: 38 20% 92%;
+    /* L'accent est le seul élément lumineux de la page. */
+    --primary: 187 72% 58%;
+    --primary-foreground: 30 10% 8%;
 
-    --muted: 220 17% 24%;
-    --muted-foreground: 218 17% 72%;
+    --secondary: 30 5% 14%;
+    --secondary-foreground: 40 14% 95%;
 
-    --accent: 210 34% 24%;
-    --accent-foreground: 38 20% 92%;
+    --muted: 30 5% 15%;
+    --muted-foreground: 35 9% 66%;
 
-    --destructive: 2 76% 58%;
-    --destructive-foreground: 210 40% 98%;
+    --accent: 187 22% 18%;
+    --accent-foreground: 187 62% 84%;
 
-    --border: 219 18% 25%;
-    --input: 219 18% 25%;
-    --ring: 194 76% 62%;
+    --destructive: 4 70% 58%;
+    --destructive-foreground: 30 10% 98%;
 
-    --surface-1: 221 31% 13%;
-    --surface-2: 221 24% 17%;
-    --elevation-1: 0 1px 2px 0 rgb(2 8 18 / 0.35);
-    --elevation-2: 0 12px 30px -12px rgb(2 8 18 / 0.55);
+    --border: 30 6% 17%;
+    --input: 30 6% 17%;
+    --ring: 187 72% 58%;
 
-    --chart-1: 194 76% 62%;
-    --chart-2: 38 90% 60%;
-    --chart-3: 218 17% 58%;
-    --chart-4: 152 55% 55%;
-    --chart-5: 340 70% 66%;
+    --chart-1: 187 72% 58%;
+    --chart-2: 36 84% 60%;
+    --chart-3: 35 9% 62%;
+    --chart-4: 152 46% 55%;
+    --chart-5: 340 62% 64%;
   }
 }
 
@@ -237,7 +327,20 @@ body.no-pinch-zoom * {
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: var(--font-ui);
+    font-family: var(--font-sans);
+    /* Chiffres alignés : pages, tomes, compteurs. */
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Titres poster : serrés, optiquement alignés. */
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
   }
 }
 

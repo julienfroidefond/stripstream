@@ -12,9 +12,10 @@ import { scanLibrary } from "@/app/actions/library";
 
 interface ScanButtonProps {
   libraryId: string;
+  className?: string;
 }
 
-export function ScanButton({ libraryId }: ScanButtonProps) {
+export function ScanButton({ libraryId, className }: ScanButtonProps) {
   const [isScanning, setIsScanning] = useState(false);
   const { toast } = useToast();
   const { t } = useTranslation();
@@ -72,10 +73,10 @@ export function ScanButton({ libraryId }: ScanButtonProps) {
       size="icon"
       onClick={handleScan}
       disabled={isScanning}
-      className="ml-2"
+      className={cn("ml-2", className)}
       aria-label={t("library.scan.button")}
     >
-      <FolderSearch className={cn("h-4 w-4", isScanning && "animate-pulse")} />
+      <FolderSearch className={cn("h-4 w-4", isScanning && "animate-pulse")} />{/* taste-skill-ignore: indicateur de scan en cours */}
     </Button>
   );
 }

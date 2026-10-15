@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Geist, Bricolage_Grotesque } from "next/font/google";
 import "@/styles/globals.css";
 import { cn } from "@/lib/utils";
 import ClientLayout from "@/components/layout/ClientLayout";
@@ -16,11 +16,16 @@ import { SidebarLibraries } from "@/components/layout/SidebarLibraries";
 import { SidebarConnections } from "@/components/layout/SidebarConnections";
 import { SidebarSectionSkeleton } from "@/components/layout/SidebarSectionSkeleton";
 
-const inter = Inter({
+const geist = Geist({
   subsets: ["latin"],
   display: "swap",
-  adjustFontFallback: false,
-  preload: false,
+  variable: "--font-geist",
+});
+
+const bricolage = Bricolage_Grotesque({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-bricolage",
 });
 
 export const metadata: Metadata = {
@@ -79,7 +84,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   }
 
   return (
-    <html lang={locale} suppressHydrationWarning className="h-full">
+    <html
+      lang={locale}
+      suppressHydrationWarning
+      className={cn("h-full", geist.variable, bricolage.variable)}
+    >
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -87,9 +96,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <meta name="apple-touch-fullscreen" content="yes" />
         <meta name="apple-mobile-web-app-title" content="StripStream" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="theme-color" content="#4F46E5" media="(prefers-color-scheme: light)" />
-        <meta name="theme-color" content="#0F172A" media="(prefers-color-scheme: dark)" />
-        <meta name="msapplication-TileColor" content="#4F46E5" />
+        <meta name="theme-color" content="#F7F4EF" media="(prefers-color-scheme: light)" />
+        <meta name="theme-color" content="#100E0D" media="(prefers-color-scheme: dark)" />
+        <meta name="msapplication-TileColor" content="#0E7C86" />
         <meta name="msapplication-tap-highlight" content="no" />
         <link
           rel="apple-touch-startup-image"
@@ -99,8 +108,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body
         className={cn(
-          "min-h-screen bg-background font-sans antialiased h-full no-pinch-zoom",
-          inter.className
+          "min-h-dvh bg-background font-sans antialiased no-pinch-zoom"
         )}
       >
         <AuthProvider>

@@ -6,30 +6,30 @@ import { AppError, getErrorMessage } from "./errors";
 
 describe("getErrorMessage", () => {
   it("returns the raw message when there are no params", () => {
-    expect(getErrorMessage(ERROR_CODES.AUTH.UNAUTHENTICATED)).toBe("🔒 User not authenticated");
+    expect(getErrorMessage(ERROR_CODES.AUTH.UNAUTHENTICATED)).toBe("User not authenticated");
   });
 
   it("interpolates a single parameter", () => {
     expect(getErrorMessage(ERROR_CODES.LIBRARY.NOT_FOUND, { libraryId: "42" })).toBe(
-      "📚 Library 42 not found"
+      "Library 42 not found"
     );
   });
 
   it("interpolates several distinct parameters", () => {
     expect(
       getErrorMessage(ERROR_CODES.KOMGA.HTTP_ERROR, { status: 404, statusText: "Not Found" })
-    ).toBe("🌍 HTTP Error: 404 Not Found");
+    ).toBe("HTTP Error: 404 Not Found");
   });
 
   it("stringifies non-string parameters", () => {
     expect(getErrorMessage(ERROR_CODES.KOMGA.SERVER_ERROR, { status: 503 })).toBe(
-      "💥 Komga server error (HTTP 503). Try again later or check the server status."
+      "Komga server error (HTTP 503). Try again later or check the server status."
     );
   });
 
   it("leaves unknown placeholders untouched", () => {
     expect(getErrorMessage(ERROR_CODES.LIBRARY.NOT_FOUND, { other: "x" })).toBe(
-      "📚 Library {libraryId} not found"
+      "Library {libraryId} not found"
     );
   });
 });
@@ -42,7 +42,7 @@ describe("AppError", () => {
     expect(error.name).toBe("AppError");
     expect(error.code).toBe(ERROR_CODES.KOMGA.NOT_FOUND);
     expect(error.message).toBe(
-      "🔍 Komga resource not found (HTTP 404). The server URL might be wrong."
+      "Komga resource not found (HTTP 404). The server URL might be wrong."
     );
   });
 
@@ -56,6 +56,6 @@ describe("AppError", () => {
 
     expect(error.params).toEqual({ status: 500 });
     expect(error.originalError).toBe(cause);
-    expect(error.message).toBe("🌍 HTTP Error: 500 {statusText}");
+    expect(error.message).toBe("HTTP Error: 500 {statusText}");
   });
 });

@@ -45,6 +45,41 @@
       "tomeLabel": "Volume {{number}}",
       "page": "Page {{current}} / {{total}}"
     },
+    "welcome": {
+      "badge": "Your library, on the big screen",
+      "title": "Welcome to StripStream",
+      "subtitle": "StripStream is a comic, manga and BD reader that plugs into the library you already own: your Komga server or Stripstream Librarian. Nothing to move — everything stays with you.",
+      "ctaKomga": "Connect Komga",
+      "ctaStripstream": "Connect Stripstream Librarian",
+      "reassurance": "Your files stay put: StripStream reads them at the source.",
+      "steps": {
+        "step1": {
+          "title": "Plug in your server",
+          "description": "Komga with your credentials, or Stripstream Librarian with an access token."
+        },
+        "step2": {
+          "title": "Get your series back",
+          "description": "Libraries, favorites and reading lists show up as they are."
+        },
+        "step3": {
+          "title": "Pick up reading",
+          "description": "Progress is saved and synced across all your devices."
+        }
+      },
+      "connections": {
+        "title": "Choose your connection",
+        "subtitle": "Step one: tell StripStream where your library lives.",
+        "action": "Set up",
+        "komga": {
+          "badge": "Basic Auth",
+          "description": "Self-hosted comic and manga library server. Connect your instance with your credentials."
+        },
+        "librarian": {
+          "badge": "Bearer Token",
+          "description": "Hosted Stripstream library. Connect it with your access token."
+        }
+      }
+    },
     "title": "Home",
     "sections": {
       "favorites": "Favorite series",
@@ -410,6 +445,20 @@
     "AUTH_LOGOUT_ERROR": "Error during logout",
     "AUTH_LOGIN_ERROR": "Error during login",
     "AUTH_REGISTER_ERROR": "Error during registration",
+    "AUTH_REGISTRATION_FAILED": "Registration failed",
+    "AUTH_USER_NOT_FOUND": "User not found",
+    "AUTH_INVALID_PASSWORD": "Invalid password",
+    "AUTH_PASSWORD_CHANGE_ERROR": "Error changing password",
+    "AUTH_FETCH_ERROR": "Unable to reach the server",
+    "AUTH_FORBIDDEN": "Access denied",
+    "AUTH_RATE_LIMITED": "Too many attempts. Please try again later.",
+    "ADMIN_FETCH_USERS_ERROR": "Error fetching users",
+    "ADMIN_UPDATE_USER_ERROR": "Error updating user",
+    "ADMIN_DELETE_USER_ERROR": "Error deleting user",
+    "ADMIN_FETCH_STATS_ERROR": "Error fetching statistics",
+    "ADMIN_CANNOT_DELETE_SELF": "You cannot delete your own account",
+    "ADMIN_RESET_PASSWORD_ERROR": "Error resetting password",
+    "ADMIN_CANNOT_RESET_OWN_PASSWORD": "You cannot reset your own password here",
     "KOMGA_MISSING_CONFIG": "Komga configuration missing",
     "KOMGA_MISSING_CREDENTIALS": "Komga credentials missing",
     "KOMGA_CONNECTION_ERROR": "Error connecting to Komga server",

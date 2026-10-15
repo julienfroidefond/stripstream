@@ -45,6 +45,41 @@
       "tomeLabel": "Tome {{number}}",
       "page": "Page {{current}} / {{total}}"
     },
+    "welcome": {
+      "badge": "Votre médiathèque, sur grand écran",
+      "title": "Bienvenue sur StripStream",
+      "subtitle": "StripStream est un lecteur de BD, mangas et comics qui se branche sur la bibliothèque que vous possédez déjà : votre serveur Komga ou Stripstream Librarian. Rien à déplacer, tout reste chez vous.",
+      "ctaKomga": "Connecter Komga",
+      "ctaStripstream": "Connecter Stripstream Librarian",
+      "reassurance": "Vos fichiers ne bougent pas : StripStream les lit à la source.",
+      "steps": {
+        "step1": {
+          "title": "Branchez votre serveur",
+          "description": "Komga avec vos identifiants, ou Stripstream Librarian avec un jeton d'accès."
+        },
+        "step2": {
+          "title": "Retrouvez vos séries",
+          "description": "Bibliothèques, favoris et listes de lecture arrivent tels quels."
+        },
+        "step3": {
+          "title": "Reprenez la lecture",
+          "description": "La progression est sauvegardée et synchronisée sur tous vos écrans."
+        }
+      },
+      "connections": {
+        "title": "Choisissez votre connexion",
+        "subtitle": "Première étape : indiquez à StripStream où vit votre bibliothèque.",
+        "action": "Configurer",
+        "komga": {
+          "badge": "Basic Auth",
+          "description": "Serveur de bibliothèque BD et mangas auto-hébergé. Connectez votre instance avec vos identifiants."
+        },
+        "librarian": {
+          "badge": "Bearer Token",
+          "description": "Bibliothèque Stripstream hébergée. Connectez-la avec votre jeton d'accès."
+        }
+      }
+    },
     "title": "Accueil",
     "sections": {
       "favorites": "Séries favorites",
@@ -413,6 +448,20 @@
     "AUTH_LOGOUT_ERROR": "Erreur lors de la déconnexion",
     "AUTH_LOGIN_ERROR": "Erreur lors de la connexion",
     "AUTH_REGISTER_ERROR": "Erreur lors de l'inscription",
+    "AUTH_REGISTRATION_FAILED": "L'inscription a échoué",
+    "AUTH_USER_NOT_FOUND": "Utilisateur introuvable",
+    "AUTH_INVALID_PASSWORD": "Mot de passe invalide",
+    "AUTH_PASSWORD_CHANGE_ERROR": "Erreur lors du changement de mot de passe",
+    "AUTH_FETCH_ERROR": "Impossible de contacter le serveur",
+    "AUTH_FORBIDDEN": "Accès refusé",
+    "AUTH_RATE_LIMITED": "Trop de tentatives. Réessaie plus tard.",
+    "ADMIN_FETCH_USERS_ERROR": "Erreur lors de la récupération des utilisateurs",
+    "ADMIN_UPDATE_USER_ERROR": "Erreur lors de la mise à jour de l'utilisateur",
+    "ADMIN_DELETE_USER_ERROR": "Erreur lors de la suppression de l'utilisateur",
+    "ADMIN_FETCH_STATS_ERROR": "Erreur lors de la récupération des statistiques",
+    "ADMIN_CANNOT_DELETE_SELF": "Impossible de supprimer ton propre compte",
+    "ADMIN_RESET_PASSWORD_ERROR": "Erreur lors de la réinitialisation du mot de passe",
+    "ADMIN_CANNOT_RESET_OWN_PASSWORD": "Impossible de réinitialiser ton propre mot de passe ici",
     "KOMGA_MISSING_CONFIG": "Configuration Komga manquante",
     "KOMGA_MISSING_CREDENTIALS": "Identifiants Komga manquants",
     "KOMGA_CONNECTION_ERROR": "Erreur de connexion au serveur Komga",

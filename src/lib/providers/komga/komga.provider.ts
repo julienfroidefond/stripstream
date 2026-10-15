@@ -82,16 +82,16 @@ export class KomgaProvider implements IMediaProvider {
     if (isDebug) {
       logger.info(
         { url, method: options.method || "GET", params, revalidate: options.revalidate },
-        "🔵 Komga Request"
+        "Komga Request"
       );
     }
     if (isCacheDebug) {
       if (options.tags) {
-        logger.info({ url, cache: "tags", tags: options.tags }, "💾 Cache tags");
+        logger.info({ url, cache: "tags", tags: options.tags }, "Cache tags");
       } else if (options.revalidate !== undefined) {
-        logger.info({ url, cache: "revalidate", ttl: options.revalidate }, "💾 Cache revalidate");
+        logger.info({ url, cache: "revalidate", ttl: options.revalidate }, "Cache revalidate");
       } else {
-        logger.info({ url, cache: "none" }, "💾 Cache none");
+        logger.info({ url, cache: "none" }, "Cache none");
       }
     }
 
@@ -153,7 +153,7 @@ export class KomgaProvider implements IMediaProvider {
         const duration = Date.now() - startTime;
         logger.info(
           { url, status: response.status, duration: `${duration}ms`, ok: response.ok },
-          "🟢 Komga Response"
+          "Komga Response"
         );
       }
 
@@ -161,7 +161,7 @@ export class KomgaProvider implements IMediaProvider {
         if (isDebug) {
           logger.error(
             { url, status: response.status, statusText: response.statusText },
-            "🔴 Komga Error Response"
+            "Komga Error Response"
           );
         }
         throw new AppError(codeForHttpStatus(response.status, KOMGA_HTTP_CODES), {
@@ -178,7 +178,7 @@ export class KomgaProvider implements IMediaProvider {
             error: error instanceof Error ? error.message : String(error),
             duration: `${Date.now() - startTime}ms`,
           },
-          "🔴 Komga Request Failed"
+          "Komga Request Failed"
         );
       }
       throw error;

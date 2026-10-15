@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback, useState, useTransition } from "react";
+import { memo, useCallback, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { NormalizedBook, NormalizedSeries } from "@/lib/providers/types";
 import { BookCover } from "../ui/book-cover";
@@ -10,9 +10,9 @@ import { ScrollContainer } from "@/components/ui/scroll-container";
 import { Section } from "@/components/ui/section";
 import { History, Sparkles, Clock, LibraryBig, BookOpen, Heart } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
 import { useAnonymous } from "@/contexts/AnonymousContext";
 import { loadHomeFeed, type HomeFeed } from "@/app/actions/home";
+import { GlowLayer, StaggerGroup, StaggerItem, usePointerGlow } from "@/components/motion";
 
 const ITEMS_PER_PAGE = 8;
 
@@ -69,34 +69,36 @@ export function MediaRow({ titleKey, items, iconName, featuredHeader = false, te
       title={t(titleKey)}
       icon={icon}
       className="space-y-5"
-      headerClassName={cn("border-b border-border/50 pb-2", featuredHeader && "border-primary/25")}
-      titleClassName={
-        featuredHeader
-          ? "bg-linear-to-r from-primary via-cyan-500 to-fuchsia-500 bg-clip-text text-transparent"
-          : undefined
-      }
+      headerClassName="pb-1"
+      titleClassName={featuredHeader ? "text-primary" : undefined}
       iconClassName={featuredHeader ? "text-primary" : undefined}
     >
-      <ScrollContainer
-        showArrows={true}
-        scrollAmount={400}
-        arrowLeftLabel={t("navigation.scrollLeft")}
-        arrowRightLabel={t("navigation.scrollRight")}
-      >
-        {loadedItems.map((item) => (
-          <MediaCard key={item.id} item={item} onClick={onItemClick} />
-        ))}
-        {hasMore && (
-          <button
-            type="button"
-            onClick={handleLoadMore}
-            disabled={isPending}
-            className="flex min-h-[282px] w-[150px] shrink-0 items-center justify-center rounded-xl border border-dashed border-border/70 bg-card/40 px-4 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/50 hover:bg-card hover:text-foreground sm:min-h-[300px]"
-          >
-            {isPending ? t("navigation.loading") : t("navigation.loadMore")}
-          </button>
-        )}
-      </ScrollContainer>
+      <StaggerGroup stagger={0.045}>
+        <ScrollContainer
+          showArrows={true}
+          scrollAmount={400}
+          arrowLeftLabel={t("navigation.scrollLeft")}
+          arrowRightLabel={t("navigation.scrollRight")}
+        >
+          {loadedItems.map((item) => (
+            <StaggerItem key={item.id} className="shrink-0">
+              <MediaCard item={item} onClick={onItemClick} />
+            </StaggerItem>
+          ))}
+          {hasMore && (
+            <StaggerItem className="shrink-0">
+              <button
+                type="button"
+                onClick={handleLoadMore}
+                disabled={isPending}
+                className="flex min-h-[282px] w-[150px] items-center justify-center rounded-xl border border-dashed border-border text-sm font-medium text-muted-foreground transition-colors hover:border-primary/60 hover:text-foreground sm:min-h-[300px]"
+              >
+                {isPending ? t("navigation.loading") : t("navigation.loadMore")}
+              </button>
+            </StaggerItem>
+          )}
+        </ScrollContainer>
+      </StaggerGroup>
     </Section>
   );
 }
@@ -123,20 +125,30 @@ const SeriesMediaCard = memo(function SeriesMediaCard({
 }) {
   const { t } = useTranslate();
   const { isAnonymous } = useAnonymous();
+  const cardRef = useRef<HTMLDivElement>(null);
+  const handleGlow = usePointerGlow(cardRef);
 
   return (
     <Card
+      ref={cardRef}
+      onMouseMove={handleGlow}
       onClick={() => onClick(series)}
-      className="group relative flex w-[188px] shrink-0 flex-col overflow-hidden rounded-xl border border-border/60 bg-card/85 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:bg-card hover:shadow-md sm:w-[200px] cursor-pointer"
+      className="group relative flex w-[188px] cursor-pointer flex-col overflow-hidden rounded-xl bg-surface-2 ring-1 ring-border/60 transition-transform duration-300 ease-out hover:-translate-y-1 sm:w-[200px]"
     >
-      <div className="relative aspect-2/3 bg-muted overflow-hidden">
-        <SeriesCover series={series} alt={`Couverture de ${series.name}`} isAnonymous={isAnonymous} />
-        <div className="absolute inset-0 flex flex-col justify-end bg-linear-to-t from-black/80 via-black/40 to-transparent p-3 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-          <h3 className="font-medium text-sm text-white line-clamp-2">{series.name}</h3>
+      <div className="relative aspect-2/3 overflow-hidden bg-surface-2">
+        <SeriesCover
+          series={series}
+          alt={`Couverture de ${series.name}`}
+          isAnonymous={isAnonymous}
+          className="transition-transform duration-500 ease-out group-hover:scale-[1.04]"
+        />
+        <div className="absolute inset-0 flex flex-col justify-end bg-linear-to-t from-black/80 via-black/40 to-transparent p-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100">{/* taste-skill-ignore: scrim neutre au-dessus de la couverture */}
+          <h3 className="font-display text-sm font-medium text-white line-clamp-2">{series.name}</h3>
           <p className="text-xs text-white/80 mt-1">
             {t("series.books", { count: series.bookCount })}
           </p>
         </div>
+        <GlowLayer />
       </div>
     </Card>
   );
@@ -150,20 +162,26 @@ const BookMediaCard = memo(function BookMediaCard({
   onClick: (item: NormalizedSeries | NormalizedBook) => void;
 }) {
   const { t } = useTranslate();
+  const glowRef = useRef<HTMLDivElement>(null);
+  const handleGlow = usePointerGlow(glowRef);
   const title = book.title || (book.number ? t("navigation.volume", { number: book.number }) : "");
 
   return (
     <Card
+      ref={glowRef}
+      onMouseMove={handleGlow}
       onClick={() => onClick(book)}
-      className="group relative flex w-[188px] shrink-0 cursor-pointer flex-col overflow-hidden rounded-xl border border-border/60 bg-card/85 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:bg-card hover:shadow-md sm:w-[200px]"
+      className="group relative flex w-[188px] cursor-pointer flex-col overflow-hidden rounded-xl bg-surface-2 ring-1 ring-border/60 transition-transform duration-300 ease-out hover:-translate-y-1 sm:w-[200px]"
     >
-      <div className="relative aspect-2/3 bg-muted overflow-hidden">
+      <div className="relative aspect-2/3 overflow-hidden bg-surface-2">
         <BookCover
           book={book}
           alt={`Couverture de ${title}`}
           showControls={false}
           overlayVariant="home"
+          className="transition-transform duration-500 ease-out group-hover:scale-[1.04]"
         />
+        <GlowLayer />
       </div>
     </Card>
   );

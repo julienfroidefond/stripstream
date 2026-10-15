@@ -82,16 +82,16 @@ export class StripstreamClient {
     if (isDebug) {
       logger.info(
         { url, method: options.method || "GET", params, revalidate: options.revalidate },
-        "🔵 Stripstream Request"
+        "Stripstream Request"
       );
     }
     if (isCacheDebug) {
       if (options.tags) {
-        logger.info({ url, cache: "tags", tags: options.tags }, "💾 Cache tags");
+        logger.info({ url, cache: "tags", tags: options.tags }, "Cache tags");
       } else if (options.revalidate !== undefined) {
-        logger.info({ url, cache: "revalidate", ttl: options.revalidate }, "💾 Cache revalidate");
+        logger.info({ url, cache: "revalidate", ttl: options.revalidate }, "Cache revalidate");
       } else {
-        logger.info({ url, cache: "none" }, "💾 Cache none");
+        logger.info({ url, cache: "none" }, "Cache none");
       }
     }
 
@@ -131,7 +131,7 @@ export class StripstreamClient {
         const duration = Date.now() - startTime;
         logger.info(
           { url, status: response.status, duration: `${duration}ms`, ok: response.ok },
-          "🟢 Stripstream Response"
+          "Stripstream Response"
         );
       }
 
@@ -139,7 +139,7 @@ export class StripstreamClient {
         if (isDebug) {
           logger.error(
             { url, status: response.status, statusText: response.statusText },
-            "🔴 Stripstream Error Response"
+            "Stripstream Error Response"
           );
         }
         throw new AppError(codeForHttpStatus(response.status, STRIPSTREAM_HTTP_CODES), {
@@ -155,7 +155,7 @@ export class StripstreamClient {
       if (isDebug) {
         logger.error(
           { url, error: error instanceof Error ? error.message : String(error), duration: `${Date.now() - startTime}ms` },
-          "🔴 Stripstream Request Failed"
+          "Stripstream Request Failed"
         );
       }
       if (error instanceof AppError) throw error;

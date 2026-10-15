@@ -1,9 +1,15 @@
+"use client";
+
 import { Library } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
 import type { NormalizedLibrary, NormalizedSeries } from "@/lib/providers/types";
 import { RefreshButton } from "./RefreshButton";
 import { ScanButton } from "./ScanButton";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { SeriesCover } from "@/components/ui/series-cover";
+import { useTranslate } from "@/hooks/useTranslate";
+import { ProjectionBackdrop } from "@/components/ui/projection-backdrop";
+import { fadeUp, liftIn, maskUp, staggerContainer } from "@/lib/motion";
 
 interface LibraryHeaderProps {
   library: NormalizedLibrary;
@@ -27,65 +33,80 @@ const getHeaderSeries = (series: NormalizedSeries[]) => {
   return { featured, background };
 };
 
+/**
+ * Bandeau de bibliothèque : l'affiche du "film". La couverture floutée éclaire
+ * le fond, puis le thème décide de la salle — écran noir en sombre, papier en
+ * clair — pour que le titre reste toujours le point le plus net de la page.
+ */
 export function LibraryHeader({
   library,
   seriesCount,
   series,
 }: LibraryHeaderProps) {
+  const { t } = useTranslate();
+  const reduce = useReducedMotion();
   const { featured, background } = getHeaderSeries(series);
-  const seriesLabel = `${seriesCount} ${seriesCount > 1 ? "series" : "serie"}`;
+  const seriesLabel = t(
+    seriesCount > 1 ? "library.header.series_plural" : "library.header.series",
+    { count: seriesCount }
+  );
+
+  const staged = reduce
+    ? {}
+    : { variants: staggerContainer(0.08, 0.05), initial: "hidden" as const, animate: "visible" as const };
 
   return (
-    <div className="relative min-h-[220px] md:h-[220px] w-screen -ml-[calc((100vw-100%)/2)] overflow-hidden border-y border-border/60">
+    <div className="relative w-screen -ml-[calc((100vw-100%)/2)] overflow-hidden">
       <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-linear-to-r from-background/85 via-background/65 to-background/85" />
         {background ? (
-          <SeriesCover
-            series={background}
-            alt=""
-            className="scale-105 blur-xs brightness-50"
-            showProgressUi={false}
-          />
+          <ProjectionBackdrop src={background.thumbnailUrl} />
         ) : (
-          <div className="w-full h-full bg-linear-to-br from-primary/20 via-primary/10 to-background" />
+          <div className="h-full w-full bg-surface-2" />
         )}
       </div>
 
-      <div className="relative container mx-auto h-full px-4 py-8">
-        <div className="flex h-full flex-col items-center gap-6 md:flex-row md:items-start">
-          <div className="relative h-[120px] w-[120px] shrink-0 overflow-hidden rounded-xl border border-border/60 shadow-lg">
+      <div className="relative container mx-auto flex min-h-[240px] items-end px-4 py-8 md:min-h-[320px] md:py-10">
+        <motion.div className="flex w-full items-end gap-5 md:gap-8" {...staged}>
+          <motion.div
+            variants={reduce ? undefined : liftIn}
+            className="relative aspect-2/3 w-[92px] shrink-0 overflow-hidden rounded-xl bg-surface-1 ring-1 ring-border md:w-[136px]"
+          >
             {featured ? (
-              <div className="relative w-full h-full">
-                <SeriesCover
-                  series={featured}
-                  alt={`Couverture de ${library.name}`}
-                  className="w-full h-full object-cover"
-                  showProgressUi={false}
-                />
-                <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                  <Library className="w-10 h-10 text-white" />
-                </div>
-              </div>
+              <SeriesCover
+                series={featured}
+                alt={t("library.coverAlt", { name: library.name })}
+                showProgressUi={false}
+              />
             ) : (
-              <div className="w-full h-full bg-primary/10 backdrop-blur-md flex items-center justify-center">
-                <Library className="w-16 h-16 text-primary" />
+              <div className="flex h-full w-full items-center justify-center bg-surface-3">
+                <Library className="h-10 w-10 text-primary" />
               </div>
             )}
-          </div>
+          </motion.div>
 
-          <div className="flex-1 space-y-4 text-center md:text-left">
-            <h1 className="text-3xl font-bold text-foreground md:text-4xl">{library.name}</h1>
+          <div className="min-w-0 flex-1 space-y-3 pb-1">
+            <span className="block overflow-hidden">
+              <motion.h1
+                variants={reduce ? undefined : maskUp}
+                className="font-display text-3xl font-semibold leading-[1.05] tracking-tight text-foreground md:text-5xl"
+              >
+                {library.name}
+              </motion.h1>
+            </span>
 
-            <div className="flex flex-wrap items-center justify-center gap-3 rounded-xl border border-border/60 bg-background/45 p-2 backdrop-blur-xs md:justify-start">
+            <motion.div
+              variants={reduce ? undefined : fadeUp}
+              className="flex flex-wrap items-center gap-2"
+            >
               <StatusBadge status="unread" icon={Library}>
                 {seriesLabel}
               </StatusBadge>
 
               <RefreshButton libraryId={library.id} />
               <ScanButton libraryId={library.id} />
-            </div>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

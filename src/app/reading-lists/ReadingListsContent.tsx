@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BookMarked, BookOpen, Bookmark, Search } from "lucide-react";
+import { StaggerGroup, StaggerItem } from "@/components/motion";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { Input } from "@/components/ui/input";
@@ -74,7 +75,7 @@ export function ReadingListsContent({ lists, isStripstream }: ReadingListsConten
         </div>
       </header>
 
-      <div className="flex flex-col gap-3 rounded-2xl border border-border/60 bg-card/45 p-3 shadow-xs sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-3 rounded-2xl bg-surface-1 p-3 sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -104,50 +105,55 @@ export function ReadingListsContent({ lists, isStripstream }: ReadingListsConten
       </div>
 
       {filteredLists.length ? (
-        <div className="grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+        <StaggerGroup
+          className="grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
+          reveal="scroll"
+          stagger={0.06}
+        >
           {filteredLists.map((list) => {
             const status = getReadingListStatus(list);
             const isCompleted = !isAnonymous && status === "read";
             const firstCover = list.preview_covers[0];
 
             return (
-              <button
-                key={list.id}
-                type="button"
-                data-testid={`reading-list-card-${list.id}`}
-                onClick={() => router.push(`/reading-lists/${list.id}`)}
-                className={cn("group flex flex-col gap-2 text-left transition-opacity", isCompleted && "opacity-70")}
-              >
-                <div className="relative aspect-2/3 overflow-hidden rounded-xl border border-border/60 bg-muted shadow-xs transition-all duration-200 group-hover:-translate-y-0.5 group-hover:shadow-md">
-                  {firstCover ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={`/api/stripstream/images/books/${firstCover}/thumbnail`} alt={list.name} loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center"><BookMarked className="h-12 w-12 text-muted-foreground/40" /></div>
-                  )}
-                  {!isAnonymous && (
-                    <StatusBadge
-                      status={status === "read" ? "success" : status === "reading" ? "reading" : "unread"}
-                      className="absolute right-2 top-2 border-background/50 bg-background/85 px-1.5 py-0.5 text-[10px] shadow-xs backdrop-blur-sm"
-                    >
-                      {t(`home.reading_lists.filters.${status}`)}
-                    </StatusBadge>
-                  )}
-                  <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/85 via-black/35 to-transparent p-3 pt-10 opacity-0 transition-opacity group-hover:opacity-100">
-                    <p className="line-clamp-2 text-sm font-semibold text-white">{list.name}</p>
+              <StaggerItem key={list.id}>
+                <button
+                  type="button"
+                  data-testid={`reading-list-card-${list.id}`}
+                  onClick={() => router.push(`/reading-lists/${list.id}`)}
+                  className={cn("group flex w-full flex-col gap-2 text-left transition-opacity", isCompleted && "opacity-70")}
+                >
+                  <div className="relative aspect-2/3 overflow-hidden rounded-xl bg-surface-2 transition-transform duration-200 group-hover:-translate-y-0.5">
+                    {firstCover ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={`/api/stripstream/images/books/${firstCover}/thumbnail`} alt={list.name} loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center"><BookMarked className="h-12 w-12 text-muted-foreground/40" /></div>
+                    )}
+                    {!isAnonymous && (
+                      <StatusBadge
+                        status={status === "read" ? "success" : status === "reading" ? "reading" : "unread"}
+                        className="absolute right-2 top-2 bg-background/90 px-1.5 py-0.5 text-[10px]"
+                      >
+                        {t(`home.reading_lists.filters.${status}`)}
+                      </StatusBadge>
+                    )}
+                    <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/85 via-black/35 to-transparent p-3 pt-10 opacity-0 transition-opacity group-hover:opacity-100">{/* taste-skill-ignore: scrim neutre au-dessus de la couverture */}
+                      <p className="line-clamp-2 text-sm font-semibold text-white">{list.name}</p>
+                    </div>
                   </div>
-                </div>
-                <div className="space-y-0.5 px-0.5">
-                  <p className="line-clamp-1 font-medium leading-tight">{list.name}</p>
-                  <p className="text-xs text-muted-foreground">{t("home.reading_lists.series_count", { count: list.series_count })}</p>
-                  {!isAnonymous && list.book_count > 0 && (
-                    <p className="text-xs text-muted-foreground">{t("series.status.progress", { read: list.books_read_count, total: list.book_count })}</p>
-                  )}
-                </div>
-              </button>
+                  <div className="space-y-0.5 px-0.5">
+                    <p className="line-clamp-1 font-medium leading-tight">{list.name}</p>
+                    <p className="text-xs text-muted-foreground">{t("home.reading_lists.series_count", { count: list.series_count })}</p>
+                    {!isAnonymous && list.book_count > 0 && (
+                      <p className="text-xs text-muted-foreground">{t("series.status.progress", { read: list.books_read_count, total: list.book_count })}</p>
+                    )}
+                  </div>
+                </button>
+              </StaggerItem>
             );
           })}
-        </div>
+        </StaggerGroup>
       ) : (
         <div data-testid="reading-list-filter-empty" className="flex min-h-64 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border bg-muted/30 p-8 text-center">
           <Search className="h-8 w-8 text-muted-foreground/60" />

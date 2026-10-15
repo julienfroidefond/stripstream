@@ -10,6 +10,7 @@ import { SeriesCover } from "@/components/ui/series-cover";
 import { useTranslate } from "@/hooks/useTranslate";
 import { useAnonymous } from "@/contexts/AnonymousContext";
 import { CircleDot, CircleCheck, CirclePause, CircleX, Star } from "lucide-react";
+import { GlowLayer, StaggerGroup, StaggerItem, usePointerGlow } from "@/components/motion";
 
 const seriesStatusMap = {
   ongoing: { className: "bg-blue-500/10 text-blue-500", icon: CircleDot },
@@ -62,18 +63,18 @@ const getReadingStatusInfo = (
 
 const SeriesGridItem = memo(function SeriesGridItem({
   series,
-  isCompact,
   isAnonymous,
   showRating,
   onOpen,
 }: {
   series: NormalizedSeries;
-  isCompact: boolean;
   isAnonymous: boolean;
   showRating: boolean;
   onOpen: (id: string) => void;
 }) {
   const { t } = useTranslate();
+  const cardRef = React.useRef<HTMLButtonElement>(null);
+  const handleGlow = usePointerGlow(cardRef);
   const statusInfo = getReadingStatusInfo(series, t);
   const seriesStatusEntry = series.seriesStatus
     ? seriesStatusMap[series.seriesStatus as keyof typeof seriesStatusMap]
@@ -82,28 +83,30 @@ const SeriesGridItem = memo(function SeriesGridItem({
 
   return (
     <button
+      ref={cardRef}
+      onMouseMove={handleGlow}
       onClick={() => onOpen(series.id)}
       className={cn(
-        "group relative aspect-2/3 overflow-hidden rounded-xl border border-border/60 bg-card/80 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
-        !isAnonymous && series.bookCount === series.booksReadCount && "opacity-50",
-        isCompact && "aspect-3/4"
+        "group relative block w-full aspect-2/3 overflow-hidden rounded-xl bg-card ring-1 ring-border/50 transition-transform duration-300 ease-out hover:-translate-y-1 hover:ring-border"
       )}
     >
       <SeriesCover
         series={series}
         alt={t("series.coverAlt", { title: series.name })}
         isAnonymous={isAnonymous}
+        className="transition-transform duration-500 ease-out group-hover:scale-[1.04]"
       />
       {displayRating !== null && (
         <div
-          className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-black/70 px-2 py-1 text-xs font-medium text-yellow-300 backdrop-blur-xs shadow-xs"
+          className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-black/70 px-2 py-1 text-xs font-medium text-yellow-300"
           title={t("series.filters.sortRating")}
         >
           <Star className="h-3 w-3 fill-yellow-300" aria-hidden="true" />
           <span className="tabular-nums">{displayRating.toFixed(1)}</span>
         </div>
       )}
-      <div className="absolute inset-x-0 bottom-0 translate-y-full space-y-2 bg-linear-to-t from-black via-black/75 to-transparent p-4 transition-transform duration-200 group-hover:translate-y-0">
+      {/* Scrim neutre au-dessus de la couverture : seul dégradé légitime ici. */}
+      <div className="absolute inset-x-0 bottom-0 translate-y-full space-y-2 bg-linear-to-t from-black via-black/75 to-transparent p-4 transition-transform duration-200 group-hover:translate-y-0">{/* taste-skill-ignore */}
         <h3 className="font-medium text-sm text-white line-clamp-2">{series.name}</h3>
         <div className="flex items-center gap-2 flex-wrap">
           {seriesStatusEntry && (
@@ -122,6 +125,7 @@ const SeriesGridItem = memo(function SeriesGridItem({
           </span>
         </div>
       </div>
+      <GlowLayer />
     </button>
   );
 });
@@ -147,24 +151,26 @@ export function SeriesGrid({ series, isCompact = false, showRating = false }: Se
   }
 
   return (
-    <div
+    <StaggerGroup
       className={cn(
         "grid gap-4 md:gap-5",
         isCompact
           ? "grid-cols-3 sm:grid-cols-4 lg:grid-cols-6"
           : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5"
       )}
+      reveal="scroll"
+      stagger={0.06}
     >
       {series.map((seriesItem) => (
-        <SeriesGridItem
-          key={seriesItem.id}
-          series={seriesItem}
-          isCompact={isCompact}
-          isAnonymous={isAnonymous}
-          showRating={showRating}
-          onOpen={handleOpenSeries}
-        />
+        <StaggerItem key={seriesItem.id}>
+          <SeriesGridItem
+            series={seriesItem}
+            isAnonymous={isAnonymous}
+            showRating={showRating}
+            onOpen={handleOpenSeries}
+          />
+        </StaggerItem>
       ))}
-    </div>
+    </StaggerGroup>
   );
 }

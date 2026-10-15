@@ -7,6 +7,7 @@ export default defineConfig([
   {
     ignores: [
       "temp/**",
+      ".agents/**",
       "src/generated/**",
       ".next/**",
       ".next-e2e/**",

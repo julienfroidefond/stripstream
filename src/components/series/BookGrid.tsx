@@ -2,10 +2,11 @@
 
 import type { NormalizedBook } from "@/lib/providers/types";
 import { BookCover } from "@/components/ui/book-cover";
-import { memo, useCallback } from "react";
+import { memo, useCallback, useRef } from "react";
 import { useTranslate } from "@/hooks/useTranslate";
 import { cn } from "@/lib/utils";
 import { BookX } from "lucide-react";
+import { GlowLayer, StaggerGroup, StaggerItem, usePointerGlow } from "@/components/motion";
 
 interface BookGridProps {
   books: NormalizedBook[];
@@ -18,15 +19,13 @@ interface BookCardProps {
   book: NormalizedBook;
   onBookClick: (book: NormalizedBook) => void;
   onSuccess: (book: NormalizedBook, action: "read" | "unread") => void;
-  isCompact: boolean;
 }
 
-const MissingBookCard = memo(function MissingBookCard({ book, isCompact }: { book: NormalizedBook; isCompact: boolean }) {
+const MissingBookCard = memo(function MissingBookCard({ book }: { book: NormalizedBook }) {
   return (
     <div
       className={cn(
-        "group relative aspect-2/3 overflow-hidden rounded-lg border border-dashed border-orange-500/40 bg-muted/50 opacity-60",
-        isCompact ? "" : ""
+        "group relative aspect-2/3 overflow-hidden rounded-lg border border-dashed border-orange-500/40 bg-muted/50 opacity-60"
       )}
     >
       {book.thumbnailUrl ? (
@@ -41,7 +40,7 @@ const MissingBookCard = memo(function MissingBookCard({ book, isCompact }: { boo
           <BookX className="h-8 w-8 text-orange-500/40" />
         </div>
       )}
-      <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 to-transparent p-2">
+      <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 to-transparent p-2">{/* taste-skill-ignore: scrim neutre au-dessus de la couverture */}
         <p className="text-xs text-orange-300 font-medium truncate">{book.title}</p>
       </div>
       <div className="absolute top-1.5 right-1.5 rounded-full bg-orange-500/90 p-0.5">
@@ -51,8 +50,10 @@ const MissingBookCard = memo(function MissingBookCard({ book, isCompact }: { boo
   );
 });
 
-const BookCard = memo(function BookCard({ book, onBookClick, onSuccess, isCompact }: BookCardProps) {
+const BookCard = memo(function BookCard({ book, onBookClick, onSuccess }: BookCardProps) {
   const { t } = useTranslate();
+  const cardRef = useRef<HTMLDivElement>(null);
+  const handleGlow = usePointerGlow(cardRef);
 
   const handleClick = () => {
     onBookClick(book);
@@ -60,14 +61,15 @@ const BookCard = memo(function BookCard({ book, onBookClick, onSuccess, isCompac
 
   return (
     <div
+      ref={cardRef}
+      onMouseMove={handleGlow}
       className={cn(
-        "group relative aspect-2/3 overflow-hidden rounded-lg bg-muted",
-        isCompact ? "hover:scale-105 transition-transform" : ""
+        "group relative aspect-2/3 overflow-hidden rounded-lg bg-muted transition-transform duration-300 ease-out hover:-translate-y-1"
       )}
     >
       <div
         onClick={handleClick}
-        className="w-full h-full cursor-pointer hover:opacity-100 transition-all"
+        className="w-full h-full cursor-pointer transition-opacity"
       >
         <BookCover
           book={book}
@@ -78,9 +80,11 @@ const BookCard = memo(function BookCard({ book, onBookClick, onSuccess, isCompac
                 ? t("navigation.volume", { number: book.number })
                 : ""),
           })}
+          className="transition-transform duration-500 ease-out group-hover:scale-[1.04]"
           onSuccess={(book, action) => onSuccess(book, action)}
         />
       </div>
+      <GlowLayer />
     </div>
   );
 });
@@ -105,27 +109,31 @@ export function BookGrid({ books, onBookClick, isCompact = false, onRefresh }: B
   }
 
   return (
-    <div
+    <StaggerGroup
       className={cn(
         "grid gap-4",
         isCompact
           ? "grid-cols-3 sm:grid-cols-4 lg:grid-cols-6"
           : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5"
       )}
+      reveal="scroll"
+      stagger={0.06}
     >
       {books.map((book) =>
         book.volumeType === "_missing" ? (
-          <MissingBookCard key={book.id} book={book} isCompact={isCompact} />
+          <StaggerItem key={book.id}>
+            <MissingBookCard book={book} />
+          </StaggerItem>
         ) : (
-          <BookCard
-            key={book.id}
-            book={book}
-            onBookClick={onBookClick}
-            onSuccess={handleOnSuccess}
-            isCompact={isCompact}
-          />
+          <StaggerItem key={book.id}>
+            <BookCard
+              book={book}
+              onBookClick={onBookClick}
+              onSuccess={handleOnSuccess}
+            />
+          </StaggerItem>
         )
       )}
-    </div>
+    </StaggerGroup>
   );
 }

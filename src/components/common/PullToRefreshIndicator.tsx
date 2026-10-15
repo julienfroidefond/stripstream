@@ -26,7 +26,7 @@ export function PullToRefreshIndicator({
   return (
     <div
       className={cn(
-        "fixed top-0 left-1/2 transform -translate-x-1/2 z-50 transition-all",
+        "fixed top-0 left-1/2 transform -translate-x-1/2 z-50 transition-[transform,opacity]",
         isHiding ? "duration-300 ease-out" : "duration-200",
         (isPulling || isRefreshing) && !isHiding
           ? "translate-y-0 opacity-100"
@@ -41,7 +41,7 @@ export function PullToRefreshIndicator({
         {/* Barre de progression */}
         <div
           className={cn(
-            "h-full transition-all duration-200 rounded-full",
+            "h-full transition-[width] duration-200 rounded-full",
             canRefresh || isRefreshing ? "bg-primary" : "bg-muted-foreground"
           )}
           style={{
@@ -54,14 +54,14 @@ export function PullToRefreshIndicator({
       <div className="flex justify-center mt-2">
         <div
           className={cn(
-            "flex items-center justify-center w-8 h-8 rounded-full transition-all duration-200",
+            "flex items-center justify-center w-8 h-8 rounded-full transition-colors duration-200",
             canRefresh || isRefreshing
               ? "bg-primary text-primary-foreground"
               : "bg-muted text-muted-foreground"
           )}
         >
           <RefreshCw
-            className={cn("h-4 w-4 transition-all duration-200", isRefreshing && "animate-spin")}
+            className={cn("h-4 w-4 transition-transform duration-200", isRefreshing && "animate-spin")}
             style={{
               transform: isRefreshing ? "rotate(0deg)" : `rotate(${rotation}deg)`,
               animationDuration: isRefreshing ? "2s" : undefined,

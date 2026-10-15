@@ -200,13 +200,13 @@ export function PaginatedSeriesGrid({
 
   return (
     <div className="space-y-8">
-      <div className="rounded-2xl border border-border/60 bg-[linear-gradient(140deg,hsl(var(--background)/0.6),hsl(var(--background)/0.38))] p-4 shadow-xs backdrop-blur-xs sm:p-5">
+      <div className="rounded-2xl bg-surface-1 p-4 sm:p-5">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="space-y-1">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
               Explorer
             </p>
-            <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">Séries</h2>
+            <h2 className="font-display text-xl font-semibold tracking-tight sm:text-2xl">Séries</h2>
           </div>
           <p className="text-sm text-muted-foreground">{getShowingText()}</p>
         </div>
