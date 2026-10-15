@@ -66,15 +66,9 @@ const nextConfig = {
     "better-sqlite3",
     "@prisma/adapter-better-sqlite3",
   ],
-  // Optimisations pour Docker dev
-  turbopack: {
-    rules: {
-      "*.svg": {
-        loaders: ["@svgr/webpack"],
-        as: "*.js",
-      },
-    },
-  },
+  // Requis par Next 16 : un contenu vide évite l'erreur « Turbopack build with
+  // a webpack config and no turbopack config » (cf. `webpack` ci-dessous).
+  turbopack: {},
   // Optimisation du cache en dev
   onDemandEntries: {
     maxInactiveAge: 25 * 1000,

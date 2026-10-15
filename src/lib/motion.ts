@@ -1,4 +1,4 @@
-import type { Transition, Variants } from "framer-motion";
+import type { Variants } from "framer-motion";
 
 /**
  * Langage de mouvement « projection ».
@@ -12,29 +12,9 @@ export const EASE_PROJECTION: [number, number, number, number] = [0.22, 1, 0.36,
 /** Courbe d'appui pour les micro-interactions (survol, focus). */
 export const EASE_OUT: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
-/** Ressort posé : éléments qui se remettent en place après un glissement. */
-export const springResort: Transition = {
-  type: "spring",
-  stiffness: 210,
-  damping: 26,
-  mass: 0.9,
-};
-
-/** Ressort vif : carrousel, pastilles, indicateurs. */
-export const springCarousel: Transition = {
-  type: "spring",
-  stiffness: 340,
-  damping: 36,
-};
-
 export const fadeUp: Variants = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: EASE_PROJECTION } },
-};
-
-export const fadeIn: Variants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { duration: 0.5, ease: EASE_OUT } },
 };
 
 /** Affiche qui se lève : légère mise à l'échelle, jamais depuis 0. */

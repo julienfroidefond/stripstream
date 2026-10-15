@@ -42,53 +42,6 @@ type ViewportAmount = number | "some" | "all";
 export const VIEWPORT_MARGIN = "4000px 0px -8% 0px";
 
 /* -------------------------------------------------------------------------
- * Reveal — une section entre en scène une fois, au défilement.
- * ---------------------------------------------------------------------- */
-
-interface RevealProps {
-  children: ReactNode;
-  className?: string;
-  style?: CSSProperties;
-  delay?: number;
-  y?: number;
-  once?: boolean;
-  amount?: ViewportAmount;
-}
-
-export function Reveal({
-  children,
-  className,
-  style,
-  delay = 0,
-  y = 22,
-  once = true,
-  amount = 0.2,
-}: RevealProps) {
-  const reduce = useReducedMotion();
-
-  if (reduce) {
-    return (
-      <div className={className} style={style}>
-        {children}
-      </div>
-    );
-  }
-
-  return (
-    <motion.div
-      className={className}
-      style={style}
-      initial={{ opacity: 0, y }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once, amount, margin: VIEWPORT_MARGIN }}
-      transition={{ duration: 0.65, ease: EASE_PROJECTION, delay }}
-    >
-      {children}
-    </motion.div>
-  );
-}
-
-/* -------------------------------------------------------------------------
  * Stagger — une grille ou un rail se déploie carte par carte.
  *
  * Deux régimes :
