@@ -7,8 +7,8 @@ WORKDIR /app
 # Install dependencies for node-gyp
 RUN apk add --no-cache python3 make g++
 
-# Enable pnpm via corepack
-RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
+# Install pnpm (corepack is no longer bundled with Node 26)
+RUN npm install -g pnpm@9.0.0
 
 # Copy package files first to leverage Docker cache
 COPY package.json pnpm-lock.yaml ./
