@@ -185,7 +185,7 @@ export function StaggerItem({ children, className, style, variants = fadeUp }: S
       <div
         ref={ref}
         className={cn(
-          "transition-[opacity,transform] ease-projection duration-600 motion-reduce:transition-none",
+          "transition-[opacity,translate] ease-projection duration-600 motion-reduce:transition-none",
           scrollState.revealed ? "translate-y-0 opacity-100" : "translate-y-5 opacity-0",
           className
         )}
