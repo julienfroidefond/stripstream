@@ -45,6 +45,41 @@
       "tomeLabel": "Tome {{number}}",
       "page": "Page {{current}} / {{total}}"
     },
+    "welcome": {
+      "badge": "Votre médiathèque, sur grand écran",
+      "title": "Bienvenue sur StripStream",
+      "subtitle": "StripStream est un lecteur de BD, mangas et comics qui se branche sur la bibliothèque que vous possédez déjà : votre serveur Komga ou Stripstream Librarian. Rien à déplacer, tout reste chez vous.",
+      "ctaKomga": "Connecter Komga",
+      "ctaStripstream": "Connecter Stripstream Librarian",
+      "reassurance": "Vos fichiers ne bougent pas : StripStream les lit à la source.",
+      "steps": {
+        "step1": {
+          "title": "Branchez votre serveur",
+          "description": "Komga avec vos identifiants, ou Stripstream Librarian avec un jeton d'accès."
+        },
+        "step2": {
+          "title": "Retrouvez vos séries",
+          "description": "Bibliothèques, favoris et listes de lecture arrivent tels quels."
+        },
+        "step3": {
+          "title": "Reprenez la lecture",
+          "description": "La progression est sauvegardée et synchronisée sur tous vos écrans."
+        }
+      },
+      "connections": {
+        "title": "Choisissez votre connexion",
+        "subtitle": "Première étape : indiquez à StripStream où vit votre bibliothèque.",
+        "action": "Configurer",
+        "komga": {
+          "badge": "Basic Auth",
+          "description": "Serveur de bibliothèque BD et mangas auto-hébergé. Connectez votre instance avec vos identifiants."
+        },
+        "librarian": {
+          "badge": "Bearer Token",
+          "description": "Bibliothèque Stripstream hébergée. Connectez-la avec votre jeton d'accès."
+        }
+      }
+    },
     "title": "Accueil",
     "sections": {
       "favorites": "Séries favorites",

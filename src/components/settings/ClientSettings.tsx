@@ -6,17 +6,24 @@ import type { KomgaConfigSummary } from "@/app/actions/config";
 import type { StripstreamConfigSummary } from "@/app/actions/stripstream-config";
 import { useTranslate } from "@/hooks/useTranslate";
 import { DisplaySettings } from "./DisplaySettings";
-import { ConnectionsSettings } from "./ConnectionsSettings";
+import { ConnectionsSettings, type ConnectionType } from "./ConnectionsSettings";
 import { BackgroundSettings } from "./BackgroundSettings";
 import { AdvancedSettings } from "./AdvancedSettings";
 import { ReaderSettings } from "./ReaderSettings";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Monitor, Network, BookOpen } from "lucide-react";
 
+export type SettingsTab = "display" | "reader" | "connection";
+export type { ConnectionType };
+
 interface ClientSettingsProps {
   initialLibraries: NormalizedLibrary[];
   komgaConfigs: KomgaConfigSummary[];
   stripstreamConfigs: StripstreamConfigSummary[];
+  /** Onglet ouvert à l'arrivée (deep-link `?tab=`), prime sur le dernier onglet visité. */
+  initialTab?: SettingsTab;
+  /** Type de connexion à pré-sélectionner dans le formulaire (deep-link `?new=`). */
+  initialNewConnection?: ConnectionType;
 }
 
 const SETTINGS_TAB_STORAGE_KEY = "stripstream:settings-active-tab";
@@ -25,11 +32,17 @@ export function ClientSettings({
   initialLibraries,
   komgaConfigs,
   stripstreamConfigs,
+  initialTab,
+  initialNewConnection,
 }: ClientSettingsProps) {
   const { t } = useTranslate();
-  const [activeTab, setActiveTab] = useState<"display" | "reader" | "connection">("display");
+  const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab ?? "display");
 
   useEffect(() => {
+    if (initialTab) {
+      window.sessionStorage.setItem(SETTINGS_TAB_STORAGE_KEY, initialTab);
+      return;
+    }
     const savedTab = window.sessionStorage.getItem(SETTINGS_TAB_STORAGE_KEY);
     if (savedTab === "display" || savedTab === "reader" || savedTab === "connection") {
       const rafId = window.requestAnimationFrame(() => {
@@ -37,7 +50,7 @@ export function ClientSettings({
       });
       return () => window.cancelAnimationFrame(rafId);
     }
-  }, []);
+  }, [initialTab]);
 
   const handleTabChange = (tab: string) => {
     if (tab === "display" || tab === "reader" || tab === "connection") {
@@ -80,6 +93,7 @@ export function ClientSettings({
             <ConnectionsSettings
               komgaConfigs={komgaConfigs}
               stripstreamConfigs={stripstreamConfigs}
+              autoStartType={initialNewConnection}
             />
             <AdvancedSettings />
           </TabsContent>

@@ -1,4 +1,8 @@
-import { ClientSettings } from "@/components/settings/ClientSettings";
+import {
+  ClientSettings,
+  type ConnectionType,
+  type SettingsTab,
+} from "@/components/settings/ClientSettings";
 import { getProvider } from "@/lib/providers/provider.factory";
 import { listKomgaConfigs } from "@/app/actions/config";
 import { listStripstreamConfigs } from "@/app/actions/stripstream-config";
@@ -13,7 +17,20 @@ export const metadata: Metadata = {
   description: "Configurez vos préférences StripStream",
 };
 
-export default async function SettingsPage() {
+interface SettingsPageProps {
+  searchParams: Promise<{ tab?: string; new?: string }>;
+}
+
+function parseTab(value: string | undefined): SettingsTab | undefined {
+  return value === "display" || value === "reader" || value === "connection" ? value : undefined;
+}
+
+function parseConnectionType(value: string | undefined): ConnectionType | undefined {
+  return value === "komga" || value === "stripstream" ? value : undefined;
+}
+
+export default async function SettingsPage({ searchParams }: SettingsPageProps) {
+  const { tab, new: newConnection } = await searchParams;
   let libraries: NormalizedLibrary[] = [];
   let komgaConfigs: Awaited<ReturnType<typeof listKomgaConfigs>> = [];
   let stripstreamConfigs: Awaited<ReturnType<typeof listStripstreamConfigs>> = [];
@@ -37,6 +54,8 @@ export default async function SettingsPage() {
       initialLibraries={libraries}
       komgaConfigs={komgaConfigs}
       stripstreamConfigs={stripstreamConfigs}
+      initialTab={parseTab(tab)}
+      initialNewConnection={parseConnectionType(newConnection)}
     />
   );
 }

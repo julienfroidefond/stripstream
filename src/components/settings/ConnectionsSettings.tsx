@@ -34,7 +34,7 @@ import {
   type StripstreamConfigSummary,
 } from "@/app/actions/stripstream-config";
 
-type ConnectionType = "komga" | "stripstream";
+export type ConnectionType = "komga" | "stripstream";
 
 interface UnifiedConnection {
   id: number;
@@ -48,6 +48,8 @@ interface UnifiedConnection {
 interface ConnectionsSettingsProps {
   komgaConfigs: KomgaConfigSummary[];
   stripstreamConfigs: StripstreamConfigSummary[];
+  /** Ouvre le formulaire d'ajout au montage, type pré-sélectionné (deep-link `?new=`). */
+  autoStartType?: ConnectionType;
 }
 
 interface FormState {
@@ -69,11 +71,18 @@ const emptyForm: FormState = {
   token: "",
 };
 
-export function ConnectionsSettings({ komgaConfigs, stripstreamConfigs }: ConnectionsSettingsProps) {
+export function ConnectionsSettings({
+  komgaConfigs,
+  stripstreamConfigs,
+  autoStartType,
+}: ConnectionsSettingsProps) {
   const { t } = useTranslate();
   const { toast } = useToast();
   const router = useRouter();
-  const [editing, setEditing] = useState<FormState | null>(null);
+  // Deep-link `?new=` : le formulaire est ouvert dès le montage, type déjà choisi.
+  const [editing, setEditing] = useState<FormState | null>(() =>
+    autoStartType ? { ...emptyForm, type: autoStartType } : null
+  );
   const [isTesting, setIsTesting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [busyKey, setBusyKey] = useState<string | null>(null);

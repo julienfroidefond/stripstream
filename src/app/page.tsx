@@ -10,6 +10,7 @@ import {
 } from "@/components/home/HomeContent";
 import { ContinueReadingHero } from "@/components/home/ContinueReadingHero";
 import { HomeClientWrapper } from "@/components/home/HomeClientWrapper";
+import { HomeWelcome } from "@/components/home/HomeWelcome";
 import { MediaRow } from "@/components/home/MediaRow";
 import { ReadingListRow } from "@/components/home/ReadingListRow";
 import { DeferredRecommendations } from "@/components/home/DeferredRecommendations";
@@ -54,7 +55,7 @@ async function HomeStreamingContent() {
       getProvider(),
       PreferencesService.getPreferences().catch(() => null),
     ]);
-    if (!provider) redirect("/settings");
+    if (!provider) return <HomeWelcome />;
 
     const isAnonymous = preferences?.anonymousMode ?? false;
 

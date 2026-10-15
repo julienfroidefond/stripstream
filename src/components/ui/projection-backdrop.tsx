@@ -19,6 +19,11 @@ interface ProjectionBackdropProps {
    * Le passer à `false` quand l'appelant gère le fondu.
    */
   fadeIn?: boolean;
+  /**
+   * Cadrage de l'image. `top` pour une couverture (le titre est en haut),
+   * `center` pour un artwork carré.
+   */
+  position?: "top" | "center";
   className?: string;
 }
 
@@ -33,7 +38,12 @@ interface ProjectionBackdropProps {
  * texte. Le fond suit le thème : lavis de papier en clair, salle noire en
  * sombre. Le mouvement est intégralement coupé sous `prefers-reduced-motion`.
  */
-export function ProjectionBackdrop({ src, fadeIn = true, className }: ProjectionBackdropProps) {
+export function ProjectionBackdrop({
+  src,
+  fadeIn = true,
+  position = "top",
+  className,
+}: ProjectionBackdropProps) {
   const reduce = useReducedMotion();
   const drift = !reduce;
 
@@ -53,7 +63,11 @@ export function ProjectionBackdrop({ src, fadeIn = true, className }: Projection
               src={src}
               alt=""
               aria-hidden="true"
-              className={cn("h-full w-full object-cover object-top blur-[14px]", IMAGE)}
+              className={cn(
+                "h-full w-full object-cover blur-[14px]",
+                position === "center" ? "object-center" : "object-top",
+                IMAGE
+              )}
             />
           </div>
         </div>
