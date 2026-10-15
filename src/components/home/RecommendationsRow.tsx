@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useCallback, memo, useTransition } from "react";
+import { useState, useCallback, memo, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Wand2, UserRound, Tag, Building2, Sparkles, Bookmark, ArrowRight, LayoutGrid, GalleryHorizontal } from "lucide-react";
-import { AnimatePresence, motion, type PanInfo } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion, type PanInfo } from "framer-motion";
 import { SeriesCover } from "@/components/ui/series-cover";
 import { ScrollContainer } from "@/components/ui/scroll-container";
 import { Section } from "@/components/ui/section";
@@ -14,11 +14,14 @@ import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
 import type { NormalizedSeries } from "@/lib/providers/types";
 import { loadHomeFeed } from "@/app/actions/home";
+import { GlowLayer, Magnetic, StaggerGroup, StaggerItem, usePointerGlow } from "@/components/motion";
+import { EASE_OUT, fadeUp, staggerContainer } from "@/lib/motion";
+import { ProjectionBackdrop } from "@/components/ui/projection-backdrop";
 
 const REASON_CONFIG: Record<string, { icon: LucideIcon; className: string }> = {
   same_reading_list: { icon: Bookmark,  className: "bg-amber-600/90 text-white" },
-  same_author:       { icon: UserRound, className: "bg-blue-600/90 text-white" },
-  same_genre:        { icon: Tag,       className: "bg-violet-600/90 text-white" },
+  same_author:       { icon: UserRound, className: "bg-teal-600/90 text-white" },
+  same_genre:        { icon: Tag,       className: "bg-cyan-600/90 text-white" },
   same_publisher:    { icon: Building2, className: "bg-emerald-600/90 text-white" },
 };
 
@@ -36,19 +39,28 @@ const VIEW_MODE_KEY = "recommendations-view-mode";
 
 interface RecommendationsRowProps {
   series: NormalizedSeries[];
+  /** Renseigné par l'appel serveur : la liste reçue est déjà tronquée. */
+  initialHasMore?: boolean;
 }
 
-export function RecommendationsRow({ series }: RecommendationsRowProps) {
+export function RecommendationsRow({ series, initialHasMore = false }: RecommendationsRowProps) {
   const { t } = useTranslate();
   const [loadedSeries, setLoadedSeries] = useState(series.slice(0, ITEMS_PER_PAGE));
-  const [hasMore, setHasMore] = useState(series.length > ITEMS_PER_PAGE);
+  const [hasMore, setHasMore] = useState(initialHasMore || series.length > ITEMS_PER_PAGE);
   const [isPending, startTransition] = useTransition();
+  /**
+   * Navigation du carrousel « Pour vous ». Elle vit ici parce que « Voir plus »
+   * ajoute des propositions en fin de liste et doit pouvoir s'y poser.
+   */
+  const [hero, setHero] = useState<{ index: number; direction: number }>({ index: 0, direction: 0 });
 
   const handleLoadMore = () => {
+    const firstNew = loadedSeries.length;
     startTransition(async () => {
-      const result = await loadHomeFeed("recommendations", loadedSeries.length);
+      const result = await loadHomeFeed("recommendations", firstNew);
       setLoadedSeries(result.items as NormalizedSeries[]);
       setHasMore(result.hasMore);
+      if (result.items.length > firstNew) setHero({ index: firstNew, direction: 1 });
     });
   };
 
@@ -72,7 +84,7 @@ export function RecommendationsRow({ series }: RecommendationsRowProps) {
       title={t("home.sections.recommendations")}
       icon={Wand2}
       className="space-y-5"
-      headerClassName="border-b border-border/50 pb-2"
+      headerClassName="pb-1"
       actions={
         <button
           type="button"
@@ -93,28 +105,37 @@ export function RecommendationsRow({ series }: RecommendationsRowProps) {
           hasMore={hasMore}
           isPending={isPending}
           onLoadMore={handleLoadMore}
+          index={hero.index}
+          direction={hero.direction}
+          onNavigate={setHero}
         />
       ) : (
-        <ScrollContainer
-          showArrows={true}
-          scrollAmount={400}
-          arrowLeftLabel={t("navigation.scrollLeft")}
-          arrowRightLabel={t("navigation.scrollRight")}
-        >
-          {loadedSeries.map((s) => (
-            <RecommendationCard key={s.id} series={s} />
-          ))}
-          {hasMore && (
-            <button
-              type="button"
-              onClick={handleLoadMore}
-              disabled={isPending}
-              className="flex min-h-[282px] w-[150px] shrink-0 items-center justify-center rounded-xl border border-dashed border-border/70 bg-card/40 px-4 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/50 hover:bg-card hover:text-foreground sm:min-h-[300px]"
-            >
-              {isPending ? t("navigation.loading") : t("navigation.loadMore")}
-            </button>
-          )}
-        </ScrollContainer>
+        <StaggerGroup stagger={0.045}>
+          <ScrollContainer
+            showArrows={true}
+            scrollAmount={400}
+            arrowLeftLabel={t("navigation.scrollLeft")}
+            arrowRightLabel={t("navigation.scrollRight")}
+          >
+            {loadedSeries.map((s) => (
+              <StaggerItem key={s.id} className="shrink-0">
+                <RecommendationCard series={s} />
+              </StaggerItem>
+            ))}
+            {hasMore && (
+              <StaggerItem className="shrink-0">
+                <button
+                  type="button"
+                  onClick={handleLoadMore}
+                  disabled={isPending}
+                  className="flex min-h-[282px] w-[150px] items-center justify-center rounded-xl border border-dashed border-border text-sm font-medium text-muted-foreground transition-colors hover:border-primary/60 hover:text-foreground sm:min-h-[300px]"
+                >
+                  {isPending ? t("navigation.loading") : t("navigation.loadMore")}
+                </button>
+              </StaggerItem>
+            )}
+          </ScrollContainer>
+        </StaggerGroup>
       )}
     </Section>
   );
@@ -127,24 +148,33 @@ interface RecommendationHeroProps {
   hasMore: boolean;
   isPending: boolean;
   onLoadMore: () => void;
+  index: number;
+  direction: number;
+  onNavigate: (nav: { index: number; direction: number }) => void;
 }
 
-function RecommendationHero({ series, hasMore, isPending, onLoadMore }: RecommendationHeroProps) {
+function RecommendationHero({
+  series,
+  hasMore,
+  isPending,
+  onLoadMore,
+  index,
+  direction,
+  onNavigate,
+}: RecommendationHeroProps) {
   const router = useRouter();
   const { t } = useTranslate();
   const { isAnonymous } = useAnonymous();
-  const [index, setIndex] = useState(0);
-  const [direction, setDirection] = useState(0);
+  const reduce = useReducedMotion();
 
   const total = series.length;
   const hasMany = total > 1;
   const safeIndex = total > 0 ? ((index % total) + total) % total : 0;
-  const showLoadMore = hasMore && safeIndex === total - 1;
+  const showLoadMore = hasMore;
   const s = series[safeIndex];
 
   const goTo = (target: number, dir: number) => {
-    setDirection(dir);
-    setIndex(((target % total) + total) % total);
+    onNavigate({ index: ((target % total) + total) % total, direction: dir });
   };
 
   const handleDragEnd = (_: unknown, info: PanInfo) => {
@@ -161,21 +191,30 @@ function RecommendationHero({ series, hasMore, isPending, onLoadMore }: Recommen
     return s.authors?.find((a) => a.name)?.name ?? null;
   })();
 
+  const stagedContent = reduce
+    ? {}
+    : { variants: staggerContainer(0.07, 0.08), initial: "hidden" as const, animate: "visible" as const };
+  const stagedItem = reduce ? {} : { variants: fadeUp };
+
   return (
     <section
-      className="relative overflow-hidden rounded-2xl border border-border/40 bg-card/60 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.5)] backdrop-blur-xs sm:bg-card/60"
+      className="grain relative overflow-hidden rounded-2xl"
       aria-roledescription="carousel"
     >
-      {/* Mobile: blurred cover bg */}
-      <div className="absolute inset-0 sm:hidden">
-        <SeriesCover
-          series={s}
-          alt=""
-          isAnonymous={isAnonymous}
-          showProgressUi={false}
-          className="h-full w-full object-cover object-top opacity-35 blur-xs scale-105"
-        />
-        <div className="absolute inset-0 bg-linear-to-t from-card/90 via-card/60 to-card/30" />
+      {/* L'affiche emprunte sa lumière à la série courante. */}
+      <div className="absolute inset-0">
+        <AnimatePresence initial={false}>
+          <motion.div
+            key={`backdrop-${s.id}`}
+            className="absolute inset-0"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.7, ease: EASE_OUT }}
+          >
+            <ProjectionBackdrop src={s.thumbnailUrl} fadeIn={false} />
+          </motion.div>
+        </AnimatePresence>
       </div>
 
       <div className="relative overflow-hidden px-5 py-5 sm:px-7 sm:py-7">
@@ -192,71 +231,94 @@ function RecommendationHero({ series, hasMore, isPending, onLoadMore }: Recommen
             dragConstraints={{ left: 0, right: 0 }}
             dragElastic={0.2}
             onDragEnd={handleDragEnd}
-            className="flex cursor-grab flex-col gap-5 active:cursor-grabbing sm:flex-row sm:gap-7"
+            className="cursor-grab active:cursor-grabbing"
           >
-            {/* Cover */}
-            <button
-              type="button"
-              onClick={() => router.push(`/series/${s.id}`)}
-              className="group/cover relative mx-auto block aspect-2/3 w-[170px] shrink-0 overflow-hidden rounded-xl border border-border/60 shadow-lg shadow-black/40 transition-transform duration-200 hover:-translate-y-0.5 sm:mx-0 sm:w-[180px]"
+            <motion.div
+              className="flex flex-col gap-5 sm:flex-row sm:gap-7"
+              {...stagedContent}
             >
-              <SeriesCover
-                series={s}
-                alt={s.name}
-                isAnonymous={isAnonymous}
-                showProgressUi={false}
-                className="h-full w-full object-cover transition-transform duration-300 group-hover/cover:scale-[1.03]"
-              />
-            </button>
+              {/* Cover */}
+              <motion.button
+                type="button"
+                variants={reduce ? undefined : fadeUp}
+                onClick={() => router.push(`/series/${s.id}`)}
+                whileHover={reduce ? undefined : { y: -5 }}
+                transition={{ duration: 0.25, ease: EASE_OUT }}
+                className="group/cover relative mx-auto block aspect-2/3 w-[170px] shrink-0 overflow-hidden rounded-xl ring-1 ring-border sm:mx-0 sm:w-[180px]"
+              >
+                <SeriesCover
+                  series={s}
+                  alt={s.name}
+                  isAnonymous={isAnonymous}
+                  showProgressUi={false}
+                  className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover/cover:scale-[1.05]"
+                />
+              </motion.button>
 
-            {/* Content */}
-            <div className="flex flex-1 flex-col justify-center gap-3 text-center sm:text-left">
-              {s.becauseOf && s.becauseOf.length > 0 && (
-                <p className="flex items-center justify-center gap-1 text-xs text-muted-foreground sm:justify-start">
-                  <Sparkles className="h-3 w-3 shrink-0 text-primary/60" />
-                  <span className="font-medium text-foreground/70">{s.becauseOf.join(", ")}</span>
-                </p>
-              )}
+              {/* Content */}
+              <div className="flex flex-1 flex-col justify-center gap-3 text-center text-foreground sm:text-left">
+                {s.becauseOf && s.becauseOf.length > 0 && (
+                  <motion.p
+                    className="flex items-center justify-center gap-1 text-xs text-muted-foreground sm:justify-start"
+                    {...stagedItem}
+                  >
+                    <Sparkles className="h-3 w-3 shrink-0 text-primary" />
+                    <span className="font-medium text-foreground/75">{s.becauseOf.join(", ")}</span>
+                  </motion.p>
+                )}
 
-              <h2 className="text-2xl font-semibold leading-tight sm:text-3xl">{s.name}</h2>
-
-              {summary && (
-                <p className="line-clamp-2 text-sm text-muted-foreground/90 sm:text-base">{summary}</p>
-              )}
-
-              {s.matchReasons && s.matchReasons.length > 0 && (
-                <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
-                  {s.matchReasons.map((reason) => {
-                    const config = REASON_CONFIG[reason];
-                    const Icon = config?.icon;
-                    const label = t(`series.matchReasons.${reason}` as Parameters<typeof t>[0]) ?? reason;
-                    return (
-                      <span
-                        key={reason}
-                        className={cn(
-                          "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium shadow-sm backdrop-blur-xs",
-                          config?.className ?? "bg-black/50 text-white"
-                        )}
-                      >
-                        {Icon && <Icon className="h-3 w-3 shrink-0" />}
-                        {label}
-                      </span>
-                    );
-                  })}
-                </div>
-              )}
-
-              <div className="mt-2 flex justify-center sm:justify-start">
-                <Button
-                  onClick={() => router.push(`/series/${s.id}`)}
-                  size="lg"
-                  className="gap-2 bg-linear-to-r from-indigo-600 via-purple-600 to-fuchsia-600 font-semibold text-white shadow-lg shadow-indigo-900/30 hover:from-indigo-500 hover:via-purple-500 hover:to-fuchsia-500 hover:text-white"
+                <motion.h2
+                  className="font-display text-2xl font-semibold leading-tight sm:text-3xl lg:text-4xl"
+                  {...stagedItem}
                 >
-                  {t("home.recommendations.discover")}
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
+                  {s.name}
+                </motion.h2>
+
+                {summary && (
+                  <motion.p className="line-clamp-2 text-sm text-muted-foreground sm:text-base" {...stagedItem}>
+                    {summary}
+                  </motion.p>
+                )}
+
+                {s.matchReasons && s.matchReasons.length > 0 && (
+                  <motion.div
+                    className="flex flex-wrap items-center justify-center gap-2 sm:justify-start"
+                    {...stagedItem}
+                  >
+                    {s.matchReasons.map((reason) => {
+                      const config = REASON_CONFIG[reason];
+                      const Icon = config?.icon;
+                      const label = t(`series.matchReasons.${reason}` as Parameters<typeof t>[0]) ?? reason;
+                      return (
+                        <span
+                          key={reason}
+                          className={cn(
+                            "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
+                            config?.className ?? "bg-black/50 text-white"
+                          )}
+                        >
+                          {Icon && <Icon className="h-3 w-3 shrink-0" />}
+                          {label}
+                        </span>
+                      );
+                    })}
+                  </motion.div>
+                )}
+
+                <motion.div className="mt-2 flex justify-center sm:justify-start" {...stagedItem}>
+                  <Magnetic>
+                    <Button
+                      onClick={() => router.push(`/series/${s.id}`)}
+                      size="lg"
+                      className="group/cta gap-2 font-semibold"
+                    >
+                      {t("home.recommendations.discover")}
+                      <ArrowRight className="h-4 w-4 transition-transform duration-300 ease-out group-hover/cta:translate-x-1" />
+                    </Button>
+                  </Magnetic>
+                </motion.div>
               </div>
-            </div>
+            </motion.div>
           </motion.div>
         </AnimatePresence>
 
@@ -272,10 +334,10 @@ function RecommendationHero({ series, hasMore, isPending, onLoadMore }: Recommen
                     aria-label={`${i + 1} / ${total}`}
                     onClick={() => goTo(i, i > safeIndex ? 1 : -1)}
                     className={cn(
-                      "h-1.5 rounded-full transition-all duration-300",
+                      "h-1.5 rounded-full transition-[width,background-color] duration-300 ease-out",
                       i === safeIndex
-                        ? "w-8 bg-linear-to-r from-primary to-fuchsia-500"
-                        : "w-2 bg-muted-foreground/40 hover:bg-muted-foreground/60"
+                        ? "w-8 bg-primary"
+                        : "w-2 bg-foreground/25 hover:bg-foreground/45"
                     )}
                   />
                 ))}
@@ -305,17 +367,27 @@ const RecommendationCard = memo(function RecommendationCard({ series: s }: { ser
   const router = useRouter();
   const { t } = useTranslate();
   const { isAnonymous } = useAnonymous();
+  const glowRef = useRef<HTMLButtonElement>(null);
+  const handleGlow = usePointerGlow(glowRef);
 
   return (
     <button
       type="button"
+      ref={glowRef}
+      onMouseMove={handleGlow}
       onClick={() => router.push(`/series/${s.id}`)}
       className="group relative flex w-[160px] shrink-0 flex-col gap-1.5 sm:w-[188px]"
     >
-      <div className="relative aspect-2/3 w-full overflow-hidden rounded-xl border border-border/60 bg-muted shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
-        <SeriesCover series={s} alt={s.name} isAnonymous={isAnonymous} showProgressUi={false} />
+      <div className="relative aspect-2/3 w-full overflow-hidden rounded-xl bg-surface-2 ring-1 ring-border/60 transition-transform duration-300 ease-out group-hover:-translate-y-1">
+        <SeriesCover
+          series={s}
+          alt={s.name}
+          isAnonymous={isAnonymous}
+          showProgressUi={false}
+          className="transition-transform duration-500 ease-out group-hover:scale-[1.04]"
+        />
 
-        <div className="absolute inset-0 flex flex-col justify-end bg-linear-to-t from-black/80 via-black/30 to-transparent p-2.5 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+        <div className="absolute inset-0 flex flex-col justify-end bg-linear-to-t from-black/80 via-black/30 to-transparent p-2.5 opacity-0 transition-opacity duration-300 group-hover:opacity-100">{/* taste-skill-ignore: scrim neutre au-dessus de la couverture */}
           <p className="line-clamp-2 text-left text-xs font-semibold text-white">{s.name}</p>
         </div>
 
@@ -329,7 +401,7 @@ const RecommendationCard = memo(function RecommendationCard({ series: s }: { ser
                   key={reason}
                   title={t(`series.matchReasons.${reason}` as Parameters<typeof t>[0]) ?? reason}
                   className={cn(
-                    "flex h-6 w-6 items-center justify-center rounded-full shadow-sm backdrop-blur-xs",
+                    "flex h-6 w-6 items-center justify-center rounded-full",
                     config?.className ?? "bg-black/70 text-white"
                   )}
                 >
@@ -339,6 +411,8 @@ const RecommendationCard = memo(function RecommendationCard({ series: s }: { ser
             })}
           </div>
         )}
+
+        <GlowLayer />
       </div>
 
       {s.becauseOf && s.becauseOf.length > 0 && (

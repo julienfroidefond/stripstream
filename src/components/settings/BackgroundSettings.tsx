@@ -212,7 +212,7 @@ export function BackgroundSettings({ initialLibraries }: BackgroundSettingsProps
                   <button
                     key={preset.id}
                     onClick={() => handleGradientSelect(preset.gradient)}
-                    className="relative group rounded-lg overflow-hidden h-20 border-2 transition-all hover:scale-105"
+                    className="relative group rounded-lg overflow-hidden h-20 border-2 transition-transform hover:scale-105"
                     style={{
                       background: preset.gradient,
                       borderColor:

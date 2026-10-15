@@ -66,17 +66,17 @@ const ScrollContainer = React.forwardRef<HTMLDivElement, ScrollContainerProps>(
         {showArrows && showLeftArrow && (
           <button
             onClick={() => scroll("left")}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-background/90 shadow-md border transition-opacity hover:bg-accent"
+            className="absolute left-0 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-popover text-popover-foreground ring-1 ring-border transition-opacity hover:bg-accent sm:flex"
             aria-label={arrowLeftLabel}
           >
-            <ChevronLeft className="h-6 w-6" />
+            <ChevronLeft className="h-5 w-5" />
           </button>
         )}
 
         <div
           ref={scrollContainerRef}
           onScroll={handleScroll}
-          className={cn("flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth pb-4", className)}
+          className={cn("flex gap-4 overflow-x-auto hide-scrollbar scroll-smooth pb-4", className)}
           {...props}
         >
           {children}
@@ -85,10 +85,10 @@ const ScrollContainer = React.forwardRef<HTMLDivElement, ScrollContainerProps>(
         {showArrows && showRightArrow && (
           <button
             onClick={() => scroll("right")}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-background/90 shadow-md border transition-opacity hover:bg-accent"
+            className="absolute right-0 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-popover text-popover-foreground ring-1 ring-border transition-opacity hover:bg-accent sm:flex"
             aria-label={arrowRightLabel}
           >
-            <ChevronRight className="h-6 w-6" />
+            <ChevronRight className="h-5 w-5" />
           </button>
         )}
       </div>

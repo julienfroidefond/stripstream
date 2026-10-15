@@ -61,7 +61,7 @@ const TabsList = React.forwardRef<HTMLDivElement, TabsListProps>(({ className, .
   <div
     ref={ref}
     className={cn(
-      "inline-flex h-10 items-center justify-center rounded-md border border-border bg-muted p-1 text-muted-foreground",
+      "inline-flex h-10 items-center justify-center rounded-md bg-surface-2 p-1 text-muted-foreground",
       className
     )}
     {...props}
@@ -86,8 +86,8 @@ const TabsTrigger = React.forwardRef<HTMLButtonElement, TabsTriggerProps>(
         role="tab"
         aria-selected={isSelected}
         className={cn(
-          "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all duration-200 ease-out focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
-          isSelected && "bg-background text-foreground shadow-xs",
+          "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-colors duration-200 ease-out focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+          isSelected && "bg-card text-foreground",
           className
         )}
         onClick={() => onValueChange(value)}

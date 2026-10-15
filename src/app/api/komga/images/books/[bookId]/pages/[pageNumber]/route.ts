@@ -30,7 +30,7 @@ export async function GET(
     if (httpStatus === 404) {
       const { bookId, pageNumber } = await params;
        
-      logger.info(`📷 Page ${pageNumber} not found for book: ${bookId}`);
+      logger.info(`Page ${pageNumber} not found for book: ${bookId}`);
       return NextResponse.json(
         {
           error: {

@@ -14,11 +14,15 @@ import { useTranslate } from "@/hooks/useTranslate";
 import { SeriesCover } from "@/components/ui/series-cover";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { IconButton } from "@/components/ui/icon-button";
+import { cn } from "@/lib/utils";
 import logger from "@/lib/logger";
 import { addToFavorites, removeFromFavorites } from "@/app/actions/favorites";
 import { useAnonymous } from "@/contexts/AnonymousContext";
 import { SeriesRatingControl } from "./SeriesRatingControl";
 import type { NormalizedProviderRating } from "@/lib/providers/types";
+import { motion, useReducedMotion } from "framer-motion";
+import { ProjectionBackdrop } from "@/components/ui/projection-backdrop";
+import { fadeUp, liftIn, maskUp, staggerContainer } from "@/lib/motion";
 
 interface SeriesHeaderProps {
   series: NormalizedSeries;
@@ -43,6 +47,10 @@ export const SeriesHeader = ({
   const [isFavorite, setIsFavorite] = useState(initialIsFavorite);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const { t } = useTranslate();
+  const reduce = useReducedMotion();
+  const staged = reduce
+    ? {}
+    : { variants: staggerContainer(0.08, 0.05), initial: "hidden" as const, animate: "visible" as const };
 
   const handleToggleFavorite = async () => {
     try {
@@ -137,50 +145,64 @@ export const SeriesHeader = ({
     : null;
 
   return (
-    <div className="relative min-h-[300px] w-screen -ml-[calc((100vw-100%)/2)] overflow-hidden">
+    <div className="relative w-screen -ml-[calc((100vw-100%)/2)] overflow-hidden">
       {/* Image de fond */}
       <div className="absolute inset-0">
-        <SeriesCover
-          series={series}
-          alt={t("series.header.coverAlt", { title: series.name })}
-          className="blur-xs scale-105 brightness-50"
-          showProgressUi={false}
-        />
+        <ProjectionBackdrop src={series.thumbnailUrl} />
       </div>
-
       {/* Contenu */}
-      <div className="relative container mx-auto px-4 py-8">
-        <div className="flex flex-col md:flex-row gap-6 items-center md:items-start w-full">
+      <div className="relative container mx-auto flex min-h-[260px] items-end px-4 pb-8 pt-12 md:min-h-[340px] md:pb-10 md:pt-16">
+        <motion.div
+          className="flex w-full flex-col items-center gap-6 md:flex-row md:items-end md:gap-8"
+          {...staged}
+        >
           {/* Image principale */}
-          <div className="relative w-[180px] aspect-2/3 rounded-lg overflow-hidden shadow-lg bg-muted/80 backdrop-blur-md shrink-0">
+          <motion.div
+            variants={reduce ? undefined : liftIn}
+            className="relative aspect-2/3 w-[132px] shrink-0 overflow-hidden rounded-xl bg-surface-2 ring-1 ring-border md:w-[168px]"
+          >
             <SeriesCover
               series={series}
               alt={t("series.header.coverAlt", { title: series.name })}
               showProgressUi={false}
             />
-          </div>
+          </motion.div>
 
           {/* Informations */}
-          <div className="flex-1 text-white space-y-2 text-center md:text-left">
-            <h1 className="text-2xl md:text-3xl font-bold">{series.name}</h1>
-            {authorsText && (
-              <p className="text-white/70 text-sm flex items-center gap-1 justify-center md:justify-start">
-                <User className="h-3.5 w-3.5 shrink-0" />
-                {authorsText}
-              </p>
-            )}
-            {series.startYear != null && (
-              <p className="text-white/70 text-sm flex items-center gap-1 justify-center md:justify-start">
-                <Calendar className="h-3.5 w-3.5 shrink-0" />
-                {series.startYear}
-              </p>
+          <motion.div
+            variants={reduce ? undefined : fadeUp}
+            className="min-w-0 flex-1 space-y-3 text-center text-foreground md:pb-1 md:text-left"
+          >
+            <span className="block overflow-hidden">
+              <motion.h1
+                variants={reduce ? undefined : maskUp}
+                className="font-display text-3xl font-semibold leading-[1.05] tracking-tight sm:text-4xl md:text-5xl"
+              >
+                {series.name}
+              </motion.h1>
+            </span>
+            {(authorsText || series.startYear != null) && (
+              <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm text-muted-foreground md:justify-start">
+                {authorsText && (
+                  <span className="flex items-center gap-1.5">
+                    <User className="h-3.5 w-3.5 shrink-0" />
+                    {authorsText}
+                  </span>
+                )}
+                {series.startYear != null && (
+                  <span className="flex items-center gap-1.5 tabular-nums">
+                    <Calendar className="h-3.5 w-3.5 shrink-0" />
+                    {series.startYear}
+                  </span>
+                )}
+              </div>
             )}
             {series.genres && series.genres.length > 0 && (
               <div className="flex flex-wrap gap-1.5 justify-center md:justify-start">
                 {series.genres.map((genre) => (
                   <span
                     key={genre}
-                    className="px-2 py-0.5 rounded-full text-xs font-medium bg-white/10 text-white/80 backdrop-blur-xs border border-white/20"
+                    className="rounded-full bg-surface-3 px-2.5 py-0.5 text-xs font-medium text-muted-foreground"
                   >
                     {genre}
                   </span>
@@ -188,19 +210,19 @@ export const SeriesHeader = ({
               </div>
             )}
             {series.summary && (
-              <div>
-                <p className={`text-white/80 text-sm md:text-base ${isDescriptionExpanded ? "max-h-[200px] overflow-y-auto" : "line-clamp-3"}`}>
+              <div className="mx-auto max-w-3xl md:mx-0">
+                <p className={cn("text-sm text-muted-foreground md:text-base", isDescriptionExpanded ? "max-h-[200px] overflow-y-auto" : "line-clamp-3")}>
                   {series.summary}
                 </p>
                 <button
                   onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
-                  className="text-white/60 hover:text-white/90 text-xs mt-1 transition-colors"
+                  className="mt-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
                 >
                   {t(isDescriptionExpanded ? "series.header.showLess" : "series.header.showMore")}
                 </button>
               </div>
             )}
-            <div className="flex items-center gap-4 mt-4 justify-center md:justify-start flex-wrap">
+            <div className="flex items-center gap-x-3 gap-y-2 pt-1 justify-center md:justify-start flex-wrap">
               {seriesStatusInfo && (
                 <StatusBadge status={seriesStatusInfo.status} icon={seriesStatusInfo.icon}>
                   {seriesStatusInfo.label}
@@ -211,7 +233,7 @@ export const SeriesHeader = ({
                   {statusInfo.label}
                 </StatusBadge>
               )}
-              <span className="text-sm text-white/80">
+              <span className="text-sm text-muted-foreground tabular-nums">
                 {series.bookCount === 1
                   ? t("series.header.books", { count: series.bookCount })
                   : t("series.header.books_plural", { count: series.bookCount })}
@@ -237,13 +259,15 @@ export const SeriesHeader = ({
                 tooltip={t(
                   isFavorite ? "series.header.favorite.remove" : "series.header.favorite.add"
                 )}
-                className="text-white hover:text-white"
                 iconClassName={isFavorite ? "fill-yellow-400 text-yellow-400" : ""}
               />
-              <RefreshButton libraryId={series.id} refreshLibrary={refreshSeries} />
+              <RefreshButton
+                libraryId={series.id}
+                refreshLibrary={refreshSeries}
+              />
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </div>
 
     </div>

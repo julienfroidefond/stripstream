@@ -12,9 +12,10 @@ import { useRefresh } from "@/contexts/RefreshContext";
 interface RefreshButtonProps {
   libraryId: string;
   refreshLibrary?: (libraryId: string) => Promise<{ success: boolean; error?: string }>;
+  className?: string;
 }
 
-export function RefreshButton({ libraryId, refreshLibrary: refreshLibraryProp }: RefreshButtonProps) {
+export function RefreshButton({ libraryId, refreshLibrary: refreshLibraryProp, className }: RefreshButtonProps) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
@@ -57,7 +58,7 @@ export function RefreshButton({ libraryId, refreshLibrary: refreshLibraryProp }:
       size="icon"
       onClick={handleRefresh}
       disabled={isRefreshing}
-      className="ml-2"
+      className={cn("ml-2", className)}
       aria-label={t("library.refresh.button")}
       data-library-id={libraryId}
     >

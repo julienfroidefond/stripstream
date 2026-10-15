@@ -524,7 +524,7 @@ function TypeBadge({ type }: { type: ConnectionType }) {
   const className =
     type === "komga"
       ? "bg-blue-500/15 text-blue-700 dark:text-blue-300"
-      : "bg-purple-500/15 text-purple-700 dark:text-purple-300";
+      : "bg-primary/15 text-primary";
   return (
     <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-xs", className)}>
       {label}
@@ -582,10 +582,10 @@ function FieldRow({
 }
 
 const inputClass =
-  "flex h-9 w-full rounded-md border border-input bg-background/70 backdrop-blur-md px-3 py-1 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
+  "flex h-9 w-full rounded-md border border-input bg-surface-1 px-3 py-1 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
 
 const btnPrimary =
-  "inline-flex h-9 items-center justify-center rounded-md bg-primary/90 backdrop-blur-md px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/80 disabled:pointer-events-none disabled:opacity-50";
+  "inline-flex h-9 items-center justify-center rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50";
 
 const btnSecondary =
   "inline-flex h-9 items-center justify-center rounded-md bg-secondary px-3 text-sm font-medium text-secondary-foreground transition-colors hover:bg-secondary/80 disabled:pointer-events-none disabled:opacity-50";

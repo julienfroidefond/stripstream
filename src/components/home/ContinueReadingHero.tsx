@@ -2,13 +2,16 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { AnimatePresence, motion, type PanInfo } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion, type PanInfo } from "framer-motion";
 import { ArrowRight, BookOpen } from "lucide-react";
 import type { NormalizedBook, NormalizedSeries } from "@/lib/providers/types";
 import { Button } from "@/components/ui/button";
 import { useTranslate } from "@/hooks/useTranslate";
 import { cn } from "@/lib/utils";
 import { loadHomeFeed } from "@/app/actions/home";
+import { CountUp, Magnetic } from "@/components/motion";
+import { EASE_OUT, EASE_PROJECTION, fadeUp, staggerContainer } from "@/lib/motion";
+import { ProjectionBackdrop } from "@/components/ui/projection-backdrop";
 
 interface ContinueReadingHeroProps {
   books: NormalizedBook[];
@@ -27,6 +30,7 @@ const slideVariants = {
 export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps) {
   const router = useRouter();
   const { t } = useTranslate();
+  const reduce = useReducedMotion();
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState(0);
   const [loadedBooks, setLoadedBooks] = useState(books.slice(0, ITEMS_PER_PAGE));
@@ -36,17 +40,23 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
   const total = loadedBooks.length;
   const hasMany = total > 1;
   const safeIndex = total > 0 ? ((index % total) + total) % total : 0;
-  const showLoadMore = hasMore && safeIndex === total - 1;
+  const showLoadMore = hasMore;
 
   if (total === 0) return null;
 
   const book = loadedBooks[safeIndex];
 
   const handleLoadMore = () => {
+    const firstNew = loadedBooks.length;
     startTransition(async () => {
-      const result = await loadHomeFeed("continue-reading", loadedBooks.length);
+      const result = await loadHomeFeed("continue-reading", firstNew);
       setLoadedBooks(result.items as NormalizedBook[]);
       setHasMore(result.hasMore);
+      // La suite se pose sur la première nouveauté : le clic se voit.
+      if (result.items.length > firstNew) {
+        setDirection(1);
+        setIndex(firstNew);
+      }
     });
   };
   const target = book.seriesId?.trim() ?? "";
@@ -90,32 +100,36 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
     else if (info.offset.x > SWIPE_THRESHOLD) goTo(safeIndex - 1, -1);
   };
 
+  const stagedContent = reduce
+    ? {}
+    : { variants: staggerContainer(0.07, 0.08), initial: "hidden" as const, animate: "visible" as const };
+  const stagedItem = reduce ? {} : { variants: fadeUp };
+
   return (
     <section
       data-testid="home-continue-reading"
-      className={cn(
-        "relative overflow-hidden rounded-2xl border border-border/40",
-        // Mobile : couverture en fond avec dégradé discret
-        "bg-card/60 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.5)] backdrop-blur-xs",
-        // Desktop : fond uni, mise en page côte-à-côte
-        "sm:bg-card/60"
-      )}
+      className="grain relative overflow-hidden rounded-2xl"
       aria-roledescription="carousel"
       aria-label={t("home.hero.label")}
     >
-      {/* Mobile only: cover as subtle blurred background */}
-      <div className="absolute inset-0 sm:hidden">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={book.thumbnailUrl}
-          alt=""
-          aria-hidden="true"
-          className="h-full w-full object-cover object-top opacity-35 blur-xs scale-105"
-        />
-        <div className="absolute inset-0 bg-linear-to-t from-card/90 via-card/60 to-card/30" />
+      {/* L'artwork courant est la seule source de lumière de l'affiche.
+          Chaque changement de tome éteint puis rallume la salle. */}
+      <div className="absolute inset-0">
+        <AnimatePresence initial={false}>
+          <motion.div
+            key={book.id}
+            className="absolute inset-0"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.7, ease: EASE_OUT }}
+          >
+            <ProjectionBackdrop src={book.thumbnailUrl} fadeIn={false} />
+          </motion.div>
+        </AnimatePresence>
       </div>
 
-      <div className="relative overflow-hidden px-5 py-5 sm:px-7 sm:py-7">
+      <div className="relative overflow-hidden px-5 py-6 sm:px-8 sm:py-9">
         <AnimatePresence mode="popLayout" custom={direction} initial={false}>
           <motion.div
             key={book.id}
@@ -129,85 +143,106 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
             dragConstraints={{ left: 0, right: 0 }}
             dragElastic={0.2}
             onDragEnd={handleDragEnd}
-            className="flex cursor-grab flex-col gap-5 active:cursor-grabbing sm:flex-row sm:gap-7"
+            className="cursor-grab active:cursor-grabbing"
           >
-            {/* Cover */}
-            <button
-              type="button"
-              onClick={handleResume}
-              className="group/cover relative mx-auto block aspect-2/3 w-[170px] shrink-0 overflow-hidden rounded-xl border border-border/60 shadow-lg shadow-black/40 transition-transform duration-200 hover:-translate-y-0.5 sm:mx-0 sm:w-[180px]"
-              aria-label={t("home.hero.resume")}
+            <motion.div
+              className="flex flex-col gap-6 sm:flex-row sm:items-center sm:gap-9"
+              {...stagedContent}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={book.thumbnailUrl}
-                alt={t("home.hero.coverAlt", { title: bookTitle })}
-                loading="eager"
-                draggable={false}
-                className="h-full w-full object-cover transition-transform duration-300 group-hover/cover:scale-[1.03]"
-              />
-            </button>
+              {/* Cover */}
+              <motion.button
+                type="button"
+                variants={reduce ? undefined : fadeUp}
+                onClick={handleResume}
+                whileHover={reduce ? undefined : { y: -5 }}
+                transition={{ duration: 0.25, ease: EASE_OUT }}
+                className="group/cover relative mx-auto block aspect-2/3 w-[168px] shrink-0 overflow-hidden rounded-xl ring-1 ring-border sm:mx-0 sm:w-[196px]"
+                aria-label={t("home.hero.resume")}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={book.thumbnailUrl}
+                  alt={t("home.hero.coverAlt", { title: bookTitle })}
+                  loading="eager"
+                  draggable={false}
+                  className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover/cover:scale-[1.05]"
+                />
+              </motion.button>
 
-            {/* Content */}
-            <div className="flex flex-1 flex-col justify-center gap-3 text-center sm:text-left">
-              <div className="flex items-center justify-center gap-2 text-xs font-medium uppercase tracking-[0.2em] text-primary sm:justify-start">
-                <BookOpen className="h-3.5 w-3.5" />
-                {t("home.hero.label")}
-              </div>
-
-              <h2 className="text-2xl font-semibold leading-tight sm:text-3xl">
-                {seriesName ? (
-                  <>
-                    {seriesName}
-                    {volumeLabel && (
-                      <span className="ml-2 text-lg font-normal text-muted-foreground sm:text-xl">
-                        — {volumeLabel}
-                      </span>
-                    )}
-                  </>
-                ) : (
-                  volumeLabel ?? bookTitle
-                )}
-              </h2>
-
-              {summary && (
-                <p className="line-clamp-2 text-sm text-muted-foreground/90 sm:text-base">
-                  {summary}
-                </p>
-              )}
-
-              {hasProgress && (
-                <div className="space-y-1.5">
-                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted/60">
-                    <div
-                      className="h-full rounded-full bg-linear-to-r from-primary via-cyan-500 to-fuchsia-500 transition-[width] duration-500"
-                      style={{ width: `${percent}%` }}
-                    />
-                  </div>
-                  <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground sm:justify-start">
-                    <span className="font-semibold text-foreground">{percent}%</span>
-                    <span>{t("home.hero.page", { current: currentPage, total: totalPages })}</span>
-                  </div>
-                </div>
-              )}
-
-              <div className="mt-2 flex justify-center sm:justify-start">
-                <Button
-                  data-testid="home-resume-reading"
-                  onClick={handleResume}
-                  size="lg"
-                  className="gap-2 bg-linear-to-r from-indigo-600 via-purple-600 to-fuchsia-600 font-semibold text-white shadow-lg shadow-indigo-900/30 hover:from-indigo-500 hover:via-purple-500 hover:to-fuchsia-500 hover:text-white"
+              {/* Content */}
+              <div className="flex flex-1 flex-col justify-center gap-4 text-center text-foreground sm:text-left">
+                <motion.div
+                  className="flex items-center justify-center gap-2 text-xs font-medium uppercase tracking-[0.2em] text-primary sm:justify-start"
+                  {...stagedItem}
                 >
-                  {hasProgress ? t("home.hero.resume") : t("home.hero.start")}
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
+                  <BookOpen className="h-3.5 w-3.5" />
+                  {t("home.hero.label")}
+                </motion.div>
+
+                <motion.h2
+                  className="font-display text-3xl font-semibold leading-[1.05] tracking-tight sm:text-4xl lg:text-5xl"
+                  {...stagedItem}
+                >
+                  {seriesName ? (
+                    <>
+                      {seriesName}
+                      {volumeLabel && (
+                        <span className="ml-3 align-middle text-lg font-normal text-muted-foreground sm:text-xl">
+                          {volumeLabel}
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    volumeLabel ?? bookTitle
+                  )}
+                </motion.h2>
+
+                {summary && (
+                  <motion.p className="line-clamp-2 text-sm text-muted-foreground sm:text-base" {...stagedItem}>
+                    {summary}
+                  </motion.p>
+                )}
+
+                {hasProgress && (
+                  <motion.div className="mx-auto w-full max-w-md space-y-2 sm:mx-0" {...stagedItem}>
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-foreground/15">
+                      <motion.div
+                        className="h-full origin-left rounded-full bg-primary"
+                        initial={reduce ? false : { scaleX: 0 }}
+                        animate={{ scaleX: percent / 100 }}
+                        transition={{ duration: 1, ease: EASE_PROJECTION, delay: 0.35 }}
+                        style={{ width: "100%" }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground sm:justify-start">
+                      <span className="font-semibold text-foreground tabular-nums">
+                        <CountUp value={percent} suffix="%" />
+                      </span>
+                      <span className="tabular-nums">{t("home.hero.page", { current: currentPage, total: totalPages })}</span>
+                    </div>
+                  </motion.div>
+                )}
+
+                <motion.div className="mt-1 flex justify-center sm:justify-start" {...stagedItem}>
+                  <Magnetic>
+                    <Button
+                      data-testid="home-resume-reading"
+                      onClick={handleResume}
+                      size="lg"
+                      className="group/cta gap-2 font-semibold"
+                    >
+                      {hasProgress ? t("home.hero.resume") : t("home.hero.start")}
+                      <ArrowRight className="h-4 w-4 transition-transform duration-300 ease-out group-hover/cta:translate-x-1" />
+                    </Button>
+                  </Magnetic>
+                </motion.div>
               </div>
-            </div>
+            </motion.div>
           </motion.div>
         </AnimatePresence>
 
         {(hasMany || showLoadMore) && (
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
             {hasMany && (
               <div
                 role="tablist"
@@ -222,10 +257,10 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
                     aria-label={`${i + 1} / ${total}`}
                     onClick={() => goTo(i, i > safeIndex ? 1 : -1)}
                     className={cn(
-                      "h-1.5 rounded-full transition-all duration-300",
+                      "h-1.5 rounded-full transition-[width,background-color] duration-300 ease-out",
                       i === safeIndex
-                        ? "w-8 bg-linear-to-r from-primary to-fuchsia-500"
-                        : "w-2 bg-muted-foreground/40 hover:bg-muted-foreground/60"
+                        ? "w-8 bg-primary"
+                        : "w-2 bg-foreground/25 hover:bg-foreground/45"
                     )}
                   />
                 ))}

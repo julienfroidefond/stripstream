@@ -137,7 +137,7 @@ export function ReaderSettings() {
                 />
                 <label
                   htmlFor={`reader-bg-${bg.value}`}
-                  className="relative flex flex-col items-center justify-center p-4 rounded-lg border-2 transition-all hover:scale-105 cursor-pointer min-h-[100px]"
+                  className="relative flex flex-col items-center justify-center p-4 rounded-lg border-2 transition-transform hover:scale-105 cursor-pointer min-h-[100px]"
                   style={{
                     backgroundColor: bg.value === "default" ? "hsl(var(--background))" : undefined,
                     borderColor:

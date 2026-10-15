@@ -19,24 +19,24 @@ export function LoginContent({ searchParams }: LoginContentProps) {
   const defaultTab = searchParams.tab || "login";
 
   return (
-    <div className="container relative min-h-screen flex-col items-center justify-center grid lg:max-w-none lg:grid-cols-2 lg:px-0">
+    <div className="relative grid min-h-dvh lg:grid-cols-2">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
-        className="absolute top-4 right-4 z-50 hover:scale-105 transition-transform"
+        className="absolute top-4 right-4 z-50 transition-transform hover:scale-105"
       >
         <LanguageSelector />
       </motion.div>
 
-      <div className="relative hidden h-full flex-col bg-slate-900 p-10 text-white lg:flex dark:border-r overflow-hidden">
+      <div className="relative hidden h-full flex-col overflow-hidden bg-[hsl(30_7%_4%)] p-10 text-white lg:flex">
         <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40 transition-opacity duration-200 ease-in-out hover:opacity-50 transform hover:scale-105 transition-transform duration-10000 ease-linear"
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40 transition-opacity duration-700 ease-out hover:opacity-50"
           style={{
             backgroundImage: "url('/images/login-bg.jpg')",
           }}
         />
-        <div className="absolute inset-0 bg-linear-to-b from-slate-900/30 via-slate-900/50 to-slate-900/90" />
+        <div className="absolute inset-0 bg-linear-to-b from-black/20 via-black/50 to-black/90" />{/* taste-skill-ignore: scrim neutre au-dessus de l'image de fond */}
         <motion.div
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -57,8 +57,8 @@ export function LoginContent({ searchParams }: LoginContentProps) {
             whileHover={{ scale: 1.08, rotate: -3 }}
             transition={{ duration: 0.3 }}
           />
-          <span className="text-2xl font-bold bg-linear-to-r from-primary via-cyan-500 to-fuchsia-500 bg-clip-text text-transparent">
-            StripStream
+          <span className="font-display text-2xl font-bold tracking-tight">
+            Strip<span className="text-primary">Stream</span>
           </span>
         </motion.div>
         <motion.div
@@ -68,65 +68,54 @@ export function LoginContent({ searchParams }: LoginContentProps) {
           className="relative z-20 mt-auto"
         >
           <blockquote className="space-y-2">
-            <p className="text-xl font-light leading-relaxed tracking-wide text-gray-200">
+            <p className="text-xl font-light leading-relaxed tracking-wide text-white/80">
               {t("login.description")}
             </p>
           </blockquote>
         </motion.div>
       </div>
+
       <motion.div
         initial={{ x: 20, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.6 }}
-        className="lg:p-8"
+        className="flex items-center justify-center p-6 lg:p-8"
       >
         <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
           <div className="flex flex-col items-center space-y-4 text-center">
-            <div className="relative">
-              <div className="relative bg-linear-to-br from-white to-gray-100 dark:from-slate-800 dark:to-slate-900 rounded-full shadow-xl overflow-hidden w-32 h-32 flex items-center justify-center">
-                <motion.img
-                  src="/images/logostripstream.png"
-                  alt="StripStream Logo"
-                  className="hidden h-full w-full object-cover dark:block"
-                  initial={{ scale: 1.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ duration: 0.5 }}
-                  whileHover={{ scale: 1.05 }}
-                />
-                <motion.img
-                  src="/images/logostripstream-white.png"
-                  alt="StripStream Logo"
-                  className="h-full w-full object-cover dark:hidden"
-                  initial={{ scale: 1.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ duration: 0.5 }}
-                  whileHover={{ scale: 1.05 }}
-                />
-              </div>
+            <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-full bg-surface-2 ring-1 ring-border">
+              <motion.img
+                src="/images/logostripstream.png"
+                alt="StripStream Logo"
+                className="hidden h-full w-full object-cover dark:block"
+                initial={{ scale: 1.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.5 }}
+                whileHover={{ scale: 1.05 }}
+              />
+              <motion.img
+                src="/images/logostripstream-white.png"
+                alt="StripStream Logo"
+                className="h-full w-full object-cover dark:hidden"
+                initial={{ scale: 1.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.5 }}
+                whileHover={{ scale: 1.05 }}
+              />
             </div>
             <motion.h1
               initial={{ y: -20 }}
               animate={{ y: 0 }}
-              className="text-3xl font-bold tracking-tight bg-linear-to-r from-primary via-cyan-500 to-fuchsia-500 bg-clip-text text-transparent"
+              className="font-display text-3xl font-bold tracking-tight"
             >
               {t("login.title")}
             </motion.h1>
             <p className="text-sm text-muted-foreground">{t("login.subtitle")}</p>
           </div>
           <Tabs defaultValue={defaultTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 p-1 bg-slate-100 dark:bg-slate-800/50 rounded-lg">
-              <TabsTrigger
-                value="login"
-                className="data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-xs dark:data-[state=active]:bg-slate-700 transition-all duration-200"
-              >
-                {t("login.tabs.login")}
-              </TabsTrigger>
-              <TabsTrigger
-                value="register"
-                className="data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-xs dark:data-[state=active]:bg-slate-700 transition-all duration-200"
-              >
-                {t("login.tabs.register")}
-              </TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="login">{t("login.tabs.login")}</TabsTrigger>
+              <TabsTrigger value="register">{t("login.tabs.register")}</TabsTrigger>
             </TabsList>
             <TabsContent value="login" className="mt-6">
               <LoginForm from={searchParams.from} />

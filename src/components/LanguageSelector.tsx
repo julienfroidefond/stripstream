@@ -27,13 +27,13 @@ export default function LanguageSelector() {
       <DropdownMenuContent align="end">
         <DropdownMenuItem
           onClick={() => handleLanguageChange("fr")}
-          className={i18n.language === "fr" ? "bg-accent/80 backdrop-blur-md" : ""}
+          className={i18n.language === "fr" ? "bg-accent text-accent-foreground" : ""}
         >
           {t("language.fr")}
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => handleLanguageChange("en")}
-          className={i18n.language === "en" ? "bg-accent/80 backdrop-blur-md" : ""}
+          className={i18n.language === "en" ? "bg-accent text-accent-foreground" : ""}
         >
           {t("language.en")}
         </DropdownMenuItem>

@@ -82,25 +82,13 @@ export function Sidebar({
     <SidebarNavContext.Provider value={handleLinkClick}>
       <aside
         className={cn(
-          "fixed left-0 top-[calc(4rem+env(safe-area-inset-top,0px))] z-30 h-[calc(100vh-4rem-env(safe-area-inset-top,0px))] w-72 border-r border-primary/30",
-          "bg-background/70 shadow-xs backdrop-blur-xl supports-backdrop-filter:bg-background/65",
-          "transition-transform duration-300 ease-in-out flex flex-col",
+          "fixed left-0 top-[calc(4rem+env(safe-area-inset-top,0px))] z-30 h-[calc(100dvh-4rem-env(safe-area-inset-top,0px))] w-72 border-r border-border", // taste-skill-ignore: arête du rail latéral
+          "bg-surface-1",
+          "transition-transform duration-300 ease-standard flex flex-col",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
         id="sidebar"
       >
-        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(160deg,hsl(var(--primary)/0.12)_0%,hsl(192_85%_55%/0.08)_32%,transparent_58%),linear-gradient(332deg,hsl(338_82%_62%/0.06)_0%,transparent_42%),repeating-linear-gradient(135deg,hsl(var(--foreground)/0.02)_0_1px,transparent_1px_11px)]" />
-        <div className="pointer-events-none absolute inset-0 z-0">
-          <div
-            className="hidden h-full w-full bg-center bg-no-repeat opacity-[0.1] bg-size-[260%] dark:block"
-            style={{ backgroundImage: "url('/images/logostripstream.png')" }}
-          />
-          <div
-            className="h-full w-full bg-center bg-no-repeat opacity-[0.12] bg-size-[260%] dark:hidden"
-            style={{ backgroundImage: "url('/images/logostripstream-white.png')" }}
-          />
-        </div>
-
         <div className="relative z-10 flex-1 space-y-4 overflow-y-auto px-3 py-4">
           <NavButton
             icon={Home}
@@ -124,7 +112,7 @@ export function Sidebar({
           {/* Connexions — streamé */}
           <Suspense fallback={connectionsSkeleton}>{connectionsSlot}</Suspense>
 
-          <div className="rounded-xl border border-border/50 bg-background/30 p-2">
+          <div className="rounded-xl bg-surface-2 p-2">
             <div className="space-y-1">
               <h2 className="mb-2 px-3 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
                 {t("sidebar.settings.title")}
@@ -153,7 +141,7 @@ export function Sidebar({
           </div>
         </div>
 
-        <div className="relative border-t border-border/50 bg-background/30 p-3">
+        <div className="relative bg-surface-2 p-3">
           <NavButton
             icon={LogOut}
             label={t("sidebar.logout")}

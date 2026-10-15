@@ -5,6 +5,8 @@ import {
   getSeriesPool,
   HomeCarouselSkeleton,
   HomeHeroSkeleton,
+  HomeReadingListSkeleton,
+  HomeRecommendationSkeleton,
 } from "@/components/home/HomeContent";
 import { ContinueReadingHero } from "@/components/home/ContinueReadingHero";
 import { HomeClientWrapper } from "@/components/home/HomeClientWrapper";
@@ -17,7 +19,7 @@ import { AppError } from "@/utils/errors";
 import { FavoriteService } from "@/lib/services/favorite.service";
 import { PreferencesService } from "@/lib/services/preferences.service";
 import { redirect } from "next/navigation";
-import { Bookmark, Heart, History, LibraryBig, Sparkles, Wand2 } from "lucide-react";
+import { Bookmark, Heart, History, LibraryBig, Sparkles } from "lucide-react";
 import type { NormalizedBook, NormalizedSeries } from "@/lib/providers/types";
 import type { HomePrimaryData } from "@/types/home";
 import type { StripstreamReadingList } from "@/types/stripstream";
@@ -103,7 +105,7 @@ async function HomeStreamingContent() {
           <FavoritesSection favoritesPromise={favoritesPromise} />
         </Suspense>
 
-        <Suspense fallback={<HomeCarouselSkeleton icon={Bookmark} />}>
+        <Suspense fallback={<HomeReadingListSkeleton icon={Bookmark} />}>
           <ReadingListsSection readingListsPromise={readingListsPromise} />
         </Suspense>
 
@@ -115,7 +117,7 @@ async function HomeStreamingContent() {
           <RecentlyReadSection recentlyReadPromise={recentlyReadPromise} />
         </Suspense>
 
-        <Suspense fallback={<HomeCarouselSkeleton icon={Wand2} />}>
+        <Suspense fallback={<HomeRecommendationSkeleton />}>
           <DeferredRecommendations isAnonymous={isAnonymous} />
         </Suspense>
       </div>
@@ -277,10 +279,10 @@ function HomePageSkeleton() {
       <HomeHeroSkeleton />
       <HomeCarouselSkeleton icon={LibraryBig} />
       <HomeCarouselSkeleton icon={Heart} />
-      <HomeCarouselSkeleton icon={Bookmark} />
+      <HomeReadingListSkeleton icon={Bookmark} />
       <HomeCarouselSkeleton icon={Sparkles} />
       <HomeCarouselSkeleton icon={History} />
-      <HomeCarouselSkeleton icon={Wand2} />
+      <HomeRecommendationSkeleton />
     </div>
   );
 }

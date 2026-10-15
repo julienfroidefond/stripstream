@@ -10,7 +10,7 @@ export const ImageLoader = ({ isLoading }: ImageLoaderProps) => {
   return (
     <div
       className={cn(
-        "absolute inset-0 flex items-center justify-center bg-background/40 backdrop-blur-[2px] transition-opacity duration-300",
+        "absolute inset-0 flex items-center justify-center bg-background/60 transition-opacity duration-300",
         isLoading ? "opacity-100" : "opacity-0 pointer-events-none"
       )}
     >

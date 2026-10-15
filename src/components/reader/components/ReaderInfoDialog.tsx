@@ -51,7 +51,7 @@ export function ReaderInfoDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] w-[calc(100vw-2rem)] overflow-y-auto border-border/60 bg-background/55 backdrop-blur-xl shadow-[0_8px_28px_-18px_rgba(0,0,0,0.75)] sm:w-[calc(100vw-3rem)] sm:max-w-5xl">
+      <DialogContent className="max-h-[90vh] w-[calc(100vw-2rem)] overflow-y-auto sm:w-[calc(100vw-3rem)] sm:max-w-5xl">
         <DialogHeader>
           <DialogTitle className="pr-8 text-left text-xl">
             {readerInfo?.seriesTitle || book.title}
@@ -62,8 +62,8 @@ export function ReaderInfoDialog({
         </DialogHeader>
 
         <div className="space-y-5">
-          <section className="flex gap-4 rounded-2xl border border-border/60 bg-muted/20 p-4 max-[520px]:flex-col">
-            <div className="relative mx-auto w-24 shrink-0 self-start overflow-hidden rounded-xl border border-border/60 shadow-xs sm:w-28 md:w-36 max-[520px]:mx-0">
+          <section className="flex gap-4 rounded-2xl bg-surface-2 p-4 max-[520px]:flex-col">
+            <div className="relative mx-auto w-24 shrink-0 self-start overflow-hidden rounded-xl bg-surface-3 sm:w-28 md:w-36 max-[520px]:mx-0">
               <div className="aspect-2/3 w-full">
                 <BookCover
                   book={book}
