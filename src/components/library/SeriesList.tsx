@@ -22,6 +22,7 @@ import { Progress } from "@/components/ui/progress";
 import { useTranslate } from "@/hooks/useTranslate";
 import { useAnonymous } from "@/contexts/AnonymousContext";
 import { cn, formatDate } from "@/lib/utils";
+import { StaggerGroup, StaggerItem } from "@/components/motion";
 
 interface SeriesListProps {
   series: NormalizedSeries[];
@@ -121,5 +122,13 @@ export function SeriesList({ series, isCompact = false }: SeriesListProps) {
   const { t } = useTranslate();
   if (!series.length) return <div className="p-8 text-center text-muted-foreground">{t("series.empty")}</div>;
 
-  return <div className={cn("space-y-3", isCompact && "space-y-2")}>{series.map((seriesItem) => <SeriesListItem key={seriesItem.id} series={seriesItem} isCompact={isCompact} />)}</div>;
+  return (
+    <StaggerGroup className={cn("space-y-3", isCompact && "space-y-2")} reveal="scroll">
+      {series.map((seriesItem) => (
+        <StaggerItem key={seriesItem.id}>
+          <SeriesListItem series={seriesItem} isCompact={isCompact} />
+        </StaggerItem>
+      ))}
+    </StaggerGroup>
+  );
 }
