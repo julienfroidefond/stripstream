@@ -66,15 +66,6 @@ const nextConfig = {
     "better-sqlite3",
     "@prisma/adapter-better-sqlite3",
   ],
-  // Optimisations pour Docker dev
-  turbopack: {
-    rules: {
-      "*.svg": {
-        loaders: ["@svgr/webpack"],
-        as: "*.js",
-      },
-    },
-  },
   // Optimisation du cache en dev
   onDemandEntries: {
     maxInactiveAge: 25 * 1000,

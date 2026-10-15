@@ -1,12 +1,15 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "entry": [
-    "scripts/**/*.{js,mjs,cjs}",
+    "playwright.config.ts",
+    "scripts/**/*.{js,mjs,cjs,ts}",
     "tests/**/*.spec.ts",
+    "tests/global-setup.ts",
+    "tests/setup/**/*.setup.ts",
     "tests/helpers/stub-provider.mjs"
   ],
+  "ignore": [".agents/**"],
   "ignoreExportsUsedInFile": true,
-  "ignoreDependencies": [
-    "pino-pretty"
-  ]
+  "ignoreDependencies": ["@prisma/client", "pino-pretty"],
+  "playwright": false
 }
