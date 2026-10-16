@@ -48,7 +48,7 @@ Two automated suites run side by side: **Vitest** for pure/unit logic and **Play
 ### Multi-provider abstraction (the core pattern)
 Stripstream is a comic reader frontend and does **not** own the library. It talks to one of two backends per user:
 - **Komga** (Spring API, basic auth)
-- **Stripstream Librarian** (custom API, bearer token)
+- **Stripstream Librarian** (custom API, bearer token). The Librarian is a separate repository — [`julienfroidefond/stripstream-librarian`](https://github.com/julienfroidefond/stripstream-librarian) (Rust/axum + PostgreSQL) — maintained by the same author and usually cloned as a sibling directory (`../stripstream-librarian`). This repo consumes its read-scoped Client API (`Bearer stl_{prefix}_{secret}`); treat that surface as a public contract. Full two-repo layout in [`docs/ecosystem.md`](docs/ecosystem.md).
 
 `src/lib/providers/provider.interface.ts` defines `IMediaProvider` (libraries, series, books, read progress, search, URL builders). Two concrete implementations live in `komga/komga.provider.ts` and `stripstream/stripstream.provider.ts`. Server code requests the active provider via:
 
@@ -115,7 +115,7 @@ PRAGMA foreign_keys=ON;
 
 Do not let Prisma auto-generate when changing constraints; it will lose data. Hand-write the SQL, preserve rows in `INSERT ... SELECT`, and make the migration idempotent so re-runs in dev/prod are no-ops. Migrations are applied automatically via `prisma migrate deploy` on prod boot.
 
-After creating or changing `.env`/`DATABASE_URL`, run `pnpm prisma generate` so the generated client and standalone scripts such as `scripts/init-db.mjs` read the new value. This matters on a fresh clone: `pnpm install` runs `prisma generate` in its postinstall hook before `.env` exists, so the client must be regenerated once the file is created.
+After creating or changing `.env`/`DATABASE_URL`, run `pnpm prisma generate` so the generated client and standalone scripts such as `scripts/init-db.ts` read the new value. This matters on a fresh clone: `pnpm install` runs `prisma generate` in its postinstall hook before `.env` exists, so the client must be regenerated once the file is created.
 
 ### PWA / offline
 Offline reading and the service worker were removed. There is **no** `public/sw.js`, no Cache Storage usage, and no book-download feature. All pages, API data, and images are fetched from the network (Next.js/native HTTP caching only).
@@ -174,6 +174,7 @@ GitHub Actions is the single deployment path (the former Gitea pipeline has been
 ## Where to look
 - `docs/architecture.md`: consolidated system reference and known limitations.
 - `docs/api.md`: current route handlers and server actions.
+- `docs/ecosystem.md`: the two-repo layout (this reader + the Stripstream Librarian backend).
 - `src/lib/providers/`: provider abstraction. Start here for backend questions.
 - `src/app/actions/`: all server-side mutations.
 - `prisma/schema.prisma`: data model (multi-config + favorites scoping).

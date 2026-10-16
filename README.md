@@ -2,27 +2,7 @@
 
 A modern web application for reading digital comics, built with Next.js 16, React 19, Tailwind CSS and a multi-provider backend (Komga and Stripstream).
 
-## 📸 Capture
-
-### Home
-
-![Capture d'écran de l'application](./docs/images/home.png)
-
-![Capture d'écran de l'application](./docs/images/nav.png)
-
-### Series
-
-![Capture d'écran de l'application](./docs/images/series%20list.png)
-
-### Books
-
-![Capture d'écran de l'application](./docs/images/books%20list.png)
-
-### Reader
-
-![Capture d'écran de l'application](./docs/images/reader%20double%20page.png)
-
-![Capture d'écran de l'application](./docs/images/reader%20nav.png)
+Stripstream is the **reader**. The self-hosted library backend lives in a separate repository, [`julienfroidefond/stripstream-librarian`](https://github.com/julienfroidefond/stripstream-librarian), usually cloned as a sibling directory (`../stripstream-librarian`). See [`docs/ecosystem.md`](./docs/ecosystem.md).
 
 ## 🚀 Technologies
 
@@ -31,7 +11,7 @@ A modern web application for reading digital comics, built with Next.js 16, Reac
 - [TypeScript](https://www.typescriptlang.org/)
 - [Tailwind CSS](https://tailwindcss.com/)
 - [Shadcn/ui](https://ui.shadcn.com/)
-- [Prisma](https://www.prisma.io/) with SQLite
+- [Prisma](https://www.prisma.io/) 7 with SQLite (`@prisma/adapter-better-sqlite3`)
 - [Docker](https://www.docker.com/)
 
 ## 📦 Major features
@@ -72,7 +52,7 @@ A modern web application for reading digital comics, built with Next.js 16, Reac
 
 ## 🛠 Prerequisites
 
-- Node.js 20.x or higher
+- Node.js 24 or higher (see `engines` in `package.json`)
 - pnpm 9.x or higher
 - Docker and Docker Compose (optional)
 
@@ -83,7 +63,7 @@ A modern web application for reading digital comics, built with Next.js 16, Reac
 1. Clone the repository
 
 ```bash
-git clone [repo-url]
+git clone https://github.com/julienfroidefond/stripstream.git
 cd stripstream
 ```
 
@@ -143,7 +123,7 @@ pnpm dev
 1. Clone the repository and navigate to the folder
 
 ```bash
-git clone [repo-url]
+git clone https://github.com/julienfroidefond/stripstream.git
 cd stripstream
 ```
 
@@ -202,6 +182,8 @@ The application will be accessible at `http://localhost:3000`
 - `pnpm lint` - Checks code with ESLint (must pass with 0 warnings)
 - `pnpm typecheck` - Runs the TypeScript compiler (`tsc --noEmit`)
 - `pnpm knip` - Detects unused files, dependencies and exports
+- `pnpm test:unit` - Runs the Vitest unit suite (colocated `src/**/*.test.ts`)
+- `pnpm test:unit:watch` - Runs Vitest in watch mode
 - `pnpm test:e2e` - Builds the E2E bundle, then runs the Playwright suite
 - `pnpm test:e2e:run` - Runs Playwright against an existing build
 - `pnpm test:e2e:build` - Builds the app for E2E into `.next-e2e`
@@ -226,26 +208,22 @@ Prisma reads `DATABASE_URL` (and the other variables it needs) from `.env`.
 It does not read the local env file used by Next.js development, so keep these
 values in `.env`.
 
-### Docker Push Script
+### Docker image publishing
 
-The `docker-push.sh` script automates building and pushing the Docker image to DockerHub:
+Images are built and pushed to Docker Hub by the GitHub Actions `deploy.yml`
+workflow on every push to `main` (tags `latest`, `<version>` and
+`<version>-<sha>`), then deployed on the self-hosted runner. Publishing is not
+done by hand anymore — see `AGENTS.md` → CI/CD.
 
-```bash
-# Push with 'latest' tag
-./docker-push.sh
+## 🌐 Backends
 
-# Push with a specific version tag
-./docker-push.sh v1.0.0
-```
+Stripstream talks to one backend at a time, per user: **Komga** or the
+**Stripstream Librarian**. The two-repo layout, the sibling-clone convention and
+the Librarian's read-scoped Client API are documented in
+[`docs/ecosystem.md`](./docs/ecosystem.md).
 
-**Prerequisite:** You must be logged in to DockerHub (`docker login`) before running the script.
-
-## 🌐 Komga API
-
-Stripstream talks to either Komga or the Stripstream Librarian backend, and this
-section documents the Komga provider only. The Komga API reference is available
-here:
-[Komga API Documentation](https://cloud.julienfroidefond.com/swagger-ui/index.html#/)
+- Komga API reference: [Komga API Documentation](https://cloud.julienfroidefond.com/swagger-ui/index.html#/) — endpoint summary in [`docs/komga-api-summary.md`](./docs/komga-api-summary.md).
+- Stripstream Librarian: [repository](https://github.com/julienfroidefond/stripstream-librarian).
 
 ## 🏗 Project Structure
 
@@ -283,6 +261,7 @@ public/                 # Static assets
 - Use Tailwind classes for styling
 - Implement accessibility features
 - Run `pnpm lint` (0 warnings) and `pnpm typecheck` before opening a Pull Request
+- Add unit tests next to pure logic (`src/**/*.test.ts`, `pnpm test:unit`); keep browser-only flows in the Playwright suite
 - For significant changes, update the relevant documentation: `AGENTS.md` for repository and agent conventions, and `docs/architecture.md` for the system reference
 - Follow the project's code style (enforced by ESLint and Prettier)
 

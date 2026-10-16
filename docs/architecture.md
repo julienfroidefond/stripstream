@@ -1,13 +1,13 @@
 # Stripstream — Architecture Reference
 
-Consolidated system reference for the current codebase. Every fact below was checked against the working tree (commit `65420bf63bb7cbf481f18a1278da8de0005c8458`, 2026-09-11). Stack: Next.js 16 App Router, React 19, TypeScript strict, Prisma 6 + SQLite, NextAuth v5 (beta). This document replaces the older dated architecture notes that were removed in the docs overhaul.
+Consolidated system reference for the current codebase. Every fact below was checked against the working tree (commit `3c772f9`, 2026-10-16). Stack: Next.js 16 App Router, React 19, TypeScript strict, Prisma 7 + SQLite (`@prisma/adapter-better-sqlite3`), NextAuth v5 (beta). This document replaces the older dated architecture notes that were removed in the docs overhaul. For the two-repo layout (this reader + the Stripstream Librarian backend), see [`ecosystem.md`](./ecosystem.md).
 
 ## 1. Multi-provider abstraction
 
 Stripstream is a comic-reader front end; it does **not** own the library. Each user talks to one of two backends at a time:
 
 - **Komga** — Spring API, HTTP Basic auth (`src/lib/providers/komga/komga.provider.ts`).
-- **Stripstream Librarian** — custom API, bearer token (`src/lib/providers/stripstream/stripstream.provider.ts`; bearer header at `src/lib/providers/stripstream/stripstream.client.ts:52,178`).
+- **Stripstream Librarian** — custom API, bearer token (`src/lib/providers/stripstream/stripstream.provider.ts`; bearer header at `src/lib/providers/stripstream/stripstream.client.ts:52,178`). The backend is a separate repository ([`julienfroidefond/stripstream-librarian`](https://github.com/julienfroidefond/stripstream-librarian), Rust/axum + PostgreSQL), usually cloned as a sibling directory; Stripstream consumes its read-scoped Client API. See [`ecosystem.md`](./ecosystem.md).
 
 ### The interface
 
@@ -66,7 +66,7 @@ The active selection is **per browser**, not global: httpOnly cookies `stripstre
 
 ## 3. Caching model
 
-Provider reads are wrapped in Next.js `unstable_cache(...)`, with **9 call sites** total: 7 in `src/lib/providers/komga/komga.provider.ts:112,415,436,470,512,533,548` and 2 in `src/lib/services/favorite.service.ts:29,44`. The **Stripstream provider does not use `unstable_cache`** — it caches through fetch options (`next: { revalidate, tags }`) assembled in `src/lib/providers/stripstream/stripstream.client.ts:100-107`. Tags come from `src/constants/cacheConstants.ts:1-6`:
+Provider reads are wrapped in Next.js `unstable_cache(...)`, with **9 call sites** total: 7 in `src/lib/providers/komga/komga.provider.ts:113,416,437,471,513,534,549` and 2 in `src/lib/services/favorite.service.ts:29,44`. The **Stripstream provider does not use `unstable_cache`** — it caches through fetch options (`next: { revalidate, tags }`) assembled in `src/lib/providers/stripstream/stripstream.client.ts:100-107`. Tags come from `src/constants/cacheConstants.ts:1-7`:
 
 | Tag constant | Tag value | Scope |
 | --- | --- | --- |
@@ -76,6 +76,7 @@ Provider reads are wrapped in Next.js `unstable_cache(...)`, with **9 call sites
 | `FAVORITES_CACHE_TAG` | `favorites` | favorites |
 | `BOOK_CACHE_TAG` | `book` | single book |
 | `SERIES_RATING_CACHE_TAG` | `series-rating` | series ratings |
+| `STATS_CACHE_TAG` | `reading-stats` | reading statistics |
 
 Per-id tags narrow invalidation: `library-series:${libraryId}` (`src/lib/providers/komga/komga.provider.ts:225-226`), `series-books:${seriesId}` (`src/app/actions/read-progress.ts:18`), `series-rating:${seriesId}` (`src/app/actions/ratings.ts:16`), plus `series-recommendations` and `series-related:${seriesId}` (`src/lib/providers/stripstream/stripstream.provider.ts:541,577`). Prefer the narrow per-id tag when touching data: the global tag invalidates the whole scope and degrades the hit rate.
 
@@ -92,7 +93,7 @@ The constants are per provider: `CACHE_TTL_LONG = 300`, `CACHE_TTL_MED = 120`, `
 
 ### Invalidation
 
-Server actions call `updateTag(...)` from `next/cache` (six action files: `read-progress.ts:14-21`, `config.ts:47-52`, `stripstream-config.ts:41-46`, `favorites.ts:9-11`, `ratings.ts:16`, `refresh.ts:15-28`), optionally together with `revalidatePath(...)`. `updateTag` immediately expires the tagged entries so the action's own re-render sees fresh data (Next.js 16 read-your-writes semantics).
+Server actions call `updateTag(...)` from `next/cache` (six action files: `read-progress.ts:15-21`, `config.ts:48-51`, `stripstream-config.ts:42-45`, `favorites.ts:9-11`, `ratings.ts:16`, `refresh.ts:15-28`), optionally together with `revalidatePath(...)`. `updateTag` immediately expires the tagged entries so the action's own re-render sees fresh data (Next.js 16 read-your-writes semantics).
 
 > Historical note: pre-overhaul documentation described `revalidateTag(tag, "max")`. The current code has **no `revalidateTag` call site** — the only remaining textual mention is a stale comment at `src/components/series/SeriesHeader.tsx:63`. Do not reintroduce `revalidateTag` blindly; follow the `updateTag` call sites above.
 
@@ -169,7 +170,7 @@ Several client storage keys are global, so two accounts on the same device/brows
 
 ### (c) Unit-test coverage is partial
 
-Vitest runs the unit suite (`pnpm test:unit`; config `vitest.config.ts`; tests colocated as `src/**/*.test.ts`). Default environment is `node` for pure logic; files that need a DOM opt in per-file with a `// @vitest-environment jsdom` docblock (plus `@testing-library/react`). It currently covers the reader eviction helper (`src/components/reader/hooks/imageEviction.ts`), the reader navigation/double-page hooks (`src/components/reader/hooks/usePageNavigation.ts`, `useDoublePageMode.ts`), the error helpers (`src/utils/errors.ts`, `src/utils/image-errors.ts`), the generic utilities (`src/lib/utils.ts`), the toast reducer (`src/components/ui/use-toast.ts`), `src/lib/pageSize.ts`, `src/utils/http-error.ts`, `src/utils/rate-limit.ts`, `src/lib/providers/ratings.ts`, the Stripstream config resolver (`src/lib/providers/stripstream/stripstream-config-resolver.ts`, with a mocked Prisma client) and both provider adapters (Komga + Stripstream normalization). Heavier browser flows that require real image loading or paint, such as `useImageLoader`, remain untested at the unit level and are exercised through the Playwright E2E suite under `tests/`. The minimum quality gate is `pnpm lint` (0 warnings) + `pnpm typecheck` + `pnpm test:unit`; E2E (`pnpm test:e2e`) is run separately.
+Vitest runs the unit suite (`pnpm test:unit`; config `vitest.config.ts`; tests colocated as `src/**/*.test.ts`). Default environment is `node` for pure logic; files that need a DOM opt in per-file with a `// @vitest-environment jsdom` docblock (plus `@testing-library/react`). It currently covers the reader eviction helper (`src/components/reader/hooks/imageEviction.ts`), the page-turn helper (`src/components/reader/hooks/pageTurn.ts`), the reader navigation/double-page hooks (`src/components/reader/hooks/usePageNavigation.ts`, `useDoublePageMode.ts`), the error helpers (`src/utils/errors.ts`, `src/utils/image-errors.ts`), the generic utilities (`src/lib/utils.ts`), the toast reducer (`src/components/ui/use-toast.ts`), `src/lib/pageSize.ts`, `src/utils/http-error.ts`, `src/utils/rate-limit.ts`, `src/lib/providers/ratings.ts`, the Stripstream config resolver (`src/lib/providers/stripstream/stripstream-config-resolver.ts`, with a mocked Prisma client) and both provider adapters (Komga + Stripstream normalization). Heavier browser flows that require real image loading or paint, such as `useImageLoader`, remain untested at the unit level and are exercised through the Playwright E2E suite under `tests/`. The minimum quality gate is `pnpm lint` (0 warnings) + `pnpm typecheck` + `pnpm test:unit`; E2E (`pnpm test:e2e`) is run separately.
 
 ### (d) Minor open backlog (last codebase audit)
 

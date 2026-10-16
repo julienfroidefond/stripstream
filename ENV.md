@@ -7,10 +7,9 @@ est `.env.example` (`cp .env.example .env`).
 
 ```env
 # Base de données SQLite utilisée par Prisma (voir prisma/schema.prisma).
-# Le chemin relatif est résolu depuis le dossier prisma/ (emplacement de
-# prisma/schema.prisma) : file:./data/stripstream.db pointe donc vers
-# prisma/data/stripstream.db.
-DATABASE_URL=file:./data/stripstream.db
+# Prisma 7 résout un chemin relatif `file:` depuis le répertoire de travail du
+# process (la racine du projet) : le chemin inclut donc prisma/.
+DATABASE_URL=file:./prisma/data/stripstream.db
 
 # OBLIGATOIRE. Clé de chiffrement des sessions/JWT NextAuth.
 # Générer avec : openssl rand -base64 32
@@ -29,7 +28,7 @@ NEXTAUTH_URL=https://ton-domaine.com
 # "development" | "production" | "test" (défaut : development).
 # NODE_ENV=production
 
-# Mot de passe du compte admin créé par scripts/init-db.mjs
+# Mot de passe du compte admin créé par scripts/init-db.ts
 # (également utilisé au build par docker-compose).
 # ADMIN_DEFAULT_PASSWORD=Admin@2025
 
@@ -65,7 +64,7 @@ openssl rand -base64 32
 
 Pour le développement, les variables sont définies directement dans
 `docker-compose.yml` (ou dans un fichier `.env` copié depuis `.env.example`).
-La CLI Prisma et les scripts autonomes (`init-db.mjs`, etc.) lisent `.env` ;
+La CLI Prisma et les scripts autonomes (`init-db.ts`, etc.) lisent `.env` ;
 c'est donc le fichier à utiliser pour `prisma migrate` et `init-db`. Après avoir
 créé `.env`, exécuter `pnpm prisma generate` : le client généré à l'installation
 par `pnpm install` précède `.env` et ne lit donc pas `DATABASE_URL`.

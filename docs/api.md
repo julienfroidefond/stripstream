@@ -165,7 +165,7 @@ Tous les fichiers de `src/app/actions/` commencent par `"use server"`. Les actio
 
 | Action | Rôle |
 | --- | --- |
-| `updateReadProgress` | Enregistre la progression de lecture (page, terminé) via le provider. Ignorée en mode anonyme. Invalide `series-books:${seriesId}` quand `seriesId` est fourni, sinon tous les livres de la série. |
+| `updateReadProgress` | Enregistre la progression de lecture (page, terminé) via le provider. Ignorée en mode anonyme. Invalide toujours `home`, `library-series` et `reading-stats`, puis `series-books:${seriesId}` quand `seriesId` est fourni, sinon tous les livres de la série. |
 | `deleteReadProgress` | Réinitialise la progression de lecture d'un livre et invalide les caches associés. |
 
 ### src/app/actions/refresh.ts

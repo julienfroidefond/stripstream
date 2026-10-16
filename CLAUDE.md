@@ -9,5 +9,6 @@ content here. When guidance changes, edit `AGENTS.md` so the two files cannot
 drift apart again.
 
 For system internals see [`docs/architecture.md`](./docs/architecture.md); for
-the API surface see [`docs/api.md`](./docs/api.md). The documentation index is
-[`docs/README.md`](./docs/README.md).
+the API surface see [`docs/api.md`](./docs/api.md); for the two-repo layout with
+the Stripstream Librarian backend see [`docs/ecosystem.md`](./docs/ecosystem.md).
+The documentation index is [`docs/README.md`](./docs/README.md).
