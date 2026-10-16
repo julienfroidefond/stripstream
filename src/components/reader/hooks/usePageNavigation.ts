@@ -33,6 +33,9 @@ export function usePageNavigation({
     return initial;
   });
   const [showEndMessage, setShowEndMessage] = useState(false);
+  // Incrémenté à chaque tentative de reculer depuis la première page : la vue
+  // y répond par un rebond, pour signaler le début du livre.
+  const [startBump, setStartBump] = useState(0);
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const finalSyncRef = useRef<{ bookId: string; page: number } | null>(null);
   const lastTrackablePageRef = useRef<number | null>(isAnonymous ? null : currentPage);
@@ -122,7 +125,10 @@ export function usePageNavigation({
   );
 
   const handlePreviousPage = useCallback(() => {
-    if (currentPage === 1) return;
+    if (currentPage === 1) {
+      setStartBump((count) => count + 1);
+      return;
+    }
     const step = isDoublePage && shouldShowDoublePage(currentPage - 2) ? 2 : 1;
     navigateToPage(Math.max(1, currentPage - step));
   }, [currentPage, isDoublePage, navigateToPage, shouldShowDoublePage]);
@@ -181,6 +187,7 @@ export function usePageNavigation({
     setCurrentPage,
     showEndMessage,
     setShowEndMessage,
+    startBump,
     navigateToPage,
     handlePreviousPage,
     handleNextPage,

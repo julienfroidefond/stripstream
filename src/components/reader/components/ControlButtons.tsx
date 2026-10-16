@@ -77,8 +77,11 @@ export const ControlButtons = memo(function ControlButtons({
       {/* Boutons de contrôle */}
       <div
         className={cn(
-          "absolute left-1/2 top-4 z-30 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-border bg-surface-2 p-1.5 transition-opacity duration-300",
-          showControls ? "opacity-100" : "opacity-0 pointer-events-none"
+          // La barre descend du haut de l'écran et y remonte.
+          "absolute left-1/2 top-4 z-30 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-border bg-surface-2 p-1.5 transition-[opacity,translate] duration-500 ease-projection motion-reduce:transition-opacity",
+          showControls
+            ? "translate-y-0 opacity-100"
+            : "-translate-y-[calc(100%+1.5rem)] opacity-0 pointer-events-none"
         )}
         onClick={(e) => {
           e.stopPropagation();
@@ -243,9 +246,12 @@ export const ControlButtons = memo(function ControlButtons({
           tooltip={t("reader.controls.previousPage")}
           iconClassName="h-8 w-8"
           className={cn(
-            "absolute top-1/2 z-20 -translate-y-1/2 rounded-full border border-border bg-surface-2 transition-opacity duration-300 hover:bg-surface-3",
+            // La flèche entre par le bord gauche.
+            "absolute top-1/2 z-20 -translate-y-1/2 rounded-full border border-border bg-surface-2 transition-[opacity,translate,background-color] duration-500 ease-projection hover:bg-surface-3 motion-reduce:transition-opacity",
             "left-4",
-            showControls ? "opacity-100" : "opacity-0 pointer-events-none"
+            showControls
+              ? "translate-x-0 opacity-100"
+              : "-translate-x-[calc(100%+1.5rem)] opacity-0 pointer-events-none"
           )}
         />
       )}
@@ -265,9 +271,12 @@ export const ControlButtons = memo(function ControlButtons({
           tooltip={t("reader.controls.nextPage")}
           iconClassName="h-8 w-8"
           className={cn(
-            "absolute top-1/2 z-20 -translate-y-1/2 rounded-full border border-border bg-surface-2 transition-opacity duration-300 hover:bg-surface-3",
+            // La flèche entre par le bord droit.
+            "absolute top-1/2 z-20 -translate-y-1/2 rounded-full border border-border bg-surface-2 transition-[opacity,translate,background-color] duration-500 ease-projection hover:bg-surface-3 motion-reduce:transition-opacity",
             "right-4",
-            showControls ? "opacity-100" : "opacity-0 pointer-events-none"
+            showControls
+              ? "translate-x-0 opacity-100"
+              : "translate-x-[calc(100%+1.5rem)] opacity-0 pointer-events-none"
           )}
         />
       )}

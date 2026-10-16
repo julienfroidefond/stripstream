@@ -29,6 +29,8 @@ export interface UserPreferences {
   readerBackground: ReaderBackground;
   readerFitMode: FitMode;
   readerDoublePageMode: boolean;
+  /** Animation de tourné de page dans le lecteur. */
+  readerPageTurn: boolean;
   defaultSortOrder: SortOrder;
   showMissingBooks: boolean;
   hideMissingBooks: boolean;
@@ -53,6 +55,7 @@ export const defaultPreferences: UserPreferences = {
   readerBackground: "default",
   readerFitMode: "fit",
   readerDoublePageMode: false,
+  readerPageTurn: true,
   defaultSortOrder: "title",
   showMissingBooks: true,
   hideMissingBooks: false,

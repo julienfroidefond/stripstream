@@ -1,6 +1,22 @@
+"use client";
+
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { RotateCw } from "lucide-react";
+import { useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import type { FitMode } from "../hooks/useFitMode";
+import { planTurn, type PageRect, type ReaderSnapshot, type TurnPlan } from "../hooks/pageTurn";
+import { PageTurnOverlay } from "./PageTurnOverlay";
+
+/** Une page seule se tourne vite ; une double page, plus large, prend son temps. */
+const TURN_DURATION_SINGLE = 650;
+const TURN_DURATION_SPREAD = 850;
+
+function measure(image: HTMLImageElement | null): PageRect | null {
+  if (!image || image.naturalWidth === 0) return null;
+  const { left, top, width, height } = image.getBoundingClientRect();
+  return { left, top, width, height };
+}
 
 interface PageDisplayProps {
   currentPage: number;
@@ -12,6 +28,10 @@ interface PageDisplayProps {
   onRetryImage: (pageNum: number) => void;
   isRTL: boolean;
   fitMode: FitMode;
+  /** Préférence utilisateur : animer le tourné de page. */
+  pageTurn: boolean;
+  /** Compteur de tentatives de reculer depuis la première page. */
+  startBump: number;
 }
 
 function ErrorPlaceholder({ onRetry }: { onRetry: () => void }) {
@@ -51,7 +71,8 @@ function ErrorPlaceholder({ onRetry }: { onRetry: () => void }) {
 
 function imageClassNameFor(fitMode: FitMode, isLoading: boolean) {
   return cn(
-    "cursor-pointer transition-opacity",
+    // Chaque page montée se pose : invisible sous un tourné, lisible après un saut.
+    "cursor-pointer transition-opacity motion-safe:animate-page-in",
     fitMode === "fit" && "max-h-full max-w-full object-contain",
     fitMode === "width" && "w-full h-auto max-w-full",
     fitMode === "height" && "h-[calc(100dvh-2.5rem)] w-auto max-h-[calc(100dvh-2.5rem)]",
@@ -70,6 +91,8 @@ export function PageDisplay({
   onRetryImage,
   isRTL,
   fitMode,
+  pageTurn,
+  startBump,
 }: PageDisplayProps) {
   // États dérivés directement pendant le rendu (pas de setState dans un effet).
   const currentBlobUrl = imageBlobUrls[currentPage];
@@ -80,6 +103,70 @@ export function PageDisplay({
   const secondPageHasError = !!imageErrors[currentPage + 1];
 
   const showSecondPage = isDoublePage && shouldShowDoublePage(currentPage);
+
+  /* ---------------------------------------------------------------------
+   * Tourné de page. On garde la dernière mesure de ce qui est à l'écran ;
+   * quand la page change, l'ancienne mesure décrit la feuille à tourner.
+   * ------------------------------------------------------------------ */
+  const reduceMotion = useReducedMotion();
+  const page1Ref = useRef<HTMLImageElement>(null);
+  const page2Ref = useRef<HTMLImageElement>(null);
+  const snapshotRef = useRef<ReaderSnapshot | null>(null);
+  const turnIdRef = useRef(0);
+  const [turn, setTurn] = useState<{ id: number; plan: TurnPlan; duration: number } | null>(null);
+
+  const takeSnapshot = useCallback((): ReaderSnapshot => {
+    const first = { url: currentBlobUrl ?? null, rect: measure(page1Ref.current) };
+    if (!showSecondPage) return { currentPage, slots: [first] };
+    const second = { url: nextBlobUrl ?? null, rect: measure(page2Ref.current) };
+    return { currentPage, slots: isRTL ? [second, first] : [first, second] };
+  }, [currentPage, currentBlobUrl, nextBlobUrl, showSecondPage, isRTL]);
+
+  // Une image décodée après le rendu, ou une fenêtre redimensionnée, change
+  // le cadre des pages : la mesure suit.
+  const refreshSnapshot = useCallback(() => {
+    snapshotRef.current = takeSnapshot();
+  }, [takeSnapshot]);
+
+  useLayoutEffect(() => {
+    const previous = snapshotRef.current;
+    const next = takeSnapshot();
+    snapshotRef.current = next;
+    if (!pageTurn || reduceMotion || !previous || previous.currentPage === next.currentPage) return;
+    if ((window.visualViewport?.scale ?? 1) > 1.15) return;
+    const plan = planTurn(previous, next, isRTL);
+    if (!plan) return;
+    turnIdRef.current += 1;
+    setTurn({
+      id: turnIdRef.current,
+      plan,
+      duration: plan.backUrl ? TURN_DURATION_SPREAD : TURN_DURATION_SINGLE,
+    });
+  }, [takeSnapshot, isRTL, reduceMotion, pageTurn]);
+
+  useEffect(() => {
+    window.addEventListener("resize", refreshSnapshot);
+    return () => window.removeEventListener("resize", refreshSnapshot);
+  }, [refreshSnapshot]);
+
+  const endTurn = useCallback(() => setTurn(null), []);
+
+  // Début du livre : la page cède un peu dans le sens du geste, puis revient,
+  // comme une couverture qu'on tire alors qu'il n'y a rien avant.
+  const spreadRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (startBump === 0 || reduceMotion) return;
+    const pull = isRTL ? -22 : 22;
+    spreadRef.current?.animate(
+      [
+        { transform: "translateX(0)" },
+        { transform: `translateX(${pull}px) rotateY(${isRTL ? 4 : -4}deg)`, offset: 0.35 },
+        { transform: `translateX(${-pull * 0.25}px)`, offset: 0.7 },
+        { transform: "translateX(0)" },
+      ],
+      { duration: 480, easing: "cubic-bezier(0.22, 1, 0.36, 1)" }
+    );
+  }, [startBump, isRTL, reduceMotion]);
 
   const outerOverflow =
     fitMode === "fit"
@@ -124,7 +211,15 @@ export function PageDisplay({
         outerOverflow
       )}
     >
-      <div className={innerSizing}>
+      {/* La première page se pose à l'ouverture du livre (une seule fois : ce
+          conteneur ne se remonte pas au fil des pages). */}
+      <div
+        ref={spreadRef}
+        className={cn(innerSizing, "motion-safe:animate-reader-in [perspective:1600px]")}
+        // Les entrées (livre, page) déplacent les pages le temps de jouer : on
+        // remesure une fois posées, la feuille du prochain tourné en dépend.
+        onAnimationEnd={refreshSnapshot}
+      >
         {/* Page 1 */}
         <div className={pageWrapperClass(true)}>
           {isLoading && !hasError && !imageErrors[currentPage] && (
@@ -144,8 +239,10 @@ export function PageDisplay({
             <>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
+                ref={page1Ref}
                 key={`page-${currentPage}-${imageBlobUrls[currentPage]}`}
                 src={imageBlobUrls[currentPage]}
+                onLoad={refreshSnapshot}
                 alt={`Page ${currentPage}`}
                 className={imageClassNameFor(fitMode, isLoading)}
                 loading="eager"
@@ -174,8 +271,10 @@ export function PageDisplay({
               <>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
+                  ref={page2Ref}
                   key={`page-${currentPage + 1}-${imageBlobUrls[currentPage + 1]}`}
                   src={imageBlobUrls[currentPage + 1]}
+                  onLoad={refreshSnapshot}
                   alt={`Page ${currentPage + 1}`}
                   className={imageClassNameFor(fitMode, secondPageLoading)}
                   loading="eager"
@@ -185,6 +284,10 @@ export function PageDisplay({
           </div>
         )}
       </div>
+
+      {turn && (
+        <PageTurnOverlay key={turn.id} plan={turn.plan} duration={turn.duration} onDone={endTurn} />
+      )}
     </div>
   );
 }

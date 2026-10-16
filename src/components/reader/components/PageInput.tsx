@@ -101,7 +101,13 @@ export const PageInput = ({ currentPage, totalPages, onPageChange }: PageInputPr
           tabIndex={0}
           aria-label="Cliquez pour naviguer vers une page spécifique"
         >
-          {currentPage}/{totalPages}
+          {/* Le numéro remonte en place à chaque page, masqué par sa ligne. */}
+          <span className="inline-block overflow-hidden align-bottom tabular-nums">
+            <span key={currentPage} className="inline-block motion-safe:animate-count-in">
+              {currentPage}
+            </span>
+          </span>
+          /{totalPages}
         </button>
       )}
     </div>

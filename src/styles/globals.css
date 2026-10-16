@@ -109,6 +109,12 @@ body.no-pinch-zoom * {
   --animate-mask-rise: mask-rise 800ms var(--ease-projection) both;
   /* Cover d'affiche : posée depuis le bas, masquée par son cadre, une fois. */
   --animate-cover-rise: cover-rise 900ms var(--ease-projection) both;
+  /* Lecteur : la première page se pose et fait le point à l'ouverture du livre. */
+  --animate-reader-in: reader-in 700ms var(--ease-projection) both;
+  /* Lecteur : une page atteinte par un saut (miniature, saisie) se pose. */
+  --animate-page-in: page-in 320ms var(--ease-projection) both;
+  /* Compteur de page : le nouveau numéro remonte en place. */
+  --animate-count-in: count-in 280ms var(--ease-projection) both;
   /* Travelling du fond d'affiche : deux axes, durées premières entre elles. */
   --animate-backdrop-pan: backdrop-pan 26s ease-in-out infinite;
   --animate-backdrop-zoom: backdrop-zoom 18s ease-in-out infinite;
@@ -154,6 +160,28 @@ body.no-pinch-zoom * {
   @keyframes cover-rise {
     from {
       transform: translateY(105%);
+    }
+  }
+
+  @keyframes reader-in {
+    from {
+      opacity: 0;
+      transform: translateY(18px) scale(0.94);
+      filter: blur(10px);
+    }
+  }
+
+  @keyframes page-in {
+    from {
+      opacity: 0.3;
+      transform: scale(0.985);
+    }
+  }
+
+  @keyframes count-in {
+    from {
+      opacity: 0;
+      transform: translateY(70%);
     }
   }
 

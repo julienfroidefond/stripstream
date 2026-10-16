@@ -215,6 +215,10 @@
         "label": "Mode double page",
         "description": "Afficher deux pages côte à côte (utile en paysage)."
       },
+      "pageTurn": {
+        "label": "Tourner les pages",
+        "description": "Animer le changement de page comme une vraie feuille qui se tourne."
+      },
       "library": {
         "title": "Affichage de la bibliothèque",
         "description": "Personnalisez l'affichage de vos séries."

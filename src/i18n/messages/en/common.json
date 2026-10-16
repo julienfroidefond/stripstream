@@ -210,6 +210,10 @@
         "label": "Double page mode",
         "description": "Display two pages side by side (useful in landscape)."
       },
+      "pageTurn": {
+        "label": "Page turn animation",
+        "description": "Animate page changes like a real sheet of paper being turned."
+      },
       "library": {
         "title": "Library Display",
         "description": "Customize the display of your series."

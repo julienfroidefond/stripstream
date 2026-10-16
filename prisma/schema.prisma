@@ -80,6 +80,7 @@ model Preferences {
   readerBackground     String   @default("default")
   readerFitMode        String   @default("fit")
   readerDoublePageMode Boolean  @default(false)
+  readerPageTurn       Boolean  @default(true)
   defaultSortOrder     String   @default("title")
   showMissingBooks     Boolean  @default(true)
   hideMissingBooks     Boolean  @default(false)

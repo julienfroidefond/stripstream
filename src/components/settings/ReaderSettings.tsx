@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Palette, BookOpen, ArrowLeftRight, Columns2 } from "lucide-react";
+import { Palette, BookOpen, ArrowLeftRight, Columns2, BookOpenText } from "lucide-react";
 import logger from "@/lib/logger";
 
 type ReaderBackground = "default" | "black" | "white" | "cream";
@@ -51,6 +51,23 @@ export function ReaderSettings() {
   const handleReaderBackgroundChange = useCallback(async (value: ReaderBackground) => {
     try {
       await updatePreferences({ readerBackground: value });
+      toast({
+        title: t("settings.title"),
+        description: t("settings.komga.messages.configSaved"),
+      });
+    } catch (error) {
+      logger.error({ err: error }, "Erreur:");
+      toast({
+        variant: "destructive",
+        title: t("settings.error.title"),
+        description: t("settings.error.message"),
+      });
+    }
+  }, [updatePreferences, toast, t]);
+
+  const handlePageTurnChange = useCallback(async (checked: boolean) => {
+    try {
+      await updatePreferences({ readerPageTurn: checked });
       toast({
         title: t("settings.title"),
         description: t("settings.komga.messages.configSaved"),
@@ -170,6 +187,24 @@ export function ReaderSettings() {
             id="double-page-mode"
             checked={preferences.readerDoublePageMode}
             onCheckedChange={handleDoublePageChange}
+          />
+        </div>
+
+        {/* Page Turn Animation */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <BookOpenText className="h-4 w-4 text-muted-foreground" />
+            <div className="space-y-0.5">
+              <Label htmlFor="page-turn">{t("settings.reader.pageTurn.label")}</Label>
+              <p className="text-sm text-muted-foreground">
+                {t("settings.reader.pageTurn.description")}
+              </p>
+            </div>
+          </div>
+          <Switch
+            id="page-turn"
+            checked={preferences.readerPageTurn}
+            onCheckedChange={handlePageTurnChange}
           />
         </div>
       </CardContent>

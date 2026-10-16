@@ -63,6 +63,8 @@ export const BookReader = memo(function BookReader(props: BookReaderProps) {
         onRetryImage={s.onRetryImage}
         isRTL={s.isRTL}
         fitMode={s.fitMode}
+        pageTurn={s.pageTurn}
+        startBump={s.startBump}
       />
 
       <NavigationBar

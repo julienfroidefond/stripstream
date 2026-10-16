@@ -53,6 +53,7 @@ export class PreferencesService {
         readerBackground: (preferences.readerBackground as UserPreferences["readerBackground"]) ?? defaultPreferences.readerBackground,
         readerFitMode: (preferences.readerFitMode as UserPreferences["readerFitMode"]) ?? defaultPreferences.readerFitMode,
         readerDoublePageMode: preferences.readerDoublePageMode,
+        readerPageTurn: preferences.readerPageTurn,
         defaultSortOrder: (preferences.defaultSortOrder as UserPreferences["defaultSortOrder"]) ?? defaultPreferences.defaultSortOrder,
         showMissingBooks: preferences.showMissingBooks,
         hideMissingBooks: preferences.hideMissingBooks,
@@ -94,6 +95,8 @@ export class PreferencesService {
         updateData.readerFitMode = preferences.readerFitMode;
       if (preferences.readerDoublePageMode !== undefined)
         updateData.readerDoublePageMode = preferences.readerDoublePageMode;
+      if (preferences.readerPageTurn !== undefined)
+        updateData.readerPageTurn = preferences.readerPageTurn;
       if (preferences.defaultSortOrder !== undefined)
         updateData.defaultSortOrder = preferences.defaultSortOrder;
       if (preferences.showMissingBooks !== undefined)
@@ -117,6 +120,7 @@ export class PreferencesService {
           readerBackground: preferences.readerBackground ?? defaultPreferences.readerBackground,
           readerFitMode: preferences.readerFitMode ?? defaultPreferences.readerFitMode,
           readerDoublePageMode: preferences.readerDoublePageMode ?? defaultPreferences.readerDoublePageMode,
+          readerPageTurn: preferences.readerPageTurn ?? defaultPreferences.readerPageTurn,
           defaultSortOrder: preferences.defaultSortOrder ?? defaultPreferences.defaultSortOrder,
           showMissingBooks: preferences.showMissingBooks ?? defaultPreferences.showMissingBooks,
           hideMissingBooks: preferences.hideMissingBooks ?? defaultPreferences.hideMissingBooks,
@@ -137,6 +141,7 @@ export class PreferencesService {
         readerBackground: (updatedPreferences.readerBackground as UserPreferences["readerBackground"]) ?? defaultPreferences.readerBackground,
         readerFitMode: (updatedPreferences.readerFitMode as UserPreferences["readerFitMode"]) ?? defaultPreferences.readerFitMode,
         readerDoublePageMode: updatedPreferences.readerDoublePageMode,
+        readerPageTurn: updatedPreferences.readerPageTurn,
         defaultSortOrder: (updatedPreferences.defaultSortOrder as UserPreferences["defaultSortOrder"]) ?? defaultPreferences.defaultSortOrder,
         showMissingBooks: updatedPreferences.showMissingBooks,
         hideMissingBooks: updatedPreferences.hideMissingBooks,

@@ -73,7 +73,7 @@ export function useReaderState({ book, pages, onClose, nextBook }: BookReaderPro
     nextBook: nextBookForLoader,
   });
 
-  const { currentPage, showEndMessage, navigateToPage, handlePreviousPage, handleNextPage } =
+  const { currentPage, showEndMessage, startBump, navigateToPage, handlePreviousPage, handleNextPage } =
     usePageNavigation({
       book,
       pages,
@@ -213,6 +213,8 @@ export function useReaderState({ book, pages, onClose, nextBook }: BookReaderPro
     isRTL,
     direction,
     fitMode,
+    pageTurn: preferences.readerPageTurn,
+    startBump,
     imageBlobUrls,
     imageErrors,
     shouldShowDoublePage,
