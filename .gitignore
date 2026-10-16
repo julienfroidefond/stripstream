@@ -65,3 +65,6 @@ temp/
 .env.local
 
 .opencode
+
+# Local workflow/planning artifacts (task management / omo)
+.omo/
