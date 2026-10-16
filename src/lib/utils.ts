@@ -30,3 +30,38 @@ export function debounce<TArgs extends unknown[]>(
     timeout = setTimeout(later, wait);
   };
 }
+
+/**
+ * Applique `worker` à chaque élément de `items` en gardant au plus
+ * `concurrency` appels en vol. Les erreurs unitaires sont comptées, jamais
+ * propagées : l'appelant reçoit un décompte succès/échec pour un retour
+ * « X / Y » côté UI.
+ */
+export async function runWithConcurrency<TItem>(
+  items: readonly TItem[],
+  concurrency: number,
+  worker: (item: TItem, index: number) => Promise<void>
+): Promise<{ succeeded: number; failed: number }> {
+  const total = items.length;
+  const tally = { succeeded: 0, failed: 0 };
+  if (total === 0) return tally;
+
+  const limit = Math.max(1, Math.min(concurrency, total));
+  let nextIndex = 0;
+
+  const runWorker = async () => {
+    while (nextIndex < total) {
+      const currentIndex = nextIndex;
+      nextIndex += 1;
+      try {
+        await worker(items[currentIndex], currentIndex);
+        tally.succeeded += 1;
+      } catch {
+        tally.failed += 1;
+      }
+    }
+  };
+
+  await Promise.all(Array.from({ length: limit }, () => runWorker()));
+  return tally;
+}

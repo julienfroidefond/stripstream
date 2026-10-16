@@ -70,4 +70,45 @@ test.describe('Reading statuses', () => {
     await page.goto('/series/series-a');
     await expect(page.getByTestId('mark-as-unread').first()).toBeVisible({ timeout: 15_000 });
   });
+
+  test('marks the entire series read and unread from the header', async ({ page }) => {
+    await page.goto('/settings');
+    await page.getByRole('tab', { name: /connection|connexion/i }).click();
+    const komgaConnection = page.getByTestId('connection-komga-stub-a');
+    await expect(komgaConnection).toBeVisible();
+    await komgaConnection.getByText('Stub A', { exact: true }).click();
+    await expect(komgaConnection.getByRole('radio')).toBeChecked();
+
+    await page.goto('/series/series-a');
+    const markAllRead = page.getByTestId('series-mark-all-read');
+    const markAllUnread = page.getByTestId('series-mark-all-unread');
+    await expect(markAllUnread).toBeVisible({ timeout: 15_000 });
+
+    // Normalise the fixture: a previous journey may have left the book read.
+    await markAllUnread.click();
+    const resetAction = page.waitForResponse(
+      (r) => r.request().method() === 'POST' && !!r.request().headers()['next-action']
+    );
+    await page.getByTestId('series-mark-all-unread-confirm').click();
+    await resetAction;
+
+    // The header action marks every book of the series as read.
+    const readAction = page.waitForResponse(
+      (r) => r.request().method() === 'POST' && !!r.request().headers()['next-action']
+    );
+    await markAllRead.click();
+    await readAction;
+    await page.reload();
+    await expect(page.getByTestId('mark-as-unread').first()).toBeVisible({ timeout: 15_000 });
+
+    // Resetting is destructive and must go through the confirmation dialog.
+    await page.getByTestId('series-mark-all-unread').click();
+    const unreadAction = page.waitForResponse(
+      (r) => r.request().method() === 'POST' && !!r.request().headers()['next-action']
+    );
+    await page.getByTestId('series-mark-all-unread-confirm').click();
+    await unreadAction;
+    await page.reload();
+    await expect(page.getByTestId('mark-as-read').first()).toBeVisible({ timeout: 15_000 });
+  });
 });

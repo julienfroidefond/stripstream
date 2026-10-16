@@ -362,6 +362,36 @@
         "add": "Added to favorites",
         "remove": "Removed from favorites"
       },
+      "markAllRead": {
+        "tooltip": "Mark all books as read",
+        "success": {
+          "title": "Series updated",
+          "description": "{{count}} book marked as read",
+          "description_plural": "{{count}} books marked as read"
+        },
+        "error": {
+          "title": "Error",
+          "description": "Unable to mark the series as read"
+        }
+      },
+      "markAllUnread": {
+        "tooltip": "Mark all books as unread",
+        "confirm": {
+          "title": "Mark the whole series as unread?",
+          "description": "This resets the reading progress of all {{count}} books in this series.",
+          "confirm": "Mark as unread",
+          "cancel": "Cancel"
+        },
+        "success": {
+          "title": "Series updated",
+          "description": "{{count}} book marked as unread",
+          "description_plural": "{{count}} books marked as unread"
+        },
+        "error": {
+          "title": "Error",
+          "description": "Unable to mark the series as unread"
+        }
+      },
       "showMore": "Show more",
       "showLess": "Show less",
       "missing": "{{count}} missing",

@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 
-import { Book, BookOpen, BookMarked, BookX, Star, StarOff, User, CircleDot, CircleCheck, CirclePause, CircleX, Calendar } from "lucide-react";
+import { Book, BookCheck, BookOpen, BookMarked, BookX, Star, StarOff, User, CircleDot, CircleCheck, CirclePause, CircleX, Calendar, Loader2 } from "lucide-react";
 import type { NormalizedSeries } from "@/lib/providers/types";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -14,9 +14,20 @@ import { useTranslate } from "@/hooks/useTranslate";
 import { SeriesCover } from "@/components/ui/series-cover";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { IconButton } from "@/components/ui/icon-button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import logger from "@/lib/logger";
 import { addToFavorites, removeFromFavorites } from "@/app/actions/favorites";
+import { updateSeriesReadStatus } from "@/app/actions/read-progress";
 import { useAnonymous } from "@/contexts/AnonymousContext";
 import { SeriesRatingControl } from "./SeriesRatingControl";
 import type { NormalizedProviderRating } from "@/lib/providers/types";
@@ -47,6 +58,8 @@ export const SeriesHeader = ({
   const { isAnonymous } = useAnonymous();
   const [isFavorite, setIsFavorite] = useState(initialIsFavorite);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [bulkAction, setBulkAction] = useState<null | "read" | "unread">(null);
+  const [isConfirmUnreadOpen, setIsConfirmUnreadOpen] = useState(false);
   const { t } = useTranslate();
   const reduce = useReducedMotion();
   const headerRef = useRef<HTMLDivElement>(null);
@@ -93,6 +106,35 @@ export const SeriesHeader = ({
             : getErrorMessage(ERROR_CODES.FAVORITE.NETWORK_ERROR),
         variant: "destructive",
       });
+    }
+  };
+
+  const handleBulkReadStatus = async (read: boolean) => {
+    setBulkAction(read ? "read" : "unread");
+    const prefix = read ? "series.header.markAllRead" : "series.header.markAllUnread";
+    try {
+      const result = await updateSeriesReadStatus(series.id, read);
+      // Les caches serveur sont invalidés même en cas d'échec partiel : on
+      // rafraîchit dans tous les cas pour refléter ce qui a été enregistré.
+      router.refresh();
+      if (!result.success) {
+        throw new AppError(ERROR_CODES.BOOK.PROGRESS_UPDATE_ERROR);
+      }
+      toast({
+        title: t(`${prefix}.success.title`),
+        description: t(`${prefix}.success.description`, {
+          count: result.updated ?? series.bookCount,
+        }),
+      });
+    } catch (error) {
+      logger.error({ err: error }, "Erreur lors du marquage groupé de la série:");
+      toast({
+        variant: "destructive",
+        title: t(`${prefix}.error.title`),
+        description: t(`${prefix}.error.description`),
+      });
+    } finally {
+      setBulkAction(null);
     }
   };
 
@@ -270,6 +312,55 @@ export const SeriesHeader = ({
                 )}
                 iconClassName={isFavorite ? "fill-yellow-400 text-yellow-400" : ""}
               />
+              {!isAnonymous && series.bookCount > 0 && (
+                <>
+                  <IconButton
+                    data-testid="series-mark-all-read"
+                    variant="ghost"
+                    size="icon"
+                    icon={bulkAction === "read" ? Loader2 : BookCheck}
+                    onClick={() => handleBulkReadStatus(true)}
+                    disabled={bulkAction !== null || series.booksReadCount >= series.bookCount}
+                    tooltip={t("series.header.markAllRead.tooltip")}
+                    iconClassName={bulkAction === "read" ? "animate-spin" : ""}
+                  />
+                  <AlertDialog open={isConfirmUnreadOpen} onOpenChange={setIsConfirmUnreadOpen}>
+                    <IconButton
+                      data-testid="series-mark-all-unread"
+                      variant="ghost"
+                      size="icon"
+                      icon={bulkAction === "unread" ? Loader2 : BookX}
+                      onClick={() => setIsConfirmUnreadOpen(true)}
+                      disabled={bulkAction !== null}
+                      tooltip={t("series.header.markAllUnread.tooltip")}
+                      iconClassName={bulkAction === "unread" ? "animate-spin" : ""}
+                    />
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>
+                          {t("series.header.markAllUnread.confirm.title")}
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          {t("series.header.markAllUnread.confirm.description", {
+                            count: series.bookCount,
+                          })}
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>
+                          {t("series.header.markAllUnread.confirm.cancel")}
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                          data-testid="series-mark-all-unread-confirm"
+                          onClick={() => handleBulkReadStatus(false)}
+                        >
+                          {t("series.header.markAllUnread.confirm.confirm")}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </>
+              )}
               <RefreshButton
                 libraryId={series.id}
                 refreshLibrary={refreshSeries}
