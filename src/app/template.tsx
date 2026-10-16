@@ -17,9 +17,11 @@ export default function Template({ children }: { children: ReactNode }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.45, ease: EASE_PROJECTION }}
+      initial={{ opacity: 0, y: 28, filter: "blur(8px)" }}
+      // Le filtre est retiré une fois posé : un `filter` résiduel ferait du
+      // conteneur le bloc de référence des éléments `position: fixed`.
+      animate={{ opacity: 1, y: 0, filter: "blur(0px)", transitionEnd: { filter: "none" } }}
+      transition={{ duration: 0.7, ease: EASE_PROJECTION }}
     >
       {children}
     </motion.div>

@@ -50,7 +50,7 @@ export function ReadingListRow({ lists }: ReadingListRowProps) {
       className="space-y-5"
       headerClassName="pb-1"
     >
-      <StaggerGroup stagger={0.045}>
+      <StaggerGroup stagger={0.08} effect="deal" amount={0.25}>
         <ScrollContainer
           showArrows={true}
           scrollAmount={400}
@@ -107,14 +107,14 @@ const ReadingListCard = memo(function ReadingListCard({ list, onClick }: Reading
       )}
     >
       {/* Cover */}
-      <div className="relative aspect-2/3 w-full overflow-hidden rounded-xl bg-surface-2 ring-1 ring-border/60 transition-transform duration-300 ease-out group-hover:-translate-y-1">
+      <div className="relative aspect-2/3 w-full overflow-hidden rounded-xl bg-surface-2 ring-1 ring-border/60 transition-[translate,box-shadow] duration-500 ease-projection group-hover:-translate-y-2 group-hover:ring-border motion-reduce:transition-none">
         {firstCover ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={`/api/stripstream/images/books/${firstCover}/thumbnail`}
             alt={list.name}
             loading="lazy"
-            className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-projection group-hover:scale-[1.07] motion-reduce:transition-none"
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center bg-surface-2">

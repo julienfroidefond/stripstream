@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion, type PanInfo } from "framer-motion";
 import { ArrowRight, BookOpen } from "lucide-react";
@@ -9,8 +9,17 @@ import { Button } from "@/components/ui/button";
 import { useTranslate } from "@/hooks/useTranslate";
 import { cn } from "@/lib/utils";
 import { loadHomeFeed } from "@/app/actions/home";
-import { CountUp, Magnetic } from "@/components/motion";
-import { EASE_OUT, EASE_PROJECTION, fadeUp, staggerContainer } from "@/lib/motion";
+import { CountUp, Magnetic, SplitWords, useSceneExit } from "@/components/motion";
+import {
+  CAROUSEL_TRANSITION,
+  EASE_OUT,
+  EASE_PROJECTION,
+  carouselSlide,
+  curtainOpen,
+  fadeUp,
+  liftIn,
+  staggerContainer,
+} from "@/lib/motion";
 import { ProjectionBackdrop } from "@/components/ui/projection-backdrop";
 
 interface ContinueReadingHeroProps {
@@ -21,12 +30,6 @@ interface ContinueReadingHeroProps {
 const SWIPE_THRESHOLD = 60;
 const ITEMS_PER_PAGE = 8;
 
-const slideVariants = {
-  enter: (dir: number) => ({ x: dir > 0 ? 80 : -80, opacity: 0 }),
-  center: { x: 0, opacity: 1 },
-  exit: (dir: number) => ({ x: dir > 0 ? -80 : 80, opacity: 0 }),
-};
-
 export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps) {
   const router = useRouter();
   const { t } = useTranslate();
@@ -36,7 +39,18 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
   const [loadedBooks, setLoadedBooks] = useState(books.slice(0, ITEMS_PER_PAGE));
   const [hasMore, setHasMore] = useState(books.length > ITEMS_PER_PAGE);
   const [isPending, startTransition] = useTransition();
+  const sectionRef = useRef<HTMLElement>(null);
+  const scene = useSceneExit(sectionRef);
+  /**
+   * La cover se pose dans son cadre au premier montage seulement : ensuite le
+   * carrousel tourne et le geste se rejouerait à chaque glissement.
+   */
+  const [coverEntrance, setCoverEntrance] = useState(true);
 
+  useEffect(() => {
+    const timer = setTimeout(() => setCoverEntrance(false), 1500);
+    return () => clearTimeout(timer);
+  }, []);
   const total = loadedBooks.length;
   const hasMany = total > 1;
   const safeIndex = total > 0 ? ((index % total) + total) % total : 0;
@@ -106,15 +120,32 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
   const stagedItem = reduce ? {} : { variants: fadeUp };
 
   return (
-    <section
+    <motion.section
+      ref={sectionRef}
       data-testid="home-continue-reading"
       className="grain relative overflow-hidden rounded-2xl"
       aria-roledescription="carousel"
       aria-label={t("home.hero.label")}
+      // Intro : le rideau s'ouvre depuis un cadre resserré. Au défilement,
+      // l'affiche recule (échelle) pendant que la page passe devant.
+      variants={reduce ? undefined : curtainOpen}
+      initial={reduce ? undefined : "hidden"}
+      animate={reduce ? undefined : "visible"}
+      style={{ scale: scene.sceneScale }}
     >
       {/* L'artwork courant est la seule source de lumière de l'affiche.
-          Chaque changement de tome éteint puis rallume la salle. */}
-      <div className="absolute inset-0">
+          Chaque changement de tome éteint puis rallume la salle. Le fond
+          recule à l'ouverture, puis glisse moins vite que la page. */}
+      <motion.div
+        className="absolute inset-0"
+        style={{ y: scene.backdropY, scale: scene.backdropScale }}
+      >
+        <motion.div
+          className="absolute inset-0"
+          initial={reduce ? false : { scale: 1.35 }}
+          animate={{ scale: 1 }}
+          transition={{ duration: 1.8, ease: EASE_PROJECTION }}
+        >
         <AnimatePresence initial={false}>
           <motion.div
             key={book.id}
@@ -127,18 +158,22 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
             <ProjectionBackdrop src={book.thumbnailUrl} fadeIn={false} />
           </motion.div>
         </AnimatePresence>
-      </div>
+        </motion.div>
+      </motion.div>
 
-      <div className="relative overflow-hidden px-5 py-6 sm:px-8 sm:py-9">
+      <motion.div
+        className="relative overflow-hidden px-5 py-6 sm:px-8 sm:py-9"
+        style={{ y: scene.contentY, opacity: scene.contentOpacity, filter: scene.contentBlur }}
+      >
         <AnimatePresence mode="popLayout" custom={direction} initial={false}>
           <motion.div
             key={book.id}
             custom={direction}
-            variants={slideVariants}
+            variants={carouselSlide}
             initial="enter"
             animate="center"
             exit="exit"
-            transition={{ x: { type: "spring", stiffness: 320, damping: 34 }, opacity: { duration: 0.18 } }}
+            transition={CAROUSEL_TRANSITION}
             drag={hasMany ? "x" : false}
             dragConstraints={{ left: 0, right: 0 }}
             dragElastic={0.2}
@@ -152,21 +187,35 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
               {/* Cover */}
               <motion.button
                 type="button"
-                variants={reduce ? undefined : fadeUp}
+                variants={reduce ? undefined : liftIn}
                 onClick={handleResume}
-                whileHover={reduce ? undefined : { y: -5 }}
-                transition={{ duration: 0.25, ease: EASE_OUT }}
-                className="group/cover relative mx-auto block aspect-2/3 w-[168px] shrink-0 overflow-hidden rounded-xl ring-1 ring-border sm:mx-0 sm:w-[196px]"
+                whileHover={reduce ? undefined : { y: -10, rotateZ: -2, scale: 1.04 }}
+                transition={{ duration: 0.35, ease: EASE_OUT }}
+                className="group/cover relative mx-auto block aspect-2/3 w-[168px] shrink-0 overflow-hidden rounded-xl sm:mx-0 sm:w-[196px]"
                 aria-label={t("home.hero.resume")}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={book.thumbnailUrl}
-                  alt={t("home.hero.coverAlt", { title: bookTitle })}
-                  loading="eager"
-                  draggable={false}
-                  className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover/cover:scale-[1.05]"
-                />
+                {/* Le cadre sert de masque : la cover se lève dedans. Le liseré
+                    est porté par la cover elle-même, pas par le cadre, pour
+                    ne jamais dessiner le contour d'un cadre encore vide. */}
+                <span
+                  className={cn(
+                    "relative block h-full w-full",
+                    coverEntrance && "motion-safe:animate-cover-rise"
+                  )}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={book.thumbnailUrl}
+                    alt={t("home.hero.coverAlt", { title: bookTitle })}
+                    loading="eager"
+                    draggable={false}
+                    className="h-full w-full object-cover"
+                  />
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-inset ring-border"
+                  />
+                </span>
               </motion.button>
 
               {/* Content */}
@@ -179,23 +228,23 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
                   {t("home.hero.label")}
                 </motion.div>
 
-                <motion.h2
-                  className="font-display text-3xl font-semibold leading-[1.05] tracking-tight sm:text-4xl lg:text-5xl"
-                  {...stagedItem}
-                >
+                <h2 className="font-display text-3xl font-semibold leading-[1.05] tracking-tight sm:text-4xl lg:text-5xl">
                   {seriesName ? (
                     <>
-                      {seriesName}
+                      <SplitWords text={seriesName} />
                       {volumeLabel && (
-                        <span className="ml-3 align-middle text-lg font-normal text-muted-foreground sm:text-xl">
+                        <motion.span
+                          {...stagedItem}
+                          className="ml-3 inline-block align-middle text-lg font-normal text-muted-foreground sm:text-xl"
+                        >
                           {volumeLabel}
-                        </span>
+                        </motion.span>
                       )}
                     </>
                   ) : (
-                    volumeLabel ?? bookTitle
+                    <SplitWords text={volumeLabel ?? bookTitle} />
                   )}
-                </motion.h2>
+                </h2>
 
                 {summary && (
                   <motion.p className="line-clamp-2 text-sm text-muted-foreground sm:text-base" {...stagedItem}>
@@ -279,7 +328,7 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
             )}
           </div>
         )}
-      </div>
-    </section>
+      </motion.div>
+    </motion.section>
   );
 }

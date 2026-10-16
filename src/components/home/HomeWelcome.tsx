@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { Fragment, useRef } from "react";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, BookOpenCheck, Cable, LibraryBig, Projector, Server } from "lucide-react";
@@ -8,7 +8,7 @@ import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProjectionBackdrop } from "@/components/ui/projection-backdrop";
 import { GlowLayer, Magnetic, StaggerGroup, StaggerItem, usePointerGlow } from "@/components/motion";
-import { fadeUp, staggerContainer } from "@/lib/motion";
+import { curtainOpen, fadeUp, staggerContainer } from "@/lib/motion";
 import { useTranslate } from "@/hooks/useTranslate";
 
 const KOMGA_SETUP_HREF = "/settings?tab=connection&new=komga";
@@ -47,7 +47,12 @@ export function HomeWelcome() {
 
   return (
     <section data-testid="home-welcome" className="space-y-10 pb-2">
-      <section className="relative overflow-hidden rounded-2xl bg-surface-1 px-6 py-12 sm:px-12 sm:py-16">
+      <motion.section
+        className="relative overflow-hidden rounded-2xl bg-surface-1 px-6 py-12 sm:px-12 sm:py-16"
+        variants={reduce ? undefined : curtainOpen}
+        initial={reduce ? undefined : "hidden"}
+        animate={reduce ? undefined : "visible"}
+      >
         {/* L'affiche du site : le logo en fond, même travelling que les
             carrousels (flou, pan/zoom, vignette). Une déclinaison par thème,
             la variante masquée n'étant pas rendue par le navigateur. */}
@@ -66,12 +71,9 @@ export function HomeWelcome() {
             {t("home.welcome.badge")}
           </motion.p>
 
-          <motion.h1
-            {...stagedItem}
-            className="font-display text-4xl font-semibold tracking-tight sm:text-5xl"
-          >
-            {t("home.welcome.title")}
-          </motion.h1>
+          <h1 className="font-display text-4xl font-semibold tracking-tight sm:text-5xl">
+            <MaskedWords text={t("home.welcome.title")} />
+          </h1>
 
           <motion.p
             {...stagedItem}
@@ -104,9 +106,9 @@ export function HomeWelcome() {
             {t("home.welcome.reassurance")}
           </motion.p>
         </motion.div>
-      </section>
+      </motion.section>
 
-      <StaggerGroup className="grid gap-4 sm:grid-cols-3" stagger={0.07}>
+      <StaggerGroup className="grid gap-4 sm:grid-cols-3" stagger={0.1} effect="settle">
         {STEPS.map(({ key, icon: Icon }, index) => (
           <StaggerItem key={key} className="h-full">
             <div className="flex h-full flex-col gap-3 rounded-2xl bg-surface-1 p-5">
@@ -165,6 +167,33 @@ export function HomeWelcome() {
         </StaggerGroup>
       </div>
     </section>
+  );
+}
+
+/**
+ * Titre d'affiche : chaque mot sort de son masque, l'un après l'autre.
+ * Tout est gated en CSS (`motion-safe`) — sans animation ni script, le texte
+ * est simplement là, jamais masqué.
+ */
+function MaskedWords({ text }: { text: string }) {
+  const words = text.split(" ");
+
+  return (
+    <>
+      {words.map((word, index) => (
+        <Fragment key={`${word}-${index}`}>
+          <span className="inline-block overflow-hidden align-bottom pb-[0.08em] -mb-[0.08em]">
+            <span
+              className="inline-block motion-safe:animate-mask-rise"
+              style={{ animationDelay: `${120 + index * 90}ms` }}
+            >
+              {word}
+            </span>
+          </span>
+          {index < words.length - 1 ? " " : null}
+        </Fragment>
+      ))}
+    </>
   );
 }
 

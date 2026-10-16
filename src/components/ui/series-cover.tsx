@@ -1,6 +1,10 @@
+"use client";
+
 import { ProgressBar } from "./progress-bar";
 import { BookX, CircleDot, CircleCheck, CirclePause, CircleX, type LucideIcon } from "lucide-react";
 import type { SeriesCoverProps } from "./cover-utils";
+import { useCoverLoaded } from "@/hooks/useCoverLoaded";
+import { cn } from "@/lib/utils";
 
 
 const seriesStatusStyles: Record<string, { bg: string; icon: LucideIcon }> = {
@@ -17,6 +21,7 @@ export function SeriesCover({
   showProgressUi = true,
   isAnonymous = false,
 }: SeriesCoverProps) {
+  const { ref, loaded, onLoad } = useCoverLoaded();
   const isCompleted = isAnonymous ? false : series.bookCount === series.booksReadCount;
 
   const readBooks = isAnonymous ? 0 : series.booksReadCount;
@@ -28,16 +33,18 @@ export function SeriesCover({
   return (
     <div className="relative w-full h-full">
       <img
+        ref={ref}
         src={series.thumbnailUrl}
         alt={alt}
         loading="lazy"
-        className={[
-          "absolute inset-0 w-full h-full object-cover",
-          isCompleted ? "opacity-60" : "",
-          className || "",
-        ]
-          .filter(Boolean)
-          .join(" ")}
+        onLoad={onLoad}
+        className={cn(
+          "absolute inset-0 h-full w-full object-cover transition-[opacity,scale] duration-600 ease-projection motion-reduce:transition-none",
+          loaded
+            ? cn("scale-100", isCompleted ? "opacity-60" : "opacity-100")
+            : "scale-[1.03] opacity-0",
+          className
+        )}
       />
       {showProgressUi && statusStyle && series.seriesStatus && (
         <div className={`absolute top-1.5 left-1.5 flex items-center rounded-full ${statusStyle.bg} p-0.5 text-white opacity-0 group-hover:opacity-100 transition-opacity`}>

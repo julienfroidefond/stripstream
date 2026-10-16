@@ -3,7 +3,7 @@ import React from "react";
 
 import { Book, BookOpen, BookMarked, BookX, Star, StarOff, User, CircleDot, CircleCheck, CirclePause, CircleX, Calendar } from "lucide-react";
 import type { NormalizedSeries } from "@/lib/providers/types";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
 import { RefreshButton } from "@/components/library/RefreshButton";
@@ -22,7 +22,8 @@ import { SeriesRatingControl } from "./SeriesRatingControl";
 import type { NormalizedProviderRating } from "@/lib/providers/types";
 import { motion, useReducedMotion } from "framer-motion";
 import { ProjectionBackdrop } from "@/components/ui/projection-backdrop";
-import { fadeUp, liftIn, maskUp, staggerContainer } from "@/lib/motion";
+import { fadeUp, liftIn, screenUnroll, staggerContainer } from "@/lib/motion";
+import { SplitWords, useSceneExit } from "@/components/motion";
 
 interface SeriesHeaderProps {
   series: NormalizedSeries;
@@ -48,6 +49,8 @@ export const SeriesHeader = ({
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const { t } = useTranslate();
   const reduce = useReducedMotion();
+  const headerRef = useRef<HTMLDivElement>(null);
+  const scene = useSceneExit(headerRef);
   const staged = reduce
     ? {}
     : { variants: staggerContainer(0.08, 0.05), initial: "hidden" as const, animate: "visible" as const };
@@ -145,15 +148,26 @@ export const SeriesHeader = ({
     : null;
 
   return (
-    <div className="relative w-screen -ml-[calc((100vw-100%)/2)] overflow-hidden">
-      {/* Image de fond */}
-      <div className="absolute inset-0">
-        <ProjectionBackdrop src={series.thumbnailUrl} />
-      </div>
+    <div ref={headerRef} className="relative w-screen -ml-[calc((100vw-100%)/2)] overflow-hidden">
+      {/* Image de fond : l'écran se déroule, puis glisse moins vite que la page. */}
+      <motion.div
+        className="absolute inset-0"
+        style={{ y: scene.backdropY, scale: scene.backdropScale }}
+      >
+        <motion.div
+          className="absolute inset-0"
+          variants={reduce ? undefined : screenUnroll}
+          initial={reduce ? undefined : "hidden"}
+          animate={reduce ? undefined : "visible"}
+        >
+          <ProjectionBackdrop src={series.thumbnailUrl} />
+        </motion.div>
+      </motion.div>
       {/* Contenu */}
       <div className="relative container mx-auto flex min-h-[260px] items-end px-4 pb-8 pt-12 md:min-h-[340px] md:pb-10 md:pt-16">
         <motion.div
           className="flex w-full flex-col items-center gap-6 md:flex-row md:items-end md:gap-8"
+          style={{ y: scene.contentY, opacity: scene.contentOpacity, filter: scene.contentBlur }}
           {...staged}
         >
           {/* Image principale */}
@@ -173,14 +187,9 @@ export const SeriesHeader = ({
             variants={reduce ? undefined : fadeUp}
             className="min-w-0 flex-1 space-y-3 text-center text-foreground md:pb-1 md:text-left"
           >
-            <span className="block overflow-hidden">
-              <motion.h1
-                variants={reduce ? undefined : maskUp}
-                className="font-display text-3xl font-semibold leading-[1.05] tracking-tight sm:text-4xl md:text-5xl"
-              >
-                {series.name}
-              </motion.h1>
-            </span>
+            <h1 className="font-display text-3xl font-semibold leading-[1.05] tracking-tight sm:text-4xl md:text-5xl">
+              <SplitWords text={series.name} />
+            </h1>
             {(authorsText || series.startYear != null) && (
               <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm text-muted-foreground md:justify-start">
                 {authorsText && (

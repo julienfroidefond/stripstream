@@ -15,7 +15,7 @@ import type { LucideIcon } from "lucide-react";
 import type { NormalizedSeries } from "@/lib/providers/types";
 import { loadHomeFeed } from "@/app/actions/home";
 import { GlowLayer, Magnetic, StaggerGroup, StaggerItem, usePointerGlow } from "@/components/motion";
-import { EASE_OUT, fadeUp, staggerContainer } from "@/lib/motion";
+import { CAROUSEL_TRANSITION, EASE_OUT, carouselSlide, fadeUp, staggerContainer } from "@/lib/motion";
 import { ProjectionBackdrop } from "@/components/ui/projection-backdrop";
 
 const REASON_CONFIG: Record<string, { icon: LucideIcon; className: string }> = {
@@ -27,12 +27,6 @@ const REASON_CONFIG: Record<string, { icon: LucideIcon; className: string }> = {
 
 const SWIPE_THRESHOLD = 60;
 const ITEMS_PER_PAGE = 8;
-
-const slideVariants = {
-  enter: (dir: number) => ({ x: dir > 0 ? 80 : -80, opacity: 0 }),
-  center: { x: 0, opacity: 1 },
-  exit: (dir: number) => ({ x: dir > 0 ? -80 : 80, opacity: 0 }),
-};
 
 type ViewMode = "hero" | "grid";
 const VIEW_MODE_KEY = "recommendations-view-mode";
@@ -110,7 +104,7 @@ export function RecommendationsRow({ series, initialHasMore = false }: Recommend
           onNavigate={setHero}
         />
       ) : (
-        <StaggerGroup stagger={0.045}>
+        <StaggerGroup stagger={0.08} effect="deal" amount={0.25}>
           <ScrollContainer
             showArrows={true}
             scrollAmount={400}
@@ -222,11 +216,11 @@ function RecommendationHero({
           <motion.div
             key={s.id}
             custom={direction}
-            variants={slideVariants}
+            variants={carouselSlide}
             initial="enter"
             animate="center"
             exit="exit"
-            transition={{ x: { type: "spring", stiffness: 320, damping: 34 }, opacity: { duration: 0.18 } }}
+            transition={CAROUSEL_TRANSITION}
             drag={hasMany ? "x" : false}
             dragConstraints={{ left: 0, right: 0 }}
             dragElastic={0.2}
@@ -251,7 +245,6 @@ function RecommendationHero({
                   alt={s.name}
                   isAnonymous={isAnonymous}
                   showProgressUi={false}
-                  className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover/cover:scale-[1.05]"
                 />
               </motion.button>
 
@@ -378,14 +371,15 @@ const RecommendationCard = memo(function RecommendationCard({ series: s }: { ser
       onClick={() => router.push(`/series/${s.id}`)}
       className="group relative flex w-[160px] shrink-0 flex-col gap-1.5 sm:w-[188px]"
     >
-      <div className="relative aspect-2/3 w-full overflow-hidden rounded-xl bg-surface-2 ring-1 ring-border/60 transition-transform duration-300 ease-out group-hover:-translate-y-1">
-        <SeriesCover
-          series={s}
-          alt={s.name}
-          isAnonymous={isAnonymous}
-          showProgressUi={false}
-          className="transition-transform duration-500 ease-out group-hover:scale-[1.04]"
-        />
+      <div className="relative aspect-2/3 w-full overflow-hidden rounded-xl bg-surface-2 ring-1 ring-border/60 transition-[translate,box-shadow] duration-500 ease-projection group-hover:-translate-y-2 group-hover:ring-border motion-reduce:transition-none">
+        <div className="absolute inset-0 transition-transform duration-700 ease-projection group-hover:scale-[1.07] motion-reduce:transition-none">
+          <SeriesCover
+            series={s}
+            alt={s.name}
+            isAnonymous={isAnonymous}
+            showProgressUi={false}
+          />
+        </div>
 
         <div className="absolute inset-0 flex flex-col justify-end bg-linear-to-t from-black/80 via-black/30 to-transparent p-2.5 opacity-0 transition-opacity duration-300 group-hover:opacity-100">{/* taste-skill-ignore: scrim neutre au-dessus de la couverture */}
           <p className="line-clamp-2 text-left text-xs font-semibold text-white">{s.name}</p>

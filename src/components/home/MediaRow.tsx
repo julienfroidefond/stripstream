@@ -73,7 +73,7 @@ export function MediaRow({ titleKey, items, iconName, featuredHeader = false, te
       titleClassName={featuredHeader ? "text-primary" : undefined}
       iconClassName={featuredHeader ? "text-primary" : undefined}
     >
-      <StaggerGroup stagger={0.045}>
+      <StaggerGroup stagger={0.08} effect="deal" amount={0.25}>
         <ScrollContainer
           showArrows={true}
           scrollAmount={400}
@@ -133,15 +133,16 @@ const SeriesMediaCard = memo(function SeriesMediaCard({
       ref={cardRef}
       onMouseMove={handleGlow}
       onClick={() => onClick(series)}
-      className="group relative flex w-[188px] cursor-pointer flex-col overflow-hidden rounded-xl bg-surface-2 ring-1 ring-border/60 transition-transform duration-300 ease-out hover:-translate-y-1 sm:w-[200px]"
+      className="group relative flex w-[188px] cursor-pointer flex-col overflow-hidden rounded-xl bg-surface-2 ring-1 ring-border/60 transition-[translate,box-shadow] duration-500 ease-projection hover:-translate-y-2 hover:ring-border sm:w-[200px] motion-reduce:transition-none"
     >
       <div className="relative aspect-2/3 overflow-hidden bg-surface-2">
-        <SeriesCover
-          series={series}
-          alt={`Couverture de ${series.name}`}
-          isAnonymous={isAnonymous}
-          className="transition-transform duration-500 ease-out group-hover:scale-[1.04]"
-        />
+        <div className="absolute inset-0 transition-transform duration-700 ease-projection group-hover:scale-[1.07] motion-reduce:transition-none">
+          <SeriesCover
+            series={series}
+            alt={`Couverture de ${series.name}`}
+            isAnonymous={isAnonymous}
+          />
+        </div>
         <div className="absolute inset-0 flex flex-col justify-end bg-linear-to-t from-black/80 via-black/40 to-transparent p-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100">{/* taste-skill-ignore: scrim neutre au-dessus de la couverture */}
           <h3 className="font-display text-sm font-medium text-white line-clamp-2">{series.name}</h3>
           <p className="text-xs text-white/80 mt-1">
@@ -171,16 +172,17 @@ const BookMediaCard = memo(function BookMediaCard({
       ref={glowRef}
       onMouseMove={handleGlow}
       onClick={() => onClick(book)}
-      className="group relative flex w-[188px] cursor-pointer flex-col overflow-hidden rounded-xl bg-surface-2 ring-1 ring-border/60 transition-transform duration-300 ease-out hover:-translate-y-1 sm:w-[200px]"
+      className="group relative flex w-[188px] cursor-pointer flex-col overflow-hidden rounded-xl bg-surface-2 ring-1 ring-border/60 transition-[translate,box-shadow] duration-500 ease-projection hover:-translate-y-2 hover:ring-border sm:w-[200px] motion-reduce:transition-none"
     >
       <div className="relative aspect-2/3 overflow-hidden bg-surface-2">
-        <BookCover
-          book={book}
-          alt={`Couverture de ${title}`}
-          showControls={false}
-          overlayVariant="home"
-          className="transition-transform duration-500 ease-out group-hover:scale-[1.04]"
-        />
+        <div className="absolute inset-0 transition-transform duration-700 ease-projection group-hover:scale-[1.07] motion-reduce:transition-none">
+          <BookCover
+            book={book}
+            alt={`Couverture de ${title}`}
+            showControls={false}
+            overlayVariant="home"
+          />
+        </div>
         <GlowLayer />
       </div>
     </Card>

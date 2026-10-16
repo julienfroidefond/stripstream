@@ -56,6 +56,7 @@ export function SidebarLibrariesView({ libraries }: { libraries: NormalizedLibra
               icon={Library}
               label={library.name}
               active={pathname === `/libraries/${library.id}`}
+              activeLayoutId="sidebar-libraries-active"
               onClick={() => handleLinkClick(`/libraries/${library.id}`)}
             />
           ))

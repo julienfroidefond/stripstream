@@ -13,6 +13,7 @@ import {
   type Variants,
 } from "framer-motion";
 import {
+  Fragment,
   createContext,
   useCallback,
   useContext,
@@ -26,7 +27,7 @@ import {
   type RefObject,
 } from "react";
 import { cn } from "@/lib/utils";
-import { EASE_PROJECTION, fadeUp, staggerContainer } from "@/lib/motion";
+import { EASE_PROJECTION, dealIn, fadeUp, maskUp, settleIn, staggerContainer } from "@/lib/motion";
 
 /** Seuil de déclenchement d'une révélation au défilement. */
 type ViewportAmount = number | "some" | "all";
@@ -54,6 +55,40 @@ export const VIEWPORT_MARGIN = "4000px 0px -8% 0px";
 
 type StaggerReveal = "group" | "scroll";
 
+/**
+ * Geste d'entrée, choisi par nature de contenu :
+ *  - "rise"   : le texte et les listes montent en faisant le point ;
+ *  - "settle" : les couvertures d'une grille montent, grandissent et font le point ;
+ *  - "deal"   : les affiches d'un rail horizontal arrivent de la droite en
+ *    pivotant, comme une main de cartes qu'on étale.
+ */
+type StaggerEffect = "rise" | "settle" | "deal";
+
+const EFFECT_VARIANTS: Record<StaggerEffect, Variants> = {
+  rise: fadeUp,
+  settle: settleIn,
+  deal: dealIn,
+};
+
+/**
+ * Équivalent CSS des variantes, pour la révélation autonome au défilement.
+ * Les classes sont écrites en entier pour que Tailwind les détecte.
+ */
+const SCROLL_REVEAL_CLASSES: Record<StaggerEffect, { hidden: string; shown: string }> = {
+  rise: {
+    hidden: "opacity-0 translate-y-9 blur-[8px]",
+    shown: "opacity-100 translate-y-0 blur-none",
+  },
+  settle: {
+    hidden: "opacity-0 translate-y-12 scale-[0.9] blur-[10px]",
+    shown: "opacity-100 translate-y-0 scale-100 blur-none",
+  },
+  deal: {
+    hidden: "opacity-0 translate-x-20 scale-[0.9] blur-[10px]",
+    shown: "opacity-100 translate-x-0 scale-100 blur-none",
+  },
+};
+
 interface StaggerGroupProps {
   children: ReactNode;
   className?: string;
@@ -63,6 +98,7 @@ interface StaggerGroupProps {
   amount?: ViewportAmount;
   once?: boolean;
   reveal?: StaggerReveal;
+  effect?: StaggerEffect;
 }
 
 /** État partagé du groupe : les enfants montés après coup savent s'animer seuls. */
@@ -71,6 +107,7 @@ const StaggerContext = createContext<{
   reduce: boolean;
   reveal: StaggerReveal;
   stagger: number;
+  effect: StaggerEffect;
 } | null>(null);
 
 /**
@@ -91,19 +128,20 @@ function columnIndexWithinRow(element: HTMLElement): number {
 export function StaggerGroup({
   children,
   className,
-  stagger = 0.05,
-  delayChildren = 0.04,
+  stagger = 0.08,
+  delayChildren = 0.06,
   amount = 0.12,
   once = true,
   reveal = "group",
+  effect = "rise",
 }: StaggerGroupProps) {
   const reduce = useReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once, amount, margin: VIEWPORT_MARGIN });
   const revealed = reduce ? true : inView;
   const contextValue = useMemo(
-    () => ({ revealed, reduce: Boolean(reduce), reveal, stagger }),
-    [revealed, reduce, reveal, stagger]
+    () => ({ revealed, reduce: Boolean(reduce), reveal, stagger, effect }),
+    [revealed, reduce, reveal, stagger, effect]
   );
 
   if (reduce) return <div className={className}>{children}</div>;
@@ -132,10 +170,12 @@ interface StaggerItemProps {
   variants?: Variants;
 }
 
-export function StaggerItem({ children, className, style, variants = fadeUp }: StaggerItemProps) {
+export function StaggerItem({ children, className, style, variants }: StaggerItemProps) {
   const context = useContext(StaggerContext);
   const scrollReveal = context?.reveal === "scroll" && !context.reduce;
-  const stagger = context?.stagger ?? 0.05;
+  const stagger = context?.stagger ?? 0.08;
+  const effect = context?.effect ?? "rise";
+  const itemVariants = variants ?? EFFECT_VARIANTS[effect];
   const ref = useRef<HTMLDivElement>(null);
   const [scrollState, setScrollState] = useState({ revealed: false, column: 0 });
   /**
@@ -168,25 +208,26 @@ export function StaggerItem({ children, className, style, variants = fadeUp }: S
 
   if (!context || context.reduce) {
     return (
-      <motion.div className={className} style={style} variants={variants} initial={false} animate="visible">
+      <motion.div className={className} style={style} variants={itemVariants} initial={false} animate="visible">
         {children}
       </motion.div>
     );
   }
 
   /**
-   * Révélation autonome en CSS — même entrée que `fadeUp` (20 px, 600 ms,
-   * courbe projection). Une transition CSS ne peut pas rester bloquée à
+   * Révélation autonome en CSS — même geste que la variante de l'effet, sur la
+   * courbe projection. Une transition CSS ne peut pas rester bloquée à
    * opacity 0 : au pire la carte se décale, elle n'a jamais l'occasion de
    * disparaître, contrairement à une variante dont le déclencheur se perd.
    */
   if (scrollReveal) {
+    const classes = SCROLL_REVEAL_CLASSES[effect];
     return (
       <div
         ref={ref}
         className={cn(
-          "transition-[opacity,translate] ease-projection duration-600 motion-reduce:transition-none",
-          scrollState.revealed ? "translate-y-0 opacity-100" : "translate-y-5 opacity-0",
+          "transition-[opacity,translate,scale,filter] ease-projection duration-1000 motion-reduce:transition-none",
+          scrollState.revealed ? classes.shown : classes.hidden,
           className
         )}
         style={{
@@ -203,7 +244,7 @@ export function StaggerItem({ children, className, style, variants = fadeUp }: S
     <motion.div
       className={className}
       style={style}
-      variants={variants}
+      variants={itemVariants}
       initial={mountedAfterReveal ? "hidden" : undefined}
       animate={mountedAfterReveal ? "visible" : undefined}
     >
@@ -347,4 +388,69 @@ export function ScrollProgress() {
       style={{ scaleX }}
     />
   );
+}
+
+/* -------------------------------------------------------------------------
+ * SplitWords — un titre dont chaque mot sort de son masque, l'un après l'autre.
+ *
+ * Le composant est un enfant de variantes : il hérite de l'état
+ * hidden/visible de son parent et déroule sa propre cascade. Sans animation,
+ * le texte est simplement là.
+ * ---------------------------------------------------------------------- */
+
+interface SplitWordsProps {
+  text: string;
+  /** Cadence mot à mot. */
+  stagger?: number;
+}
+
+const splitWordsContainer = staggerContainer(0.07, 0);
+
+export function SplitWords({ text, stagger }: SplitWordsProps) {
+  const reduce = useReducedMotion();
+  const variants = useMemo(
+    () => (stagger === undefined ? splitWordsContainer : staggerContainer(stagger, 0)),
+    [stagger]
+  );
+
+  if (reduce) return <>{text}</>;
+
+  const words = text.split(" ");
+  return (
+    <motion.span variants={variants} className="inline">
+      {words.map((word, index) => (
+        <Fragment key={`${word}-${index}`}>
+          <span className="-mb-[0.12em] inline-block overflow-hidden pb-[0.12em] align-bottom">
+            <motion.span variants={maskUp} className="inline-block will-change-transform">
+              {word}
+            </motion.span>
+          </span>
+          {index < words.length - 1 ? " " : null}
+        </Fragment>
+      ))}
+    </motion.span>
+  );
+}
+
+/* -------------------------------------------------------------------------
+ * useSceneExit — un bandeau quitte la scène au défilement.
+ *
+ * Tant que le bandeau sort par le haut, le fond descend moins vite que la
+ * page (parallaxe), le contenu s'éloigne et s'éteint : la salle se rallume
+ * sur la suite. Les valeurs restent neutres sous `prefers-reduced-motion`.
+ * ---------------------------------------------------------------------- */
+
+export function useSceneExit(ref: RefObject<HTMLElement | null>) {
+  const reduce = useReducedMotion();
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
+  const progress = useSpring(scrollYProgress, { stiffness: 220, damping: 32, restDelta: 0.001 });
+
+  const backdropY = useTransform(progress, [0, 1], reduce ? ["0%", "0%"] : ["0%", "38%"]);
+  const backdropScale = useTransform(progress, [0, 1], reduce ? [1, 1] : [1, 1.12]);
+  const contentY = useTransform(progress, [0, 1], reduce ? [0, 0] : [0, 90]);
+  const contentOpacity = useTransform(progress, [0, 0.75], reduce ? [1, 1] : [1, 0]);
+  const contentBlur = useTransform(progress, [0, 0.75], reduce ? ["blur(0px)", "blur(0px)"] : ["blur(0px)", "blur(6px)"]);
+  const sceneScale = useTransform(progress, [0, 1], reduce ? [1, 1] : [1, 0.92]);
+
+  return { backdropY, backdropScale, contentY, contentOpacity, contentBlur, sceneScale };
 }

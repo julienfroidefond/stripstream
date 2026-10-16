@@ -5,7 +5,8 @@ import type { BookCoverProps } from "./cover-utils";
 import { MarkAsReadButton } from "./mark-as-read-button";
 import { MarkAsUnreadButton } from "./mark-as-unread-button";
 import { useTranslate } from "@/hooks/useTranslate";
-import { formatDate } from "@/lib/utils";
+import { useCoverLoaded } from "@/hooks/useCoverLoaded";
+import { cn, formatDate } from "@/lib/utils";
 import { useAnonymous } from "@/contexts/AnonymousContext";
 
 // Fonction utilitaire pour obtenir les informations de statut de lecture
@@ -62,6 +63,7 @@ function BookCoverContent({
 }: BookCoverProps) {
   const { t } = useTranslate();
   const { isAnonymous } = useAnonymous();
+  const { ref, loaded, onLoad } = useCoverLoaded();
 
   const isCompleted = isAnonymous ? false : (book.readProgress?.completed || false);
 
@@ -85,16 +87,18 @@ function BookCoverContent({
     <>
       <div className="relative w-full h-full">
         <img
+          ref={ref}
           src={book.thumbnailUrl.trim()}
           alt={alt || t("books.defaultCoverAlt")}
           loading="lazy"
-          className={[
-            "absolute inset-0 w-full h-full object-cover rounded-lg",
-            isCompleted ? "opacity-50" : "",
-            className || "",
-          ]
-            .filter(Boolean)
-            .join(" ")}
+          onLoad={onLoad}
+          className={cn(
+            "absolute inset-0 h-full w-full object-cover rounded-lg transition-[opacity,scale] duration-600 ease-projection motion-reduce:transition-none",
+            loaded
+              ? cn("scale-100", isCompleted ? "opacity-50" : "opacity-100")
+              : "scale-[1.03] opacity-0",
+            className
+          )}
         />
         {showProgress && <ProgressBar progress={currentPage} total={totalPages} type="book" />}
       </div>

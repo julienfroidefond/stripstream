@@ -108,7 +108,8 @@ export function ReadingListsContent({ lists, isStripstream }: ReadingListsConten
         <StaggerGroup
           className="grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
           reveal="scroll"
-          stagger={0.06}
+          effect="settle"
+          stagger={0.09}
         >
           {filteredLists.map((list) => {
             const status = getReadingListStatus(list);
@@ -123,7 +124,7 @@ export function ReadingListsContent({ lists, isStripstream }: ReadingListsConten
                   onClick={() => router.push(`/reading-lists/${list.id}`)}
                   className={cn("group flex w-full flex-col gap-2 text-left transition-opacity", isCompleted && "opacity-70")}
                 >
-                  <div className="relative aspect-2/3 overflow-hidden rounded-xl bg-surface-2 transition-transform duration-200 group-hover:-translate-y-0.5">
+                  <div className="relative aspect-2/3 overflow-hidden rounded-xl bg-surface-2">
                     {firstCover ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={`/api/stripstream/images/books/${firstCover}/thumbnail`} alt={list.name} loading="lazy" className="absolute inset-0 h-full w-full object-cover" />

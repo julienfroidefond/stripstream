@@ -105,6 +105,10 @@ body.no-pinch-zoom * {
   --animate-fade-in: fade-in 0.3s ease-in forwards;
   --animate-loader-slide: loader-slide 1.25s ease-in-out infinite;
   --animate-reveal: reveal var(--duration-slow) cubic-bezier(0.16, 1, 0.3, 1) both;
+  /* Titre d'accueil : chaque mot sort de son masque, une seule fois. */
+  --animate-mask-rise: mask-rise 800ms var(--ease-projection) both;
+  /* Cover d'affiche : posée depuis le bas, masquée par son cadre, une fois. */
+  --animate-cover-rise: cover-rise 900ms var(--ease-projection) both;
   /* Travelling du fond d'affiche : deux axes, durées premières entre elles. */
   --animate-backdrop-pan: backdrop-pan 26s ease-in-out infinite;
   --animate-backdrop-zoom: backdrop-zoom 18s ease-in-out infinite;
@@ -136,6 +140,20 @@ body.no-pinch-zoom * {
     to {
       opacity: 1;
       transform: translateY(0);
+    }
+  }
+
+  /* Le mot remonte depuis sous sa ligne de base, masqué par son parent. */
+  @keyframes mask-rise {
+    from {
+      transform: translateY(110%);
+    }
+  }
+
+  /* L'affiche se lève dans son cadre, masquée par lui. */
+  @keyframes cover-rise {
+    from {
+      transform: translateY(105%);
     }
   }
 

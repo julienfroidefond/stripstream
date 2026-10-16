@@ -43,6 +43,7 @@ export function SidebarFavoritesView({ favorites }: { favorites: NormalizedSerie
               icon={Star}
               label={series.name}
               active={pathname === `/series/${series.id}`}
+              activeLayoutId="sidebar-favorites-active"
               onClick={() => handleLinkClick(`/series/${series.id}`)}
               className="[&_svg]:fill-yellow-400 [&_svg]:text-yellow-400"
             />

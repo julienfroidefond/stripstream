@@ -4,8 +4,8 @@ import * as React from "react";
 import { motion, useReducedMotion, type Variants } from "framer-motion";
 import { type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { EASE_PROJECTION, maskUp } from "@/lib/motion";
-import { VIEWPORT_MARGIN } from "@/components/motion";
+import { drawLine } from "@/lib/motion";
+import { SplitWords, VIEWPORT_MARGIN } from "@/components/motion";
 
 export interface SectionProps extends React.HTMLAttributes<HTMLElement> {
   title?: string;
@@ -19,16 +19,17 @@ export interface SectionProps extends React.HTMLAttributes<HTMLElement> {
 
 const headerVariants: Variants = {
   hidden: {},
-  visible: { transition: { staggerChildren: 0.06 } },
+  visible: { transition: { staggerChildren: 0.08 } },
 };
 
+/** L'icône tombe en place et rebondit : le titre qui suit s'appuie sur elle. */
 const iconVariants: Variants = {
-  hidden: { opacity: 0, scale: 0.85, rotate: -10 },
+  hidden: { opacity: 0, scale: 0.3, rotate: -60 },
   visible: {
     opacity: 1,
     scale: 1,
     rotate: 0,
-    transition: { duration: 0.45, ease: EASE_PROJECTION },
+    transition: { type: "spring", stiffness: 380, damping: 16, mass: 0.8 },
   },
 };
 
@@ -76,17 +77,20 @@ const Section = React.forwardRef<HTMLElement, SectionProps>(
                   </motion.span>
                 )}
                 <div>
-                  <span className="block overflow-hidden pb-0.5">
-                    <motion.h2
-                      variants={reduce ? undefined : maskUp}
-                      className={cn(
-                        "font-display text-2xl font-semibold tracking-tight",
-                        titleClassName
-                      )}
-                    >
-                      {title}
-                    </motion.h2>
-                  </span>
+                  <h2
+                    className={cn(
+                      "font-display text-2xl font-semibold tracking-tight",
+                      titleClassName
+                    )}
+                  >
+                    <SplitWords text={title} />
+                  </h2>
+                  {/* Trait d'accent : il se trace une fois le titre posé. */}
+                  <motion.span
+                    aria-hidden
+                    variants={reduce ? undefined : drawLine}
+                    className="mt-1.5 block h-[3px] w-10 origin-left rounded-full bg-primary"
+                  />
                   {description && (
                     <p className="text-sm text-muted-foreground mt-1">{description}</p>
                   )}

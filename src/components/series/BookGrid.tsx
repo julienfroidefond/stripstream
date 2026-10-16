@@ -64,7 +64,7 @@ const BookCard = memo(function BookCard({ book, onBookClick, onSuccess }: BookCa
       ref={cardRef}
       onMouseMove={handleGlow}
       className={cn(
-        "group relative aspect-2/3 overflow-hidden rounded-lg bg-muted transition-transform duration-300 ease-out hover:-translate-y-1"
+        "group relative aspect-2/3 overflow-hidden rounded-lg bg-muted"
       )}
     >
       <div
@@ -80,7 +80,6 @@ const BookCard = memo(function BookCard({ book, onBookClick, onSuccess }: BookCa
                 ? t("navigation.volume", { number: book.number })
                 : ""),
           })}
-          className="transition-transform duration-500 ease-out group-hover:scale-[1.04]"
           onSuccess={(book, action) => onSuccess(book, action)}
         />
       </div>
@@ -117,7 +116,8 @@ export function BookGrid({ books, onBookClick, isCompact = false, onRefresh }: B
           : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5"
       )}
       reveal="scroll"
-      stagger={0.06}
+      effect="settle"
+      stagger={0.09}
     >
       {books.map((book) =>
         book.volumeType === "_missing" ? (

@@ -87,14 +87,13 @@ const SeriesGridItem = memo(function SeriesGridItem({
       onMouseMove={handleGlow}
       onClick={() => onOpen(series.id)}
       className={cn(
-        "group relative block w-full aspect-2/3 overflow-hidden rounded-xl bg-card ring-1 ring-border/50 transition-transform duration-300 ease-out hover:-translate-y-1 hover:ring-border"
+        "group relative block w-full aspect-2/3 overflow-hidden rounded-xl bg-card ring-1 ring-border/50 transition-shadow duration-300 ease-out hover:ring-border"
       )}
     >
       <SeriesCover
         series={series}
         alt={t("series.coverAlt", { title: series.name })}
         isAnonymous={isAnonymous}
-        className="transition-transform duration-500 ease-out group-hover:scale-[1.04]"
       />
       {displayRating !== null && (
         <div
@@ -159,7 +158,8 @@ export function SeriesGrid({ series, isCompact = false, showRating = false }: Se
           : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5"
       )}
       reveal="scroll"
-      stagger={0.06}
+      effect="settle"
+      stagger={0.09}
     >
       {series.map((seriesItem) => (
         <StaggerItem key={seriesItem.id}>

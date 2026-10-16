@@ -110,6 +110,7 @@ export function RatingStars({
             key={idx}
             onMouseMove={(e) => handleMouseMove(e, idx)}
             onClick={(e) => handleClick(e, idx)}
+            className="inline-block transition-transform duration-150 ease-out active:scale-90"
           >
             <Star fill={fill(idx)} sizePx={px} />
           </span>

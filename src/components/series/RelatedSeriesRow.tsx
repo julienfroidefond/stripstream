@@ -48,7 +48,7 @@ export function RelatedSeriesRow({ series }: RelatedSeriesRowProps) {
             key={s.id}
             type="button"
             onClick={() => router.push(`/series/${s.id}`)}
-            className="group relative aspect-2/3 w-[160px] shrink-0 overflow-hidden rounded-xl bg-surface-2 transition-transform duration-200 hover:-translate-y-0.5 sm:w-[188px]"
+            className="group relative aspect-2/3 w-[160px] shrink-0 overflow-hidden rounded-xl bg-surface-2 sm:w-[188px]"
           >
             <SeriesCover series={s} alt={s.name} isAnonymous={isAnonymous} showProgressUi={false} />
 
