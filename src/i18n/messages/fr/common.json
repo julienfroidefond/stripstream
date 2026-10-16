@@ -367,6 +367,36 @@
         "add": "Ajouté aux favoris",
         "remove": "Retiré des favoris"
       },
+      "markAllRead": {
+        "tooltip": "Marquer tous les tomes comme lus",
+        "success": {
+          "title": "Série mise à jour",
+          "description": "{{count}} tome marqué comme lu",
+          "description_plural": "{{count}} tomes marqués comme lus"
+        },
+        "error": {
+          "title": "Erreur",
+          "description": "Impossible de marquer la série comme lue"
+        }
+      },
+      "markAllUnread": {
+        "tooltip": "Marquer tous les tomes comme non lus",
+        "confirm": {
+          "title": "Marquer toute la série comme non lue ?",
+          "description": "Cela réinitialise la progression de lecture des {{count}} tomes de cette série.",
+          "confirm": "Marquer comme non lue",
+          "cancel": "Annuler"
+        },
+        "success": {
+          "title": "Série mise à jour",
+          "description": "{{count}} tome marqué comme non lu",
+          "description_plural": "{{count}} tomes marqués comme non lus"
+        },
+        "error": {
+          "title": "Erreur",
+          "description": "Impossible de marquer la série comme non lue"
+        }
+      },
       "showMore": "Voir plus",
       "showLess": "Voir moins",
       "missing": "{{count}} manquant(s)",
