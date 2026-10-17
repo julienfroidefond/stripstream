@@ -15,6 +15,7 @@ import { ViewModeButton } from "@/components/common/ViewModeButton";
 import { UnreadFilterButton } from "@/components/common/UnreadFilterButton";
 import { MissingFilterButton } from "@/components/common/MissingFilterButton";
 import { normalizeGridPageSize } from "@/lib/pageSize";
+import { splitBooksByVolumeType } from "./bookGrouping";
 
 interface PaginatedBookGridProps {
   books: NormalizedBook[];
@@ -163,18 +164,7 @@ export function PaginatedBookGrid({
     [router]
   );
 
-  const { regularBooks, specialBooks } = useMemo(() => {
-    const regular: NormalizedBook[] = [];
-    const special: NormalizedBook[] = [];
-    for (const book of books) {
-      if (book.volumeType && book.volumeType !== "regular") {
-        special.push(book);
-      } else {
-        regular.push(book);
-      }
-    }
-    return { regularBooks: regular, specialBooks: special };
-  }, [books]);
+  const { regularBooks, specialBooks } = useMemo(() => splitBooksByVolumeType(books), [books]);
 
   // Merge missing books into regular books as placeholders, sorted by volume number
   const displayBooks = useMemo(() => {
