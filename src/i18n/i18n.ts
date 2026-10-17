@@ -30,7 +30,10 @@ if (!i18n.isInitialized) {
       detection: {
         // Pas de détection `navigator` : le serveur ne peut pas la lire et son
         // repli sur `fallbackLng` provoquerait un décalage d'hydratation client.
-        order: ["cookie", "localStorage"],
+        // Pas de repli `localStorage` non plus : la clé est partagée par tous
+        // les comptes du navigateur, et le cookie `NEXT_LOCALE` (lisible par le
+        // serveur, posé par le proxy et le sélecteur) est la source unique.
+        order: ["cookie"],
         lookupCookie: "NEXT_LOCALE",
         caches: ["cookie"],
         cookieOptions: {
