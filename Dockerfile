@@ -63,6 +63,16 @@ COPY prisma.config.ts ./
 # Generated Prisma Client (imported by the tsx init script)
 COPY --from=builder /app/src/generated ./src/generated
 
+# App modules imported by scripts/encrypt-credentials.ts, run on demand inside
+# the container with `./node_modules/.bin/tsx scripts/encrypt-credentials.ts`
+# (the runner image has no pnpm). The standalone output only ships compiled JS,
+# so these sources must be copied explicitly. Keep this list in sync with the
+# script's import closure: adding an import to src/lib/credentials.ts means
+# adding the module here too.
+COPY --from=builder /app/src/lib/credentials.ts /app/src/lib/credentials-migration.ts /app/src/lib/logger.ts ./src/lib/
+COPY --from=builder /app/src/utils/errors.ts ./src/utils/
+COPY --from=builder /app/src/constants/errorCodes.ts /app/src/constants/errorMessages.ts ./src/constants/
+
 # Copy entrypoint script
 COPY docker-entrypoint.sh ./
 RUN chmod +x docker-entrypoint.sh
