@@ -9,6 +9,7 @@ import { useDoublePageMode } from "./useDoublePageMode";
 import { useImageLoader } from "./useImageLoader";
 import { usePageNavigation } from "./usePageNavigation";
 import { useTouchNavigation } from "./useTouchNavigation";
+import { resolveReaderShortcut } from "./keyboardShortcuts";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { updatePreferences } from "@/app/actions/preferences";
 import type { ReaderBackground } from "@/types/preferences";
@@ -18,6 +19,7 @@ export function useReaderState({ book, pages, onClose, nextBook }: BookReaderPro
   const [showControls, setShowControls] = useState(false);
   const [showThumbnails, setShowThumbnails] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
   const [readerBackground, setReaderBackground] = useState<ReaderBackground>(preferences.readerBackground);
 
   const totalPages = pages.length;
@@ -167,31 +169,85 @@ export function useReaderState({ book, pages, onClose, nextBook }: BookReaderPro
   // Navigation clavier
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "ArrowLeft") {
-        e.preventDefault();
-        if (isRTL) handleNextPage();
-        else handlePreviousPage();
-      } else if (e.key === "ArrowRight") {
-        e.preventDefault();
-        if (isRTL) handlePreviousPage();
-        else handleNextPage();
-      } else if (e.key === "Escape" && onClose) {
-        e.preventDefault();
-        handleCloseReader(currentPage);
+      // Radix gère ses propres dialogues : tant qu'ils sont ouverts, `Échap`
+      // doit fermer le dialogue (pas le livre) et les lettres rester inactives.
+      if (showInfo || showShortcuts || showEndMessage) return;
+
+      const action = resolveReaderShortcut(e, { isRTL, isFullscreenAvailable });
+      if (!action) return;
+
+      e.preventDefault();
+
+      switch (action) {
+        case "previous-page":
+          handlePreviousPage();
+          break;
+        case "next-page":
+          handleNextPage();
+          break;
+        case "first-page":
+          navigateToPage(1);
+          break;
+        case "last-page":
+          navigateToPage(totalPages);
+          break;
+        case "toggle-fullscreen":
+          toggleFullscreen(document.body);
+          break;
+        case "toggle-double-page":
+          toggleDoublePage();
+          break;
+        case "toggle-thumbnails":
+          setShowThumbnails((prev) => !prev);
+          break;
+        case "toggle-info":
+          setShowInfo((prev) => !prev);
+          break;
+        case "toggle-direction":
+          toggleDirection();
+          break;
+        case "toggle-shortcuts":
+          setShowShortcuts(true);
+          break;
+        case "close-reader":
+          if (onClose) handleCloseReader(currentPage);
+          break;
       }
     };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleNextPage, handlePreviousPage, onClose, isRTL, currentPage, handleCloseReader]);
+    // Capture sur `window` : Radix ferme le dialogue ouvert sur le même
+    // `keydown` et React commite cet état de façon synchrone. En phase de
+    // bouillonnement, notre garde lirait déjà `showInfo`/`showShortcuts` à
+    // `false` et fermerait le livre au lieu du dialogue.
+    window.addEventListener("keydown", handleKeyDown, true);
+    return () => window.removeEventListener("keydown", handleKeyDown, true);
+  }, [
+    handleNextPage,
+    handlePreviousPage,
+    navigateToPage,
+    totalPages,
+    isRTL,
+    isFullscreenAvailable,
+    toggleFullscreen,
+    toggleDoublePage,
+    toggleDirection,
+    onClose,
+    currentPage,
+    handleCloseReader,
+    showInfo,
+    showShortcuts,
+    showEndMessage,
+  ]);
 
   const onToggleControls = useCallback(() => setShowControls((prev) => !prev), []);
   const onToggleThumbnails = useCallback(() => setShowThumbnails((prev) => !prev), []);
   const onToggleInfo = useCallback(() => setShowInfo((prev) => !prev), []);
+  const onToggleShortcuts = useCallback(() => setShowShortcuts((prev) => !prev), []);
   const onReaderBackgroundChange = useCallback((background: ReaderBackground) => {
     setReaderBackground(background);
     updatePreferences({ readerBackground: background }).catch(() => undefined);
   }, []);
   const onInfoOpenChange = useCallback((open: boolean) => setShowInfo(open), []);
+  const onShortcutsOpenChange = useCallback((open: boolean) => setShowShortcuts(open), []);
   const onToggleFullscreen = useCallback(
     () => toggleFullscreen(document.body),
     [toggleFullscreen]
@@ -206,6 +262,7 @@ export function useReaderState({ book, pages, onClose, nextBook }: BookReaderPro
     showControls,
     showThumbnails,
     showInfo,
+    showShortcuts,
     readerBackground,
     isDoublePage,
     isFullscreen,
@@ -225,8 +282,10 @@ export function useReaderState({ book, pages, onClose, nextBook }: BookReaderPro
     onToggleControls,
     onToggleThumbnails,
     onToggleInfo,
+    onToggleShortcuts,
     onReaderBackgroundChange,
     onInfoOpenChange,
+    onShortcutsOpenChange,
     onToggleDoublePage: toggleDoublePage,
     onToggleFullscreen,
     onToggleDirection: toggleDirection,

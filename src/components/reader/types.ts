@@ -41,6 +41,7 @@ export interface ControlButtonsProps {
   showControls: boolean;
   onToggleControls: () => void;
   onToggleInfo: () => void;
+  onToggleShortcuts: () => void;
   onPreviousPage: () => void;
   onNextPage: () => void;
   onPageChange: (page: number) => void;

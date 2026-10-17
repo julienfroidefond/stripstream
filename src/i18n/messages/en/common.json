@@ -606,6 +606,28 @@
       "nextPage": "Next page",
       "refresh": "Reload book"
     },
+    "shortcuts": {
+      "open": "Keyboard shortcuts",
+      "title": "Keyboard shortcuts",
+      "description": "Drive the reader without leaving the keyboard.",
+      "groups": {
+        "navigation": "Navigation",
+        "display": "Display",
+        "help": "Help"
+      },
+      "previousPage": "Previous page",
+      "nextPage": "Next page",
+      "firstPage": "First page",
+      "lastPage": "Last page",
+      "fullscreen": "Fullscreen",
+      "doublePage": "Double page",
+      "thumbnails": "Thumbnails",
+      "info": "Book information",
+      "direction": "Reading direction",
+      "help": "This help",
+      "close": "Close the reader",
+      "hint": "The arrows follow the reading direction; the other keys keep their meaning (Space moves forward, Shift + Space moves back)."
+    },
     "info": {
       "positionValue": "Volume {{current}} of {{total}}",
       "positionCurrentOnly": "Volume {{current}}",

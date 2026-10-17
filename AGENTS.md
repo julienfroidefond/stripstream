@@ -92,6 +92,8 @@ The reader is the most stateful surface. Key hooks in `src/components/reader/hoo
 
 The reader holds blob URLs for fetched pages. Eviction is mandatory when navigating, otherwise memory grows unbounded on long books.
 
+Keyboard shortcuts go through the pure `resolveReaderShortcut` (`src/components/reader/hooks/keyboardShortcuts.ts`), executed by `useReaderState`: arrows are RTL-aware, `PageUp`/`PageDown`/`Space`/`Home`/`End` toggle pages, `F`/`D`/`T`/`I`/`R` toggle fullscreen/double page/thumbnails/info/direction, `?` opens `ReaderShortcutsDialog`. Inputs and contenteditable regions are guarded, `Space` is left to the focused control, and an open dialog keeps `Escape` for Radix. Add any new key to the dialog list too.
+
 ### LocalStorage scoping
 Anything user-specific stored in `localStorage` must be scoped, otherwise user A and user B on the same device share state.
 

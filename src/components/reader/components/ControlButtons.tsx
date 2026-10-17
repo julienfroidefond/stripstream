@@ -13,6 +13,7 @@ import {
   Palette,
   RotateCcw,
   Info,
+  Keyboard,
 } from "lucide-react";
 import { memo, useState } from "react";
 import { cn } from "@/lib/utils";
@@ -39,6 +40,7 @@ export const ControlButtons = memo(function ControlButtons({
   showControls,
   onToggleControls,
   onToggleInfo,
+  onToggleShortcuts,
   onPreviousPage,
   onNextPage,
   onClose,
@@ -151,6 +153,19 @@ export const ControlButtons = memo(function ControlButtons({
             onToggleInfo();
           }}
           tooltip={t("reader.controls.info")}
+          iconClassName="h-5 w-5"
+          className="rounded-full h-9 w-9"
+        />
+        <IconButton
+          data-testid="reader-shortcuts"
+          variant="ghost"
+          size="icon"
+          icon={Keyboard}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleShortcuts();
+          }}
+          tooltip={t("reader.shortcuts.open")}
           iconClassName="h-5 w-5"
           className="rounded-full h-9 w-9"
         />
