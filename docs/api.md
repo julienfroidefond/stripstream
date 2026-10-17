@@ -2,7 +2,7 @@
 
 Stripstream expose deux surfaces côté serveur, et rien d'autre :
 
-- **Route Handlers** — les fichiers `route.ts` sous `src/app/api/`. Ce sont les seuls endpoints HTTP de l'application : authentification, recherche et streaming d'images.
+- **Route Handlers** — les fichiers `route.ts` sous `src/app/api/`. Ce sont les seuls endpoints HTTP de l'application : authentification, recherche, streaming d'images et téléchargement du fichier source d'un tome.
 - **Server Actions** — les fichiers `"use server"` sous `src/app/actions/`. Elles remplacent les anciennes routes REST de lecture et de mutation (favoris, préférences, progression de lecture, configuration, administration…). Les composants clients les appellent directement, sans `fetch` HTTP interne.
 
 ## 🔐 Authentification
@@ -23,6 +23,12 @@ Stripstream expose deux surfaces côté serveur, et rien d'autre :
 
 - **Description** : même handler NextAuth v5 ; porte les soumissions de connexion/déconnexion et les callbacks.
 - **Authentification** : publique.
+
+### GET /api/komga/books/[bookId]/file
+
+- **Description** : téléchargement du fichier source d'un livre Komga (`/api/v1/books/{id}/file`), relayé en streaming par `KomgaBookService.streamFile()`. Le `Content-Type` et le `Content-Disposition` amont sont recopiés ; `Content-Length` est volontairement omis (Safari est strict sur un `Content-Length` posé au-dessus d'une réponse chunked). `404` si le fichier est absent, `401`/`403` si Komga refuse l'accès.
+- **Authentification** : session NextAuth requise ; configuration Komga active.
+- **Cache** : `Cache-Control: private, no-store`.
 
 ### GET /api/komga/books/[bookId]/pages/[pageNumber]
 
@@ -65,6 +71,12 @@ Stripstream expose deux surfaces côté serveur, et rien d'autre :
 - **Description** : recherche via le provider actif (`getProvider()` → `provider.search(query, limit)`). Query `q` (minimum 2 caractères), `limit` optionnel (défaut 6, borné entre 1 et 10). Renvoie un tableau de résultats normalisés, ou `[]` si `q` est trop court ou si aucun provider n'est configuré.
 - **Authentification** : session NextAuth requise.
 - **Cache** : `Cache-Control: no-store`.
+
+### GET /api/stripstream/books/[bookId]/file
+
+- **Description** : téléchargement du fichier source d'un tome Stripstream (`books/{id}/file` côté Librarian), relayé en streaming par `StripstreamClient.fetchFile()`. Le `Content-Type` et le `Content-Disposition` (nom de fichier réel, RFC 6266) amont sont recopiés ; `Content-Length` est volontairement omis (Safari). `404` si le fichier est introuvable.
+- **Authentification** : session NextAuth requise **et** contrôle explicite `getCurrentUser()` (`401` sinon) ; config Stripstream résolue pour l'utilisateur.
+- **Cache** : `Cache-Control: private, no-store`.
 
 ### GET /api/stripstream/images/books/[bookId]/pages/[pageNumber]
 

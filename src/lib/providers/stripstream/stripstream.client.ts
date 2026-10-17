@@ -197,4 +197,39 @@ export class StripstreamClient {
       clearTimeout(timeoutId);
     }
   }
+
+  /**
+   * Open a stream on the original source file (`books/{id}/file`). The body is
+   * forwarded untouched by the route handler, so this only needs to surface a
+   * status-aware `AppError` (404 when the file row or the disk file is missing).
+   */
+  async fetchFile(path: string): Promise<Response> {
+    const url = this.buildUrl(path);
+    const headers = new Headers({
+      Authorization: `Bearer ${this.token}`,
+      Accept: "application/octet-stream, */*",
+    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), IMAGE_TIMEOUT_MS);
+    try {
+      const response = await fetch(url, { headers, signal: controller.signal, cache: "no-store" });
+      if (!response.ok) {
+        throw new AppError(codeForHttpStatus(response.status, STRIPSTREAM_HTTP_CODES), {
+          status: response.status,
+          statusText: response.statusText,
+        });
+      }
+      return response;
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      if (isConnectionError(error)) {
+        logger.warn({ err: error, url }, "Stripstream file request failed");
+      } else {
+        logger.error({ err: error, url }, "Stripstream file request failed");
+      }
+      throw new AppError(ERROR_CODES.STRIPSTREAM.CONNECTION_ERROR, {}, error);
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
 }

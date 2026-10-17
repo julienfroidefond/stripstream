@@ -6,7 +6,9 @@ import { memo, useCallback, useRef } from "react";
 import { useTranslate } from "@/hooks/useTranslate";
 import { cn } from "@/lib/utils";
 import { BookX } from "lucide-react";
+import { DownloadBookButton } from "@/components/ui/download-book-button";
 import { GlowLayer, StaggerGroup, StaggerItem, usePointerGlow } from "@/components/motion";
+import { useAnonymous } from "@/contexts/AnonymousContext";
 
 interface BookGridProps {
   books: NormalizedBook[];
@@ -52,12 +54,17 @@ const MissingBookCard = memo(function MissingBookCard({ book }: { book: Normaliz
 
 const BookCard = memo(function BookCard({ book, onBookClick, onSuccess }: BookCardProps) {
   const { t } = useTranslate();
+  const { isAnonymous } = useAnonymous();
   const cardRef = useRef<HTMLDivElement>(null);
   const handleGlow = usePointerGlow(cardRef);
 
   const handleClick = () => {
     onBookClick(book);
   };
+
+  const title =
+    book.title ||
+    (book.number ? t("navigation.volume", { number: book.number }) : "");
 
   return (
     <div
@@ -73,16 +80,19 @@ const BookCard = memo(function BookCard({ book, onBookClick, onSuccess }: BookCa
       >
         <BookCover
           book={book}
-          alt={t("books.coverAlt", {
-            title:
-              book.title ||
-              (book.number
-                ? t("navigation.volume", { number: book.number })
-                : ""),
-          })}
+          alt={t("books.coverAlt", { title })}
           onSuccess={(book, action) => onSuccess(book, action)}
         />
       </div>
+      {!isAnonymous && book.downloadUrl && (
+        <div className="absolute top-2 left-2 z-30">
+          <DownloadBookButton
+            url={book.downloadUrl}
+            filename={title}
+            className="bg-white/90 hover:bg-white text-black"
+          />
+        </div>
+      )}
       <GlowLayer />
     </div>
   );

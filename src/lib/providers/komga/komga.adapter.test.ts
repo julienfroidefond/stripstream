@@ -120,6 +120,7 @@ describe("KomgaAdapter.toNormalizedBook", () => {
       volume: 1,
       pageCount: 42,
       thumbnailUrl: "/api/komga/images/books/book-1/thumbnail",
+      downloadUrl: "/api/komga/books/book-1/file",
       readProgress: null,
       summary: "A summary",
     });

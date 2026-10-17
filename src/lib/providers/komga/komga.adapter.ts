@@ -26,6 +26,7 @@ export class KomgaAdapter {
       volume: typeof book.number === "number" ? book.number : null,
       pageCount: book.media?.pagesCount ?? 0,
       thumbnailUrl: `/api/komga/images/books/${book.id}/thumbnail`,
+      downloadUrl: `/api/komga/books/${book.id}/file`,
       readProgress: KomgaAdapter.toNormalizedReadProgress(book.readProgress),
       summary: book.metadata?.summary?.trim() || null,
     };

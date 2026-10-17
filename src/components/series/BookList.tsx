@@ -10,6 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { FileText, BookX } from "lucide-react";
 import { MarkAsReadButton } from "@/components/ui/mark-as-read-button";
 import { MarkAsUnreadButton } from "@/components/ui/mark-as-unread-button";
+import { DownloadBookButton } from "@/components/ui/download-book-button";
 import { StaggerGroup, StaggerItem } from "@/components/motion";
 import { useAnonymous } from "@/contexts/AnonymousContext";
 import { useRouter } from "next/navigation";
@@ -129,6 +130,13 @@ const BookListItem = memo(function BookListItem({ book, onBookClick, onSuccess, 
                 {totalPages} {totalPages > 1 ? t("books.pages_plural") : t("books.pages")}
               </span>
             </div>
+            {!isAnonymous && (
+              <DownloadBookButton
+                url={book.downloadUrl}
+                filename={title}
+                className="ml-auto h-7 w-7 text-muted-foreground"
+              />
+            )}
           </div>
         </div>
       </div>
@@ -219,6 +227,13 @@ const BookListItem = memo(function BookListItem({ book, onBookClick, onSuccess, 
               bookId={book.id}
               onSuccess={() => onSuccess(book, "unread")}
               className="text-xs"
+            />
+          )}
+          {!isAnonymous && (
+            <DownloadBookButton
+              url={book.downloadUrl}
+              filename={title}
+              className="h-8 w-8 text-muted-foreground"
             />
           )}
         </div>

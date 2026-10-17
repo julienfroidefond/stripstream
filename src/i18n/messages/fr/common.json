@@ -483,6 +483,14 @@
           "description": "Impossible de marquer le tome comme non lu",
           "update": "Erreur lors de la mise à jour"
         }
+      },
+      "download": {
+        "button": "Télécharger le fichier original",
+        "preparing": "Préparation du téléchargement…",
+        "error": {
+          "title": "Erreur",
+          "description": "Impossible de télécharger le fichier original de ce tome"
+        }
       }
     }
   },
