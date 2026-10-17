@@ -480,6 +480,14 @@
           "description": "Unable to mark book as unread",
           "update": "Error updating status"
         }
+      },
+      "download": {
+        "button": "Download original file",
+        "preparing": "Preparing download…",
+        "error": {
+          "title": "Error",
+          "description": "Unable to download this book's original file"
+        }
       }
     }
   },

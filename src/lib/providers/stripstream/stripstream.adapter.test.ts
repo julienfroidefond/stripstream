@@ -137,6 +137,7 @@ describe("StripstreamAdapter.toNormalizedBook", () => {
       volume: null,
       pageCount: 0,
       thumbnailUrl: "/api/stripstream/images/books/book-1/thumbnail",
+      downloadUrl: "/api/stripstream/books/book-1/file",
       readProgress: null,
       volumeType: "volume",
     });

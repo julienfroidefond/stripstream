@@ -67,6 +67,12 @@ export interface NormalizedBook {
   volume: number | null;
   pageCount: number;
   thumbnailUrl: string;
+  /**
+   * Local proxy URL that streams the original source file (CBZ/CBR/PDF/EPUB).
+   * Built by each provider adapter, exactly like `thumbnailUrl`, so the UI never
+   * needs to know which backend is active.
+   */
+  downloadUrl?: string;
   readProgress: NormalizedReadProgress | null;
   volumeType?: string | null;
   /** Optional per-book summary (Komga-rich, Stripstream usually absent). */

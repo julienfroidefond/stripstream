@@ -37,6 +37,7 @@ export class StripstreamAdapter {
       volume: book.volume ?? null,
       pageCount: book.page_count ?? 0,
       thumbnailUrl: `/api/stripstream/images/books/${book.id}/thumbnail`,
+      downloadUrl: `/api/stripstream/books/${book.id}/file`,
       readProgress:
         book.reading_status === "unread" && !book.reading_current_page
           ? null
@@ -61,6 +62,7 @@ export class StripstreamAdapter {
       volume: book.volume ?? null,
       pageCount: book.page_count ?? 0,
       thumbnailUrl: `/api/stripstream/images/books/${book.id}/thumbnail`,
+      downloadUrl: `/api/stripstream/books/${book.id}/file`,
       readProgress:
         book.reading_status === "unread" && !book.reading_current_page
           ? null
