@@ -132,6 +132,55 @@ test.describe('Home functional journeys', () => {
     });
   });
 
+  test('keeps the hero cover fully visible when the carousel slides', async ({ page }) => {
+    await selectConnection(page, 'Stub A');
+    await page.goto('/');
+
+    const hero = page.getByTestId('home-continue-reading').first();
+    await expect(hero).toBeVisible({ timeout: 15_000 });
+    const tabs = hero.getByRole('tab');
+    expect(await tabs.count()).toBeGreaterThan(1);
+
+    // L'ouverture (cover posée dans son cadre, texte qui monte) dure 1,5 s.
+    // Une fois terminée, seule la translation du carrousel doit encore jouer.
+    await page.waitForTimeout(2_000);
+
+    // Échantillonne la cover à chaque frame, avant puis pendant le glissement.
+    await page.evaluate(() => {
+      type CoverFrame = { opacity: number; blur: number };
+      const target = window as Window & { __e2eHeroCoverFrames?: CoverFrame[] };
+      target.__e2eHeroCoverFrames = [];
+      const sample = () => {
+        document.querySelectorAll('[data-testid="home-hero-cover"]').forEach((cover) => {
+          const style = getComputedStyle(cover);
+          const blurMatch = /blur\(([\d.]+)px\)/.exec(style.filter);
+          target.__e2eHeroCoverFrames!.push({
+            opacity: Number.parseFloat(style.opacity),
+            blur: blurMatch ? Number.parseFloat(blurMatch[1]) : 0,
+          });
+        });
+        if (target.__e2eHeroCoverFrames!.length < 4_000) requestAnimationFrame(sample);
+      };
+      requestAnimationFrame(sample);
+    });
+
+    await tabs.nth(1).click();
+    await page.waitForTimeout(1_400);
+
+    const frames = await page.evaluate(
+      () =>
+        (window as Window & { __e2eHeroCoverFrames?: Array<{ opacity: number; blur: number }> })
+          .__e2eHeroCoverFrames ?? []
+    );
+    expect(frames.length).toBeGreaterThan(10);
+
+    // La cover entrante garde son opacité et sa netteté : elle ne rejoue pas
+    // `liftIn` (opacity 0 + blur(12px)), qui produisait une coupure visible au
+    // milieu du glissement.
+    const replayed = frames.filter((frame) => frame.opacity < 0.99 || frame.blur > 0);
+    expect(replayed).toEqual([]);
+  });
+
   test('shows reading lists on the home page and opens one', async ({ page }) => {
     await selectConnection(page, 'Stub Lists');
     await page.goto('/');

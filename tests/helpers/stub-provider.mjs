@@ -75,6 +75,38 @@ const books = [
   },
 ];
 
+// Le carrousel « Reprendre la lecture » a besoin de plusieurs diapositives pour
+// exercer un glissement. `books` reste le fixture principal (lecteur,
+// bibliothèque) : ces tomes ne sont servis que par `books/ondeck`.
+const heroOnDeckBooks = [
+  {
+    id: 'book-a-2',
+    name: `${seriesName} #2`,
+    metadata: { numberSort: 2, title: `${seriesName} #2`, summary: '' },
+    seriesTitle: seriesName,
+    seriesId,
+    booksCountInSeries: 1,
+    numbers: [2],
+    readProgress: { page: 3, completed: false, readDate: '2026-01-02T00:00:00.000Z' },
+    mediaStatus: 'READY',
+    media: { pagesCount: 10 },
+    pageCount: 10,
+  },
+  {
+    id: 'book-a-3',
+    name: `${seriesName} #3`,
+    metadata: { numberSort: 3, title: `${seriesName} #3`, summary: '' },
+    seriesTitle: seriesName,
+    seriesId,
+    booksCountInSeries: 1,
+    numbers: [3],
+    readProgress: { page: 1, completed: false, readDate: '2026-01-03T00:00:00.000Z' },
+    mediaStatus: 'READY',
+    media: { pagesCount: 10 },
+    pageCount: 10,
+  },
+];
+
 const readingList = {
   id: 'list-a',
   name: 'E2E Reading List',
@@ -459,7 +491,7 @@ const server = http.createServer(async (req, res) => {
     if (failOndeck) {
       return send({ error: 'ondeck unavailable' }, 503);
     }
-    return send(paged(currentBooks()));
+    return send(paged([...currentBooks(), ...heroOnDeckBooks]));
   }
 
   // POST /api/v1/series/list (body: condition | fullTextSearch)
