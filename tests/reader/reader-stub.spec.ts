@@ -106,6 +106,118 @@ test.describe('Reader against the deterministic Komga fixture', () => {
     await expect(page.getByRole('dialog')).toBeVisible();
   });
 
+  test('drives pages and panels from the keyboard', async ({ page }) => {
+    await page.goto('/books/book-a');
+    await goToPage(page, 1);
+    await expect(page.getByAltText('Page 1')).toBeVisible({ timeout: 15_000 });
+    // Focus the page itself, so `Espace` stays a reader shortcut instead of
+    // activating the control button that was clicked last.
+    await page.getByAltText('Page 1').click({ position: { x: 10, y: 10 } });
+
+    // The reading direction is persisted per account: normalize it before
+    // asserting the arrow behaviour, and restore it at the end.
+    const direction = page.getByTestId('reader-toggle-direction');
+    const startedRtl = /right to left|droite\s+(?:à|vers)\s+gauche/i.test(
+      (await direction.getAttribute('aria-label')) ?? ''
+    );
+    if (startedRtl) {
+      await page.keyboard.press('r');
+      await expect(direction).toHaveAttribute(
+        'aria-label',
+        /left to right|gauche\s+(?:à|vers)\s+droite/i
+      );
+    }
+
+    // Single-page mode makes "next page" = +1 whatever the viewport ratio.
+    const doublePage = page.getByTestId('reader-toggle-double-page');
+    const startedDoublePage = /disable|désactiver/i.test(
+      (await doublePage.getAttribute('aria-label')) ?? ''
+    );
+    if (startedDoublePage) {
+      await page.keyboard.press('d');
+    }
+    await expect(doublePage).toHaveAttribute('aria-label', /enable|activer/i);
+
+    await page.keyboard.press('ArrowRight');
+    await expect(page.getByAltText('Page 2')).toBeVisible({ timeout: 10_000 });
+    await page.keyboard.press('PageDown');
+    await expect(page.getByAltText('Page 3')).toBeVisible({ timeout: 10_000 });
+    await page.keyboard.press('Space');
+    await expect(page.getByAltText('Page 4')).toBeVisible({ timeout: 10_000 });
+    await page.keyboard.press('End');
+    await expect(page.getByAltText('Page 10')).toBeVisible({ timeout: 10_000 });
+    await page.keyboard.press('Home');
+    await expect(page.getByAltText('Page 1')).toBeVisible({ timeout: 10_000 });
+
+    // `?` opens the shortcut list; `Échap` closes the dialog, not the book.
+    await page.keyboard.press('?');
+    const shortcuts = page.getByTestId('reader-shortcuts-dialog');
+    await expect(shortcuts).toBeVisible();
+    await expect(shortcuts).toContainText(/Page précédente|Previous page/i);
+    await page.keyboard.press('Escape');
+    await expect(shortcuts).toBeHidden();
+    await expect(page).toHaveURL(/\/books\/book-a$/);
+
+    // Same dialog guard for the book information panel.
+    await page.keyboard.press('i');
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog')).toBeHidden();
+    await expect(page).toHaveURL(/\/books\/book-a$/);
+
+    await page.keyboard.press('t');
+    await expect(page.locator('#thumbnails-container')).toBeVisible();
+    await page.keyboard.press('t');
+    await expect(page.locator('#thumbnails-container')).toBeHidden();
+
+    await page.keyboard.press('d');
+    await expect(doublePage).toHaveAttribute('aria-label', /disable|désactiver/i);
+
+    // Arrows follow the reading direction: in RTL the left arrow goes forward.
+    await page.keyboard.press('r');
+    await expect(direction).toHaveAttribute(
+      'aria-label',
+      /right to left|droite\s+(?:à|vers)\s+gauche/i
+    );
+    await page.keyboard.press('ArrowLeft');
+    await expect(page.getByAltText('Page 2')).toBeVisible({ timeout: 10_000 });
+    await page.keyboard.press('ArrowRight');
+    await expect(page.getByAltText('Page 1')).toBeVisible({ timeout: 10_000 });
+    if (!startedRtl) {
+      await page.keyboard.press('r');
+    }
+    if (!startedDoublePage) {
+      await page.keyboard.press('d');
+    }
+
+    // Typing a page number must not trigger any shortcut. Radix restored focus
+    // to a control button: blur it, then make sure the bar is on screen so the
+    // page field is reachable.
+    await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+    const controlsBar = page.getByTestId('reader-toggle-double-page').locator('..');
+    if (!(await controlsBar.getAttribute('class'))?.includes('opacity-100')) {
+      await page.getByAltText('Page 1').click({ position: { x: 10, y: 300 } });
+    }
+    await expect(controlsBar).toHaveClass(/opacity-100/);
+
+    const pageInput = page.getByRole('group', { name: 'Navigation par numéro de page' });
+    await pageInput.getByRole('button').click();
+    const input = page.getByRole('textbox', { name: 'Entrez un numéro de page' });
+    await input.fill('');
+    await page.keyboard.press('ArrowRight');
+    await page.keyboard.press('d');
+    await page.keyboard.press('t');
+    await expect(page.getByAltText('Page 1')).toBeVisible();
+    await expect(page.locator('#thumbnails-container')).toBeHidden();
+    await expect(doublePage).toHaveAttribute(
+      'aria-label',
+      startedDoublePage ? /disable|désactiver/i : /enable|activer/i
+    );
+    await page.keyboard.press('Escape');
+    await expect(page).toHaveURL(/\/books\/book-a$/);
+    await expect(page.getByAltText('Page 1')).toBeVisible();
+  });
+
   test('does not attribute anonymous reading progress to the current account', async ({ page, request }) => {
     await request.delete('http://127.0.0.1:8444/api/v1/books/book-a/read-progress');
     await page.goto('/');

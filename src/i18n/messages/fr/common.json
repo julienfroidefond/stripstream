@@ -609,6 +609,28 @@
       "nextPage": "Page suivante",
       "refresh": "Recharger le livre"
     },
+    "shortcuts": {
+      "open": "Raccourcis clavier",
+      "title": "Raccourcis clavier",
+      "description": "Pilotez le lecteur sans quitter le clavier.",
+      "groups": {
+        "navigation": "Navigation",
+        "display": "Affichage",
+        "help": "Aide"
+      },
+      "previousPage": "Page précédente",
+      "nextPage": "Page suivante",
+      "firstPage": "Première page",
+      "lastPage": "Dernière page",
+      "fullscreen": "Plein écran",
+      "doublePage": "Double page",
+      "thumbnails": "Vignettes",
+      "info": "Informations du tome",
+      "direction": "Sens de lecture",
+      "help": "Cette aide",
+      "close": "Fermer le lecteur",
+      "hint": "Les flèches suivent le sens de lecture ; les autres touches gardent leur sens (Espace avance, Maj + Espace recule)."
+    },
     "info": {
       "positionValue": "Tome {{current}} sur {{total}}",
       "positionCurrentOnly": "Tome {{current}}",

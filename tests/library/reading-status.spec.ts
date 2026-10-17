@@ -61,7 +61,9 @@ test.describe('Reading statuses', () => {
     await page.locator('#thumbnail-10').click();
     const lastPage = page.getByRole('img', { name: 'Page 10', exact: true });
     await expect(lastPage).toBeVisible({ timeout: 10_000 });
-    await lastPage.click({ position: { x: 10, y: 10 } });
+    // Cliquer sous la barre de contrôle : un clic au ras du bord haut peut
+    // atterrir sur la barre elle-même au lieu de la page.
+    await lastPage.click({ position: { x: 10, y: 100 } });
     await page.getByRole('button', { name: /thumbnails|vignettes/i }).click({ force: true });
     const directionLabel = await page.getByRole('button', { name: /direction|sens/i }).getAttribute('aria-label');
     await page.keyboard.press(/right to left|droite (?:à|vers) gauche|rtl/i.test(directionLabel ?? '') ? 'ArrowLeft' : 'ArrowRight');

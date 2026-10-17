@@ -9,6 +9,7 @@ import { EndOfSeriesModal } from "./components/EndOfSeriesModal";
 import { PageDisplay } from "./components/PageDisplay";
 import { ReaderContainer } from "./components/ReaderContainer";
 import { ReaderInfoDialog } from "./components/ReaderInfoDialog";
+import { ReaderShortcutsDialog } from "./components/ReaderShortcutsDialog";
 
 export const BookReader = memo(function BookReader(props: BookReaderProps) {
   const s = useReaderState(props);
@@ -23,6 +24,13 @@ export const BookReader = memo(function BookReader(props: BookReaderProps) {
         readerInfo={props.readerInfo}
       />
 
+      <ReaderShortcutsDialog
+        open={s.showShortcuts}
+        onOpenChange={s.onShortcutsOpenChange}
+        isFullscreenAvailable={s.isFullscreenAvailable}
+        isRTL={s.isRTL}
+      />
+
       <EndOfSeriesModal
         show={s.showEndMessage}
         onClose={s.onClose}
@@ -33,6 +41,7 @@ export const BookReader = memo(function BookReader(props: BookReaderProps) {
         showControls={s.showControls}
         onToggleControls={s.onToggleControls}
         onToggleInfo={s.onToggleInfo}
+        onToggleShortcuts={s.onToggleShortcuts}
         onPreviousPage={s.onPreviousPage}
         onNextPage={s.onNextPage}
         onPageChange={s.onPageChange}
