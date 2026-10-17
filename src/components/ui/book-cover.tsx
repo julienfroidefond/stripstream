@@ -63,7 +63,7 @@ function BookCoverContent({
 }: BookCoverProps) {
   const { t } = useTranslate();
   const { isAnonymous } = useAnonymous();
-  const { ref, loaded, onLoad } = useCoverLoaded();
+  const { ref, loaded, onLoad, onError } = useCoverLoaded();
 
   const isCompleted = isAnonymous ? false : (book.readProgress?.completed || false);
 
@@ -92,6 +92,7 @@ function BookCoverContent({
           alt={alt || t("books.defaultCoverAlt")}
           loading="lazy"
           onLoad={onLoad}
+          onError={onError}
           className={cn(
             "absolute inset-0 h-full w-full object-cover rounded-lg transition-[opacity,scale] duration-600 ease-projection motion-reduce:transition-none",
             loaded
