@@ -10,7 +10,9 @@ import { Section } from "@/components/ui/section";
 import { Button } from "@/components/ui/button";
 import { useTranslate } from "@/hooks/useTranslate";
 import { useAnonymous } from "@/contexts/AnonymousContext";
+import { useUserScope } from "@/contexts/UserScopeContext";
 import { cn } from "@/lib/utils";
+import { buildStorageKey } from "@/lib/storage";
 import type { LucideIcon } from "lucide-react";
 import type { NormalizedSeries } from "@/lib/providers/types";
 import { loadHomeFeed } from "@/app/actions/home";
@@ -29,7 +31,8 @@ const SWIPE_THRESHOLD = 60;
 const ITEMS_PER_PAGE = 8;
 
 type ViewMode = "hero" | "grid";
-const VIEW_MODE_KEY = "recommendations-view-mode";
+// Suffixe scopé par utilisateur au moment de l'exécution (voir viewModeKey).
+const VIEW_MODE_STORAGE_SUFFIX = "recommendations-view-mode";
 
 interface RecommendationsRowProps {
   series: NormalizedSeries[];
@@ -39,6 +42,10 @@ interface RecommendationsRowProps {
 
 export function RecommendationsRow({ series, initialHasMore = false }: RecommendationsRowProps) {
   const { t } = useTranslate();
+  const scope = useUserScope();
+  // `localStorage` est partagé par tous les comptes du navigateur : la clé doit
+  // porter l'id de l'utilisateur, sinon un compte hérite de la vue de l'autre.
+  const viewModeKey = buildStorageKey(scope, VIEW_MODE_STORAGE_SUFFIX);
   const [loadedSeries, setLoadedSeries] = useState(series.slice(0, ITEMS_PER_PAGE));
   const [hasMore, setHasMore] = useState(initialHasMore || series.length > ITEMS_PER_PAGE);
   const [isPending, startTransition] = useTransition();
@@ -60,16 +67,16 @@ export function RecommendationsRow({ series, initialHasMore = false }: Recommend
 
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     if (typeof window === "undefined") return "hero";
-    return (localStorage.getItem(VIEW_MODE_KEY) as ViewMode) ?? "hero";
+    return (localStorage.getItem(viewModeKey) as ViewMode) ?? "hero";
   });
 
   const toggleViewMode = useCallback(() => {
     setViewMode((prev) => {
       const next = prev === "hero" ? "grid" : "hero";
-      localStorage.setItem(VIEW_MODE_KEY, next);
+      localStorage.setItem(viewModeKey, next);
       return next;
     });
-  }, []);
+  }, [viewModeKey]);
 
   if (!series.length) return null;
 

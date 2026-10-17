@@ -6,6 +6,7 @@ import ClientLayout from "@/components/layout/ClientLayout";
 import { PreferencesService } from "@/lib/services/preferences.service";
 import { PreferencesProvider } from "@/contexts/PreferencesContext";
 import { AnonymousProvider } from "@/contexts/AnonymousContext";
+import { UserScopeProvider } from "@/contexts/UserScopeContext";
 import { I18nProvider } from "@/components/providers/I18nProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { cookies } from "next/headers";
@@ -112,23 +113,25 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         )}
       >
         <AuthProvider>
-          <I18nProvider locale={locale}>
-            <PreferencesProvider initialPreferences={preferences}>
-              <AnonymousProvider>
-                <ClientLayout
-                  userIsAdmin={userIsAdmin}
-                  sidebarFavorites={<SidebarFavorites />}
-                  sidebarLibraries={<SidebarLibraries />}
-                  sidebarConnections={<SidebarConnections />}
-                  sidebarFavoritesSkeleton={<SidebarSectionSkeleton />}
-                  sidebarLibrariesSkeleton={<SidebarSectionSkeleton />}
-                  sidebarConnectionsSkeleton={<SidebarSectionSkeleton />}
-                >
-                  {children}
-                </ClientLayout>
-              </AnonymousProvider>
-            </PreferencesProvider>
-          </I18nProvider>
+          <UserScopeProvider scope={currentUser?.id ?? null}>
+            <I18nProvider locale={locale}>
+              <PreferencesProvider initialPreferences={preferences}>
+                <AnonymousProvider>
+                  <ClientLayout
+                    userIsAdmin={userIsAdmin}
+                    sidebarFavorites={<SidebarFavorites />}
+                    sidebarLibraries={<SidebarLibraries />}
+                    sidebarConnections={<SidebarConnections />}
+                    sidebarFavoritesSkeleton={<SidebarSectionSkeleton />}
+                    sidebarLibrariesSkeleton={<SidebarSectionSkeleton />}
+                    sidebarConnectionsSkeleton={<SidebarSectionSkeleton />}
+                  >
+                    {children}
+                  </ClientLayout>
+                </AnonymousProvider>
+              </PreferencesProvider>
+            </I18nProvider>
+          </UserScopeProvider>
         </AuthProvider>
       </body>
     </html>

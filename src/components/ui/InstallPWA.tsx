@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { Download, X } from "lucide-react";
 import logger from "@/lib/logger";
+import { buildStorageKey } from "@/lib/storage";
+import { useUserScope } from "@/contexts/UserScopeContext";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -13,10 +15,15 @@ interface NavigatorStandalone extends Navigator {
   standalone?: boolean;
 }
 
-const DISMISS_KEY = "pwa-install-dismissed";
+// Suffixe scopé par utilisateur au moment de l'exécution (voir dismissKey).
+const DISMISS_STORAGE_SUFFIX = "pwa-install-dismissed";
 const DISMISS_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 jours en millisecondes
 
 export function InstallPWA() {
+  const scope = useUserScope();
+  // `localStorage` est partagé par tous les comptes du navigateur : la clé doit
+  // porter l'id de l'utilisateur, sinon un compte masque la bannière de l'autre.
+  const dismissKey = buildStorageKey(scope, DISMISS_STORAGE_SUFFIX);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstallable, setIsInstallable] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
@@ -35,7 +42,7 @@ export function InstallPWA() {
 
     // Vérifier si l'invite a été fermée récemment
     const checkDismissed = () => {
-      const dismissedAt = localStorage.getItem(DISMISS_KEY);
+      const dismissedAt = localStorage.getItem(dismissKey);
       if (dismissedAt) {
         const dismissedTime = parseInt(dismissedAt, 10);
         const now = Date.now();
@@ -75,7 +82,7 @@ export function InstallPWA() {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
       displayModeQuery.removeEventListener("change", handleDisplayModeChange);
     };
-  }, []);
+  }, [dismissKey]);
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) return;
@@ -95,7 +102,7 @@ export function InstallPWA() {
   };
 
   const handleDismiss = () => {
-    localStorage.setItem(DISMISS_KEY, Date.now().toString());
+    localStorage.setItem(dismissKey, Date.now().toString());
     setIsDismissed(true);
   };
 
@@ -106,7 +113,10 @@ export function InstallPWA() {
   if ((!isInstallable && !isIOS) || isDismissed || isStandalone) return null;
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 z-50">
+    <div
+      className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 z-50"
+      data-testid="pwa-install-banner"
+    >
       <div className="bg-card border border-border shadow-lg rounded-lg p-4 max-w-sm mx-auto sm:mx-0">{/* taste-skill-ignore: bannière flottante (overlay) */}
         <div className="flex items-start gap-4">
           <Download className="h-6 w-6 shrink-0 text-primary" />
@@ -135,6 +145,7 @@ export function InstallPWA() {
             onClick={handleDismiss}
             className="p-1 hover:bg-accent hover:text-accent-foreground rounded-md transition-colors"
             aria-label="Fermer"
+            data-testid="pwa-install-dismiss"
           >
             <X className="h-4 w-4" />
           </button>
