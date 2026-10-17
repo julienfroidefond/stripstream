@@ -251,3 +251,19 @@ export interface StripstreamReadingListDetail {
   created_at: string;
   updated_at: string;
 }
+
+/**
+ * Subset of the Librarian index job returned by `POST /libraries/{id}/scan`
+ * and `GET /index/jobs/{id}`. Both routes live on the admin API, so a
+ * `read`-scoped token gets a 403 (the provider degrades to `unavailable`).
+ */
+export interface StripstreamIndexJob {
+  id: string;
+  library_id?: string | null;
+  type?: string;
+  status: string;
+  error_opt?: string | null;
+  progress_percent?: number | null;
+  processed_files?: number | null;
+  total_files?: number | null;
+}

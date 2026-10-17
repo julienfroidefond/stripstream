@@ -9,6 +9,8 @@ import type {
   NormalizedMissingBook,
   NormalizedSeriesRating,
   NormalizedReadingStats,
+  ScanStartResult,
+  ScanStatus,
 } from "./types";
 import type { HomeData, HomeDeferredData, HomePrimaryData } from "@/types/home";
 import type { StripstreamReadingList } from "@/types/stripstream";
@@ -55,7 +57,9 @@ export interface IMediaProvider {
   deleteSeriesRating(seriesId: string): Promise<void>;
 
   // ── Admin / utility ──────────────────────────────────────────────────────
-  scanLibrary(libraryId: string): Promise<void>;
+  scanLibrary(libraryId: string): Promise<ScanStartResult>;
+  /** Follow a scan started by `scanLibrary`; returns `unavailable` when the backend cannot report it. */
+  getScanStatus(libraryId: string, jobId?: string | null): Promise<ScanStatus>;
   getRandomBook(libraryIds?: string[]): Promise<string | null>;
 
   // ── Reading statistics (active connection) ───────────────────────────────

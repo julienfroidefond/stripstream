@@ -117,3 +117,29 @@ export interface NormalizedBooksPage {
   totalPages?: number;
   totalElements?: number;
 }
+
+/**
+ * Lifecycle of a library scan as reported by the backend.
+ *
+ * `unavailable` is the honest answer when the provider exposes no way to follow
+ * the scan: the UI must not invent a completion.
+ */
+export type ScanState = "running" | "completed" | "failed" | "cancelled" | "unavailable";
+
+/** Result of starting a library scan. */
+export interface ScanStartResult {
+  /** Backend job id when the provider can report progress, otherwise null. */
+  jobId: string | null;
+  /** True when `getScanStatus` can follow the scan started by this call. */
+  progressSupported: boolean;
+}
+
+export interface ScanStatus {
+  state: ScanState;
+  /** Completion percentage (0-100) when the backend exposes it. */
+  progressPercent?: number;
+  processedFiles?: number;
+  totalFiles?: number;
+  /** Backend-provided failure message, when available. */
+  error?: string;
+}

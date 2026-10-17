@@ -10,6 +10,8 @@ import type {
   NormalizedMissingBook,
   NormalizedSeriesRating,
   NormalizedReadingStats,
+  ScanStartResult,
+  ScanStatus,
 } from "../types";
 import type { HomeData, HomeDeferredData, HomePrimaryData } from "@/types/home";
 import type { StripstreamReadingList } from "@/types/stripstream";
@@ -573,10 +575,28 @@ export class KomgaProvider implements IMediaProvider {
     }
   }
 
-  async scanLibrary(libraryId: string): Promise<void> {
+  async scanLibrary(libraryId: string): Promise<ScanStartResult> {
     const url = this.buildUrl(`libraries/${libraryId}/scan`);
     const headers = this.getHeaders();
-    await fetch(url, { method: "POST", headers });
+    const response = await fetch(url, { method: "POST", headers });
+
+    if (!response.ok) {
+      throw new AppError(codeForHttpStatus(response.status, KOMGA_HTTP_CODES), {
+        status: response.status,
+        statusText: response.statusText,
+      });
+    }
+
+    // Komga 1.24.1 exposes no task-status endpoint: `TaskController` only clears
+    // the queue (`DELETE /tasks`, admin) and the SSE task events are admin-only
+    // and global per type. The reader cannot follow the scan, so the UI degrades
+    // to an explicit "scan started, progress unavailable" state.
+    return { jobId: null, progressSupported: false };
+  }
+
+  async getScanStatus(): Promise<ScanStatus> {
+    // Nothing to poll on Komga (see scanLibrary).
+    return { state: "unavailable" };
   }
 
   async getRandomBook(libraryIds?: string[]): Promise<string | null> {

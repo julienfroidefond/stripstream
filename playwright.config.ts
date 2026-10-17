@@ -180,6 +180,7 @@ export default defineConfig({
         '**/library/authenticated-navigation.spec.ts',
         '**/library/favorites-reading-lists.spec.ts',
         '**/library/reading-status.spec.ts',
+        '**/library/scan.spec.ts',
         '**/library/series-rating.spec.ts',
         '**/library/series-sort.spec.ts',
         '**/reader/reader.spec.ts',

@@ -17,7 +17,7 @@ Stripstream is a comic-reader front end; it does **not** own the library. Each u
 - home feeds — `getHomePrimaryData`, `getHomeDeferredData`, `getHomeData`, and the individual section methods;
 - read progress — `getReadProgress`, `saveReadProgress`, `resetReadProgress`;
 - series ratings — Stripstream-only; Komga returns `null` / not-supported (`provider.interface.ts:51-54`);
-- admin/utility — `scanLibrary`, `getRandomBook`;
+- admin/utility — `scanLibrary` (returns a `{ jobId, progressSupported }` handle), `getScanStatus` (follows that job, or `unavailable` when the backend cannot report it), `getRandomBook`;
 - related/recommended series — `getRelatedSeries`, `getRecommendations`;
 - favorites — `getFavorites`, `isFavorite`, `addToFavorites`, `removeFromFavorites`;
 - search — `search`;
@@ -174,7 +174,7 @@ The app is installable as a PWA shell only: `public/manifest.json` is linked fro
 
 ### (c) Unit-test coverage is partial
 
-Vitest runs the unit suite (`pnpm test:unit`; config `vitest.config.ts`; tests colocated as `src/**/*.test.ts`). Default environment is `node` for pure logic; files that need a DOM opt in per-file with a `// @vitest-environment jsdom` docblock (plus `@testing-library/react`). It currently covers the reader eviction helper (`src/components/reader/hooks/imageEviction.ts`), the page-turn helper (`src/components/reader/hooks/pageTurn.ts`), the reader navigation/double-page hooks (`src/components/reader/hooks/usePageNavigation.ts`, `useDoublePageMode.ts`), the error helpers (`src/utils/errors.ts`, `src/utils/image-errors.ts`), the generic utilities (`src/lib/utils.ts`), the toast reducer (`src/components/ui/use-toast.ts`), `src/lib/pageSize.ts`, `src/lib/storage.ts`, `src/utils/http-error.ts`, `src/utils/rate-limit.ts`, `src/lib/providers/ratings.ts`, the Stripstream config resolver (`src/lib/providers/stripstream/stripstream-config-resolver.ts`, with a mocked Prisma client), the credential encryption helpers (`src/lib/credentials.ts`, `src/lib/credentials-migration.ts`) and both provider adapters (Komga + Stripstream normalization). Heavier browser flows that require real image loading or paint, such as `useImageLoader`, remain untested at the unit level and are exercised through the Playwright E2E suite under `tests/`. The minimum quality gate is `pnpm lint` (0 warnings) + `pnpm typecheck` + `pnpm test:unit`; E2E (`pnpm test:e2e`) is run separately.
+Vitest runs the unit suite (`pnpm test:unit`; config `vitest.config.ts`; tests colocated as `src/**/*.test.ts`). Default environment is `node` for pure logic; files that need a DOM opt in per-file with a `// @vitest-environment jsdom` docblock (plus `@testing-library/react`). It currently covers the reader eviction helper (`src/components/reader/hooks/imageEviction.ts`), the page-turn helper (`src/components/reader/hooks/pageTurn.ts`), the reader navigation/double-page hooks (`src/components/reader/hooks/usePageNavigation.ts`, `useDoublePageMode.ts`), the error helpers (`src/utils/errors.ts`, `src/utils/image-errors.ts`), the generic utilities (`src/lib/utils.ts`), the toast reducer (`src/components/ui/use-toast.ts`), `src/lib/pageSize.ts`, `src/lib/storage.ts`, `src/lib/providers/scan-status.ts`, `src/utils/http-error.ts`, `src/utils/rate-limit.ts`, `src/lib/providers/ratings.ts`, the Stripstream config resolver (`src/lib/providers/stripstream/stripstream-config-resolver.ts`, with a mocked Prisma client), the credential encryption helpers (`src/lib/credentials.ts`, `src/lib/credentials-migration.ts`) and both provider adapters (Komga + Stripstream normalization). Heavier browser flows that require real image loading or paint, such as `useImageLoader`, remain untested at the unit level and are exercised through the Playwright E2E suite under `tests/`. The minimum quality gate is `pnpm lint` (0 warnings) + `pnpm typecheck` + `pnpm test:unit`; E2E (`pnpm test:e2e`) is run separately.
 
 ### (d) Minor open backlog (last codebase audit)
 
@@ -183,6 +183,14 @@ Vitest runs the unit suite (`pnpm test:unit`; config `vitest.config.ts`; tests c
 - **Unlogged `Promise.allSettled` rejections** — `src/app/settings/page.tsx:22-30` silently ignores rejected branches, and `KomgaProvider.getHomeContinueReadingData` degrades partial failures to empty arrays without logging the reasons (`src/lib/providers/komga/komga.provider.ts:489-499`). Add `logger.warn` on rejected results.
 - **`ConfigDBService.getConfig()` misnaming** — the generic name returns only the active **Komga** config (`src/lib/services/config-db.service.ts:59-82`); rename to `getActiveKomgaConfig()` or make it polymorphic.
 - **`AbortController` cleanup** — `useImageLoader` relies on the trailing `.finally()` to delete controllers/promises (`src/components/reader/hooks/useImageLoader.ts:269-273`); there is no defensive `try/catch` inside the cleanup, so a catastrophic throw before it would leak entries in the tracking maps.
+
+### (e) Library scan progress depends on the backend
+
+`scanLibrary` only reports progress when the backend exposes a job handle, and `getScanStatus` follows it through a pure mapper (`src/lib/providers/scan-status.ts`, unit-tested). Constraints:
+
+- **Komga 1.24.1** has no task-status endpoint (`TaskController` only exposes `DELETE /tasks`, admin, and the queue counters are admin-only per-type SSE events), so `getScanStatus` returns `unavailable` and the UI shows "scan started, progress unavailable" instead of inventing a completion.
+- **Stripstream Librarian** returns an index job from `POST /libraries/{id}/scan`, but the job routes (`GET /index/jobs/{id}`) live on its admin API: a `read`-scoped token gets a `403`, which degrades to `unavailable` for the client and to an explicit "administrator access required" toast on the scan itself.
+- Status: **mitigated** — the previous fixed `setTimeout(5 s)` + unconditional "scan complete" toast were replaced by bounded polling (2 s interval, 10 min ceiling, 3 consecutive `unavailable` stop the loop).
 
 ## Where to look
 

@@ -12,6 +12,19 @@
 |--------|----------|-------------|
 | GET | `/libraries` | Liste des bibliothèques |
 | GET | `/libraries/{id}` | Détail d'une bibliothèque |
+| POST | `/libraries/{id}/scan` | Lance un scan (**rôle ADMIN requis**) |
+
+### Tasks
+| Méthode | Endpoint | Description |
+|--------|----------|-------------|
+| DELETE | `/tasks` | Vide la file d'attente (**ADMIN**) |
+
+**Limitation (v1.24.1) :** il n'existe **aucun** endpoint pour lire l'état d'une
+tâche de scan. `TaskController` n'expose que `DELETE /tasks`, et les compteurs de
+file passent par le flux SSE `TaskQueueStatus` (`/sse/v1/events`), réservé aux
+admins et agrégé par type de tâche. Côté Stripstream, `getScanStatus` renvoie
+donc `unavailable` pour Komga : l'UI affiche « analyse lancée, progression
+indisponible » au lieu de deviner la fin du scan.
 
 ### Series
 | Méthode | Endpoint | Description |
