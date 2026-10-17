@@ -3,6 +3,7 @@ import { getCurrentUser } from "../auth-utils";
 import { getActiveConnection } from "@/lib/active-connection";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
+import { buildKomgaAuthHeader, decryptSecret, encryptSecret } from "../credentials";
 import type { User, KomgaConfigData, KomgaConfig } from "@/types/komga";
 
 export class ConfigDBService {
@@ -12,6 +13,15 @@ export class ConfigDBService {
       throw new AppError(ERROR_CODES.AUTH.UNAUTHENTICATED);
     }
     return user;
+  }
+
+  /**
+   * Déchiffre l'`authHeader` stocké au repos avant de le rendre : les
+   * consommateurs (services d'images Komga) l'utilisent directement comme
+   * en-tête Basic.
+   */
+  private static withPlainAuthHeader(config: KomgaConfig): KomgaConfig {
+    return { ...config, authHeader: decryptSecret(config.authHeader) };
   }
 
   /**
@@ -25,7 +35,7 @@ export class ConfigDBService {
       const user = await this.getCurrentUser();
       const userId = parseInt(user.id, 10);
 
-      const authHeader = Buffer.from(`${data.username}:${data.password}`).toString("base64");
+      const authHeader = encryptSecret(buildKomgaAuthHeader(data.username, data.password));
 
       const activeConnection = await getActiveConnection(userId);
 
@@ -34,7 +44,7 @@ export class ConfigDBService {
           where: { id: activeConnection.configId },
           data: { url: data.url, username: data.username, authHeader },
         });
-        return config as KomgaConfig;
+        return this.withPlainAuthHeader(config as KomgaConfig);
       }
 
       const config = await prisma.komgaConfig.create({
@@ -46,7 +56,7 @@ export class ConfigDBService {
           authHeader,
         },
       });
-      return config as KomgaConfig;
+      return this.withPlainAuthHeader(config as KomgaConfig);
     } catch (error) {
       if (error instanceof AppError) throw error;
       throw new AppError(ERROR_CODES.CONFIG.SAVE_ERROR, {}, error);
@@ -67,14 +77,14 @@ export class ConfigDBService {
         const config = await prisma.komgaConfig.findFirst({
           where: { id: activeConnection.configId, userId },
         });
-        if (config) return config as KomgaConfig;
+        if (config) return this.withPlainAuthHeader(config as KomgaConfig);
       }
 
       const fallback = await prisma.komgaConfig.findFirst({
         where: { userId },
         orderBy: { createdAt: "asc" },
       });
-      return fallback as KomgaConfig | null;
+      return fallback ? this.withPlainAuthHeader(fallback as KomgaConfig) : null;
     } catch (error) {
       if (error instanceof AppError) throw error;
       throw new AppError(ERROR_CODES.CONFIG.FETCH_ERROR, {}, error);

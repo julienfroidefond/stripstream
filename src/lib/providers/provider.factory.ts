@@ -3,6 +3,7 @@ import { cache } from "react";
 import { getCurrentUser } from "@/lib/auth-utils";
 import { getActiveConnection } from "@/lib/active-connection";
 import { getResolvedStripstreamConfig } from "./stripstream/stripstream-config-resolver";
+import { decryptSecret } from "@/lib/credentials";
 import type { IMediaProvider } from "./provider.interface";
 import type { StripstreamReadingListDetail } from "@/types/stripstream";
 
@@ -81,13 +82,14 @@ async function resolveActiveKomgaConfig(
       where: { id: activeId, userId },
       select: { url: true, authHeader: true },
     });
-    if (config) return config;
+    if (config) return { ...config, authHeader: decryptSecret(config.authHeader) };
   }
 
   // Fallback : première config disponible
-  return prisma.komgaConfig.findFirst({
+  const fallback = await prisma.komgaConfig.findFirst({
     where: { userId },
     orderBy: { createdAt: "asc" },
     select: { url: true, authHeader: true },
   });
+  return fallback ? { ...fallback, authHeader: decryptSecret(fallback.authHeader) } : null;
 }

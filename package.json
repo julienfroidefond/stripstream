@@ -1,6 +1,6 @@
 {
   "name": "stripstream",
-  "version": "1.33.0",
+  "version": "1.33.1",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -9,6 +9,7 @@
     "start:prod": "tsx scripts/init-db.ts && pnpm start",
     "init-db": "tsx scripts/init-db.ts",
     "reset-admin-password": "tsx scripts/reset-admin-password.ts",
+    "encrypt-credentials": "tsx scripts/encrypt-credentials.ts",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "knip": "knip",

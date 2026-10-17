@@ -185,3 +185,5 @@ Tous les fichiers de `src/app/actions/` commencent par `"use server"`. Les actio
 | `deleteStripstreamConfig` | Supprime une configuration Stripstream de l'utilisateur. |
 | `testStripstreamConfigById` | Teste une configuration Stripstream existante avec le token stocké. Limitée par `checkRateLimit` (5 / 30 s). |
 | `setActiveStripstreamConfig` | Active une configuration Stripstream et invalide les caches provider. |
+
+> **Chiffrement au repos** : l'`authHeader` Komga et le `token` Stripstream sont stockés sous enveloppe AES-256-GCM (`src/lib/credentials.ts`, clé `CREDENTIALS_ENCRYPTION_KEY`). Les actions `save*Config` chiffrent à l'écriture (mot de passe/token vide en mise à jour : la valeur chiffrée existante est conservée) ; la lecture déchiffre au niveau du provider (`getProvider`) ou de la config résolue. Les lignes legacy en clair restent lisibles ; `pnpm encrypt-credentials` les migre de façon idempotente (`ENV.md`).

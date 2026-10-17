@@ -170,11 +170,13 @@ GitHub Actions is the single deployment path (the former Gitea pipeline has been
 - Validate Komga and auth-related config through settings flows before merging.
 - Prefer server-side data fetching/services for sensitive operations.
 - Credential-touching server actions must stay gated by `requireUserId()` and `checkRateLimit`.
+- Provider credentials (Komga `authHeader`, Stripstream `token`) are encrypted at rest with AES-256-GCM (`src/lib/credentials.ts`, key `CREDENTIALS_ENCRYPTION_KEY`). **Encrypt on write and decrypt on read through those helpers only** — never touch the raw columns. Migration of legacy plaintext rows: `pnpm encrypt-credentials` (idempotent).
 
 ## Where to look
 - `docs/architecture.md`: consolidated system reference and known limitations.
 - `docs/api.md`: current route handlers and server actions.
 - `docs/ecosystem.md`: the two-repo layout (this reader + the Stripstream Librarian backend).
+- `src/lib/credentials.ts`: credential encryption at rest (+ `credentials-migration.ts`, `scripts/encrypt-credentials.ts`).
 - `src/lib/providers/`: provider abstraction. Start here for backend questions.
 - `src/app/actions/`: all server-side mutations.
 - `prisma/schema.prisma`: data model (multi-config + favorites scoping).

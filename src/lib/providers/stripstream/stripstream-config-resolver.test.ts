@@ -11,6 +11,7 @@ vi.mock("@/lib/prisma", () => ({
 }));
 
 import { getResolvedStripstreamConfig } from "./stripstream-config-resolver";
+import { encryptSecret } from "@/lib/credentials";
 
 const ACTIVE_QUERY = {
   where: { id: 42, userId: 7 },
@@ -72,6 +73,20 @@ describe("getResolvedStripstreamConfig", () => {
 
     expect(findFirstMock).toHaveBeenCalledTimes(1);
     expect(findFirstMock).toHaveBeenCalledWith(FALLBACK_QUERY);
+  });
+
+  it("decrypts tokens stored at rest", async () => {
+    vi.stubEnv("CREDENTIALS_ENCRYPTION_KEY", Buffer.alloc(32, 5).toString("base64"));
+    findFirstMock.mockResolvedValueOnce({
+      url: "http://active",
+      token: encryptSecret("tok-secret"),
+    });
+
+    expect(await getResolvedStripstreamConfig(7, 42)).toEqual({
+      url: "http://active",
+      token: "tok-secret",
+      source: "db",
+    });
   });
 
   it("falls back to the environment when the user has no config", async () => {

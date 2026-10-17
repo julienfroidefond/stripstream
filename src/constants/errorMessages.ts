@@ -100,6 +100,14 @@ export const ERROR_MESSAGES: Record<string, string> = {
   [ERROR_CODES.CONFIG.TTL_SAVE_ERROR]: "Error saving TTL configuration",
   [ERROR_CODES.CONFIG.TTL_FETCH_ERROR]: "Error fetching TTL configuration",
 
+  // Credentials encryption
+  [ERROR_CODES.CREDENTIALS.MISSING_ENCRYPTION_KEY]:
+    "Encrypted provider credentials found but {env} is not set. Set it to the key used when they were encrypted.",
+  [ERROR_CODES.CREDENTIALS.INVALID_ENCRYPTION_KEY]:
+    "{env} is invalid: expected 32 bytes encoded in base64 ({hint}) or 64 hex characters.",
+  [ERROR_CODES.CREDENTIALS.DECRYPT_ERROR]:
+    "Unable to decrypt stored provider credentials. Check that {env} matches the key used at encryption time.",
+
   // Client
   [ERROR_CODES.CLIENT.FETCH_ERROR]: "Error during request",
   [ERROR_CODES.CLIENT.NETWORK_ERROR]: "Network connection error",

@@ -13,6 +13,7 @@ import {
 } from "@/constants/cacheConstants";
 import { checkRateLimit } from "@/utils/rate-limit";
 import { getActiveConnection, setActiveConnection } from "@/lib/active-connection";
+import { buildKomgaAuthHeader, decryptSecret, encryptSecret } from "@/lib/credentials";
 import type { KomgaLibrary } from "@/types/komga";
 
 const TEST_CONNECTION_LIMIT = 5;
@@ -32,10 +33,6 @@ interface SaveKomgaInput {
   url: string;
   username: string;
   password?: string;
-}
-
-function buildAuthHeader(username: string, password: string): string {
-  return Buffer.from(`${username}:${password}`).toString("base64");
 }
 
 async function requireUserId(): Promise<number> {
@@ -75,7 +72,7 @@ export async function testKomgaConnection(
       };
     }
 
-    const authHeader = buildAuthHeader(username, password);
+    const authHeader = buildKomgaAuthHeader(username, password);
     const url = new URL(`${serverUrl}/api/v1/libraries`).toString();
     const headers = new Headers({
       Authorization: `Basic ${authHeader}`,
@@ -148,7 +145,7 @@ export async function saveKomgaConfig(
         return { success: false, message: "Configuration introuvable" };
       }
       const authHeader = input.password
-        ? buildAuthHeader(username, input.password)
+        ? encryptSecret(buildKomgaAuthHeader(username, input.password))
         : existing.authHeader;
       await prisma.komgaConfig.update({
         where: { id: input.id },
@@ -162,7 +159,7 @@ export async function saveKomgaConfig(
       return { success: false, message: "Le mot de passe est requis pour une nouvelle config" };
     }
 
-    const authHeader = buildAuthHeader(username, input.password);
+    const authHeader = encryptSecret(buildKomgaAuthHeader(username, input.password));
     const created = await prisma.komgaConfig.create({
       data: { userId, name, url, username, authHeader },
     });
@@ -226,7 +223,7 @@ export async function testKomgaConfigById(
 
     const url = new URL(`${config.url}/api/v1/libraries`).toString();
     const headers = new Headers({
-      Authorization: `Basic ${config.authHeader}`,
+      Authorization: `Basic ${decryptSecret(config.authHeader)}`,
       Accept: "application/json",
     });
     const response = await fetch(url, { headers });

@@ -22,6 +22,17 @@ NEXTAUTH_URL=https://ton-domaine.com
 # NEXTAUTH_URL=http://localhost:3000
 ```
 
+## Fortement recommandées (lues par le code de l'application)
+
+```env
+# Chiffre les identifiants des providers au repos (mot de passe Komga, token du
+# Librarian) : AES-256-GCM, 32 octets en base64 ou 64 caractères hexadécimaux.
+# Générer avec : openssl rand -base64 32
+# Sans cette clé, les identifiants sont stockés en clair et un avertissement est
+# journalisé à chaque écriture.
+# CREDENTIALS_ENCRYPTION_KEY=
+```
+
 ## Optionnelles (lues par le code de l'application)
 
 ```env
@@ -59,6 +70,21 @@ l'application.
 ```bash
 openssl rand -base64 32
 ```
+
+## Migration des identifiants déjà stockés
+
+Les connexions enregistrées avant l'introduction du chiffrement restent en clair
+lisible (rétro-compatibilité). Pour les chiffrer, renseigner
+`CREDENTIALS_ENCRYPTION_KEY` puis lancer une fois :
+
+```bash
+pnpm encrypt-credentials
+```
+
+Le script est **idempotent** : les lignes déjà au format `enc:v1:` sont
+ignorées, on peut donc le rejouer sans risque. **La clé doit rester stable** —
+si elle est perdue ou remplacée, il faut ressaisir les mots de passe / tokens
+dans les réglages (les valeurs existantes deviennent indéchiffrables).
 
 ## Développement
 
