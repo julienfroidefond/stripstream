@@ -1,5 +1,6 @@
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 import { PrismaClient } from '../src/generated/prisma/client';
+import { encryptSecret } from '../src/lib/credentials';
 import bcrypt from 'bcryptjs';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -51,11 +52,17 @@ export default async function globalSetup() {
 
   const basic = Buffer.from('user:pass').toString('base64');
   const header = `Basic ${basic}`;
+  // Chiffrement au repos actif en E2E comme en prod. Les lignes les plus
+  // sollicitées (`Stub A` des deux comptes, la 1re connexion Stripstream) sont
+  // chiffrées : une clé absente ou erronée côté serveur ferait échouer toute la
+  // suite. `Stub B`/`Stub Partial` restent en clair pour couvrir la lecture des
+  // lignes legacy non encore migrées.
+  const encryptedHeader = encryptSecret(header);
 
   const configA = await prisma.komgaConfig.upsert({
     where: { userId_name: { userId: user.id, name: 'Stub A' } },
-    update: { url: 'http://127.0.0.1:8444', authHeader: header },
-    create: { userId: user.id, name: 'Stub A', url: 'http://127.0.0.1:8444', username: 'user', authHeader: header },
+    update: { url: 'http://127.0.0.1:8444', authHeader: encryptedHeader },
+    create: { userId: user.id, name: 'Stub A', url: 'http://127.0.0.1:8444', username: 'user', authHeader: encryptedHeader },
   });
   const configB = await prisma.komgaConfig.upsert({
     where: { userId_name: { userId: user.id, name: 'Stub B' } },
@@ -74,7 +81,7 @@ export default async function globalSetup() {
   });
 
   const readerConfigA = await prisma.komgaConfig.create({
-    data: { userId: readerUser.id, name: 'Stub A', url: 'http://127.0.0.1:8444', username: 'user', authHeader: header },
+    data: { userId: readerUser.id, name: 'Stub A', url: 'http://127.0.0.1:8444', username: 'user', authHeader: encryptedHeader },
   });
   await prisma.komgaConfig.create({
     data: { userId: readerUser.id, name: 'Stub B', url: 'http://127.0.0.1:8445', username: 'user', authHeader: header },
@@ -88,7 +95,7 @@ export default async function globalSetup() {
       userId: user.id,
       name: 'Stub Lists',
       url: 'http://127.0.0.1:8444',
-      token: 'e2e-stripstream-token',
+      token: encryptSecret('e2e-stripstream-token'),
     },
   });
   await prisma.stripstreamConfig.create({

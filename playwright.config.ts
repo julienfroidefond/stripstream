@@ -15,6 +15,14 @@ const defaultE2eDbUrl = `file:${join(tmpdir(), `stripstream-e2e-${process.pid}.d
 const e2eDbUrlRaw = process.env.E2E_DATABASE_URL ?? defaultE2eDbUrl;
 process.env.E2E_DATABASE_URL = e2eDbUrlRaw;
 
+// Credential encryption must be active during E2E, with the SAME key in three
+// places: this config (so the server inherits it via `...process.env`), the
+// server's own env, and `global-setup.ts` (which encrypts the seeded rows).
+// A mismatch would make the app fail every Komga/Stripstream read.
+// 32 bytes, base64 (AAECAw…Hh8= is bytes 0x00..0x1f).
+process.env.CREDENTIALS_ENCRYPTION_KEY ??=
+  'AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=';
+
 // Normalisée en chemin absolu : Prisma résout `file:` relatif au dossier schema.prisma.
 const e2eDbUrl = e2eDbUrlRaw && e2eDbUrlRaw.startsWith('file:./')
   ? `file:${__dirname}/prisma/${e2eDbUrlRaw.slice('file:./'.length)}`

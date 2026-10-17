@@ -14,6 +14,7 @@ import {
 } from "@/constants/cacheConstants";
 import { checkRateLimit } from "@/utils/rate-limit";
 import { getActiveConnection, setActiveConnection } from "@/lib/active-connection";
+import { decryptSecret, encryptSecret } from "@/lib/credentials";
 
 const TEST_CONNECTION_LIMIT = 5;
 const TEST_CONNECTION_WINDOW_MS = 30_000;
@@ -127,7 +128,8 @@ export async function saveStripstreamConfig(
       if (!existing) {
         return { success: false, message: "Configuration introuvable" };
       }
-      const token = input.token?.trim() || existing.token;
+      const tokenInput = input.token?.trim();
+      const token = tokenInput ? encryptSecret(tokenInput) : existing.token;
       await prisma.stripstreamConfig.update({
         where: { id: input.id },
         data: { name, url, token },
@@ -141,7 +143,7 @@ export async function saveStripstreamConfig(
     }
 
     const created = await prisma.stripstreamConfig.create({
-      data: { userId, name, url, token: input.token.trim() },
+      data: { userId, name, url, token: encryptSecret(input.token.trim()) },
     });
 
     revalidateConnectionCaches();
@@ -201,7 +203,7 @@ export async function testStripstreamConfigById(
     });
     if (!config) return { success: false, message: "Configuration introuvable" };
 
-    const provider = new StripstreamProvider(config.url, config.token);
+    const provider = new StripstreamProvider(config.url, decryptSecret(config.token));
     const result = await provider.testConnection();
     if (!result.ok) {
       return { success: false, message: result.error ?? "Connexion échouée" };
