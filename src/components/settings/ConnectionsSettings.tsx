@@ -354,175 +354,184 @@ export function ConnectionsSettings({
           if (!open) cancelEdit();
         }}
       >
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>
-              {editing?.id
-                ? t("settings.connections.editTitle")
-                : t("settings.connections.addTitle")}
-            </DialogTitle>
-            <DialogDescription>
-              {editing?.id
-                ? t("settings.connections.editDescription")
-                : t("settings.connections.addDescription")}
-            </DialogDescription>
-          </DialogHeader>
+        {/*
+          Monté uniquement à l'ouverture : si le contenu restait monté pendant
+          son animation de sortie, un clic sur « Modifier » juste après une
+          sauvegarde rouvrirait le dialog pendant cette animation. Radix diffère
+          alors le pointerdown extérieur au clic suivant, si bien que ce clic
+          ouvrait puis refermait aussitôt le formulaire.
+        */}
+        {editing !== null && (
+          <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>
+                {editing?.id
+                  ? t("settings.connections.editTitle")
+                  : t("settings.connections.addTitle")}
+              </DialogTitle>
+              <DialogDescription>
+                {editing?.id
+                  ? t("settings.connections.editDescription")
+                  : t("settings.connections.addDescription")}
+              </DialogDescription>
+            </DialogHeader>
 
-          {editing && (
-            <form onSubmit={handleSave} id="connection-form" className="space-y-3">
-              {!editing.id && (
-                <div className="space-y-1.5">
-                  <span className="text-sm font-medium">{t("settings.connections.type")}</span>
-                  <div className="grid grid-cols-2 gap-2">
-                    <TypeButton
-                      label="Komga"
-                      description="Basic Auth"
-                      selected={editing.type === "komga"}
-                      onClick={() => setEditing({ ...editing, type: "komga" })}
-                    />
-                    <TypeButton
-                      label="Stripstream Librarian"
-                      description="Bearer Token"
-                      selected={editing.type === "stripstream"}
-                      onClick={() => setEditing({ ...editing, type: "stripstream" })}
-                    />
+            {editing && (
+              <form onSubmit={handleSave} id="connection-form" className="space-y-3">
+                {!editing.id && (
+                  <div className="space-y-1.5">
+                    <span className="text-sm font-medium">{t("settings.connections.type")}</span>
+                    <div className="grid grid-cols-2 gap-2">
+                      <TypeButton
+                        label="Komga"
+                        description="Basic Auth"
+                        selected={editing.type === "komga"}
+                        onClick={() => setEditing({ ...editing, type: "komga" })}
+                      />
+                      <TypeButton
+                        label="Stripstream Librarian"
+                        description="Bearer Token"
+                        selected={editing.type === "stripstream"}
+                        onClick={() => setEditing({ ...editing, type: "stripstream" })}
+                      />
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {editing.id && (
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="text-muted-foreground">
-                    {t("settings.connections.type")} :
-                  </span>
-                  <TypeBadge type={editing.type} />
-                </div>
-              )}
+                {editing.id && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-muted-foreground">
+                      {t("settings.connections.type")} :
+                    </span>
+                    <TypeBadge type={editing.type} />
+                  </div>
+                )}
 
-              <FieldRow label={t("settings.connections.name")} htmlFor="conn-name">
-                <input
-                  id="conn-name"
-                  type="text"
-                  required
-                  value={editing.name}
-                  onChange={(e) => setEditing({ ...editing, name: e.target.value })}
-                  className={inputClass}
-                  placeholder={
-                    editing.type === "komga"
-                      ? t("settings.connections.komgaNamePlaceholder")
-                      : t("settings.connections.stripstreamNamePlaceholder")
-                  }
-                />
-              </FieldRow>
+                <FieldRow label={t("settings.connections.name")} htmlFor="conn-name">
+                  <input
+                    id="conn-name"
+                    type="text"
+                    required
+                    value={editing.name}
+                    onChange={(e) => setEditing({ ...editing, name: e.target.value })}
+                    className={inputClass}
+                    placeholder={
+                      editing.type === "komga"
+                        ? t("settings.connections.komgaNamePlaceholder")
+                        : t("settings.connections.stripstreamNamePlaceholder")
+                    }
+                  />
+                </FieldRow>
 
-              <FieldRow label={t("settings.connections.serverUrl")} htmlFor="conn-url">
-                <input
-                  id="conn-url"
-                  type="url"
-                  required
-                  value={editing.url}
-                  onChange={(e) => setEditing({ ...editing, url: e.target.value })}
-                  className={inputClass}
-                  placeholder={
-                    editing.type === "komga"
-                      ? "https://komga.example.com"
-                      : "https://librarian.example.com"
-                  }
-                />
-              </FieldRow>
+                <FieldRow label={t("settings.connections.serverUrl")} htmlFor="conn-url">
+                  <input
+                    id="conn-url"
+                    type="url"
+                    required
+                    value={editing.url}
+                    onChange={(e) => setEditing({ ...editing, url: e.target.value })}
+                    className={inputClass}
+                    placeholder={
+                      editing.type === "komga"
+                        ? "https://komga.example.com"
+                        : "https://librarian.example.com"
+                    }
+                  />
+                </FieldRow>
 
-              {editing.type === "komga" ? (
-                <>
-                  <FieldRow label={t("settings.connections.username")} htmlFor="conn-username">
-                    <input
-                      id="conn-username"
-                      type="text"
-                      required
-                      value={editing.username}
-                      onChange={(e) => setEditing({ ...editing, username: e.target.value })}
-                      className={inputClass}
-                    />
-                  </FieldRow>
+                {editing.type === "komga" ? (
+                  <>
+                    <FieldRow label={t("settings.connections.username")} htmlFor="conn-username">
+                      <input
+                        id="conn-username"
+                        type="text"
+                        required
+                        value={editing.username}
+                        onChange={(e) => setEditing({ ...editing, username: e.target.value })}
+                        className={inputClass}
+                      />
+                    </FieldRow>
+                    <FieldRow
+                      label={t("settings.connections.password")}
+                      htmlFor="conn-password"
+                      hint={editing.id ? t("settings.connections.editHint") : undefined}
+                    >
+                      <input
+                        id="conn-password"
+                        type="password"
+                        required={!editing.id}
+                        value={editing.password}
+                        onChange={(e) => setEditing({ ...editing, password: e.target.value })}
+                        className={inputClass}
+                        placeholder={editing.id ? "••••••••" : ""}
+                      />
+                    </FieldRow>
+                  </>
+                ) : (
                   <FieldRow
-                    label={t("settings.connections.password")}
-                    htmlFor="conn-password"
+                    label={t("settings.connections.token")}
+                    htmlFor="conn-token"
                     hint={editing.id ? t("settings.connections.editHint") : undefined}
                   >
                     <input
-                      id="conn-password"
+                      id="conn-token"
                       type="password"
                       required={!editing.id}
-                      value={editing.password}
-                      onChange={(e) => setEditing({ ...editing, password: e.target.value })}
+                      value={editing.token}
+                      onChange={(e) => setEditing({ ...editing, token: e.target.value })}
                       className={inputClass}
-                      placeholder={editing.id ? "••••••••" : ""}
+                      placeholder={editing.id ? "••••••••" : "stl_xxxx_xxxxxxxx"}
                     />
                   </FieldRow>
-                </>
-              ) : (
-                <FieldRow
-                  label={t("settings.connections.token")}
-                  htmlFor="conn-token"
-                  hint={editing.id ? t("settings.connections.editHint") : undefined}
-                >
-                  <input
-                    id="conn-token"
-                    type="password"
-                    required={!editing.id}
-                    value={editing.token}
-                    onChange={(e) => setEditing({ ...editing, token: e.target.value })}
-                    className={inputClass}
-                    placeholder={editing.id ? "••••••••" : "stl_xxxx_xxxxxxxx"}
-                  />
-                </FieldRow>
-              )}
-            </form>
-          )}
+                )}
+              </form>
+            )}
 
-          <DialogFooter className="gap-2 sm:flex-row sm:justify-end">
-            <button type="button" onClick={cancelEdit} className={btnSecondary}>
-              {t("settings.connections.cancel")}
-            </button>
-            <button
-              type="button"
-              onClick={handleTest}
-              disabled={
-                !editing ||
-                isTesting ||
-                !editing.url ||
-                (editing.type === "komga"
-                  ? !editing.username || !editing.password
-                  : !editing.token)
-              }
-              className={btnSecondary}
-            >
-              {isTesting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {t("settings.connections.testing")}
-                </>
-              ) : (
-                t("settings.connections.test")
-              )}
-            </button>
-            <button
-              type="submit"
-              form="connection-form"
-              data-testid="connection-save"
-              disabled={isSaving}
-              className={btnPrimary}
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {t("settings.connections.saving")}
-                </>
-              ) : (
-                t("settings.connections.save")
-              )}
-            </button>
-          </DialogFooter>
-        </DialogContent>
+            <DialogFooter className="gap-2 sm:flex-row sm:justify-end">
+              <button type="button" onClick={cancelEdit} className={btnSecondary}>
+                {t("settings.connections.cancel")}
+              </button>
+              <button
+                type="button"
+                onClick={handleTest}
+                disabled={
+                  !editing ||
+                  isTesting ||
+                  !editing.url ||
+                  (editing.type === "komga"
+                    ? !editing.username || !editing.password
+                    : !editing.token)
+                }
+                className={btnSecondary}
+              >
+                {isTesting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {t("settings.connections.testing")}
+                  </>
+                ) : (
+                  t("settings.connections.test")
+                )}
+              </button>
+              <button
+                type="submit"
+                form="connection-form"
+                data-testid="connection-save"
+                disabled={isSaving}
+                className={btnPrimary}
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {t("settings.connections.saving")}
+                  </>
+                ) : (
+                  t("settings.connections.save")
+                )}
+              </button>
+            </DialogFooter>
+          </DialogContent>
+        )}
       </Dialog>
     </Card>
   );
