@@ -21,7 +21,7 @@ export function SeriesCover({
   showProgressUi = true,
   isAnonymous = false,
 }: SeriesCoverProps) {
-  const { ref, loaded, onLoad } = useCoverLoaded();
+  const { ref, loaded, onLoad, onError } = useCoverLoaded();
   const isCompleted = isAnonymous ? false : series.bookCount === series.booksReadCount;
 
   const readBooks = isAnonymous ? 0 : series.booksReadCount;
@@ -38,6 +38,7 @@ export function SeriesCover({
         alt={alt}
         loading="lazy"
         onLoad={onLoad}
+        onError={onError}
         className={cn(
           "absolute inset-0 h-full w-full object-cover transition-[opacity,scale] duration-600 ease-projection motion-reduce:transition-none",
           loaded
