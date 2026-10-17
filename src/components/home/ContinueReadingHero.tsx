@@ -42,13 +42,15 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
   const sectionRef = useRef<HTMLElement>(null);
   const scene = useSceneExit(sectionRef);
   /**
-   * La cover se pose dans son cadre au premier montage seulement : ensuite le
-   * carrousel tourne et le geste se rejouerait à chaque glissement.
+   * La mise en scène (cover posée dans son cadre, texte qui monte) ne joue
+   * qu'à l'ouverture. Le carrousel change de diapositive ensuite : le geste se
+   * rejouerait sinon sur chaque glissement, et l'image repasserait en petit à
+   * chaque fois.
    */
-  const [coverEntrance, setCoverEntrance] = useState(true);
+  const [introPlaying, setIntroPlaying] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => setCoverEntrance(false), 1500);
+    const timer = setTimeout(() => setIntroPlaying(false), 1500);
     return () => clearTimeout(timer);
   }, []);
   const total = loadedBooks.length;
@@ -68,6 +70,7 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
       setHasMore(result.hasMore);
       // La suite se pose sur la première nouveauté : le clic se voit.
       if (result.items.length > firstNew) {
+        setIntroPlaying(false);
         setDirection(1);
         setIndex(firstNew);
       }
@@ -103,6 +106,9 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
   const bookTitle = book.title?.trim() || volumeLabel || "";
 
   const goTo = (target: number, dir: number) => {
+    // Un glissement interrompt l'ouverture : on fige la mise en scène pour ne
+    // pas la relancer sur la diapositive suivante.
+    setIntroPlaying(false);
     setDirection(dir);
     setIndex(((target % total) + total) % total);
   };
@@ -114,10 +120,11 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
     else if (info.offset.x > SWIPE_THRESHOLD) goTo(safeIndex - 1, -1);
   };
 
-  const stagedContent = reduce
-    ? {}
-    : { variants: staggerContainer(0.07, 0.08), initial: "hidden" as const, animate: "visible" as const };
-  const stagedItem = reduce ? {} : { variants: fadeUp };
+  const staged = !reduce && introPlaying;
+  const stagedContent = staged
+    ? { variants: staggerContainer(0.07, 0.08), initial: "hidden" as const, animate: "visible" as const }
+    : {};
+  const stagedItem = staged ? { variants: fadeUp } : {};
 
   return (
     <motion.section
@@ -187,6 +194,7 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
               {/* Cover */}
               <motion.button
                 type="button"
+                data-testid="home-hero-cover"
                 variants={reduce ? undefined : liftIn}
                 onClick={handleResume}
                 whileHover={reduce ? undefined : { y: -10, rotateZ: -2, scale: 1.04 }}
@@ -200,7 +208,7 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
                 <span
                   className={cn(
                     "relative block h-full w-full",
-                    coverEntrance && "motion-safe:animate-cover-rise"
+                    introPlaying && "motion-safe:animate-cover-rise"
                   )}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
