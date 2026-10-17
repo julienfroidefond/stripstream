@@ -49,6 +49,14 @@ L'authentification se fait par en-tête `Authorization: Bearer stl_{prefix}_{sec
 (`src/lib/providers/stripstream/stripstream.client.ts:50-56`). Les tokens suivent
 le format `stl_{prefix}_{secret}` et sont hachés (Argon2) côté Librarian.
 
+Le **scan de bibliothèque** (`POST /libraries/{id}/scan`) et son suivi
+(`GET /index/jobs/{id}`, flux SSE `/index/jobs/{id}/stream`) vivent sur l'Admin
+API : un token de scope `read` reçoit un 403. Stripstream garde le bouton
+d'analyse (utile avec une connexion Komga admin) et affiche un message explicite
+quand le backend refuse ; il ne suit la progression que si le token fourni le
+permet, sinon il annonce « analyse lancée, progression indisponible » au lieu de
+deviner la fin du scan (voir `docs/api.md`, `scanLibrary`).
+
 La références complète des endpoints vit dans la documentation du Librarian
 (`apps/docs/`, section [Référence API](https://github.com/julienfroidefond/stripstream-librarian/blob/main/apps/docs/src/content/docs/reference/api.md)).
 Côté Librarian, cette Client API est traitée comme **un contrat public** : les

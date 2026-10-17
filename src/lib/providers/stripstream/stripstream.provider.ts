@@ -11,10 +11,13 @@ import type {
   NormalizedMissingBook,
   NormalizedSeriesRating,
   NormalizedReadingStats,
+  ScanStartResult,
+  ScanStatus,
 } from "../types";
 import type { HomeData, HomeDeferredData, HomePrimaryData } from "@/types/home";
 import { StripstreamClient } from "./stripstream.client";
 import { StripstreamAdapter } from "./stripstream.adapter";
+import { scanStateFromIndexJobStatus } from "../scan-status";
 import type {
   StripstreamLibraryResponse,
   StripstreamBooksPage,
@@ -33,6 +36,7 @@ import type {
   StripstreamReadingList,
   StripstreamReadingListDetail,
   StripstreamSeriesRatingsResponse,
+  StripstreamIndexJob,
 } from "@/types/stripstream";
 import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, SERIES_BOOKS_CACHE_TAG, SERIES_RATING_CACHE_TAG, STATS_CACHE_TAG } from "@/constants/cacheConstants";
 
@@ -444,10 +448,40 @@ export class StripstreamProvider implements IMediaProvider {
     });
   }
 
-  async scanLibrary(libraryId: string): Promise<void> {
-    await this.client.fetch<unknown>(`libraries/${libraryId}/scan`, undefined, {
-      method: "POST",
-    });
+  async scanLibrary(libraryId: string): Promise<ScanStartResult> {
+    const job = await this.client.fetch<StripstreamIndexJob>(
+      `libraries/${libraryId}/scan`,
+      undefined,
+      { method: "POST" }
+    );
+
+    // The Librarian answers with the created index job. A 204 or an unexpected
+    // payload means there is nothing to follow, so the UI stays honest instead
+    // of guessing when the scan ends.
+    if (!job?.id) return { jobId: null, progressSupported: false };
+
+    return { jobId: job.id, progressSupported: true };
+  }
+
+  async getScanStatus(_libraryId: string, jobId?: string | null): Promise<ScanStatus> {
+    if (!jobId) return { state: "unavailable" };
+
+    try {
+      const job = await this.client.fetch<StripstreamIndexJob>(`index/jobs/${jobId}`);
+      return {
+        state: scanStateFromIndexJobStatus(job.status),
+        progressPercent: job.progress_percent ?? undefined,
+        processedFiles: job.processed_files ?? undefined,
+        totalFiles: job.total_files ?? undefined,
+        error: job.error_opt ?? undefined,
+      };
+    } catch (error) {
+      // Read-scoped tokens cannot read the admin job API (403), and a removed
+      // job (404) or a network blip must not break the button. Degrade quietly:
+      // the client stops polling after a few consecutive `unavailable` answers.
+      logger.debug({ err: error, jobId }, "Scan status unavailable");
+      return { state: "unavailable" };
+    }
   }
 
   async getRandomBook(libraryIds?: string[]): Promise<string | null> {

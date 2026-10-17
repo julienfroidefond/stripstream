@@ -139,7 +139,8 @@ Tous les fichiers de `src/app/actions/` commencent par `"use server"`. Les actio
 
 | Action | Rôle |
 | --- | --- |
-| `scanLibrary` | Déclenche un scan d'une bibliothèque via le provider actif et revalide la page de la bibliothèque et la liste. |
+| `scanLibrary` | Déclenche un scan d'une bibliothèque via le provider actif et revalide la page de la bibliothèque et la liste. Renvoie `{ jobId, progressSupported, forbidden? }` : `jobId` n'est renseigné que si le backend expose un suivi (Librarian admin), et `forbidden` vaut `true` sur un 403 (scan réservé aux admins côté Komga comme côté Librarian). |
+| `getScanStatus` | Suit le job renvoyé par `scanLibrary` (`libraryId`, `jobId`). Renvoie `{ state: "running" \| "completed" \| "failed" \| "cancelled" \| "unavailable" }` et ne lève jamais : un backend sans suivi (Komga), un 403 (token `read`) ou une erreur réseau dégradent en `unavailable`. |
 | `getRandomBookFromLibraries` | Renvoie l'URL de miniature d'un livre tiré au hasard parmi les bibliothèques fournies. |
 
 ### src/app/actions/password.ts

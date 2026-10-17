@@ -292,10 +292,26 @@
         "title": "Scan complete",
         "description": "The library has been scanned and updated"
       },
+      "cancelled": {
+        "title": "Scan cancelled",
+        "description": "The scan was interrupted before it finished"
+      },
+      "tracking": {
+        "unavailable": "This server does not expose scan progress: use Refresh once the scan is done.",
+        "lost": {
+          "title": "Tracking interrupted",
+          "description": "Scan progress is no longer available. Refresh the page to see the result."
+        },
+        "timeout": {
+          "title": "Scan still running",
+          "description": "The scan is taking longer than expected: it keeps running in the background. Refresh the page later."
+        }
+      },
       "error": {
         "title": "Error",
         "description": "An error occurred while scanning the library",
-        "refresh": "An error occurred while updating the library data"
+        "refresh": "An error occurred while updating the library data",
+        "forbidden": "This action requires administrator access to the server."
       }
     },
     "header": {

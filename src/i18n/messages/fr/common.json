@@ -297,10 +297,26 @@
         "title": "Analyse terminée",
         "description": "La bibliothèque a été analysée et mise à jour"
       },
+      "cancelled": {
+        "title": "Analyse annulée",
+        "description": "Le scan a été interrompu avant la fin"
+      },
+      "tracking": {
+        "unavailable": "Ce serveur n'expose pas la progression du scan : utilise « Actualiser » une fois l'analyse terminée.",
+        "lost": {
+          "title": "Suivi interrompu",
+          "description": "La progression du scan n'est plus disponible. Actualise la page pour voir le résultat."
+        },
+        "timeout": {
+          "title": "Analyse toujours en cours",
+          "description": "Le scan dure plus longtemps que prévu : il continue en arrière-plan. Actualise la page plus tard."
+        }
+      },
       "error": {
         "title": "Erreur",
         "description": "Une erreur est survenue lors de l'analyse de la bibliothèque",
-        "refresh": "Une erreur est survenue lors de la mise à jour des données"
+        "refresh": "Une erreur est survenue lors de la mise à jour des données",
+        "forbidden": "Cette action nécessite un accès administrateur au serveur."
       }
     },
     "header": {

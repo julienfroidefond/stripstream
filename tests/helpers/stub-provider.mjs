@@ -168,6 +168,10 @@ const stripstreamBookItem = {
 const stripstreamRatings = new Map();
 // Store de favoris Stripstream en mémoire (reset au démarrage du stub).
 const stripstreamFavorites = new Set();
+// Jobs de scan Stripstream : chaque POST crée un job dont le statut avance à
+// chaque poll, ce qui rend le suivi observable en E2E.
+const scanJobs = new Map();
+let scanJobCounter = 0;
 
 function stripstreamSeriesPage() {
   // 31 séries pour exercer la pagination, comme le fixture Komga.
@@ -262,6 +266,40 @@ const server = http.createServer(async (req, res) => {
 
   if (path === '/libraries' && req.method === 'GET') {
     return send(stripstreamLibraries);
+  }
+
+  // POST /libraries/{id}/scan → crée un job suivi par /index/jobs/{id}.
+  let sm = path.match(/^\/libraries\/([^/]+)\/scan$/);
+  if (sm && req.method === 'POST') {
+    const id = `scan-job-${++scanJobCounter}`;
+    scanJobs.set(id, { libraryId: sm[1], polls: 0 });
+    return send({
+      id,
+      library_id: sm[1],
+      type: 'scan',
+      status: 'pending',
+      progress_percent: 0,
+      processed_files: 0,
+      total_files: 10,
+    });
+  }
+
+  // GET /index/jobs/{id} → running au premier poll, success ensuite.
+  sm = path.match(/^\/index\/jobs\/([^/]+)$/);
+  if (sm && req.method === 'GET') {
+    const job = scanJobs.get(sm[1]);
+    if (!job) return send({ error: 'job not found' }, 404);
+    job.polls += 1;
+    const done = job.polls >= 2;
+    return send({
+      id: sm[1],
+      library_id: job.libraryId,
+      type: 'scan',
+      status: done ? 'success' : 'running',
+      progress_percent: done ? 100 : 40,
+      processed_files: done ? 10 : 4,
+      total_files: 10,
+    });
   }
 
   // GET /series (cross-library list, utilisé par /libraries/lib-a via library_id)
@@ -389,6 +427,15 @@ const server = http.createServer(async (req, res) => {
   // GET /api/v1/libraries
   if (path === '/api/v1/libraries' && req.method === 'GET') {
     return send(libraries);
+  }
+
+  // POST /api/v1/libraries/{id}/scan → Komga accepts the request (202) but has
+  // no task-status endpoint, which is exactly the "progress unavailable" path.
+  let km = path.match(/^\/api\/v1\/libraries\/([^/]+)\/scan$/);
+  if (km && req.method === 'POST') {
+    res.statusCode = 202;
+    res.end();
+    return;
   }
 
   // GET /api/v1/series/{id}
