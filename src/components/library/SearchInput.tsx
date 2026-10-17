@@ -1,8 +1,11 @@
+"use client";
+
 import { Search } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useTransition } from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useRef, useTransition } from "react";
 import { Input } from "@/components/ui/input";
-import { debounce } from "@/lib/utils";
+
+const SEARCH_DEBOUNCE_MS = 300;
 
 interface SearchInputProps {
   placeholder?: string;
@@ -11,28 +14,54 @@ interface SearchInputProps {
 
 export const SearchInput = ({ placeholder, testId }: SearchInputProps) => {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
 
-  const createQueryString = useCallback(
-    (name: string, value: string) => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (value) {
-        params.set(name, value);
+  /**
+   * Le debounce lit les paramètres au moment du déclenchement : un rendu
+   * intermédiaire (spinner, navigation) ne doit pas figer une URL périmée.
+   */
+  const searchParamsRef = useRef(searchParams);
+  useEffect(() => {
+    searchParamsRef.current = searchParams;
+  }, [searchParams]);
+
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const commit = useCallback(
+    (term: string) => {
+      const params = new URLSearchParams(searchParamsRef.current.toString());
+      if (term.trim()) {
+        params.set("search", term);
       } else {
-        params.delete(name);
+        params.delete("search");
       }
-      return params.toString();
+      // Une recherche repart toujours de la première page : sinon, lancée
+      // depuis la page 2+, elle interroge une page inexistante et la grille
+      // reste vide.
+      params.set("page", "1");
+      startTransition(() => {
+        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+      });
     },
-    [searchParams]
+    [pathname, router]
   );
 
-  const handleSearch = debounce((term: string) => {
-    startTransition(() => {
-      const query = createQueryString("search", term);
-      router.push(`?${query}`);
-    });
-  }, 300);
+  const handleChange = useCallback(
+    (term: string) => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => commit(term), SEARCH_DEBOUNCE_MS);
+    },
+    [commit]
+  );
+
+  useEffect(
+    () => () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    },
+    []
+  );
 
   return (
     <div className="relative w-full rounded-xl border border-border bg-surface-1 px-1 transition-colors focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-ring/30 sm:max-w-2xl">
@@ -43,7 +72,7 @@ export const SearchInput = ({ placeholder, testId }: SearchInputProps) => {
         placeholder={placeholder}
         className="h-12 rounded-xl border-0 bg-transparent pl-10 pr-10 text-sm shadow-none focus-visible:border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
         defaultValue={searchParams.get("search") ?? ""}
-        onChange={(e) => handleSearch(e.target.value)}
+        onChange={(e) => handleChange(e.target.value)}
         aria-label={placeholder}
       />
       {isPending && (
