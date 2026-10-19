@@ -3,7 +3,7 @@
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import { Loader2 } from "lucide-react";
-import type { NormalizedBook } from "@/lib/providers/types";
+import type { NormalizedBook, NormalizedSeriesRating } from "@/lib/providers/types";
 import { useRouter } from "next/navigation";
 
 // Chargement différé du lecteur lourd (uniquement quand on ouvre le reader).
@@ -18,10 +18,11 @@ interface ClientBookWrapperProps {
   pages: number[];
   nextBook: NormalizedBook | null;
   readerInfo?: ReaderInfo | null;
+  seriesRating?: NormalizedSeriesRating | null;
   onRefresh?: () => Promise<void>;
 }
 
-export function ClientBookWrapper({ book, pages, nextBook, readerInfo, onRefresh }: ClientBookWrapperProps) {
+export function ClientBookWrapper({ book, pages, nextBook, readerInfo, seriesRating, onRefresh }: ClientBookWrapperProps) {
   const router = useRouter();
   const [isClosing, setIsClosing] = useState(false);
 
@@ -46,6 +47,7 @@ export function ClientBookWrapper({ book, pages, nextBook, readerInfo, onRefresh
       book={book}
       pages={pages}
       readerInfo={readerInfo}
+      seriesRating={seriesRating}
       onClose={handleCloseReader}
       onRefresh={onRefresh}
       nextBook={nextBook}

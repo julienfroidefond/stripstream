@@ -17,6 +17,11 @@ interface SeriesRatingControlProps {
   /** Read-only aggregate ratings from linked metadata providers. */
   providerRatings: NormalizedProviderRating[];
   disabled?: boolean;
+  /**
+   * Palette d'affichage : `overlay` (défaut) pour un fond sombre type hero de
+   * série, `surface` pour un fond de carte/modal thémé.
+   */
+  tone?: "overlay" | "surface";
 }
 
 /** Capitalize a provider slug for display (e.g. "anilist" → "AniList"). */
@@ -31,6 +36,7 @@ export function SeriesRatingControl({
   initialRating,
   providerRatings,
   disabled = false,
+  tone = "overlay",
 }: SeriesRatingControlProps) {
   const { toast } = useToast();
   const { t } = useTranslate();
@@ -89,19 +95,28 @@ export function SeriesRatingControl({
       >
         <RatingStars value={rating} onChange={handleChange} onClear={handleClear} size="md" />
         {rating !== null && (
-          <span data-testid="series-rating-value" className="text-sm font-medium tabular-nums text-white/90">
+          <span
+            data-testid="series-rating-value"
+            className={`text-sm font-medium tabular-nums ${tone === "surface" ? "text-foreground" : "text-white/90"}`}
+          >
             {(rating / 2).toFixed(1)}
           </span>
         )}
         {saving && (
-          <svg className="w-3.5 h-3.5 animate-spin text-white/70" fill="none" viewBox="0 0 24 24">
+          <svg
+            className={`w-3.5 h-3.5 animate-spin ${tone === "surface" ? "text-muted-foreground" : "text-white/70"}`}
+            fill="none"
+            viewBox="0 0 24 24"
+          >
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
           </svg>
         )}
       </div>
       {providerRatings.length > 0 && (
-        <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-white/70">
+        <div
+          className={`flex flex-wrap gap-x-3 gap-y-0.5 text-xs ${tone === "surface" ? "text-muted-foreground" : "text-white/70"}`}
+        >
           {providerRatings.map((p) => (
             <span key={p.provider} className="tabular-nums">
               {displayProvider(p.provider)} {(p.rating / (p.ratingScale || 10) * 10).toFixed(1)}/10

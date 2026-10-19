@@ -1,4 +1,4 @@
-import type { NormalizedBook } from "@/lib/providers/types";
+import type { NormalizedBook, NormalizedSeriesRating } from "@/lib/providers/types";
 import type { ReaderBackground } from "@/types/preferences";
 
 export interface ReaderInfo {
@@ -16,6 +16,7 @@ export interface BookReaderProps {
   onClose?: (currentPage: number) => void;
   onRefresh?: () => Promise<void>;
   nextBook?: NormalizedBook | null;
+  seriesRating?: NormalizedSeriesRating | null;
 }
 
 export interface ThumbnailProps {

@@ -1,6 +1,7 @@
 import type { IMediaProvider } from "@/lib/providers/provider.interface";
-import type { NormalizedBook } from "@/lib/providers/types";
+import type { NormalizedBook, NormalizedSeriesRating } from "@/lib/providers/types";
 import type { ReaderInfo } from "@/lib/reader/types";
+import { getActiveProviderType } from "@/lib/providers/provider.factory";
 import logger from "@/lib/logger";
 
 export interface ReaderData {
@@ -8,6 +9,8 @@ export interface ReaderData {
   pages: number[];
   nextBook: NormalizedBook | null;
   readerInfo: ReaderInfo | null;
+  /** Note de la série affichée en fin de lecture, ou null si non supportée/disponible. */
+  seriesRating: NormalizedSeriesRating | null;
 }
 
 function sortBooksBySeriesPosition(a: NormalizedBook, b: NormalizedBook) {
@@ -78,6 +81,25 @@ async function getReaderInfo(
   }
 }
 
+async function getReaderSeriesRating(
+  provider: IMediaProvider,
+  seriesId: string | null
+): Promise<NormalizedSeriesRating | null> {
+  // La notation n'est disponible que sur le provider Stripstream ; Komga
+  // renvoie toujours null (voir IMediaProvider#getSeriesRating).
+  if (!seriesId) return null;
+
+  const providerType = await getActiveProviderType();
+  if (providerType !== "stripstream") return null;
+
+  try {
+    return await provider.getSeriesRating(seriesId);
+  } catch (error) {
+    logger.warn({ err: error, seriesId }, "Failed to fetch reader series rating");
+    return null;
+  }
+}
+
 export async function getReaderData(
   provider: IMediaProvider,
   bookId: string
@@ -92,12 +114,16 @@ export async function getReaderData(
   ]);
 
   const pages = Array.from({ length: book.pageCount }, (_, i) => i + 1);
-  const readerInfo = await getReaderInfo(provider, book);
+  const [readerInfo, seriesRating] = await Promise.all([
+    getReaderInfo(provider, book),
+    getReaderSeriesRating(provider, book.seriesId ?? null),
+  ]);
 
   return {
     book,
     pages,
     nextBook,
     readerInfo,
+    seriesRating,
   };
 }
