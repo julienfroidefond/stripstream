@@ -44,7 +44,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
         with:
-          fetch-depth: 1
+          # Full history: diffs are taken against origin/main.
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Set up pnpm
@@ -76,17 +77,77 @@ jobs:
           prompt: |
             Implement the GitHub issue this event refers to.
 
-            - Read the full issue, including all comments, for context and acceptance criteria.
-            - Follow the repository conventions in AGENTS.md.
-            - Add or update tests for any behavior change.
-            - The runner provisions Node 24, pnpm and the Playwright Chromium browser,
-              so `pnpm test:unit` and `pnpm test:e2e` are expected to pass as-is. If they
-              fail to start, the infrastructure is broken — report it instead of
-              rewriting the tests.
-            - Run `pnpm lint`, `pnpm typecheck`, `pnpm test:unit` and `pnpm build` before finishing.
-            - Create a dedicated branch and open a pull request that references the issue with `Closes #<number>`.
-            - Never merge and never push directly to `main`.
-            - If the issue is ambiguous or requires a product decision, comment on the issue with your questions instead of guessing.
+            ## Before coding
+            - Read the full issue, including all comments, and restate the acceptance
+              criteria as a checklist.
+            - Read AGENTS.md and the docs/ file covering every area you touch.
+            - If the issue spans several independent surfaces, or would touch more than
+              ~15 files, comment on the issue with a proposed split and stop.
+            - Search for existing code first (`rg`, and `semble` if available): helpers,
+              server actions, provider methods, hooks, cache tags, UI primitives. Reuse or
+              extend them. Never copy-paste an existing provider call, cache tag, server
+              action or component; if duplication is unavoidable, justify it in the PR
+              body.
+
+            ## Implementation
+            - Follow AGENTS.md: server-first (RSC + server actions), small cohesive
+              modules, no dead code, no unrelated reformatting.
+            - Reach the media backend only through `getProvider()`; never import
+              `KomgaProvider` or `StripstreamProvider` directly.
+            - Keep mutations in `src/app/actions/`; client components only for
+              browser-only concerns.
+            - New user-facing copy goes in both `src/i18n/messages/en/common.json` and
+              `src/i18n/messages/fr/common.json`. New errors use `AppError`, a code from
+              `src/constants/errorCodes.ts` and an `errors.${CODE}` message.
+            - Update `docs/` when user-visible behavior or the API surface changes.
+            - Add tests for the nominal path, the empty/no-op path, the edge states that
+              actually exist (for example a book with no read progress, or a favorite
+              scoped to another config), and the error path. Put pure logic in Vitest
+              tests next to the source (`src/**/*.test.ts`) and user-facing flows in
+              `tests/`. Name them in the PR body.
+
+            ## Validation (must pass before you finish)
+            - `pnpm lint` (0 warnings)
+            - `pnpm typecheck`
+            - `pnpm test:unit`
+            - `pnpm build`
+            - If you touched a user-facing route: `pnpm test:e2e`. The runner provisions
+              Node 24, pnpm and the Playwright Chromium browser; if the suite cannot
+              start, the infrastructure is broken — report it instead of rewriting the
+              tests.
+            - If a test fails for reasons unrelated to your change, name it and show that
+              it also fails on the base commit.
+
+            ## Self-review before finishing
+            Stage everything (`git add -A`) so new files appear in the diff, then re-read
+            `git diff origin/main` (the checkout has full history). Then delegate a second
+            review to the `reviewer` subagent: give it the issue's acceptance criteria and
+            the base ref (`origin/main`); it can read the diff itself. Ask for findings
+            with `file:line`. Address every finding, or justify in the final response why
+            it does not apply.
+            Check the same axes yourself and fix what you find:
+            - duplication: is there an existing helper, server action, provider method,
+              hook, cache tag or UI primitive that should have been reused or factored out?
+            - dead code: unused imports or variables, unreachable branches, debug output;
+            - contracts: provider interface changes mirrored in both implementations,
+              route handlers and `docs/api.md` agree, Prisma schema/migrations match the
+              code;
+            - conventions: cache invalidated at the right tag scope, localStorage keys
+              scoped with `buildStorageKey`, secrets never logged, i18n keys in both en
+              and fr;
+            - completeness: every acceptance criterion has code and tests;
+            - scope: no unrelated changes, no version bump, no formatting noise.
+
+            ## Pull request
+            - Do not create a branch, commit, push or open the pull request yourself: the
+              runner does that after you finish, and uses your final response as the PR
+              body.
+            - Make the final response the PR body, with these sections: Contexte,
+              Changement, Réutilisation (existing code reused), Tests (names), Commandes
+              exécutées, Points d'attention / hors périmètre.
+            - Never push directly to `main`.
+            - If the issue is ambiguous or requires a product decision, stop and explain
+              the decision needed instead of guessing.
 
   comment:
     name: Reply to mention
@@ -101,7 +162,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
         with:
-          fetch-depth: 1
+          # Full history: diffs are taken against origin/main.
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Set up pnpm

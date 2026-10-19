@@ -64,7 +64,10 @@ temp/
 .auth/
 .env.local
 
-.opencode
+# OpenCode local tooling; keep the shared agent definitions under version control
+.opencode/*
+!.opencode/agent/
+!.opencode/agent/**
 
 # Local workflow/planning artifacts (task management / omo)
 .omo/
