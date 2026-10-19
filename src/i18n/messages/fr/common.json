@@ -650,6 +650,7 @@
     },
     "endOfSeries": "Fin de la série",
     "endOfSeriesMessage": "Vous avez terminé tous les tomes de cette série !",
+    "endOfSeriesRate": "Envie de noter cette série ?",
     "backToSeries": "Retourner à la série"
   },
   "header": {

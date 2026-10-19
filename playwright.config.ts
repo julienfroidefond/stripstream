@@ -185,6 +185,7 @@ export default defineConfig({
         '**/library/series-sort.spec.ts',
         '**/reader/reader.spec.ts',
         '**/reader/reader-stub.spec.ts',
+        '**/reader/reader-end-of-series.spec.ts',
       ],
       use: { ...devices['Desktop Chrome'] },
     },

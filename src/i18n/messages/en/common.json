@@ -647,6 +647,7 @@
     },
     "endOfSeries": "End of series",
     "endOfSeriesMessage": "You have finished all the books in this series!",
+    "endOfSeriesRate": "Want to rate this series?",
     "backToSeries": "Back to series"
   },
   "header": {

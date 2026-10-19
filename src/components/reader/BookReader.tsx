@@ -35,6 +35,8 @@ export const BookReader = memo(function BookReader(props: BookReaderProps) {
         show={s.showEndMessage}
         onClose={s.onClose}
         currentPage={s.currentPage}
+        seriesId={props.book.seriesId ?? null}
+        seriesRating={props.seriesRating ?? null}
       />
 
       <ControlButtons

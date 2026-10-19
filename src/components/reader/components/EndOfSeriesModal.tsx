@@ -1,17 +1,34 @@
+"use client";
+
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useTranslate } from "@/hooks/useTranslate";
 import { EASE_PROJECTION } from "@/lib/motion";
+import { useAnonymous } from "@/contexts/AnonymousContext";
+import { SeriesRatingControl } from "@/components/series/SeriesRatingControl";
+import type { NormalizedSeriesRating } from "@/lib/providers/types";
 
 interface EndOfSeriesModalProps {
   show: boolean;
   onClose: (currentPage: number) => void;
   currentPage: number;
+  /** Série notée à la fin de la lecture, si le provider la supporte. */
+  seriesId?: string | null;
+  seriesRating?: NormalizedSeriesRating | null;
 }
 
-export function EndOfSeriesModal({ show, onClose, currentPage }: EndOfSeriesModalProps) {
+export function EndOfSeriesModal({
+  show,
+  onClose,
+  currentPage,
+  seriesId,
+  seriesRating,
+}: EndOfSeriesModalProps) {
   const { t } = useTranslate();
+  const { isAnonymous } = useAnonymous();
 
   const reduce = useReducedMotion();
+
+  const canRate = !isAnonymous && Boolean(seriesId) && seriesRating != null;
 
   // Le rideau tombe sur la lecture, puis le carton de fin se lève.
   return (
@@ -36,6 +53,20 @@ export function EndOfSeriesModal({ show, onClose, currentPage }: EndOfSeriesModa
           >
             <h3 id="end-of-series-title" className="text-lg font-semibold mb-2">{t("reader.endOfSeries")}</h3>
             <p className="text-muted-foreground mb-4">{t("reader.endOfSeriesMessage")}</p>
+            {canRate && seriesId && (
+              <div className="mb-5">
+                <div className="mb-4 h-px bg-border" />
+                <p className="text-sm text-muted-foreground mb-3">{t("reader.endOfSeriesRate")}</p>
+                <div className="flex justify-center" data-testid="end-of-series-rating">
+                  <SeriesRatingControl
+                    seriesId={seriesId}
+                    initialRating={seriesRating?.userRating ?? null}
+                    providerRatings={seriesRating?.providerRatings ?? []}
+                    tone="surface"
+                  />
+                </div>
+              </div>
+            )}
             <button
               onClick={() => onClose(currentPage)}
               className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
