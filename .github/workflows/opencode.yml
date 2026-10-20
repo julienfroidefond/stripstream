@@ -11,8 +11,18 @@ on:
 # One run per issue/PR. A newer event supersedes the previous run instead of
 # queueing behind it: without this, a single wedged run blocks every further
 # `/oc` mention on that thread until the job timeout.
+#
+# The agent posts "Created PR #N" itself when it finishes. That issue_comment
+# event used to land in the same group and cancelled the run that had just
+# opened the PR, in the middle of its post-steps: successful runs were reported
+# as "cancelled" for this reason. Bot-triggered runs therefore get a throwaway
+# group, so they can never cancel real work.
 concurrency:
-  group: opencode-${{ github.event.issue.number || github.event.pull_request.number }}
+  group: >-
+    opencode-${{ github.event.sender.type == 'Bot'
+    && format('noop-{0}', github.run_id)
+    || github.event.issue.number
+    || github.event.pull_request.number }}
   cancel-in-progress: true
 
 env:
@@ -35,9 +45,10 @@ jobs:
       github.event.sender.type != 'Bot'
     runs-on: ubuntu-latest
     # install + lint + typecheck + unit tests + build on a warm cache takes
-    # ~10–15 min; the E2E suite adds a production build of its own. Cap the job
-    # so a wedged agent fails fast instead of holding the concurrency group.
-    timeout-minutes: 60
+    # ~10–15 min; the E2E suite adds a production build of its own, and the agent
+    # itself works 20–45 min on top of that. Cap the job so a wedged agent fails
+    # fast instead of holding the concurrency group.
+    timeout-minutes: 90
     permissions:
       id-token: write
     steps:
@@ -153,6 +164,7 @@ jobs:
     name: Reply to mention
     if: |
       github.event_name != 'issues' &&
+      github.event.sender.type != 'Bot' &&
       (contains(github.event.comment.body, '/oc') || contains(github.event.comment.body, '/opencode'))
     runs-on: ubuntu-latest
     timeout-minutes: 60
