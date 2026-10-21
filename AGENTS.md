@@ -61,7 +61,7 @@ Two automated suites run side by side: **Vitest** for pure/unit logic and **Play
 - Indentation: 2 spaces; keep imports grouped and sorted logically. ESLint + Prettier enforce style.
 - Styling: Tailwind utility classes; prefer existing `src/components/ui` primitives before creating new ones. Radix is wired up for dialog, dropdown, collapsible, radio-group, and toast.
 - Conventional Commits (`feat:`, `fix:`, `refactor:`, `chore:`, `docs:`, `perf:`).
-- The `<img>` lint rule is intentionally disabled for cover components (`book-cover`, `series-cover`, `BookGrid`, `BookList`, `GlobalSearch`, `cover-client`) because their `src` is already a thumbnailed proxy URL and `next/image` would just add an optimizer round-trip. Do not switch them to `next/image`.
+- The `<img>` lint rule is intentionally disabled for cover components (`book-cover`, `series-cover`, `ReadingListCover`, `BookGrid`, `BookList`, `GlobalSearch`, `cover-client`) because their `src` is already a thumbnailed proxy URL and `next/image` would just add an optimizer round-trip. Do not switch them to `next/image`.
 - Quality gates: `pnpm lint` (0 warnings) and `pnpm typecheck` must pass before merge.
 
 ## Commit & Pull Request Guidelines

@@ -7,6 +7,7 @@ import { StaggerGroup, StaggerItem } from "@/components/motion";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { Input } from "@/components/ui/input";
+import { ReadingListCover } from "@/components/reading-lists/ReadingListCover";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useAnonymous } from "@/contexts/AnonymousContext";
 import { useTranslate } from "@/hooks/useTranslate";
@@ -114,7 +115,6 @@ export function ReadingListsContent({ lists, isStripstream }: ReadingListsConten
           {filteredLists.map((list) => {
             const status = getReadingListStatus(list);
             const isCompleted = !isAnonymous && status === "read";
-            const firstCover = list.preview_covers[0];
 
             return (
               <StaggerItem key={list.id}>
@@ -125,12 +125,11 @@ export function ReadingListsContent({ lists, isStripstream }: ReadingListsConten
                   className={cn("group flex w-full flex-col gap-2 text-left transition-opacity", isCompleted && "opacity-70")}
                 >
                   <div className="relative aspect-2/3 overflow-hidden rounded-xl bg-surface-2">
-                    {firstCover ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={`/api/stripstream/images/books/${firstCover}/thumbnail`} alt={list.name} loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
-                    ) : (
-                      <div className="absolute inset-0 flex items-center justify-center"><BookMarked className="h-12 w-12 text-muted-foreground/40" /></div>
-                    )}
+                    <ReadingListCover
+                      covers={list.preview_covers}
+                      alt={list.name}
+                      className="absolute inset-0 h-full w-full object-cover"
+                    />
                     {!isAnonymous && (
                       <StatusBadge
                         status={status === "read" ? "success" : status === "reading" ? "reading" : "unread"}

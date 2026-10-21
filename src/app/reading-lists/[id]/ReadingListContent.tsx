@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { ArrowLeft, Book, BookMarked, BookOpen, Bookmark } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { SeriesGrid } from "@/components/library/SeriesGrid";
@@ -18,8 +19,11 @@ export function ReadingListContent({ detail }: ReadingListContentProps) {
   const router = useRouter();
   const { t } = useTranslate();
   const { isAnonymous } = useAnonymous();
-  const firstBookId = detail.items[0]?.first_book_id ?? null;
+  const [failedBannerCover, setFailedBannerCover] = useState<string | null>(null);
   const series = detail.items.map(StripstreamAdapter.toNormalizedReadingListSeries);
+  const bannerCovers = series.map((item) => item.thumbnailUrl).filter(Boolean);
+  const bannerCover =
+    bannerCovers.find((cover) => cover !== failedBannerCover) ?? "";
   const totalBooks = detail.items.reduce((total, item) => total + item.book_count, 0);
   const readBooks = detail.items.reduce((total, item) => total + item.books_read_count, 0);
   const allSeriesRead =
@@ -42,17 +46,18 @@ export function ReadingListContent({ detail }: ReadingListContentProps) {
       {/* Banner header — full-width blurred bg */}
       <div className="relative min-h-[200px] w-screen -ml-[calc((100vw-100%)/2)] overflow-hidden">
         {/* Blurred cover background */}
-        {firstBookId && (
+        {bannerCover && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={`/api/stripstream/images/books/${firstBookId}/thumbnail`}
+            src={bannerCover}
             alt=""
             aria-hidden="true"
+            onError={() => setFailedBannerCover(bannerCover)}
             className="absolute inset-0 h-full w-full object-cover blur-xs scale-105 brightness-50"
           />
         )}
         {/* Fallback neutre quand aucune couverture */}
-        {!firstBookId && (
+        {!bannerCover && (
           <div className="absolute inset-0 bg-surface-2" />
         )}
         <div className="absolute inset-0 bg-background/60" />

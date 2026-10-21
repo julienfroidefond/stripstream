@@ -15,7 +15,39 @@ import type {
   NormalizedReadProgress,
 } from "../types";
 
+const SENTINEL_BOOK_ID = "00000000-0000-0000-0000-000000000000";
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export class StripstreamAdapter {
+  private static bookThumbnail(bookId: string): string {
+    return `/api/stripstream/images/books/${bookId}/thumbnail`;
+  }
+
+  /**
+   * Series covers come from the first book when it exists; a series with no
+   * book yet only carries its metadata `cover_url`.
+   */
+  private static seriesThumbnail(
+    firstBookId: string | null | undefined,
+    coverUrl: string | null | undefined
+  ): string {
+    if (firstBookId && firstBookId !== SENTINEL_BOOK_ID) {
+      return StripstreamAdapter.bookThumbnail(firstBookId);
+    }
+    return coverUrl ?? "";
+  }
+
+  /**
+   * `preview_covers` mixes book UUIDs with raw `cover_url` values (series that
+   * have no book yet). Only a UUID can go through the book thumbnail proxy.
+   */
+  static resolveReadingListPreviewCover(cover: string | null | undefined): string {
+    if (!cover || cover === SENTINEL_BOOK_ID) return "";
+    return UUID_RE.test(cover)
+      ? StripstreamAdapter.bookThumbnail(cover)
+      : cover;
+  }
+
   static toNormalizedReadProgress(
     rp: StripstreamReadingProgressResponse | null
   ): NormalizedReadProgress | null {
@@ -77,10 +109,10 @@ export class StripstreamAdapter {
   }
 
   static toNormalizedSeries(series: StripstreamSeriesItem): NormalizedSeries {
-    const isValidId = series.first_book_id && series.first_book_id !== "00000000-0000-0000-0000-000000000000";
-    const thumbnailUrl = isValidId
-      ? `/api/stripstream/images/books/${series.first_book_id}/thumbnail`
-      : (series.cover_url ?? "");
+    const thumbnailUrl = StripstreamAdapter.seriesThumbnail(
+      series.first_book_id,
+      series.cover_url
+    );
     return {
       id: series.series_id,
       name: series.name,
@@ -102,10 +134,10 @@ export class StripstreamAdapter {
   }
 
   static toNormalizedRelatedSeries(item: StripstreamRelatedSeriesItem): NormalizedSeries {
-    const isValidId = item.first_book_id && item.first_book_id !== "00000000-0000-0000-0000-000000000000";
-    const thumbnailUrl = isValidId
-      ? `/api/stripstream/images/books/${item.first_book_id}/thumbnail`
-      : (item.cover_url ?? "");
+    const thumbnailUrl = StripstreamAdapter.seriesThumbnail(
+      item.first_book_id,
+      item.cover_url
+    );
     return {
       id: item.series_id,
       name: item.name,
@@ -126,15 +158,15 @@ export class StripstreamAdapter {
   }
 
   static toNormalizedReadingListSeries(item: StripstreamReadingListItem): NormalizedSeries {
-    const isValidId = item.first_book_id && item.first_book_id !== "00000000-0000-0000-0000-000000000000";
     return {
       id: item.id,
       name: item.name,
       bookCount: item.book_count,
       booksReadCount: item.books_read_count,
-      thumbnailUrl: isValidId
-        ? `/api/stripstream/images/books/${item.first_book_id}/thumbnail`
-        : (item.cover_url ?? ""),
+      thumbnailUrl: StripstreamAdapter.seriesThumbnail(
+        item.first_book_id,
+        item.cover_url
+      ),
       libraryId: item.library_id,
       summary: null,
       authors: [],
@@ -147,10 +179,10 @@ export class StripstreamAdapter {
   }
 
   static toNormalizedRecommendedSeries(item: StripstreamRecommendedSeriesItem): NormalizedSeries {
-    const isValidId = item.first_book_id && item.first_book_id !== "00000000-0000-0000-0000-000000000000";
-    const thumbnailUrl = isValidId
-      ? `/api/stripstream/images/books/${item.first_book_id}/thumbnail`
-      : (item.cover_url ?? "");
+    const thumbnailUrl = StripstreamAdapter.seriesThumbnail(
+      item.first_book_id,
+      item.cover_url
+    );
     return {
       id: item.series_id,
       name: item.name,

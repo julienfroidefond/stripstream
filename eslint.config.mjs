@@ -122,6 +122,7 @@ export default defineConfig([
       "src/components/ui/cover-client.tsx",
       "src/components/ui/book-cover.tsx",
       "src/components/ui/series-cover.tsx",
+      "src/components/reading-lists/ReadingListCover.tsx",
       "src/components/series/BookGrid.tsx",
       "src/components/series/BookList.tsx",
       "src/components/layout/GlobalSearch.tsx",
