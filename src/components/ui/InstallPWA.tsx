@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { Download, X } from "lucide-react";
 import logger from "@/lib/logger";
 import { buildStorageKey } from "@/lib/storage";
@@ -21,6 +22,7 @@ const DISMISS_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 jours en millisecondes
 
 export function InstallPWA() {
   const scope = useUserScope();
+  const pathname = usePathname();
   // `localStorage` est partagé par tous les comptes du navigateur : la clé doit
   // porter l'id de l'utilisateur, sinon un compte masque la bannière de l'autre.
   const dismissKey = buildStorageKey(scope, DISMISS_STORAGE_SUFFIX);
@@ -107,10 +109,17 @@ export function InstallPWA() {
   };
 
   // Ne pas afficher si :
+  // - On est sur Le Wall : la bannière recouvrirait ses commandes et le panneau de filtres.
   // - L'app n'est pas installable ET ce n'est pas iOS
   // - OU si l'invite a été fermée
   // - OU si on est en mode standalone (PWA)
-  if ((!isInstallable && !isIOS) || isDismissed || isStandalone) return null;
+  if (
+    pathname === "/wall" ||
+    (!isInstallable && !isIOS) ||
+    isDismissed ||
+    isStandalone
+  )
+    return null;
 
   return (
     <div
