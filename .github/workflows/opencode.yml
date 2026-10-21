@@ -49,6 +49,14 @@ jobs:
     # itself works 20–45 min on top of that. Cap the job so a wedged agent fails
     # fast instead of holding the concurrency group.
     timeout-minutes: 90
+    # `issues` is a low-trust trigger: GitHub hands the job a read-only cache
+    # token ("Cache mode: read" / "cache write denied: token has no writable
+    # scopes"), so neither the pnpm store nor the OpenCode CLI cache is ever
+    # saved. `cache-mode: write` opts this job out of the read-only default.
+    # Do not add `actions: write` for this: cache access is enforced with scoped
+    # cache tokens, and a job with only `contents: read` saves caches fine (see
+    # ci.yml). See .github/workflows/README.md#caches.
+    cache-mode: write
     permissions:
       id-token: write
     steps:
@@ -168,6 +176,10 @@ jobs:
       (contains(github.event.comment.body, '/oc') || contains(github.event.comment.body, '/opencode'))
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    # Same as the `issue` job: `issue_comment` / `pull_request_review_comment`
+    # are low-trust triggers, so the cache stays read-only unless the job asks
+    # for `cache-mode: write`. See .github/workflows/README.md#caches.
+    cache-mode: write
     permissions:
       id-token: write
     steps:

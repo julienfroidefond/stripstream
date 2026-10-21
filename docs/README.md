@@ -15,6 +15,8 @@ This index is the entry point to the Stripstream documentation set. Start here, 
 | [`api.md`](./api.md) | Developers integrating with the app | Current API surface: route handlers and the server actions that replaced the old REST routes. |
 | [`komga-api-summary.md`](./komga-api-summary.md) | Developers working on the Komga provider | Summary of the upstream Komga API endpoints the app relies on. |
 | [`../tests/README.md`](../tests/README.md) | Developers running or writing tests | Playwright E2E setup, commands, and conventions. |
+| [`../.github/workflows/README.md`](../.github/workflows/README.md) | Maintainers and release engineers | CI/CD internals: workflows, required check, image tags, deploy runner, and the Actions cache policy. |
+| [`../.github/dependabot-policy.md`](../.github/dependabot-policy.md) | Maintainers | Dependabot grouping, auto-merge scope, framework exclusions, and schedule. |
 | [`../.env.example`](../.env.example) | Operators and developers | Config template. Copy it to `.env` and fill in real values. |
 
 ## How to use this doc set

@@ -28,16 +28,13 @@ Use `pnpm` (lockfile and `packageManager` are configured for it). All commands r
 - `pnpm reset-admin-password`: reset admin credentials.
 - `pnpm icons`: regenerate PWA icons and splash screens.
 - `pnpm prisma migrate deploy`: apply pending migrations (or `pnpm prisma migrate dev --name <n>` while developing).
+- After creating or changing `.env`/`DATABASE_URL`, run `pnpm prisma generate`: `pnpm install` runs it in `postinstall`, before `.env` exists on a fresh clone, so the client and standalone scripts such as `scripts/init-db.ts` must be regenerated once.
 
 ## Testing Guidelines
 Two automated suites run side by side: **Vitest** for pure/unit logic and **Playwright** for user-facing E2E.
-- `pnpm test:unit`: Vitest unit suite. Tests live next to the source as `src/**/*.test.ts` and run in `node` by default (per-file `// @vitest-environment jsdom` opt-in for DOM hooks). Config: `vitest.config.ts`.
-- Put pure logic (adapters, helpers, parsers, rate-limiters) under unit tests; keep browser-only behaviour in E2E. Hooks that only need a DOM (no real network/paint) can opt in per-file with the `// @vitest-environment jsdom` docblock together with `@testing-library/react`; heavier browser flows stay in E2E.
-- `pnpm test:e2e`: build `.next-e2e` then run the full suite (`setup`, then `read-only`, then `mutating`).
-- `pnpm test:e2e:read-only`: run only read-only journeys (plus the `setup` dependency).
-- `pnpm test:e2e:mutating`: run only mutating journeys (plus `setup` and `read-only` dependencies).
-- `pnpm test:e2e:ui`: interactive UI mode.
-- `pnpm test:e2e:run`, `test:e2e:build`, `test:e2e:report`, `test:e2e:timings`: rerun without rebuilding, build only, open the last report, and parse a JSON report.
+- `pnpm test:unit`: tests live next to the source as `src/**/*.test.ts` and run in `node` by default (per-file `// @vitest-environment jsdom` opt-in for DOM hooks, with `@testing-library/react`). Config: `vitest.config.ts`.
+- Put pure logic (adapters, helpers, parsers, rate-limiters) under unit tests; keep browser-only behaviour in E2E. Heavier browser flows that need real network/paint stay in E2E.
+- `pnpm test:e2e`: build `.next-e2e` then run the full suite (`setup`, then `read-only`, then `mutating`). `test:e2e:read-only` / `test:e2e:mutating` run one project plus its dependencies; `test:e2e:run`, `test:e2e:build`, `test:e2e:report`, `test:e2e:timings` rerun without rebuilding, build only, open the last report, and parse a JSON report; `test:e2e:ui` is the interactive mode.
 - Prerequisite once per machine: `pnpm exec playwright install chromium`.
 - `tests/README.md` is the reference for projects, execution order, auth state, the read-only runtime proof, and E2E environment variables.
 - Minimum quality gate for every change: `pnpm lint` (0 warnings), `pnpm typecheck` and `pnpm test:unit`.
@@ -45,96 +42,23 @@ Two automated suites run side by side: **Vitest** for pure/unit logic and **Play
 
 ## Architecture
 
-### Multi-provider abstraction (the core pattern)
-Stripstream is a comic reader frontend and does **not** own the library. It talks to one of two backends per user:
-- **Komga** (Spring API, basic auth)
-- **Stripstream Librarian** (custom API, bearer token). The Librarian is a separate repository — [`julienfroidefond/stripstream-librarian`](https://github.com/julienfroidefond/stripstream-librarian) (Rust/axum + PostgreSQL) — maintained by the same author and usually cloned as a sibling directory (`../stripstream-librarian`). This repo consumes its read-scoped Client API (`Bearer stl_{prefix}_{secret}`); treat that surface as a public contract. Full two-repo layout in [`docs/ecosystem.md`](docs/ecosystem.md).
+`docs/architecture.md` is the system reference: provider abstraction, caching and TTLs, error model, reader, localStorage scoping, migrations, rate limiting, PWA state, and known limitations. Read the matching section before changing a surface. This file keeps only the rules that change what you write.
 
-`src/lib/providers/provider.interface.ts` defines `IMediaProvider` (libraries, series, books, read progress, search, URL builders). Two concrete implementations live in `komga/komga.provider.ts` and `stripstream/stripstream.provider.ts`. Server code requests the active provider via:
-
-```ts
-const provider = await getProvider(); // src/lib/providers/provider.factory.ts
-```
-
-The factory resolves the per-browser active connection through `getActiveConnection(userId)` (`src/lib/active-connection.ts:24-67`), which reads the httpOnly cookies `stripstream-active-provider` and the matching config cookie, validates the id against the user's rows, and falls back to the user's first config. The `User.activeProvider` / `activeKomgaConfigId` / `activeStripstreamConfigId` columns are legacy and are not read by app code (only written by `tests/global-setup.ts`). **Never bypass this**. Direct calls to provider classes break multi-config support.
-
-A user can hold multiple `KomgaConfig` and `StripstreamConfig` rows; only one of each type is active at a time. `Favorite` is scoped per `(userId, komgaConfigId|stripstreamConfigId, seriesId)` so favorites do not leak across configs.
-
-### Server-first data flow
-Pages (`src/app/**/page.tsx`) and layouts are React Server Components. They fetch through the provider and pass serialized normalized props to client components. Mutations live in `src/app/actions/*.ts` (Next.js server actions). Client components (`"use client"`) are reserved for browser-only concerns: event handlers, refs, effects. **Do not introduce client-side `fetch` to internal APIs when a server action would do.**
-
-Image streams are the exception: `/api/komga/...` and `/api/stripstream/images/...` proxy thumbnails and pages so the browser can use `<img src=...>` with auth handled server-side.
-
-### Caching with granular tags
-The **Komga** provider (and favorites) wrap reads in `unstable_cache(...)` with tags from `src/constants/cacheConstants.ts` plus per-id tags. The **Stripstream** provider caches through fetch options (`next: { revalidate, tags }`) in `src/lib/providers/stripstream/stripstream.client.ts`. Tag scopes:
-- `HOME_CACHE_TAG` for the global home feed.
-- `LIBRARY_SERIES_CACHE_TAG` + `library-series:${libraryId}`.
-- `SERIES_BOOKS_CACHE_TAG` + `series-books:${seriesId}`.
-- `BOOK_CACHE_TAG` for single-book reads.
-- `SERIES_RATING_CACHE_TAG` for series ratings.
-- `FAVORITES_CACHE_TAG`.
-
-This list covers the main scopes; see `docs/architecture.md` §3 for the full tag table and TTLs.
-
-Mutations invalidate caches with `updateTag(...)` from `next/cache` (plus `revalidatePath(...)` where a route needs it). The call sites live in `src/app/actions/`: `favorites.ts`, `read-progress.ts`, `ratings.ts`, `config.ts`, `stripstream-config.ts`, and `refresh.ts`. Touch only the narrow per-id tag when possible: the global tag invalidates everything for that scope and tanks hit rate. `revalidateTag` is historical only; there is no call site in `src/` (the lone textual mention is a stale comment in `src/components/series/SeriesHeader.tsx`). `force-dynamic` was deliberately removed from image routes; do not reintroduce it without a specific reason.
-
-### Errors
-All thrown errors should be `AppError` from `src/utils/errors.ts`, with a code from `src/constants/errorCodes.ts` and a localized message keyed by `errors.${code}` in `src/i18n/messages/{fr,en}/common.json`. Provider errors are status-aware: use `codeForHttpStatus(status, codes)` from `src/utils/http-error.ts` to map 401/403/404/5xx onto provider-specific codes (`KOMGA_UNAUTHORIZED`, `STRIPSTREAM_NOT_FOUND`, etc.). `getHomeContinueReadingData` uses `Promise.allSettled` and only throws past a failure threshold so the home stays usable when one provider is down (`getHomeData` itself uses `Promise.all`).
-
-Test-connection actions (`testKomgaConnection`, `testStripstreamConnection`) are gated by `requireUserId()` + `checkRateLimit` from `src/utils/rate-limit.ts`. Keep that pattern when adding similar credential-touching actions.
-
-### Reader (`src/components/reader/`)
-The reader is the most stateful surface. Key hooks in `src/components/reader/hooks/`:
-- `useReaderState`: orchestrates page state across the book session.
-- `usePageNavigation`: prev/next, syncs the `read-progress` server action with `seriesId` for granular cache invalidation.
-- `useImageLoader`: concurrent prefetch + retry with exponential backoff + LRU-style window eviction (`computeEvictionKeys` in `imageEviction.ts`); the same `prefetchKey(key, url)` is used for current and next-book pages.
-- `useTouchNavigation`, `useDoublePageMode`, `useFitMode`, `useFullscreen`, `useReadingDirection`.
-
-The reader holds blob URLs for fetched pages. Eviction is mandatory when navigating, otherwise memory grows unbounded on long books.
-
-Keyboard shortcuts go through the pure `resolveReaderShortcut` (`src/components/reader/hooks/keyboardShortcuts.ts`), executed by `useReaderState`: arrows are RTL-aware, `PageUp`/`PageDown`/`Space`/`Home`/`End` toggle pages, `F`/`D`/`T`/`I`/`R` toggle fullscreen/double page/thumbnails/info/direction, `?` opens `ReaderShortcutsDialog`. Inputs and contenteditable regions are guarded, `Space` is left to the focused control, and an open dialog keeps `Escape` for Radix. Add any new key to the dialog list too.
-
-### LocalStorage scoping
-Anything user-specific stored in `localStorage` must be scoped, otherwise user A and user B on the same device share state.
-
-Use `buildStorageKey(scope, key)` from `src/lib/storage.ts`, which prefixes keys as `stripstream:<userId>:<key>`. The scope is the signed-in user id, resolved server-side in `src/app/layout.tsx` and consumed in client components through `useUserScope()` (`src/contexts/UserScopeContext.tsx`) — **never** guess it on the client. Public pages fall back to the `anonymous` scope. Consumers today: `pwa-install-dismissed` (`src/components/ui/InstallPWA.tsx`) and `recommendations-view-mode` (`src/components/home/RecommendationsRow.tsx`). Read progress and reading direction are persisted server-side (`src/app/actions/read-progress.ts`, `src/components/reader/hooks/useReadingDirection.ts:11`), so they do not live in localStorage. See `docs/architecture.md` §6 and §11(b).
-
-### i18n
-`react-i18next` with namespaces under `src/i18n/messages/{fr,en}/common.json`. Add a key in **both** locales when introducing user-facing copy. Error messages live under `errors.${ERROR_CODE}`.
-
-### Prisma migrations on SQLite
-SQLite's `ALTER TABLE` only supports adding columns and renaming. Anything else (changing a constraint, dropping a column, switching `@unique` shape) requires the **manual rebuild pattern** used by `20260429000000_multi_config` and `20260505000000_dedupe_favorites`:
-
-```sql
-PRAGMA foreign_keys=OFF;
-CREATE TABLE "new_x" (...);          -- new shape
-INSERT INTO "new_x" SELECT ... FROM "x";
-DROP TABLE "x";
-ALTER TABLE "new_x" RENAME TO "x";
--- recreate indexes
-PRAGMA foreign_keys=ON;
-```
-
-Do not let Prisma auto-generate when changing constraints; it will lose data. Hand-write the SQL, preserve rows in `INSERT ... SELECT`, and make the migration idempotent so re-runs in dev/prod are no-ops. Migrations are applied automatically via `prisma migrate deploy` on prod boot.
-
-After creating or changing `.env`/`DATABASE_URL`, run `pnpm prisma generate` so the generated client and standalone scripts such as `scripts/init-db.ts` read the new value. This matters on a fresh clone: `pnpm install` runs `prisma generate` in its postinstall hook before `.env` exists, so the client must be regenerated once the file is created.
-
-### PWA / offline
-Offline reading and the service worker were removed. There is **no** `public/sw.js`, no Cache Storage usage, and no book-download feature. All pages, API data, and images are fetched from the network (Next.js/native HTTP caching only).
-
-The web app manifest (`public/manifest.json`) and `InstallPWA` are kept so the app can still be installed as a PWA shell, but nothing is cached for offline use.
-
-### Rate limiting
-`checkRateLimit` from `src/utils/rate-limit.ts` is **in-memory per process**, so it resets on every redeploy and is not shared across instances. Acceptable for the current SQLite-bound mono-instance deployment; if we ever scale horizontally, this needs to move to a shared store.
+- **Providers — never bypass the factory.** `IMediaProvider` (`src/lib/providers/provider.interface.ts`) has two implementations (Komga, Stripstream); server code gets the active one with `const provider = await getProvider()`. The factory resolves the per-browser connection from the `stripstream-active-provider*` cookies and the user's rows — direct `new KomgaProvider()` / `new StripstreamProvider()` breaks multi-config support. Mirror interface changes in both implementations. A user can hold several configs of each type; `Favorite` is scoped per `(userId, configId, seriesId)` so favorites never leak across configs. Legacy `User.activeProvider*` columns are not read by app code (still written by `tests/global-setup.ts`).
+- **Server-first.** Pages/layouts are React Server Components that fetch through the provider and pass serialized props down; mutations are server actions in `src/app/actions/`. Use `"use client"` only for browser-only concerns (handlers, refs, effects, DOM) and do not add client-side `fetch` to internal APIs when a server action would do. The only exception is the `/api/...` image/search proxies, which exist so `<img src=...>` works with credentials kept server-side.
+- **Caching.** Tag constants live in `src/constants/cacheConstants.ts`; the Komga provider and favorites use `unstable_cache(...)`, the Stripstream provider uses fetch options (`next: { revalidate, tags }`) in `stripstream.client.ts`. Invalidate with `updateTag(...)` from `next/cache` (plus `revalidatePath(...)` where needed) and prefer the narrow per-id tag (`library-series:${id}`, `series-books:${id}`, `series-rating:${id}`): the global tag invalidates a whole scope and tanks the hit rate. `revalidateTag` has no call site — do not reintroduce it on the strength of a stale comment. `force-dynamic` was deliberately removed from image routes; keep it off unless there is a specific reason (settings/admin/account pages still use it intentionally).
+- **Errors.** Throw `AppError` (`src/utils/errors.ts`) with a code from `src/constants/errorCodes.ts` and a message keyed `errors.${code}` in both locales. Map provider HTTP failures with `codeForHttpStatus(status, codes)` (`src/utils/http-error.ts`). Home keeps degrading gracefully: one failing feed renders empty (`Promise.allSettled` with a failure threshold in `getHomeContinueReadingData`). Credential-touching actions stay gated by `requireUserId()` + `checkRateLimit`.
+- **Reader** (`src/components/reader/`). Blob page URLs must be revoked and evicted when navigating (`useImageLoader` + `imageEviction.ts`), otherwise memory grows unbounded on long books. Keyboard shortcuts go through the pure `resolveReaderShortcut` (`hooks/keyboardShortcuts.ts`): arrows are RTL-aware, `PageUp`/`PageDown`/`Space`/`Home`/`End` page, `F`/`D`/`T`/`I`/`R` toggle fullscreen/double page/thumbnails/info/direction, `?` opens the shortcuts dialog. Inputs/contenteditable are guarded, `Space` is left to the focused control and an open dialog keeps `Escape` for Radix. Add every new key to `ReaderShortcutsDialog` too.
+- **localStorage.** Anything user-specific must be scoped: `buildStorageKey(scope, key)` from `src/lib/storage.ts` yields `stripstream:<userId>:<key>`, with the scope resolved server-side in `src/app/layout.tsx` and read through `useUserScope()` — **never** guess it on the client (public pages use `anonymous`). Read progress and reading direction live server-side, not in localStorage.
+- **i18n.** `react-i18next`, namespaces under `src/i18n/messages/{fr,en}/common.json`. Add user-facing copy in **both** locales.
+- **Prisma migrations on SQLite.** `ALTER TABLE` only adds columns or renames, so anything else requires the hand-written rebuild pattern of `20260429000000_multi_config` / `20260505000000_dedupe_favorites` (copy rows into `new_x`, drop, rename, recreate indexes, `PRAGMA foreign_keys` off/on). Do not let Prisma auto-generate it — data would be lost — and keep the migration idempotent; prod applies it with `prisma migrate deploy` on boot.
+- **PWA.** Installable shell only: `public/manifest.json` + `InstallPWA`. Offline reading and the service worker were removed; there is no `public/sw.js`, no Cache Storage and no download feature. Do not reintroduce them silently.
+- **Rate limiting.** `checkRateLimit` (`src/utils/rate-limit.ts`) is an in-memory per-process `Map`: it resets on redeploy and is not shared across instances. Fine for the current single-instance SQLite deployment; it must move to a shared store before scaling out.
 
 ## Coding Style & Naming Conventions
 - Language: TypeScript (`.ts/.tsx`) with React function components; strict mode (no `any` without an `eslint-disable` justification).
-- Architecture priority: **server-first**. Default to React Server Components (RSC) for pages and feature composition.
-- Data mutations: prefer **Server Actions** (`src/app/actions/`) over client-side fetch patterns.
-- Client components (`"use client"`): use only for browser-only concerns (event handlers, local UI state, effects, DOM APIs).
-- Data fetching: do it on the server first (`page.tsx`, server components, services in `src/lib/services`), then pass serialized props down.
-- Indentation: 2 spaces; keep imports grouped and sorted logically. ESLint + Prettier enforce style.
 - Components/hooks/services: `PascalCase.tsx` for components, `useThing.ts` for hooks, `camelCase` for functions, `*.service.ts` for service modules.
+- Indentation: 2 spaces; keep imports grouped and sorted logically. ESLint + Prettier enforce style.
 - Styling: Tailwind utility classes; prefer existing `src/components/ui` primitives before creating new ones. Radix is wired up for dialog, dropdown, collapsible, radio-group, and toast.
 - Conventional Commits (`feat:`, `fix:`, `refactor:`, `chore:`, `docs:`, `perf:`).
 - The `<img>` lint rule is intentionally disabled for cover components (`book-cover`, `series-cover`, `BookGrid`, `BookList`, `GlobalSearch`, `cover-client`) because their `src` is already a thumbnailed proxy URL and `next/image` would just add an optimizer round-trip. Do not switch them to `next/image`.
@@ -150,22 +74,11 @@ The web app manifest (`public/manifest.json`) and `InstallPWA` are kept so the a
   - verification steps/commands run.
 
 ## CI/CD
-GitHub Actions is the single deployment path (the former Gitea pipeline has been retired).
-- `.github/workflows/ci.yml` — PR-only quality gate: `pnpm install --frozen-lockfile`, `pnpm lint`,
-  `pnpm typecheck`, `pnpm build`. Its `Quality (lint · typecheck · build)` check is required on `main`.
-- `.github/workflows/deploy.yml` — on push to `main` (or manual dispatch) it builds the image on a
-  GitHub-hosted runner and pushes `latest`, `<version>` and `<version>-<sha>` to Docker Hub
-  (`julienfroidefond32/stripstream`, registry cache tag `buildcache`), then deploys on the self-hosted
-  `mac-mini` runner: `docker pull` + `./scripts/stack.sh up stripstream` from
-  `/Users/julienfroidefond/Sites/docker-stack`. Commits prefixed `chore|docs|style|test|ci|build`
-  skip the build (same types the auto-bump hook ignores).
-- The version comes from `package.json` (auto-bumped by `.husky/post-commit` from the Conventional
-  Commit type); the short SHA is appended to the image tag.
-- `.github/dependabot.yml` — dependency automation (npm/pnpm, GitHub Actions, Docker). Minor/patch
-  updates are grouped by family and auto-merged once the `Quality` check passes, via
-  `.github/workflows/dependabot-auto-merge.yml`; majors and the framework/runtime deps (`next`,
-  `react`, `react-dom`, `@prisma/client`, `prisma`, `sharp`) stay manual. Dependabot replaces the
-  former Renovate setup — do not re-add `renovate.json` alongside it, or you will get duplicate PRs.
+GitHub Actions is the single deployment path (the former Gitea pipeline has been retired). The
+`Quality (lint · typecheck · build)` check of `.github/workflows/ci.yml` is required on `main`;
+`deploy.yml` builds the image and deploys it on the self-hosted `mac-mini` runner. Pipeline internals,
+image tags, required-check rules and the Actions cache policy: [`.github/workflows/README.md`](.github/workflows/README.md).
+Dependency automation and its grouping/auto-merge policy: [`.github/dependabot-policy.md`](.github/dependabot-policy.md).
 
 ## Security & Configuration Tips
 - Never commit secrets; use `.env` based on `.env.example`.
