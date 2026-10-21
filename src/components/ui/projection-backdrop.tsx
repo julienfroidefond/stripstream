@@ -30,7 +30,7 @@ interface ProjectionBackdropProps {
 /**
  * Fond d'affiche — la couverture, très floutée, éclaire la scène.
  *
- * Un travelling lent garde la salle vivante : translation et zoom sur deux
+ * Un travelling continu garde la salle vivante : translation et zoom sur deux
  * éléments imbriqués, chacun sa durée. Il est écrit en CSS (classes
  * `animate-backdrop-pan` / `animate-backdrop-zoom`) et non en JS : une boucle
  * infinie n'a ainsi rien à monter, elle démarre dès que la classe est posée et

@@ -223,11 +223,11 @@ function RecommendationHero({
           <motion.div
             key={s.id}
             custom={direction}
-            variants={carouselSlide}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={CAROUSEL_TRANSITION}
+            variants={reduce ? undefined : carouselSlide}
+            initial={reduce ? false : "enter"}
+            animate={reduce ? undefined : "center"}
+            exit={reduce ? undefined : "exit"}
+            transition={reduce ? { duration: 0 } : CAROUSEL_TRANSITION}
             drag={hasMany ? "x" : false}
             dragConstraints={{ left: 0, right: 0 }}
             dragElastic={0.2}
