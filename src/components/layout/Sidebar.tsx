@@ -3,6 +3,7 @@
 import {
   Home,
   Bookmark,
+  LayoutGrid,
   Settings,
   LogOut,
   User,
@@ -95,6 +96,12 @@ export function Sidebar({
             label={t("sidebar.home")}
             active={pathname === "/"}
             onClick={() => handleLinkClick("/")}
+          />
+          <NavButton
+            icon={LayoutGrid}
+            label={t("sidebar.wall")}
+            active={pathname === "/wall"}
+            onClick={() => handleLinkClick("/wall")}
           />
           <NavButton
             icon={Bookmark}

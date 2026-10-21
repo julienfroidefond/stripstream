@@ -16,6 +16,12 @@ export const EASE_PROJECTION: [number, number, number, number] = [0.22, 1, 0.36,
 /** Courbe d'appui pour les micro-interactions (survol, focus). */
 export const EASE_OUT: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
+/**
+ * Vol de la caméra vers une œuvre : la cible est dépassée d'un rien avant que
+ * l'image se pose, comme un projecteur qui corrige son cadrage.
+ */
+export const EASE_FOCUS: [number, number, number, number] = [0.18, 1.075, 0.32, 1];
+
 /** Perspective commune aux gestes en 3D (cartes distribuées, affiches qui pivotent). */
 export const PERSPECTIVE = 1100;
 
