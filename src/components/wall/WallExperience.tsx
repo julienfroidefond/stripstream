@@ -40,6 +40,12 @@ import {
   hashId,
   visibleWallTiles,
 } from "@/lib/wall-layout";
+import {
+  capMomentum,
+  decayMomentum,
+  isMomentumDying,
+  signedVelocity,
+} from "@/lib/wall-momentum";
 import type { WallItem, WallRect, WallRenderTile } from "@/types/wall";
 import { WallFrame } from "./WallFrame";
 import {
@@ -136,7 +142,6 @@ const HOVER_DIM_EXIT_DELAY = 160;
 const FILTERS_STORAGE_SUFFIX = "wall-libraries";
 const DRAG_CLICK_GUARD = 420;
 const DRAG_THRESHOLD = 3;
-const MOMENTUM = 190;
 const WHEEL_ZOOM = 0.0022;
 const ZOOM_STEP = 1.28;
 /** Seuils de recalcul de la liste des tuiles visibles pendant un geste. */
@@ -252,6 +257,7 @@ export function WallExperience({ items }: WallExperienceProps) {
   const pinchRef = useRef<PinchOrigin | null>(null);
   const dragBlockedRef = useRef(false);
   const cameraRef = useRef<CameraState>({ x: 0, y: 0, scale: 1 });
+  const momentumRafRef = useRef<number | null>(null);
 
   const x = useMotionValue(0);
   const y = useMotionValue(0);
@@ -551,6 +557,29 @@ export function WallExperience({ items }: WallExperienceProps) {
   useMotionValueEvent(y, "change", scheduleCameraSync);
   useMotionValueEvent(scale, "change", scheduleCameraSync);
 
+  /** Toute animation programmée reprend la main : l'inertie s'efface. */
+  const stopMomentum = useCallback(() => {
+    if (momentumRafRef.current !== null) {
+      window.cancelAnimationFrame(momentumRafRef.current);
+      momentumRafRef.current = null;
+    }
+  }, []);
+
+  /**
+   * Pendant un geste, les tuiles passent sous le curseur : le survol serait
+   * un stroboscope. On coupe l'effet de focus jusqu'à ce que la main s'arrête.
+   */
+  const markPanning = useCallback(() => {
+    setPanning(true);
+    if (panIdleTimerRef.current !== null) {
+      window.clearTimeout(panIdleTimerRef.current);
+    }
+    panIdleTimerRef.current = window.setTimeout(() => {
+      panIdleTimerRef.current = null;
+      setPanning(false);
+    }, PAN_IDLE);
+  }, []);
+
   const animateView = useCallback(
     (
       nextScale: number,
@@ -559,6 +588,7 @@ export function WallExperience({ items }: WallExperienceProps) {
       duration = 0.8,
       ease: [number, number, number, number] = EASE_PROJECTION
     ) => {
+      stopMomentum();
       animate(scale, nextScale, {
         duration: reduce ? 0 : duration,
         ease,
@@ -572,7 +602,54 @@ export function WallExperience({ items }: WallExperienceProps) {
         ease,
       });
     },
-    [reduce, scale, x, y]
+    [reduce, scale, stopMomentum, x, y]
+  );
+
+  /**
+   * Inertie du mur : la vitesse du geste est freinée par une friction
+   * exponentielle, image par image. `@use-gesture` fournit une vitesse absolue,
+   * `signedVelocity` lui rend son sens, puis le mur ralentit progressivement.
+   */
+  const startMomentum = useCallback(
+    (
+      velocity: readonly [number, number],
+      direction: readonly [number, number],
+      movement: readonly [number, number]
+    ) => {
+      stopMomentum();
+      if (reduce) return;
+
+      const [rawX, rawY] = signedVelocity(velocity, direction, movement);
+      const [startX, startY] = capMomentum(rawX, rawY);
+      if (isMomentumDying(startX, startY)) return;
+
+      let vx = startX;
+      let vy = startY;
+      let last = performance.now();
+      markPanning();
+
+      const step = (now: number) => {
+        // Un onglet en arrière-plan peut sauter plusieurs secondes : on borne
+        // le pas pour éviter une téléportation du mur au retour.
+        const elapsed = Math.min(64, Math.max(0, now - last));
+        last = now;
+        vx = decayMomentum(vx, elapsed);
+        vy = decayMomentum(vy, elapsed);
+
+        x.set(x.get() + vx * elapsed);
+        y.set(y.get() + vy * elapsed);
+        markPanning();
+
+        if (isMomentumDying(vx, vy)) {
+          momentumRafRef.current = null;
+          return;
+        }
+        momentumRafRef.current = window.requestAnimationFrame(step);
+      };
+
+      momentumRafRef.current = window.requestAnimationFrame(step);
+    },
+    [markPanning, reduce, stopMomentum, x, y]
   );
 
   const cancelReveal = useCallback(() => {
@@ -738,6 +815,7 @@ export function WallExperience({ items }: WallExperienceProps) {
       const currentScale = scale.get();
       if (Math.abs(nextScale - currentScale) < 0.0005) return;
 
+      stopMomentum();
       closePlaque();
       const rect = stage.getBoundingClientRect();
       const focusX = clientX - rect.left;
@@ -750,7 +828,7 @@ export function WallExperience({ items }: WallExperienceProps) {
       y.set(focusY - worldY * nextScale);
       setOverview(false);
     },
-    [clampZoom, closePlaque, scale, x, y]
+    [clampZoom, closePlaque, scale, stopMomentum, x, y]
   );
 
   const zoomBy = useCallback(
@@ -827,21 +905,15 @@ export function WallExperience({ items }: WallExperienceProps) {
   }, [fitView, overview, resetView]);
 
   const settleView = useCallback(
-    (velocity?: readonly [number, number]) => {
-      if (reduce || !velocity) return;
-      if (Math.abs(velocity[0]) < 0.04 && Math.abs(velocity[1]) < 0.04) {
-        return;
-      }
-
-      // Glissade courte : le mur s'arrête comme une plaque un peu lourde.
-      animateView(
-        scale.get(),
-        x.get() + velocity[0] * MOMENTUM,
-        y.get() + velocity[1] * MOMENTUM,
-        0.7
-      );
+    (
+      velocity?: readonly [number, number],
+      direction?: readonly [number, number],
+      movement?: readonly [number, number]
+    ) => {
+      if (reduce || !velocity || !direction || !movement) return;
+      startMomentum(velocity, direction, movement);
     },
-    [animateView, reduce, scale, x, y]
+    [reduce, startMomentum]
   );
 
   const goToRandom = useCallback(() => {
@@ -895,6 +967,7 @@ export function WallExperience({ items }: WallExperienceProps) {
         dragBlockedRef.current = isUiTarget(state.target);
         if (dragBlockedRef.current) return;
 
+        stopMomentum();
         dragOriginRef.current = { x: x.get(), y: y.get() };
         scale.stop();
         x.stop();
@@ -931,7 +1004,7 @@ export function WallExperience({ items }: WallExperienceProps) {
           }, DRAG_CLICK_GUARD);
         }
 
-        settleView(state.velocity);
+        settleView(state.velocity, state.direction, state.movement);
       },
       onPinchStart: (state) => {
         if (isUiTarget(state.target)) {
@@ -941,6 +1014,7 @@ export function WallExperience({ items }: WallExperienceProps) {
         const stage = stageRef.current;
         if (!stage) return;
 
+        stopMomentum();
         const rect = stage.getBoundingClientRect();
         const startScale = scale.get();
         const originX = state.origin[0] - rect.left;
@@ -977,7 +1051,6 @@ export function WallExperience({ items }: WallExperienceProps) {
       onPinchEnd: () => {
         pinchRef.current = null;
         setDragging(false);
-        settleView();
       },
     },
     {
@@ -1113,21 +1186,6 @@ export function WallExperience({ items }: WallExperienceProps) {
     return () => observer.disconnect();
   }, []);
 
-  /**
-   * Pendant un geste, les tuiles passent sous le curseur : le survol serait
-   * un stroboscope. On coupe l'effet de focus jusqu'à ce que la main s'arrête.
-   */
-  const markPanning = useCallback(() => {
-    setPanning(true);
-    if (panIdleTimerRef.current !== null) {
-      window.clearTimeout(panIdleTimerRef.current);
-    }
-    panIdleTimerRef.current = window.setTimeout(() => {
-      panIdleTimerRef.current = null;
-      setPanning(false);
-    }, PAN_IDLE);
-  }, []);
-
   const handleWheel = useCallback(
     (event: WheelEvent) => {
       const stage = stageRef.current;
@@ -1135,6 +1193,7 @@ export function WallExperience({ items }: WallExperienceProps) {
       if (isUiTarget(event.target)) return;
 
       event.preventDefault();
+      stopMomentum();
       scale.stop();
       x.stop();
       y.stop();
@@ -1157,6 +1216,7 @@ export function WallExperience({ items }: WallExperienceProps) {
       closePlaque,
       markPanning,
       scale,
+      stopMomentum,
       x,
       y,
       zoomAt,
@@ -1248,6 +1308,9 @@ export function WallExperience({ items }: WallExperienceProps) {
       }
       if (cameraRafRef.current !== null) {
         window.cancelAnimationFrame(cameraRafRef.current);
+      }
+      if (momentumRafRef.current !== null) {
+        window.cancelAnimationFrame(momentumRafRef.current);
       }
     };
   }, []);

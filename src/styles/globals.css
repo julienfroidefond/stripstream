@@ -19,6 +19,17 @@ body.no-pinch-zoom * {
 }
 
 /*
+  Le Wall est une surface de jeu : ses gestes (glisser, pincer) doivent rester
+  au canvas, sinon le navigateur s'approprie le pinch et la page bouge sous le
+  doigt. Cette règle non layerisée est plus spécifique que la règle globale
+  `body.no-pinch-zoom *` et la remplace sur le canvas.
+  Le panneau de filtres reste hors du canvas pour garder son défilement natif.
+*/
+body.no-pinch-zoom .wall-canvas {
+  touch-action: none;
+}
+
+/*
   Ajout des règles pour gérer le safe-area-inset sur iOS
 @supports (padding-top: env(safe-area-inset-top)) {
   body {
@@ -854,8 +865,10 @@ body.no-pinch-zoom * {
 
 .wall-filters-list {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
   gap: 1px;
+  min-height: 0;
   margin-top: 13px;
   padding-right: 3px;
   overflow-y: auto;
@@ -865,6 +878,7 @@ body.no-pinch-zoom * {
 
 .wall-filter-row {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 10px;
   width: 100%;
@@ -934,6 +948,38 @@ body.no-pinch-zoom * {
 
 .wall-filter-row.is-active .wall-filter-count {
   color: hsl(var(--primary) / 0.9);
+}
+
+/*
+  Sur téléphone, le panneau est ancré au bouton de filtre : aligné à droite
+  dans une barre d'actions large, il débordait à gauche de l'écran. On le pose
+  donc sur la fenêtre, entre les deux bords, juste au-dessus de la barre.
+*/
+@media (max-width: 639px) {
+  .wall-filters {
+    position: fixed;
+    right: 12px;
+    bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+    left: 12px;
+    width: auto;
+    max-height: min(58vh, 440px);
+    transform-origin: bottom center;
+  }
+
+  .wall-filter-row {
+    height: 44px;
+  }
+}
+
+/*
+  À 360 px, les deux grappes du bas (zoom et actions) se chevauchaient de 8 px.
+  On resserre leurs gouttières plutôt que de masquer une commande.
+*/
+@media (max-width: 380px) {
+  .wall-zoom,
+  .wall-actions {
+    gap: 2px;
+  }
 }
 
 .wall-hint {
