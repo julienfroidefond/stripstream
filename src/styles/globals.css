@@ -116,8 +116,8 @@ body.no-pinch-zoom * {
   /* Compteur de page : le nouveau numéro remonte en place. */
   --animate-count-in: count-in 280ms var(--ease-projection) both;
   /* Travelling du fond d'affiche : deux axes, durées premières entre elles. */
-  --animate-backdrop-pan: backdrop-pan 26s ease-in-out infinite;
-  --animate-backdrop-zoom: backdrop-zoom 18s ease-in-out infinite;
+  --animate-backdrop-pan: backdrop-pan 14s ease-in-out infinite;
+  --animate-backdrop-zoom: backdrop-zoom 10s ease-in-out infinite;
 
   @keyframes fade-in {
     from {
@@ -189,28 +189,30 @@ body.no-pinch-zoom * {
      montage JS. Deux axes sur deux éléments imbriqués — la translation sur le
      parent, l'échelle sur l'enfant — avec des durées premières entre elles,
      donc le fond ne repasse jamais par la même image : aucun cycle ne se lit.
-     Chaque boucle revient à sa valeur de départ, la reprise est invisible. */
+     Chaque boucle revient à sa valeur de départ, la reprise est invisible.
+     L'amplitude tient dans la marge de l'élément (`-inset-[8%]`) et dans son
+     échelle minimale : aucun bord de l'image n'entre dans le cadre. */
   @keyframes backdrop-pan {
     0% {
-      transform: translate3d(-2.6%, 1.6%, 0);
+      transform: translate3d(-5.5%, 3.4%, 0);
     }
     50% {
-      transform: translate3d(2.6%, -1.6%, 0);
+      transform: translate3d(5.5%, -3.4%, 0);
     }
     100% {
-      transform: translate3d(-2.6%, 1.6%, 0);
+      transform: translate3d(-5.5%, 3.4%, 0);
     }
   }
 
   @keyframes backdrop-zoom {
     0% {
-      transform: scale(1.08);
+      transform: scale(1.12);
     }
     50% {
-      transform: scale(1.2);
+      transform: scale(1.28);
     }
     100% {
-      transform: scale(1.08);
+      transform: scale(1.12);
     }
   }
 }

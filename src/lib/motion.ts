@@ -126,12 +126,14 @@ export function staggerContainer(stagger = 0.08, delayChildren = 0.06): Variants
 /**
  * Carrousel d'affiches : la diapositive sortante pivote et s'éloigne, la
  * suivante entre de l'autre côté en faisant le point. `custom` = sens (+1/-1).
+ * L'amplitude est franche (la diapositive venue d'ailleurs se lit d'un coup
+ * d'œil) et le ressort se cale vite, pour que le geste réponde au clic.
  */
 export const carouselSlide: Variants = {
   enter: (dir: number) => ({
-    x: dir > 0 ? 160 : -160,
-    rotateY: dir > 0 ? -22 : 22,
-    scale: 0.92,
+    x: dir > 0 ? 220 : -220,
+    rotateY: dir > 0 ? -28 : 28,
+    scale: 0.9,
     opacity: 0,
     filter: "blur(10px)",
     transformPerspective: PERSPECTIVE,
@@ -145,9 +147,9 @@ export const carouselSlide: Variants = {
     transformPerspective: PERSPECTIVE,
   },
   exit: (dir: number) => ({
-    x: dir > 0 ? -160 : 160,
-    rotateY: dir > 0 ? 22 : -22,
-    scale: 0.92,
+    x: dir > 0 ? -220 : 220,
+    rotateY: dir > 0 ? 28 : -28,
+    scale: 0.9,
     opacity: 0,
     filter: "blur(10px)",
     transformPerspective: PERSPECTIVE,
@@ -155,9 +157,10 @@ export const carouselSlide: Variants = {
 };
 
 export const CAROUSEL_TRANSITION = {
-  default: { type: "spring", stiffness: 210, damping: 28, mass: 0.9 },
-  opacity: { duration: 0.35, ease: EASE_OUT },
-  filter: { duration: 0.45, ease: EASE_OUT },
+  // Presque critique : la diapositive se pose en ~0,45 s au lieu de dériver.
+  default: { type: "spring", stiffness: 320, damping: 30, mass: 0.75 },
+  opacity: { duration: 0.22, ease: EASE_OUT },
+  filter: { duration: 0.3, ease: EASE_OUT },
 } as const;
 
 /** Écran pleine largeur qui se déroule de haut en bas à l'arrivée sur la page. */
