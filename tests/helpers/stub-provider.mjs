@@ -114,7 +114,7 @@ const readingList = {
   series_count: 1,
   book_count: 3,
   books_read_count: 3,
-  preview_covers: ['book-a'],
+  preview_covers: ['2b7c1c3e-5b0f-4a3e-9d0e-1f2a3b4c5d6e'],
   created_at: '2026-01-01T00:00:00.000Z',
   updated_at: '2026-01-01T00:00:00.000Z',
 };

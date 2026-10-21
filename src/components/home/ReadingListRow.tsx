@@ -2,7 +2,8 @@
 
 import { memo, useCallback, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Bookmark, BookMarked } from "lucide-react";
+import { Bookmark } from "lucide-react";
+import { ReadingListCover } from "@/components/reading-lists/ReadingListCover";
 import { ScrollContainer } from "@/components/ui/scroll-container";
 import { Section } from "@/components/ui/section";
 import { useTranslate } from "@/hooks/useTranslate";
@@ -90,7 +91,6 @@ const ReadingListCard = memo(function ReadingListCard({ list, onClick }: Reading
   const { isAnonymous } = useAnonymous();
   const glowRef = useRef<HTMLButtonElement>(null);
   const handleGlow = usePointerGlow(glowRef);
-  const firstCover = list.preview_covers[0];
   const isCompleted =
     !isAnonymous && list.book_count > 0 && list.books_read_count >= list.book_count;
 
@@ -108,19 +108,12 @@ const ReadingListCard = memo(function ReadingListCard({ list, onClick }: Reading
     >
       {/* Cover */}
       <div className="relative aspect-2/3 w-full overflow-hidden rounded-xl bg-surface-2 ring-1 ring-border/60 transition-[translate,box-shadow] duration-500 ease-projection group-hover:-translate-y-2 group-hover:ring-border motion-reduce:transition-none">
-        {firstCover ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={`/api/stripstream/images/books/${firstCover}/thumbnail`}
-            alt={list.name}
-            loading="lazy"
-            className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-projection group-hover:scale-[1.07] motion-reduce:transition-none"
-          />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-surface-2">
-            <BookMarked className="h-12 w-12 text-muted-foreground/40" />
-          </div>
-        )}
+        <ReadingListCover
+          covers={list.preview_covers}
+          alt={list.name}
+          className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-projection group-hover:scale-[1.07] motion-reduce:transition-none"
+          placeholderClassName="bg-surface-2"
+        />
 
         {/* Hover overlay */}
         <div className="absolute inset-0 flex flex-col justify-end bg-linear-to-t from-black/80 via-black/30 to-transparent p-2.5 opacity-0 transition-opacity duration-300 group-hover:opacity-100">{/* taste-skill-ignore: scrim neutre au-dessus de la couverture */}

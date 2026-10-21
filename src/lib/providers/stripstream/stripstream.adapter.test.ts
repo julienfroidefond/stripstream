@@ -344,6 +344,25 @@ describe("StripstreamAdapter.toNormalizedRecommendedSeries", () => {
   });
 });
 
+describe("StripstreamAdapter.resolveReadingListPreviewCover", () => {
+  it("routes a book UUID through the thumbnail proxy", () => {
+    expect(
+      StripstreamAdapter.resolveReadingListPreviewCover("2b7c1c3e-5b0f-4a3e-9d0e-1f2a3b4c5d6e")
+    ).toBe("/api/stripstream/images/books/2b7c1c3e-5b0f-4a3e-9d0e-1f2a3b4c5d6e/thumbnail");
+  });
+
+  it("keeps the raw cover URL of a series without a book", () => {
+    expect(
+      StripstreamAdapter.resolveReadingListPreviewCover("https://covers.example/series.jpg")
+    ).toBe("https://covers.example/series.jpg");
+  });
+
+  it("returns an empty string for missing or sentinel covers", () => {
+    expect(StripstreamAdapter.resolveReadingListPreviewCover(null)).toBe("");
+    expect(StripstreamAdapter.resolveReadingListPreviewCover(SENTINEL)).toBe("");
+  });
+});
+
 describe("StripstreamAdapter.toNormalizedLibrary", () => {
   it("maps the library fields", () => {
     const library: StripstreamLibraryResponse = {
