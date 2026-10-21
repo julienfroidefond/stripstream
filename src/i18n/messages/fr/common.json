@@ -119,6 +119,7 @@
     "connection": "Connexion",
     "home": "Accueil",
     "readingLists": "Listes de lecture",
+    "wall": "Le Wall",
     "account": "Mon compte",
     "favorites": {
       "title": "Favoris",
@@ -494,6 +495,47 @@
       }
     }
   },
+  "wall": {
+    "eyebrow": "Toutes les couvertures",
+    "title": "Le Wall",
+    "count_one": "{{count}} œuvre",
+    "count_other": "{{count}} œuvres",
+    "libraries_one": "{{count}} bibliothèque",
+    "libraries_other": "{{count}} bibliothèques",
+    "hint": "Glissez pour parcourir · Ctrl/⌘ + molette pour zoomer · Cliquez une œuvre pour sa fiche",
+    "zoomIn": "Zoomer",
+    "zoomOut": "Dézoomer",
+    "overview": "Vue d'ensemble",
+    "overviewShort": "Vue",
+    "random": "Œuvre au hasard",
+    "reset": "Recentrer le mur",
+    "close": "Fermer",
+    "open": "Ouvrir la série",
+    "volume": "{{count}} tome",
+    "volumes": "{{count}} tomes",
+    "completed": "Série terminée",
+    "progress": "{{read}} / {{total}} lus",
+    "unread": "Pas encore commencé",
+    "noSummary": "Le résumé n'est pas encore arrivé.",
+    "srHint": "Mur de couvertures. Glissez pour parcourir, plus et moins pour zoomer, F pour la vue d'ensemble, R pour une œuvre au hasard.",
+    "emptyTitle": "Le mur attend ses œuvres.",
+    "emptyBody": "Aucune série à accrocher pour l'instant. Vérifiez la connexion à votre bibliothèque, puis revenez : les couvertures suivront.",
+    "emptyFootnote": "Le mur se construit à partir de la bibliothèque active.",
+    "connect": "Configurer la connexion",
+    "backHome": "Retour à l'accueil",
+    "errorTitle": "Le mur n'a pas pu être accroché.",
+    "filters": {
+      "label": "Filtrer par bibliothèque",
+      "short": "Bibliothèques",
+      "title": "Bibliothèques",
+      "meta_one": "{{count}} bibliothèque disponible",
+      "meta_other": "{{count}} bibliothèques disponibles",
+      "hint": "Choisissez les murs à afficher. Le mur se recompose.",
+      "all": "Toutes les bibliothèques",
+      "clear": "Tout afficher",
+      "close": "Fermer les filtres"
+    }
+  },
   "errors": {
     "MONGODB_MISSING_URI": "URI MongoDB manquante",
     "MONGODB_CONNECTION_FAILED": "Erreur lors de la connexion à MongoDB",
@@ -576,7 +618,8 @@
     "CLIENT_FETCH_ERROR": "Erreur lors de la récupération des données",
     "CLIENT_NETWORK_ERROR": "Erreur réseau",
     "CLIENT_REQUEST_FAILED": "La requête a échoué",
-    "GENERIC_ERROR": "Une erreur est survenue"
+    "GENERIC_ERROR": "Une erreur est survenue",
+    "WALL_FETCH_ERROR": "Impossible de rassembler les œuvres du mur. Vérifiez votre connexion puis réessayez."
   },
   "reader": {
     "controls": {

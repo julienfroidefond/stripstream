@@ -119,6 +119,7 @@
     "connection": "Connection",
     "home": "Home",
     "readingLists": "Reading lists",
+    "wall": "The Wall",
     "account": "My Account",
     "favorites": {
       "title": "Favorites",
@@ -491,6 +492,47 @@
       }
     }
   },
+  "wall": {
+    "eyebrow": "Every cover",
+    "title": "Le Wall",
+    "count_one": "{{count}} work",
+    "count_other": "{{count}} works",
+    "libraries_one": "{{count}} library",
+    "libraries_other": "{{count}} libraries",
+    "hint": "Drag to roam · Ctrl/⌘ + wheel to zoom · Click a work to open its details",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "overview": "Overview",
+    "overviewShort": "Overview",
+    "random": "Random work",
+    "reset": "Recenter the wall",
+    "close": "Close",
+    "open": "Open series",
+    "volume": "{{count}} volume",
+    "volumes": "{{count}} volumes",
+    "completed": "Series complete",
+    "progress": "{{read}} / {{total}} read",
+    "unread": "Not started yet",
+    "noSummary": "The summary has not arrived yet.",
+    "srHint": "Cover wall. Drag to roam, plus and minus to zoom, F for the overview, R for a random work.",
+    "emptyTitle": "The wall is waiting for its works.",
+    "emptyBody": "There is no series to hang yet. Check your library connection, then come back: the covers will follow.",
+    "emptyFootnote": "The wall is built from the active library.",
+    "connect": "Set up the connection",
+    "backHome": "Back home",
+    "errorTitle": "The wall could not be hung.",
+    "filters": {
+      "label": "Filter by library",
+      "short": "Libraries",
+      "title": "Libraries",
+      "meta_one": "{{count}} library available",
+      "meta_other": "{{count}} libraries available",
+      "hint": "Choose the walls to show. The wall recomposes itself.",
+      "all": "All libraries",
+      "clear": "Show all",
+      "close": "Close filters"
+    }
+  },
   "errors": {
     "MONGODB_MISSING_URI": "MongoDB URI missing",
     "MONGODB_CONNECTION_FAILED": "MongoDB connection failed",
@@ -573,7 +615,8 @@
     "CLIENT_FETCH_ERROR": "Error fetching data",
     "CLIENT_NETWORK_ERROR": "Network error",
     "CLIENT_REQUEST_FAILED": "Request failed",
-    "GENERIC_ERROR": "An error occurred"
+    "GENERIC_ERROR": "An error occurred",
+    "WALL_FETCH_ERROR": "Could not gather the works for the wall. Check your connection and try again."
   },
   "reader": {
     "controls": {

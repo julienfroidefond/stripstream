@@ -116,6 +116,17 @@ export default defineConfig([
     },
   },
   {
+    // Geste impératif du mur : les pointeurs, l'inertie et le pincement vivent
+    // dans un objet mutable hors rendu (comme une instance de contrôleur). Le
+    // compilateur ne peut pas distinguer cette mutation volontaire d'une
+    // mutation de prop ; on la déclare ici plutôt que de figer l'objet à
+    // chaque frame.
+    files: ["src/components/wall/WallExperience.tsx"],
+    rules: {
+      "react-hooks/immutability": "off",
+    },
+  },
+  {
     // URLs proxy Komga/Stripstream déjà thumbnailées côté provider :
     // l'optimizer next/image ajouterait un round-trip sans gain réel.
     files: [
