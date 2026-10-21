@@ -3,13 +3,10 @@
 # This replaces the former Renovate setup (renovate.json). Dependabot runs
 # natively on GitHub and reads pnpm-lock.yaml through the "npm" ecosystem.
 #
-# Policy
-#   - minor/patch updates are grouped by family and can be auto-merged once the
-#     required "Quality (lint · typecheck · build)" check passes (see
-#     .github/workflows/dependabot-auto-merge.yml);
-#   - major updates always land as their own PR and are reviewed by hand;
-#   - framework/runtime deps (next, react, react-dom, @prisma/client, prisma,
-#     sharp) never enter the auto-merged group.
+# The policy (grouping, auto-merge scope, framework exclusions, schedule) is
+# documented in .github/dependabot-policy.md — read it before changing a group
+# here. Framework/runtime exclusions are mirrored in
+# .github/workflows/dependabot-auto-merge.yml and must stay in sync.
 
 version: 2
 
