@@ -17,6 +17,7 @@ import type {
 import type { HomeData, HomeDeferredData, HomePrimaryData } from "@/types/home";
 import { StripstreamClient } from "./stripstream.client";
 import { StripstreamAdapter } from "./stripstream.adapter";
+import { selectApprovedMetadataLink } from "./metadata-links";
 import { scanStateFromIndexJobStatus } from "../scan-status";
 import type {
   StripstreamLibraryResponse,
@@ -172,8 +173,9 @@ export class StripstreamProvider implements IMediaProvider {
         { revalidate: CACHE_TTL_MED }
       );
 
-      // 2. Find the approved link
-      const approvedLink = links.find((l) => l.status === "approved");
+      // 2. Find the approved link, preferring Librarian's primary link when
+      // several providers are approved for the same series (#76).
+      const approvedLink = selectApprovedMetadataLink(links);
       if (!approvedLink) return [];
 
       // 3. Get missing books for this link
