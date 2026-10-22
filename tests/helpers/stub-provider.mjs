@@ -36,6 +36,9 @@ const bookId = instance === 'B' ? 'book-b' : 'book-a';
 // La seconde connexion est volontairement lente afin de rendre observable le
 // fallback de bascule dans le test E2E.
 const responseDelayMs = instance === 'B' ? 750 : 0;
+// Sur l'instance B, toutes les séries sont déjà lues : le test du Wall peut
+// ainsi vérifier l'état vide produit par le filtre « séries terminées ».
+const allSeriesRead = instance === 'B';
 let readProgress = null;
 
 const libraries = [
@@ -53,10 +56,28 @@ const series = Array.from({ length: 31 }, (_, index) => {
       title: `${seriesName}${suffix}`,
     },
     booksCount: 1,
-    readStatus: 'UNREAD',
+    booksReadCount: allSeriesRead ? 1 : 0,
+    readStatus: allSeriesRead ? 'READ' : 'UNREAD',
     status: 'ENDED',
     type: 'SINGLE_BOOK',
   };
+});
+
+// Série déjà terminée : elle donne au test du Wall un cas déterministe à
+// masquer, sans toucher au fixture du lecteur (`series-a`).
+series.push({
+  id: 'series-read',
+  name: `${seriesName} (terminée)`,
+  metadata: {
+    titleSort: `${seriesName} (terminée)`,
+    summary: `Summary ${instance}`,
+    title: `${seriesName} (terminée)`,
+  },
+  booksCount: 1,
+  booksReadCount: 1,
+  readStatus: 'READ',
+  status: 'ENDED',
+  type: 'SINGLE_BOOK',
 });
 
 const books = [

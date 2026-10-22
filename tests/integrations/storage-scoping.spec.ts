@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { e2eReaderEmail, hasE2eCredentials, signIn } from '../helpers/auth';
+import { e2eReaderEmail, hasE2eCredentials, signIn, signOut } from '../helpers/auth';
 
 const DISMISS_SUFFIX = 'pwa-install-dismissed';
 const SCOPED_DISMISS_KEY = new RegExp(`^stripstream:.+:${DISMISS_SUFFIX}$`);
@@ -57,12 +57,7 @@ test.describe('Browser storage scoping', () => {
 
     // Switch accounts in the same browser profile: localStorage survives and
     // must not leak the first account's state into the second one.
-    const sidebarTrigger = page.getByRole('button', { name: /menu|navigation/i }).first();
-    if (await sidebarTrigger.isVisible()) await sidebarTrigger.click();
-    const signOutButton = page.getByRole('button', { name: /sign out|déconnecter/i });
-    await signOutButton.evaluate((element) => (element as HTMLButtonElement).click());
-    await expect(page).toHaveURL(/\/login/);
-
+    await signOut(page);
     await signIn(page, { email: e2eReaderEmail });
     await page.goto('/');
 

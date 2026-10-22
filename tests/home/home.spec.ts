@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { hasE2eCredentials } from '../helpers/auth';
+import { selectConnection } from '../helpers/connections';
 
 type ImagePerformanceSample = {
   resources: Array<{ name: string; duration: number; transferSize: number }>;
@@ -44,16 +45,6 @@ test.describe('Home functional journeys', () => {
     await pageInput.getByRole('button').click();
     await page.getByRole('textbox', { name: 'Entrez un numéro de page' }).fill(String(pageNumber));
     await page.getByRole('textbox', { name: 'Entrez un numéro de page' }).press('Enter');
-  }
-
-  async function selectConnection(page: import('@playwright/test').Page, name: string) {
-    await page.goto('/settings');
-    await page.getByRole('tab', { name: /connection|connexion/i }).click();
-    const connectionId = `connection-${name === 'Stub Lists' ? 'stripstream' : 'komga'}-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
-    const connection = page.getByTestId(connectionId);
-    await expect(connection).toBeVisible();
-    await connection.getByText(name, { exact: true }).click();
-    await expect(connection.getByRole('radio')).toBeChecked({ timeout: 15_000 });
   }
 
   test('shows continue reading and resumes the last viewed page', async ({ page, request }) => {

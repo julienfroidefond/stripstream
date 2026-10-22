@@ -186,6 +186,7 @@ export default defineConfig({
         '**/reader/reader.spec.ts',
         '**/reader/reader-stub.spec.ts',
         '**/reader/reader-end-of-series.spec.ts',
+        '**/wall/wall.spec.ts',
       ],
       use: { ...devices['Desktop Chrome'] },
     },

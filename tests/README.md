@@ -9,6 +9,7 @@ tests/
 ├── home/          # continue reading, favorites, and reading lists
 ├── library/       # navigation, libraries, favorites, lists, reading status
 ├── reader/        # reader controls and deterministic reader fixture
+├── wall/          # wall filters and per-user persistence
 └── integrations/  # provider mutations and streaming connection changes
 ```
 

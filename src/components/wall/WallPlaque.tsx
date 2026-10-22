@@ -7,6 +7,7 @@ import { ArrowUpRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EASE_PROJECTION } from "@/lib/motion";
 import { useTranslate } from "@/hooks/useTranslate";
+import { isWallItemComplete } from "@/lib/wall-filter";
 import type { WallItem } from "@/types/wall";
 import { cn } from "@/lib/utils";
 
@@ -60,7 +61,7 @@ export function WallPlaque({
   const isSheet = placement.mode === "sheet";
   const progress =
     item.bookCount > 0 ? Math.min(1, Math.max(0, item.booksReadCount / item.bookCount)) : 0;
-  const complete = item.bookCount > 0 && item.booksReadCount >= item.bookCount;
+  const complete = isWallItemComplete(item);
   const started = item.booksReadCount > 0;
   const volumeLabel =
     item.bookCount > 1

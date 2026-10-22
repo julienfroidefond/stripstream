@@ -27,3 +27,11 @@ export async function signIn(
   await page.getByRole('button', { name: /sign in|se connecter/i }).click();
   await expect(page).not.toHaveURL(/\/login(?:\?|$)/, { timeout: 15_000 });
 }
+
+export async function signOut(page: Page) {
+  const sidebarTrigger = page.getByRole('button', { name: /menu|navigation/i }).first();
+  if (await sidebarTrigger.isVisible()) await sidebarTrigger.click();
+  const signOutButton = page.getByRole('button', { name: /sign out|déconnecter/i });
+  await signOutButton.evaluate((element) => (element as HTMLButtonElement).click());
+  await expect(page).toHaveURL(/\/login/);
+}
