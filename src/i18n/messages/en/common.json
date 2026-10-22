@@ -575,6 +575,7 @@
     "STRIPSTREAM_FORBIDDEN": "Stripstream access denied (HTTP 403). Check the token's permissions.",
     "STRIPSTREAM_NOT_FOUND": "Stripstream resource not found (HTTP 404). The server URL might be wrong.",
     "STRIPSTREAM_SERVER_ERROR": "Stripstream server issue (HTTP 5xx). Try again later.",
+    "CONFIG_INVALID_URL": "Invalid server URL. Use an http(s) URL without credentials, query string or metadata endpoint.",
     "CONFIG_SAVE_ERROR": "Error saving configuration",
     "CONFIG_FETCH_ERROR": "Error fetching configuration",
     "CONFIG_TTL_SAVE_ERROR": "Error saving TTL configuration",

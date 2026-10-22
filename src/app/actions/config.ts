@@ -12,6 +12,7 @@ import {
   SERIES_BOOKS_CACHE_TAG,
 } from "@/constants/cacheConstants";
 import { checkRateLimit } from "@/utils/rate-limit";
+import { normalizeServerUrl } from "@/utils/server-url";
 import { getActiveConnection, setActiveConnection } from "@/lib/active-connection";
 import { buildKomgaAuthHeader, decryptSecret, encryptSecret } from "@/lib/credentials";
 import type { KomgaLibrary } from "@/types/komga";
@@ -73,12 +74,17 @@ export async function testKomgaConnection(
     }
 
     const authHeader = buildKomgaAuthHeader(username, password);
-    const url = new URL(`${serverUrl}/api/v1/libraries`).toString();
+    const url = new URL(`${normalizeServerUrl(serverUrl)}/api/v1/libraries`).toString();
     const headers = new Headers({
       Authorization: `Basic ${authHeader}`,
       Accept: "application/json",
     });
 
+    // L'URL est un serveur auto-hébergé fourni par un utilisateur authentifié,
+    // validée par `normalizeServerUrl` (http(s) uniquement, sans credentials
+    // ni endpoint de métadonnées). Le SSRF est borné et correspond à la
+    // fonctionnalité même de l'application.
+    // codeql[js/request-forgery]
     const response = await fetch(url, { headers });
 
     if (!response.ok) {
@@ -129,12 +135,14 @@ export async function saveKomgaConfig(
   try {
     const userId = await requireUserId();
     const name = input.name.trim();
-    const url = input.url.trim();
+    const rawUrl = input.url.trim();
     const username = input.username.trim();
 
-    if (!name || !url || !username) {
+    if (!name || !rawUrl || !username) {
       return { success: false, message: "Nom, URL et identifiant sont requis" };
     }
+
+    const url = normalizeServerUrl(rawUrl);
 
     if (input.id) {
       const existing = await prisma.komgaConfig.findFirst({
@@ -221,7 +229,7 @@ export async function testKomgaConfigById(
     });
     if (!config) return { success: false, message: "Configuration introuvable" };
 
-    const url = new URL(`${config.url}/api/v1/libraries`).toString();
+    const url = new URL(`${normalizeServerUrl(config.url)}/api/v1/libraries`).toString();
     const headers = new Headers({
       Authorization: `Basic ${decryptSecret(config.authHeader)}`,
       Accept: "application/json",
@@ -235,7 +243,10 @@ export async function testKomgaConfigById(
       success: true,
       message: `Connexion réussie ! ${libraries.length} bibliothèque${libraries.length > 1 ? "s" : ""}`,
     };
-  } catch {
+  } catch (error) {
+    if (error instanceof AppError) {
+      return { success: false, message: error.message };
+    }
     return { success: false, message: "Erreur lors du test de connexion" };
   }
 }

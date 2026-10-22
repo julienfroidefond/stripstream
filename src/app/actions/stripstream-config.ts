@@ -13,6 +13,7 @@ import {
   SERIES_BOOKS_CACHE_TAG,
 } from "@/constants/cacheConstants";
 import { checkRateLimit } from "@/utils/rate-limit";
+import { normalizeServerUrl } from "@/utils/server-url";
 import { getActiveConnection, setActiveConnection } from "@/lib/active-connection";
 import { decryptSecret, encryptSecret } from "@/lib/credentials";
 
@@ -114,11 +115,13 @@ export async function saveStripstreamConfig(
   try {
     const userId = await requireUserId();
     const name = input.name.trim();
-    const url = input.url.trim();
+    const rawUrl = input.url.trim();
 
-    if (!name || !url) {
+    if (!name || !rawUrl) {
       return { success: false, message: "Nom et URL sont requis" };
     }
+
+    const url = normalizeServerUrl(rawUrl);
 
     if (input.id) {
       const existing = await prisma.stripstreamConfig.findFirst({

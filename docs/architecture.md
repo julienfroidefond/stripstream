@@ -43,7 +43,13 @@ const provider = await getProvider();
 
 The factory resolves the current user, resolves the active connection, dynamically imports the matching provider and instantiates it with the connection's URL and **decrypted** credentials (`src/lib/credentials.ts`). It returns `null` when there is no authenticated user or no usable config. **Never bypass this** — constructing `KomgaProvider`/`StripstreamProvider` directly breaks multi-config support.
 
-Direct construction still exists in a few places and is the exception, not the pattern: `new KomgaProvider` appears only in `src/lib/providers/provider.factory.ts:34`; `new StripstreamProvider` appears in the factory itself (`src/lib/providers/provider.factory.ts:26,67`, the latter for the reading-list detail helper) and in the Stripstream connection-test actions `testStripstreamConnection` (`src/app/actions/stripstream-config.ts:72`, caller-supplied token, never stored) and `testStripstreamConfigById` (`src/app/actions/stripstream-config.ts:206`, token read straight from the DB row and decrypted). The Komga-side connection tests (`testKomgaConnection`, `testKomgaConfigById` in `src/app/actions/config.ts`) bypass the factory too, with raw `fetch` calls (`testKomgaConnection` fetches the caller-supplied server at `src/app/actions/config.ts:82`; `testKomgaConfigById` fetches the stored config at `src/app/actions/config.ts:229`).
+Direct construction still exists in a few places and is the exception, not the pattern: `new KomgaProvider` appears only in `src/lib/providers/provider.factory.ts:34`; `new StripstreamProvider` appears in the factory itself (`src/lib/providers/provider.factory.ts:26,67`, the latter for the reading-list detail helper) and in the Stripstream connection-test actions `testStripstreamConnection` (`src/app/actions/stripstream-config.ts:72`, caller-supplied token, never stored) and `testStripstreamConfigById` (`src/app/actions/stripstream-config.ts:206`, token read straight from the DB row and decrypted). The Komga-side connection tests (`testKomgaConnection`, `testKomgaConfigById` in `src/app/actions/config.ts`) bypass the factory too, with raw `fetch` calls.
+
+### Server URL validation
+
+Provider URLs are user-configured by design (self-hosted Komga/Librarian). `normalizeServerUrl()` (`src/utils/server-url.ts`) is applied on save, on connection tests and in both provider constructors: it requires `http(s)`, rejects embedded credentials, query strings and fragments, and refuses cloud metadata endpoints (`169.254.0.0/16`, `100.100.100.200`, `fd00:ec2::254`, `metadata.google.internal`). Localhost and private LAN ranges stay allowed — they are the normal deployment.
+
+The residual SSRF surface (an authenticated user chooses which server the instance contacts) is intentional; the three `fetch` call sites are annotated with `codeql[js/request-forgery]` suppression comments.
 
 ### Active connection and multi-config per user
 

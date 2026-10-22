@@ -1,6 +1,7 @@
 import { AppError } from "@/utils/errors";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { codeForHttpStatus, isConnectionError } from "@/utils/http-error";
+import { normalizeServerUrl } from "@/utils/server-url";
 import logger from "@/lib/logger";
 
 const STRIPSTREAM_HTTP_CODES = {
@@ -42,8 +43,7 @@ export class StripstreamClient {
   private token: string;
 
   constructor(url: string, token: string) {
-    // Trim trailing slash
-    this.baseUrl = url.replace(/\/$/, "");
+    this.baseUrl = normalizeServerUrl(url);
     this.token = token;
   }
 
@@ -112,11 +112,15 @@ export class StripstreamClient {
 
     const doFetch = async () => {
       try {
+        // URL validée dans le constructeur (`normalizeServerUrl`) : la cible
+        // est le serveur configuré par l'utilisateur, auto-hébergé par nature.
+        // codeql[js/request-forgery]
         return await fetch(url, { ...fetchOptions, signal: controller.signal });
       } catch (err: unknown) {
         if (isRetryable(err)) {
           logger.warn({ err, url }, "Transient network error, retrying...");
           await new Promise((r) => setTimeout(r, 500));
+          // codeql[js/request-forgery]
           return fetch(url, { ...fetchOptions, signal: controller.signal });
         }
         throw err;
