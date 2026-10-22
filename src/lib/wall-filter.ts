@@ -5,7 +5,13 @@ import type { WallItem } from "@/types/wall";
  *
  * Le mur est déjà chargé en entier : filtrer ne demande aucun aller-retour
  * serveur. Une série est « terminée » quand elle compte au moins un tome et
- * que tous ses tomes sont lus, exactement comme les badges de la bibliothèque.
+ * que le nombre de tomes lus l'atteint (`booksRead >= bookCount`).
+ *
+ * Divergence assumée avec les badges de la bibliothèque, qui testent l'égalité
+ * stricte (`bookCount === booksReadCount`, cf. `SeriesList`/`SeriesGrid`) : ce
+ * `>=` reprend la règle historique de `WallPlaque`. Avec des données
+ * fournisseur incohérentes (`booksReadCount > bookCount`), le mur masque donc
+ * la série là où la bibliothèque l'affiche encore « en cours ».
  */
 export function isWallItemComplete(
   item: Pick<WallItem, "bookCount" | "booksReadCount">

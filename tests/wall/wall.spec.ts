@@ -103,6 +103,11 @@ test.describe('Wall filters', () => {
 
     const empty = page.getByTestId('wall-filter-empty');
     await expect(empty).toBeVisible();
+    // Le panneau se referme de lui-même pour laisser voir l'état vide.
+    await expect(page.getByTestId('wall-filter-trigger')).toHaveAttribute(
+      'aria-expanded',
+      'false'
+    );
     await empty.getByRole('button', { name: /show all|tout afficher/i }).click();
 
     await expect.poll(() => readItemCount(wallCount)).toBe(total);

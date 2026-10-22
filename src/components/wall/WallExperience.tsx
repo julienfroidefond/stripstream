@@ -398,15 +398,24 @@ export function WallExperience({ items }: WallExperienceProps) {
 
   useEffect(() => {
     if (!filtersHydratedRef.current) return;
-    window.localStorage.setItem(
-      filtersStorageKey,
-      JSON.stringify([...selectedLibraries].sort())
-    );
+    try {
+      window.localStorage.setItem(
+        filtersStorageKey,
+        JSON.stringify([...selectedLibraries].sort())
+      );
+    } catch {
+      // Même garde qu'à la lecture : un stockage plein ou désactivé ne doit
+      // pas faire tomber le mur.
+    }
   }, [filtersStorageKey, selectedLibraries]);
 
   useEffect(() => {
     if (!filtersHydratedRef.current) return;
-    window.localStorage.setItem(hideReadStorageKey, String(hideRead));
+    try {
+      window.localStorage.setItem(hideReadStorageKey, String(hideRead));
+    } catch {
+      // Idem : la préférence n'est simplement pas retenue.
+    }
   }, [hideRead, hideReadStorageKey]);
 
   const visibleItems = useMemo(
@@ -1635,15 +1644,18 @@ export function WallExperience({ items }: WallExperienceProps) {
           <div
             data-wall-ui
             data-testid="wall-filter-empty"
-            role="status"
             className="pointer-events-none absolute inset-0 z-[25] flex flex-col items-center justify-center gap-3 px-6 text-center"
           >
-            <p className="wall-filters-title text-xl">
-              {t("wall.filters.emptyTitle")}
-            </p>
-            <p className="max-w-sm text-sm text-muted-foreground">
-              {t("wall.filters.emptyBody")}
-            </p>
+            {/* Le bouton reste hors de la région live : seul le message est
+                annoncé poliment. */}
+            <div role="status" className="flex flex-col items-center gap-3">
+              <p className="wall-filters-title text-xl">
+                {t("wall.filters.emptyTitle")}
+              </p>
+              <p className="max-w-sm text-sm text-muted-foreground">
+                {t("wall.filters.emptyBody")}
+              </p>
+            </div>
             <button
               type="button"
               className="wall-control wall-control-wide pointer-events-auto"
