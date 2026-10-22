@@ -725,7 +725,19 @@
     "scrollRight": "Scroll right",
     "loadMore": "Load more",
     "loading": "Loading…",
-    "volume": "Volume {number}"
+    "volume": "Volume {number}",
+    "seriesLabel": "Series",
+    "bookLabel": "Volume",
+    "readingListLabel": "Reading list",
+    "viewSeries": "View series",
+    "readBook": "Read",
+    "continueBook": "Continue",
+    "rereadBook": "Read again",
+    "openReadingList": "Open list",
+    "carousel": {
+      "oneByOne": "Show one item at a time",
+      "rail": "Show as a carousel"
+    }
   },
   "common": {
     "retry": "Retry",

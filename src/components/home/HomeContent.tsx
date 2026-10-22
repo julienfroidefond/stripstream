@@ -115,7 +115,7 @@ export function HomeHeroSkeleton() {
   );
 }
 
-/** Carrousel « Pour vous », qui s'affiche en grand format par défaut. */
+/** Carrousel « Pour vous » : rail classique par défaut, avec sa bascule de vue. */
 export function HomeRecommendationSkeleton() {
   return (
     <section className="space-y-5">
@@ -128,24 +128,14 @@ export function HomeRecommendationSkeleton() {
         </div>
         <Skeleton className="h-8 w-8 rounded-lg" />
       </div>
-      <div className="relative overflow-hidden rounded-2xl bg-surface-1 px-5 py-5 sm:px-7 sm:py-7">
-        <div className="flex flex-col gap-5 sm:flex-row sm:gap-7">
-          <Skeleton className="mx-auto aspect-2/3 w-[170px] shrink-0 rounded-xl sm:mx-0 sm:w-[180px]" />
-          <div className="flex flex-1 flex-col items-center justify-center gap-3 sm:items-start">
-            <Skeleton className="h-4 w-40" />
-            <Skeleton className="h-10 w-3/5" />
-            <Skeleton className="h-10 w-full max-w-lg" />
-            <Skeleton className="h-6 w-56 rounded-full" />
-            <Skeleton className="h-11 w-40 rounded-lg" />
-          </div>
-        </div>
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
-          <div className="flex items-center justify-center gap-2">
-            {Array.from({ length: 8 }).map((_, index) => (
-              <Skeleton key={index} className="h-1.5 w-2 rounded-full first:w-8" />
-            ))}
-          </div>
-          <Skeleton className="h-9 w-[84px] rounded-lg" />
+      <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:gap-9">
+        <Skeleton className="mx-auto aspect-2/3 w-[168px] shrink-0 rounded-xl sm:mx-0 sm:w-[196px]" />
+        <div className="flex flex-1 flex-col gap-4 text-center sm:text-left">
+          <Skeleton className="mx-auto h-4 w-24 sm:mx-0" />
+          <Skeleton className="mx-auto h-10 w-3/4 sm:mx-0" />
+          <Skeleton className="mx-auto h-4 w-full max-w-md sm:mx-0" />
+          <Skeleton className="mx-auto h-4 w-2/3 max-w-sm sm:mx-0" />
+          <Skeleton className="mx-auto mt-2 h-10 w-32 sm:mx-0" />
         </div>
       </div>
     </section>

@@ -728,7 +728,19 @@
     "scrollRight": "Défiler vers la droite",
     "loadMore": "Voir plus",
     "loading": "Chargement…",
-    "volume": "Tome {number}"
+    "volume": "Tome {number}",
+    "seriesLabel": "Série",
+    "bookLabel": "Tome",
+    "readingListLabel": "Liste de lecture",
+    "viewSeries": "Voir la série",
+    "readBook": "Lire",
+    "continueBook": "Continuer",
+    "rereadBook": "Relire",
+    "openReadingList": "Ouvrir la liste",
+    "carousel": {
+      "oneByOne": "Afficher un élément à la fois",
+      "rail": "Afficher en carrousel"
+    }
   },
   "common": {
     "retry": "Réessayer",

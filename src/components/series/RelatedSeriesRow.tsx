@@ -1,23 +1,18 @@
 "use client";
-import React from "react";
 
 import { useRouter } from "next/navigation";
-import { Sparkles, UserRound, Tag, Building2, Bookmark } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { SeriesCover } from "@/components/ui/series-cover";
 import { ScrollContainer } from "@/components/ui/scroll-container";
 import { Section } from "@/components/ui/section";
+import { CarouselViewToggle } from "@/components/ui/carousel-view-toggle";
+import { SpotlightCarousel } from "@/components/ui/spotlight-carousel";
+import { SeriesSpotlightSlide } from "@/components/ui/series-spotlight-slide";
+import { SeriesMatchReasonBadges } from "@/components/ui/series-match-reasons";
 import { useTranslate } from "@/hooks/useTranslate";
+import { useCarouselViewMode } from "@/hooks/useCarouselViewMode";
 import { useAnonymous } from "@/contexts/AnonymousContext";
-import { cn } from "@/lib/utils";
-import type { LucideIcon } from "lucide-react";
 import type { NormalizedSeries } from "@/lib/providers/types";
-
-const REASON_CONFIG: Record<string, { icon: LucideIcon; className: string }> = {
-  same_reading_list: { icon: Bookmark,  className: "bg-cyan-600/90 text-white" },
-  same_author:       { icon: UserRound, className: "bg-blue-600/90 text-white" },
-  same_genre:        { icon: Tag,       className: "bg-rose-600/90 text-white" },
-  same_publisher:    { icon: Building2, className: "bg-emerald-600/90 text-white" },
-};
 
 interface RelatedSeriesRowProps {
   series: NormalizedSeries[];
@@ -26,9 +21,11 @@ interface RelatedSeriesRowProps {
 export function RelatedSeriesRow({ series }: RelatedSeriesRowProps) {
   const router = useRouter();
   const { t } = useTranslate();
-  const { isAnonymous } = useAnonymous();
+  const { viewMode, toggleViewMode } = useCarouselViewMode("series-related-view-mode");
 
   if (!series.length) return null;
+
+  const openSeries = (id: string) => router.push(`/series/${id}`);
 
   return (
     <Section
@@ -36,51 +33,64 @@ export function RelatedSeriesRow({ series }: RelatedSeriesRowProps) {
       icon={Sparkles}
       className="space-y-5"
       headerClassName="pb-2"
+      actions={<CarouselViewToggle viewMode={viewMode} onToggle={toggleViewMode} />}
     >
-      <ScrollContainer
-        showArrows={true}
-        scrollAmount={400}
-        arrowLeftLabel={t("navigation.scrollLeft")}
-        arrowRightLabel={t("navigation.scrollRight")}
-      >
-        {series.map((s) => (
-          <button
-            key={s.id}
-            type="button"
-            onClick={() => router.push(`/series/${s.id}`)}
-            className="group relative aspect-2/3 w-[160px] shrink-0 overflow-hidden rounded-xl bg-surface-2 sm:w-[188px]"
-          >
-            <SeriesCover series={s} alt={s.name} isAnonymous={isAnonymous} showProgressUi={false} />
-
-            {/* hover overlay with title */}
-            <div className="absolute inset-0 flex flex-col justify-end bg-linear-to-t from-black/80 via-black/30 to-transparent p-3 opacity-0 transition-opacity duration-200 group-hover:opacity-100">{/* taste-skill-ignore: scrim neutre au-dessus de la couverture */}
-              <p className="line-clamp-2 text-left text-sm font-medium text-white">{s.name}</p>
-            </div>
-
-            {/* match reason badges — icon only */}
-            {s.matchReasons && s.matchReasons.length > 0 && (
-              <div className="absolute left-2 top-2 flex flex-col gap-1">
-                {s.matchReasons.map((reason) => {
-                  const config = REASON_CONFIG[reason];
-                  const Icon = config?.icon;
-                  return (
-                    <span
-                      key={reason}
-                      title={t(`series.matchReasons.${reason}` as Parameters<typeof t>[0]) ?? reason}
-                      className={cn(
-                        "flex h-6 w-6 items-center justify-center rounded-full",
-                        config?.className ?? "bg-black/50 text-white"
-                      )}
-                    >
-                      {Icon && <Icon className="h-3 w-3" />}
-                    </span>
-                  );
-                })}
-              </div>
-            )}
-          </button>
-        ))}
-      </ScrollContainer>
+      {viewMode === "spotlight" ? (
+        <SpotlightCarousel
+          ariaLabel={t("series.related")}
+          slides={series.map((s) => ({
+            key: s.id,
+            backdropSrc: s.thumbnailUrl,
+            content: (
+              <SeriesSpotlightSlide
+                series={s}
+                onOpen={() => openSeries(s.id)}
+                ctaLabel={t("navigation.viewSeries")}
+                eyebrow={t("navigation.seriesLabel")}
+                showMatchReasons
+              />
+            ),
+          }))}
+        />
+      ) : (
+        <ScrollContainer
+          showArrows={true}
+          scrollAmount={400}
+          arrowLeftLabel={t("navigation.scrollLeft")}
+          arrowRightLabel={t("navigation.scrollRight")}
+        >
+          {series.map((s) => (
+            <RelatedSeriesCard key={s.id} series={s} onOpen={openSeries} />
+          ))}
+        </ScrollContainer>
+      )}
     </Section>
+  );
+}
+
+function RelatedSeriesCard({
+  series: s,
+  onOpen,
+}: {
+  series: NormalizedSeries;
+  onOpen: (id: string) => void;
+}) {
+  const { isAnonymous } = useAnonymous();
+
+  return (
+    <button
+      type="button"
+      onClick={() => onOpen(s.id)}
+      className="group relative aspect-2/3 w-[160px] shrink-0 overflow-hidden rounded-xl bg-surface-2 sm:w-[188px]"
+    >
+      <SeriesCover series={s} alt={s.name} isAnonymous={isAnonymous} showProgressUi={false} />
+
+      {/* hover overlay with title */}
+      <div className="absolute inset-0 flex flex-col justify-end bg-linear-to-t from-black/80 via-black/30 to-transparent p-3 opacity-0 transition-opacity duration-200 group-hover:opacity-100">{/* taste-skill-ignore: scrim neutre au-dessus de la couverture */}
+        <p className="line-clamp-2 text-left text-sm font-medium text-white">{s.name}</p>
+      </div>
+
+      <SeriesMatchReasonBadges reasons={s.matchReasons} />
+    </button>
   );
 }

@@ -23,10 +23,10 @@ export default function AppLoading() {
           <HomeHeroSkeleton />
           <HomeCarouselSkeleton icon={LibraryBig} />
           <HomeCarouselSkeleton icon={Heart} />
+          <HomeRecommendationSkeleton />
           <HomeReadingListSkeleton icon={Bookmark} />
           <HomeCarouselSkeleton icon={Sparkles} />
           <HomeCarouselSkeleton icon={History} />
-          <HomeRecommendationSkeleton />
         </div>
       </div>
     </main>

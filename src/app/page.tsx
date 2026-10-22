@@ -106,6 +106,10 @@ async function HomeStreamingContent() {
           <FavoritesSection favoritesPromise={favoritesPromise} />
         </Suspense>
 
+        <Suspense fallback={<HomeRecommendationSkeleton />}>
+          <DeferredRecommendations isAnonymous={isAnonymous} />
+        </Suspense>
+
         <Suspense fallback={<HomeReadingListSkeleton icon={Bookmark} />}>
           <ReadingListsSection readingListsPromise={readingListsPromise} />
         </Suspense>
@@ -116,10 +120,6 @@ async function HomeStreamingContent() {
 
         <Suspense fallback={<HomeCarouselSkeleton icon={History} />}>
           <RecentlyReadSection recentlyReadPromise={recentlyReadPromise} />
-        </Suspense>
-
-        <Suspense fallback={<HomeRecommendationSkeleton />}>
-          <DeferredRecommendations isAnonymous={isAnonymous} />
         </Suspense>
       </div>
     );
@@ -280,10 +280,10 @@ function HomePageSkeleton() {
       <HomeHeroSkeleton />
       <HomeCarouselSkeleton icon={LibraryBig} />
       <HomeCarouselSkeleton icon={Heart} />
+      <HomeRecommendationSkeleton />
       <HomeReadingListSkeleton icon={Bookmark} />
       <HomeCarouselSkeleton icon={Sparkles} />
       <HomeCarouselSkeleton icon={History} />
-      <HomeRecommendationSkeleton />
     </div>
   );
 }

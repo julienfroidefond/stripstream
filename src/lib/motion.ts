@@ -122,6 +122,58 @@ export const curtainOpen: Variants = {
   },
 };
 
+/**
+ * Entrée d'un carrousel « une œuvre à la fois » au défilement.
+ *
+ * Le bloc s'ouvre depuis un cadre resserré, monte et fait le point pendant que
+ * l'affiche de fond se recule : le même geste que le rideau du bandeau
+ * « Reprendre la lecture », pour que les rangées spotlight ne surgissent pas
+ * sans mise en scène.
+ */
+export const spotlightShell: Variants = {
+  hidden: {
+    opacity: 0,
+    y: 80,
+    scale: 0.9,
+    filter: "blur(16px)",
+    clipPath: "inset(10% 8% 10% 8% round 28px)",
+  },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    filter: "blur(0px)",
+    clipPath: "inset(0% 0% 0% 0% round 16px)",
+    transitionEnd: { filter: "none" },
+    transition: {
+      duration: 1.05,
+      ease: EASE_PROJECTION,
+      staggerChildren: 0.12,
+      delayChildren: 0.08,
+    },
+  },
+};
+
+/** L'affiche de fond se recule pendant que le bloc se pose. */
+export const spotlightBackdrop: Variants = {
+  hidden: { opacity: 0, scale: 1.2 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: { duration: 1.4, ease: EASE_PROJECTION },
+  },
+};
+
+/** Le contenu suit le bloc avec un léger retard, pour lire la profondeur. */
+export const spotlightContent: Variants = {
+  hidden: { opacity: 0, y: 40 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.85, ease: EASE_PROJECTION, delay: 0.1 },
+  },
+};
+
 export function staggerContainer(stagger = 0.08, delayChildren = 0.06): Variants {
   return {
     hidden: {},
