@@ -40,12 +40,20 @@ export function cleanWallSummary(summary: string | null | undefined): string | n
     (entity) => ENTITIES[entity.toLowerCase()] ?? entity
   );
 
-  const text = decoded
+  let text = decoded
     .replace(/<br\s*\/?>/gi, " ")
-    .replace(/<\/(p|div|li)>/gi, " ")
-    .replace(/<[^>]+>/g, "")
-    // Le résumé est rendu comme du texte : aucun chevron ne doit survivre,
-    // y compris quand le balisage d'entrée est malformé (`<<script>`).
+    .replace(/<\/(p|div|li)>/gi, " ");
+
+  // On répète la suppression : un balisage imbriqué ou malformé (`<<script>`)
+  // peut reconstituer un tag après une première passe.
+  let previousText: string;
+  do {
+    previousText = text;
+    text = text.replace(/<[^>]+>/g, "");
+  } while (text !== previousText);
+
+  text = text
+    // Le résumé est rendu comme du texte : aucun chevron ne doit survivre.
     .replace(/[<>]/g, "")
     .replace(/\s+/g, " ")
     .trim();
