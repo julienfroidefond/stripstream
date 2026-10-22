@@ -22,10 +22,12 @@ body.no-pinch-zoom * {
   Le Wall est une surface de jeu : ses gestes (glisser, pincer) doivent rester
   au canvas, sinon le navigateur s'approprie le pinch et la page bouge sous le
   doigt. Cette règle non layerisée est plus spécifique que la règle globale
-  `body.no-pinch-zoom *` et la remplace sur le canvas.
+  `body.no-pinch-zoom *` et la remplace sur le canvas et ses descendants : sur
+  iOS, le doigt touche une tuile ou une image, pas le canvas lui-même.
   Le panneau de filtres reste hors du canvas pour garder son défilement natif.
 */
-body.no-pinch-zoom .wall-canvas {
+body.no-pinch-zoom .wall-canvas,
+body.no-pinch-zoom .wall-canvas * {
   touch-action: none;
 }
 

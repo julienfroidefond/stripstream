@@ -48,6 +48,21 @@ import {
   isMomentumDying,
   signedVelocity,
 } from "@/lib/wall-momentum";
+import {
+  MAX_WALL_ZOOM,
+  MIN_WALL_ZOOM,
+  type WallClickGuardState,
+  armWallClickGuard,
+  beginWallPinch,
+  beginWallPress,
+  clampWallZoom,
+  clearWallClickGuard,
+  createWallClickGuardState,
+  endWallPinch,
+  isWallClickGuarded,
+  pinchScale,
+  releaseWallTouch,
+} from "@/lib/wall-pinch";
 import type { WallItem, WallRect, WallRenderTile } from "@/types/wall";
 import { WallFrame } from "./WallFrame";
 import {
@@ -99,8 +114,6 @@ interface LibraryEntry {
   count: number;
 }
 
-const MAX_ZOOM = 2.4;
-const MIN_ZOOM = 0.28;
 const SHEET_BREAKPOINT = 900;
 const PANEL_MIN_WIDTH = 300;
 const PANEL_MAX_WIDTH = 376;
@@ -278,13 +291,16 @@ export function WallExperience({ items }: WallExperienceProps) {
   const flashTimerRef = useRef<number | null>(null);
   const entranceTimerRef = useRef<number | null>(null);
   const revealTimerRef = useRef<number | null>(null);
-  const clickGuardTimerRef = useRef<number | null>(null);
   const panIdleTimerRef = useRef<number | null>(null);
   const cameraRafRef = useRef<number | null>(null);
-  const suppressClickRef = useRef(false);
+  const clickGuardRef = useRef<WallClickGuardState>(
+    createWallClickGuardState()
+  );
   const initializedRef = useRef(false);
   const dragOriginRef = useRef<DragOrigin>({ x: 0, y: 0 });
   const pinchRef = useRef<PinchOrigin | null>(null);
+  const dragActiveRef = useRef(false);
+  const dragNeedsRebaseRef = useRef(false);
   const dragBlockedRef = useRef(false);
   const cameraRef = useRef<CameraState>({ x: 0, y: 0, scale: 1 });
   const momentumRafRef = useRef<number | null>(null);
@@ -422,11 +438,11 @@ export function WallExperience({ items }: WallExperienceProps) {
    * centaines de vignettes illisibles ; les copies voisines sont virtualisées.
    */
   const minScale = useMemo(() => {
-    if (!viewport.width || !viewport.height) return MIN_ZOOM;
+    if (!viewport.width || !viewport.height) return MIN_WALL_ZOOM;
     return Math.min(
-      MAX_ZOOM,
+      MAX_WALL_ZOOM,
       Math.max(
-        MIN_ZOOM,
+        MIN_WALL_ZOOM,
         (viewport.width / layout.width) * 0.5,
         (viewport.height / layout.height) * 0.5
       )
@@ -434,7 +450,7 @@ export function WallExperience({ items }: WallExperienceProps) {
   }, [layout.height, layout.width, viewport.height, viewport.width]);
 
   const clampZoom = useCallback(
-    (value: number) => Math.min(MAX_ZOOM, Math.max(minScale, value)),
+    (value: number) => clampWallZoom(value, minScale),
     [minScale]
   );
 
@@ -751,10 +767,7 @@ export function WallExperience({ items }: WallExperienceProps) {
       );
       if (!target) return;
 
-      const nextScale = Math.min(
-        MAX_ZOOM,
-        Math.max(minScale, target.width / tile.width)
-      );
+      const nextScale = clampZoom(target.width / tile.width);
       const nextX =
         target.left + target.width / 2 - (tile.x + tile.width / 2) * nextScale;
       const nextY =
@@ -809,7 +822,7 @@ export function WallExperience({ items }: WallExperienceProps) {
         });
       }, delay);
     },
-    [animateView, closePlaque, minScale, reduce]
+    [animateView, clampZoom, closePlaque, reduce]
   );
 
   const toggleFilters = useCallback(() => {
@@ -997,6 +1010,7 @@ export function WallExperience({ items }: WallExperienceProps) {
         dragBlockedRef.current = isUiTarget(state.target);
         if (dragBlockedRef.current) return;
 
+        dragActiveRef.current = true;
         stopMomentum();
         dragOriginRef.current = { x: x.get(), y: y.get() };
         scale.stop();
@@ -1009,6 +1023,18 @@ export function WallExperience({ items }: WallExperienceProps) {
       onDrag: (state) => {
         if (dragBlockedRef.current || state.pinching) return;
         const [moveX, moveY] = state.movement;
+
+        // Après un pinch, le doigt resté posé continue le drag reconnu avant
+        // le geste à deux doigts. On recale son origine sur la caméra telle
+        // qu'elle est sortie du pinch pour éviter un saut au premier mouvement.
+        if (dragNeedsRebaseRef.current) {
+          dragNeedsRebaseRef.current = false;
+          dragOriginRef.current = {
+            x: x.get() - moveX,
+            y: y.get() - moveY,
+          };
+        }
+
         if (moveX === 0 && moveY === 0) return;
 
         setOverview(false);
@@ -1017,6 +1043,7 @@ export function WallExperience({ items }: WallExperienceProps) {
         y.set(dragOriginRef.current.y + moveY);
       },
       onDragEnd: (state) => {
+        dragActiveRef.current = false;
         setDragging(false);
         if (dragBlockedRef.current) {
           dragBlockedRef.current = false;
@@ -1024,19 +1051,25 @@ export function WallExperience({ items }: WallExperienceProps) {
         }
 
         if (!state.tap) {
-          suppressClickRef.current = true;
-          if (clickGuardTimerRef.current !== null) {
-            window.clearTimeout(clickGuardTimerRef.current);
-          }
-          clickGuardTimerRef.current = window.setTimeout(() => {
-            clickGuardTimerRef.current = null;
-            suppressClickRef.current = false;
-          }, DRAG_CLICK_GUARD);
+          armWallClickGuard(
+            clickGuardRef.current,
+            performance.now(),
+            DRAG_CLICK_GUARD
+          );
         }
+
+        // La vélocité du drag a été calculée pendant le pinch : la relancer
+        // ferait dériver le mur après que les doigts se sont levés. Le drapeau
+        // reste armé jusqu'à la prochaine séquence de touches pour couvrir
+        // aussi le relâchement du dernier doigt.
+        const pinched = clickGuardRef.current.pinchHappened;
+        dragNeedsRebaseRef.current = false;
+        if (pinched) return;
 
         settleView(state.velocity, state.direction, state.movement);
       },
       onPinchStart: (state) => {
+        beginWallPinch(clickGuardRef.current, performance.now());
         if (isUiTarget(state.target)) {
           pinchRef.current = null;
           return;
@@ -1059,7 +1092,7 @@ export function WallExperience({ items }: WallExperienceProps) {
         x.stop();
         y.stop();
         closePlaque();
-          setOverview(false);
+        setOverview(false);
         setDragging(true);
       },
       onPinch: (state) => {
@@ -1068,9 +1101,7 @@ export function WallExperience({ items }: WallExperienceProps) {
         if (!pinch || !stage) return;
 
         const rect = stage.getBoundingClientRect();
-        const nextScale = clampZoom(
-          pinch.scale * (1 + state.movement[0])
-        );
+        const nextScale = clampZoom(pinchScale(pinch.scale, state.movement[0]));
         const originX = state.origin[0] - rect.left;
         const originY = state.origin[1] - rect.top;
 
@@ -1079,8 +1110,11 @@ export function WallExperience({ items }: WallExperienceProps) {
         y.set(originY - pinch.worldY * nextScale);
       },
       onPinchEnd: () => {
+        if (!pinchRef.current) return;
         pinchRef.current = null;
-        setDragging(false);
+        setDragging(dragActiveRef.current);
+        dragNeedsRebaseRef.current = true;
+        endWallPinch(clickGuardRef.current, performance.now());
       },
     },
     {
@@ -1260,6 +1294,77 @@ export function WallExperience({ items }: WallExperienceProps) {
     return () => stage.removeEventListener("wheel", handleWheel);
   }, [handleWheel]);
 
+  /**
+   * iOS garde parfois le pinch-zoom natif malgré `touch-action: none`,
+   * particulièrement en PWA standalone. Un `touchmove` non passif à deux
+   * doigts et les gestes WebKit coupent ce zoom avant qu'il ne déplace le
+   * viewport sous le mur. Le défilement à un doigt des panneaux reste intact.
+   * Safari desktop n'expose pas `maxTouchPoints` : ses gestes de trackpad ne
+   * sont pas interceptés.
+   */
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    const touchCapable = navigator.maxTouchPoints > 0;
+
+    const stopGestureZoom = (event: Event) => {
+      if (event.cancelable) event.preventDefault();
+    };
+    const stopMultiTouchZoom = (event: TouchEvent) => {
+      if (event.touches.length < 2) return;
+      if (event.cancelable) event.preventDefault();
+    };
+    // Un nouveau geste (premier doigt, ou souris) libère la garde du geste
+    // précédent. Le deuxième doigt d'un pinch n'est pas un nouveau geste.
+    const startFreshSequence = () => {
+      beginWallPress(clickGuardRef.current);
+      dragActiveRef.current = false;
+      dragNeedsRebaseRef.current = false;
+    };
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!event.isPrimary) return;
+      startFreshSequence();
+    };
+    const handleTouchStart = (event: TouchEvent) => {
+      if (event.touches.length !== 1) return;
+      startFreshSequence();
+    };
+    // Le dernier doigt peut se lever plus de 500 ms après le premier : c'est
+    // ce relâchement final qui déclenche le clic synthétique de WebKit.
+    const armAfterLastFinger = (event: TouchEvent) => {
+      releaseWallTouch(
+        clickGuardRef.current,
+        performance.now(),
+        event.touches.length
+      );
+    };
+
+    if (touchCapable) {
+      stage.addEventListener("gesturestart", stopGestureZoom, {
+        passive: false,
+      });
+      stage.addEventListener("gesturechange", stopGestureZoom, {
+        passive: false,
+      });
+    }
+    stage.addEventListener("pointerdown", handlePointerDown, { passive: true });
+    stage.addEventListener("touchstart", handleTouchStart, { passive: true });
+    stage.addEventListener("touchmove", stopMultiTouchZoom, { passive: false });
+    stage.addEventListener("touchend", armAfterLastFinger, { passive: true });
+    stage.addEventListener("touchcancel", armAfterLastFinger, {
+      passive: true,
+    });
+    return () => {
+      stage.removeEventListener("gesturestart", stopGestureZoom);
+      stage.removeEventListener("gesturechange", stopGestureZoom);
+      stage.removeEventListener("pointerdown", handlePointerDown);
+      stage.removeEventListener("touchstart", handleTouchStart);
+      stage.removeEventListener("touchmove", stopMultiTouchZoom);
+      stage.removeEventListener("touchend", armAfterLastFinger);
+      stage.removeEventListener("touchcancel", armAfterLastFinger);
+    };
+  }, []);
+
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (
@@ -1277,6 +1382,12 @@ export function WallExperience({ items }: WallExperienceProps) {
           ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))
       ) {
         return;
+      }
+
+      // Une activation clavier ne doit pas être avalée par la garde laissée
+      // par le pinch ou le drag précédent.
+      if (event.key === "Enter" || event.key === " ") {
+        clearWallClickGuard(clickGuardRef.current);
       }
 
       if (event.key === "Escape") {
@@ -1329,7 +1440,6 @@ export function WallExperience({ items }: WallExperienceProps) {
         flashTimerRef,
         entranceTimerRef,
         revealTimerRef,
-        clickGuardTimerRef,
         panIdleTimerRef,
         hoverTimerRef,
       ];
@@ -1367,8 +1477,7 @@ export function WallExperience({ items }: WallExperienceProps) {
   }, [active]);
 
   const handleClickCapture = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (suppressClickRef.current) {
-      suppressClickRef.current = false;
+    if (isWallClickGuarded(clickGuardRef.current, performance.now())) {
       event.preventDefault();
       event.stopPropagation();
       return;
@@ -1377,6 +1486,11 @@ export function WallExperience({ items }: WallExperienceProps) {
   };
 
   const handleDoubleClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (isWallClickGuarded(clickGuardRef.current, performance.now())) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
     const target = event.target as Element | null;
     if (target?.closest("[data-wall-ui], .wall-tile")) return;
     resetView();
