@@ -137,6 +137,8 @@ export interface StripstreamMetadataLink {
   provider: string;
   external_id: string;
   status: string;
+  /** Primary link chosen by Librarian when a series has several approved providers. */
+  is_primary?: boolean;
   metadata_json: unknown;
   synced_at?: string | null;
   total_volumes_external?: number | null;
