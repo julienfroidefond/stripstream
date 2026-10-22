@@ -1,5 +1,42 @@
 import { useTranslation } from "react-i18next";
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Remplace les placeholders simple accolade (`{title}`), que i18next ne
+ * reconnaît pas (il utilise `{{title}}`). Les clés sont échappées avant
+ * construction de la regex : une clé comme `count.total` ne doit pas être
+ * interprétée comme un motif.
+ */
+export function interpolateSingleBracePlaceholders(
+  translatedText: string,
+  values: Record<string, number | string>
+): string {
+  const keys = Object.keys(values);
+  if (keys.length === 0) return translatedText;
+
+  const placeholderRegex = new RegExp(
+    `\\{(${keys.map(escapeRegExp).join("|")})\\}`,
+    "g"
+  );
+
+  return translatedText.replace(
+    placeholderRegex,
+    (placeholder, key: string, offset: number, input: string) => {
+      // Ne pas casser la syntaxe i18next `{{count}}` : on ne remplace que
+      // les accolades simples.
+      const isDoubleBrace =
+        input[offset - 1] === "{" || input[offset + placeholder.length] === "}";
+      if (isDoubleBrace) return placeholder;
+
+      const value = values[key];
+      return value === undefined ? placeholder : String(value);
+    }
+  );
+}
+
 export function useTranslate() {
   const { t: tBase, i18n } = useTranslation("common");
 
@@ -10,19 +47,7 @@ export function useTranslate() {
   const t = (translationKey: string, values?: { [key: string]: number | string }) => {
     if (values && Object.keys(values).length > 0) {
       const translatedText = tBase(translationKey, values);
-
-      const placeholderRegex = new RegExp(`(\{${Object.keys(values).join("}|{")}\})`, "g");
-
-      const parts = translatedText.split(placeholderRegex);
-      return parts
-        .map((part) => {
-          const key = part.replace(/[{}]/g, "");
-          if (values[key] !== undefined) {
-            return values[key];
-          }
-          return part;
-        })
-        .join("");
+      return interpolateSingleBracePlaceholders(translatedText, values);
     }
     return tBase(translationKey, values);
   };
