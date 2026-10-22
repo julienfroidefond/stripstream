@@ -35,11 +35,18 @@ const ENTITIES: Record<string, string> = {
 export function cleanWallSummary(summary: string | null | undefined): string | null {
   if (!summary) return null;
 
-  const text = summary
+  const decoded = summary.replace(
+    /&(?:nbsp|amp|quot|#39|apos|lt|gt);/gi,
+    (entity) => ENTITIES[entity.toLowerCase()] ?? entity
+  );
+
+  const text = decoded
     .replace(/<br\s*\/?>/gi, " ")
     .replace(/<\/(p|div|li)>/gi, " ")
     .replace(/<[^>]+>/g, "")
-    .replace(/&(?:nbsp|amp|quot|#39|apos|lt|gt);/gi, (entity) => ENTITIES[entity.toLowerCase()] ?? entity)
+    // Le résumé est rendu comme du texte : aucun chevron ne doit survivre,
+    // y compris quand le balisage d'entrée est malformé (`<<script>`).
+    .replace(/[<>]/g, "")
     .replace(/\s+/g, " ")
     .trim();
 

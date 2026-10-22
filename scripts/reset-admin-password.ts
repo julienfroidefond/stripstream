@@ -64,7 +64,6 @@ async function resetAdminPassword() {
     });
 
     console.log(`✅ Password reset successfully for ${adminEmail}`);
-    console.log(`   New password: ${adminPassword}`);
     console.log(`   ⚠️  Please change the password after login!`);
   } catch (error) {
     console.error("❌ Error resetting admin password:", error);

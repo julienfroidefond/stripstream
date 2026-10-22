@@ -56,8 +56,7 @@ async function initializeAdminUser() {
     });
 
     console.log(`✅ Admin user created: ${ADMIN_EMAIL}`);
-    console.log(`   Default password: ${ADMIN_PASSWORD}`);
-    console.log(`   ⚠️  Please change the password after first login!`);
+    console.log(`   ⚠️  Change the default password after first login!`);
   } catch (error) {
     console.error("❌ Error initializing admin user:", error);
     throw error;

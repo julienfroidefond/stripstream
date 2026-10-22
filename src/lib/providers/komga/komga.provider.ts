@@ -19,6 +19,7 @@ import { KomgaAdapter } from "./komga.adapter";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 import { codeForHttpStatus } from "@/utils/http-error";
+import { normalizeServerUrl } from "@/utils/server-url";
 
 const KOMGA_HTTP_CODES = {
   UNAUTHORIZED: ERROR_CODES.KOMGA.UNAUTHORIZED,
@@ -45,7 +46,7 @@ export class KomgaProvider implements IMediaProvider {
   private config: AuthConfig;
 
   constructor(url: string, authHeader: string) {
-    this.config = { serverUrl: url, authHeader };
+    this.config = { serverUrl: normalizeServerUrl(url), authHeader };
   }
 
   private buildUrl(path: string, params?: Record<string, string | string[]>): string {

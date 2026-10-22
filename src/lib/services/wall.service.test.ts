@@ -22,6 +22,11 @@ describe("cleanWallSummary", () => {
     ).toBe('Tom & Jerry : "fin" \'provisoire\'');
   });
 
+  it("never leaves a tag-like sequence in the plain-text summary", () => {
+    expect(cleanWallSummary("<<script>alert('x')</script>")).toBe("alert('x')");
+    expect(cleanWallSummary("&lt;script&gt;alert('x')&lt;/script&gt;")).toBe("alert('x')");
+  });
+
   it("caps very long summaries without cutting mid-word upstream", () => {
     const summary = cleanWallSummary("mot ".repeat(900));
     expect(summary).not.toBeNull();

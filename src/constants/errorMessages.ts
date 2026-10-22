@@ -95,6 +95,8 @@ export const ERROR_MESSAGES: Record<string, string> = {
   [ERROR_CODES.HOME.FETCH_ERROR]: "Error fetching home page data",
 
   // Config
+  [ERROR_CODES.CONFIG.INVALID_URL]:
+    "Invalid server URL. Use an http(s) URL without credentials, query string or metadata endpoint.",
   [ERROR_CODES.CONFIG.SAVE_ERROR]: "Error saving configuration",
   [ERROR_CODES.CONFIG.FETCH_ERROR]: "Error fetching configuration",
   [ERROR_CODES.CONFIG.TTL_SAVE_ERROR]: "Error saving TTL configuration",

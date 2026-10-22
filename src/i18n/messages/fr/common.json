@@ -578,6 +578,7 @@
     "STRIPSTREAM_FORBIDDEN": "Accès Stripstream refusé (HTTP 403). Vérifie les permissions du token.",
     "STRIPSTREAM_NOT_FOUND": "Ressource Stripstream introuvable (HTTP 404). L'URL du serveur est peut-être incorrecte.",
     "STRIPSTREAM_SERVER_ERROR": "Le serveur Stripstream rencontre un problème (HTTP 5xx). Réessaie plus tard.",
+    "CONFIG_INVALID_URL": "URL de serveur invalide. Utilise une URL http(s) sans identifiants, paramètres ni adresse de métadonnées.",
     "CONFIG_SAVE_ERROR": "Erreur lors de la sauvegarde de la configuration",
     "CONFIG_FETCH_ERROR": "Erreur lors de la récupération de la configuration",
     "CONFIG_TTL_SAVE_ERROR": "Erreur lors de la sauvegarde des TTL",
