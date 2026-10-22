@@ -4,6 +4,7 @@ import {
   MAX_WALL_ZOOM,
   MIN_WALL_ZOOM,
   PINCH_CLICK_GUARD_MS,
+  armWallClickGuard,
   beginWallPinch,
   beginWallPress,
   clampWallZoom,
@@ -102,6 +103,17 @@ describe("WallClickGuardState", () => {
 
     expect(guard.pinchHappened).toBe(false);
     expect(isWallClickGuarded(guard, 2000)).toBe(false);
+  });
+
+  it("respects the custom duration used after a drag", () => {
+    // Même valeur que `DRAG_CLICK_GUARD` dans `WallExperience.tsx`.
+    const dragClickGuard = 420;
+    const guard = createWallClickGuardState();
+
+    armWallClickGuard(guard, 1000, dragClickGuard);
+
+    expect(isWallClickGuarded(guard, 1000 + dragClickGuard - 1)).toBe(true);
+    expect(isWallClickGuarded(guard, 1000 + dragClickGuard)).toBe(false);
   });
 
   it("lets a keyboard activation through without forgetting the pinch", () => {

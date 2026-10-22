@@ -293,9 +293,10 @@ export function WallExperience({ items }: WallExperienceProps) {
   const revealTimerRef = useRef<number | null>(null);
   const panIdleTimerRef = useRef<number | null>(null);
   const cameraRafRef = useRef<number | null>(null);
-  const clickGuardRef = useRef<WallClickGuardState>(
-    createWallClickGuardState()
-  );
+  // Init paresseuse : `useRef(createWallClickGuardState())` recréerait l'objet
+  // à chaque rendu pour ne conserver que le premier.
+  const clickGuardRef = useRef<WallClickGuardState | null>(null);
+  const clickGuard = (clickGuardRef.current ??= createWallClickGuardState());
   const initializedRef = useRef(false);
   const dragOriginRef = useRef<DragOrigin>({ x: 0, y: 0 });
   const pinchRef = useRef<PinchOrigin | null>(null);
@@ -1052,7 +1053,7 @@ export function WallExperience({ items }: WallExperienceProps) {
 
         if (!state.tap) {
           armWallClickGuard(
-            clickGuardRef.current,
+            clickGuard,
             performance.now(),
             DRAG_CLICK_GUARD
           );
@@ -1062,14 +1063,14 @@ export function WallExperience({ items }: WallExperienceProps) {
         // ferait dériver le mur après que les doigts se sont levés. Le drapeau
         // reste armé jusqu'à la prochaine séquence de touches pour couvrir
         // aussi le relâchement du dernier doigt.
-        const pinched = clickGuardRef.current.pinchHappened;
+        const pinched = clickGuard.pinchHappened;
         dragNeedsRebaseRef.current = false;
         if (pinched) return;
 
         settleView(state.velocity, state.direction, state.movement);
       },
       onPinchStart: (state) => {
-        beginWallPinch(clickGuardRef.current, performance.now());
+        beginWallPinch(clickGuard, performance.now());
         if (isUiTarget(state.target)) {
           pinchRef.current = null;
           return;
@@ -1110,11 +1111,15 @@ export function WallExperience({ items }: WallExperienceProps) {
         y.set(originY - pinch.worldY * nextScale);
       },
       onPinchEnd: () => {
-        if (!pinchRef.current) return;
+        // Gestion d'état commune aux deux chemins : un pinch démarré sur une
+        // cible `[data-wall-ui]` laisse `pinchRef` à null, mais la garde doit
+        // être réarmée et le drag resté actif doit reprendre. Le rebase est
+        // sans effet de saut : il recale l'origine du drag sur la caméra
+        // courante, qui n'a pas bougé pendant ce pinch.
         pinchRef.current = null;
         setDragging(dragActiveRef.current);
         dragNeedsRebaseRef.current = true;
-        endWallPinch(clickGuardRef.current, performance.now());
+        endWallPinch(clickGuard, performance.now());
       },
     },
     {
@@ -1299,8 +1304,10 @@ export function WallExperience({ items }: WallExperienceProps) {
    * particulièrement en PWA standalone. Un `touchmove` non passif à deux
    * doigts et les gestes WebKit coupent ce zoom avant qu'il ne déplace le
    * viewport sous le mur. Le défilement à un doigt des panneaux reste intact.
-   * Safari desktop n'expose pas `maxTouchPoints` : ses gestes de trackpad ne
-   * sont pas interceptés.
+   * Safari macOS expose aussi `maxTouchPoints` (1 sur un Mac à trackpad) : ses
+   * gestes de trackpad sont donc interceptés de la même façon, ce qui est
+   * voulu — `preventDefault` y bloque le zoom natif de page et le zoom du mur
+   * continue de passer par le handler `wheel` natif (`pinchOnWheel: false`).
    */
   useEffect(() => {
     const stage = stageRef.current;
@@ -1317,7 +1324,7 @@ export function WallExperience({ items }: WallExperienceProps) {
     // Un nouveau geste (premier doigt, ou souris) libère la garde du geste
     // précédent. Le deuxième doigt d'un pinch n'est pas un nouveau geste.
     const startFreshSequence = () => {
-      beginWallPress(clickGuardRef.current);
+      beginWallPress(clickGuard);
       dragActiveRef.current = false;
       dragNeedsRebaseRef.current = false;
     };
@@ -1333,7 +1340,7 @@ export function WallExperience({ items }: WallExperienceProps) {
     // ce relâchement final qui déclenche le clic synthétique de WebKit.
     const armAfterLastFinger = (event: TouchEvent) => {
       releaseWallTouch(
-        clickGuardRef.current,
+        clickGuard,
         performance.now(),
         event.touches.length
       );
@@ -1363,7 +1370,9 @@ export function WallExperience({ items }: WallExperienceProps) {
       stage.removeEventListener("touchend", armAfterLastFinger);
       stage.removeEventListener("touchcancel", armAfterLastFinger);
     };
-  }, []);
+    // `clickGuard` est l'objet stable lu depuis `clickGuardRef` : le lister ne
+    // relance l'effet qu'une fois, mais garde la dépendance explicite.
+  }, [clickGuard]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -1387,7 +1396,7 @@ export function WallExperience({ items }: WallExperienceProps) {
       // Une activation clavier ne doit pas être avalée par la garde laissée
       // par le pinch ou le drag précédent.
       if (event.key === "Enter" || event.key === " ") {
-        clearWallClickGuard(clickGuardRef.current);
+        clearWallClickGuard(clickGuard);
       }
 
       if (event.key === "Escape") {
@@ -1426,6 +1435,7 @@ export function WallExperience({ items }: WallExperienceProps) {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [
+    clickGuard,
     closePlaque,
     filtersOpen,
     goToRandom,
@@ -1477,7 +1487,7 @@ export function WallExperience({ items }: WallExperienceProps) {
   }, [active]);
 
   const handleClickCapture = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (isWallClickGuarded(clickGuardRef.current, performance.now())) {
+    if (isWallClickGuarded(clickGuard, performance.now())) {
       event.preventDefault();
       event.stopPropagation();
       return;
@@ -1486,7 +1496,7 @@ export function WallExperience({ items }: WallExperienceProps) {
   };
 
   const handleDoubleClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (isWallClickGuarded(clickGuardRef.current, performance.now())) {
+    if (isWallClickGuarded(clickGuard, performance.now())) {
       event.preventDefault();
       event.stopPropagation();
       return;
