@@ -60,10 +60,15 @@ function BookCoverContent({
   showControls = true,
   showOverlay = true,
   overlayVariant = "default",
+  eager = false,
+  fetchPriority = "auto",
 }: BookCoverProps) {
   const { t } = useTranslate();
   const { isAnonymous } = useAnonymous();
-  const { ref, loaded, onLoad, onError } = useCoverLoaded();
+  const { ref, loaded, failed, onLoad, onError } = useCoverLoaded(
+    book.thumbnailUrl.trim(),
+    { eager }
+  );
 
   const isCompleted = isAnonymous ? false : (book.readProgress?.completed || false);
 
@@ -90,7 +95,9 @@ function BookCoverContent({
           ref={ref}
           src={book.thumbnailUrl.trim()}
           alt={alt || t("books.defaultCoverAlt")}
-          loading="lazy"
+          loading={eager ? "eager" : "lazy"}
+          fetchPriority={fetchPriority}
+          decoding="async"
           onLoad={onLoad}
           onError={onError}
           className={cn(
@@ -101,6 +108,16 @@ function BookCoverContent({
             className
           )}
         />
+        {failed && (
+          <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-surface-2 px-3 text-center">
+            <span className="line-clamp-4 text-[11px] font-medium leading-snug text-muted-foreground">
+              {book.title ||
+                (book.number
+                  ? t("navigation.volume", { number: book.number })
+                  : t("books.defaultCoverAlt"))}
+            </span>
+          </div>
+        )}
         {showProgress && <ProgressBar progress={currentPage} total={totalPages} type="book" />}
       </div>
       {/* Overlay avec les contrôles */}

@@ -1,4 +1,4 @@
-import { KomgaImageService } from "./image.service";
+import { KomgaImageService, THUMBNAIL_TIMEOUT_MS } from "./image.service";
 import { PreferencesService } from "../preferences.service";
 import { ConfigDBService } from "../config-db.service";
 import { ERROR_CODES } from "../../../constants/errorCodes";
@@ -25,10 +25,10 @@ export class KomgaBookService {
     try {
       const preferences = await PreferencesService.getPreferences();
       if (preferences.showThumbnails) {
-        return KomgaImageService.streamImage(`books/${bookId}/thumbnail`, undefined, conditionalHeaders);
+        return KomgaImageService.streamImage(`books/${bookId}/thumbnail`, undefined, conditionalHeaders, THUMBNAIL_TIMEOUT_MS);
       }
       // Première page (zero_based=true → page 0 = première)
-      return KomgaImageService.streamImage(`books/${bookId}/pages/0?zero_based=true`, undefined, conditionalHeaders);
+      return KomgaImageService.streamImage(`books/${bookId}/pages/0?zero_based=true`, undefined, conditionalHeaders, THUMBNAIL_TIMEOUT_MS);
     } catch (error) {
       throw new AppError(ERROR_CODES.BOOK.PAGES_FETCH_ERROR, {}, error);
     }

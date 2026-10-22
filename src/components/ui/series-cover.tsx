@@ -20,8 +20,13 @@ export function SeriesCover({
   className,
   showProgressUi = true,
   isAnonymous = false,
+  eager = false,
+  fetchPriority = "auto",
 }: SeriesCoverProps) {
-  const { ref, loaded, onLoad, onError } = useCoverLoaded();
+  const { ref, loaded, failed, onLoad, onError } = useCoverLoaded(
+    series.thumbnailUrl,
+    { eager }
+  );
   const isCompleted = isAnonymous ? false : series.bookCount === series.booksReadCount;
 
   const readBooks = isAnonymous ? 0 : series.booksReadCount;
@@ -36,7 +41,9 @@ export function SeriesCover({
         ref={ref}
         src={series.thumbnailUrl}
         alt={alt}
-        loading="lazy"
+        loading={eager ? "eager" : "lazy"}
+        fetchPriority={fetchPriority}
+        decoding="async"
         onLoad={onLoad}
         onError={onError}
         className={cn(
@@ -47,6 +54,13 @@ export function SeriesCover({
           className
         )}
       />
+      {failed && (
+        <div className="absolute inset-0 flex items-center justify-center bg-surface-2 px-3 text-center">
+          <span className="line-clamp-4 text-[11px] font-medium leading-snug text-muted-foreground">
+            {series.name}
+          </span>
+        </div>
+      )}
       {showProgressUi && statusStyle && series.seriesStatus && (
         <div className={`absolute top-1.5 left-1.5 flex items-center rounded-full ${statusStyle.bg} p-0.5 text-white opacity-0 group-hover:opacity-100 transition-opacity`}>
           <statusStyle.icon className="h-3.5 w-3.5" />

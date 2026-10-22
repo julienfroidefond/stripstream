@@ -9,7 +9,11 @@ import { AppError } from "@/utils/errors";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { isConnectionError } from "@/utils/http-error";
 import { requestDeduplicationService } from "@/lib/services/request-deduplication.service";
+import { imageRequestLimiter } from "@/lib/services/image-request-limiter";
 import logger from "@/lib/logger";
+
+/** Une couverture doit répondre vite : au-delà, la tuile reste noire. */
+const THUMBNAIL_TIMEOUT_MS = 12000;
 
 export async function GET(
   request: NextRequest,
@@ -44,15 +48,21 @@ export async function GET(
     const { buffer, contentType, etag, lastModified, status } = await requestDeduplicationService.deduplicate(
       `stripstream-thumbnail:${connectionKey}:${bookId}:${validatorKey}`,
       async () => {
-        const client = new StripstreamClient(config.url, config.token);
-        const response = await client.fetchImage(`books/${bookId}/thumbnail`, request.headers);
-        return {
-          buffer: await response.arrayBuffer(),
-          contentType: response.headers.get("content-type") ?? "image/jpeg",
-          etag: response.headers.get("etag"),
-          lastModified: response.headers.get("last-modified"),
-          status: response.status,
-        };
+        return imageRequestLimiter.run(async () => {
+          const client = new StripstreamClient(config.url, config.token);
+          const response = await client.fetchImage(
+            `books/${bookId}/thumbnail`,
+            request.headers,
+            THUMBNAIL_TIMEOUT_MS
+          );
+          return {
+            buffer: await response.arrayBuffer(),
+            contentType: response.headers.get("content-type") ?? "image/jpeg",
+            etag: response.headers.get("etag"),
+            lastModified: response.headers.get("last-modified"),
+            status: response.status,
+          };
+        });
       }
     );
 

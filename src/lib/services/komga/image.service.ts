@@ -1,9 +1,18 @@
 import { ConfigDBService } from "../config-db.service";
 import { ERROR_CODES } from "../../../constants/errorCodes";
 import { AppError } from "../../../utils/errors";
+import { imageRequestLimiter } from "../image-request-limiter";
 import logger from "@/lib/logger";
 
 const IMAGE_CACHE_MAX_AGE = 2592000;
+/**
+ * Un provider qui ne répond pas ne doit pas laisser la balise `<img>` en
+ * attente indéfiniment : le navigateur n'émet alors ni `load` ni `error`, et la
+ * tuile reste noire. On coupe nous-mêmes la requête amont.
+ */
+const IMAGE_TIMEOUT_MS = 20000;
+/** Les couvertures sont petites : inutile de laisser traîner une requête. */
+export const THUMBNAIL_TIMEOUT_MS = 12000;
 
 /**
  * Stream une image depuis le serveur Komga actif (URL + Basic Auth de la
@@ -19,7 +28,8 @@ export class KomgaImageService {
   static async streamImage(
     path: string,
     cacheMaxAge: number = IMAGE_CACHE_MAX_AGE,
-    conditionalHeaders?: HeadersInit
+    conditionalHeaders?: HeadersInit,
+    timeoutMs: number = IMAGE_TIMEOUT_MS
   ): Promise<Response> {
     try {
       const config = await ConfigDBService.getConfig();
@@ -38,7 +48,16 @@ export class KomgaImageService {
         }
       }
 
-      const response = await fetch(url, { headers });
+      const response = await imageRequestLimiter.run(async () => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+          return await fetch(url, { headers, signal: controller.signal });
+        } finally {
+          clearTimeout(timeoutId);
+        }
+      });
+
       if (!response.ok && response.status !== 304) {
         throw new AppError(ERROR_CODES.IMAGE.FETCH_ERROR, { status: response.status });
       }

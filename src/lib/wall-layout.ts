@@ -270,9 +270,10 @@ export function visibleWallTiles(
           y: worldY,
           key: `${copyX}_${copyY}_${tile.index}`,
           itemIndex: (tile.index + offset) % itemCount,
+          visible: intersects(worldTile, viewport),
         };
 
-        if (intersects(worldTile, viewport)) visible.push(rendered);
+        if (rendered.visible) visible.push(rendered);
         else marginTiles.push(rendered);
       }
     }
