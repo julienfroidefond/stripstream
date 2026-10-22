@@ -126,6 +126,8 @@ function WallTileComponent({
           series={wallItemToSeries(item)}
           alt=""
           showProgressUi={false}
+          eager={tile.visible}
+          fetchPriority={tile.visible && tile.order < 8 ? "high" : "auto"}
           className="transition-none"
         />
       </div>
@@ -148,6 +150,7 @@ function sameWallTile(previous: WallTileProps, next: WallTileProps): boolean {
     previous.tile.width === next.tile.width &&
     previous.tile.height === next.tile.height &&
     previous.tile.itemIndex === next.tile.itemIndex &&
+    previous.tile.visible === next.tile.visible &&
     previous.active === next.active &&
     previous.flash === next.flash &&
     previous.enter === next.enter &&

@@ -172,7 +172,11 @@ export class StripstreamClient {
     }
   }
 
-  async fetchImage(path: string, conditionalHeaders?: HeadersInit): Promise<Response> {
+  async fetchImage(
+    path: string,
+    conditionalHeaders?: HeadersInit,
+    timeoutMs: number = IMAGE_TIMEOUT_MS
+  ): Promise<Response> {
     const url = this.buildUrl(path);
     const headers = new Headers({
       Authorization: `Bearer ${this.token}`,
@@ -186,7 +190,7 @@ export class StripstreamClient {
       }
     }
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), IMAGE_TIMEOUT_MS);
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
     try {
       const response = await fetch(url, { headers, signal: controller.signal });
       if (!response.ok && response.status !== 304) {

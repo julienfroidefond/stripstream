@@ -40,11 +40,13 @@ export interface WallTile {
 /**
  * Une copie concrète du motif, prête à être rendue.
  * `key` identifie la copie (elle reste stable pendant le défilement) et
- * `itemIndex` désigne la série réellement affichée.
+ * `itemIndex` désigne la série réellement affichée. `visible` indique que la
+ * tuile croise le cadre (les autres forment la marge de préchargement).
  */
 export interface WallRenderTile extends WallTile {
   key: string;
   itemIndex: number;
+  visible: boolean;
 }
 
 export interface WallLayout {

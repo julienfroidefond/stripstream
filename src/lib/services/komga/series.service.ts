@@ -1,5 +1,5 @@
 import type { KomgaBook } from "@/types/komga";
-import { KomgaImageService } from "./image.service";
+import { KomgaImageService, THUMBNAIL_TIMEOUT_MS } from "./image.service";
 import { PreferencesService } from "../preferences.service";
 import { ConfigDBService } from "../config-db.service";
 import { ERROR_CODES } from "../../../constants/errorCodes";
@@ -38,11 +38,11 @@ export class KomgaSeriesService {
     try {
       const preferences = await PreferencesService.getPreferences();
       if (preferences.showThumbnails) {
-        return KomgaImageService.streamImage(`series/${seriesId}/thumbnail`, undefined, conditionalHeaders);
+        return KomgaImageService.streamImage(`series/${seriesId}/thumbnail`, undefined, conditionalHeaders, THUMBNAIL_TIMEOUT_MS);
       }
       const firstBookId = await KomgaSeriesService.getFirstBook(seriesId);
       // Première page du premier livre (zero_based=true → page 0)
-      return KomgaImageService.streamImage(`books/${firstBookId}/pages/0?zero_based=true`, undefined, conditionalHeaders);
+      return KomgaImageService.streamImage(`books/${firstBookId}/pages/0?zero_based=true`, undefined, conditionalHeaders, THUMBNAIL_TIMEOUT_MS);
     } catch (error) {
       logger.error({ err: error }, "Erreur lors de la récupération de la couverture de la série");
       throw new AppError(ERROR_CODES.SERIES.FETCH_ERROR, {}, error);

@@ -6,6 +6,10 @@ export interface BaseCoverProps {
   quality?: number;
   sizes?: string;
   showProgressUi?: boolean;
+  /** Couverture immédiatement visible : chargement prioritaire et watchdog. */
+  eager?: boolean;
+  /** Indication au navigateur pour arbitrer les requêtes d'image. */
+  fetchPriority?: "high" | "low" | "auto";
 }
 
 export interface BookCoverProps extends BaseCoverProps {

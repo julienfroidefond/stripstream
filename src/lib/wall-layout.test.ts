@@ -158,6 +158,25 @@ describe("visibleWallTiles", () => {
     expect(tiles.length).toBeLessThan(500);
   });
 
+  it("marks which copies intersect the viewport", () => {
+    const viewport = camera();
+    const tiles = visibleWallTiles(layout, viewport, 60, 0, 0.3);
+    const left = -viewport.x / viewport.scale;
+    const top = -viewport.y / viewport.scale;
+
+    expect(tiles.some((tile) => tile.visible)).toBe(true);
+    expect(tiles.some((tile) => !tile.visible)).toBe(true);
+
+    for (const tile of tiles) {
+      const intersects =
+        tile.x + tile.width > left &&
+        tile.x < left + viewport.width / viewport.scale &&
+        tile.y + tile.height > top &&
+        tile.y < top + viewport.height / viewport.scale;
+      expect(tile.visible).toBe(intersects);
+    }
+  });
+
   it("still renders when the camera is far from the origin", () => {
     const left = 94812;
     const top = -60231;

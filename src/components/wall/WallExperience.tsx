@@ -25,12 +25,14 @@ import {
   useRef,
   useState,
 } from "react";
+import { preload } from "react-dom";
 
 import { EASE_FOCUS, EASE_PROJECTION } from "@/lib/motion";
 import { useTranslate } from "@/hooks/useTranslate";
 import { useUserScope } from "@/contexts/UserScopeContext";
 import { buildStorageKey } from "@/lib/storage";
 import { cn } from "@/lib/utils";
+import { wallPreloadUrls } from "@/lib/wall-cover";
 import {
   WALL_CELL_WIDTH,
   WALL_PATCH_HEIGHT,
@@ -230,6 +232,21 @@ function isUiTarget(target: EventTarget | null): boolean {
 }
 
 /**
+ * Les couvertures du centre partent dès le rendu serveur (les `<link>` sont
+ * alors dans la première réponse HTML) et, pour une navigation client, dès que
+ * le composant est monté. Dans les deux cas, le navigateur réutilise ces
+ * préchargements quand les `<img>` arrivent.
+ */
+function preloadWallCovers(urls: readonly string[]) {
+  urls.forEach((url, index) => {
+    preload(url, {
+      as: "image",
+      fetchPriority: index < 8 ? "high" : "auto",
+    });
+  });
+}
+
+/**
  * Le Wall — surface de jeu.
  *
  * Les séries arrivent entières, la géométrie est calculée ici à partir de la
@@ -242,6 +259,19 @@ export function WallExperience({ items }: WallExperienceProps) {
   const { t, currentLanguage } = useTranslate();
   const prefersReducedMotion = useReducedMotion();
   const reduce = Boolean(prefersReducedMotion);
+
+  /**
+   * Le préchargement doit partir le plus tôt possible : côté serveur pendant le
+   * rendu, côté client au montage (les tuiles sont montées dans le même commit,
+   * le navigateur réutilise la requête en cours).
+   */
+  const preloadUrls = useMemo(() => wallPreloadUrls(items), [items]);
+  if (typeof window === "undefined") {
+    preloadWallCovers(preloadUrls);
+  }
+  useEffect(() => {
+    preloadWallCovers(preloadUrls);
+  }, [preloadUrls]);
 
   const stageRef = useRef<HTMLDivElement>(null);
   const zoomLabelRef = useRef<HTMLSpanElement>(null);
