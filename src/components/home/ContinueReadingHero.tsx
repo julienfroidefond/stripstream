@@ -22,7 +22,7 @@ import {
   prefersReducedMotion,
   ScrollTrigger,
   SplitText,
-  useGSAP,
+  useGsapEffect,
 } from "@/lib/gsap";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
@@ -59,7 +59,7 @@ function HeroTitle({
   const ref = useRef<HTMLSpanElement>(null);
   const played = useRef(false);
 
-  useGSAP(
+  useGsapEffect(
     () => {
       const element = ref.current;
       if (
@@ -117,7 +117,7 @@ function HeroTitle({
         split.revert();
       };
     },
-    { scope: ref, dependencies: [intro, reduce, text] }
+    { dependencies: [intro, reduce, text] }
   );
 
   return (
@@ -428,7 +428,7 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
     });
   };
 
-  useGSAP(
+  useGsapEffect(
     () => {
       const section = sectionRef.current;
       const backdrop = introBackdropRef.current;
@@ -551,10 +551,10 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
 
       return () => timeline.kill();
     },
-    { scope: sectionRef, dependencies: [reduce] }
+    { dependencies: [reduce] }
   );
 
-  useGSAP(
+  useGsapEffect(
     () => {
       // L'ouverture anime les mêmes transformations : la profondeur au scroll
       // ne s'installe qu'une fois la scène posée.
@@ -604,10 +604,10 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
         }
       };
     },
-    { scope: sectionRef, dependencies: [introDone, reduce] }
+    { dependencies: [introDone, reduce] }
   );
 
-  useGSAP(
+  useGsapEffect(
     () => {
       const layer = backdropLayerRef.current;
       const first = firstBackdrop.current;
@@ -624,7 +624,7 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
       );
       return () => tween.kill();
     },
-    { scope: sectionRef, dependencies: [book?.id, reduce] }
+    { dependencies: [book?.id, reduce] }
   );
 
   if (total === 0 || !book) return null;

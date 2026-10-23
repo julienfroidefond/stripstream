@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { cn } from "@/lib/utils";
-import { gsap, prefersReducedMotion, useGSAP } from "@/lib/gsap";
+import { gsap, prefersReducedMotion, useGsapEffect } from "@/lib/gsap";
 
 const SWIPE_THRESHOLD = 60;
 const SWIPE_RESISTANCE = 0.55;
@@ -76,7 +76,7 @@ export function DirectionalSlide({
     onSettledRef.current = onSettled;
   }, [onSwipe, onSettled]);
 
-  useGSAP(
+  useGsapEffect(
     () => {
       const enter = enterRef.current;
       if (!enter) return;
@@ -151,7 +151,6 @@ export function DirectionalSlide({
       return () => timeline.kill();
     },
     {
-      scope: rootRef,
       dependencies: [
         activeKey,
         previousKey,

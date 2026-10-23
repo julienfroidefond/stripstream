@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTranslate } from "@/hooks/useTranslate";
 import LanguageSelector from "@/components/LanguageSelector";
 import { useRef } from "react";
-import { gsap, prefersReducedMotion, useGSAP } from "@/lib/gsap";
+import { gsap, prefersReducedMotion, useGsapEffect } from "@/lib/gsap";
 
 interface LoginContentProps {
   searchParams: {
@@ -25,7 +25,7 @@ export function LoginContent({ searchParams }: LoginContentProps) {
    * glisse en place, le panneau du formulaire pivote vers le spectateur et
    * le logo se pose en rebondissant. États de départ en CSS (`[data-login]`).
    */
-  useGSAP(
+  useGsapEffect(
     () => {
       const root = rootRef.current;
       if (!root) return;
@@ -76,8 +76,7 @@ export function LoginContent({ searchParams }: LoginContentProps) {
         );
       });
       return () => timeline.kill();
-    },
-    { scope: rootRef }
+    }
   );
 
   return (

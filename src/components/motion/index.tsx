@@ -1,6 +1,6 @@
 "use client";
 
-import { gsap, prefersReducedMotion, ScrollTrigger, SplitText, useGSAP } from "@/lib/gsap";
+import { gsap, prefersReducedMotion, ScrollTrigger, SplitText, useGsapEffect } from "@/lib/gsap";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import {
   createContext,
@@ -242,7 +242,7 @@ export function StaggerItem({ children, className, style }: StaggerItemProps) {
       : scrollState.revealed
     : false;
 
-  useGSAP(
+  useGsapEffect(
     () => {
       const element = ref.current;
       if (!element) return;
@@ -282,7 +282,6 @@ export function StaggerItem({ children, className, style }: StaggerItemProps) {
       };
     },
     {
-      scope: ref,
       dependencies: [
         delayChildren,
         effect,
@@ -420,7 +419,7 @@ export function CountUp({ value, suffix = "", className, duration = 1.1 }: Count
    * Le compteur écrit directement dans le nœud texte rendu par React : aucun
    * re-render par frame, et React garde la main sur ce même nœud.
    */
-  useGSAP(
+  useGsapEffect(
     () => {
       const element = ref.current;
       if (!element) return;
@@ -473,7 +472,7 @@ export function ProgressFill({ percent, className, delay = 0.35 }: ProgressFillP
   const reduce = usePrefersReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
 
-  useGSAP(
+  useGsapEffect(
     () => {
       const element = ref.current;
       if (!element) return;
@@ -488,7 +487,7 @@ export function ProgressFill({ percent, className, delay = 0.35 }: ProgressFillP
       );
       return () => tween.kill();
     },
-    { scope: ref, dependencies: [percent, delay, reduce] }
+    { dependencies: [percent, delay, reduce] }
   );
 
   return (
@@ -508,7 +507,7 @@ export function ScrollProgress() {
   const reduce = usePrefersReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
 
-  useGSAP(
+  useGsapEffect(
     () => {
       const bar = ref.current;
       if (!bar || reduce || prefersReducedMotion()) return;
@@ -554,7 +553,7 @@ export function ScrollProgress() {
 export function useBannerScene(ref: RefObject<HTMLElement | null>) {
   const reduce = usePrefersReducedMotion();
 
-  useGSAP(
+  useGsapEffect(
     () => {
       const root = ref.current;
       if (!root) return;
@@ -672,7 +671,7 @@ export function useBannerScene(ref: RefObject<HTMLElement | null>) {
         exit?.revert();
       };
     },
-    { scope: ref, dependencies: [reduce] }
+    { dependencies: [reduce] }
   );
 }
 
@@ -702,7 +701,7 @@ export function usePresence(
     stepsRef.current = steps;
   });
 
-  useGSAP(
+  useGsapEffect(
     () => {
       const element = ref.current;
       if (!element || !rendered) return;

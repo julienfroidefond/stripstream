@@ -1,6 +1,6 @@
 "use client";
 
-import { useGSAP } from "@gsap/react";
+import { useEffect, useLayoutEffect, type DependencyList } from "react";
 import { gsap } from "gsap";
 import { CustomEase } from "gsap/CustomEase";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -23,7 +23,7 @@ const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
  * easing restent de simples chaînes, donc le rendu SSR ne dépend pas de GSAP.
  */
 if (typeof window !== "undefined") {
-  gsap.registerPlugin(ScrollTrigger, CustomEase, SplitText, useGSAP);
+  gsap.registerPlugin(ScrollTrigger, CustomEase, SplitText);
 
   CustomEase.create("projection", "M0,0 C0.22,1 0.36,1 1,1");
   CustomEase.create("out", "M0,0 C0.16,1 0.3,1 1,1");
@@ -39,4 +39,37 @@ export function prefersReducedMotion(): boolean {
   );
 }
 
-export { gsap, ScrollTrigger, SplitText, useGSAP };
+const useIsomorphicLayoutEffect = typeof document !== "undefined" ? useLayoutEffect : useEffect;
+
+type GsapCleanup = void | (() => void);
+
+/**
+ * Effet GSAP lié au cycle de vie React, joué avant la peinture.
+ *
+ * L'effet s'exécute dans un `gsap.context` ; à chaque changement de
+ * `dependencies` comme au démontage, la fonction de nettoyage qu'il renvoie
+ * est appelée et les animations qu'il a créées sont tuées (sans être
+ * annulées : les éléments restent dans l'état où l'effet les a laissés).
+ *
+ * `useGSAP` (`@gsap/react`) ne fait pas cela : avec des dépendances et sans
+ * `revertOnUpdate`, il repousse tout nettoyage au démontage, si bien qu'une
+ * boucle `repeat: -1` démarrée sous condition ne s'arrêtait jamais.
+ */
+export function useGsapEffect(
+  effect: () => GsapCleanup,
+  { dependencies = [] }: { dependencies?: DependencyList } = {}
+): void {
+  useIsomorphicLayoutEffect(() => {
+    let cleanup: GsapCleanup;
+    const context = gsap.context(() => {
+      cleanup = effect();
+    });
+    return () => {
+      if (typeof cleanup === "function") cleanup();
+      context.kill();
+    };
+    // Les dépendances sont fournies par l'appelant, comme pour `useEffect`.
+  }, dependencies);
+}
+
+export { gsap, ScrollTrigger, SplitText };

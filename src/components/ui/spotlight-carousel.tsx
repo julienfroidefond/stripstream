@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import { gsap, prefersReducedMotion, SplitText, useGSAP } from "@/lib/gsap";
+import { gsap, prefersReducedMotion, SplitText, useGsapEffect } from "@/lib/gsap";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { VIEWPORT_MARGIN } from "@/components/motion";
 import { DirectionalSlide } from "@/components/ui/directional-slide";
@@ -133,7 +133,7 @@ export function SpotlightCarousel({
     previousTotal.current = total;
   }, [nav.index, reduce, total]);
 
-  useGSAP(
+  useGsapEffect(
     () => {
       const section = sectionRef.current;
       const backdrop = backdropRef.current;
@@ -257,10 +257,10 @@ export function SpotlightCarousel({
         splits.forEach((split) => split.revert());
       };
     },
-    { scope: sectionRef, dependencies: [reduce, revealed] }
+    { dependencies: [reduce, revealed] }
   );
 
-  useGSAP(
+  useGsapEffect(
     () => {
       const layer = backdropLayerRef.current;
       const first = firstBackdrop.current;
@@ -273,7 +273,7 @@ export function SpotlightCarousel({
       const tween = gsap.fromTo(layer, { opacity: 0 }, { opacity: 1, duration: 0.7, ease: "out" });
       return () => tween.kill();
     },
-    { scope: sectionRef, dependencies: [slide?.key, reduce] }
+    { dependencies: [slide?.key, reduce] }
   );
 
   if (total === 0 || !slide) return null;

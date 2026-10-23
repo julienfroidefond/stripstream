@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import { cn } from "@/lib/utils";
-import { gsap, prefersReducedMotion, useGSAP } from "@/lib/gsap";
+import { gsap, prefersReducedMotion, useGsapEffect } from "@/lib/gsap";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
 interface LoadMoreLabelProps {
@@ -32,7 +32,7 @@ export function LoadMoreLabel({ pending, label, loadingLabel, className }: LoadM
   const arcRef = useRef<SVGCircleElement>(null);
   const previous = useRef(pending);
 
-  useGSAP(
+  useGsapEffect(
     () => {
       const text = labelRef.current;
       const icon = iconRef.current;
@@ -93,7 +93,7 @@ export function LoadMoreLabel({ pending, label, loadingLabel, className }: LoadM
         loops.forEach((loop) => loop.kill());
       };
     },
-    { scope: rootRef, dependencies: [pending, reduce] }
+    { dependencies: [pending, reduce] }
   );
 
   return (

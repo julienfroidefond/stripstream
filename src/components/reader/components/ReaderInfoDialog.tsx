@@ -9,7 +9,7 @@ import type { ReaderInfo } from "../types";
 import { useTranslation } from "react-i18next";
 import { useRef } from "react";
 import { CountUp } from "@/components/motion";
-import { gsap, prefersReducedMotion, SplitText, useGSAP } from "@/lib/gsap";
+import { gsap, prefersReducedMotion, SplitText, useGsapEffect } from "@/lib/gsap";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
 /** Les barres attendent que leur bloc soit posé pour se remplir sous les yeux. */
@@ -41,7 +41,7 @@ export function ReaderInfoDialog({
 
   // À chaque ouverture : la cover arrive du fond, les mots du titre basculent
   // en 3D, les blocs remontent en cascade — le langage de l'accueil.
-  useGSAP(
+  useGsapEffect(
     () => {
       const content = contentRef.current;
       if (!open || !content) return;

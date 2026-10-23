@@ -28,7 +28,6 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@gsap/react": "^2.1.2",
     "@prisma/adapter-better-sqlite3": "^7.10.0",
     "@prisma/client": "^7.10.0",
     "@radix-ui/react-alert-dialog": "^1.1.24",

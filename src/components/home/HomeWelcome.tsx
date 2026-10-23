@@ -7,7 +7,7 @@ import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProjectionBackdrop } from "@/components/ui/projection-backdrop";
 import { GlowLayer, Magnetic, StaggerGroup, StaggerItem, usePointerGlow } from "@/components/motion";
-import { gsap, prefersReducedMotion, SplitText, useGSAP } from "@/lib/gsap";
+import { gsap, prefersReducedMotion, SplitText, useGsapEffect } from "@/lib/gsap";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { useTranslate } from "@/hooks/useTranslate";
 
@@ -43,7 +43,7 @@ export function HomeWelcome() {
    * spectateur, les mots du titre basculent en 3D, le reste remonte en
    * cascade. États de départ en CSS (`[data-hero-intro]`, `[data-hero-item]`).
    */
-  useGSAP(
+  useGsapEffect(
     () => {
       const scene = sceneRef.current;
       if (!scene) return;
@@ -118,7 +118,7 @@ export function HomeWelcome() {
         split?.revert();
       };
     },
-    { scope: sceneRef, dependencies: [reduce] }
+    { dependencies: [reduce] }
   );
 
   const stagedItem = reduce ? {} : { "data-hero-item": "" };

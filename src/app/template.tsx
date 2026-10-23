@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { useRef, type ReactNode } from "react";
-import { gsap, prefersReducedMotion, useGSAP } from "@/lib/gsap";
+import { gsap, prefersReducedMotion, useGsapEffect } from "@/lib/gsap";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
 /**
@@ -20,7 +20,7 @@ export default function Template({ children }: { children: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
   const skip = pathname.startsWith("/books/");
 
-  useGSAP(
+  useGsapEffect(
     () => {
       const element = ref.current;
       if (!element || skip) return;
@@ -48,7 +48,7 @@ export default function Template({ children }: { children: ReactNode }) {
 
       return () => timeline.kill();
     },
-    { scope: ref, dependencies: [pathname, reduce, skip] }
+    { dependencies: [pathname, reduce, skip] }
   );
 
   if (skip) return <>{children}</>;

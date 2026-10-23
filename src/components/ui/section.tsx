@@ -4,7 +4,7 @@ import * as React from "react";
 import { type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { VIEWPORT_MARGIN } from "@/components/motion";
-import { gsap, prefersReducedMotion, SplitText, useGSAP } from "@/lib/gsap";
+import { gsap, prefersReducedMotion, SplitText, useGsapEffect } from "@/lib/gsap";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
 export interface SectionProps extends React.HTMLAttributes<HTMLElement> {
@@ -45,7 +45,7 @@ function useSectionHeaderReveal(
     return () => observer.disconnect();
   }, [ref, reduce]);
 
-  useGSAP(
+  useGsapEffect(
     () => {
       const header = ref.current;
       if (!header || !header.hasAttribute("data-section-header")) return;
@@ -115,7 +115,7 @@ function useSectionHeaderReveal(
         split?.revert();
       };
     },
-    { scope: ref, dependencies: [reduce, revealed, title] }
+    { dependencies: [reduce, revealed, title] }
   );
 
   return !reduce;
