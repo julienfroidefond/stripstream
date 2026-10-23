@@ -1710,3 +1710,24 @@ body.no-pinch-zoom .wall-canvas * {
     }
   }
 }
+
+/* Squelette : invisible les 160 premières ms (un chargement rapide n'en
+   montre aucun), puis la pulsation habituelle. `visibility` et non
+   `opacity`, que la pulsation anime déjà. */
+.skeleton-reveal {
+  animation:
+    skeleton-wait 160ms step-end both,
+    pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes skeleton-wait {
+  from {
+    visibility: hidden;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-reveal {
+    animation: skeleton-wait 160ms step-end both;
+  }
+}
