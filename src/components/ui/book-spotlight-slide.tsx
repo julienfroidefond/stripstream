@@ -49,21 +49,24 @@ export function BookSpotlightSlide({ book, onOpen, eyebrow }: BookSpotlightSlide
 
   return (
     <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:gap-9">
-      <button
-        type="button"
-        onClick={onOpen}
-        {...staging.cover}
-        className="group/cover relative mx-auto block aspect-2/3 w-[168px] shrink-0 overflow-hidden rounded-xl bg-surface-2 sm:mx-0 sm:w-[196px] transition-transform duration-350 ease-out hover:-translate-y-2.5 hover:-rotate-2 hover:scale-104 motion-reduce:transition-none motion-reduce:hover:translate-none motion-reduce:hover:rotate-none motion-reduce:hover:scale-none"
-        aria-label={ctaLabel}
-      >
-        <BookCover
-          book={book}
-          alt={title}
-          showControls={false}
-          showProgressUi={false}
-          overlayVariant="home"
-        />
-      </button>
+      {/* L'enveloppe fixe capte le survol, le bouton seul se soulève. */}
+      <div className="group/cover mx-auto shrink-0 sm:mx-0">
+        <button
+          type="button"
+          onClick={onOpen}
+          {...staging.cover}
+          className="relative block aspect-2/3 w-[168px] overflow-hidden rounded-xl bg-surface-2 sm:w-[196px] transition-transform duration-350 ease-out group-hover/cover:-translate-y-2.5 group-hover/cover:-rotate-2 group-hover/cover:scale-104 motion-reduce:transition-none motion-reduce:group-hover/cover:translate-none motion-reduce:group-hover/cover:rotate-none motion-reduce:group-hover/cover:scale-none"
+          aria-label={ctaLabel}
+        >
+          <BookCover
+            book={book}
+            alt={title}
+            showControls={false}
+            showProgressUi={false}
+            overlayVariant="home"
+          />
+        </button>
+      </div>
 
       <div className="flex flex-1 flex-col justify-center gap-4 text-center text-foreground sm:text-left">
         <div

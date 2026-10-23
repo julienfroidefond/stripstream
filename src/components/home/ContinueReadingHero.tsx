@@ -184,10 +184,11 @@ function HeroSlide({
 
   return (
     <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:gap-9">
-      {/* Cover : le décalage de profondeur (`translate`) est porté par
-          l'enveloppe, le survol par le bouton, pour ne pas se marcher dessus. */}
+      {/* Cover : l'enveloppe porte la profondeur (`translate`) et capte le
+          survol ; seul le bouton bouge. Survoler l'élément qui se déplace
+          ferait trembler la cover : elle sortirait de sous le curseur. */}
       <div
-        className="hero-depth-cover mx-auto shrink-0 sm:mx-0"
+        className="hero-depth-cover group/cover mx-auto shrink-0 sm:mx-0"
         data-hero-tilt="cover"
         {...(staged && !reduce ? { "data-hero-fly": "" } : {})}
       >
@@ -195,7 +196,7 @@ function HeroSlide({
           type="button"
           data-testid="home-hero-cover"
           onClick={() => onResume(book)}
-          className="hero-cover-shadow group/cover relative block aspect-2/3 w-[168px] overflow-hidden rounded-xl transition-transform duration-350 ease-out hover:-translate-y-2.5 hover:-rotate-2 hover:scale-104 motion-reduce:transition-none motion-reduce:hover:translate-none motion-reduce:hover:rotate-none motion-reduce:hover:scale-none sm:w-[196px]"
+          className="hero-cover-shadow relative block aspect-2/3 w-[168px] overflow-hidden rounded-xl transition-transform duration-350 ease-out group-hover/cover:-translate-y-2.5 group-hover/cover:-rotate-2 group-hover/cover:scale-104 motion-reduce:transition-none motion-reduce:group-hover/cover:translate-none motion-reduce:group-hover/cover:rotate-none motion-reduce:group-hover/cover:scale-none sm:w-[196px]"
           aria-label={t("home.hero.resume")}
         >
           {/* Le liseré est porté par la cover elle-même, pas par le cadre. */}

@@ -157,20 +157,23 @@ const ReadingListSpotlightSlide = memo(function ReadingListSpotlightSlide({
 
   return (
     <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:gap-9">
-      <button
-        type="button"
-        onClick={() => onOpen(list.id)}
-        {...staging.cover}
-        className="group relative mx-auto block aspect-2/3 w-[168px] shrink-0 overflow-hidden rounded-xl bg-surface-2 sm:mx-0 sm:w-[196px] transition-transform duration-350 ease-out hover:-translate-y-2.5 hover:-rotate-2 hover:scale-104 motion-reduce:transition-none motion-reduce:hover:translate-none motion-reduce:hover:rotate-none motion-reduce:hover:scale-none"
-        aria-label={t("navigation.openReadingList")}
-      >
-        <ReadingListCover
-          covers={list.preview_covers}
-          alt={list.name}
-          className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-projection group-hover:scale-[1.07] motion-reduce:transition-none"
-          placeholderClassName="bg-surface-2"
-        />
-      </button>
+      {/* L'enveloppe fixe capte le survol, le bouton seul se soulève. */}
+      <div className="group mx-auto shrink-0 sm:mx-0">
+        <button
+          type="button"
+          onClick={() => onOpen(list.id)}
+          {...staging.cover}
+          className="relative block aspect-2/3 w-[168px] overflow-hidden rounded-xl bg-surface-2 sm:w-[196px] transition-transform duration-350 ease-out group-hover:-translate-y-2.5 group-hover:-rotate-2 group-hover:scale-104 motion-reduce:transition-none motion-reduce:group-hover:translate-none motion-reduce:group-hover:rotate-none motion-reduce:group-hover:scale-none"
+          aria-label={t("navigation.openReadingList")}
+        >
+          <ReadingListCover
+            covers={list.preview_covers}
+            alt={list.name}
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-projection group-hover:scale-[1.07] motion-reduce:transition-none"
+            placeholderClassName="bg-surface-2"
+          />
+        </button>
+      </div>
 
       <div className="flex flex-1 flex-col justify-center gap-4 text-center text-foreground sm:text-left">
         <div
