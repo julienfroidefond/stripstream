@@ -688,7 +688,12 @@ body.no-pinch-zoom .wall-canvas * {
   }
 }
 
+/* Le cadre bouge au survol (traction, inclinaison) : il ne doit pas capter le
+   pointeur. Le survol se décide sur la boîte fixe de la tuile, sinon le cadre
+   tiré vers le curseur déborderait sur la voisine, perdrait le survol, revien-
+   drait sous le curseur et le reprendrait — la tuile tremblerait en boucle. */
 .wall-tile-frame {
+  pointer-events: none;
   border-radius: inherit;
   background: hsl(var(--surface-2));
   box-shadow: 0 0 0 1px hsl(var(--foreground) / 0.07);

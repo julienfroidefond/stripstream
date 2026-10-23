@@ -59,8 +59,10 @@ function WallTileComponent({
       const element = event.currentTarget;
       const rect = element.getBoundingClientRect();
       if (!rect.width || !rect.height) return;
-      const px = (event.clientX - rect.left) / rect.width - 0.5;
-      const py = (event.clientY - rect.top) / rect.height - 0.5;
+      // Bornée à la tuile : au-delà du bord, la traction ne suit plus le
+      // curseur (sinon le cadre le poursuivrait sur la voisine).
+      const px = Math.min(0.5, Math.max(-0.5, (event.clientX - rect.left) / rect.width - 0.5));
+      const py = Math.min(0.5, Math.max(-0.5, (event.clientY - rect.top) / rect.height - 0.5));
       element.style.setProperty("--wall-tilt-x", `${(-py * 6).toFixed(2)}deg`);
       element.style.setProperty("--wall-tilt-y", `${(px * 8).toFixed(2)}deg`);
       element.style.setProperty("--wall-pull-x", `${(px * 10).toFixed(2)}px`);
