@@ -21,6 +21,7 @@ import { preload } from "react-dom";
 
 import { useCameraStyle, useMotionNumber, useMotionNumberEvent } from "@/lib/motion-value";
 import { usePresence } from "@/components/motion";
+import { gsap } from "@/lib/gsap";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { useTranslate } from "@/hooks/useTranslate";
 import { useUserScope } from "@/contexts/UserScopeContext";
@@ -261,6 +262,34 @@ function preloadWallCovers(urls: readonly string[]) {
 }
 
 /**
+ * Pose l'affiche visée devant le voile le temps du vol de la caméra et lui
+ * donne un retour tactile : elle s'enfonce comme un bouton pressé, jaillit,
+ * puis se pose avec un rebond. Renvoie la fonction qui la rend au mur.
+ */
+function pressFocusedTile(
+  stage: HTMLElement,
+  tile: WallRenderTile,
+  reduce: boolean
+): (() => void) | null {
+  const focused = stage.querySelector<HTMLElement>(
+    `.wall-tile[data-wall-key="${CSS.escape(tile.key)}"]`
+  );
+  if (!focused) return null;
+  focused.setAttribute("data-focus", "");
+
+  if (!reduce) {
+    gsap.killTweensOf(focused);
+    gsap
+      .timeline({ onComplete: () => gsap.set(focused, { clearProps: "transform" }) })
+      .to(focused, { scale: 0.92, duration: 0.12, ease: "power2.out" })
+      .to(focused, { scale: 1.06, duration: 0.18, ease: "power2.out" })
+      .to(focused, { scale: 1, duration: 0.4, ease: "back.out(2.4)" });
+  }
+
+  return () => focused.removeAttribute("data-focus");
+}
+
+/**
  * Le Wall — surface de jeu.
  *
  * Les séries arrivent entières, la géométrie est calculée ici à partir de la
@@ -291,6 +320,8 @@ export function WallExperience({ items }: WallExperienceProps) {
   const flashTimerRef = useRef<number | null>(null);
   const entranceTimerRef = useRef<number | null>(null);
   const revealTimerRef = useRef<number | null>(null);
+  /** Rend au mur l'affiche visée par le vol en cours. */
+  const settleFocusRef = useRef<(() => void) | null>(null);
   const panIdleTimerRef = useRef<number | null>(null);
   const cameraRafRef = useRef<number | null>(null);
   // Init paresseuse : `useRef(createWallClickGuardState())` recréerait l'objet
@@ -320,6 +351,8 @@ export function WallExperience({ items }: WallExperienceProps) {
   const [viewport, setViewport] = useState<Viewport>({ width: 0, height: 0 });
   const [camera, setCamera] = useState<CameraState>({ x: 0, y: 0, scale: 1 });
   const [active, setActive] = useState<ActivePlaqueState | null>(null);
+  /** Œuvre visée pendant le vol de la caméra, avant que la plaque se pose. */
+  const [focusKey, setFocusKey] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
   const [panning, setPanning] = useState(false);
   const [overview, setOverview] = useState(false);
@@ -731,7 +764,10 @@ export function WallExperience({ items }: WallExperienceProps) {
 
   const closePlaque = useCallback(() => {
     cancelReveal();
+    settleFocusRef.current?.();
+    settleFocusRef.current = null;
     setActive(null);
+    setFocusKey(null);
   }, [cancelReveal]);
 
   const clearFlash = useCallback(() => {
@@ -799,6 +835,13 @@ export function WallExperience({ items }: WallExperienceProps) {
 
       animateView(nextScale, nextX, nextY, duration, "focus");
       setOverview(false);
+      // La salle reste éteinte pendant tout le vol : le voile ne se rallume
+      // pas quand la caméra part, il attend la plaque (`data-plaque`).
+      setFocusKey(tile.key);
+
+      // L'affiche visée passe devant le voile pendant le vol et répond au clic.
+      settleFocusRef.current?.();
+      settleFocusRef.current = pressFocusedTile(stage, tile, reduce);
 
       let anchor: WallPlaqueAnchor | null = null;
       if (mode === "anchor") {
@@ -837,6 +880,9 @@ export function WallExperience({ items }: WallExperienceProps) {
       const delay = reduce ? 0 : Math.max(300, duration * 1000 - 300);
       revealTimerRef.current = window.setTimeout(() => {
         revealTimerRef.current = null;
+        settleFocusRef.current?.();
+        settleFocusRef.current = null;
+        setFocusKey(null);
         setActive({
           key: tile.key,
           index: tile.itemIndex,
@@ -1612,6 +1658,7 @@ export function WallExperience({ items }: WallExperienceProps) {
         data-dragging={dragging || undefined}
         data-panning={panning || dragging || undefined}
         data-plaque={active ? true : undefined}
+        data-focusing={focusKey ? true : undefined}
         data-sheet={active?.mode === "sheet" || undefined}
         className={cn(
           "wall-stage absolute inset-0 touch-pan-y select-none",

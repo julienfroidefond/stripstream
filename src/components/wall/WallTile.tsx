@@ -28,7 +28,7 @@ const TILT_EPSILON = 0.002;
 function canTilt(link: HTMLElement): boolean {
   if (prefersReducedMotion()) return false;
   if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return false;
-  if (link.hasAttribute("data-active")) return false;
+  if (link.hasAttribute("data-active") || link.hasAttribute("data-focus")) return false;
   const stage = link.closest(".wall-stage");
   return !stage?.hasAttribute("data-panning") && !stage?.hasAttribute("data-plaque");
 }

@@ -757,6 +757,19 @@ body.no-pinch-zoom .wall-canvas * {
   opacity: 0;
 }
 
+/* Clic sur une œuvre : la salle s'éteint dès le départ du vol et le reste
+   jusqu'à la plaque, même si la caméra bouge. L'affiche visée passe devant le
+   voile. */
+.wall-stage[data-focusing] .wall-dim {
+  opacity: 1;
+  transition: opacity 320ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.wall-tile[data-focus] {
+  z-index: 6;
+}
+
+
 @media (hover: hover) and (pointer: fine) {
   .wall-stage:not([data-panning]):not([data-plaque]) .wall-tile:hover {
     z-index: 4;
