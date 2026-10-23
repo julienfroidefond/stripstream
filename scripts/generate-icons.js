@@ -3,7 +3,12 @@ const fs = require("fs").promises;
 const path = require("path");
 
 const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
-const sourceLogo = path.join(__dirname, "../public/images/logostripstream.png");
+// Un logo par usage : la version claire pour les icônes d'app, la sombre pour
+// les splash screens (fond sombre du site), la monochrome pour le favicon,
+// seule lisible en tout petit.
+const sourceLogo = path.join(__dirname, "../public/images/logostripstream-white.png");
+const splashLogo = path.join(__dirname, "../public/images/logostripstream.png");
+const faviconLogo = path.join(__dirname, "../public/images/logostripstream-mono.png");
 const outputDir = path.join(__dirname, "../public/images/icons");
 const screenshotsDir = path.join(__dirname, "../public/images/screenshots");
 const splashDir = path.join(__dirname, "../public/images/splash");
@@ -62,11 +67,8 @@ async function generateSplashScreens() {
   await fs.mkdir(splashDir, { recursive: true });
   console.log(`\n📱 Génération des splash screens...`);
 
-  // Couleur du thème dark du site : hsl(222, 35%, 10%) = #111826
-  const bg = { r: 17, g: 24, b: 38 };
-
-  // Charger le logo source
-  const logoBuffer = await sharp(sourceLogo).png().toBuffer();
+  // Fond du logo sombre, pour que le logo se fonde dans l'écran sans cadre.
+  const bg = { r: 15, g: 12, b: 12 };
 
   for (const screen of splashScreens) {
     const { width, height } = screen;
@@ -75,62 +77,14 @@ async function generateSplashScreens() {
     // Taille du logo : 40% du côté le plus court
     const logoSize = Math.round(shortSide * 0.4);
 
-    // Fond uni + touches cyan/magenta + grille subtile + glow derrière le logo
-    const glowRadius = Math.round(logoSize * 0.9);
-    const dotSpacing = 24;
-    const gradientSvg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <radialGradient id="glow" cx="50%" cy="50%" r="${(glowRadius / Math.max(width, height) * 100).toFixed(1)}%">
-          <stop offset="0%" stop-color="rgba(86,184,222,0.15)" />
-          <stop offset="100%" stop-color="rgba(86,184,222,0)" />
-        </radialGradient>
-        <radialGradient id="cyan" cx="35%" cy="30%" r="50%">
-          <stop offset="0%" stop-color="rgba(56,189,210,0.08)" />
-          <stop offset="100%" stop-color="rgba(56,189,210,0)" />
-        </radialGradient>
-        <radialGradient id="magenta" cx="65%" cy="70%" r="50%">
-          <stop offset="0%" stop-color="rgba(180,60,120,0.08)" />
-          <stop offset="100%" stop-color="rgba(180,60,120,0)" />
-        </radialGradient>
-        <pattern id="grid" width="${dotSpacing}" height="${dotSpacing}" patternUnits="userSpaceOnUse">
-          <line x1="0" y1="${dotSpacing}" x2="${dotSpacing}" y2="${dotSpacing}" stroke="rgba(255,255,255,0.04)" stroke-width="0.5"/>
-          <line x1="${dotSpacing}" y1="0" x2="${dotSpacing}" y2="${dotSpacing}" stroke="rgba(255,255,255,0.04)" stroke-width="0.5"/>
-        </pattern>
-      </defs>
-      <rect width="${width}" height="${height}" fill="rgb(${bg.r},${bg.g},${bg.b})" />
-      <rect width="${width}" height="${height}" fill="url(#cyan)" />
-      <rect width="${width}" height="${height}" fill="url(#magenta)" />
-      <rect width="${width}" height="${height}" fill="url(#grid)" />
-      <rect width="${width}" height="${height}" fill="url(#glow)" />
-    </svg>`;
+    const logo = await sharp(splashLogo).resize(logoSize, logoSize).png().toBuffer();
 
-    // Redimensionner le logo et le cropper en cercle
-    const resizedLogo = await sharp(logoBuffer)
-      .resize(logoSize, logoSize, { fit: "cover" })
-      .png()
-      .toBuffer();
-
-    // Masque circulaire pour cropper le logo en rond
-    const circleMask = Buffer.from(
-      `<svg width="${logoSize}" height="${logoSize}"><circle cx="${logoSize / 2}" cy="${logoSize / 2}" r="${logoSize / 2}" fill="white"/></svg>`
-    );
-
-    const circularLogo = await sharp(resizedLogo)
-      .composite([{ input: circleMask, blend: "dest-in" }])
-      .png()
-      .toBuffer();
-
-    const logoLeft = Math.round((width - logoSize) / 2);
-    const logoTop = Math.round((height - logoSize) / 2);
-
-    // Composer : fond dégradé + cercle + logo
-    await sharp(Buffer.from(gradientSvg))
-      .png()
+    await sharp({ create: { width, height, channels: 3, background: bg } })
       .composite([
         {
-          input: circularLogo,
-          left: logoLeft,
-          top: logoTop,
+          input: logo,
+          left: Math.round((width - logoSize) / 2),
+          top: Math.round((height - logoSize) / 2),
         },
       ])
       .png({ compressionLevel: 9 })
@@ -142,7 +96,7 @@ async function generateSplashScreens() {
 
 async function generateIcons() {
   try {
-    await fs.access(sourceLogo);
+    await Promise.all([sourceLogo, splashLogo, faviconLogo].map((logo) => fs.access(logo)));
 
     // Créer les dossiers de sortie s'ils n'existent pas
     await fs.mkdir(outputDir, { recursive: true });
@@ -186,7 +140,7 @@ async function generateIcons() {
     }
 
     // Générer le favicon principal utilisé par Next metadata
-    await sharp(sourceLogo)
+    await sharp(faviconLogo)
       .resize(64, 64, {
         fit: "cover",
       })
