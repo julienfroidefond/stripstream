@@ -36,44 +36,6 @@ export const fadeUp: Variants = {
   },
 };
 
-/** Pose d'une affiche : elle monte, grandit et fait le point. */
-export const settleIn: Variants = {
-  hidden: { opacity: 0, y: 48, scale: 0.9, filter: "blur(10px)" },
-  visible: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    filter: "blur(0px)",
-    transitionEnd: { filter: "none" },
-    transition: { duration: 1, ease: EASE_PROJECTION },
-  },
-};
-
-/**
- * Carte distribuée : dans un rail horizontal, chaque affiche arrive de la
- * droite en pivotant, comme une main de cartes qu'on étale sur la table.
- */
-export const dealIn: Variants = {
-  hidden: {
-    opacity: 0,
-    x: 90,
-    rotateY: -28,
-    scale: 0.88,
-    filter: "blur(10px)",
-    transformPerspective: PERSPECTIVE,
-  },
-  visible: {
-    opacity: 1,
-    x: 0,
-    rotateY: 0,
-    scale: 1,
-    filter: "blur(0px)",
-    transformPerspective: PERSPECTIVE,
-    transitionEnd: { filter: "none" },
-    transition: { duration: 1.05, ease: EASE_PROJECTION },
-  },
-};
-
 /** Affiche de bandeau qui se lève en pivotant vers le spectateur. */
 export const liftIn: Variants = {
   hidden: {
@@ -130,49 +92,8 @@ export const curtainOpen: Variants = {
  * « Reprendre la lecture », pour que les rangées spotlight ne surgissent pas
  * sans mise en scène.
  */
-export const spotlightShell: Variants = {
-  hidden: {
-    opacity: 0,
-    y: 80,
-    scale: 0.9,
-    filter: "blur(16px)",
-    clipPath: "inset(10% 8% 10% 8% round 28px)",
-  },
-  visible: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    filter: "blur(0px)",
-    clipPath: "inset(0% 0% 0% 0% round 16px)",
-    transitionEnd: { filter: "none" },
-    transition: {
-      duration: 1.05,
-      ease: EASE_PROJECTION,
-      staggerChildren: 0.12,
-      delayChildren: 0.08,
-    },
-  },
-};
-
-/** L'affiche de fond se recule pendant que le bloc se pose. */
-export const spotlightBackdrop: Variants = {
-  hidden: { opacity: 0, scale: 1.2 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    transition: { duration: 1.4, ease: EASE_PROJECTION },
-  },
-};
 
 /** Le contenu suit le bloc avec un léger retard, pour lire la profondeur. */
-export const spotlightContent: Variants = {
-  hidden: { opacity: 0, y: 40 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.85, ease: EASE_PROJECTION, delay: 0.1 },
-  },
-};
 
 export function staggerContainer(stagger = 0.08, delayChildren = 0.06): Variants {
   return {
@@ -180,46 +101,6 @@ export function staggerContainer(stagger = 0.08, delayChildren = 0.06): Variants
     visible: { transition: { staggerChildren: stagger, delayChildren } },
   };
 }
-
-/**
- * Carrousel d'affiches : la diapositive sortante pivote et s'éloigne, la
- * suivante entre de l'autre côté en faisant le point. `custom` = sens (+1/-1).
- * L'amplitude est franche (la diapositive venue d'ailleurs se lit d'un coup
- * d'œil) et le ressort se cale vite, pour que le geste réponde au clic.
- */
-export const carouselSlide: Variants = {
-  enter: (dir: number) => ({
-    x: dir > 0 ? 220 : -220,
-    rotateY: dir > 0 ? -28 : 28,
-    scale: 0.9,
-    opacity: 0,
-    filter: "blur(10px)",
-    transformPerspective: PERSPECTIVE,
-  }),
-  center: {
-    x: 0,
-    rotateY: 0,
-    scale: 1,
-    opacity: 1,
-    filter: "blur(0px)",
-    transformPerspective: PERSPECTIVE,
-  },
-  exit: (dir: number) => ({
-    x: dir > 0 ? -220 : 220,
-    rotateY: dir > 0 ? 28 : -28,
-    scale: 0.9,
-    opacity: 0,
-    filter: "blur(10px)",
-    transformPerspective: PERSPECTIVE,
-  }),
-};
-
-export const CAROUSEL_TRANSITION = {
-  // Presque critique : la diapositive se pose en ~0,45 s au lieu de dériver.
-  default: { type: "spring", stiffness: 320, damping: 30, mass: 0.75 },
-  opacity: { duration: 0.22, ease: EASE_OUT },
-  filter: { duration: 0.3, ease: EASE_OUT },
-} as const;
 
 /** Écran pleine largeur qui se déroule de haut en bas à l'arrivée sur la page. */
 export const screenUnroll: Variants = {

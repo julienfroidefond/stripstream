@@ -1,17 +1,8 @@
 "use client";
 
-import {
-  animate,
-  motion,
-  useInView,
-  useMotionValue,
-  useMotionValueEvent,
-  useReducedMotion,
-  useScroll,
-  useSpring,
-  useTransform,
-  type Variants,
-} from "framer-motion";
+import { motion, useReducedMotion, useScroll, useSpring, useTransform } from "framer-motion";
+import { gsap, prefersReducedMotion, useGSAP } from "@/lib/gsap";
+import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import {
   Fragment,
   createContext,
@@ -27,7 +18,7 @@ import {
   type RefObject,
 } from "react";
 import { cn } from "@/lib/utils";
-import { EASE_PROJECTION, dealIn, fadeUp, maskUp, settleIn, staggerContainer } from "@/lib/motion";
+import { maskUp, staggerContainer } from "@/lib/motion";
 
 /** Seuil de déclenchement d'une révélation au défilement. */
 type ViewportAmount = number | "some" | "all";
@@ -64,28 +55,39 @@ type StaggerReveal = "group" | "scroll";
  */
 type StaggerEffect = "rise" | "settle" | "deal";
 
-const EFFECT_VARIANTS: Record<StaggerEffect, Variants> = {
-  rise: fadeUp,
-  settle: settleIn,
-  deal: dealIn,
-};
-
-/**
- * Équivalent CSS des variantes, pour la révélation autonome au défilement.
- * Les classes sont écrites en entier pour que Tailwind les détecte.
- */
-const SCROLL_REVEAL_CLASSES: Record<StaggerEffect, { hidden: string; shown: string }> = {
+const EFFECT_MOTION: Record<
+  StaggerEffect,
+  { from: gsap.TweenVars; to: gsap.TweenVars; duration: number; ease?: string }
+> = {
   rise: {
-    hidden: "opacity-0 translate-y-9 blur-[8px]",
-    shown: "opacity-100 translate-y-0 blur-none",
+    from: { opacity: 0, y: 36, filter: "blur(8px)" },
+    to: { opacity: 1, y: 0, filter: "blur(0px)" },
+    duration: 0.9,
   },
   settle: {
-    hidden: "opacity-0 translate-y-12 scale-[0.9] blur-[10px]",
-    shown: "opacity-100 translate-y-0 scale-100 blur-none",
+    from: { opacity: 0, y: 48, scale: 0.9, filter: "blur(10px)" },
+    to: { opacity: 1, y: 0, scale: 1, filter: "blur(0px)" },
+    duration: 1,
   },
+  // Même relief que le hero : chaque cover remonte du fond en pivotant et
+  // dépasse un peu sa place, comme une carte qu'on pose sur la table.
   deal: {
-    hidden: "opacity-0 translate-x-20 scale-[0.9] blur-[10px]",
-    shown: "opacity-100 translate-x-0 scale-100 blur-none",
+    from: {
+      opacity: 0,
+      x: 70,
+      z: -320,
+      rotateY: -35,
+      transformPerspective: 900,
+    },
+    to: {
+      opacity: 1,
+      x: 0,
+      z: 0,
+      rotateY: 0,
+      transformPerspective: 900,
+    },
+    duration: 0.6,
+    ease: "back.out(1.5)",
   },
 };
 
@@ -107,6 +109,7 @@ const StaggerContext = createContext<{
   reduce: boolean;
   reveal: StaggerReveal;
   stagger: number;
+  delayChildren: number;
   effect: StaggerEffect;
 } | null>(null);
 
@@ -135,30 +138,47 @@ export function StaggerGroup({
   reveal = "group",
   effect = "rise",
 }: StaggerGroupProps) {
-  const reduce = useReducedMotion();
+  const prefersReduce = usePrefersReducedMotion();
+  const reduce = Boolean(prefersReduce);
   const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once, amount, margin: VIEWPORT_MARGIN });
-  const revealed = reduce ? true : inView;
+  const [revealed, setRevealed] = useState(false);
+  const isRevealed = reduce || revealed;
+
+  useEffect(() => {
+    if (reduce) return;
+    if (reveal !== "group") return;
+    const element = ref.current;
+    if (!element) return;
+    const threshold =
+      typeof amount === "number" ? amount : amount === "all" ? 1 : 0.01;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (!entry) return;
+        if (entry.isIntersecting) {
+          setRevealed(true);
+          if (once) observer.disconnect();
+        } else if (!once) {
+          setRevealed(false);
+        }
+      },
+      { rootMargin: VIEWPORT_MARGIN, threshold }
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [amount, once, reduce, reveal]);
+
   const contextValue = useMemo(
-    () => ({ revealed, reduce: Boolean(reduce), reveal, stagger, effect }),
-    [revealed, reduce, reveal, stagger, effect]
+    () => ({ revealed: isRevealed, reduce, reveal, stagger, delayChildren, effect }),
+    [isRevealed, reduce, reveal, stagger, delayChildren, effect]
   );
-
-  if (reduce) return <div className={className}>{children}</div>;
-
-  const playsAsGroup = reveal === "group";
 
   return (
     <StaggerContext.Provider value={contextValue}>
-      <motion.div
-        ref={ref}
-        className={className}
-        variants={playsAsGroup ? staggerContainer(stagger, delayChildren) : undefined}
-        initial={playsAsGroup ? "hidden" : false}
-        animate={playsAsGroup ? (revealed ? "visible" : "hidden") : undefined}
-      >
+      <div ref={ref} className={className}>
         {children}
-      </motion.div>
+      </div>
     </StaggerContext.Provider>
   );
 }
@@ -167,26 +187,39 @@ interface StaggerItemProps {
   children: ReactNode;
   className?: string;
   style?: CSSProperties;
-  variants?: Variants;
 }
 
-export function StaggerItem({ children, className, style, variants }: StaggerItemProps) {
+/**
+ * Rang de la carte dans sa vague, pour la cascade du groupe. Seules comptent
+ * les voisines précédentes encore en attente (`data-stagger-item`) : une
+ * carte ajoutée par « Voir plus » ouvre sa propre vague au lieu d'attendre
+ * derrière toutes celles déjà posées.
+ */
+function waveIndex(element: HTMLElement | null): number {
+  let index = 0;
+  let sibling = element?.previousElementSibling ?? null;
+  while (sibling) {
+    if (sibling.hasAttribute("data-stagger-item")) index += 1;
+    sibling = sibling.previousElementSibling;
+  }
+  return index;
+}
+
+export function StaggerItem({ children, className, style }: StaggerItemProps) {
   const context = useContext(StaggerContext);
-  const scrollReveal = context?.reveal === "scroll" && !context.reduce;
-  const stagger = context?.stagger ?? 0.08;
+  const prefersReduce = usePrefersReducedMotion();
+  const reduce = Boolean(context?.reduce ?? prefersReduce);
   const effect = context?.effect ?? "rise";
-  const itemVariants = variants ?? EFFECT_VARIANTS[effect];
+  const reveal = context?.reveal ?? "group";
+  const stagger = context?.stagger ?? 0.08;
+  const delayChildren = context?.delayChildren ?? 0.06;
+
   const ref = useRef<HTMLDivElement>(null);
+  const played = useRef(false);
   const [scrollState, setScrollState] = useState({ revealed: false, column: 0 });
-  /**
-   * Un élément monté alors que le groupe est déjà révélé — changement de page
-   * d'une grille, « voir plus » d'un rail — n'hérite d'aucune transition : il
-   * doit jouer la sienne, faute de quoi il resterait bloqué à opacity 0.
-   */
-  const [mountedAfterReveal] = useState(() => context?.revealed ?? false);
 
   useEffect(() => {
-    if (!scrollReveal) return;
+    if (!context || reduce || reveal !== "scroll") return;
     const element = ref.current;
     if (!element) return;
     /**
@@ -204,52 +237,76 @@ export function StaggerItem({ children, className, style, variants }: StaggerIte
     );
     observer.observe(element);
     return () => observer.disconnect();
-  }, [scrollReveal]);
+  }, [context, reduce, reveal]);
 
-  if (!context || context.reduce) {
-    return (
-      <motion.div className={className} style={style} variants={itemVariants} initial={false} animate="visible">
-        {children}
-      </motion.div>
-    );
-  }
+  const shouldPlay = context
+    ? reveal === "group"
+      ? context.revealed
+      : scrollState.revealed
+    : false;
 
-  /**
-   * Révélation autonome en CSS — même geste que la variante de l'effet, sur la
-   * courbe projection. Une transition CSS ne peut pas rester bloquée à
-   * opacity 0 : au pire la carte se décale, elle n'a jamais l'occasion de
-   * disparaître, contrairement à une variante dont le déclencheur se perd.
-   */
-  if (scrollReveal) {
-    const classes = SCROLL_REVEAL_CLASSES[effect];
-    return (
-      <div
-        ref={ref}
-        className={cn(
-          "transition-[opacity,translate,scale,filter] ease-projection duration-1000 motion-reduce:transition-none",
-          scrollState.revealed ? classes.shown : classes.hidden,
-          className
-        )}
-        style={{
-          ...style,
-          transitionDelay: `${Math.round(scrollState.column * stagger * 1000)}ms`,
-        }}
-      >
-        {children}
-      </div>
-    );
-  }
+  useGSAP(
+    () => {
+      const element = ref.current;
+      if (!element) return;
+
+      if (reduce || prefersReducedMotion()) {
+        element.removeAttribute("data-stagger-item");
+        gsap.set(element, { clearProps: "opacity,transform,filter" });
+        return;
+      }
+
+      if (!shouldPlay || played.current) return;
+
+      played.current = true;
+      const motion = EFFECT_MOTION[effect];
+      const delay = reveal === "group"
+        ? delayChildren + waveIndex(element) * stagger
+        : scrollState.column * stagger;
+
+      const tween = gsap.fromTo(element, motion.from, {
+        ...motion.to,
+        duration: motion.duration,
+        delay,
+        ease: motion.ease ?? "projection",
+        overwrite: "auto",
+        onComplete: () => {
+          element.removeAttribute("data-stagger-item");
+          gsap.set(element, { clearProps: "opacity,transform,filter" });
+        },
+      });
+
+      return () => {
+        // Interrompue avant la fin (double montage StrictMode, dépendance qui
+        // change), l'entrée doit pouvoir rejouer : sinon la carte reste figée
+        // dans son état de départ, invisible.
+        if (tween.progress() < 1) played.current = false;
+        tween.kill();
+      };
+    },
+    {
+      scope: ref,
+      dependencies: [
+        delayChildren,
+        effect,
+        reduce,
+        reveal,
+        scrollState.column,
+        shouldPlay,
+        stagger,
+      ],
+    }
+  );
 
   return (
-    <motion.div
+    <div
+      ref={ref}
       className={className}
       style={style}
-      variants={itemVariants}
-      initial={mountedAfterReveal ? "hidden" : undefined}
-      animate={mountedAfterReveal ? "visible" : undefined}
+      data-stagger-item={reduce || !context ? undefined : effect}
     >
       {children}
-    </motion.div>
+    </div>
   );
 }
 
@@ -265,38 +322,54 @@ interface MagneticProps {
 }
 
 export function Magnetic({ children, className, strength = 0.16 }: MagneticProps) {
-  const reduce = useReducedMotion();
+  const reduce = usePrefersReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
-  const x = useSpring(0, { stiffness: 260, damping: 18, mass: 0.6 });
-  const y = useSpring(0, { stiffness: 260, damping: 18, mass: 0.6 });
+
+  useEffect(() => {
+    const element = ref.current;
+    return () => {
+      if (element) gsap.killTweensOf(element);
+    };
+  }, []);
 
   const handleMove = useCallback(
     (event: ReactMouseEvent<HTMLDivElement>) => {
-      if (reduce) return;
       const element = ref.current;
-      if (!element) return;
+      if (!element || reduce || prefersReducedMotion()) return;
       const rect = element.getBoundingClientRect();
-      x.set((event.clientX - (rect.left + rect.width / 2)) * strength);
-      y.set((event.clientY - (rect.top + rect.height / 2)) * strength);
+      gsap.to(element, {
+        x: (event.clientX - (rect.left + rect.width / 2)) * strength,
+        y: (event.clientY - (rect.top + rect.height / 2)) * strength,
+        duration: 0.35,
+        ease: "out",
+        overwrite: "auto",
+      });
     },
-    [reduce, strength, x, y]
+    [reduce, strength]
   );
 
+  // Relâché, le bouton revient en place avec un petit rebond.
   const handleLeave = useCallback(() => {
-    x.set(0);
-    y.set(0);
-  }, [x, y]);
+    const element = ref.current;
+    if (!element) return;
+    gsap.to(element, {
+      x: 0,
+      y: 0,
+      duration: 0.9,
+      ease: "elastic.out(1, 0.4)",
+      overwrite: "auto",
+    });
+  }, []);
 
   return (
-    <motion.div
+    <div
       ref={ref}
       className={cn("inline-flex", className)}
-      style={{ x, y }}
       onMouseMove={handleMove}
       onMouseLeave={handleLeave}
     >
       {children}
-    </motion.div>
+    </div>
   );
 }
 
@@ -342,27 +415,91 @@ interface CountUpProps {
 }
 
 export function CountUp({ value, suffix = "", className, duration = 1.1 }: CountUpProps) {
-  const reduce = useReducedMotion();
-  const count = useMotionValue(0);
-  const rounded = useTransform(count, (latest) => Math.round(latest));
-  const [display, setDisplay] = useState(0);
+  const reduce = usePrefersReducedMotion();
+  const ref = useRef<HTMLSpanElement>(null);
+  const current = useRef(0);
 
-  useMotionValueEvent(rounded, "change", (latest) => setDisplay(latest));
+  /**
+   * Le compteur écrit directement dans le nœud texte rendu par React : aucun
+   * re-render par frame, et React garde la main sur ce même nœud.
+   */
+  useGSAP(
+    () => {
+      const element = ref.current;
+      if (!element) return;
+      const write = (latest: number) => {
+        const text = `${Math.round(latest)}${suffix}`;
+        if (element.firstChild) element.firstChild.nodeValue = text;
+        else element.textContent = text;
+      };
 
-  useEffect(() => {
-    if (reduce) {
-      count.set(value);
-      return;
-    }
-    const controls = animate(count, value, { duration, ease: EASE_PROJECTION });
-    return () => controls.stop();
-  }, [count, value, duration, reduce]);
+      if (reduce || prefersReducedMotion()) {
+        current.current = value;
+        write(value);
+        return;
+      }
+
+      const state = { count: current.current };
+      const tween = gsap.to(state, {
+        count: value,
+        duration,
+        ease: "projection",
+        onUpdate: () => {
+          current.current = state.count;
+          write(state.count);
+        },
+      });
+      return () => tween.kill();
+    },
+    { dependencies: [value, suffix, duration, reduce] }
+  );
 
   return (
-    <span className={className}>
-      {display}
-      {suffix}
+    <span ref={ref} className={className}>
+      {`${reduce ? value : 0}${suffix}`}
     </span>
+  );
+}
+
+/* -------------------------------------------------------------------------
+ * ProgressFill — une barre de progression qui se remplit une fois posée.
+ * ---------------------------------------------------------------------- */
+
+interface ProgressFillProps {
+  /** Avancement, de 0 à 100. */
+  percent: number;
+  className?: string;
+  delay?: number;
+}
+
+export function ProgressFill({ percent, className, delay = 0.35 }: ProgressFillProps) {
+  const reduce = usePrefersReducedMotion();
+  const ref = useRef<HTMLDivElement>(null);
+
+  useGSAP(
+    () => {
+      const element = ref.current;
+      if (!element) return;
+      if (reduce || prefersReducedMotion()) {
+        gsap.set(element, { scaleX: percent / 100 });
+        return;
+      }
+      const tween = gsap.fromTo(
+        element,
+        { scaleX: 0 },
+        { scaleX: percent / 100, duration: 0.8, delay, ease: "projection" }
+      );
+      return () => tween.kill();
+    },
+    { scope: ref, dependencies: [percent, delay, reduce] }
+  );
+
+  return (
+    <div
+      ref={ref}
+      className={cn("h-full w-full origin-left rounded-full bg-primary", className)}
+      style={{ transform: "scaleX(0)" }}
+    />
   );
 }
 

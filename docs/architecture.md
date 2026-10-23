@@ -204,6 +204,18 @@ Vitest runs the unit suite (`pnpm test:unit`; config `vitest.config.ts`; tests c
 - **Stripstream Librarian** returns an index job from `POST /libraries/{id}/scan`, but the job routes (`GET /index/jobs/{id}`) live on its admin API: a `read`-scoped token gets a `403`, which degrades to `unavailable` for the client and to an explicit "administrator access required" toast on the scan itself.
 - Status: **mitigated** — the previous fixed `setTimeout(5 s)` + unconditional "scan complete" toast were replaced by bounded polling (2 s interval, 10 min ceiling, 3 consecutive `unavailable` stop the loop).
 
+## 12. Motion
+
+Two engines coexist during the GSAP pilot; do not assume one can be removed yet.
+
+- **framer-motion** still owns declarative variants, `AnimatePresence` outside the pilot, and the reader/wall gestures. `src/lib/motion.ts` is the shared easing/variant vocabulary.
+- **GSAP 3.15 + `@gsap/react`** owns the route template (`src/app/template.tsx`), the shared scroll reveal (`StaggerGroup`/`StaggerItem` in `src/components/motion/index.tsx`), the continue-reading hero, the spotlight carousel and its slides, section headers (`src/components/ui/section.tsx`), `HomeWelcome`, and the `Magnetic` / `CountUp` / `ProgressFill` primitives. `ProjectionBackdrop` fades in with a CSS animation. On the home page framer only remains in the global header and nav. `SplitWords`, `useSceneExit` and `ScrollProgress` stay on framer for the series/library headers, the reader and the layout. `src/lib/gsap.ts` registers `ScrollTrigger`, `CustomEase` and `useGSAP`; its `projection` / `out` / `focus` curves mirror the framer easings.
+- **Initial states live in CSS**, not in JS, so the server HTML never flashes the final state before hydration: `[data-route-enter]`, `[data-stagger-item]`, `[data-hero-intro]`, `[data-hero-backdrop]`, `[data-hero-fly]`, `[data-hero-item]`, `[data-spotlight-shell|backdrop|content]`, `[data-spot-fly|item]`, `[data-section-header]` (`src/styles/globals.css`). Each GSAP timeline removes its attribute and clears inline props on completion. `@media (prefers-reduced-motion: reduce)` and `@media (scripting: none)` force the visible state.
+- **Reduced motion is checked twice**: `usePrefersReducedMotion()` drives render-time decisions, and every GSAP callback also calls `prefersReducedMotion()` because the external-store snapshot can still be the server value during the first hydration pass.
+- **Hero depth**: the intro animates `transform` on the section and the flying cover, so mouse tilt and the scroll pop-up only start once `introDone` is set. Scroll depth is written to `--hero-progress` and mouse tilt to `--tilt-x`/`--tilt-y`; CSS consumes them through the individual `translate`/`scale` properties, which compose with GSAP's `transform`.
+- **Spotlight slides** mark their cover, title and lines with `useSpotlightStaging()` (`src/components/ui/spotlight-carousel.tsx`). The carousel plays the same 3D entrance as the hero once, on first reveal; later slide changes only use the `DirectionalSlide` card throw, so the content never replays its cascade.
+- **Carousel swaps** go through `DirectionalSlide` (`src/components/ui/directional-slide.tsx`): the entering slide stays in flow, the outgoing slide is absolute and `inert` and is thrown toward the viewer while the entering one rises from depth, and pointer capture is only taken once a horizontal drag is confirmed so buttons keep their click target. Slides are keyed by id; never remove framer variants from a mounted slide (that leaves its children frozen at `hidden`).
+
 ## Where to look
 
 - Provider abstraction: `src/lib/providers/`
@@ -211,4 +223,5 @@ Vitest runs the unit suite (`pnpm test:unit`; config `vitest.config.ts`; tests c
 - Data model and migrations: `prisma/schema.prisma`, `prisma/migrations/`
 - Error codes and copy: `src/constants/errorCodes.ts`, `src/i18n/messages/{fr,en}/common.json`
 - Reader: `src/components/reader/`
+- Motion: `src/lib/motion.ts`, `src/lib/gsap.ts`, `src/components/ui/directional-slide.tsx`
 - Environment: `ENV.md`; API surface: `docs/api.md`; agent guide: `AGENTS.md`.

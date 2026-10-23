@@ -7,6 +7,7 @@ import { BookCover } from "../ui/book-cover";
 import { SeriesCover } from "../ui/series-cover";
 import { useTranslate } from "@/hooks/useTranslate";
 import { ScrollContainer } from "@/components/ui/scroll-container";
+import { LoadMoreLabel } from "@/components/ui/load-more-label";
 import { Section } from "@/components/ui/section";
 import { History, Sparkles, Clock, LibraryBig, BookOpen, Heart } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -110,14 +111,20 @@ export function MediaRow({ titleKey, items, iconName, featuredHeader = false, te
                 size="sm"
                 onClick={handleLoadMore}
                 disabled={isPending}
+                aria-busy={isPending}
+                className="disabled:opacity-100"
               >
-                {isPending ? t("navigation.loading") : t("navigation.loadMore")}
+                <LoadMoreLabel
+                  pending={isPending}
+                  label={t("navigation.loadMore")}
+                  loadingLabel={t("navigation.loading")}
+                />
               </Button>
             ) : undefined
           }
         />
       ) : (
-        <StaggerGroup stagger={0.08} effect="deal" amount={0.25}>
+        <StaggerGroup stagger={0.05} effect="deal" amount={0.25}>
           <ScrollContainer
             showArrows={true}
             scrollAmount={400}
@@ -135,9 +142,14 @@ export function MediaRow({ titleKey, items, iconName, featuredHeader = false, te
                   type="button"
                   onClick={handleLoadMore}
                   disabled={isPending}
+                  aria-busy={isPending}
                   className="flex min-h-[282px] w-[150px] items-center justify-center rounded-xl border border-dashed border-border text-sm font-medium text-muted-foreground transition-colors hover:border-primary/60 hover:text-foreground sm:min-h-[300px]"
                 >
-                  {isPending ? t("navigation.loading") : t("navigation.loadMore")}
+                  <LoadMoreLabel
+                  pending={isPending}
+                  label={t("navigation.loadMore")}
+                  loadingLabel={t("navigation.loading")}
+                />
                 </button>
               </StaggerItem>
             )}

@@ -32,6 +32,192 @@ body.no-pinch-zoom .wall-canvas * {
 }
 
 /*
+  États initiaux des animations GSAP.
+  Ils sont écrits dans le HTML (data-attributes) plutôt que posés par JS après
+  hydratation : le contenu ne saute donc pas d'un état final à un état de
+  départ. Chaque animation GSAP retire son attribut à la fin ; sans JavaScript,
+  les media queries ci-dessous rendent tout visible.
+*/
+[data-route-enter] {
+  opacity: 0;
+  transform: translateY(16px);
+}
+
+[data-stagger-item="rise"] {
+  opacity: 0;
+  transform: translateY(2.25rem);
+  filter: blur(8px);
+}
+
+[data-stagger-item="settle"] {
+  opacity: 0;
+  transform: translateY(3rem) scale(0.9);
+  filter: blur(10px);
+}
+
+[data-stagger-item="deal"] {
+  opacity: 0;
+  transform: perspective(900px) translate3d(70px, 0, -320px) rotateY(-35deg);
+}
+
+/* La scène attend, basculée en arrière ; la cover attend au fond. */
+[data-hero-intro] {
+  opacity: 0;
+  transform: perspective(1400px) translateY(80px) rotateX(24deg) scale(0.9);
+  transform-origin: 50% 100%;
+}
+
+[data-hero-fly] {
+  opacity: 0;
+}
+
+[data-hero-item] {
+  opacity: 0;
+  transform: translateY(1.5rem);
+}
+
+[data-hero-backdrop] {
+  transform: scale(1.35);
+}
+
+/*
+ * Relief du hero. La profondeur au scroll est pilotée par ScrollTrigger via
+ * --hero-progress (0 → 1) : la cover se décolle et grossit plus vite que le
+ * texte, qui va lui-même plus vite que le fond. L'inclinaison à la souris
+ * écrit --tilt-x / --tilt-y (-1 → 1) : le reflet suit le curseur, l'ombre
+ * part à l'opposé. Ces propriétés (`translate`, `scale`) se composent avec le
+ * `transform` que GSAP anime sur les mêmes éléments.
+ */
+.hero-depth-cover {
+  translate: 0 calc(var(--hero-progress, 0) * -140px);
+  scale: calc(1 + var(--hero-progress, 0) * 0.16);
+}
+
+.hero-depth-copy {
+  translate: 0 calc(var(--hero-progress, 0) * -50px);
+}
+
+.hero-cover-shadow {
+  box-shadow: calc(var(--tilt-x, 0) * -26px) calc(var(--tilt-y, 0) * -20px + 28px) 48px -14px
+    rgb(0 0 0 / 0.55);
+}
+
+.hero-glare {
+  background: radial-gradient(
+    circle at calc(50% + var(--tilt-x, 0) * 45%) calc(50% + var(--tilt-y, 0) * 45%),
+    rgb(255 255 255 / 0.5),
+    transparent 58%
+  );
+  mix-blend-mode: overlay;
+}
+
+/* La lumière du projecteur n'a de sens qu'avec une souris et du mouvement. */
+@media (hover: none) {
+  .hero-glow {
+    display: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-glow {
+    display: none !important;
+  }
+}
+
+[data-spotlight-shell] {
+  opacity: 0;
+  transform: perspective(1400px) translateY(70px) rotateX(20deg) scale(0.92);
+  transform-origin: 50% 100%;
+}
+
+[data-spot-fly],
+[data-spot-item] {
+  opacity: 0;
+}
+
+[data-section-header] [data-section-icon],
+[data-section-header] [data-section-title] {
+  opacity: 0;
+}
+
+[data-section-header] [data-section-line] {
+  transform: scaleX(0);
+}
+
+[data-spotlight-backdrop] {
+  opacity: 0;
+  transform: scale(1.2);
+}
+
+[data-spotlight-content] {
+  opacity: 0;
+  transform: translateY(2.5rem);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-route-enter],
+  [data-stagger-item],
+  [data-hero-intro],
+  [data-hero-fly],
+  [data-hero-item],
+  [data-spot-fly],
+  [data-spot-item],
+  [data-section-header] [data-section-icon],
+  [data-section-header] [data-section-title],
+  [data-section-header] [data-section-line],
+  [data-spotlight-shell],
+  [data-spotlight-content] {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+
+  [data-hero-backdrop],
+  [data-spotlight-backdrop] {
+    opacity: 1;
+    transform: none;
+  }
+
+  .hero-depth-cover,
+  .hero-depth-copy {
+    translate: none;
+    scale: none;
+  }
+}
+
+/* Navigateur sans JavaScript : le contenu doit rester lisible. */
+@media (scripting: none) {
+  [data-route-enter],
+  [data-stagger-item],
+  [data-hero-intro],
+  [data-hero-fly],
+  [data-hero-item],
+  [data-spot-fly],
+  [data-spot-item],
+  [data-section-header] [data-section-icon],
+  [data-section-header] [data-section-title],
+  [data-section-header] [data-section-line],
+  [data-spotlight-shell],
+  [data-spotlight-content] {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+
+  [data-hero-backdrop],
+  [data-spotlight-backdrop] {
+    opacity: 1;
+    transform: none;
+  }
+
+  .hero-depth-cover,
+  .hero-depth-copy {
+    translate: none;
+    scale: none;
+  }
+}
+
+/*
   Ajout des règles pour gérer le safe-area-inset sur iOS
 @supports (padding-top: env(safe-area-inset-top)) {
   body {
@@ -129,6 +315,8 @@ body.no-pinch-zoom .wall-canvas * {
   /* Compteur de page : le nouveau numéro remonte en place. */
   --animate-count-in: count-in 280ms var(--ease-projection) both;
   /* Travelling du fond d'affiche : deux axes, durées premières entre elles. */
+  /* Fond d'affiche : la salle s'allume en douceur. */
+  --animate-backdrop-in: fade-in 1.1s cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-backdrop-pan: backdrop-pan 14s ease-in-out infinite;
   --animate-backdrop-zoom: backdrop-zoom 10s ease-in-out infinite;
 

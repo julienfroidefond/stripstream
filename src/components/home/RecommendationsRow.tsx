@@ -4,6 +4,7 @@ import { useState, memo, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Wand2, Sparkles } from "lucide-react";
 import { SeriesCover } from "@/components/ui/series-cover";
+import { LoadMoreLabel } from "@/components/ui/load-more-label";
 import { ScrollContainer } from "@/components/ui/scroll-container";
 import { Section } from "@/components/ui/section";
 import { Button } from "@/components/ui/button";
@@ -53,8 +54,14 @@ export function RecommendationsRow({ series, initialHasMore = false }: Recommend
       size="sm"
       onClick={handleLoadMore}
       disabled={isPending}
+      aria-busy={isPending}
+      className="disabled:opacity-100"
     >
-      {isPending ? t("navigation.loading") : t("navigation.loadMore")}
+      <LoadMoreLabel
+                  pending={isPending}
+                  label={t("navigation.loadMore")}
+                  loadingLabel={t("navigation.loading")}
+                />
     </Button>
   ) : undefined;
 
@@ -86,7 +93,7 @@ export function RecommendationsRow({ series, initialHasMore = false }: Recommend
           footer={loadMoreFooter}
         />
       ) : (
-        <StaggerGroup stagger={0.08} effect="deal" amount={0.25}>
+        <StaggerGroup stagger={0.05} effect="deal" amount={0.25}>
           <ScrollContainer
             showArrows={true}
             scrollAmount={400}
@@ -104,9 +111,14 @@ export function RecommendationsRow({ series, initialHasMore = false }: Recommend
                   type="button"
                   onClick={handleLoadMore}
                   disabled={isPending}
+                  aria-busy={isPending}
                   className="flex min-h-[282px] w-[150px] items-center justify-center rounded-xl border border-dashed border-border text-sm font-medium text-muted-foreground transition-colors hover:border-primary/60 hover:text-foreground sm:min-h-[300px]"
                 >
-                  {isPending ? t("navigation.loading") : t("navigation.loadMore")}
+                  <LoadMoreLabel
+                  pending={isPending}
+                  label={t("navigation.loadMore")}
+                  loadingLabel={t("navigation.loading")}
+                />
                 </button>
               </StaggerItem>
             )}
