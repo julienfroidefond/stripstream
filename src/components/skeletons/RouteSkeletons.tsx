@@ -260,17 +260,48 @@ export function SettingsSkeleton() {
 
 export function LoginSkeleton() {
   return (
-    <main className="grid min-h-dvh lg:grid-cols-2">
-      <div className="hidden bg-muted/50 lg:block" />
-      <div className="flex items-center justify-center p-8">
-        <div className="w-full max-w-[350px] space-y-6">
-          <Skeleton className="mx-auto h-32 w-32 rounded-full" />
-          <Skeleton className="mx-auto h-8 w-48" />
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-11 w-full" />
+    <div className="relative flex min-h-dvh flex-col">
+      <div className="mx-auto flex h-16 w-full max-w-6xl shrink-0 items-center justify-between gap-4 px-4 sm:h-20 sm:px-8">
+        <div className="flex items-center gap-2.5">
+          <Skeleton className="h-9 w-9 rounded-[10px]" />
+          <div className="space-y-1.5">
+            <Skeleton className="h-5 w-28" />
+            <Skeleton className="hidden h-2.5 w-20 sm:block" />
+          </div>
+        </div>
+        <Skeleton className="h-9 w-20 rounded-full" />
+      </div>
+
+      <div className="mx-auto flex w-full max-w-6xl flex-1 items-start px-4 pb-12 pt-6 sm:px-8 sm:pb-16 lg:items-center lg:py-12">
+        <div className="grid w-full items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)] lg:gap-20">
+          <div className="max-w-xl space-y-5">
+            <Skeleton className="h-4 w-44" />
+            <Skeleton className="h-10 w-full sm:hidden" />
+            <Skeleton className="hidden h-14 w-full sm:block" />
+            <Skeleton className="hidden h-14 w-4/5 sm:block" />
+            <Skeleton className="hidden h-5 w-full max-w-md sm:block" />
+            <Skeleton className="hidden h-5 w-3/4 max-w-sm sm:block" />
+            <Skeleton className="hidden h-3 w-52 sm:block" />
+          </div>
+
+          <div className="w-full max-w-[440px] justify-self-center rounded-2xl bg-surface-1 p-5 ring-1 ring-border/70 sm:p-7 lg:justify-self-end">
+            <Skeleton className="mb-5 h-4 w-64 max-w-full" />
+            <Skeleton className="h-11 w-full rounded-xl" />
+            <div className="mt-5 space-y-4">
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-11 w-full rounded-lg" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-11 w-full rounded-lg" />
+              </div>
+              <Skeleton className="h-5 w-36" />
+              <Skeleton className="mt-1 h-11 w-full rounded-lg" />
+            </div>
+          </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

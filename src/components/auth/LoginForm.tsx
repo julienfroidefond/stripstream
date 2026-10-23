@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { signIn } from "next-auth/react";
+import { Loader2 } from "lucide-react";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { shake } from "@/lib/celebrate";
 import { useGsapEffect } from "@/lib/gsap";
@@ -80,33 +81,51 @@ export function LoginForm({ from }: LoginFormProps) {
   return (
     <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="email">{t("login.form.email")}</Label>
+        <Label htmlFor="email" className="text-sm font-medium text-foreground/80">
+          {t("login.form.email")}
+        </Label>
         <Input
           id="email"
           name="email"
           type="email"
           autoComplete="email"
+          className="h-11 rounded-lg bg-background/60"
           required
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="password">{t("login.form.password")}</Label>
+        <Label htmlFor="password" className="text-sm font-medium text-foreground/80">
+          {t("login.form.password")}
+        </Label>
         <Input
           id="password"
           name="password"
           type="password"
           autoComplete="current-password"
+          className="h-11 rounded-lg bg-background/60"
           required
         />
       </div>
-      <div className="flex items-center space-x-2">
-        <Checkbox id="remember" name="remember" defaultChecked />
-        <Label htmlFor="remember" className="cursor-pointer">
+      <div className="flex items-center gap-2.5">
+        <Checkbox
+          id="remember"
+          name="remember"
+          defaultChecked
+          className="h-[18px] w-[18px] rounded-[4px]"
+        />
+        <Label htmlFor="remember" className="cursor-pointer text-sm text-muted-foreground">
           {t("login.form.remember")}
         </Label>
       </div>
       {error && <ErrorMessage errorCode={error.code} variant="form" />}
-      <Button type="submit" disabled={isLoading} className="w-full">
+      <Button
+        type="submit"
+        size="lg"
+        disabled={isLoading}
+        aria-busy={isLoading}
+        className="h-11 w-full rounded-lg font-semibold"
+      >
+        {isLoading && <Loader2 aria-hidden className="h-4 w-4 animate-spin" />}
         {isLoading ? t("login.form.submit.loading.login") : t("login.form.submit.login")}
       </Button>
     </form>

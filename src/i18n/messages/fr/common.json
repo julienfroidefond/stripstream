@@ -12,13 +12,14 @@
     }
   },
   "login": {
+    "eyebrow": "Accès à la bibliothèque",
     "title": "Bienvenue sur StripStream",
     "subtitle": "Connectez-vous ou créez un compte pour commencer",
     "tabs": {
       "login": "Connexion",
       "register": "Inscription"
     },
-    "description": "Profitez de vos BD, mangas et comics préférés avec une expérience de lecture moderne et fluide.",
+    "description": "Vos BD, mangas et comics, lus à la source depuis votre serveur Komga ou Stripstream Librarian.",
     "form": {
       "email": "Email",
       "password": "Mot de passe",
