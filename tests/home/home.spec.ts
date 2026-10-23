@@ -203,3 +203,50 @@ test.describe('Home functional journeys', () => {
     await selectConnection(page, 'Stub A');
   });
 });
+
+test.describe('Home touch carousel', () => {
+  test.skip(!hasE2eCredentials, 'Local E2E account unavailable');
+
+  // Le carrousel suit le doigt par `pointer events` : un vrai contexte tactile
+  // est nécessaire pour rejouer le bug de transfert de capture du pointeur.
+  test.use({
+    hasTouch: true,
+    isMobile: true,
+    viewport: { width: 390, height: 844 },
+  });
+
+  test('swipes the continue-reading hero to the next slide', async ({ page }) => {
+    await selectConnection(page, 'Stub A');
+    await page.goto('/');
+
+    const hero = page.getByTestId('home-continue-reading').first();
+    await expect(hero).toBeVisible({ timeout: 15_000 });
+    const tabs = hero.getByRole('tab');
+    await expect(tabs.first()).toHaveAttribute('aria-selected', 'true');
+    await page.waitForTimeout(2_000);
+
+    const box = await hero.boundingBox();
+    if (!box) throw new Error('Hero has no layout box');
+
+    const client = await page.context().newCDPSession(page);
+    const startX = box.x + box.width * 0.75;
+    const y = box.y + Math.min(160, box.height * 0.3);
+    await client.send('Input.dispatchTouchEvent', {
+      type: 'touchStart',
+      touchPoints: [{ x: startX, y }],
+    });
+    for (let step = 1; step <= 8; step += 1) {
+      await client.send('Input.dispatchTouchEvent', {
+        type: 'touchMove',
+        touchPoints: [{ x: startX - (240 * step) / 8, y }],
+      });
+      await page.waitForTimeout(16);
+    }
+    await client.send('Input.dispatchTouchEvent', {
+      type: 'touchEnd',
+      touchPoints: [],
+    });
+
+    await expect(tabs.nth(1)).toHaveAttribute('aria-selected', 'true');
+  });
+});

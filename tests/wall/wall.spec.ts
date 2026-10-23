@@ -27,7 +27,6 @@ async function openWall(page: Page): Promise<Locator> {
 
 test.describe('Wall filters', () => {
   test.skip(!hasIsolatedDatabase, 'Local E2E database unavailable');
-
   test('hides finished series, composes with libraries and stays per user', async ({ page }) => {
     await selectConnection(page, 'Stub A');
     const wallCount = await openWall(page);
@@ -116,5 +115,56 @@ test.describe('Wall filters', () => {
       'aria-pressed',
       'false'
     );
+  });
+});
+
+test.describe('Wall mobile sheet', () => {
+  test.skip(!hasIsolatedDatabase, 'Local E2E database unavailable');
+
+  test.use({
+    hasTouch: true,
+    isMobile: true,
+    viewport: { width: 390, height: 844 },
+  });
+
+  /**
+   * Sur iOS, le focus automatique d'un contrôle de la feuille la faisait
+   * défiler hors de l'écran, avec tout le mur. La feuille doit rester dans le
+   * cadre et la page ne doit pas bouger.
+   */
+  test('opens the sheet fully inside the viewport after tapping a cover', async ({ page }) => {
+    await selectConnection(page, 'Stub A');
+    await openWall(page);
+
+    const target = await page.evaluate(() => {
+      let best: { distance: number; x: number; y: number } | null = null;
+      for (const tile of document.querySelectorAll<HTMLElement>('.wall-tile')) {
+        const rect = tile.getBoundingClientRect();
+        const x = rect.left + rect.width / 2;
+        const y = rect.top + rect.height / 2;
+        if (x <= 20 || x >= window.innerWidth - 20 || y <= 80 || y >= window.innerHeight - 60) {
+          continue;
+        }
+        const distance =
+          Math.abs(x - window.innerWidth / 2) + Math.abs(y - window.innerHeight / 2);
+        if (!best || distance < best.distance) best = { distance, x, y };
+      }
+      return best;
+    });
+    expect(target).not.toBeNull();
+
+    await page.touchscreen.tap(target!.x, target!.y);
+
+    const sheet = page.locator('.wall-sheet');
+    await expect(sheet).toBeVisible({ timeout: 10_000 });
+    await expect(sheet).toBeFocused();
+
+    const box = await sheet.boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.x).toBeGreaterThanOrEqual(0);
+    expect(box!.y).toBeGreaterThanOrEqual(0);
+    expect(box!.x + box!.width).toBeLessThanOrEqual(390 + 2);
+    expect(box!.y + box!.height).toBeLessThanOrEqual(844 + 2);
+    expect(await page.evaluate(() => window.scrollY)).toBe(0);
   });
 });
