@@ -136,7 +136,7 @@ export function ReaderInfoDialog({
       {/* La carte se lève plus franchement que le dialogue standard, puis son
           contenu se déroule : titre mot à mot, couverture qui se redresse,
           blocs en cascade, barres qui se remplissent une fois posées. */}
-      <DialogContent className="max-h-[90vh] w-[calc(100vw-2rem)] overflow-y-auto duration-500 ease-projection data-[state=open]:zoom-in-90 data-[state=open]:slide-in-from-bottom-10! sm:w-[calc(100vw-3rem)] sm:max-w-5xl">
+      <DialogContent className="max-h-[90vh] w-[calc(100vw-2rem)] overflow-y-auto sm:w-[calc(100vw-3rem)] sm:max-w-5xl">
         <div ref={contentRef} className="space-y-5">
         <DialogHeader>
           <DialogTitle className="pr-8 text-left text-xl">
