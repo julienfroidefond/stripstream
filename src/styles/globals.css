@@ -698,9 +698,9 @@ body.no-pinch-zoom .wall-canvas * {
   background: hsl(var(--surface-2));
   box-shadow: 0 0 0 1px hsl(var(--foreground) / 0.07);
   transform-origin: 50% 70%;
-  transition:
-    box-shadow 420ms var(--ease-projection),
-    transform 240ms cubic-bezier(0.16, 1, 0.3, 1);
+  /* La pose de survol (transform) est lissée en JS, frame par frame
+     (`WallTile`) : seule l'ombre passe par une transition. */
+  transition: box-shadow 420ms var(--ease-projection);
 }
 
 /* La lumière suit le curseur : un reflet chaud passe sur l'affiche. */
@@ -763,19 +763,11 @@ body.no-pinch-zoom .wall-canvas * {
   }
 
   /* La tuile se soulève, s'incline vers le curseur et le suit de quelques
-     pixels. Seule la tuile survolée bouge : aucune voisine n'est déplacée. */
+     pixels (pose lissée en JS, voir `WallTile`). Seule la tuile survolée
+     bouge : aucune voisine n'est déplacée. */
   .wall-stage:not([data-panning]):not([data-plaque])
     .wall-tile:not([data-active]):hover
     .wall-tile-frame {
-    transform:
-      translate3d(
-        var(--wall-pull-x, 0px),
-        calc(-7px + var(--wall-pull-y, 0px)),
-        0
-      )
-      scale(1.015)
-      rotateX(var(--wall-tilt-x, 0deg))
-      rotateY(var(--wall-tilt-y, 0deg));
     box-shadow:
       0 0 0 1px hsl(var(--primary) / 0.55),
       0 28px 56px -22px rgb(0 0 0 / 0.88),
