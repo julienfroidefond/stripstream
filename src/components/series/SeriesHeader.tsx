@@ -33,6 +33,7 @@ import { SeriesRatingControl } from "./SeriesRatingControl";
 import type { NormalizedProviderRating } from "@/lib/providers/types";
 import { ProjectionBackdrop } from "@/components/ui/projection-backdrop";
 import { useBannerScene } from "@/components/motion";
+import { burst, nudge, pop } from "@/lib/celebrate";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
 interface SeriesHeaderProps {
@@ -67,13 +68,26 @@ export const SeriesHeader = ({
   const fly = reduce ? {} : { "data-hero-fly": "" };
   const item = reduce ? {} : { "data-hero-item": "" };
 
-  const handleToggleFavorite = async () => {
+  const handleToggleFavorite = async (event: React.MouseEvent<HTMLButtonElement>) => {
+    // Capturé tout de suite : `currentTarget` n'existe plus après l'`await`.
+    const button = event.currentTarget;
     try {
       const action = isFavorite ? removeFromFavorites : addToFavorites;
       const result = await action(series.id);
 
       if (result.success) {
         setIsFavorite(!isFavorite);
+        // L'icône change de composant au rendu suivant : on l'anime après.
+        const adding = !isFavorite;
+        requestAnimationFrame(() => {
+          const icon = button.querySelector("svg");
+          if (adding) {
+            pop(icon, 1.5);
+            burst(button, { color: "rgb(250 204 21)", count: 12 });
+          } else {
+            nudge(icon);
+          }
+        });
         // Dispatcher l'événement avec le seriesId pour mise à jour optimiste de la sidebar
         const event = new CustomEvent("favoritesChanged", {
           detail: {

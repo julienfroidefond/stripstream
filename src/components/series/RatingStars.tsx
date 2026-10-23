@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { burst } from "@/lib/celebrate";
+import { gsap, prefersReducedMotion } from "@/lib/gsap";
 
 interface RatingStarsProps {
   /** Rating on the 1-10 half-star scale, or null when unrated. */
@@ -67,6 +69,7 @@ export function RatingStars({
   const stars = max / 2;
   const px = SIZE_PX[size] ?? 17;
   const [hovered, setHovered] = useState<number | null>(null);
+  const starsRef = useRef<HTMLDivElement>(null);
 
   const display = hovered ?? value ?? 0;
 
@@ -84,8 +87,23 @@ export function RatingStars({
 
   function handleClick(e: React.MouseEvent<HTMLSpanElement>, starIdx: number) {
     if (readOnly || !onChange) return;
-    const rect = e.currentTarget.getBoundingClientRect();
+    const target = e.currentTarget;
+    const rect = target.getBoundingClientRect();
     onChange(e.clientX - rect.left < rect.width / 2 ? starIdx * 2 - 1 : starIdx * 2);
+    celebrate(target, starIdx);
+  }
+
+  /** Les étoiles se remplissent une à une jusqu'à la note, puis une gerbe part. */
+  function celebrate(chosen: HTMLElement, starIdx: number) {
+    const container = starsRef.current;
+    if (!container || prefersReducedMotion()) return;
+    const lit = Array.from(container.children).slice(0, starIdx);
+    gsap.fromTo(
+      lit,
+      { scale: 0.5, rotate: -25 },
+      { scale: 1, rotate: 0, duration: 0.45, stagger: 0.05, ease: "back.out(3)", clearProps: "scale,rotate" }
+    );
+    gsap.delayedCall(lit.length * 0.05, () => burst(chosen, { count: 8, distance: 22 }));
   }
 
   const isActive = hovered !== null ? true : !!value;
@@ -93,6 +111,7 @@ export function RatingStars({
   return (
     <div className="flex items-center gap-1">
       <div
+        ref={starsRef}
         className={[
           "flex gap-0.5 transition-colors",
           isActive ? "text-primary" : "text-muted-foreground/60",
