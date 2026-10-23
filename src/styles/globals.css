@@ -316,7 +316,7 @@ body.no-pinch-zoom .wall-canvas * {
   --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-bricolage), var(--font-geist), ui-sans-serif, system-ui, sans-serif;
 
-  /* Courbe signature du langage de mouvement (EASE_PROJECTION côté framer-motion). */
+  /* Courbe signature du langage de mouvement (`projection` côté GSAP). */
   --ease-projection: cubic-bezier(0.22, 1, 0.36, 1);
 
   /* Project-specific animations (accordion/collapsible come from tw-animate-css). */

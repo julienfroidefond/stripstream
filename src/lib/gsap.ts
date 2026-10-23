@@ -11,9 +11,9 @@ const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
 /**
  * Socle GSAP du langage « projection ».
  *
- * Les courbes sont les mêmes que celles de `src/lib/motion.ts` (framer-motion)
- * pour que les deux moteurs racontent la même chose pendant la transition :
- *  - `projection` : cubic-bezier(0.22, 1, 0.36, 1), la courbe signature ;
+ * Les courbes nommées, partagées par toutes les animations du site :
+ *  - `projection` : cubic-bezier(0.22, 1, 0.36, 1), la courbe signature (aussi
+ *                   exposée en CSS : `--ease-projection`) ;
  *  - `out`        : cubic-bezier(0.16, 1, 0.3, 1), les micro-interactions ;
  *  - `focus`      : léger dépassement, comme un projecteur qui corrige son
  *                   cadrage.
