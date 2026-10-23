@@ -1,7 +1,7 @@
 "use client";
 
-import { motion, useReducedMotion, useScroll, useSpring, useTransform } from "framer-motion";
-import { gsap, prefersReducedMotion, useGSAP } from "@/lib/gsap";
+import { motion, useReducedMotion } from "framer-motion";
+import { gsap, prefersReducedMotion, ScrollTrigger, SplitText, useGSAP } from "@/lib/gsap";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import {
   Fragment,
@@ -508,21 +508,35 @@ export function ProgressFill({ percent, className, delay = 0.35 }: ProgressFillP
  * ---------------------------------------------------------------------- */
 
 export function ScrollProgress() {
-  const reduce = useReducedMotion();
-  const { scrollYProgress } = useScroll();
-  const scaleX = useSpring(scrollYProgress, {
-    stiffness: 150,
-    damping: 26,
-    restDelta: 0.001,
-  });
+  const reduce = usePrefersReducedMotion();
+  const ref = useRef<HTMLDivElement>(null);
+
+  useGSAP(
+    () => {
+      const bar = ref.current;
+      if (!bar || reduce || prefersReducedMotion()) return;
+      // `quickTo` lisse le suivi : le fil rattrape le défilement au lieu de sauter.
+      const follow = gsap.quickTo(bar, "scaleX", { duration: 0.35, ease: "out" });
+      gsap.set(bar, { scaleX: 0, transformOrigin: "0% 50%" });
+      const trigger = ScrollTrigger.create({
+        start: 0,
+        end: "max",
+        onUpdate: (self) => follow(self.progress),
+      });
+      follow(trigger.progress);
+      return () => trigger.kill();
+    },
+    { dependencies: [reduce] }
+  );
 
   if (reduce) return null;
 
   return (
-    <motion.div
+    <div
+      ref={ref}
       aria-hidden
       className="pointer-events-none fixed inset-x-0 top-0 z-[70] h-[2px] origin-left bg-primary"
-      style={{ scaleX }}
+      style={{ transform: "scaleX(0)" }}
     />
   );
 }
@@ -570,24 +584,139 @@ export function SplitWords({ text, stagger }: SplitWordsProps) {
 }
 
 /* -------------------------------------------------------------------------
- * useSceneExit — un bandeau quitte la scène au défilement.
+ * useBannerScene — un bandeau d'en-tête (bibliothèque, série) entre en scène
+ * puis quitte la scène au défilement.
  *
- * Tant que le bandeau sort par le haut, le fond descend moins vite que la
- * page (parallaxe), le contenu s'éloigne et s'éteint : la salle se rallume
- * sur la suite. Les valeurs restent neutres sous `prefers-reduced-motion`.
+ * Entrée, même relief que le hero de l'accueil : l'écran se déroule
+ * (`[data-banner-unroll]`), la cover arrive du fond (`[data-hero-fly]`), les
+ * mots du titre basculent en 3D (`[data-banner-title]`), le reste remonte
+ * (`[data-hero-item]`). Sortie, pilotée par ScrollTrigger : le fond
+ * (`[data-banner-backdrop]`) descend moins vite que la page, le contenu
+ * (`[data-banner-content]`) s'éloigne et s'éteint. Les états de départ sont
+ * en CSS ; rien ne bouge sous `prefers-reduced-motion`.
  * ---------------------------------------------------------------------- */
 
-export function useSceneExit(ref: RefObject<HTMLElement | null>) {
-  const reduce = useReducedMotion();
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
-  const progress = useSpring(scrollYProgress, { stiffness: 220, damping: 32, restDelta: 0.001 });
+export function useBannerScene(ref: RefObject<HTMLElement | null>) {
+  const reduce = usePrefersReducedMotion();
 
-  const backdropY = useTransform(progress, [0, 1], reduce ? ["0%", "0%"] : ["0%", "38%"]);
-  const backdropScale = useTransform(progress, [0, 1], reduce ? [1, 1] : [1, 1.12]);
-  const contentY = useTransform(progress, [0, 1], reduce ? [0, 0] : [0, 90]);
-  const contentOpacity = useTransform(progress, [0, 0.75], reduce ? [1, 1] : [1, 0]);
-  const contentBlur = useTransform(progress, [0, 0.75], reduce ? ["blur(0px)", "blur(0px)"] : ["blur(0px)", "blur(6px)"]);
-  const sceneScale = useTransform(progress, [0, 1], reduce ? [1, 1] : [1, 0.92]);
+  useGSAP(
+    () => {
+      const root = ref.current;
+      if (!root) return;
+      const all = (selector: string) => Array.from(root.querySelectorAll<HTMLElement>(selector));
+      const unroll = all("[data-banner-unroll]");
+      const fliers = all("[data-hero-fly]");
+      const titles = all("[data-banner-title]");
+      const items = all("[data-hero-item]");
+      const backdrop = root.querySelector<HTMLElement>("[data-banner-backdrop]");
+      const content = root.querySelector<HTMLElement>("[data-banner-content]");
 
-  return { backdropY, backdropScale, contentY, contentOpacity, contentBlur, sceneScale };
+      const settle = () => {
+        unroll.forEach((element) => element.removeAttribute("data-banner-unroll"));
+        fliers.forEach((element) => element.removeAttribute("data-hero-fly"));
+        items.forEach((element) => element.removeAttribute("data-hero-item"));
+        gsap.set([...unroll, ...fliers, ...items], {
+          clearProps: "opacity,transform,clipPath",
+        });
+      };
+
+      if (reduce || prefersReducedMotion()) {
+        settle();
+        return;
+      }
+
+      const splits = titles.map((title) => SplitText.create(title, { type: "words" }));
+      const words = splits.flatMap((split) => split.words);
+      const intro = gsap.timeline({
+        defaults: { ease: "projection" },
+        onComplete: () => {
+          splits.forEach((split) => split.revert());
+          settle();
+        },
+      });
+
+      if (unroll.length > 0) {
+        intro.fromTo(
+          unroll,
+          { clipPath: "inset(0% 0% 100% 0%)" },
+          { clipPath: "inset(0% 0% 0% 0%)", duration: 0.8, ease: "power3.inOut" },
+          0
+        );
+      }
+      if (fliers.length > 0) {
+        intro.fromTo(
+          fliers,
+          {
+            opacity: 0,
+            x: -120,
+            z: -600,
+            rotateY: -75,
+            rotateX: 18,
+            rotateZ: -7,
+            transformPerspective: 900,
+          },
+          {
+            opacity: 1,
+            x: 0,
+            z: 0,
+            rotateY: 0,
+            rotateX: 0,
+            rotateZ: 0,
+            duration: 0.8,
+            ease: "back.out(1.5)",
+          },
+          0.15
+        );
+      }
+      if (items.length > 0) {
+        intro.fromTo(
+          items,
+          { opacity: 0, y: 30 },
+          { opacity: 1, y: 0, duration: 0.45, stagger: 0.05 },
+          0.25
+        );
+      }
+      if (words.length > 0) {
+        intro.fromTo(
+          words,
+          {
+            opacity: 0,
+            yPercent: 70,
+            z: -160,
+            rotateX: -95,
+            transformPerspective: 600,
+            transformOrigin: "50% 100%",
+          },
+          {
+            opacity: 1,
+            yPercent: 0,
+            z: 0,
+            rotateX: 0,
+            duration: 0.6,
+            ease: "back.out(2)",
+            stagger: 0.05,
+          },
+          0.3
+        );
+      }
+
+      const exit =
+        backdrop && content
+          ? gsap
+              .timeline({
+                scrollTrigger: { trigger: root, start: "top top", end: "bottom top", scrub: 0.5 },
+              })
+              .to(backdrop, { yPercent: 38, scale: 1.12, ease: "none" }, 0)
+              .to(content, { y: 90, opacity: 0, ease: "power1.in" }, 0)
+          : null;
+
+      return () => {
+        intro.kill();
+        splits.forEach((split) => split.revert());
+        exit?.scrollTrigger?.kill();
+        exit?.revert();
+      };
+    },
+    { scope: ref, dependencies: [reduce] }
+  );
 }
