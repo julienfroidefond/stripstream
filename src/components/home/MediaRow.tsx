@@ -19,7 +19,7 @@ import { BookSpotlightSlide } from "@/components/ui/book-spotlight-slide";
 import { useAnonymous } from "@/contexts/AnonymousContext";
 import { useCarouselViewMode } from "@/hooks/useCarouselViewMode";
 import { loadHomeFeed, type HomeFeed } from "@/app/actions/home";
-import { GlowLayer, StaggerGroup, StaggerItem, usePointerGlow } from "@/components/motion";
+import { GlowLayer, StaggerGroup, StaggerItem, usePointerGlow, ScrollScene } from "@/components/motion";
 
 const ITEMS_PER_PAGE = 8;
 
@@ -72,91 +72,93 @@ export function MediaRow({ titleKey, items, iconName, featuredHeader = false, te
   if (!items.length) return null;
 
   return (
-    <Section
-      data-testid={testId}
-      title={t(titleKey)}
-      icon={icon}
-      className="space-y-5"
-      headerClassName="pb-1"
-      titleClassName={featuredHeader ? "text-primary" : undefined}
-      iconClassName={featuredHeader ? "text-primary" : undefined}
-      actions={<CarouselViewToggle viewMode={viewMode} onToggle={toggleViewMode} />}
-    >
-      {viewMode === "spotlight" ? (
-        <SpotlightCarousel
-          ariaLabel={t(titleKey)}
-          slides={loadedItems.map((item) => ({
-            key: item.id,
-            backdropSrc: item.thumbnailUrl,
-            content: isSeries(item) ? (
-              <SeriesSpotlightSlide
-                series={item}
-                onOpen={() => onItemClick(item)}
-                ctaLabel={t("navigation.viewSeries")}
-                eyebrow={t("navigation.seriesLabel")}
-              />
-            ) : (
-              <BookSpotlightSlide
-                book={item}
-                onOpen={() => onItemClick(item)}
-                eyebrow={t("navigation.bookLabel")}
-              />
-            ),
-          }))}
-          footer={
-            hasMore ? (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleLoadMore}
-                disabled={isPending}
-                aria-busy={isPending}
-                className="disabled:opacity-100"
-              >
-                <LoadMoreLabel
-                  pending={isPending}
-                  label={t("navigation.loadMore")}
-                  loadingLabel={t("navigation.loading")}
+    <ScrollScene>
+      <Section
+        data-testid={testId}
+        title={t(titleKey)}
+        icon={icon}
+        className="space-y-5"
+        headerClassName="pb-1"
+        titleClassName={featuredHeader ? "text-primary" : undefined}
+        iconClassName={featuredHeader ? "text-primary" : undefined}
+        actions={<CarouselViewToggle viewMode={viewMode} onToggle={toggleViewMode} />}
+      >
+        {viewMode === "spotlight" ? (
+          <SpotlightCarousel
+            ariaLabel={t(titleKey)}
+            slides={loadedItems.map((item) => ({
+              key: item.id,
+              backdropSrc: item.thumbnailUrl,
+              content: isSeries(item) ? (
+                <SeriesSpotlightSlide
+                  series={item}
+                  onOpen={() => onItemClick(item)}
+                  ctaLabel={t("navigation.viewSeries")}
+                  eyebrow={t("navigation.seriesLabel")}
                 />
-              </Button>
-            ) : undefined
-          }
-        />
-      ) : (
-        <StaggerGroup stagger={0.05} effect="deal" amount={0.25}>
-          <ScrollContainer
-            showArrows={true}
-            scrollAmount={400}
-            arrowLeftLabel={t("navigation.scrollLeft")}
-            arrowRightLabel={t("navigation.scrollRight")}
-          >
-            {loadedItems.map((item) => (
-              <StaggerItem key={item.id} className="shrink-0">
-                <MediaCard item={item} onClick={onItemClick} />
-              </StaggerItem>
-            ))}
-            {hasMore && (
-              <StaggerItem className="shrink-0">
-                <button
+              ) : (
+                <BookSpotlightSlide
+                  book={item}
+                  onOpen={() => onItemClick(item)}
+                  eyebrow={t("navigation.bookLabel")}
+                />
+              ),
+            }))}
+            footer={
+              hasMore ? (
+                <Button
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={handleLoadMore}
                   disabled={isPending}
                   aria-busy={isPending}
-                  className="flex min-h-[282px] w-[150px] items-center justify-center rounded-xl border border-dashed border-border text-sm font-medium text-muted-foreground transition-colors hover:border-primary/60 hover:text-foreground sm:min-h-[300px]"
+                  className="disabled:opacity-100"
                 >
                   <LoadMoreLabel
-                  pending={isPending}
-                  label={t("navigation.loadMore")}
-                  loadingLabel={t("navigation.loading")}
-                />
-                </button>
-              </StaggerItem>
-            )}
-          </ScrollContainer>
-        </StaggerGroup>
-      )}
-    </Section>
+                    pending={isPending}
+                    label={t("navigation.loadMore")}
+                    loadingLabel={t("navigation.loading")}
+                  />
+                </Button>
+              ) : undefined
+            }
+          />
+        ) : (
+          <StaggerGroup stagger={0.05} effect="deal" amount={0.25}>
+            <ScrollContainer
+              showArrows={true}
+              scrollAmount={400}
+              arrowLeftLabel={t("navigation.scrollLeft")}
+              arrowRightLabel={t("navigation.scrollRight")}
+            >
+              {loadedItems.map((item) => (
+                <StaggerItem key={item.id} className="shrink-0">
+                  <MediaCard item={item} onClick={onItemClick} />
+                </StaggerItem>
+              ))}
+              {hasMore && (
+                <StaggerItem className="shrink-0">
+                  <button
+                    type="button"
+                    onClick={handleLoadMore}
+                    disabled={isPending}
+                    aria-busy={isPending}
+                    className="flex min-h-[282px] w-[150px] items-center justify-center rounded-xl border border-dashed border-border text-sm font-medium text-muted-foreground transition-colors hover:border-primary/60 hover:text-foreground sm:min-h-[300px]"
+                  >
+                    <LoadMoreLabel
+                    pending={isPending}
+                    label={t("navigation.loadMore")}
+                    loadingLabel={t("navigation.loading")}
+                  />
+                  </button>
+                </StaggerItem>
+              )}
+            </ScrollContainer>
+          </StaggerGroup>
+        )}
+      </Section>
+    </ScrollScene>
   );
 }
 

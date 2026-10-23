@@ -538,6 +538,78 @@ export function ScrollProgress() {
 }
 
 /* -------------------------------------------------------------------------
+ * ScrollScene — une rangée qui entre et sort de scène au défilement.
+ *
+ * Lié au scroll dans les deux sens (ScrollTrigger, `scrub`) : en arrivant par
+ * le bas, la rangée remonte avec un temps de retard en se redressant vers le
+ * spectateur ; en partant par le haut, elle bascule en arrière, recule et
+ * s'éteint, comme le hero. Les révélations internes (cartes, carrousels)
+ * jouent à l'intérieur, sur leurs propres éléments.
+ * ---------------------------------------------------------------------- */
+
+/**
+ * Les rangées de l'accueil arrivent en streaming : chaque nouvelle rangée
+ * décale celles du dessous. Un seul recalcul des bornes, groupé, suffit.
+ */
+let refreshCall: gsap.core.Tween | null = null;
+function scheduleScrollRefresh() {
+  refreshCall?.kill();
+  refreshCall = gsap.delayedCall(0.15, () => {
+    refreshCall = null;
+    ScrollTrigger.refresh();
+  });
+}
+
+export function ScrollScene({ children, className }: { children: ReactNode; className?: string }) {
+  const reduce = usePrefersReducedMotion();
+  const ref = useRef<HTMLDivElement>(null);
+
+  useGsapEffect(
+    () => {
+      const scene = ref.current;
+      if (!scene || reduce || prefersReducedMotion()) return;
+
+      const timeline = gsap
+        .timeline({
+          scrollTrigger: { trigger: scene, start: "top bottom", end: "bottom top", scrub: 0.6 },
+        })
+        .fromTo(
+          scene,
+          {
+            y: 140,
+            rotateX: -18,
+            scale: 0.9,
+            opacity: 0.45,
+            transformPerspective: 1400,
+            transformOrigin: "50% 0%",
+          },
+          { y: 0, rotateX: 0, scale: 1, opacity: 1, duration: 0.35, ease: "power2.out" }
+        )
+        // Le pivot change de bord pendant le palier, à plat : aucun saut.
+        .set(scene, { transformOrigin: "50% 100%" }, 0.5)
+        .to(
+          scene,
+          { y: -90, rotateX: 24, scale: 0.86, opacity: 0.08, duration: 0.35, ease: "power2.in" },
+          0.65
+        );
+      scheduleScrollRefresh();
+
+      return () => {
+        timeline.scrollTrigger?.kill();
+        timeline.revert();
+      };
+    },
+    { dependencies: [reduce] }
+  );
+
+  return (
+    <div ref={ref} className={className}>
+      {children}
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------
  * useBannerScene — un bandeau d'en-tête (bibliothèque, série) entre en scène
  * puis quitte la scène au défilement.
  *

@@ -25,6 +25,7 @@ import {
   StaggerGroup,
   StaggerItem,
   usePointerGlow,
+  ScrollScene,
 } from "@/components/motion";
 
 interface ReadingListRowProps {
@@ -59,76 +60,78 @@ export function ReadingListRow({ lists }: ReadingListRowProps) {
   if (!lists.length) return null;
 
   return (
-    <Section
-      data-testid="home-reading-lists"
-      title={t("home.sections.reading_lists")}
-      icon={Bookmark}
-      className="space-y-5"
-      headerClassName="pb-1"
-      actions={<CarouselViewToggle viewMode={viewMode} onToggle={toggleViewMode} />}
-    >
-      {viewMode === "spotlight" ? (
-        <SpotlightCarousel
-          ariaLabel={t("home.sections.reading_lists")}
-          slides={loadedLists.map((list) => ({
-            key: list.id,
-            backdropSrc: StripstreamAdapter.resolveReadingListPreviewCover(list.preview_covers?.[0]),
-            content: <ReadingListSpotlightSlide list={list} onOpen={handleOpenList} />,
-          }))}
-          footer={
-            hasMore ? (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleLoadMore}
-                disabled={isPending}
-                aria-busy={isPending}
-                className="disabled:opacity-100"
-              >
-                <LoadMoreLabel
-                  pending={isPending}
-                  label={t("navigation.loadMore")}
-                  loadingLabel={t("navigation.loading")}
-                />
-              </Button>
-            ) : undefined
-          }
-        />
-      ) : (
-        <StaggerGroup stagger={0.05} effect="deal" amount={0.25}>
-          <ScrollContainer
-            showArrows={true}
-            scrollAmount={400}
-            arrowLeftLabel={t("navigation.scrollLeft")}
-            arrowRightLabel={t("navigation.scrollRight")}
-          >
-            {loadedLists.map((list) => (
-              <StaggerItem key={list.id} className="shrink-0">
-                <ReadingListCard list={list} onClick={handleOpenList} />
-              </StaggerItem>
-            ))}
-            {hasMore && (
-              <StaggerItem className="shrink-0">
-                <button
+    <ScrollScene>
+      <Section
+        data-testid="home-reading-lists"
+        title={t("home.sections.reading_lists")}
+        icon={Bookmark}
+        className="space-y-5"
+        headerClassName="pb-1"
+        actions={<CarouselViewToggle viewMode={viewMode} onToggle={toggleViewMode} />}
+      >
+        {viewMode === "spotlight" ? (
+          <SpotlightCarousel
+            ariaLabel={t("home.sections.reading_lists")}
+            slides={loadedLists.map((list) => ({
+              key: list.id,
+              backdropSrc: StripstreamAdapter.resolveReadingListPreviewCover(list.preview_covers?.[0]),
+              content: <ReadingListSpotlightSlide list={list} onOpen={handleOpenList} />,
+            }))}
+            footer={
+              hasMore ? (
+                <Button
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={handleLoadMore}
                   disabled={isPending}
                   aria-busy={isPending}
-                  className="flex min-h-[282px] w-[150px] items-center justify-center rounded-xl border border-dashed border-border text-sm font-medium text-muted-foreground transition-colors hover:border-primary/60 hover:text-foreground sm:min-h-[300px]"
+                  className="disabled:opacity-100"
                 >
                   <LoadMoreLabel
-                  pending={isPending}
-                  label={t("navigation.loadMore")}
-                  loadingLabel={t("navigation.loading")}
-                />
-                </button>
-              </StaggerItem>
-            )}
-          </ScrollContainer>
-        </StaggerGroup>
-      )}
-    </Section>
+                    pending={isPending}
+                    label={t("navigation.loadMore")}
+                    loadingLabel={t("navigation.loading")}
+                  />
+                </Button>
+              ) : undefined
+            }
+          />
+        ) : (
+          <StaggerGroup stagger={0.05} effect="deal" amount={0.25}>
+            <ScrollContainer
+              showArrows={true}
+              scrollAmount={400}
+              arrowLeftLabel={t("navigation.scrollLeft")}
+              arrowRightLabel={t("navigation.scrollRight")}
+            >
+              {loadedLists.map((list) => (
+                <StaggerItem key={list.id} className="shrink-0">
+                  <ReadingListCard list={list} onClick={handleOpenList} />
+                </StaggerItem>
+              ))}
+              {hasMore && (
+                <StaggerItem className="shrink-0">
+                  <button
+                    type="button"
+                    onClick={handleLoadMore}
+                    disabled={isPending}
+                    aria-busy={isPending}
+                    className="flex min-h-[282px] w-[150px] items-center justify-center rounded-xl border border-dashed border-border text-sm font-medium text-muted-foreground transition-colors hover:border-primary/60 hover:text-foreground sm:min-h-[300px]"
+                  >
+                    <LoadMoreLabel
+                    pending={isPending}
+                    label={t("navigation.loadMore")}
+                    loadingLabel={t("navigation.loading")}
+                  />
+                  </button>
+                </StaggerItem>
+              )}
+            </ScrollContainer>
+          </StaggerGroup>
+        )}
+      </Section>
+    </ScrollScene>
   );
 }
 
