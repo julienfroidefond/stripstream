@@ -1,6 +1,6 @@
 "use client";
 
-import { gsap, prefersReducedMotion, ScrollTrigger, SplitText, useGsapEffect } from "@/lib/gsap";
+import { Flip, gsap, prefersReducedMotion, ScrollTrigger, SplitText, useGsapEffect } from "@/lib/gsap";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import {
   createContext,
@@ -534,6 +534,78 @@ export function ScrollProgress() {
       className="pointer-events-none fixed inset-x-0 top-0 z-[70] h-[2px] origin-left bg-primary"
       style={{ transform: "scaleX(0)" }}
     />
+  );
+}
+
+/* -------------------------------------------------------------------------
+ * useGridFlip / useGridFlipPlayback — les cartes d'une grille glissent vers
+ * leur nouvelle place.
+ *
+ * `capture()` (appelée dans le gestionnaire de l'action : compact, tri,
+ * filtre…) mémorise la position de chaque carte. Au premier rendu où
+ * `contentKey` a changé — tout de suite pour un changement de mise en page,
+ * à l'arrivée des données pour une navigation —, chaque carte part de son
+ * ancienne position et glisse jusqu'à la nouvelle en se redimensionnant. Les
+ * cartes nouvelles jouent leur propre entrée (`StaggerItem`), les disparues
+ * s'effacent. `container` enveloppe la grille : ses cartes sont les enfants
+ * de son premier enfant.
+ * ---------------------------------------------------------------------- */
+
+interface GridFlip {
+  containerRef: RefObject<HTMLElement | null>;
+  /** Mémorise la position des cartes, avant l'action. */
+  capture: () => void;
+  /**
+   * Enregistre le contenu affiché ; si une capture attend un autre contenu,
+   * la rend (et l'oublie), sinon renvoie `null`.
+   */
+  take: (contentKey: string) => Flip.FlipState | null;
+}
+
+/** Se déclare tôt : `capture` peut être appelée par tous les gestionnaires. */
+export function useGridFlip(containerRef: RefObject<HTMLElement | null>): GridFlip {
+  const pending = useRef<{ state: Flip.FlipState; key: string | null } | null>(null);
+  const keyRef = useRef<string | null>(null);
+
+  const capture = useCallback(() => {
+    const grid = containerRef.current?.firstElementChild;
+    if (!grid || prefersReducedMotion()) return;
+    pending.current = { state: Flip.getState(Array.from(grid.children)), key: keyRef.current };
+  }, [containerRef]);
+
+  const take = useCallback((contentKey: string) => {
+    keyRef.current = contentKey;
+    const captured = pending.current;
+    if (!captured || captured.key === contentKey) return null;
+    pending.current = null;
+    return captured.state;
+  }, []);
+
+  return useMemo(() => ({ containerRef, capture, take }), [containerRef, capture, take]);
+}
+
+/** Se déclare une fois `contentKey` connu : rejoue le glissement capturé. */
+export function useGridFlipPlayback(flip: GridFlip, contentKey: string): void {
+  useGsapEffect(
+    () => {
+      const state = flip.take(contentKey);
+      const grid = flip.containerRef.current?.firstElementChild;
+      if (!state || !grid) return;
+      const animation = Flip.from(state, {
+        targets: Array.from(grid.children),
+        duration: 0.55,
+        ease: "projection",
+        scale: true,
+        // Les entrées et les sorties restent celles de `StaggerItem`.
+        onEnter: () => undefined,
+      });
+      // Interrompu par un nouveau contenu, le glissement finit d'un coup au
+      // lieu de laisser les cartes à mi-chemin.
+      return () => {
+        animation.progress(1);
+      };
+    },
+    { dependencies: [contentKey] }
   );
 }
 

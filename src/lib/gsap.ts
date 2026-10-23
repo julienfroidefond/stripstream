@@ -3,6 +3,7 @@
 import { useEffect, useLayoutEffect, type DependencyList } from "react";
 import { gsap } from "gsap";
 import { CustomEase } from "gsap/CustomEase";
+import { Flip } from "gsap/Flip";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
 
@@ -23,7 +24,7 @@ const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
  * easing restent de simples chaînes, donc le rendu SSR ne dépend pas de GSAP.
  */
 if (typeof window !== "undefined") {
-  gsap.registerPlugin(ScrollTrigger, CustomEase, SplitText);
+  gsap.registerPlugin(ScrollTrigger, CustomEase, SplitText, Flip);
 
   CustomEase.create("projection", "M0,0 C0.22,1 0.36,1 1,1");
   CustomEase.create("out", "M0,0 C0.16,1 0.3,1 1,1");
@@ -72,4 +73,4 @@ export function useGsapEffect(
   }, dependencies);
 }
 
-export { gsap, ScrollTrigger, SplitText };
+export { gsap, Flip, ScrollTrigger, SplitText };
