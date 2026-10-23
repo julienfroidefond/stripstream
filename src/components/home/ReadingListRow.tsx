@@ -3,26 +3,25 @@
 import { memo, useCallback, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, BookOpen, Bookmark } from "lucide-react";
-import { motion, useReducedMotion } from "framer-motion";
 import { ReadingListCover } from "@/components/reading-lists/ReadingListCover";
 import { ScrollContainer } from "@/components/ui/scroll-container";
+import { LoadMoreLabel } from "@/components/ui/load-more-label";
 import { Section } from "@/components/ui/section";
 import { Button } from "@/components/ui/button";
 import { CarouselViewToggle } from "@/components/ui/carousel-view-toggle";
-import { SpotlightCarousel, useSpotlightReveal } from "@/components/ui/spotlight-carousel";
+import { SpotlightCarousel, useSpotlightStaging } from "@/components/ui/spotlight-carousel";
 import { useTranslate } from "@/hooks/useTranslate";
 import { useCarouselViewMode } from "@/hooks/useCarouselViewMode";
 import { useAnonymous } from "@/contexts/AnonymousContext";
 import { StripstreamAdapter } from "@/lib/providers/stripstream/stripstream.adapter";
 import { cn } from "@/lib/utils";
-import { EASE_OUT, EASE_PROJECTION, fadeUp, staggerContainer } from "@/lib/motion";
 import type { StripstreamReadingList } from "@/types/stripstream";
 import { loadHomeFeed } from "@/app/actions/home";
 import {
   CountUp,
   GlowLayer,
   Magnetic,
-  SplitWords,
+  ProgressFill,
   StaggerGroup,
   StaggerItem,
   usePointerGlow,
@@ -84,14 +83,20 @@ export function ReadingListRow({ lists }: ReadingListRowProps) {
                 size="sm"
                 onClick={handleLoadMore}
                 disabled={isPending}
+                aria-busy={isPending}
+                className="disabled:opacity-100"
               >
-                {isPending ? t("navigation.loading") : t("navigation.loadMore")}
+                <LoadMoreLabel
+                  pending={isPending}
+                  label={t("navigation.loadMore")}
+                  loadingLabel={t("navigation.loading")}
+                />
               </Button>
             ) : undefined
           }
         />
       ) : (
-        <StaggerGroup stagger={0.08} effect="deal" amount={0.25}>
+        <StaggerGroup stagger={0.05} effect="deal" amount={0.25}>
           <ScrollContainer
             showArrows={true}
             scrollAmount={400}
@@ -109,9 +114,14 @@ export function ReadingListRow({ lists }: ReadingListRowProps) {
                   type="button"
                   onClick={handleLoadMore}
                   disabled={isPending}
+                  aria-busy={isPending}
                   className="flex min-h-[282px] w-[150px] items-center justify-center rounded-xl border border-dashed border-border text-sm font-medium text-muted-foreground transition-colors hover:border-primary/60 hover:text-foreground sm:min-h-[300px]"
                 >
-                  {isPending ? t("navigation.loading") : t("navigation.loadMore")}
+                  <LoadMoreLabel
+                  pending={isPending}
+                  label={t("navigation.loadMore")}
+                  loadingLabel={t("navigation.loading")}
+                />
                 </button>
               </StaggerItem>
             )}
@@ -136,8 +146,6 @@ const ReadingListSpotlightSlide = memo(function ReadingListSpotlightSlide({
 }) {
   const { t } = useTranslate();
   const { isAnonymous } = useAnonymous();
-  const reduce = useReducedMotion();
-  const revealed = useSpotlightReveal();
   const hasProgress =
     !isAnonymous && list.book_count > 0 && list.books_read_count > 0;
   const percent = hasProgress
@@ -145,76 +153,61 @@ const ReadingListSpotlightSlide = memo(function ReadingListSpotlightSlide({
     : 0;
   const description = list.description?.trim() || null;
 
-  const stagedContent = reduce
-    ? {}
-    : {
-        variants: staggerContainer(0.07, 0.08),
-        initial: "hidden" as const,
-        animate: revealed ? ("visible" as const) : ("hidden" as const),
-      };
-  const stagedItem = reduce ? {} : { variants: fadeUp };
+  const staging = useSpotlightStaging();
 
   return (
-    <motion.div
-      className="flex flex-col gap-6 sm:flex-row sm:items-center sm:gap-9"
-      {...stagedContent}
-    >
-      <motion.button
-        type="button"
-        variants={reduce ? undefined : fadeUp}
-        onClick={() => onOpen(list.id)}
-        whileHover={reduce ? undefined : { y: -10, rotateZ: -2, scale: 1.04 }}
-        transition={{ duration: 0.35, ease: EASE_OUT }}
-        className="group relative mx-auto block aspect-2/3 w-[168px] shrink-0 overflow-hidden rounded-xl bg-surface-2 sm:mx-0 sm:w-[196px]"
-        aria-label={t("navigation.openReadingList")}
-      >
-        <ReadingListCover
-          covers={list.preview_covers}
-          alt={list.name}
-          className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-projection group-hover:scale-[1.07] motion-reduce:transition-none"
-          placeholderClassName="bg-surface-2"
-        />
-      </motion.button>
+    <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:gap-9">
+      {/* L'enveloppe fixe capte le survol, le bouton seul se soulève. */}
+      <div className="group mx-auto shrink-0 sm:mx-0">
+        <button
+          type="button"
+          onClick={() => onOpen(list.id)}
+          {...staging.cover}
+          className="relative block aspect-2/3 w-[168px] overflow-hidden rounded-xl bg-surface-2 sm:w-[196px] transition-transform duration-350 ease-out group-hover:-translate-y-2.5 group-hover:-rotate-2 group-hover:scale-104 motion-reduce:transition-none motion-reduce:group-hover:translate-none motion-reduce:group-hover:rotate-none motion-reduce:group-hover:scale-none"
+          aria-label={t("navigation.openReadingList")}
+        >
+          <ReadingListCover
+            covers={list.preview_covers}
+            alt={list.name}
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-projection group-hover:scale-[1.07] motion-reduce:transition-none"
+            placeholderClassName="bg-surface-2"
+          />
+        </button>
+      </div>
 
       <div className="flex flex-1 flex-col justify-center gap-4 text-center text-foreground sm:text-left">
-        <motion.div
+        <div
           className="flex items-center justify-center gap-2 text-xs font-medium uppercase tracking-[0.2em] text-primary sm:justify-start"
-          {...stagedItem}
+          {...staging.item}
         >
           <BookOpen className="h-3.5 w-3.5" />
           {t("navigation.readingListLabel")}
-        </motion.div>
+        </div>
 
         <h2 className="font-display text-3xl font-semibold leading-[1.05] tracking-tight sm:text-4xl lg:text-5xl">
-          <SplitWords text={list.name} />
+          <span {...staging.title}>{list.name}</span>
         </h2>
 
-        <motion.p
+        <p
           className="text-sm text-muted-foreground sm:text-base"
-          {...stagedItem}
+          {...staging.item}
         >
           {t("home.reading_lists.series_count", { count: list.series_count })}
-        </motion.p>
+        </p>
 
         {description && (
-          <motion.p
+          <p
             className="line-clamp-2 text-sm text-muted-foreground sm:text-base"
-            {...stagedItem}
+            {...staging.item}
           >
             {description}
-          </motion.p>
+          </p>
         )}
 
         {hasProgress && (
-          <motion.div className="mx-auto w-full max-w-md space-y-2 sm:mx-0" {...stagedItem}>
+          <div className="mx-auto w-full max-w-md space-y-2 sm:mx-0" {...staging.item}>
             <div className="h-1.5 w-full overflow-hidden rounded-full bg-foreground/15">
-              <motion.div
-                className="h-full origin-left rounded-full bg-primary"
-                initial={reduce ? false : { scaleX: 0 }}
-                animate={{ scaleX: percent / 100 }}
-                transition={{ duration: 1, ease: EASE_PROJECTION, delay: 0.35 }}
-                style={{ width: "100%" }}
-              />
+              <ProgressFill percent={percent} />
             </div>
             <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground sm:justify-start">
               <span className="font-semibold text-foreground tabular-nums">
@@ -227,10 +220,10 @@ const ReadingListSpotlightSlide = memo(function ReadingListSpotlightSlide({
                 })}
               </span>
             </div>
-          </motion.div>
+          </div>
         )}
 
-        <motion.div className="mt-1 flex justify-center sm:justify-start" {...stagedItem}>
+        <div className="mt-1 flex justify-center sm:justify-start" {...staging.item}>
           <Magnetic>
             <Button
               onClick={() => onOpen(list.id)}
@@ -241,9 +234,9 @@ const ReadingListSpotlightSlide = memo(function ReadingListSpotlightSlide({
               <ArrowRight className="h-4 w-4 transition-transform duration-300 ease-out group-hover/cta:translate-x-1" />
             </Button>
           </Magnetic>
-        </motion.div>
+        </div>
       </div>
-    </motion.div>
+    </div>
   );
 });
 

@@ -7,6 +7,7 @@ import { Button } from "./button";
 import { useToast } from "./use-toast";
 import { canShareFiles, fetchSharedFile, isIosStandalone } from "@/lib/download";
 import { cn } from "@/lib/utils";
+import { drop } from "@/lib/celebrate";
 import logger from "@/lib/logger";
 
 interface DownloadBookButtonProps {
@@ -34,6 +35,7 @@ export function DownloadBookButton({ url, filename, className }: DownloadBookBut
 
   const handleClick = async (event: React.MouseEvent<HTMLAnchorElement>) => {
     event.stopPropagation();
+    drop(event.currentTarget.querySelector("svg"));
 
     if (!isIosStandalone()) return;
     event.preventDefault();

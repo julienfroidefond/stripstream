@@ -5,6 +5,7 @@ import { UserService } from "@/lib/services/user.service";
 import { getReadingStats } from "@/lib/services/reading-stats.service";
 import { redirect } from "next/navigation";
 import logger from "@/lib/logger";
+import { StaggerGroup, StaggerItem } from "@/components/motion";
 
 export const dynamic = "force-dynamic";
 
@@ -26,12 +27,20 @@ export default async function AccountPage() {
             </p>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2">
-            <UserProfileCard profile={{ ...profile, stats }} />
-            <ChangePasswordForm username={profile.email} />
-          </div>
+          <StaggerGroup className="grid gap-6 md:grid-cols-2" effect="settle" stagger={0.08}>
+            <StaggerItem className="h-full">
+              <UserProfileCard profile={{ ...profile, stats }} />
+            </StaggerItem>
+            <StaggerItem className="h-full">
+              <ChangePasswordForm username={profile.email} />
+            </StaggerItem>
+          </StaggerGroup>
 
-          <ReadingStatsCard stats={readingStats} />
+          <StaggerGroup effect="settle">
+            <StaggerItem>
+              <ReadingStatsCard stats={readingStats} />
+            </StaggerItem>
+          </StaggerGroup>
         </div>
       </div>
     );

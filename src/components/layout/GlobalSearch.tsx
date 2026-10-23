@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useTranslate } from "@/hooks/useTranslate";
 import type { NormalizedSearchResult } from "@/lib/providers/types";
+import { usePresence } from "@/components/motion";
+import { gsap, prefersReducedMotion, useGsapEffect } from "@/lib/gsap";
 
 const MIN_QUERY_LENGTH = 2;
 
@@ -14,6 +16,8 @@ export function GlobalSearch() {
   const { t } = useTranslate();
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
+  const iconRef = useRef<SVGSVGElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const [query, setQuery] = useState("");
@@ -92,6 +96,99 @@ export function GlobalSearch() {
     };
   }, [query]);
 
+  const panelOpen = isOpen && query.trim().length >= MIN_QUERY_LENGTH;
+
+  /**
+   * Même langage que le reste du site : le panneau bascule vers le
+   * spectateur depuis le champ, puis se replie vite à la fermeture.
+   */
+  const panelRendered = usePresence(panelOpen, panelRef, {
+    enter: (timeline, panel, still) => {
+      timeline.fromTo(
+        panel,
+        still
+          ? { opacity: 0 }
+          : {
+              opacity: 0,
+              y: -10,
+              rotateX: -16,
+              scale: 0.97,
+              transformPerspective: 900,
+              transformOrigin: "50% 0%",
+            },
+        { opacity: 1, y: 0, rotateX: 0, scale: 1, duration: still ? 0.15 : 0.38, ease: "back.out(1.6)" }
+      );
+    },
+    exit: (timeline, panel, still) => {
+      timeline.to(
+        panel,
+        still
+          ? { opacity: 0, duration: 0.12 }
+          : { opacity: 0, y: -6, scale: 0.98, duration: 0.16, ease: "power2.in" }
+      );
+    },
+  });
+
+  // À chaque nouvelle liste : les lignes remontent en cascade et les covers
+  // arrivent du fond en pivotant, comme les rails de l'accueil.
+  useGsapEffect(
+    () => {
+      const panel = panelRef.current;
+      if (!panel || !panelRendered || prefersReducedMotion()) return;
+      const rows = panel.querySelectorAll<HTMLElement>("[data-search-row]");
+      const covers = panel.querySelectorAll<HTMLElement>("[data-search-cover]");
+      if (rows.length === 0) return;
+      const timeline = gsap.timeline({ defaults: { ease: "projection" } });
+      timeline
+        .fromTo(rows, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.32, stagger: 0.035 }, 0)
+        .fromTo(
+          covers,
+          { opacity: 0, x: -10, rotateY: -55, transformPerspective: 500 },
+          { opacity: 1, x: 0, rotateY: 0, duration: 0.45, stagger: 0.035, ease: "back.out(1.8)" },
+          0.04
+        );
+      return () => {
+        timeline.kill();
+        gsap.set([...rows, ...covers], { clearProps: "opacity,transform" });
+      };
+    },
+    { dependencies: [results, panelRendered] }
+  );
+
+  // Pendant la requête, la loupe balaie en petits cercles : elle cherche.
+  useGsapEffect(
+    () => {
+      const icon = iconRef.current;
+      if (!icon || !isLoading || prefersReducedMotion()) return;
+      const sweep = { angle: 0 };
+      const tween = gsap.to(sweep, {
+        angle: Math.PI * 2,
+        duration: 0.7,
+        ease: "none",
+        repeat: -1,
+        onUpdate: () => {
+          gsap.set(icon, { x: Math.cos(sweep.angle) * 2.5, y: Math.sin(sweep.angle) * 2.5 });
+        },
+      });
+      return () => {
+        tween.kill();
+        gsap.to(icon, { x: 0, y: 0, duration: 0.3, ease: "back.out(2)" });
+      };
+    },
+    { dependencies: [isLoading] }
+  );
+
+  /** Au focus, la loupe fait un petit bond et prend la couleur de l'accent. */
+  const popIcon = () => {
+    const icon = iconRef.current;
+    if (!icon || prefersReducedMotion()) return;
+    gsap.fromTo(
+      icon,
+      { rotate: -24, scale: 1.25 },
+      { rotate: 0, scale: 1, duration: 0.5, ease: "back.out(3)", overwrite: "auto" }
+    );
+  };
+
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -103,12 +200,18 @@ export function GlobalSearch() {
 
   return (
     <div ref={containerRef} className="relative w-full">
-      <form onSubmit={handleSubmit}>
-        <Search className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      <form onSubmit={handleSubmit} className="group/search" aria-busy={isLoading}>
+        <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2">
+          <Search
+            ref={iconRef}
+            className="h-4 w-4 text-muted-foreground transition-colors duration-200 group-focus-within/search:text-primary"
+          />
+        </span>
         <Input
           type="search"
           value={query}
           onFocus={() => {
+            popIcon();
             if (query.trim().length >= MIN_QUERY_LENGTH) {
               setIsOpen(true);
             }
@@ -123,15 +226,10 @@ export function GlobalSearch() {
           aria-label={t("header.search.placeholder")}
           className="h-10 rounded-full border-border bg-surface-1 pl-10 pr-10 text-sm focus-visible:ring-primary/40"
         />
-        {isLoading && (
-          <div className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2">
-            <div className="h-4 w-4 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-          </div>
-        )}
       </form>
 
-      {isOpen && query.trim().length >= MIN_QUERY_LENGTH && (
-        <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 overflow-hidden rounded-2xl border border-border bg-popover shadow-xl">{/* taste-skill-ignore: panneau déroulant (overlay) */}
+      {panelRendered && (
+        <div ref={panelRef} className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 overflow-hidden rounded-2xl border border-border bg-popover shadow-xl">{/* taste-skill-ignore: panneau déroulant (overlay) */}
           <div className="max-h-[26rem] overflow-y-auto p-2">
             {seriesResults.length > 0 && (
               <div className="mb-2">
@@ -143,14 +241,16 @@ export function GlobalSearch() {
                     key={item.id}
                     href={item.href}
                     onClick={() => setIsOpen(false)}
-                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-accent"
+                    data-search-row
+                    className="group/row flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-accent"
                     aria-label={t("header.search.openSeries", { title: item.title })}
                   >
                     <img
                       src={item.coverUrl}
                       alt={item.title}
                       loading="lazy"
-                      className="h-14 w-10 shrink-0 rounded object-cover bg-muted"
+                      data-search-cover
+                      className="h-14 w-10 shrink-0 rounded object-cover bg-muted transition-[rotate,scale] duration-300 ease-out group-hover/row:-rotate-3 group-hover/row:scale-108 motion-reduce:transition-none"
                       onError={(e) => { e.currentTarget.style.display = "none"; }}
                     />
                     <div className="min-w-0 flex-1">
@@ -175,14 +275,16 @@ export function GlobalSearch() {
                     key={item.id}
                     href={item.href}
                     onClick={() => setIsOpen(false)}
-                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-accent"
+                    data-search-row
+                    className="group/row flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-accent"
                     aria-label={t("header.search.openBook", { title: item.title })}
                   >
                     <img
                       src={item.coverUrl}
                       alt={item.title}
                       loading="lazy"
-                      className="h-14 w-10 shrink-0 rounded object-cover bg-muted"
+                      data-search-cover
+                      className="h-14 w-10 shrink-0 rounded object-cover bg-muted transition-[rotate,scale] duration-300 ease-out group-hover/row:-rotate-3 group-hover/row:scale-108 motion-reduce:transition-none"
                       onError={(e) => { e.currentTarget.style.display = "none"; }}
                     />
                     <div className="min-w-0 flex-1">
@@ -198,7 +300,9 @@ export function GlobalSearch() {
             )}
 
             {!isLoading && !hasResults && (
-              <p className="px-3 py-4 text-sm text-muted-foreground">{t("header.search.empty")}</p>
+              <p data-search-row className="px-3 py-4 text-sm text-muted-foreground">
+                {t("header.search.empty")}
+              </p>
             )}
           </div>
         </div>

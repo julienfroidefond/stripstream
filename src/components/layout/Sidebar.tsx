@@ -12,7 +12,8 @@ import {
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
-import { useCallback, Suspense } from "react";
+import { useCallback, useRef, Suspense } from "react";
+import { gsap, prefersReducedMotion, useGsapEffect } from "@/lib/gsap";
 import { useToast } from "@/components/ui/use-toast";
 import { useTranslate } from "@/hooks/useTranslate";
 import { NavButton } from "@/components/ui/nav-button";
@@ -79,6 +80,29 @@ export function Sidebar({
     [pathname, router, onClose]
   );
 
+  // À chaque ouverture, les entrées glissent en place l'une après l'autre.
+  const entriesRef = useRef<HTMLDivElement>(null);
+  useGsapEffect(
+    () => {
+      const entries = entriesRef.current;
+      if (!entries || !isOpen || prefersReducedMotion()) return;
+      gsap.fromTo(
+        entries.children,
+        { opacity: 0, x: -24 },
+        {
+          opacity: 1,
+          x: 0,
+          duration: 0.4,
+          stagger: 0.035,
+          delay: 0.08,
+          ease: "back.out(1.6)",
+          clearProps: "opacity,transform",
+        }
+      );
+    },
+    { dependencies: [isOpen] }
+  );
+
   return (
     <SidebarNavContext.Provider value={handleLinkClick}>
       <aside
@@ -90,7 +114,7 @@ export function Sidebar({
         )}
         id="sidebar"
       >
-        <div className="relative z-10 flex-1 space-y-4 overflow-y-auto px-3 py-4">
+        <div ref={entriesRef} className="relative z-10 flex-1 space-y-4 overflow-y-auto px-3 py-4">
           <NavButton
             icon={Home}
             label={t("sidebar.home")}

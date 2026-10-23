@@ -32,7 +32,7 @@ export const ErrorMessage = ({
       <div
         role="alert"
         aria-live="assertive"
-        className="flex items-center gap-2 rounded-md bg-destructive/15 p-2.5 text-sm text-destructive"
+        className="flex items-center gap-2 rounded-md bg-destructive/15 p-2.5 text-sm text-destructive motion-safe:animate-pop-in"
       >
         <AlertCircle className="h-4 w-4" />
         <p>{message}</p>
@@ -49,7 +49,7 @@ export const ErrorMessage = ({
     <div
       role="alert"
       aria-live="assertive"
-      className="relative overflow-hidden rounded-lg border border-destructive/50 bg-card p-6 dark:border-destructive/30"
+      className="relative overflow-hidden rounded-lg border border-destructive/50 bg-card p-6 dark:border-destructive/30 motion-safe:animate-rise-in"
     >
       <div className="absolute inset-0 bg-destructive/5" />
 

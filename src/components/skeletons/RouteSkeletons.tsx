@@ -274,13 +274,14 @@ export function LoginSkeleton() {
 
       <div className="mx-auto flex w-full max-w-6xl flex-1 items-start px-4 pb-12 pt-6 sm:px-8 sm:pb-16 lg:items-center lg:py-12">
         <div className="grid w-full items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)] lg:gap-20">
-          <div className="hidden max-w-xl space-y-5 lg:block">
+          <div className="max-w-xl space-y-5">
             <Skeleton className="h-4 w-44" />
-            <Skeleton className="h-14 w-full" />
-            <Skeleton className="h-14 w-4/5" />
-            <Skeleton className="h-5 w-full max-w-md" />
-            <Skeleton className="h-5 w-3/4 max-w-sm" />
-            <Skeleton className="h-3 w-52" />
+            <Skeleton className="h-10 w-full sm:hidden" />
+            <Skeleton className="hidden h-14 w-full sm:block" />
+            <Skeleton className="hidden h-14 w-4/5 sm:block" />
+            <Skeleton className="hidden h-5 w-full max-w-md sm:block" />
+            <Skeleton className="hidden h-5 w-3/4 max-w-sm sm:block" />
+            <Skeleton className="hidden h-3 w-52 sm:block" />
           </div>
 
           <div className="w-full max-w-[440px] justify-self-center rounded-2xl bg-surface-1 p-5 ring-1 ring-border/70 sm:p-7 lg:justify-self-end">

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { GalleryHorizontal, LayoutGrid } from "lucide-react";
 import { useTranslate } from "@/hooks/useTranslate";
 import { cn } from "@/lib/utils";
@@ -18,6 +19,9 @@ interface CarouselViewToggleProps {
 export function CarouselViewToggle({ viewMode, onToggle, className }: CarouselViewToggleProps) {
   const { t } = useTranslate();
   const isSpotlight = viewMode === "spotlight";
+  // L'icône ne pivote qu'après un clic, pas à chaque chargement de page.
+  const [toggled, setToggled] = useState(false);
+  const iconClass = cn("h-4 w-4", toggled && "motion-safe:animate-icon-swap");
   const label = isSpotlight
     ? t("navigation.carousel.rail")
     : t("navigation.carousel.oneByOne");
@@ -25,7 +29,10 @@ export function CarouselViewToggle({ viewMode, onToggle, className }: CarouselVi
   return (
     <button
       type="button"
-      onClick={onToggle}
+      onClick={() => {
+        setToggled(true);
+        onToggle();
+      }}
       aria-label={label}
       aria-pressed={isSpotlight}
       title={label}
@@ -35,9 +42,9 @@ export function CarouselViewToggle({ viewMode, onToggle, className }: CarouselVi
       )}
     >
       {isSpotlight ? (
-        <LayoutGrid className="h-4 w-4" />
+        <LayoutGrid key="grid" className={iconClass} />
       ) : (
-        <GalleryHorizontal className="h-4 w-4" />
+        <GalleryHorizontal key="rail" className={iconClass} />
       )}
     </button>
   );

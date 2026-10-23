@@ -1,14 +1,14 @@
 "use client";
 
-import { Fragment, useRef } from "react";
+import { useRef } from "react";
 import Link from "next/link";
-import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, BookOpenCheck, Cable, LibraryBig, Projector, Server } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProjectionBackdrop } from "@/components/ui/projection-backdrop";
 import { GlowLayer, Magnetic, StaggerGroup, StaggerItem, usePointerGlow } from "@/components/motion";
-import { curtainOpen, fadeUp, staggerContainer } from "@/lib/motion";
+import { gsap, prefersReducedMotion, SplitText, useGsapEffect } from "@/lib/gsap";
+import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { useTranslate } from "@/hooks/useTranslate";
 
 const KOMGA_SETUP_HREF = "/settings?tab=connection&new=komga";
@@ -34,24 +34,101 @@ const STEPS: { key: string; icon: LucideIcon }[] = [
  */
 export function HomeWelcome() {
   const { t } = useTranslate();
-  const reduce = useReducedMotion();
+  const reduce = usePrefersReducedMotion();
+  const sceneRef = useRef<HTMLElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
 
-  const stagedContent = reduce
-    ? {}
-    : {
-        variants: staggerContainer(0.07, 0.05),
-        initial: "hidden" as const,
-        animate: "visible" as const,
+  /**
+   * Même ouverture que le hero de lecture : l'affiche se redresse vers le
+   * spectateur, les mots du titre basculent en 3D, le reste remonte en
+   * cascade. États de départ en CSS (`[data-hero-intro]`, `[data-hero-item]`).
+   */
+  useGsapEffect(
+    () => {
+      const scene = sceneRef.current;
+      if (!scene) return;
+      const items = Array.from(scene.querySelectorAll<HTMLElement>("[data-hero-item]"));
+      const settle = () => {
+        scene.removeAttribute("data-hero-intro");
+        items.forEach((item) => item.removeAttribute("data-hero-item"));
+        gsap.set([scene, ...items], { clearProps: "opacity,transform,transformOrigin" });
       };
-  const stagedItem = reduce ? {} : { variants: fadeUp };
+
+      if (reduce || prefersReducedMotion()) {
+        settle();
+        return;
+      }
+
+      const split = titleRef.current
+        ? SplitText.create(titleRef.current, { type: "words" })
+        : null;
+      const timeline = gsap.timeline({
+        defaults: { ease: "projection" },
+        onComplete: () => {
+          split?.revert();
+          settle();
+        },
+      });
+
+      timeline.fromTo(
+        scene,
+        {
+          opacity: 0,
+          y: 80,
+          rotateX: 24,
+          scale: 0.9,
+          transformPerspective: 1400,
+          transformOrigin: "50% 100%",
+        },
+        { opacity: 1, y: 0, rotateX: 0, scale: 1, duration: 0.7, ease: "focus" },
+        0
+      );
+      if (split) {
+        timeline.fromTo(
+          split.words,
+          {
+            opacity: 0,
+            yPercent: 70,
+            z: -160,
+            rotateX: -95,
+            transformPerspective: 600,
+            transformOrigin: "50% 100%",
+          },
+          {
+            opacity: 1,
+            yPercent: 0,
+            z: 0,
+            rotateX: 0,
+            duration: 0.6,
+            ease: "back.out(2)",
+            stagger: 0.05,
+          },
+          0.25
+        );
+      }
+      timeline.fromTo(
+        items,
+        { opacity: 0, y: 30 },
+        { opacity: 1, y: 0, duration: 0.45, stagger: 0.05 },
+        0.35
+      );
+
+      return () => {
+        timeline.kill();
+        split?.revert();
+      };
+    },
+    { dependencies: [reduce] }
+  );
+
+  const stagedItem = reduce ? {} : { "data-hero-item": "" };
 
   return (
     <section data-testid="home-welcome" className="space-y-10 pb-2">
-      <motion.section
+      <section
+        ref={sceneRef}
+        data-hero-intro
         className="relative overflow-hidden rounded-2xl bg-surface-1 px-6 py-12 sm:px-12 sm:py-16"
-        variants={reduce ? undefined : curtainOpen}
-        initial={reduce ? undefined : "hidden"}
-        animate={reduce ? undefined : "visible"}
       >
         {/* L'affiche du site : le logo en fond, même travelling que les
             carrousels (flou, pan/zoom, vignette). Une déclinaison par thème,
@@ -59,30 +136,27 @@ export function HomeWelcome() {
         <ProjectionBackdrop src={LOGO_LIGHT} position="center" className="dark:hidden" />
         <ProjectionBackdrop src={LOGO_DARK} position="center" className="hidden dark:block" />
 
-        <motion.div
-          className="relative mx-auto flex max-w-2xl flex-col items-center gap-5 text-center"
-          {...stagedContent}
-        >
-          <motion.p
+        <div className="relative mx-auto flex max-w-2xl flex-col items-center gap-5 text-center">
+          <p
             {...stagedItem}
             className="inline-flex items-center gap-2 rounded-full bg-surface-2 px-3 py-1 text-xs font-medium text-muted-foreground"
           >
             <Projector aria-hidden className="h-3.5 w-3.5 text-primary" />
             {t("home.welcome.badge")}
-          </motion.p>
+          </p>
 
-          <h1 className="font-display text-4xl font-semibold tracking-tight sm:text-5xl">
-            <MaskedWords text={t("home.welcome.title")} />
+          <h1 ref={titleRef} className="font-display text-4xl font-semibold tracking-tight sm:text-5xl">
+            {t("home.welcome.title")}
           </h1>
 
-          <motion.p
+          <p
             {...stagedItem}
             className="text-base leading-relaxed text-muted-foreground sm:text-lg"
           >
             {t("home.welcome.subtitle")}
-          </motion.p>
+          </p>
 
-          <motion.div
+          <div
             {...stagedItem}
             className="mt-2 flex flex-col items-center gap-3 sm:flex-row"
           >
@@ -100,13 +174,13 @@ export function HomeWelcome() {
                 <ArrowRight aria-hidden className="h-4 w-4" />
               </Link>
             </Button>
-          </motion.div>
+          </div>
 
-          <motion.p {...stagedItem} className="text-xs text-muted-foreground">
+          <p {...stagedItem} className="text-xs text-muted-foreground">
             {t("home.welcome.reassurance")}
-          </motion.p>
-        </motion.div>
-      </motion.section>
+          </p>
+        </div>
+      </section>
 
       <StaggerGroup className="grid gap-4 sm:grid-cols-3" stagger={0.1} effect="settle">
         {STEPS.map(({ key, icon: Icon }, index) => (
@@ -167,33 +241,6 @@ export function HomeWelcome() {
         </StaggerGroup>
       </div>
     </section>
-  );
-}
-
-/**
- * Titre d'affiche : chaque mot sort de son masque, l'un après l'autre.
- * Tout est gated en CSS (`motion-safe`) — sans animation ni script, le texte
- * est simplement là, jamais masqué.
- */
-function MaskedWords({ text }: { text: string }) {
-  const words = text.split(" ");
-
-  return (
-    <>
-      {words.map((word, index) => (
-        <Fragment key={`${word}-${index}`}>
-          <span className="inline-block overflow-hidden align-bottom pb-[0.08em] -mb-[0.08em]">
-            <span
-              className="inline-block motion-safe:animate-mask-rise"
-              style={{ animationDelay: `${120 + index * 90}ms` }}
-            >
-              {word}
-            </span>
-          </span>
-          {index < words.length - 1 ? " " : null}
-        </Fragment>
-      ))}
-    </>
   );
 }
 

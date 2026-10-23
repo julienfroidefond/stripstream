@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { RotateCw } from "lucide-react";
-import { useReducedMotion } from "framer-motion";
+import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { cn } from "@/lib/utils";
 import type { FitMode } from "../hooks/useFitMode";
 import { planTurn, type PageRect, type ReaderSnapshot, type TurnPlan } from "../hooks/pageTurn";
@@ -108,7 +108,7 @@ export function PageDisplay({
    * Tourné de page. On garde la dernière mesure de ce qui est à l'écran ;
    * quand la page change, l'ancienne mesure décrit la feuille à tourner.
    * ------------------------------------------------------------------ */
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = usePrefersReducedMotion();
   const page1Ref = useRef<HTMLImageElement>(null);
   const page2Ref = useRef<HTMLImageElement>(null);
   const snapshotRef = useRef<ReaderSnapshot | null>(null);

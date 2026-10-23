@@ -4,7 +4,9 @@ import { BookGrid } from "./BookGrid";
 import { BookList } from "./BookList";
 import { Pagination } from "@/components/ui/Pagination";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { cn } from "@/lib/utils";
+import { useGridFlip, useGridFlipPlayback } from "@/components/motion";
+import { useState, useEffect, useCallback, useMemo, useRef, useTransition } from "react";
 import type { NormalizedBook, NormalizedMissingBook } from "@/lib/providers/types";
 import { useTranslate } from "@/hooks/useTranslate";
 import { useDisplayPreferences } from "@/hooks/useDisplayPreferences";
@@ -60,16 +62,21 @@ export function PaginatedBookGrid({
   const [hideMissing, setHideMissing] = useState(preferences.hideMissingBooks);
   const effectivePageSize = normalizeGridPageSize(pageSize || preferenceItemsPerPage, isCompact);
 
-  const toggleHideMissing = useCallback(() => {
-    setHideMissing((prev) => {
-      const next = !prev;
-      updatePreferences({ hideMissingBooks: next }).catch((_err: unknown) => undefined);
-      return next;
-    });
-  }, [updatePreferences]);
+  // Compact, filtres, tomes manquants : les cartes glissent vers leur place.
+  const gridRef = useRef<HTMLDivElement>(null);
+  const gridFlip = useGridFlip(gridRef);
+  const captureLayout = gridFlip.capture;
+
+
+  // La grille reste en place, atténuée, le temps que la nouvelle page arrive.
+  const [isNavigating, startNavigation] = useTransition();
 
   const updateUrlParams = useCallback(
-    async (updates: Record<string, string | null>, replace: boolean = false) => {
+    async (
+      updates: Record<string, string | null>,
+      replace: boolean = false,
+      { dim = true }: { dim?: boolean } = {}
+    ) => {
       const params = new URLSearchParams(searchParams.toString());
 
       Object.entries(updates).forEach(([key, value]) => {
@@ -83,7 +90,11 @@ export function PaginatedBookGrid({
       if (replace) {
         await router.replace(`${pathname}?${params.toString()}`, { scroll: false });
       } else {
-        await router.push(`${pathname}?${params.toString()}`, { scroll: false });
+        const navigate = () => router.push(`${pathname}?${params.toString()}`, { scroll: false });
+        // La grille ne s'atténue que si son contenu va être remplacé ; un
+        // changement de mise en page (compact, taille) glisse directement.
+        if (dim) startNavigation(navigate);
+        else navigate();
       }
     },
     [router, pathname, searchParams]
@@ -104,6 +115,7 @@ export function PaginatedBookGrid({
   );
 
   const handleUnreadFilter = useCallback(async () => {
+    captureLayout();
     const newUnreadState = !showOnlyUnread;
     setShowOnlyUnread(newUnreadState);
     await updateUrlParams({
@@ -117,19 +129,21 @@ export function PaginatedBookGrid({
       // Log l'erreur mais ne bloque pas l'utilisateur
       console.error("Erreur lors de la sauvegarde de la préférence:", error);
     }
-  }, [showOnlyUnread, updateUrlParams, updatePreferences]);
+  }, [captureLayout, showOnlyUnread, updateUrlParams, updatePreferences]);
 
   const handlePageSizeChange = useCallback(
     async (size: number) => {
+      captureLayout();
       const nextSize = normalizeGridPageSize(size, isCompact);
       await persistPageSizeChange(nextSize);
-      await updateUrlParams({ page: "1", size: nextSize.toString() });
+      await updateUrlParams({ page: "1", size: nextSize.toString() }, false, { dim: false });
     },
-    [isCompact, persistPageSizeChange, updateUrlParams]
+    [captureLayout, isCompact, persistPageSizeChange, updateUrlParams]
   );
 
   const handleCompactModeToggle = useCallback(
     async (nextCompactMode: boolean) => {
+      captureLayout();
       setIsCompact(nextCompactMode);
 
       const nextSize = normalizeGridPageSize(effectivePageSize, nextCompactMode);
@@ -143,10 +157,10 @@ export function PaginatedBookGrid({
       });
 
       if (nextSize !== effectivePageSize) {
-        await updateUrlParams({ page: "1", size: nextSize.toString() });
+        await updateUrlParams({ page: "1", size: nextSize.toString() }, false, { dim: false });
       }
     },
-    [effectivePageSize, preferences.displayMode, viewMode, updateUrlParams, updatePreferences]
+    [captureLayout, effectivePageSize, preferences.displayMode, viewMode, updateUrlParams, updatePreferences]
   );
 
   const handleViewModeToggle = useCallback(
@@ -194,6 +208,21 @@ export function PaginatedBookGrid({
     return merged;
   }, [regularBooks, missingBooks, hideMissing]);
 
+  /** Identifie le contenu affiché : sa variation déclenche le glissement. */
+  const gridKey = displayBooks.map((book) => book.id).join(",");
+
+  useGridFlipPlayback(gridFlip, `${isCompact ? "compact" : "full"}:${gridKey}`);
+
+  const toggleHideMissing = useCallback(() => {
+    captureLayout();
+    const next = !hideMissing;
+    setHideMissing(next);
+    // Hors de l'updater de `setHideMissing` : React l'exécute pendant le rendu,
+    // et la server action met à jour le routeur (« Cannot update a component
+    // while rendering a different component »).
+    updatePreferences({ hideMissingBooks: next }).catch((_err: unknown) => undefined);
+  }, [captureLayout, hideMissing, updatePreferences]);
+
   // Calculate start and end indices for display
   const startIndex = (currentPage - 1) * effectivePageSize + 1;
   const endIndex = Math.min(currentPage * effectivePageSize, totalElements);
@@ -227,21 +256,33 @@ export function PaginatedBookGrid({
         </div>
       </div>
 
-      {viewMode === "grid" ? (
-        <BookGrid
-          books={displayBooks}
-          onBookClick={handleBookClick}
-          isCompact={isCompact}
-          onRefresh={onRefresh}
-        />
-      ) : (
-        <BookList
-          books={displayBooks}
-          onBookClick={handleBookClick}
-          isCompact={isCompact}
-          onRefresh={onRefresh}
-        />
-      )}
+      {/* Pendant la navigation, la grille s'atténue et recule un peu ; elle est
+          remontée à chaque nouveau contenu, et toutes ses cartes rejouent leur
+          entrée. */}
+      <div
+        ref={gridRef}
+        aria-busy={isNavigating}
+        className={cn(
+          "transition-[opacity,scale] duration-300 ease-projection motion-reduce:transition-none",
+          isNavigating && "pointer-events-none scale-[0.985] opacity-45"
+        )}
+      >
+        {viewMode === "grid" ? (
+          <BookGrid
+            books={displayBooks}
+            onBookClick={handleBookClick}
+            isCompact={isCompact}
+            onRefresh={onRefresh}
+          />
+        ) : (
+          <BookList
+            books={displayBooks}
+            onBookClick={handleBookClick}
+            isCompact={isCompact}
+            onRefresh={onRefresh}
+          />
+        )}
+      </div>
 
       {specialBooks.length > 0 && (
         <div className="space-y-4">

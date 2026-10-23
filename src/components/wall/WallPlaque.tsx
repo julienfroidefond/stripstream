@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { motion, type Variants } from "framer-motion";
+import { useRef } from "react";
 import { ArrowUpRight, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { EASE_PROJECTION } from "@/lib/motion";
+import { usePresence } from "@/components/motion";
+import { SplitText } from "@/lib/gsap";
 import { useTranslate } from "@/hooks/useTranslate";
 import { isWallItemComplete } from "@/lib/wall-filter";
 import type { WallItem } from "@/types/wall";
@@ -26,39 +27,92 @@ export type WallPlaquePlacement =
 interface WallPlaqueProps {
   item: WallItem;
   placement: WallPlaquePlacement;
-  reduce: boolean;
+  /** Faux : la plaque joue sa sortie puis se retire. */
+  open: boolean;
   onClose: () => void;
 }
-
-const lineVariants: Variants = {
-  hidden: { opacity: 0, y: 16, filter: "blur(6px)" },
-  visible: {
-    opacity: 1,
-    y: 0,
-    filter: "blur(0px)",
-    transitionEnd: { filter: "none" },
-    transition: { duration: 0.48, ease: EASE_PROJECTION },
-  },
-};
-
-const bodyVariants: Variants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.055, delayChildren: 0.08 } },
-};
 
 /**
  * Plaque d'œuvre : la fiche se pose à côté de la couverture, comme une
  * étiquette de musée. Sur mobile, elle devient une feuille ancrée en bas,
  * seule surface interactive du mur.
+ *
+ * Entrée en relief, comme le reste du site : la plaque pivote depuis la
+ * couverture, charnière côté œuvre, comme un volet qu'on ouvre ; la feuille
+ * mobile monte du bas avec un léger rebond. Puis les mots du titre basculent
+ * en 3D, les lignes remontent et la jauge de lecture se remplit.
  */
-export function WallPlaque({
-  item,
-  placement,
-  reduce,
-  onClose,
-}: WallPlaqueProps) {
+export function WallPlaque({ item, placement, open, onClose }: WallPlaqueProps) {
   const { t } = useTranslate();
   const isSheet = placement.mode === "sheet";
+  const panelRef = useRef<HTMLElement | null>(null);
+  const hingeLeft = !isSheet && placement.anchor.side !== "left";
+
+  const rendered = usePresence(open, panelRef, {
+    enter: (timeline, panel, still) => {
+      if (still) {
+        timeline.fromTo(panel, { opacity: 0 }, { opacity: 1, duration: 0.15 });
+        return;
+      }
+      timeline.fromTo(
+        panel,
+        isSheet
+          ? { opacity: 0, yPercent: 100 }
+          : {
+              opacity: 0,
+              rotateY: hingeLeft ? -78 : 78,
+              transformPerspective: 900,
+              transformOrigin: hingeLeft ? "0% 50%" : "100% 50%",
+            },
+        {
+          opacity: 1,
+          yPercent: 0,
+          rotateY: 0,
+          duration: isSheet ? 0.5 : 0.55,
+          ease: isSheet ? "back.out(1.2)" : "back.out(1.4)",
+        },
+        0
+      );
+
+      const title = panel.querySelector<HTMLElement>("[data-plaque-title]");
+      const split = title ? SplitText.create(title, { type: "words" }) : null;
+      if (split) {
+        timeline.fromTo(
+          split.words,
+          { opacity: 0, yPercent: 70, rotateX: -95, transformPerspective: 600, transformOrigin: "50% 100%" },
+          { opacity: 1, yPercent: 0, rotateX: 0, duration: 0.5, ease: "back.out(2)", stagger: 0.04 },
+          0.12
+        );
+        timeline.eventCallback("onComplete", () => split.revert());
+      }
+      timeline.fromTo(
+        panel.querySelectorAll("[data-plaque-line]"),
+        { opacity: 0, y: 16 },
+        { opacity: 1, y: 0, duration: 0.4, stagger: 0.05 },
+        0.16
+      );
+      const fill = panel.querySelector<HTMLElement>("[data-plaque-fill]");
+      if (fill) {
+        timeline.fromTo(
+          fill,
+          { scaleX: 0, transformOrigin: "0% 50%" },
+          { scaleX: 1, duration: 0.6 },
+          0.35
+        );
+      }
+    },
+    exit: (timeline, panel, still) => {
+      timeline.to(
+        panel,
+        still
+          ? { opacity: 0, duration: 0.15 }
+          : isSheet
+            ? { opacity: 0, yPercent: 60, duration: 0.28, ease: "power2.in" }
+            : { opacity: 0, rotateY: hingeLeft ? -50 : 50, duration: 0.24, ease: "power2.in" }
+      );
+    },
+  });
+
   const progress =
     item.bookCount > 0 ? Math.min(1, Math.max(0, item.booksReadCount / item.bookCount)) : 0;
   const complete = isWallItemComplete(item);
@@ -69,38 +123,38 @@ export function WallPlaque({
       : t("wall.volume", { count: item.bookCount });
 
   const content = (
-    <motion.div variants={bodyVariants} initial={reduce ? false : "hidden"} animate="visible">
-      <motion.p variants={lineVariants} className="wall-plaque-kicker">
+    <div>
+      <p data-plaque-line className="wall-plaque-kicker">
         <span className="wall-plaque-dot" aria-hidden />
         {item.libraryName}
         {item.startYear ? ` · ${item.startYear}` : ""}
-      </motion.p>
+      </p>
 
-      <motion.h2 variants={lineVariants} className="wall-plaque-title">
+      <h2 data-plaque-title className="wall-plaque-title">
         {item.name}
-      </motion.h2>
+      </h2>
 
       {item.authors.length > 0 && (
-        <motion.p variants={lineVariants} className="wall-plaque-authors">
+        <p data-plaque-line className="wall-plaque-authors">
           {item.authors.join(" · ")}
-        </motion.p>
+        </p>
       )}
 
-      <motion.p variants={lineVariants} className="wall-plaque-summary">
+      <p data-plaque-line className="wall-plaque-summary">
         {item.summary ?? t("wall.noSummary")}
-      </motion.p>
+      </p>
 
       {item.genres.length > 0 && (
-        <motion.div variants={lineVariants} className="wall-plaque-genres">
+        <div data-plaque-line className="wall-plaque-genres">
           {item.genres.map((genre) => (
             <span key={genre} className="wall-plaque-genre">
               {genre}
             </span>
           ))}
-        </motion.div>
+        </div>
       )}
 
-      <motion.div variants={lineVariants} className="wall-plaque-footer">
+      <div data-plaque-line className="wall-plaque-footer">
         <div className="min-w-0">
           <p className="wall-plaque-progress-label">
             {complete
@@ -111,6 +165,7 @@ export function WallPlaque({
           </p>
           <div className="wall-plaque-progress-track" aria-hidden>
             <div
+              data-plaque-fill
               className="wall-plaque-progress-fill"
               style={{ width: `${Math.round(progress * 100)}%` }}
             />
@@ -134,14 +189,16 @@ export function WallPlaque({
             <ArrowUpRight className="h-3.5 w-3.5" />
           </Link>
         )}
-      </motion.div>
+      </div>
 
       <p className="wall-plaque-meta">{volumeLabel}</p>
-    </motion.div>
+    </div>
   );
 
+  if (!rendered) return null;
+
   return (
-    <motion.div
+    <div
       data-wall-ui
       className={cn("wall-plaque-shell", isSheet ? "wall-sheet-shell" : "wall-anchor-shell")}
       style={
@@ -155,14 +212,13 @@ export function WallPlaque({
       }
     >
       {isSheet ? (
-        <motion.div
+        <div
+          ref={(node) => {
+            panelRef.current = node;
+          }}
           className="wall-sheet"
           role="dialog"
           aria-label={item.name}
-          initial={reduce ? { opacity: 0 } : { opacity: 0, y: 40, filter: "blur(10px)" }}
-          animate={reduce ? { opacity: 1 } : { opacity: 1, y: 0, filter: "blur(0px)" }}
-          exit={reduce ? { opacity: 0 } : { opacity: 0, y: 24, filter: "blur(6px)" }}
-          transition={{ duration: reduce ? 0 : 0.5, ease: EASE_PROJECTION }}
           style={placement.maxHeight ? { maxHeight: placement.maxHeight } : undefined}
           onPointerDown={(event) => event.stopPropagation()}
         >
@@ -177,36 +233,15 @@ export function WallPlaque({
             <X className="h-4 w-4" />
           </button>
           <div className="wall-sheet-body">{content}</div>
-        </motion.div>
+        </div>
       ) : (
-        <motion.article
+        <article
+          ref={(node) => {
+            panelRef.current = node;
+          }}
           className={cn("wall-plaque", placement.anchor.side === "left" && "wall-plaque-left")}
           role="dialog"
           aria-label={item.name}
-          initial={
-            reduce
-              ? { opacity: 0 }
-              : {
-                  opacity: 0,
-                  x: placement.anchor.side === "right" ? -18 : 18,
-                  scale: 0.975,
-                  filter: "blur(10px)",
-                }
-          }
-          animate={
-            reduce ? { opacity: 1 } : { opacity: 1, x: 0, scale: 1, filter: "blur(0px)" }
-          }
-          exit={
-            reduce
-              ? { opacity: 0 }
-              : {
-                  opacity: 0,
-                  x: placement.anchor.side === "right" ? -10 : 10,
-                  scale: 0.985,
-                  filter: "blur(6px)",
-                }
-          }
-          transition={{ duration: reduce ? 0 : 0.42, ease: EASE_PROJECTION }}
           onPointerDown={(event) => event.stopPropagation()}
         >
           <button
@@ -220,8 +255,8 @@ export function WallPlaque({
           </button>
           <span className="wall-plaque-rule" aria-hidden />
           {content}
-        </motion.article>
+        </article>
       )}
-    </motion.div>
+    </div>
   );
 }

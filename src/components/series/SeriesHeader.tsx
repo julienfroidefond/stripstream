@@ -31,10 +31,10 @@ import { updateSeriesReadStatus } from "@/app/actions/read-progress";
 import { useAnonymous } from "@/contexts/AnonymousContext";
 import { SeriesRatingControl } from "./SeriesRatingControl";
 import type { NormalizedProviderRating } from "@/lib/providers/types";
-import { motion, useReducedMotion } from "framer-motion";
 import { ProjectionBackdrop } from "@/components/ui/projection-backdrop";
-import { fadeUp, liftIn, screenUnroll, staggerContainer } from "@/lib/motion";
-import { SplitWords, useSceneExit } from "@/components/motion";
+import { useBannerScene } from "@/components/motion";
+import { burst, nudge, pop } from "@/lib/celebrate";
+import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
 interface SeriesHeaderProps {
   series: NormalizedSeries;
@@ -61,20 +61,33 @@ export const SeriesHeader = ({
   const [bulkAction, setBulkAction] = useState<null | "read" | "unread">(null);
   const [isConfirmUnreadOpen, setIsConfirmUnreadOpen] = useState(false);
   const { t } = useTranslate();
-  const reduce = useReducedMotion();
+  const reduce = usePrefersReducedMotion();
   const headerRef = useRef<HTMLDivElement>(null);
-  const scene = useSceneExit(headerRef);
-  const staged = reduce
-    ? {}
-    : { variants: staggerContainer(0.08, 0.05), initial: "hidden" as const, animate: "visible" as const };
+  useBannerScene(headerRef);
+  /** Marqueurs d'entrée en scène de `useBannerScene` (états de départ en CSS). */
+  const fly = reduce ? {} : { "data-hero-fly": "" };
+  const item = reduce ? {} : { "data-hero-item": "" };
 
-  const handleToggleFavorite = async () => {
+  const handleToggleFavorite = async (event: React.MouseEvent<HTMLButtonElement>) => {
+    // Capturé tout de suite : `currentTarget` n'existe plus après l'`await`.
+    const button = event.currentTarget;
     try {
       const action = isFavorite ? removeFromFavorites : addToFavorites;
       const result = await action(series.id);
 
       if (result.success) {
         setIsFavorite(!isFavorite);
+        // L'icône change de composant au rendu suivant : on l'anime après.
+        const adding = !isFavorite;
+        requestAnimationFrame(() => {
+          const icon = button.querySelector("svg");
+          if (adding) {
+            pop(icon, 1.5);
+            burst(button, { color: "rgb(250 204 21)", count: 12 });
+          } else {
+            nudge(icon);
+          }
+        });
         // Dispatcher l'événement avec le seriesId pour mise à jour optimiste de la sidebar
         const event = new CustomEvent("favoritesChanged", {
           detail: {
@@ -192,29 +205,20 @@ export const SeriesHeader = ({
   return (
     <div ref={headerRef} className="relative w-screen -ml-[calc((100vw-100%)/2)] overflow-hidden">
       {/* Image de fond : l'écran se déroule, puis glisse moins vite que la page. */}
-      <motion.div
-        className="absolute inset-0"
-        style={{ y: scene.backdropY, scale: scene.backdropScale }}
-      >
-        <motion.div
-          className="absolute inset-0"
-          variants={reduce ? undefined : screenUnroll}
-          initial={reduce ? undefined : "hidden"}
-          animate={reduce ? undefined : "visible"}
-        >
+      <div className="absolute inset-0" data-banner-backdrop>
+        <div className="absolute inset-0" {...(reduce ? {} : { "data-banner-unroll": "" })}>
           <ProjectionBackdrop src={series.thumbnailUrl} />
-        </motion.div>
-      </motion.div>
+        </div>
+      </div>
       {/* Contenu */}
       <div className="relative container mx-auto flex min-h-[260px] items-end px-4 pb-8 pt-12 md:min-h-[340px] md:pb-10 md:pt-16">
-        <motion.div
+        <div
           className="flex w-full flex-col items-center gap-6 md:flex-row md:items-end md:gap-8"
-          style={{ y: scene.contentY, opacity: scene.contentOpacity, filter: scene.contentBlur }}
-          {...staged}
+          data-banner-content
         >
           {/* Image principale */}
-          <motion.div
-            variants={reduce ? undefined : liftIn}
+          <div
+            {...fly}
             className="relative aspect-2/3 w-[132px] shrink-0 overflow-hidden rounded-xl bg-surface-2 ring-1 ring-border md:w-[168px]"
           >
             <SeriesCover
@@ -222,15 +226,15 @@ export const SeriesHeader = ({
               alt={t("series.header.coverAlt", { title: series.name })}
               showProgressUi={false}
             />
-          </motion.div>
+          </div>
 
           {/* Informations */}
-          <motion.div
-            variants={reduce ? undefined : fadeUp}
+          <div
+            {...item}
             className="min-w-0 flex-1 space-y-3 text-center text-foreground md:pb-1 md:text-left"
           >
             <h1 className="font-display text-3xl font-semibold leading-[1.05] tracking-tight sm:text-4xl md:text-5xl">
-              <SplitWords text={series.name} />
+              <span data-banner-title>{series.name}</span>
             </h1>
             {(authorsText || series.startYear != null) && (
               <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm text-muted-foreground md:justify-start">
@@ -366,8 +370,8 @@ export const SeriesHeader = ({
                 refreshLibrary={refreshSeries}
               />
             </div>
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
       </div>
 
     </div>

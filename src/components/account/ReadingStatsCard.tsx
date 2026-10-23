@@ -3,6 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { NormalizedReadingStats } from "@/lib/providers/types";
+import { CountUp, StaggerGroup, StaggerItem } from "@/components/motion";
 
 const COLORS = {
   read: "hsl(var(--chart-1))",
@@ -65,12 +66,12 @@ function ReadingStatsContent({ stats }: { stats: NormalizedReadingStats }) {
 
   return (
     <div className="space-y-8">
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <StaggerGroup className="grid grid-cols-2 gap-4 sm:grid-cols-4" effect="settle" stagger={0.06}>
         <StatTile label="Séries" value={stats.totalSeries} />
         <StatTile label="Livres" value={stats.totalBooks} />
         <StatTile label="Lus" value={stats.booksRead} />
-        <StatTile label="Progression" value={`${overallProgress}%`} />
-      </div>
+        <StatTile label="Progression" value={overallProgress} suffix="%" />
+      </StaggerGroup>
 
       <div>
         <h3 className="mb-2 text-sm font-medium">Répartition des livres</h3>
@@ -133,12 +134,15 @@ function LegendItem({ color, label, value }: { color: string; label: string; val
   );
 }
 
-function StatTile({ label, value }: { label: string; value: number | string }) {
+/** Tuile de chiffre : elle se pose dans la cascade et sa valeur se compte. */
+function StatTile({ label, value, suffix = "" }: { label: string; value: number; suffix?: string }) {
   return (
-    <div className="rounded-lg border border-border bg-secondary/50 p-3">
-      <p className="text-2xl font-semibold">{value}</p>
+    <StaggerItem className="rounded-lg border border-border bg-secondary/50 p-3">
+      <p className="text-2xl font-semibold tabular-nums">
+        <CountUp value={value} suffix={suffix} />
+      </p>
       <p className="text-xs text-muted-foreground">{label}</p>
-    </div>
+    </StaggerItem>
   );
 }
 

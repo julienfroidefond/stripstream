@@ -1,10 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { motion, useReducedMotion } from "framer-motion";
 import { type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { EASE_PROJECTION } from "@/lib/motion";
+import { gsap, prefersReducedMotion, useGsapEffect } from "@/lib/gsap";
+import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
 export interface NavButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   icon: LucideIcon;
@@ -13,18 +13,81 @@ export interface NavButtonProps extends React.ButtonHTMLAttributes<HTMLButtonEle
   count?: number;
   /**
    * Identifiant partagé par les entrées d'une même liste : le fond actif
-   * glisse d'une entrée à l'autre au lieu de sauter (layoutId framer-motion).
+   * glisse d'une entrée à l'autre au lieu de sauter.
    */
   activeLayoutId?: string;
 }
 
+/**
+ * Dernier bouton actif de chaque liste. Quand une autre entrée devient
+ * active, son fond part de la position de celle-ci (FLIP) puis se pose.
+ */
+const lastActive = new Map<string, HTMLButtonElement>();
+
 const NavButton = React.forwardRef<HTMLButtonElement, NavButtonProps>(
   ({ icon: Icon, label, active, count, activeLayoutId, className, ...props }, ref) => {
-    const reduce = useReducedMotion();
+    const reduce = usePrefersReducedMotion();
+    const buttonRef = React.useRef<HTMLButtonElement | null>(null);
+    const backgroundRef = React.useRef<HTMLSpanElement>(null);
+    const markerRef = React.useRef<HTMLSpanElement>(null);
+
+    const setRefs = React.useCallback(
+      (node: HTMLButtonElement | null) => {
+        buttonRef.current = node;
+        if (typeof ref === "function") ref(node);
+        else if (ref) ref.current = node;
+      },
+      [ref]
+    );
+
+    useGsapEffect(
+      () => {
+        const button = buttonRef.current;
+        if (!active || !button) return;
+        const still = reduce || prefersReducedMotion();
+        const timeline = gsap.timeline({ defaults: { ease: "projection" } });
+
+        const background = backgroundRef.current;
+        if (activeLayoutId && background) {
+          const previous = lastActive.get(activeLayoutId);
+          lastActive.set(activeLayoutId, button);
+          if (!still && previous && previous !== button && previous.isConnected) {
+            const from = previous.getBoundingClientRect();
+            const to = button.getBoundingClientRect();
+            if (to.width > 0 && to.height > 0) {
+              timeline.fromTo(
+                background,
+                {
+                  x: from.left - to.left,
+                  y: from.top - to.top,
+                  scaleX: from.width / to.width,
+                  scaleY: from.height / to.height,
+                  transformOrigin: "0% 0%",
+                },
+                { x: 0, y: 0, scaleX: 1, scaleY: 1, duration: 0.28 },
+                0
+              );
+            }
+          }
+        }
+
+        if (!still && markerRef.current) {
+          timeline.fromTo(
+            markerRef.current,
+            { scaleY: 0, opacity: 0 },
+            { scaleY: 1, opacity: 1, duration: 0.4, ease: "back.out(2.4)" },
+            0.08
+          );
+        }
+
+        return () => timeline.kill();
+      },
+      { dependencies: [active, activeLayoutId, reduce] }
+    );
 
     return (
       <button
-        ref={ref}
+        ref={setRefs}
         className={cn(
           "group relative w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-200 ease-out focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
           active ? "text-accent-foreground" : "hover:bg-accent hover:text-accent-foreground",
@@ -32,24 +95,18 @@ const NavButton = React.forwardRef<HTMLButtonElement, NavButtonProps>(
         )}
         {...props}
       >
-        {active &&
-          (activeLayoutId ? (
-            <motion.span
-              aria-hidden
-              layoutId={activeLayoutId}
-              className="absolute inset-0 rounded-lg bg-accent"
-              transition={reduce ? { duration: 0 } : { duration: 0.28, ease: EASE_PROJECTION }}
-            />
-          ) : (
-            <span aria-hidden className="absolute inset-0 rounded-lg bg-accent" />
-          ))}
         {active && (
-          <motion.span
+          <span
+            ref={backgroundRef}
+            aria-hidden
+            className="absolute inset-0 rounded-lg bg-accent"
+          />
+        )}
+        {active && (
+          <span
+            ref={markerRef}
             aria-hidden
             className="absolute left-0 top-[calc(50%-10px)] h-5 w-1 rounded-r-full bg-primary"
-            initial={reduce ? false : { scaleY: 0, opacity: 0 }}
-            animate={{ scaleY: 1, opacity: 1 }}
-            transition={{ duration: 0.4, ease: EASE_PROJECTION }}
           />
         )}
         <div className="relative flex items-center">

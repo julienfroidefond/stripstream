@@ -1,11 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { motion, useReducedMotion, type Variants } from "framer-motion";
 import { type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { drawLine } from "@/lib/motion";
-import { SplitWords, VIEWPORT_MARGIN } from "@/components/motion";
+import { VIEWPORT_MARGIN } from "@/components/motion";
+import { gsap, prefersReducedMotion, SplitText, useGsapEffect } from "@/lib/gsap";
+import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
 export interface SectionProps extends React.HTMLAttributes<HTMLElement> {
   title?: string;
@@ -17,21 +17,109 @@ export interface SectionProps extends React.HTMLAttributes<HTMLElement> {
   iconClassName?: string;
 }
 
-const headerVariants: Variants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.08 } },
-};
+/**
+ * En-tête de rangée, même relief que le hero : l'icône tombe en place et
+ * rebondit, les mots du titre basculent en 3D, puis le trait d'accent se
+ * trace. Les états de départ sont en CSS (`[data-section-header]`) ; la
+ * cascade joue une fois, quand l'en-tête entre dans la fenêtre.
+ */
+function useSectionHeaderReveal(
+  ref: React.RefObject<HTMLDivElement | null>,
+  title: string | undefined
+) {
+  const reduce = usePrefersReducedMotion();
+  const [revealed, setRevealed] = React.useState(false);
 
-/** L'icône tombe en place et rebondit : le titre qui suit s'appuie sur elle. */
-const iconVariants: Variants = {
-  hidden: { opacity: 0, scale: 0.3, rotate: -60 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    rotate: 0,
-    transition: { type: "spring", stiffness: 380, damping: 16, mass: 0.8 },
-  },
-};
+  React.useEffect(() => {
+    const element = ref.current;
+    if (!element || reduce) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        setRevealed(true);
+        observer.disconnect();
+      },
+      { rootMargin: VIEWPORT_MARGIN, threshold: 0.6 }
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [ref, reduce]);
+
+  useGsapEffect(
+    () => {
+      const header = ref.current;
+      if (!header || !header.hasAttribute("data-section-header")) return;
+      const icon = header.querySelector<HTMLElement>("[data-section-icon]");
+      const heading = header.querySelector<HTMLElement>("[data-section-title]");
+      const line = header.querySelector<HTMLElement>("[data-section-line]");
+      const parts = [icon, heading, line].filter((part): part is HTMLElement => Boolean(part));
+      const settle = () => {
+        header.removeAttribute("data-section-header");
+        gsap.set(parts, { clearProps: "opacity,transform" });
+      };
+
+      if (reduce || prefersReducedMotion()) {
+        settle();
+        return;
+      }
+      if (!revealed) return;
+
+      const split = heading ? SplitText.create(heading, { type: "words" }) : null;
+      const timeline = gsap.timeline({
+        onComplete: () => {
+          split?.revert();
+          settle();
+        },
+      });
+
+      if (icon) {
+        timeline.fromTo(
+          icon,
+          { opacity: 0, scale: 0.3, rotate: -60 },
+          { opacity: 1, scale: 1, rotate: 0, duration: 0.5, ease: "back.out(2.6)" },
+          0
+        );
+      }
+      if (heading && split) {
+        timeline.set(heading, { opacity: 1 }, 0.06).fromTo(
+          split.words,
+          {
+            opacity: 0,
+            yPercent: 60,
+            rotateX: -90,
+            transformPerspective: 500,
+            transformOrigin: "50% 100%",
+          },
+          {
+            opacity: 1,
+            yPercent: 0,
+            rotateX: 0,
+            duration: 0.5,
+            ease: "back.out(2)",
+            stagger: 0.05,
+          },
+          0.06
+        );
+      }
+      if (line) {
+        timeline.fromTo(
+          line,
+          { scaleX: 0 },
+          { scaleX: 1, duration: 0.45, ease: "projection" },
+          0.3
+        );
+      }
+
+      return () => {
+        timeline.kill();
+        split?.revert();
+      };
+    },
+    { dependencies: [reduce, revealed, title] }
+  );
+
+  return !reduce;
+}
 
 const Section = React.forwardRef<HTMLElement, SectionProps>(
   (
@@ -49,46 +137,41 @@ const Section = React.forwardRef<HTMLElement, SectionProps>(
     },
     ref
   ) => {
-    const reduce = useReducedMotion();
-    const motionProps = reduce
-      ? {}
-      : {
-          variants: headerVariants,
-          initial: "hidden" as const,
-          whileInView: "visible" as const,
-          viewport: { once: true, amount: 0.6, margin: VIEWPORT_MARGIN },
-        };
+    const headerRef = React.useRef<HTMLDivElement>(null);
+    const staged = useSectionHeaderReveal(headerRef, title);
 
     return (
       <section ref={ref} className={cn("space-y-4", className)} {...props}>
         {(title || actions) && (
-          <motion.div
+          <div
+            ref={headerRef}
             className={cn("flex items-center justify-between", headerClassName)}
-            {...motionProps}
+            {...(staged ? { "data-section-header": "" } : {})}
           >
             {title && (
               <div className="flex items-center gap-2.5">
                 {Icon && (
-                  <motion.span variants={reduce ? undefined : iconVariants} className="inline-flex">
+                  <span data-section-icon className="inline-flex">
                     <Icon
                       aria-hidden
                       className={cn("h-5 w-5 text-muted-foreground", iconClassName)}
                     />
-                  </motion.span>
+                  </span>
                 )}
                 <div>
                   <h2
+                    data-section-title
                     className={cn(
                       "font-display text-2xl font-semibold tracking-tight",
                       titleClassName
                     )}
                   >
-                    <SplitWords text={title} />
+                    {title}
                   </h2>
                   {/* Trait d'accent : il se trace une fois le titre posé. */}
-                  <motion.span
+                  <span
                     aria-hidden
-                    variants={reduce ? undefined : drawLine}
+                    data-section-line
                     className="mt-1.5 block h-[3px] w-10 origin-left rounded-full bg-primary"
                   />
                   {description && (
@@ -98,7 +181,7 @@ const Section = React.forwardRef<HTMLElement, SectionProps>(
               </div>
             )}
             {actions && <div className="flex items-center gap-2">{actions}</div>}
-          </motion.div>
+          </div>
         )}
         {children}
       </section>

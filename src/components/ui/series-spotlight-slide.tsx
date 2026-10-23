@@ -1,6 +1,5 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
 import {
   ArrowRight,
   BookOpen,
@@ -18,11 +17,10 @@ import { SeriesCover } from "@/components/ui/series-cover";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { SeriesMatchReasonPills } from "@/components/ui/series-match-reasons";
-import { useSpotlightReveal } from "@/components/ui/spotlight-carousel";
-import { CountUp, Magnetic, SplitWords } from "@/components/motion";
+import { useSpotlightStaging } from "@/components/ui/spotlight-carousel";
+import { CountUp, Magnetic, ProgressFill } from "@/components/motion";
 import { useAnonymous } from "@/contexts/AnonymousContext";
 import { useTranslate } from "@/hooks/useTranslate";
-import { EASE_OUT, EASE_PROJECTION, fadeUp, staggerContainer } from "@/lib/motion";
 import type { NormalizedSeries } from "@/lib/providers/types";
 
 const SERIES_STATUS: Record<
@@ -61,17 +59,8 @@ export function SeriesSpotlightSlide({
 }: SeriesSpotlightSlideProps) {
   const { t } = useTranslate();
   const { isAnonymous } = useAnonymous();
-  const reduce = useReducedMotion();
-  const revealed = useSpotlightReveal();
 
-  const stagedContent = reduce
-    ? {}
-    : {
-        variants: staggerContainer(0.07, 0.08),
-        initial: "hidden" as const,
-        animate: revealed ? ("visible" as const) : ("hidden" as const),
-      };
-  const stagedItem = reduce ? {} : { variants: fadeUp };
+  const staging = useSpotlightStaging();
 
   const authorsText = series.authors?.length
     ? series.authors.map((author) => author.name).join(", ")
@@ -89,32 +78,30 @@ export function SeriesSpotlightSlide({
     : 0;
 
   return (
-    <motion.div
-      className="flex flex-col gap-6 sm:flex-row sm:items-center sm:gap-9"
-      {...stagedContent}
-    >
+    <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:gap-9">
       {/* Couverture à gauche, comme « Reprendre la lecture ». */}
-      <motion.button
-        type="button"
-        variants={reduce ? undefined : fadeUp}
-        onClick={onOpen}
-        whileHover={reduce ? undefined : { y: -10, rotateZ: -2, scale: 1.04 }}
-        transition={{ duration: 0.35, ease: EASE_OUT }}
-        className="group/cover relative mx-auto block aspect-2/3 w-[168px] shrink-0 overflow-hidden rounded-xl sm:mx-0 sm:w-[196px]"
-        aria-label={ctaLabel}
-      >
-        <SeriesCover
-          series={series}
-          alt={series.name}
-          isAnonymous={isAnonymous}
-          showProgressUi={false}
-        />
-      </motion.button>
+      {/* L'enveloppe fixe capte le survol, le bouton seul se soulève. */}
+      <div className="group/cover mx-auto shrink-0 sm:mx-0">
+        <button
+          type="button"
+          onClick={onOpen}
+          {...staging.cover}
+          className="relative block aspect-2/3 w-[168px] overflow-hidden rounded-xl sm:w-[196px] transition-transform duration-350 ease-out group-hover/cover:-translate-y-2.5 group-hover/cover:-rotate-2 group-hover/cover:scale-104 motion-reduce:transition-none motion-reduce:group-hover/cover:translate-none motion-reduce:group-hover/cover:rotate-none motion-reduce:group-hover/cover:scale-none"
+          aria-label={ctaLabel}
+        >
+          <SeriesCover
+            series={series}
+            alt={series.name}
+            isAnonymous={isAnonymous}
+            showProgressUi={false}
+          />
+        </button>
+      </div>
 
       <div className="flex flex-1 flex-col justify-center gap-4 text-center text-foreground sm:text-left">
-        <motion.div
+        <div
           className="flex flex-wrap items-center justify-center gap-2 text-xs font-medium uppercase tracking-[0.2em] text-primary sm:justify-start"
-          {...stagedItem}
+          {...staging.item}
         >
           <BookOpen className="h-3.5 w-3.5" />
           {eyebrow}
@@ -123,29 +110,29 @@ export function SeriesSpotlightSlide({
               {t(`series.header.seriesStatus.${series.seriesStatus}`)}
             </StatusBadge>
           )}
-        </motion.div>
+        </div>
 
         {becauseOf && becauseOf.length > 0 && (
-          <motion.p
+          <p
             className="flex items-center justify-center gap-1 text-xs text-muted-foreground sm:justify-start"
-            {...stagedItem}
+            {...staging.item}
           >
             <Sparkles className="h-3 w-3 shrink-0 text-primary" />
             <span>
               {t("home.recommendations.because")}{" "}
               <span className="font-medium text-foreground/75">{becauseOf.join(", ")}</span>
             </span>
-          </motion.p>
+          </p>
         )}
 
         <h2 className="font-display text-3xl font-semibold leading-[1.05] tracking-tight sm:text-4xl lg:text-5xl">
-          <SplitWords text={series.name} />
+          <span {...staging.title}>{series.name}</span>
         </h2>
 
         {(authorsText || series.startYear != null) && (
-          <motion.div
+          <div
             className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm text-muted-foreground sm:justify-start"
-            {...stagedItem}
+            {...staging.item}
           >
             {authorsText && (
               <span className="flex items-center gap-1.5">
@@ -159,13 +146,13 @@ export function SeriesSpotlightSlide({
                 {series.startYear}
               </span>
             )}
-          </motion.div>
+          </div>
         )}
 
         {genres.length > 0 && (
-          <motion.div
+          <div
             className="flex flex-wrap justify-center gap-1.5 sm:justify-start"
-            {...stagedItem}
+            {...staging.item}
           >
             {genres.map((genre) => (
               <span
@@ -175,34 +162,28 @@ export function SeriesSpotlightSlide({
                 {genre}
               </span>
             ))}
-          </motion.div>
+          </div>
         )}
 
         {summary && (
-          <motion.p
+          <p
             className="line-clamp-2 text-sm text-muted-foreground sm:text-base"
-            {...stagedItem}
+            {...staging.item}
           >
             {summary}
-          </motion.p>
+          </p>
         )}
 
         {showMatchReasons && (
-          <motion.div {...stagedItem}>
+          <div {...staging.item}>
             <SeriesMatchReasonPills reasons={series.matchReasons} />
-          </motion.div>
+          </div>
         )}
 
         {hasProgress && (
-          <motion.div className="mx-auto w-full max-w-md space-y-2 sm:mx-0" {...stagedItem}>
+          <div className="mx-auto w-full max-w-md space-y-2 sm:mx-0" {...staging.item}>
             <div className="h-1.5 w-full overflow-hidden rounded-full bg-foreground/15">
-              <motion.div
-                className="h-full origin-left rounded-full bg-primary"
-                initial={reduce ? false : { scaleX: 0 }}
-                animate={{ scaleX: percent / 100 }}
-                transition={{ duration: 1, ease: EASE_PROJECTION, delay: 0.35 }}
-                style={{ width: "100%" }}
-              />
+              <ProgressFill percent={percent} />
             </div>
             <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground sm:justify-start">
               <span className="font-semibold text-foreground tabular-nums">
@@ -215,18 +196,18 @@ export function SeriesSpotlightSlide({
                 })}
               </span>
             </div>
-          </motion.div>
+          </div>
         )}
 
-        <motion.div className="mt-1 flex justify-center sm:justify-start" {...stagedItem}>
+        <div className="mt-1 flex justify-center sm:justify-start" {...staging.item}>
           <Magnetic>
             <Button onClick={onOpen} size="lg" className="group/cta gap-2 font-semibold">
               {ctaLabel}
               <ArrowRight className="h-4 w-4 transition-transform duration-300 ease-out group-hover/cta:translate-x-1" />
             </Button>
           </Magnetic>
-        </motion.div>
+        </div>
       </div>
-    </motion.div>
+    </div>
   );
 }

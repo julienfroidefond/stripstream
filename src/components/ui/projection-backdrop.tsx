@@ -1,8 +1,7 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { EASE_OUT } from "@/lib/motion";
+import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
 /** Voile de papier : en clair, le bandeau se fond dans la page. */
 const SCRIM =
@@ -44,17 +43,17 @@ export function ProjectionBackdrop({
   position = "top",
   className,
 }: ProjectionBackdropProps) {
-  const reduce = useReducedMotion();
+  const reduce = usePrefersReducedMotion();
   const drift = !reduce;
 
   return (
     <div className={cn("grain absolute inset-0 overflow-hidden [contain:paint]", className)}>
-      {/* Seul le fondu passe par framer : le travelling, lui, ne dépend d'aucun montage. */}
-      <motion.div
-        className="absolute -inset-[8%]"
-        initial={fadeIn && drift ? { opacity: 0 } : undefined}
-        animate={{ opacity: 1 }}
-        transition={drift ? { duration: 1.1, ease: EASE_OUT } : { duration: 0 }}
+      {/* Fondu d'apparition et travelling sont en CSS : rien à monter en JS. */}
+      <div
+        className={cn(
+          "absolute -inset-[8%]",
+          fadeIn && "motion-safe:animate-backdrop-in"
+        )}
       >
         <div className={cn("h-full w-full", drift && "animate-backdrop-pan motion-reduce:animate-none")}>
           <div className={cn("h-full w-full", drift ? "animate-backdrop-zoom motion-reduce:animate-none" : "scale-[1.12]")}>
@@ -71,7 +70,7 @@ export function ProjectionBackdrop({
             />
           </div>
         </div>
-      </motion.div>
+      </div>
 
       {/* Voiles neutres : contraste du texte, puis vignette de salle. */}
       <div className="absolute inset-0 bg-background/55 dark:bg-black/25" />

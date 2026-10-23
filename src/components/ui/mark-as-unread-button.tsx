@@ -2,6 +2,7 @@
 
 import { BookX, Loader2 } from "lucide-react";
 import { Button } from "./button";
+import { nudge } from "@/lib/celebrate";
 import { useToast } from "./use-toast";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -21,6 +22,8 @@ export function MarkAsUnreadButton({ bookId, onSuccess, className }: MarkAsUnrea
 
   const handleMarkAsUnread = async (e: React.MouseEvent) => {
     e.stopPropagation(); // Empêcher la propagation au parent
+    const button = e.currentTarget;
+    let succeeded = false;
     setIsLoading(true);
     try {
       const result = await deleteReadProgress(bookId);
@@ -33,6 +36,7 @@ export function MarkAsUnreadButton({ bookId, onSuccess, className }: MarkAsUnrea
         title: t("books.actions.markAsUnread.success.title"),
         description: t("books.actions.markAsUnread.success.description"),
       });
+      succeeded = true;
       onSuccess?.();
     } catch (error) {
       logger.error({ err: error }, "Erreur lors de la mise à jour du progresseur de lecture:");
@@ -43,6 +47,7 @@ export function MarkAsUnreadButton({ bookId, onSuccess, className }: MarkAsUnrea
       });
     } finally {
       setIsLoading(false);
+      if (succeeded) requestAnimationFrame(() => nudge(button.querySelector("svg")));
     }
   };
 

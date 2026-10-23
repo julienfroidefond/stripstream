@@ -6,11 +6,11 @@ export const useReadingDirection = (initial: ReadingDirection = "ltr") => {
   const [direction, setDirection] = useState<ReadingDirection>(initial);
 
   const toggleDirection = () => {
-    setDirection((prev) => {
-      const next = prev === "ltr" ? "rtl" : "ltr";
-      updatePreferences({ readingDirection: next }).catch((_err: unknown) => undefined);
-      return next;
-    });
+    // La server action reste hors de l'updater : React l'exécute pendant le
+    // rendu, et l'action met à jour le routeur.
+    const next = direction === "ltr" ? "rtl" : "ltr";
+    setDirection(next);
+    updatePreferences({ readingDirection: next }).catch((_err: unknown) => undefined);
   };
 
   return {

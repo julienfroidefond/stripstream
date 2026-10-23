@@ -32,6 +32,211 @@ body.no-pinch-zoom .wall-canvas * {
 }
 
 /*
+  États initiaux des animations GSAP.
+  Ils sont écrits dans le HTML (data-attributes) plutôt que posés par JS après
+  hydratation : le contenu ne saute donc pas d'un état final à un état de
+  départ. Chaque animation GSAP retire son attribut à la fin ; sans JavaScript,
+  les media queries ci-dessous rendent tout visible.
+*/
+[data-route-enter] {
+  opacity: 0;
+  transform: translateY(16px);
+}
+
+[data-stagger-item="rise"] {
+  opacity: 0;
+  transform: translateY(2.25rem);
+  filter: blur(8px);
+}
+
+[data-stagger-item="settle"] {
+  opacity: 0;
+  transform: translateY(3rem) scale(0.9);
+  filter: blur(10px);
+}
+
+[data-stagger-item="deal"] {
+  opacity: 0;
+  transform: perspective(900px) translate3d(70px, 0, -320px) rotateY(-35deg);
+}
+
+/* La scène attend, basculée en arrière ; la cover attend au fond. */
+[data-hero-intro] {
+  opacity: 0;
+  transform: perspective(1400px) translateY(80px) rotateX(24deg) scale(0.9);
+  transform-origin: 50% 100%;
+}
+
+[data-hero-fly] {
+  opacity: 0;
+}
+
+[data-hero-item] {
+  opacity: 0;
+  transform: translateY(1.5rem);
+}
+
+[data-hero-backdrop] {
+  transform: scale(1.35);
+}
+
+/*
+ * Relief du hero. La profondeur au scroll est pilotée par ScrollTrigger via
+ * --hero-progress (0 → 1) : la cover se décolle et grossit plus vite que le
+ * texte, qui va lui-même plus vite que le fond. L'inclinaison à la souris
+ * écrit --tilt-x / --tilt-y (-1 → 1) : le reflet suit le curseur, l'ombre
+ * part à l'opposé. Ces propriétés (`translate`, `scale`) se composent avec le
+ * `transform` que GSAP anime sur les mêmes éléments.
+ */
+.hero-depth-cover {
+  translate: 0 calc(var(--hero-progress, 0) * -140px);
+  scale: calc(1 + var(--hero-progress, 0) * 0.16);
+}
+
+.hero-depth-copy {
+  translate: 0 calc(var(--hero-progress, 0) * -50px);
+}
+
+.hero-cover-shadow {
+  box-shadow: calc(var(--tilt-x, 0) * -26px) calc(var(--tilt-y, 0) * -20px + 28px) 48px -14px
+    rgb(0 0 0 / 0.55);
+}
+
+.hero-glare {
+  background: radial-gradient(
+    circle at calc(50% + var(--tilt-x, 0) * 45%) calc(50% + var(--tilt-y, 0) * 45%),
+    rgb(255 255 255 / 0.5),
+    transparent 58%
+  );
+  mix-blend-mode: overlay;
+}
+
+/* La lumière du projecteur n'a de sens qu'avec une souris et du mouvement. */
+@media (hover: none) {
+  .hero-glow {
+    display: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-glow {
+    display: none !important;
+  }
+}
+
+[data-spotlight-shell] {
+  opacity: 0;
+  transform: perspective(1400px) translateY(70px) rotateX(20deg) scale(0.92);
+  transform-origin: 50% 100%;
+}
+
+[data-spot-fly],
+[data-spot-item] {
+  opacity: 0;
+}
+
+[data-section-header] [data-section-icon],
+[data-section-header] [data-section-title] {
+  opacity: 0;
+}
+
+[data-section-header] [data-section-line] {
+  transform: scaleX(0);
+}
+
+[data-login] {
+  opacity: 0;
+}
+
+/* Bandeau d'en-tête (bibliothèque, série) : l'écran est enroulé en haut. */
+[data-banner-unroll] {
+  clip-path: inset(0 0 100% 0);
+}
+
+[data-spotlight-backdrop] {
+  opacity: 0;
+  transform: scale(1.2);
+}
+
+[data-spotlight-content] {
+  opacity: 0;
+  transform: translateY(2.5rem);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-route-enter],
+  [data-stagger-item],
+  [data-hero-intro],
+  [data-hero-fly],
+  [data-hero-item],
+  [data-spot-fly],
+  [data-spot-item],
+  [data-login],
+  [data-section-header] [data-section-icon],
+  [data-section-header] [data-section-title],
+  [data-section-header] [data-section-line],
+  [data-spotlight-shell],
+  [data-spotlight-content] {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+
+  [data-banner-unroll] {
+    clip-path: none;
+  }
+
+  [data-hero-backdrop],
+  [data-spotlight-backdrop] {
+    opacity: 1;
+    transform: none;
+  }
+
+  .hero-depth-cover,
+  .hero-depth-copy {
+    translate: none;
+    scale: none;
+  }
+}
+
+/* Navigateur sans JavaScript : le contenu doit rester lisible. */
+@media (scripting: none) {
+  [data-route-enter],
+  [data-stagger-item],
+  [data-hero-intro],
+  [data-hero-fly],
+  [data-hero-item],
+  [data-spot-fly],
+  [data-spot-item],
+  [data-login],
+  [data-section-header] [data-section-icon],
+  [data-section-header] [data-section-title],
+  [data-section-header] [data-section-line],
+  [data-spotlight-shell],
+  [data-spotlight-content] {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+
+  [data-banner-unroll] {
+    clip-path: none;
+  }
+
+  [data-hero-backdrop],
+  [data-spotlight-backdrop] {
+    opacity: 1;
+    transform: none;
+  }
+
+  .hero-depth-cover,
+  .hero-depth-copy {
+    translate: none;
+    scale: none;
+  }
+}
+
+/*
   Ajout des règles pour gérer le safe-area-inset sur iOS
 @supports (padding-top: env(safe-area-inset-top)) {
   body {
@@ -111,10 +316,32 @@ body.no-pinch-zoom .wall-canvas * {
   --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-bricolage), var(--font-geist), ui-sans-serif, system-ui, sans-serif;
 
-  /* Courbe signature du langage de mouvement (EASE_PROJECTION côté framer-motion). */
+  /* Courbe signature du langage de mouvement (`projection` côté GSAP). */
   --ease-projection: cubic-bezier(0.22, 1, 0.36, 1);
 
   /* Project-specific animations (accordion/collapsible come from tw-animate-css). */
+  /* Dialogue : il bascule vers le spectateur et dépasse un peu sa place ; il
+     se replie vite. Radix attend la fin de l'animation CSS pour démonter. */
+  --animate-dialog-in: dialog-in 440ms cubic-bezier(0.34, 1.4, 0.64, 1) both;
+  --animate-dialog-out: dialog-out 160ms cubic-bezier(0.4, 0, 1, 1) both;
+  /* Toast : il arrive en basculant depuis son bord (haut sur mobile, bas
+     au-delà) avec un rebond ; la sortie reste le glissement de Radix. */
+  /* Menu déroulant, liste de choix : il bascule depuis son point d'ancrage
+     (transform-origin fourni par Radix) et se replie vite. */
+  --animate-menu-in: menu-in 260ms cubic-bezier(0.34, 1.5, 0.64, 1) both;
+  --animate-menu-out: menu-out 120ms cubic-bezier(0.4, 0, 1, 1) both;
+  /* Icône qui change d'état : la nouvelle pivote et grossit en place. */
+  --animate-icon-swap: icon-swap 420ms cubic-bezier(0.34, 1.6, 0.64, 1) both;
+  /* Case cochée : l'indicateur fait un petit bond. */
+  --animate-check-pop: check-pop 320ms cubic-bezier(0.34, 1.8, 0.64, 1) both;
+  /* Pastille, message court : il grossit en place avec un rebond. */
+  --animate-pop-in: pop-in 420ms cubic-bezier(0.34, 1.6, 0.64, 1) both;
+  /* Carte, page : elle remonte en basculant vers le spectateur. */
+  --animate-rise-in: rise-in 620ms cubic-bezier(0.34, 1.4, 0.64, 1) both;
+  /* Onglet : le panneau choisi bascule en place à chaque changement. */
+  --animate-tab-in: tab-in 380ms cubic-bezier(0.34, 1.4, 0.64, 1) both;
+  --animate-toast-in-top: toast-in-top 520ms cubic-bezier(0.34, 1.5, 0.64, 1) both;
+  --animate-toast-in-bottom: toast-in-bottom 520ms cubic-bezier(0.34, 1.5, 0.64, 1) both;
   --animate-fade-in: fade-in 0.3s ease-in forwards;
   --animate-loader-slide: loader-slide 1.25s ease-in-out infinite;
   --animate-reveal: reveal var(--duration-slow) cubic-bezier(0.16, 1, 0.3, 1) both;
@@ -129,8 +356,86 @@ body.no-pinch-zoom .wall-canvas * {
   /* Compteur de page : le nouveau numéro remonte en place. */
   --animate-count-in: count-in 280ms var(--ease-projection) both;
   /* Travelling du fond d'affiche : deux axes, durées premières entre elles. */
+  /* Fond d'affiche : la salle s'allume en douceur. */
+  --animate-backdrop-in: fade-in 1.1s cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-backdrop-pan: backdrop-pan 14s ease-in-out infinite;
   --animate-backdrop-zoom: backdrop-zoom 10s ease-in-out infinite;
+
+  @keyframes dialog-in {
+    from {
+      opacity: 0;
+      transform: perspective(1200px) translateY(36px) rotateX(16deg) scale(0.92);
+    }
+  }
+
+  @keyframes dialog-out {
+    to {
+      opacity: 0;
+      transform: perspective(1200px) translateY(14px) rotateX(-6deg) scale(0.96);
+    }
+  }
+
+  @keyframes menu-in {
+    from {
+      opacity: 0;
+      transform: perspective(700px) rotateX(-18deg) scale(0.92);
+    }
+  }
+
+  @keyframes menu-out {
+    to {
+      opacity: 0;
+      transform: perspective(700px) rotateX(-8deg) scale(0.96);
+    }
+  }
+
+  @keyframes icon-swap {
+    from {
+      opacity: 0;
+      transform: rotate(-120deg) scale(0.4);
+    }
+  }
+
+  @keyframes check-pop {
+    from {
+      transform: scale(0.4);
+    }
+  }
+
+  @keyframes pop-in {
+    from {
+      opacity: 0;
+      transform: translateY(-12px) scale(0.85);
+    }
+  }
+
+  @keyframes rise-in {
+    from {
+      opacity: 0;
+      transform: perspective(900px) translateY(40px) rotateX(-30deg);
+    }
+  }
+
+  @keyframes tab-in {
+    from {
+      opacity: 0;
+      transform: perspective(1000px) translateY(14px) rotateX(10deg) scale(0.98);
+    }
+  }
+
+  @keyframes toast-in-top {
+    from {
+      opacity: 0;
+      transform: perspective(800px) translateY(-110%) rotateX(-40deg) scale(0.9);
+    }
+  }
+
+  @keyframes toast-in-bottom {
+    from {
+      opacity: 0;
+      transform: perspective(800px) translateY(110%) rotateX(40deg) scale(0.9);
+    }
+  }
 
   @keyframes fade-in {
     from {
@@ -481,14 +786,19 @@ body.no-pinch-zoom .wall-canvas * {
   }
 }
 
+/* Le cadre bouge au survol (traction, inclinaison) : il ne doit pas capter le
+   pointeur. Le survol se décide sur la boîte fixe de la tuile, sinon le cadre
+   tiré vers le curseur déborderait sur la voisine, perdrait le survol, revien-
+   drait sous le curseur et le reprendrait — la tuile tremblerait en boucle. */
 .wall-tile-frame {
+  pointer-events: none;
   border-radius: inherit;
   background: hsl(var(--surface-2));
   box-shadow: 0 0 0 1px hsl(var(--foreground) / 0.07);
   transform-origin: 50% 70%;
-  transition:
-    box-shadow 420ms var(--ease-projection),
-    transform 240ms cubic-bezier(0.16, 1, 0.3, 1);
+  /* La pose de survol (transform) est lissée en JS, frame par frame
+     (`WallTile`) : seule l'ombre passe par une transition. */
+  transition: box-shadow 420ms var(--ease-projection);
 }
 
 /* La lumière suit le curseur : un reflet chaud passe sur l'affiche. */
@@ -545,25 +855,30 @@ body.no-pinch-zoom .wall-canvas * {
   opacity: 0;
 }
 
+/* Clic sur une œuvre : la salle s'éteint dès le départ du vol et le reste
+   jusqu'à la plaque, même si la caméra bouge. L'affiche visée passe devant le
+   voile. */
+.wall-stage[data-focusing] .wall-dim {
+  opacity: 1;
+  transition: opacity 320ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.wall-tile[data-focus] {
+  z-index: 6;
+}
+
+
 @media (hover: hover) and (pointer: fine) {
   .wall-stage:not([data-panning]):not([data-plaque]) .wall-tile:hover {
     z-index: 4;
   }
 
   /* La tuile se soulève, s'incline vers le curseur et le suit de quelques
-     pixels. Seule la tuile survolée bouge : aucune voisine n'est déplacée. */
+     pixels (pose lissée en JS, voir `WallTile`). Seule la tuile survolée
+     bouge : aucune voisine n'est déplacée. */
   .wall-stage:not([data-panning]):not([data-plaque])
     .wall-tile:not([data-active]):hover
     .wall-tile-frame {
-    transform:
-      translate3d(
-        var(--wall-pull-x, 0px),
-        calc(-7px + var(--wall-pull-y, 0px)),
-        0
-      )
-      scale(1.015)
-      rotateX(var(--wall-tilt-x, 0deg))
-      rotateY(var(--wall-tilt-y, 0deg));
     box-shadow:
       0 0 0 1px hsl(var(--primary) / 0.55),
       0 28px 56px -22px rgb(0 0 0 / 0.88),
@@ -1422,3 +1737,76 @@ body.no-pinch-zoom .wall-canvas * {
   }
 }
 
+/* Sans mouvement : dialogues, menus et toasts ne font plus que s'estomper. */
+@media (prefers-reduced-motion: reduce) {
+  @keyframes menu-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  @keyframes menu-out {
+    to {
+      opacity: 0;
+    }
+  }
+
+  @keyframes dialog-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  @keyframes dialog-out {
+    to {
+      opacity: 0;
+    }
+  }
+
+  @keyframes toast-in-top {
+    from {
+      opacity: 0;
+    }
+  }
+
+  @keyframes toast-in-bottom {
+    from {
+      opacity: 0;
+    }
+  }
+}
+
+/* Squelette : invisible les 160 premières ms (un chargement rapide n'en
+   montre aucun), puis la pulsation habituelle. `visibility` et non
+   `opacity`, que la pulsation anime déjà. */
+.skeleton-reveal {
+  animation:
+    skeleton-wait 160ms step-end both,
+    pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes skeleton-wait {
+  from {
+    visibility: hidden;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-reveal {
+    animation: skeleton-wait 160ms step-end both;
+  }
+}
+
+/* La coche se trace (trait de la case cochée, voir `Checkbox`). */
+@media (prefers-reduced-motion: no-preference) {
+  .check-draw path {
+    stroke-dasharray: 30;
+    animation: check-draw 260ms 60ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
+
+@keyframes check-draw {
+  from {
+    stroke-dashoffset: 30;
+  }
+}
