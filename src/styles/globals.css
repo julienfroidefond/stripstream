@@ -89,12 +89,12 @@ body.no-pinch-zoom .wall-canvas * {
  * `transform` que GSAP anime sur les mêmes éléments.
  */
 .hero-depth-cover {
-  translate: 0 calc(var(--hero-progress, 0) * -200px);
-  scale: calc(1 + var(--hero-progress, 0) * 0.22);
+  translate: 0 calc(var(--hero-progress, 0) * -140px);
+  scale: calc(1 + var(--hero-progress, 0) * 0.16);
 }
 
 .hero-depth-copy {
-  translate: 0 calc(var(--hero-progress, 0) * -85px);
+  translate: 0 calc(var(--hero-progress, 0) * -50px);
 }
 
 .hero-cover-shadow {

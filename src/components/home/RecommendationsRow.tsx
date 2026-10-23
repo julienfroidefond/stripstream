@@ -17,7 +17,7 @@ import { useCarouselViewMode } from "@/hooks/useCarouselViewMode";
 import { useAnonymous } from "@/contexts/AnonymousContext";
 import type { NormalizedSeries } from "@/lib/providers/types";
 import { loadHomeFeed } from "@/app/actions/home";
-import { GlowLayer, StaggerGroup, StaggerItem, usePointerGlow, ScrollScene } from "@/components/motion";
+import { GlowLayer, StaggerGroup, StaggerItem, usePointerGlow } from "@/components/motion";
 
 const ITEMS_PER_PAGE = 8;
 
@@ -66,68 +66,66 @@ export function RecommendationsRow({ series, initialHasMore = false }: Recommend
   ) : undefined;
 
   return (
-    <ScrollScene>
-      <Section
-        title={t("home.sections.recommendations")}
-        icon={Wand2}
-        className="space-y-5"
-        headerClassName="pb-1"
-        actions={<CarouselViewToggle viewMode={viewMode} onToggle={toggleViewMode} />}
-      >
-        {viewMode === "spotlight" ? (
-          <SpotlightCarousel
-            ariaLabel={t("home.sections.recommendations")}
-            slides={loadedSeries.map((item) => ({
-              key: item.id,
-              backdropSrc: item.thumbnailUrl,
-              content: (
-                <SeriesSpotlightSlide
-                  series={item}
-                  onOpen={() => router.push(`/series/${item.id}`)}
-                  ctaLabel={t("home.recommendations.discover")}
-                  eyebrow={t("navigation.seriesLabel")}
-                  showMatchReasons
-                  becauseOf={item.becauseOf}
+    <Section
+      title={t("home.sections.recommendations")}
+      icon={Wand2}
+      className="space-y-5"
+      headerClassName="pb-1"
+      actions={<CarouselViewToggle viewMode={viewMode} onToggle={toggleViewMode} />}
+    >
+      {viewMode === "spotlight" ? (
+        <SpotlightCarousel
+          ariaLabel={t("home.sections.recommendations")}
+          slides={loadedSeries.map((item) => ({
+            key: item.id,
+            backdropSrc: item.thumbnailUrl,
+            content: (
+              <SeriesSpotlightSlide
+                series={item}
+                onOpen={() => router.push(`/series/${item.id}`)}
+                ctaLabel={t("home.recommendations.discover")}
+                eyebrow={t("navigation.seriesLabel")}
+                showMatchReasons
+                becauseOf={item.becauseOf}
+              />
+            ),
+          }))}
+          footer={loadMoreFooter}
+        />
+      ) : (
+        <StaggerGroup stagger={0.05} effect="deal" amount={0.25}>
+          <ScrollContainer
+            showArrows={true}
+            scrollAmount={400}
+            arrowLeftLabel={t("navigation.scrollLeft")}
+            arrowRightLabel={t("navigation.scrollRight")}
+          >
+            {loadedSeries.map((s) => (
+              <StaggerItem key={s.id} className="shrink-0">
+                <RecommendationCard series={s} />
+              </StaggerItem>
+            ))}
+            {hasMore && (
+              <StaggerItem className="shrink-0">
+                <button
+                  type="button"
+                  onClick={handleLoadMore}
+                  disabled={isPending}
+                  aria-busy={isPending}
+                  className="flex min-h-[282px] w-[150px] items-center justify-center rounded-xl border border-dashed border-border text-sm font-medium text-muted-foreground transition-colors hover:border-primary/60 hover:text-foreground sm:min-h-[300px]"
+                >
+                  <LoadMoreLabel
+                  pending={isPending}
+                  label={t("navigation.loadMore")}
+                  loadingLabel={t("navigation.loading")}
                 />
-              ),
-            }))}
-            footer={loadMoreFooter}
-          />
-        ) : (
-          <StaggerGroup stagger={0.05} effect="deal" amount={0.25}>
-            <ScrollContainer
-              showArrows={true}
-              scrollAmount={400}
-              arrowLeftLabel={t("navigation.scrollLeft")}
-              arrowRightLabel={t("navigation.scrollRight")}
-            >
-              {loadedSeries.map((s) => (
-                <StaggerItem key={s.id} className="shrink-0">
-                  <RecommendationCard series={s} />
-                </StaggerItem>
-              ))}
-              {hasMore && (
-                <StaggerItem className="shrink-0">
-                  <button
-                    type="button"
-                    onClick={handleLoadMore}
-                    disabled={isPending}
-                    aria-busy={isPending}
-                    className="flex min-h-[282px] w-[150px] items-center justify-center rounded-xl border border-dashed border-border text-sm font-medium text-muted-foreground transition-colors hover:border-primary/60 hover:text-foreground sm:min-h-[300px]"
-                  >
-                    <LoadMoreLabel
-                    pending={isPending}
-                    label={t("navigation.loadMore")}
-                    loadingLabel={t("navigation.loading")}
-                  />
-                  </button>
-                </StaggerItem>
-              )}
-            </ScrollContainer>
-          </StaggerGroup>
-        )}
-      </Section>
-    </ScrollScene>
+                </button>
+              </StaggerItem>
+            )}
+          </ScrollContainer>
+        </StaggerGroup>
+      )}
+    </Section>
   );
 }
 

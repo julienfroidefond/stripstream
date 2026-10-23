@@ -582,7 +582,7 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
       // Livre pop-up qui se referme : la scène bascule en arrière pendant
       // que la cover se décolle vers le spectateur (`--hero-progress`, CSS).
       timeline
-        .to(backdrop, { yPercent: 34, scale: 1.26, ease: "none" }, 0)
+        .to(backdrop, { yPercent: 24, scale: 1.18, ease: "none" }, 0)
         .to(content, { y: 40, opacity: 0, ease: "power1.in" }, 0)
         .fromTo(
           section,

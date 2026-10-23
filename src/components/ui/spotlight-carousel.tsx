@@ -64,7 +64,6 @@ export function SpotlightCarousel({
   const sectionRef = useRef<HTMLElement | null>(null);
   const backdropRef = useRef<HTMLDivElement | null>(null);
   const backdropLayerRef = useRef<HTMLDivElement | null>(null);
-  const parallaxRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
   const [inView, setInView] = useState(false);
   const total = slides.length;
@@ -277,30 +276,6 @@ export function SpotlightCarousel({
     { dependencies: [slide?.key, reduce] }
   );
 
-  // Parallaxe au défilement : le fond d'affiche traverse la scène moins vite
-  // que son contenu, la profondeur se lit sur toute la hauteur de la page.
-  useGsapEffect(
-    () => {
-      const section = sectionRef.current;
-      const layer = parallaxRef.current;
-      if (!section || !layer || reduce || prefersReducedMotion()) return;
-      const tween = gsap.fromTo(
-        layer,
-        { yPercent: -18 },
-        {
-          yPercent: 18,
-          ease: "none",
-          scrollTrigger: { trigger: section, start: "top bottom", end: "bottom top", scrub: 0.4 },
-        }
-      );
-      return () => {
-        tween.scrollTrigger?.kill();
-        tween.revert();
-      };
-    },
-    { dependencies: [reduce, total > 0] }
-  );
-
   if (total === 0 || !slide) return null;
 
   // La copie sortante n'est jamais « staged » : elle est hors du fournisseur.
@@ -321,20 +296,16 @@ export function SpotlightCarousel({
       aria-label={ariaLabel}
     >
       <div ref={backdropRef} data-spotlight-backdrop className="absolute inset-0 bg-surface-1">
-        {/* Calque de parallaxe : plus haut que la scène, il glisse moins vite
-            que la page sans jamais montrer ses bords. */}
-        <div ref={parallaxRef} className="absolute inset-x-0 -inset-y-[30%]">
-          {transition?.from.backdropSrc ? (
-            <div className="absolute inset-0" aria-hidden>
-              <ProjectionBackdrop src={transition.from.backdropSrc} fadeIn={false} />
-            </div>
-          ) : null}
-          {slide.backdropSrc ? (
-            <div ref={backdropLayerRef} key={`backdrop-${slide.key}`} className="absolute inset-0">
-              <ProjectionBackdrop src={slide.backdropSrc} fadeIn={false} />
-            </div>
-          ) : null}
-        </div>
+        {transition?.from.backdropSrc ? (
+          <div className="absolute inset-0" aria-hidden>
+            <ProjectionBackdrop src={transition.from.backdropSrc} fadeIn={false} />
+          </div>
+        ) : null}
+        {slide.backdropSrc ? (
+          <div ref={backdropLayerRef} key={`backdrop-${slide.key}`} className="absolute inset-0">
+            <ProjectionBackdrop src={slide.backdropSrc} fadeIn={false} />
+          </div>
+        ) : null}
       </div>
 
       <div
