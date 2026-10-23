@@ -326,6 +326,10 @@ body.no-pinch-zoom .wall-canvas * {
   --animate-dialog-out: dialog-out 160ms cubic-bezier(0.4, 0, 1, 1) both;
   /* Toast : il arrive en basculant depuis son bord (haut sur mobile, bas
      au-delà) avec un rebond ; la sortie reste le glissement de Radix. */
+  /* Menu déroulant, liste de choix : il bascule depuis son point d'ancrage
+     (transform-origin fourni par Radix) et se replie vite. */
+  --animate-menu-in: menu-in 260ms cubic-bezier(0.34, 1.5, 0.64, 1) both;
+  --animate-menu-out: menu-out 120ms cubic-bezier(0.4, 0, 1, 1) both;
   /* Onglet : le panneau choisi bascule en place à chaque changement. */
   --animate-tab-in: tab-in 380ms cubic-bezier(0.34, 1.4, 0.64, 1) both;
   --animate-toast-in-top: toast-in-top 520ms cubic-bezier(0.34, 1.5, 0.64, 1) both;
@@ -360,6 +364,20 @@ body.no-pinch-zoom .wall-canvas * {
     to {
       opacity: 0;
       transform: perspective(1200px) translateY(14px) rotateX(-6deg) scale(0.96);
+    }
+  }
+
+  @keyframes menu-in {
+    from {
+      opacity: 0;
+      transform: perspective(700px) rotateX(-18deg) scale(0.92);
+    }
+  }
+
+  @keyframes menu-out {
+    to {
+      opacity: 0;
+      transform: perspective(700px) rotateX(-8deg) scale(0.96);
     }
   }
 
@@ -1684,8 +1702,20 @@ body.no-pinch-zoom .wall-canvas * {
   }
 }
 
-/* Sans mouvement : dialogues et toasts ne font plus que s'estomper. */
+/* Sans mouvement : dialogues, menus et toasts ne font plus que s'estomper. */
 @media (prefers-reduced-motion: reduce) {
+  @keyframes menu-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  @keyframes menu-out {
+    to {
+      opacity: 0;
+    }
+  }
+
   @keyframes dialog-in {
     from {
       opacity: 0;
