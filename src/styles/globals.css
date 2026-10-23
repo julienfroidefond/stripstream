@@ -332,6 +332,8 @@ body.no-pinch-zoom .wall-canvas * {
   --animate-menu-out: menu-out 120ms cubic-bezier(0.4, 0, 1, 1) both;
   /* Icône qui change d'état : la nouvelle pivote et grossit en place. */
   --animate-icon-swap: icon-swap 420ms cubic-bezier(0.34, 1.6, 0.64, 1) both;
+  /* Case cochée : l'indicateur fait un petit bond. */
+  --animate-check-pop: check-pop 320ms cubic-bezier(0.34, 1.8, 0.64, 1) both;
   /* Onglet : le panneau choisi bascule en place à chaque changement. */
   --animate-tab-in: tab-in 380ms cubic-bezier(0.34, 1.4, 0.64, 1) both;
   --animate-toast-in-top: toast-in-top 520ms cubic-bezier(0.34, 1.5, 0.64, 1) both;
@@ -387,6 +389,12 @@ body.no-pinch-zoom .wall-canvas * {
     from {
       opacity: 0;
       transform: rotate(-120deg) scale(0.4);
+    }
+  }
+
+  @keyframes check-pop {
+    from {
+      transform: scale(0.4);
     }
   }
 
@@ -1768,5 +1776,19 @@ body.no-pinch-zoom .wall-canvas * {
 @media (prefers-reduced-motion: reduce) {
   .skeleton-reveal {
     animation: skeleton-wait 160ms step-end both;
+  }
+}
+
+/* La coche se trace (trait de la case cochée, voir `Checkbox`). */
+@media (prefers-reduced-motion: no-preference) {
+  .check-draw path {
+    stroke-dasharray: 30;
+    animation: check-draw 260ms 60ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
+
+@keyframes check-draw {
+  from {
+    stroke-dashoffset: 30;
   }
 }
