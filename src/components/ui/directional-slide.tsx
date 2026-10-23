@@ -261,7 +261,12 @@ export function DirectionalSlide({
       onPointerLeave={() => {
         if (drag.current && !drag.current.horizontal) drag.current = null;
       }}
-      onLostPointerCapture={() => {
+      onLostPointerCapture={(event) => {
+        // Sur tactile, le navigateur capture implicitement le pointeur sur la
+        // cible touchée : `setPointerCapture` sur la scène la lui retire, et le
+        // `lostpointercapture` de cet enfant remonte jusqu'ici. Ce n'est pas
+        // une perte du geste, seulement le transfert de la capture.
+        if (event.target !== event.currentTarget) return;
         if (drag.current?.horizontal) resetDrag();
       }}
       onClickCapture={handleClickCapture}

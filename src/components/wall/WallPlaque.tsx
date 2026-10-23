@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { ArrowUpRight, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -47,6 +47,15 @@ export function WallPlaque({ item, placement, open, onClose }: WallPlaqueProps) 
   const isSheet = placement.mode === "sheet";
   const panelRef = useRef<HTMLElement | null>(null);
   const hingeLeft = !isSheet && placement.anchor.side !== "left";
+
+  // La feuille entre par le bas : un `autoFocus` classique sur un de ses
+  // contrôles la ferait défiler hors de l'écran sur iOS, en emportant tout le
+  // mur avec elle. On donne donc le focus au panneau lui-même, sans défilement ;
+  // `Tab` atteint ensuite la croix de fermeture.
+  useEffect(() => {
+    if (!open) return;
+    panelRef.current?.focus({ preventScroll: true });
+  }, [open]);
 
   const rendered = usePresence(open, panelRef, {
     enter: (timeline, panel, still) => {
@@ -219,6 +228,7 @@ export function WallPlaque({ item, placement, open, onClose }: WallPlaqueProps) 
           className="wall-sheet"
           role="dialog"
           aria-label={item.name}
+          tabIndex={-1}
           style={placement.maxHeight ? { maxHeight: placement.maxHeight } : undefined}
           onPointerDown={(event) => event.stopPropagation()}
         >
@@ -228,7 +238,6 @@ export function WallPlaque({ item, placement, open, onClose }: WallPlaqueProps) 
             className="wall-sheet-close"
             onClick={onClose}
             aria-label={t("wall.close")}
-            autoFocus
           >
             <X className="h-4 w-4" />
           </button>
@@ -242,6 +251,7 @@ export function WallPlaque({ item, placement, open, onClose }: WallPlaqueProps) 
           className={cn("wall-plaque", placement.anchor.side === "left" && "wall-plaque-left")}
           role="dialog"
           aria-label={item.name}
+          tabIndex={-1}
           onPointerDown={(event) => event.stopPropagation()}
         >
           <button
@@ -249,7 +259,6 @@ export function WallPlaque({ item, placement, open, onClose }: WallPlaqueProps) 
             className="wall-plaque-close"
             onClick={onClose}
             aria-label={t("wall.close")}
-            autoFocus
           >
             <X className="h-3.5 w-3.5" />
           </button>
