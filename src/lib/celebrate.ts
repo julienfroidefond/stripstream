@@ -35,6 +35,22 @@ export function nudge(element: Element | null | undefined): void {
   );
 }
 
+/** Saisie refusée : l'élément secoue la tête de gauche à droite. */
+export function shake(element: Element | null | undefined): void {
+  if (!element || prefersReducedMotion()) return;
+  gsap.fromTo(
+    element,
+    { x: 0 },
+    {
+      keyframes: { x: [0, -10, 9, -6, 4, 0] },
+      duration: 0.45,
+      ease: "power2.out",
+      overwrite: "auto",
+      clearProps: "transform",
+    }
+  );
+}
+
 /** Téléchargement : la flèche tombe, puis revient d'en haut. */
 export function drop(element: Element | null | undefined): void {
   if (!element || prefersReducedMotion()) return;
