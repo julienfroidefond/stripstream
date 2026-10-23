@@ -1,7 +1,9 @@
 "use client";
 
+import { useRef } from "react";
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { gsap, prefersReducedMotion, useGsapEffect } from "@/lib/gsap";
 
 interface PaginationProps {
   currentPage: number;
@@ -11,6 +13,27 @@ interface PaginationProps {
 }
 
 export function Pagination({ currentPage, totalPages, onPageChange, className }: PaginationProps) {
+  const navRef = useRef<HTMLElement>(null);
+  const lastPillRect = useRef<DOMRect | null>(null);
+
+  // La pastille de la page active glisse depuis la page précédente.
+  useGsapEffect(
+    () => {
+      const pill = navRef.current?.querySelector<HTMLElement>("[data-page-pill]");
+      if (!pill) return;
+      const from = lastPillRect.current;
+      const to = pill.getBoundingClientRect();
+      lastPillRect.current = to;
+      if (!from || prefersReducedMotion()) return;
+      gsap.fromTo(
+        pill,
+        { x: from.left - to.left, y: from.top - to.top },
+        { x: 0, y: 0, duration: 0.42, ease: "back.out(1.6)", clearProps: "transform" }
+      );
+    },
+    { dependencies: [currentPage, totalPages] }
+  );
+
   // Ne pas afficher la pagination s'il n'y a qu'une seule page
   if (totalPages <= 1) return null;
 
@@ -53,6 +76,7 @@ export function Pagination({ currentPage, totalPages, onPageChange, className }:
 
   return (
     <nav
+      ref={navRef}
       data-testid="pagination"
       role="navigation"
       aria-label="Pagination"
@@ -87,14 +111,17 @@ export function Pagination({ currentPage, totalPages, onPageChange, className }:
               onClick={() => onPageChange(page)}
               disabled={page === currentPage}
               className={cn(
-                "inline-flex items-center justify-center rounded-md text-sm font-medium h-10 w-10 transition-colors",
+                "relative isolate inline-flex items-center justify-center rounded-md text-sm font-medium h-10 w-10 transition-colors",
                 page === currentPage
-                  ? "bg-primary text-primary-foreground"
+                  ? "text-primary-foreground"
                   : "hover:bg-accent hover:text-accent-foreground"
               )}
               aria-label={`Page ${page}`}
               aria-current={page === currentPage ? "page" : undefined}
             >
+              {page === currentPage && (
+                <span data-page-pill aria-hidden className="absolute inset-0 -z-10 rounded-md bg-primary" />
+              )}
               {page}
             </button>
           );
