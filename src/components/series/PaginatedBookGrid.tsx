@@ -4,7 +4,8 @@ import { BookGrid } from "./BookGrid";
 import { BookList } from "./BookList";
 import { Pagination } from "@/components/ui/Pagination";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { playGridExit } from "@/components/motion";
 import type { NormalizedBook, NormalizedMissingBook } from "@/lib/providers/types";
 import { useTranslate } from "@/hooks/useTranslate";
 import { useDisplayPreferences } from "@/hooks/useDisplayPreferences";
@@ -68,6 +69,8 @@ export function PaginatedBookGrid({
     });
   }, [updatePreferences]);
 
+  const gridRef = useRef<HTMLDivElement>(null);
+
   const updateUrlParams = useCallback(
     async (updates: Record<string, string | null>, replace: boolean = false) => {
       const params = new URLSearchParams(searchParams.toString());
@@ -83,6 +86,8 @@ export function PaginatedBookGrid({
       if (replace) {
         await router.replace(`${pathname}?${params.toString()}`, { scroll: false });
       } else {
+        // Les cartes quittent la scène avant que la nouvelle page arrive.
+        await playGridExit(gridRef.current);
         await router.push(`${pathname}?${params.toString()}`, { scroll: false });
       }
     },
@@ -194,6 +199,9 @@ export function PaginatedBookGrid({
     return merged;
   }, [regularBooks, missingBooks, hideMissing]);
 
+  /** Change avec le contenu affiché : la grille est alors remontée. */
+  const gridKey = displayBooks.map((book) => book.id).join(",");
+
   // Calculate start and end indices for display
   const startIndex = (currentPage - 1) * effectivePageSize + 1;
   const endIndex = Math.min(currentPage * effectivePageSize, totalElements);
@@ -227,21 +235,27 @@ export function PaginatedBookGrid({
         </div>
       </div>
 
-      {viewMode === "grid" ? (
-        <BookGrid
-          books={displayBooks}
-          onBookClick={handleBookClick}
-          isCompact={isCompact}
-          onRefresh={onRefresh}
-        />
-      ) : (
-        <BookList
-          books={displayBooks}
-          onBookClick={handleBookClick}
-          isCompact={isCompact}
-          onRefresh={onRefresh}
-        />
-      )}
+      {/* La grille est remontée à chaque nouveau contenu : toutes les cartes
+          rejouent leur entrée après la sortie jouée avant la navigation. */}
+      <div ref={gridRef}>
+        {viewMode === "grid" ? (
+          <BookGrid
+            key={gridKey}
+            books={displayBooks}
+            onBookClick={handleBookClick}
+            isCompact={isCompact}
+            onRefresh={onRefresh}
+          />
+        ) : (
+          <BookList
+            key={gridKey}
+            books={displayBooks}
+            onBookClick={handleBookClick}
+            isCompact={isCompact}
+            onRefresh={onRefresh}
+          />
+        )}
+      </div>
 
       {specialBooks.length > 0 && (
         <div className="space-y-4">

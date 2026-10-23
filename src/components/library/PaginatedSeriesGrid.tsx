@@ -4,7 +4,8 @@ import { SeriesGrid } from "./SeriesGrid";
 import { SeriesList } from "./SeriesList";
 import { Pagination } from "@/components/ui/Pagination";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { playGridExit } from "@/components/motion";
 import type { NormalizedSeries } from "@/lib/providers/types";
 import { SearchInput } from "./SearchInput";
 import { useTranslate } from "@/hooks/useTranslate";
@@ -69,6 +70,10 @@ export function PaginatedSeriesGrid({
     }
   }, []);
 
+  const gridRef = useRef<HTMLDivElement>(null);
+  /** Change avec le contenu affiché : la grille est alors remontée. */
+  const gridKey = series.map((item) => item.id).join(",");
+
   const updateUrlParams = useCallback(
     async (updates: Record<string, string | null>, replace: boolean = false) => {
       const params = new URLSearchParams(searchParams.toString());
@@ -84,6 +89,8 @@ export function PaginatedSeriesGrid({
       if (replace) {
         await router.replace(`${pathname}?${params.toString()}`, { scroll: false });
       } else {
+        // Les cartes quittent la scène avant que la nouvelle page arrive.
+        await playGridExit(gridRef.current);
         await router.push(`${pathname}?${params.toString()}`, { scroll: false });
       }
     },
@@ -246,11 +253,20 @@ export function PaginatedSeriesGrid({
         </div>
       </div>
 
-      {viewMode === "grid" ? (
-        <SeriesGrid series={series} isCompact={isCompact} showRating={currentSort === "community_score"} />
-      ) : (
-        <SeriesList series={series} isCompact={isCompact} />
-      )}
+      {/* La grille est remontée à chaque nouveau contenu : toutes les cartes
+          rejouent leur entrée après la sortie jouée avant la navigation. */}
+      <div ref={gridRef}>
+        {viewMode === "grid" ? (
+          <SeriesGrid
+            key={gridKey}
+            series={series}
+            isCompact={isCompact}
+            showRating={currentSort === "community_score"}
+          />
+        ) : (
+          <SeriesList key={gridKey} series={series} isCompact={isCompact} />
+        )}
+      </div>
 
       <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
         <p className="text-sm text-muted-foreground order-2 sm:order-1">

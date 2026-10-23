@@ -326,6 +326,8 @@ body.no-pinch-zoom .wall-canvas * {
   --animate-dialog-out: dialog-out 160ms cubic-bezier(0.4, 0, 1, 1) both;
   /* Toast : il arrive en basculant depuis son bord (haut sur mobile, bas
      au-delà) avec un rebond ; la sortie reste le glissement de Radix. */
+  /* Onglet : le panneau choisi bascule en place à chaque changement. */
+  --animate-tab-in: tab-in 380ms cubic-bezier(0.34, 1.4, 0.64, 1) both;
   --animate-toast-in-top: toast-in-top 520ms cubic-bezier(0.34, 1.5, 0.64, 1) both;
   --animate-toast-in-bottom: toast-in-bottom 520ms cubic-bezier(0.34, 1.5, 0.64, 1) both;
   --animate-fade-in: fade-in 0.3s ease-in forwards;
@@ -358,6 +360,13 @@ body.no-pinch-zoom .wall-canvas * {
     to {
       opacity: 0;
       transform: perspective(1200px) translateY(14px) rotateX(-6deg) scale(0.96);
+    }
+  }
+
+  @keyframes tab-in {
+    from {
+      opacity: 0;
+      transform: perspective(1000px) translateY(14px) rotateX(10deg) scale(0.98);
     }
   }
 
