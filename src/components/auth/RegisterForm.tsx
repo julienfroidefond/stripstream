@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
+import { Loader2 } from "lucide-react";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { useTranslate } from "@/hooks/useTranslate";
 import type { AppErrorType } from "@/types/global";
@@ -91,25 +92,53 @@ export function RegisterForm({ from }: RegisterFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="email">{t("login.form.email")}</Label>
-        <Input id="email" name="email" type="email" autoComplete="email" required />
+        <Label htmlFor="email" className="text-sm font-medium text-foreground/80">
+          {t("login.form.email")}
+        </Label>
+        <Input
+          id="email"
+          name="email"
+          type="email"
+          autoComplete="email"
+          className="h-11 rounded-lg bg-background/60"
+          required
+        />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="password">{t("login.form.password")}</Label>
-        <Input id="password" name="password" type="password" autoComplete="new-password" required />
+        <Label htmlFor="password" className="text-sm font-medium text-foreground/80">
+          {t("login.form.password")}
+        </Label>
+        <Input
+          id="password"
+          name="password"
+          type="password"
+          autoComplete="new-password"
+          className="h-11 rounded-lg bg-background/60"
+          required
+        />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="confirmPassword">{t("login.form.confirmPassword")}</Label>
+        <Label htmlFor="confirmPassword" className="text-sm font-medium text-foreground/80">
+          {t("login.form.confirmPassword")}
+        </Label>
         <Input
           id="confirmPassword"
           name="confirmPassword"
           type="password"
           autoComplete="new-password"
+          className="h-11 rounded-lg bg-background/60"
           required
         />
       </div>
       {error && <ErrorMessage errorCode={error.code} variant="form" />}
-      <Button type="submit" disabled={isLoading} className="w-full">
+      <Button
+        type="submit"
+        size="lg"
+        disabled={isLoading}
+        aria-busy={isLoading}
+        className="h-11 w-full rounded-lg font-semibold"
+      >
+        {isLoading && <Loader2 aria-hidden className="h-4 w-4 animate-spin" />}
         {isLoading ? t("login.form.submit.loading.register") : t("login.form.submit.register")}
       </Button>
     </form>

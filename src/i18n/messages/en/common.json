@@ -12,13 +12,14 @@
     }
   },
   "login": {
+    "eyebrow": "Library access",
     "title": "Welcome to StripStream",
     "subtitle": "Sign in or create an account to get started",
     "tabs": {
       "login": "Sign in",
       "register": "Sign up"
     },
-    "description": "Enjoy your favorite comics, manga and graphic novels with a modern and smooth reading experience.",
+    "description": "Your comics, manga and graphic novels, read straight from your Komga or Stripstream Librarian server.",
     "form": {
       "email": "Email",
       "password": "Password",

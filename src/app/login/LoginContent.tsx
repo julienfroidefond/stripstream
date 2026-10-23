@@ -1,11 +1,18 @@
 "use client";
 
+import { motion, useReducedMotion } from "framer-motion";
+import { LogIn, UserPlus } from "lucide-react";
+import LanguageSelector from "@/components/LanguageSelector";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { RegisterForm } from "@/components/auth/RegisterForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useTranslate } from "@/hooks/useTranslate";
-import LanguageSelector from "@/components/LanguageSelector";
-import { motion } from "framer-motion";
+import { EASE_PROJECTION, fadeUp, staggerContainer } from "@/lib/motion";
+
+/** Le logo du site, décliné pour chaque thème. */
+const LOGO_LIGHT = "/images/logostripstream-white.png";
+const LOGO_DARK = "/images/logostripstream.png";
 
 interface LoginContentProps {
   searchParams: {
@@ -14,118 +21,128 @@ interface LoginContentProps {
   };
 }
 
+/**
+ * Entrée de la salle : une seule composition, sans visuel latéral.
+ *
+ * La typographie porte l'affiche à gauche, la carte d'accès se pose à droite.
+ * Sur téléphone, la carte passe sous le titre et la page défile naturellement.
+ */
 export function LoginContent({ searchParams }: LoginContentProps) {
   const { t } = useTranslate();
-  const defaultTab = searchParams.tab || "login";
+  const reduce = useReducedMotion();
+  const defaultTab = searchParams.tab === "register" ? "register" : "login";
+
+  const stagedContent = reduce
+    ? {}
+    : {
+        variants: staggerContainer(0.08, 0.05),
+        initial: "hidden" as const,
+        animate: "visible" as const,
+      };
+  const stagedItem = reduce ? {} : { variants: fadeUp };
 
   return (
-    <div className="relative grid min-h-dvh lg:grid-cols-2">
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-        className="absolute top-4 right-4 z-50 transition-transform hover:scale-105"
-      >
-        <LanguageSelector />
-      </motion.div>
-
-      <div className="relative hidden h-full flex-col overflow-hidden bg-[hsl(30_7%_4%)] p-10 text-white lg:flex">
-        <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40 transition-opacity duration-700 ease-out hover:opacity-50"
-          style={{
-            backgroundImage: "url('/images/login-bg.jpg')",
-          }}
-        />
-        <div className="absolute inset-0 bg-linear-to-b from-black/20 via-black/50 to-black/90" />{/* taste-skill-ignore: scrim neutre au-dessus de l'image de fond */}
-        <motion.div
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="relative z-20 flex items-center text-lg font-medium"
-        >
-          <motion.img
-            src="/images/logostripstream.png"
-            alt="StripStream Logo"
-            className="mr-3 hidden h-9 w-9 rounded-md object-cover dark:block"
-            whileHover={{ scale: 1.08, rotate: -3 }}
-            transition={{ duration: 0.3 }}
+    <div className="relative flex min-h-dvh flex-col">
+      <header className="mx-auto flex h-16 w-full max-w-6xl shrink-0 items-center justify-between gap-4 px-4 sm:h-20 sm:px-8">
+        <div className="flex items-center gap-2.5">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={LOGO_DARK}
+            alt=""
+            className="hidden h-9 w-9 rounded-[10px] object-cover dark:block"
           />
-          <motion.img
-            src="/images/logostripstream-white.png"
-            alt="StripStream Logo"
-            className="mr-3 h-9 w-9 rounded-md object-cover dark:hidden"
-            whileHover={{ scale: 1.08, rotate: -3 }}
-            transition={{ duration: 0.3 }}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={LOGO_LIGHT}
+            alt=""
+            className="h-9 w-9 rounded-[10px] object-cover dark:hidden"
           />
-          <span className="font-display text-2xl font-bold tracking-tight">
-            Strip<span className="text-primary">Stream</span>
+          <span className="inline-flex flex-col leading-none">
+            <span className="font-display text-base font-bold tracking-[0.06em] text-foreground sm:text-lg sm:tracking-[0.08em]">
+              Strip<span className="text-primary">Stream</span>
+            </span>
+            <span className="mt-1 hidden text-[10px] font-medium uppercase tracking-[0.22em] text-muted-foreground sm:inline">
+              comic reader
+            </span>
           </span>
-        </motion.div>
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-          className="relative z-20 mt-auto"
-        >
-          <blockquote className="space-y-2">
-            <p className="text-xl font-light leading-relaxed tracking-wide text-white/80">
-              {t("login.description")}
-            </p>
-          </blockquote>
-        </motion.div>
-      </div>
+        </div>
 
-      <motion.div
-        initial={{ x: 20, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        transition={{ duration: 0.6 }}
-        className="flex items-center justify-center p-6 lg:p-8"
-      >
-        <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
-          <div className="flex flex-col items-center space-y-4 text-center">
-            <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-full bg-surface-2 ring-1 ring-border">
-              <motion.img
-                src="/images/logostripstream.png"
-                alt="StripStream Logo"
-                className="hidden h-full w-full object-cover dark:block"
-                initial={{ scale: 1.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.5 }}
-                whileHover={{ scale: 1.05 }}
-              />
-              <motion.img
-                src="/images/logostripstream-white.png"
-                alt="StripStream Logo"
-                className="h-full w-full object-cover dark:hidden"
-                initial={{ scale: 1.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.5 }}
-                whileHover={{ scale: 1.05 }}
-              />
-            </div>
+        <div className="flex items-center gap-1">
+          <ThemeToggle />
+          <LanguageSelector />
+        </div>
+      </header>
+
+      <div className="mx-auto flex w-full max-w-6xl flex-1 items-start px-4 pb-12 pt-6 sm:px-8 sm:pb-16 lg:items-center lg:py-12">
+        <div className="grid w-full items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)] lg:gap-20">
+          <motion.section className="max-w-xl" {...stagedContent}>
+            <motion.p
+              {...stagedItem}
+              className="flex items-center gap-3 text-[11px] font-medium uppercase tracking-[0.28em] text-primary"
+            >
+              <span aria-hidden className="h-px w-8 bg-primary/60" />
+              {t("login.eyebrow")}
+            </motion.p>
+
             <motion.h1
-              initial={{ y: -20 }}
-              animate={{ y: 0 }}
-              className="font-display text-3xl font-bold tracking-tight"
+              {...stagedItem}
+              className="mt-5 font-display text-4xl font-semibold leading-[0.98] tracking-[-0.045em] sm:text-5xl lg:text-6xl"
             >
               {t("login.title")}
             </motion.h1>
-            <p className="text-sm text-muted-foreground">{t("login.subtitle")}</p>
-          </div>
-          <Tabs defaultValue={defaultTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">{t("login.tabs.login")}</TabsTrigger>
-              <TabsTrigger value="register">{t("login.tabs.register")}</TabsTrigger>
-            </TabsList>
-            <TabsContent value="login" className="mt-6">
-              <LoginForm from={searchParams.from} />
-            </TabsContent>
-            <TabsContent value="register" className="mt-6">
-              <RegisterForm from={searchParams.from} />
-            </TabsContent>
-          </Tabs>
+
+            <motion.p
+              {...stagedItem}
+              className="mt-5 hidden max-w-md text-base leading-relaxed text-muted-foreground sm:block sm:text-lg"
+            >
+              {t("login.description")}
+            </motion.p>
+
+            <motion.p
+              {...stagedItem}
+              className="mt-8 hidden items-center gap-3 text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground/80 sm:flex"
+            >
+              <span aria-hidden className="h-px w-8 bg-border" />
+              Komga <span className="text-primary/70">·</span> Stripstream Librarian
+            </motion.p>
+          </motion.section>
+
+          <motion.div
+            className="w-full max-w-[440px] justify-self-center lg:justify-self-end"
+            initial={reduce ? undefined : { opacity: 0, y: 36 }}
+            animate={reduce ? undefined : { opacity: 1, y: 0 }}
+            transition={
+              reduce ? undefined : { duration: 0.85, ease: EASE_PROJECTION, delay: 0.18 }
+            }
+          >
+            <div className="rounded-2xl bg-surface-1 p-5 ring-1 ring-border/70 sm:p-7">
+              <p className="mb-5 text-sm leading-relaxed text-muted-foreground">
+                {t("login.subtitle")}
+              </p>
+
+              <Tabs defaultValue={defaultTab} className="w-full">
+                <TabsList className="grid h-11 w-full grid-cols-2 rounded-xl bg-surface-2 p-1">
+                  <TabsTrigger value="login" className="gap-2 rounded-lg py-2">
+                    <LogIn aria-hidden className="h-4 w-4" />
+                    {t("login.tabs.login")}
+                  </TabsTrigger>
+                  <TabsTrigger value="register" className="gap-2 rounded-lg py-2">
+                    <UserPlus aria-hidden className="h-4 w-4" />
+                    {t("login.tabs.register")}
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="login" className="mt-5">
+                  <LoginForm from={searchParams.from} />
+                </TabsContent>
+                <TabsContent value="register" className="mt-5">
+                  <RegisterForm from={searchParams.from} />
+                </TabsContent>
+              </Tabs>
+            </div>
+          </motion.div>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }

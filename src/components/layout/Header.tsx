@@ -1,8 +1,8 @@
-import { Menu, Moon, Sun, RefreshCw, Search, EyeOff, Eye } from "lucide-react";
-import { useTheme } from "next-themes";
+import { Menu, RefreshCw, Search, EyeOff, Eye } from "lucide-react";
 import LanguageSelector from "@/components/LanguageSelector";
 import { useTranslation } from "react-i18next";
 import { IconButton } from "@/components/ui/icon-button";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useState } from "react";
 import { GlobalSearch } from "@/components/layout/GlobalSearch";
 import { useAnonymous } from "@/contexts/AnonymousContext";
@@ -20,7 +20,6 @@ export function Header({
   onRefreshBackground,
   showRefreshBackground = false,
 }: HeaderProps) {
-  const { theme, setTheme } = useTheme();
   const { t } = useTranslation();
   const { isAnonymous, toggleAnonymous } = useAnonymous();
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -32,10 +31,6 @@ export function Header({
   useMotionValueEvent(scrollY, "change", (latest) => {
     setIsCondensed(latest > 12);
   });
-
-  const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
-  };
 
   const handleRefreshBackground = async () => {
     if (onRefreshBackground && !isRefreshing) {
@@ -107,18 +102,7 @@ export function Header({
               tooltip={t(isAnonymous ? "header.anonymousModeOn" : "header.anonymousModeOff")}
             />
             <LanguageSelector />
-            <button
-              onClick={toggleTheme}
-              className="rounded-full p-2 transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              aria-label={t("header.toggleTheme")}
-            >
-              <div className="relative flex h-5 w-5 items-center">
-                {/* En Tailwind 4, `rotate-*` pilote la propriété `rotate` (et non `transform`) : la transition doit donc la cibler. */}
-                <Sun className="absolute inset-0 h-[1.2rem] w-[1.2rem] rotate-0 transition-[rotate,opacity] dark:-rotate-90 dark:opacity-0" />
-                <Moon className="absolute inset-0 h-[1.2rem] w-[1.2rem] rotate-90 opacity-0 transition-[rotate,opacity] dark:rotate-0 dark:opacity-100" />
-              </div>
-              <span className="sr-only">{t("header.toggleTheme")}</span>
-            </button>
+            <ThemeToggle />
           </nav>
         </div>
       </div>
