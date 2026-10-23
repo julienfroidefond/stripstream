@@ -7,6 +7,7 @@ import { BookCover } from "../ui/book-cover";
 import { SeriesCover } from "../ui/series-cover";
 import { useTranslate } from "@/hooks/useTranslate";
 import { ScrollContainer } from "@/components/ui/scroll-container";
+import { LoadMoreLabel } from "@/components/ui/load-more-label";
 import { Section } from "@/components/ui/section";
 import { History, Sparkles, Clock, LibraryBig, BookOpen, Heart } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -110,14 +111,20 @@ export function MediaRow({ titleKey, items, iconName, featuredHeader = false, te
                 size="sm"
                 onClick={handleLoadMore}
                 disabled={isPending}
+                aria-busy={isPending}
+                className="disabled:opacity-100"
               >
-                {isPending ? t("navigation.loading") : t("navigation.loadMore")}
+                <LoadMoreLabel
+                  pending={isPending}
+                  label={t("navigation.loadMore")}
+                  loadingLabel={t("navigation.loading")}
+                />
               </Button>
             ) : undefined
           }
         />
       ) : (
-        <StaggerGroup stagger={0.08} effect="deal" amount={0.25}>
+        <StaggerGroup stagger={0.05} effect="deal" amount={0.25}>
           <ScrollContainer
             showArrows={true}
             scrollAmount={400}
@@ -135,9 +142,14 @@ export function MediaRow({ titleKey, items, iconName, featuredHeader = false, te
                   type="button"
                   onClick={handleLoadMore}
                   disabled={isPending}
+                  aria-busy={isPending}
                   className="flex min-h-[282px] w-[150px] items-center justify-center rounded-xl border border-dashed border-border text-sm font-medium text-muted-foreground transition-colors hover:border-primary/60 hover:text-foreground sm:min-h-[300px]"
                 >
-                  {isPending ? t("navigation.loading") : t("navigation.loadMore")}
+                  <LoadMoreLabel
+                  pending={isPending}
+                  label={t("navigation.loadMore")}
+                  loadingLabel={t("navigation.loading")}
+                />
                 </button>
               </StaggerItem>
             )}
@@ -174,29 +186,33 @@ const SeriesMediaCard = memo(function SeriesMediaCard({
   const handleGlow = usePointerGlow(cardRef);
 
   return (
-    <Card
-      ref={cardRef}
-      onMouseMove={handleGlow}
-      onClick={() => onClick(series)}
-      className="group relative flex w-[188px] cursor-pointer flex-col overflow-hidden rounded-xl bg-surface-2 ring-1 ring-border/60 transition-[translate,box-shadow] duration-500 ease-projection hover:-translate-y-2 hover:ring-border sm:w-[200px] motion-reduce:transition-none"
-    >
-      <div className="relative aspect-2/3 overflow-hidden bg-surface-2">
-        <div className="absolute inset-0 transition-transform duration-700 ease-projection group-hover:scale-[1.07] motion-reduce:transition-none">
-          <SeriesCover
-            series={series}
-            alt={`Couverture de ${series.name}`}
-            isAnonymous={isAnonymous}
-          />
+    // Le survol est capté par l'enveloppe fixe : soulever la carte survolée
+    // la ferait sortir de sous le curseur, puis retomber, en boucle.
+    <div className="group/lift">
+      <Card
+        ref={cardRef}
+        onMouseMove={handleGlow}
+        onClick={() => onClick(series)}
+        className="group relative flex w-[188px] cursor-pointer flex-col overflow-hidden rounded-xl bg-surface-2 ring-1 ring-border/60 transition-[translate,box-shadow] duration-500 ease-projection group-hover/lift:-translate-y-2 hover:ring-border sm:w-[200px] motion-reduce:transition-none"
+      >
+        <div className="relative aspect-2/3 overflow-hidden bg-surface-2">
+          <div className="absolute inset-0 transition-transform duration-700 ease-projection group-hover:scale-[1.07] motion-reduce:transition-none">
+            <SeriesCover
+              series={series}
+              alt={`Couverture de ${series.name}`}
+              isAnonymous={isAnonymous}
+            />
+          </div>
+          <div className="absolute inset-0 flex flex-col justify-end bg-linear-to-t from-black/80 via-black/40 to-transparent p-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100">{/* taste-skill-ignore: scrim neutre au-dessus de la couverture */}
+            <h3 className="font-display text-sm font-medium text-white line-clamp-2">{series.name}</h3>
+            <p className="text-xs text-white/80 mt-1">
+              {t("series.books", { count: series.bookCount })}
+            </p>
+          </div>
+          <GlowLayer />
         </div>
-        <div className="absolute inset-0 flex flex-col justify-end bg-linear-to-t from-black/80 via-black/40 to-transparent p-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100">{/* taste-skill-ignore: scrim neutre au-dessus de la couverture */}
-          <h3 className="font-display text-sm font-medium text-white line-clamp-2">{series.name}</h3>
-          <p className="text-xs text-white/80 mt-1">
-            {t("series.books", { count: series.bookCount })}
-          </p>
-        </div>
-        <GlowLayer />
-      </div>
-    </Card>
+      </Card>
+    </div>
   );
 });
 
@@ -213,23 +229,27 @@ const BookMediaCard = memo(function BookMediaCard({
   const title = book.title || (book.number ? t("navigation.volume", { number: book.number }) : "");
 
   return (
-    <Card
-      ref={glowRef}
-      onMouseMove={handleGlow}
-      onClick={() => onClick(book)}
-      className="group relative flex w-[188px] cursor-pointer flex-col overflow-hidden rounded-xl bg-surface-2 ring-1 ring-border/60 transition-[translate,box-shadow] duration-500 ease-projection hover:-translate-y-2 hover:ring-border sm:w-[200px] motion-reduce:transition-none"
-    >
-      <div className="relative aspect-2/3 overflow-hidden bg-surface-2">
-        <div className="absolute inset-0 transition-transform duration-700 ease-projection group-hover:scale-[1.07] motion-reduce:transition-none">
-          <BookCover
-            book={book}
-            alt={`Couverture de ${title}`}
-            showControls={false}
-            overlayVariant="home"
-          />
+    // Le survol est capté par l'enveloppe fixe : soulever la carte survolée
+    // la ferait sortir de sous le curseur, puis retomber, en boucle.
+    <div className="group/lift">
+      <Card
+        ref={glowRef}
+        onMouseMove={handleGlow}
+        onClick={() => onClick(book)}
+        className="group relative flex w-[188px] cursor-pointer flex-col overflow-hidden rounded-xl bg-surface-2 ring-1 ring-border/60 transition-[translate,box-shadow] duration-500 ease-projection group-hover/lift:-translate-y-2 hover:ring-border sm:w-[200px] motion-reduce:transition-none"
+      >
+        <div className="relative aspect-2/3 overflow-hidden bg-surface-2">
+          <div className="absolute inset-0 transition-transform duration-700 ease-projection group-hover:scale-[1.07] motion-reduce:transition-none">
+            <BookCover
+              book={book}
+              alt={`Couverture de ${title}`}
+              showControls={false}
+              overlayVariant="home"
+            />
+          </div>
+          <GlowLayer />
         </div>
-        <GlowLayer />
-      </div>
-    </Card>
+      </Card>
+    </div>
   );
 });

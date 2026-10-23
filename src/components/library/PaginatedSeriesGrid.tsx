@@ -4,7 +4,9 @@ import { SeriesGrid } from "./SeriesGrid";
 import { SeriesList } from "./SeriesList";
 import { Pagination } from "@/components/ui/Pagination";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { useState, useEffect, useCallback } from "react";
+import { cn } from "@/lib/utils";
+import { useGridFlip, useGridFlipPlayback } from "@/components/motion";
+import { useState, useEffect, useCallback, useRef, useTransition } from "react";
 import type { NormalizedSeries } from "@/lib/providers/types";
 import { SearchInput } from "./SearchInput";
 import { useTranslate } from "@/hooks/useTranslate";
@@ -69,8 +71,22 @@ export function PaginatedSeriesGrid({
     }
   }, []);
 
+  // La grille reste en place, atténuée, le temps que la nouvelle page arrive.
+  const [isNavigating, startNavigation] = useTransition();
+  /** Change avec le contenu affiché : la grille est alors remontée. */
+  const gridKey = series.map((item) => item.id).join(",");
+  // Compact, tri, filtres : les cartes glissent vers leur nouvelle place.
+  const gridRef = useRef<HTMLDivElement>(null);
+  const gridFlip = useGridFlip(gridRef);
+  const captureLayout = gridFlip.capture;
+  useGridFlipPlayback(gridFlip, `${isCompact ? "compact" : "full"}:${gridKey}`);
+
   const updateUrlParams = useCallback(
-    async (updates: Record<string, string | null>, replace: boolean = false) => {
+    async (
+      updates: Record<string, string | null>,
+      replace: boolean = false,
+      { dim = true }: { dim?: boolean } = {}
+    ) => {
       const params = new URLSearchParams(searchParams.toString());
 
       Object.entries(updates).forEach(([key, value]) => {
@@ -84,7 +100,11 @@ export function PaginatedSeriesGrid({
       if (replace) {
         await router.replace(`${pathname}?${params.toString()}`, { scroll: false });
       } else {
-        await router.push(`${pathname}?${params.toString()}`, { scroll: false });
+        const navigate = () => router.push(`${pathname}?${params.toString()}`, { scroll: false });
+        // La grille ne s'atténue que si son contenu va être remplacé ; un
+        // changement de mise en page (compact, taille) glisse directement.
+        if (dim) startNavigation(navigate);
+        else navigate();
       }
     },
     [router, pathname, searchParams]
@@ -105,17 +125,19 @@ export function PaginatedSeriesGrid({
   );
 
   const handleUnreadFilter = useCallback(async () => {
+    captureLayout();
     const newUnreadState = !showOnlyUnread;
     setShowOnlyUnread(newUnreadState);
     await updateUrlParams({ page: "1", unread: newUnreadState ? "true" : "false" });
     await persistPreferences({ showOnlyUnread: newUnreadState });
-  }, [showOnlyUnread, updateUrlParams, persistPreferences]);
+  }, [captureLayout, showOnlyUnread, updateUrlParams, persistPreferences]);
 
   const handlePageSizeChange = useCallback(
     async (size: number) => {
+      captureLayout();
       const nextSize = normalizeGridPageSize(size, isCompact);
       setCurrentPageSize(nextSize);
-      await updateUrlParams({ page: "1", size: nextSize.toString() });
+      await updateUrlParams({ page: "1", size: nextSize.toString() }, false, { dim: false });
 
       await persistPreferences({
         displayMode: {
@@ -125,17 +147,18 @@ export function PaginatedSeriesGrid({
         },
       });
     },
-    [isCompact, updateUrlParams, persistPreferences, viewMode]
+    [captureLayout, isCompact, updateUrlParams, persistPreferences, viewMode]
   );
 
   const handleCompactModeToggle = useCallback(
     async (nextCompactMode: boolean) => {
+      captureLayout();
       setIsCompact(nextCompactMode);
       const nextSize = normalizeGridPageSize(effectivePageSize, nextCompactMode);
       setCurrentPageSize(nextSize);
 
       if (nextSize !== effectivePageSize) {
-        await updateUrlParams({ page: "1", size: nextSize.toString() });
+        await updateUrlParams({ page: "1", size: nextSize.toString() }, false, { dim: false });
       }
 
       await persistPreferences({
@@ -146,17 +169,19 @@ export function PaginatedSeriesGrid({
         },
       });
     },
-    [effectivePageSize, updateUrlParams, persistPreferences, viewMode]
+    [captureLayout, effectivePageSize, updateUrlParams, persistPreferences, viewMode]
   );
 
   const handleMissingToggle = useCallback(async () => {
+    captureLayout();
     const next = !showMissing;
     setShowMissing(next);
     await updateUrlParams({ page: "1", missing: next ? "true" : null });
     await persistPreferences({ showMissingBooks: next });
-  }, [showMissing, updateUrlParams, persistPreferences]);
+  }, [captureLayout, showMissing, updateUrlParams, persistPreferences]);
 
   const handleSortToggle = useCallback(async () => {
+    captureLayout();
     // Cycle : title → latest → (community_score si Stripstream) → title
     const nextSort = (() => {
       if (currentSort === "title") return "latest";
@@ -167,7 +192,7 @@ export function PaginatedSeriesGrid({
     setCurrentSort(nextSort);
     await updateUrlParams({ page: "1", sort: nextSort === "title" ? null : nextSort });
     await persistPreferences({ defaultSortOrder: nextSort as "title" | "latest" | "community_score" });
-  }, [currentSort, canSortByRating, updateUrlParams, persistPreferences]);
+  }, [captureLayout, currentSort, canSortByRating, updateUrlParams, persistPreferences]);
 
   const handleViewModeToggle = useCallback(
     async (nextViewMode: "grid" | "list") => {
@@ -246,11 +271,27 @@ export function PaginatedSeriesGrid({
         </div>
       </div>
 
-      {viewMode === "grid" ? (
-        <SeriesGrid series={series} isCompact={isCompact} showRating={currentSort === "community_score"} />
-      ) : (
-        <SeriesList series={series} isCompact={isCompact} />
-      )}
+      {/* Pendant la navigation, la grille s'atténue et recule un peu ; elle est
+          remontée à chaque nouveau contenu, et toutes ses cartes rejouent leur
+          entrée. */}
+      <div
+        ref={gridRef}
+        aria-busy={isNavigating}
+        className={cn(
+          "transition-[opacity,scale] duration-300 ease-projection motion-reduce:transition-none",
+          isNavigating && "pointer-events-none scale-[0.985] opacity-45"
+        )}
+      >
+        {viewMode === "grid" ? (
+          <SeriesGrid
+            series={series}
+            isCompact={isCompact}
+            showRating={currentSort === "community_score"}
+          />
+        ) : (
+          <SeriesList series={series} isCompact={isCompact} />
+        )}
+      </div>
 
       <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
         <p className="text-sm text-muted-foreground order-2 sm:order-1">

@@ -1,7 +1,10 @@
 "use client";
 
+import { useRef } from "react";
 import { RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { pop } from "@/lib/celebrate";
+import { useGsapEffect } from "@/lib/gsap";
 
 interface PullToRefreshIndicatorProps {
   isPulling: boolean;
@@ -27,6 +30,15 @@ export function PullToRefreshIndicator({
   canRefresh,
   isHiding,
 }: PullToRefreshIndicatorProps) {
+  const iconRef = useRef<HTMLDivElement>(null);
+  // Le seuil franchi se sent : l'icône fait un bond, on peut lâcher.
+  useGsapEffect(
+    () => {
+      if (canRefresh && !isRefreshing) pop(iconRef.current, 1.3);
+    },
+    { dependencies: [canRefresh] }
+  );
+
   if (!isPulling && !isRefreshing && !isHiding) return null;
 
   const rotation = progress * 180;
@@ -64,6 +76,7 @@ export function PullToRefreshIndicator({
         {/* Icône centrée */}
         <div className="mt-2 flex justify-center">
           <div
+            ref={iconRef}
             data-testid="pull-to-refresh-icon"
             className={cn(
               "flex h-8 w-8 items-center justify-center rounded-full transition-colors duration-200",

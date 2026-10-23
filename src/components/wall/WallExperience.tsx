@@ -2,14 +2,6 @@
 
 import { useGesture } from "@use-gesture/react";
 import {
-  AnimatePresence,
-  animate,
-  motion,
-  useMotionValue,
-  useMotionValueEvent,
-  useReducedMotion,
-} from "framer-motion";
-import {
   Check,
   LayoutGrid,
   LocateFixed,
@@ -27,7 +19,10 @@ import {
 } from "react";
 import { preload } from "react-dom";
 
-import { EASE_FOCUS, EASE_PROJECTION } from "@/lib/motion";
+import { useCameraStyle, useMotionNumber, useMotionNumberEvent } from "@/lib/motion-value";
+import { usePresence } from "@/components/motion";
+import { gsap } from "@/lib/gsap";
+import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { useTranslate } from "@/hooks/useTranslate";
 import { useUserScope } from "@/contexts/UserScopeContext";
 import { buildStorageKey } from "@/lib/storage";
@@ -267,6 +262,34 @@ function preloadWallCovers(urls: readonly string[]) {
 }
 
 /**
+ * Pose l'affiche visée devant le voile le temps du vol de la caméra et lui
+ * donne un retour tactile : elle s'enfonce comme un bouton pressé, jaillit,
+ * puis se pose avec un rebond. Renvoie la fonction qui la rend au mur.
+ */
+function pressFocusedTile(
+  stage: HTMLElement,
+  tile: WallRenderTile,
+  reduce: boolean
+): (() => void) | null {
+  const focused = stage.querySelector<HTMLElement>(
+    `.wall-tile[data-wall-key="${CSS.escape(tile.key)}"]`
+  );
+  if (!focused) return null;
+  focused.setAttribute("data-focus", "");
+
+  if (!reduce) {
+    gsap.killTweensOf(focused);
+    gsap
+      .timeline({ onComplete: () => gsap.set(focused, { clearProps: "transform" }) })
+      .to(focused, { scale: 0.92, duration: 0.12, ease: "power2.out" })
+      .to(focused, { scale: 1.06, duration: 0.18, ease: "power2.out" })
+      .to(focused, { scale: 1, duration: 0.4, ease: "back.out(2.4)" });
+  }
+
+  return () => focused.removeAttribute("data-focus");
+}
+
+/**
  * Le Wall — surface de jeu.
  *
  * Les séries arrivent entières, la géométrie est calculée ici à partir de la
@@ -277,8 +300,7 @@ function preloadWallCovers(urls: readonly string[]) {
  */
 export function WallExperience({ items }: WallExperienceProps) {
   const { t, currentLanguage } = useTranslate();
-  const prefersReducedMotion = useReducedMotion();
-  const reduce = Boolean(prefersReducedMotion);
+  const reduce = usePrefersReducedMotion();
 
   /**
    * Le préchargement doit partir le plus tôt possible : côté serveur pendant le
@@ -298,6 +320,8 @@ export function WallExperience({ items }: WallExperienceProps) {
   const flashTimerRef = useRef<number | null>(null);
   const entranceTimerRef = useRef<number | null>(null);
   const revealTimerRef = useRef<number | null>(null);
+  /** Rend au mur l'affiche visée par le vol en cours. */
+  const settleFocusRef = useRef<(() => void) | null>(null);
   const panIdleTimerRef = useRef<number | null>(null);
   const cameraRafRef = useRef<number | null>(null);
   // Init paresseuse : `useRef(createWallClickGuardState())` recréerait l'objet
@@ -313,16 +337,22 @@ export function WallExperience({ items }: WallExperienceProps) {
   const cameraRef = useRef<CameraState>({ x: 0, y: 0, scale: 1 });
   const momentumRafRef = useRef<number | null>(null);
 
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-  const scale = useMotionValue(1);
-  const canvasOpacity = useMotionValue(0);
+  // La caméra vit hors de React : les gestes l'écrivent à chaque frame, GSAP
+  // la fait glisser, et `useCameraStyle` la répercute sur le canvas.
+  const x = useMotionNumber(0);
+  const y = useMotionNumber(0);
+  const scale = useMotionNumber(1);
+  const canvasOpacity = useMotionNumber(0);
+  const canvasRef = useRef<HTMLDivElement>(null);
+  useCameraStyle(canvasRef, { x, y, scale, opacity: canvasOpacity });
 
   // Taille du cadre observée, jamais devinée : l'hydratation ne dépend pas
   // d'un `window.innerWidth` divergent entre serveur et client.
   const [viewport, setViewport] = useState<Viewport>({ width: 0, height: 0 });
   const [camera, setCamera] = useState<CameraState>({ x: 0, y: 0, scale: 1 });
   const [active, setActive] = useState<ActivePlaqueState | null>(null);
+  /** Œuvre visée pendant le vol de la caméra, avant que la plaque se pose. */
+  const [focusKey, setFocusKey] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
   const [panning, setPanning] = useState(false);
   const [overview, setOverview] = useState(false);
@@ -591,7 +621,7 @@ export function WallExperience({ items }: WallExperienceProps) {
     }
   }, []);
 
-  useMotionValueEvent(scale, "change", updateZoomLabel);
+  useMotionNumberEvent(scale, updateZoomLabel);
 
   /**
    * La liste des tuiles rendues est recalculée par React, pas à chaque pixel
@@ -634,9 +664,9 @@ export function WallExperience({ items }: WallExperienceProps) {
     });
   }, [syncCamera]);
 
-  useMotionValueEvent(x, "change", scheduleCameraSync);
-  useMotionValueEvent(y, "change", scheduleCameraSync);
-  useMotionValueEvent(scale, "change", scheduleCameraSync);
+  useMotionNumberEvent(x, scheduleCameraSync);
+  useMotionNumberEvent(y, scheduleCameraSync);
+  useMotionNumberEvent(scale, scheduleCameraSync);
 
   /** Toute animation programmée reprend la main : l'inertie s'efface. */
   const stopMomentum = useCallback(() => {
@@ -667,21 +697,13 @@ export function WallExperience({ items }: WallExperienceProps) {
       nextX: number,
       nextY: number,
       duration = 0.8,
-      ease: [number, number, number, number] = EASE_PROJECTION
+      ease = "projection"
     ) => {
       stopMomentum();
-      animate(scale, nextScale, {
-        duration: reduce ? 0 : duration,
-        ease,
-      });
-      animate(x, nextX, {
-        duration: reduce ? 0 : duration,
-        ease,
-      });
-      animate(y, nextY, {
-        duration: reduce ? 0 : duration,
-        ease,
-      });
+      const tween = { duration: reduce ? 0 : duration, ease };
+      scale.animateTo(nextScale, tween);
+      x.animateTo(nextX, tween);
+      y.animateTo(nextY, tween);
     },
     [reduce, scale, stopMomentum, x, y]
   );
@@ -742,7 +764,10 @@ export function WallExperience({ items }: WallExperienceProps) {
 
   const closePlaque = useCallback(() => {
     cancelReveal();
+    settleFocusRef.current?.();
+    settleFocusRef.current = null;
     setActive(null);
+    setFocusKey(null);
   }, [cancelReveal]);
 
   const clearFlash = useCallback(() => {
@@ -808,8 +833,15 @@ export function WallExperience({ items }: WallExperienceProps) {
       const nextY =
         target.top + target.height / 2 - (tile.y + tile.height / 2) * nextScale;
 
-      animateView(nextScale, nextX, nextY, duration, EASE_FOCUS);
+      animateView(nextScale, nextX, nextY, duration, "focus");
       setOverview(false);
+      // La salle reste éteinte pendant tout le vol : le voile ne se rallume
+      // pas quand la caméra part, il attend la plaque (`data-plaque`).
+      setFocusKey(tile.key);
+
+      // L'affiche visée passe devant le voile pendant le vol et répond au clic.
+      settleFocusRef.current?.();
+      settleFocusRef.current = pressFocusedTile(stage, tile, reduce);
 
       let anchor: WallPlaqueAnchor | null = null;
       if (mode === "anchor") {
@@ -848,6 +880,9 @@ export function WallExperience({ items }: WallExperienceProps) {
       const delay = reduce ? 0 : Math.max(300, duration * 1000 - 300);
       revealTimerRef.current = window.setTimeout(() => {
         revealTimerRef.current = null;
+        settleFocusRef.current?.();
+        settleFocusRef.current = null;
+        setFocusKey(null);
         setActive({
           key: tile.key,
           index: tile.itemIndex,
@@ -1198,19 +1233,28 @@ export function WallExperience({ items }: WallExperienceProps) {
       viewport.width / 2 - (WALL_PATCH_WIDTH / 2) * nextScale;
     const nextY =
       viewport.height / 2 - (WALL_PATCH_HEIGHT / 2) * nextScale;
-    scale.set(nextScale);
-    x.set(nextX);
-    y.set(nextY);
-    updateZoomLabel(nextScale);
-    syncCamera(true);
-
     if (reduce) {
+      scale.set(nextScale);
+      x.set(nextX);
+      y.set(nextY);
+      updateZoomLabel(nextScale);
+      syncCamera(true);
       canvasOpacity.set(1);
     } else {
-      animate(canvasOpacity, 1, {
-        duration: 0.7,
-        ease: EASE_PROJECTION,
-      });
+      // Travelling d'arrivée : la caméra part plus loin du mur et avance
+      // jusqu'au cadrage, centre fixe. Comme le centre dépend linéairement de
+      // l'échelle, interpoler x, y et l'échelle sur la même courbe le garde.
+      const fromScale = nextScale * 0.72;
+      scale.set(fromScale);
+      x.set(viewport.width / 2 - (WALL_PATCH_WIDTH / 2) * fromScale);
+      y.set(viewport.height / 2 - (WALL_PATCH_HEIGHT / 2) * fromScale);
+      updateZoomLabel(fromScale);
+      syncCamera(true);
+      const dolly = { duration: 1.3, ease: "focus" };
+      scale.animateTo(nextScale, dolly);
+      x.animateTo(nextX, dolly);
+      y.animateTo(nextY, dolly);
+      canvasOpacity.animateTo(1, { duration: 0.7 });
     }
   }, [
     canvasOpacity,
@@ -1531,6 +1575,61 @@ export function WallExperience({ items }: WallExperienceProps) {
     return { mode: "anchor", anchor: active.anchor };
   }, [active]);
 
+  /**
+   * Dernière plaque affichée : elle reste montée pendant sa sortie. Une autre
+   * œuvre la remplace (nouvelle clé) et joue sa propre entrée.
+   */
+  const [plaque, setPlaque] = useState<{
+    item: WallItem;
+    placement: WallPlaquePlacement;
+  } | null>(null);
+  if (
+    activeItem &&
+    placement &&
+    (plaque?.item !== activeItem || plaque.placement !== placement)
+  ) {
+    setPlaque({ item: activeItem, placement });
+  }
+
+  const scrimRef = useRef<HTMLButtonElement>(null);
+  const scrimRendered = usePresence(filtersOpen, scrimRef, {
+    enter: (timeline, scrim) => {
+      timeline.fromTo(scrim, { opacity: 0 }, { opacity: 1, duration: 0.25 });
+    },
+    exit: (timeline, scrim) => {
+      timeline.to(scrim, { opacity: 0, duration: 0.2 });
+    },
+  });
+
+  // Le panneau de filtres bascule vers le spectateur depuis son bord bas.
+  const filtersRef = useRef<HTMLDivElement>(null);
+  const filtersRendered = usePresence(filtersOpen, filtersRef, {
+    enter: (timeline, panel, still) => {
+      timeline.fromTo(
+        panel,
+        still
+          ? { opacity: 0 }
+          : {
+              opacity: 0,
+              y: 18,
+              rotateX: 24,
+              scale: 0.94,
+              transformPerspective: 900,
+              transformOrigin: "100% 100%",
+            },
+        { opacity: 1, y: 0, rotateX: 0, scale: 1, duration: still ? 0.15 : 0.4, ease: "back.out(1.6)" }
+      );
+    },
+    exit: (timeline, panel, still) => {
+      timeline.to(
+        panel,
+        still
+          ? { opacity: 0, duration: 0.15 }
+          : { opacity: 0, y: 10, rotateX: 14, scale: 0.97, duration: 0.2, ease: "power2.in" }
+      );
+    },
+  });
+
   const handleClickCapture = (event: React.MouseEvent<HTMLDivElement>) => {
     if (isWallClickGuarded(clickGuard, performance.now())) {
       event.preventDefault();
@@ -1559,6 +1658,7 @@ export function WallExperience({ items }: WallExperienceProps) {
         data-dragging={dragging || undefined}
         data-panning={panning || dragging || undefined}
         data-plaque={active ? true : undefined}
+        data-focusing={focusKey ? true : undefined}
         data-sheet={active?.mode === "sheet" || undefined}
         className={cn(
           "wall-stage absolute inset-0 touch-pan-y select-none",
@@ -1567,16 +1667,10 @@ export function WallExperience({ items }: WallExperienceProps) {
         onClickCapture={handleClickCapture}
         onDoubleClick={handleDoubleClick}
       >
-        <motion.div
+        <div
+          ref={canvasRef}
           className="wall-canvas absolute left-0 top-0 origin-top-left [touch-action:none]"
-          style={{
-            width: layout.width,
-            height: layout.height,
-            x,
-            y,
-            scale,
-            opacity: canvasOpacity,
-          }}
+          style={{ width: layout.width, height: layout.height }}
         >
           {visibleTiles.map((tile) => {
             const item = visibleItems[tile.itemIndex];
@@ -1611,7 +1705,7 @@ export function WallExperience({ items }: WallExperienceProps) {
             }
             aria-hidden
           />
-        </motion.div>
+        </div>
 
         <div
           className="wall-vignette pointer-events-none absolute inset-0"
@@ -1666,23 +1760,17 @@ export function WallExperience({ items }: WallExperienceProps) {
           </div>
         )}
 
-        <AnimatePresence>
-          {filtersOpen && (
-            <motion.button
-              key="wall-filter-scrim"
-              type="button"
-              data-wall-ui="scrim"
-              tabIndex={-1}
-              aria-label={t("wall.filters.close")}
-              className="wall-filter-scrim absolute inset-0 z-20"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: reduce ? 0 : 0.25 }}
-              onClick={() => setFiltersOpen(false)}
-            />
-          )}
-        </AnimatePresence>
+        {scrimRendered && (
+          <button
+            ref={scrimRef}
+            type="button"
+            data-wall-ui="scrim"
+            tabIndex={-1}
+            aria-label={t("wall.filters.close")}
+            className="wall-filter-scrim absolute inset-0 z-20"
+            onClick={() => setFiltersOpen(false)}
+          />
+        )}
 
         <div
           data-wall-ui
@@ -1725,142 +1813,131 @@ export function WallExperience({ items }: WallExperienceProps) {
           className="wall-actions absolute bottom-4 right-4 z-30 flex items-center gap-1 sm:bottom-6 sm:right-6"
         >
           <div className="wall-filter">
-            <AnimatePresence>
-              {filtersOpen && (
-                <motion.div
-                  key="wall-filters"
-                  className="wall-filters"
-                  role="group"
-                  aria-label={t("wall.filters.label")}
-                  initial={reduce ? false : { opacity: 0, y: 10, scale: 0.98 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={
-                    reduce ? { opacity: 0 } : { opacity: 0, y: 8, scale: 0.98 }
-                  }
-                  transition={{
-                    duration: reduce ? 0 : 0.26,
-                    ease: EASE_PROJECTION,
-                  }}
-                >
-                  <div className="wall-filters-head">
-                    <div className="min-w-0">
-                      <p className="wall-filters-title">
-                        {t("wall.filters.title")}
-                      </p>
-                      <p className="wall-filters-meta">
-                        {t("wall.filters.meta", { count: libraries.length })}
-                      </p>
-                    </div>
-                    {(selectedLibraries.size > 0 || hideRead) && (
-                      <button
-                        type="button"
-                        className="wall-filters-clear"
-                        onClick={showAllItems}
-                      >
-                        {t("wall.filters.clear")}
-                      </button>
-                    )}
+            {filtersRendered && (
+              <div
+                ref={filtersRef}
+                className="wall-filters"
+                role="group"
+                aria-label={t("wall.filters.label")}
+              >
+                <div className="wall-filters-head">
+                  <div className="min-w-0">
+                    <p className="wall-filters-title">
+                      {t("wall.filters.title")}
+                    </p>
+                    <p className="wall-filters-meta">
+                      {t("wall.filters.meta", { count: libraries.length })}
+                    </p>
                   </div>
-
-                  <p className="wall-filters-hint">
-                    {t("wall.filters.hint")}
-                  </p>
-
-                  <button
-                    type="button"
-                    data-testid="wall-filter-hide-read"
-                    className={cn("wall-filter-row", hideRead && "is-active")}
-                    aria-pressed={hideRead}
-                    onClick={toggleHideRead}
-                  >
-                    <span
-                      className={cn("wall-filter-check", hideRead && "is-on")}
-                      aria-hidden
-                    >
-                      {hideRead && <Check className="h-3 w-3" strokeWidth={3} />}
-                    </span>
-                    <span className="wall-filter-name">
-                      {t("wall.filters.hideRead")}
-                    </span>
-                    <span
-                      className="wall-filter-count"
-                      data-testid="wall-filter-hide-read-count"
-                    >
-                      {t("wall.filters.completed", { count: completedCount })}
-                    </span>
-                  </button>
-
-                  <div
-                    className="wall-filters-list"
-                    role="group"
-                    aria-label={t("wall.filters.librariesLabel")}
-                  >
+                  {(selectedLibraries.size > 0 || hideRead) && (
                     <button
                       type="button"
-                      className={cn(
-                        "wall-filter-row",
-                        selectedLibraries.size === 0 && "is-active"
-                      )}
-                      aria-pressed={selectedLibraries.size === 0}
-                      onClick={showAllLibraries}
+                      className="wall-filters-clear"
+                      onClick={showAllItems}
                     >
-                      <span
-                        className={cn(
-                          "wall-filter-check",
-                          selectedLibraries.size === 0 && "is-on"
-                        )}
-                        aria-hidden
-                      >
-                        {selectedLibraries.size === 0 && (
-                          <Check className="h-3 w-3" strokeWidth={3} />
-                        )}
-                      </span>
-                      <span className="wall-filter-name">
-                        {t("wall.filters.all")}
-                      </span>
-                      <span className="wall-filter-count">{items.length}</span>
+                      {t("wall.filters.clear")}
                     </button>
+                  )}
+                </div>
 
-                    {libraries.map((library) => {
-                      const on = selectedLibraries.has(library.name);
-                      return (
-                        <button
-                          key={library.name}
-                          type="button"
+                <p className="wall-filters-hint">
+                  {t("wall.filters.hint")}
+                </p>
+
+                <button
+                  type="button"
+                  data-testid="wall-filter-hide-read"
+                  className={cn("wall-filter-row", hideRead && "is-active")}
+                  aria-pressed={hideRead}
+                  onClick={toggleHideRead}
+                >
+                  <span
+                    className={cn("wall-filter-check", hideRead && "is-on")}
+                    aria-hidden
+                  >
+                    {hideRead && <Check className="h-3 w-3" strokeWidth={3} />}
+                  </span>
+                  <span className="wall-filter-name">
+                    {t("wall.filters.hideRead")}
+                  </span>
+                  <span
+                    className="wall-filter-count"
+                    data-testid="wall-filter-hide-read-count"
+                  >
+                    {t("wall.filters.completed", { count: completedCount })}
+                  </span>
+                </button>
+
+                <div
+                  className="wall-filters-list"
+                  role="group"
+                  aria-label={t("wall.filters.librariesLabel")}
+                >
+                  <button
+                    type="button"
+                    className={cn(
+                      "wall-filter-row",
+                      selectedLibraries.size === 0 && "is-active"
+                    )}
+                    aria-pressed={selectedLibraries.size === 0}
+                    onClick={showAllLibraries}
+                  >
+                    <span
+                      className={cn(
+                        "wall-filter-check",
+                        selectedLibraries.size === 0 && "is-on"
+                      )}
+                      aria-hidden
+                    >
+                      {selectedLibraries.size === 0 && (
+                        <Check className="h-3 w-3" strokeWidth={3} />
+                      )}
+                    </span>
+                    <span className="wall-filter-name">
+                      {t("wall.filters.all")}
+                    </span>
+                    <span className="wall-filter-count">{items.length}</span>
+                  </button>
+
+                  {libraries.map((library) => {
+                    const on = selectedLibraries.has(library.name);
+                    return (
+                      <button
+                        key={library.name}
+                        type="button"
+                        className={cn(
+                          "wall-filter-row",
+                          on && "is-active"
+                        )}
+                        aria-pressed={on}
+                        onClick={() => toggleLibrary(library.name)}
+                      >
+                        <span
                           className={cn(
-                            "wall-filter-row",
-                            on && "is-active"
+                            "wall-filter-check",
+                            on && "is-on"
                           )}
-                          aria-pressed={on}
-                          onClick={() => toggleLibrary(library.name)}
+                          aria-hidden
                         >
-                          <span
-                            className={cn(
-                              "wall-filter-check",
-                              on && "is-on"
-                            )}
-                            aria-hidden
-                          >
-                            {on && (
-                              <Check className="h-3 w-3" strokeWidth={3} />
-                            )}
-                          </span>
-                          <span
-                            className="wall-filter-name"
-                            title={library.name}
-                          >
-                            {library.name}
-                          </span>
-                          <span className="wall-filter-count">
-                            {library.count}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                          {on && (
+                            <Check className="h-3 w-3" strokeWidth={3} />
+                          )}
+                        </span>
+                        <span
+                          className="wall-filter-name"
+                          title={library.name}
+                        >
+                          {library.name}
+                        </span>
+                        <span className="wall-filter-count">
+                          {library.count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             <button
               type="button"
@@ -1934,17 +2011,15 @@ export function WallExperience({ items }: WallExperienceProps) {
           </p>
         )}
 
-        <AnimatePresence initial={false}>
-          {activeItem && placement && (
-            <WallPlaque
-              key={`${activeItem.id}:${placement.mode}`}
-              item={activeItem}
-              placement={placement}
-              reduce={reduce}
-              onClose={closePlaque}
-            />
-          )}
-        </AnimatePresence>
+        {plaque && (
+          <WallPlaque
+            key={`${plaque.item.id}:${plaque.placement.mode}`}
+            open={Boolean(activeItem && placement)}
+            item={plaque.item}
+            placement={plaque.placement}
+            onClose={closePlaque}
+          />
+        )}
       </div>
     </WallFrame>
   );

@@ -71,7 +71,9 @@ const BookCard = memo(function BookCard({ book, onBookClick, onSuccess }: BookCa
       ref={cardRef}
       onMouseMove={handleGlow}
       className={cn(
-        "group relative aspect-2/3 overflow-hidden rounded-lg bg-muted"
+        // `isolate` : les z-index internes (bouton de téléchargement) restent
+        // dans la carte et ne passent jamais devant le menu latéral.
+        "group relative isolate aspect-2/3 overflow-hidden rounded-lg bg-muted"
       )}
     >
       <div

@@ -2,6 +2,7 @@
 
 import { BookCheck, Loader2 } from "lucide-react";
 import { Button } from "./button";
+import { burst, pop } from "@/lib/celebrate";
 import { useToast } from "./use-toast";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -29,6 +30,8 @@ export function MarkAsReadButton({
 
   const handleMarkAsRead = async (e: React.MouseEvent) => {
     e.stopPropagation(); // Empêcher la propagation au parent
+    const button = e.currentTarget;
+    let succeeded = false;
     setIsLoading(true);
     try {
       const result = await updateReadProgress(bookId, pagesCount, true);
@@ -41,6 +44,7 @@ export function MarkAsReadButton({
         title: t("books.actions.markAsRead.success.title"),
         description: t("books.actions.markAsRead.success.description"),
       });
+      succeeded = true;
       onSuccess?.();
     } catch (error) {
       logger.error({ err: error }, "Erreur lors de la mise à jour du progresseur de lecture:");
@@ -51,6 +55,13 @@ export function MarkAsReadButton({
       });
     } finally {
       setIsLoading(false);
+      // L'icône revient à la place du spinner au rendu suivant : on l'anime après.
+      if (succeeded) {
+        requestAnimationFrame(() => {
+          pop(button.querySelector("svg"), 1.5);
+          burst(button);
+        });
+      }
     }
   };
 

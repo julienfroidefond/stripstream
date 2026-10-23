@@ -3,10 +3,9 @@ import { useTheme } from "next-themes";
 import LanguageSelector from "@/components/LanguageSelector";
 import { useTranslation } from "react-i18next";
 import { IconButton } from "@/components/ui/icon-button";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { GlobalSearch } from "@/components/layout/GlobalSearch";
 import { useAnonymous } from "@/contexts/AnonymousContext";
-import { useMotionValueEvent, useScroll } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 interface HeaderProps {
@@ -26,12 +25,13 @@ export function Header({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [isCondensed, setIsCondensed] = useState(false);
-  const { scrollY } = useScroll();
-
   // La barre se resserre dès que la page défile : elle rend de la place au contenu.
-  useMotionValueEvent(scrollY, "change", (latest) => {
-    setIsCondensed(latest > 12);
-  });
+  useEffect(() => {
+    const update = () => setIsCondensed(window.scrollY > 12);
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    return () => window.removeEventListener("scroll", update);
+  }, []);
 
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark");

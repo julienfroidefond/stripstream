@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { signIn } from "next-auth/react";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
+import { shake } from "@/lib/celebrate";
+import { useGsapEffect } from "@/lib/gsap";
 import { useTranslate } from "@/hooks/useTranslate";
 import type { AppErrorType } from "@/types/global";
 import { Input } from "@/components/ui/input";
@@ -17,6 +19,14 @@ interface RegisterFormProps {
 export function RegisterForm({ from }: RegisterFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<AppErrorType | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+  // Une erreur fait secouer la tête au formulaire.
+  useGsapEffect(
+    () => {
+      if (error) shake(formRef.current);
+    },
+    { dependencies: [error] }
+  );
   const { t } = useTranslate();
 
   const getSafeRedirectPath = (path?: string) => {
@@ -89,7 +99,7 @@ export function RegisterForm({ from }: RegisterFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="email">{t("login.form.email")}</Label>
         <Input id="email" name="email" type="email" autoComplete="email" required />

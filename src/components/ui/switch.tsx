@@ -36,10 +36,14 @@ const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(
           aria-checked={checked ?? defaultChecked ?? false}
           {...props}
         />
+        {/* Le curseur glisse sur un ressort et s'étire pendant l'appui, du côté
+            opposé à sa destination (origine à gauche quand il part à droite). */}
         <span
           className={cn(
-            "pointer-events-none absolute left-0.5 h-5 w-5 rounded-full bg-background ring-0 transition-transform",
-            "peer-checked:translate-x-[20px]"
+            "pointer-events-none absolute left-0.5 h-5 w-5 rounded-full bg-background ring-0",
+            "origin-left transition-[translate,scale] duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]",
+            "peer-checked:origin-right peer-checked:translate-x-[20px] peer-active:scale-x-[1.25]",
+            "motion-reduce:transition-none"
           )}
         />
       </div>

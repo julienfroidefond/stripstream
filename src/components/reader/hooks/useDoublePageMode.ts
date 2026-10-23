@@ -23,12 +23,12 @@ export function useDoublePageMode(initial = false) {
   );
 
   const toggleDoublePage = useCallback(() => {
-    setIsDoublePage((prev) => {
-      const next = !prev;
-      updatePreferences({ readerDoublePageMode: next }).catch((_err: unknown) => undefined);
-      return next;
-    });
-  }, []);
+    // La server action reste hors de l'updater : React l'exécute pendant le
+    // rendu, et l'action met à jour le routeur.
+    const next = !isDoublePage;
+    setIsDoublePage(next);
+    updatePreferences({ readerDoublePageMode: next }).catch((_err: unknown) => undefined);
+  }, [isDoublePage]);
 
   return {
     isDoublePage,
