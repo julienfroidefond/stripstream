@@ -126,7 +126,7 @@ export function InstallPWA() {
       className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 z-50"
       data-testid="pwa-install-banner"
     >
-      <div className="bg-card border border-border shadow-lg rounded-lg p-4 max-w-sm mx-auto sm:mx-0">{/* taste-skill-ignore: bannière flottante (overlay) */}
+      <div className="bg-card border border-border shadow-lg rounded-lg p-4 max-w-sm mx-auto sm:mx-0 motion-safe:animate-rise-in">{/* taste-skill-ignore: bannière flottante (overlay) */}
         <div className="flex items-start gap-4">
           <Download className="h-6 w-6 shrink-0 text-primary" />
           <div className="flex-1">
