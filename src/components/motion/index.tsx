@@ -538,60 +538,6 @@ export function ScrollProgress() {
 }
 
 /* -------------------------------------------------------------------------
- * playGridExit — les cartes d'une grille quittent la scène avant un
- * changement de page, de tri ou de filtre.
- *
- * `container` enveloppe la grille : ses cartes sont les enfants de son premier
- * enfant. Seules les cartes à l'écran jouent la sortie (rapide, en cascade) ;
- * les autres s'éteignent d'un coup. La promesse se résout à la fin, l'appelant
- * navigue alors. Si la grille n'a pas été remplacée au bout de quelques
- * secondes (même résultat, navigation annulée), les cartes reviennent.
- * ---------------------------------------------------------------------- */
-
-const GRID_EXIT_RESTORE = 2.5;
-
-export function playGridExit(container: HTMLElement | null): Promise<void> {
-  const grid = container?.firstElementChild;
-  const cards = grid ? (Array.from(grid.children) as HTMLElement[]) : [];
-  if (cards.length === 0 || prefersReducedMotion()) return Promise.resolve();
-
-  const visible = cards.filter((card) => {
-    const rect = card.getBoundingClientRect();
-    return rect.bottom > 0 && rect.top < window.innerHeight;
-  });
-  gsap.set(
-    cards.filter((card) => !visible.includes(card)),
-    { opacity: 0 }
-  );
-
-  gsap.delayedCall(GRID_EXIT_RESTORE, () => {
-    const remaining = cards.filter((card) => card.isConnected);
-    if (remaining.length === 0) return;
-    gsap.to(remaining, {
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      duration: 0.3,
-      ease: "projection",
-      clearProps: "opacity,transform",
-    });
-  });
-
-  return new Promise((resolve) => {
-    gsap.to(visible, {
-      opacity: 0,
-      y: 18,
-      scale: 0.94,
-      duration: 0.22,
-      stagger: 0.012,
-      ease: "power2.in",
-      overwrite: "auto",
-      onComplete: () => resolve(),
-    });
-  });
-}
-
-/* -------------------------------------------------------------------------
  * useBannerScene — un bandeau d'en-tête (bibliothèque, série) entre en scène
  * puis quitte la scène au défilement.
  *

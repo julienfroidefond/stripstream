@@ -4,8 +4,8 @@ import { SeriesGrid } from "./SeriesGrid";
 import { SeriesList } from "./SeriesList";
 import { Pagination } from "@/components/ui/Pagination";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { useState, useEffect, useCallback, useRef } from "react";
-import { playGridExit } from "@/components/motion";
+import { cn } from "@/lib/utils";
+import { useState, useEffect, useCallback, useTransition } from "react";
 import type { NormalizedSeries } from "@/lib/providers/types";
 import { SearchInput } from "./SearchInput";
 import { useTranslate } from "@/hooks/useTranslate";
@@ -70,7 +70,8 @@ export function PaginatedSeriesGrid({
     }
   }, []);
 
-  const gridRef = useRef<HTMLDivElement>(null);
+  // La grille reste en place, atténuée, le temps que la nouvelle page arrive.
+  const [isNavigating, startNavigation] = useTransition();
   /** Change avec le contenu affiché : la grille est alors remontée. */
   const gridKey = series.map((item) => item.id).join(",");
 
@@ -89,9 +90,9 @@ export function PaginatedSeriesGrid({
       if (replace) {
         await router.replace(`${pathname}?${params.toString()}`, { scroll: false });
       } else {
-        // Les cartes quittent la scène avant que la nouvelle page arrive.
-        await playGridExit(gridRef.current);
-        await router.push(`${pathname}?${params.toString()}`, { scroll: false });
+        startNavigation(() => {
+          router.push(`${pathname}?${params.toString()}`, { scroll: false });
+        });
       }
     },
     [router, pathname, searchParams]
@@ -253,9 +254,16 @@ export function PaginatedSeriesGrid({
         </div>
       </div>
 
-      {/* La grille est remontée à chaque nouveau contenu : toutes les cartes
-          rejouent leur entrée après la sortie jouée avant la navigation. */}
-      <div ref={gridRef}>
+      {/* Pendant la navigation, la grille s'atténue et recule un peu ; elle est
+          remontée à chaque nouveau contenu, et toutes ses cartes rejouent leur
+          entrée. */}
+      <div
+        aria-busy={isNavigating}
+        className={cn(
+          "transition-[opacity,scale] duration-300 ease-projection motion-reduce:transition-none",
+          isNavigating && "pointer-events-none scale-[0.985] opacity-45"
+        )}
+      >
         {viewMode === "grid" ? (
           <SeriesGrid
             key={gridKey}
