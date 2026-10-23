@@ -215,12 +215,13 @@ export function PaginatedBookGrid({
 
   const toggleHideMissing = useCallback(() => {
     captureLayout();
-    setHideMissing((prev) => {
-      const next = !prev;
-      updatePreferences({ hideMissingBooks: next }).catch((_err: unknown) => undefined);
-      return next;
-    });
-  }, [captureLayout, updatePreferences]);
+    const next = !hideMissing;
+    setHideMissing(next);
+    // Hors de l'updater de `setHideMissing` : React l'exécute pendant le rendu,
+    // et la server action met à jour le routeur (« Cannot update a component
+    // while rendering a different component »).
+    updatePreferences({ hideMissingBooks: next }).catch((_err: unknown) => undefined);
+  }, [captureLayout, hideMissing, updatePreferences]);
 
   // Calculate start and end indices for display
   const startIndex = (currentPage - 1) * effectivePageSize + 1;
