@@ -1,10 +1,8 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
 import { gsap, prefersReducedMotion, ScrollTrigger, SplitText, useGSAP } from "@/lib/gsap";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import {
-  Fragment,
   createContext,
   useCallback,
   useContext,
@@ -18,7 +16,6 @@ import {
   type RefObject,
 } from "react";
 import { cn } from "@/lib/utils";
-import { maskUp, staggerContainer } from "@/lib/motion";
 
 /** Seuil de déclenchement d'une révélation au défilement. */
 type ViewportAmount = number | "some" | "all";
@@ -542,48 +539,6 @@ export function ScrollProgress() {
 }
 
 /* -------------------------------------------------------------------------
- * SplitWords — un titre dont chaque mot sort de son masque, l'un après l'autre.
- *
- * Le composant est un enfant de variantes : il hérite de l'état
- * hidden/visible de son parent et déroule sa propre cascade. Sans animation,
- * le texte est simplement là.
- * ---------------------------------------------------------------------- */
-
-interface SplitWordsProps {
-  text: string;
-  /** Cadence mot à mot. */
-  stagger?: number;
-}
-
-const splitWordsContainer = staggerContainer(0.07, 0);
-
-export function SplitWords({ text, stagger }: SplitWordsProps) {
-  const reduce = useReducedMotion();
-  const variants = useMemo(
-    () => (stagger === undefined ? splitWordsContainer : staggerContainer(stagger, 0)),
-    [stagger]
-  );
-
-  if (reduce) return <>{text}</>;
-
-  const words = text.split(" ");
-  return (
-    <motion.span variants={variants} className="inline">
-      {words.map((word, index) => (
-        <Fragment key={`${word}-${index}`}>
-          <span className="-mb-[0.12em] inline-block overflow-hidden pb-[0.12em] align-bottom">
-            <motion.span variants={maskUp} className="inline-block will-change-transform">
-              {word}
-            </motion.span>
-          </span>
-          {index < words.length - 1 ? " " : null}
-        </Fragment>
-      ))}
-    </motion.span>
-  );
-}
-
-/* -------------------------------------------------------------------------
  * useBannerScene — un bandeau d'en-tête (bibliothèque, série) entre en scène
  * puis quitte la scène au défilement.
  *
@@ -719,4 +674,56 @@ export function useBannerScene(ref: RefObject<HTMLElement | null>) {
     },
     { scope: ref, dependencies: [reduce] }
   );
+}
+
+/* -------------------------------------------------------------------------
+ * usePresence — garde un élément monté le temps de sa sortie.
+ *
+ * Remplace `AnimatePresence` : l'élément est rendu tant que `show` est vrai
+ * ou que sa sortie joue. `enter` / `exit` remplissent la timeline ; `still`
+ * vaut vrai sous `prefers-reduced-motion`, à charge pour eux de se réduire à
+ * un fondu. Rendre l'élément si et seulement si la valeur renvoyée est vraie.
+ * ---------------------------------------------------------------------- */
+
+type PresenceStep = (timeline: gsap.core.Timeline, element: HTMLElement, still: boolean) => void;
+
+export function usePresence(
+  show: boolean,
+  ref: RefObject<HTMLElement | null>,
+  steps: { enter: PresenceStep; exit: PresenceStep }
+): boolean {
+  const [rendered, setRendered] = useState(show);
+  // Dérivé de `show` pendant le rendu : l'élément est présent dès la frame
+  // où il doit entrer, sans attendre un effet.
+  if (show && !rendered) setRendered(true);
+
+  const stepsRef = useRef(steps);
+  useEffect(() => {
+    stepsRef.current = steps;
+  });
+
+  useGSAP(
+    () => {
+      const element = ref.current;
+      if (!element || !rendered) return;
+      const still = prefersReducedMotion();
+      const timeline = gsap.timeline({ defaults: { ease: "projection" } });
+
+      if (show) {
+        stepsRef.current.enter(timeline, element, still);
+      } else {
+        stepsRef.current.exit(timeline, element, still);
+        if (timeline.duration() === 0) {
+          setRendered(false);
+        } else {
+          timeline.eventCallback("onComplete", () => setRendered(false));
+        }
+      }
+
+      return () => timeline.kill();
+    },
+    { dependencies: [show, rendered] }
+  );
+
+  return rendered;
 }
