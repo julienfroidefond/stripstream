@@ -5,8 +5,8 @@
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0F0C0C",
-  "theme_color": "#100E0D",
+  "background_color": "#100F0E",
+  "theme_color": "#100F0E",
   "categories": ["books", "entertainment", "reading"],
   "icons": [
     {
