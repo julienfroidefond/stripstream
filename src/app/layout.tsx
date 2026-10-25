@@ -16,6 +16,7 @@ import { SidebarFavorites } from "@/components/layout/SidebarFavorites";
 import { SidebarLibraries } from "@/components/layout/SidebarLibraries";
 import { SidebarConnections } from "@/components/layout/SidebarConnections";
 import { SidebarSectionSkeleton } from "@/components/layout/SidebarSectionSkeleton";
+import { SPLASH_SCREENS } from "@/constants/splashScreens";
 
 const geist = Geist({
   subsets: ["latin"],
@@ -101,11 +102,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <meta name="theme-color" content="#100E0D" media="(prefers-color-scheme: dark)" />
         <meta name="msapplication-TileColor" content="#0E7C86" />
         <meta name="msapplication-tap-highlight" content="no" />
-        <link
-          rel="apple-touch-startup-image"
-          href="/images/splash/splash-2048x2732.png"
-          media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
-        />
+        {SPLASH_SCREENS.map((screen) => (
+          <link
+            key={screen.href}
+            rel="apple-touch-startup-image"
+            href={screen.href}
+            media={screen.media}
+          />
+        ))}
       </head>
       <body
         className={cn(

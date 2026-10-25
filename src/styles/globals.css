@@ -37,9 +37,12 @@ body.no-pinch-zoom .wall-canvas * {
   hydratation : le contenu ne saute donc pas d'un état final à un état de
   départ. Chaque animation GSAP retire son attribut à la fin ; sans JavaScript,
   les media queries ci-dessous rendent tout visible.
+
+  La route fait exception : elle n'attend que sa translation, jamais son
+  opacité. Sur une PWA iOS lente, le squelette streamé doit rester visible sous
+  le header au lieu de laisser une zone vide avant l'hydratation.
 */
 [data-route-enter] {
-  opacity: 0;
   transform: translateY(16px);
 }
 
