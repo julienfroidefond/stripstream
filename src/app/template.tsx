@@ -40,7 +40,6 @@ export default function Template({ children }: { children: ReactNode }) {
       });
 
       timeline.to(element, {
-        opacity: 1,
         y: 0,
         duration: 0.4,
         ease: "projection",
