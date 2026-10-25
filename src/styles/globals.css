@@ -597,7 +597,7 @@ body.no-pinch-zoom .wall-canvas * {
   :root {
     /* Papier chaud */
     --background: 40 24% 96%;
-    --background-rgb: 247, 244, 239;
+    --background-rgb: 247, 246, 242;
     --foreground: 25 12% 11%;
 
     --card: 40 30% 99%;
@@ -648,7 +648,7 @@ body.no-pinch-zoom .wall-canvas * {
   .dark {
     /* Encre chaude, jamais #000 */
     --background: 30 7% 6%;
-    --background-rgb: 16, 14, 13;
+    --background-rgb: 16, 15, 14;
     --foreground: 40 14% 95%;
 
     --card: 30 6% 9%;

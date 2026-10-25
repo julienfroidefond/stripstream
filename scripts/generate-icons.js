@@ -3,13 +3,17 @@ const fs = require("fs").promises;
 const path = require("path");
 
 const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
-// Un seul logo pour les icônes d'app et les splash screens : la version sombre
-// (fond noir), qui s'accorde avec le thème sombre du reader et la plupart des
-// écrans d'accueil ; la monochrome reste dédiée au favicon, seule lisible en
-// tout petit.
-const sourceLogo = path.join(__dirname, "../public/images/logostripstream.png");
+// Un seul logo pour les icônes d'app et les splash screens : la marque sombre
+// détourée, posée sur le fond du thème sombre (et non sur le fond cuit dans
+// l'ancien visuel, qui ne coïncidait pas avec lui) ; la monochrome reste dédiée
+// au favicon, seule lisible en tout petit.
+const sourceLogo = path.join(__dirname, "../public/images/logo-mark-dark.png");
 const splashLogo = sourceLogo;
 const faviconLogo = path.join(__dirname, "../public/images/logostripstream-mono.png");
+
+// `--background` du thème sombre (hsl(30 7% 6%)), la couleur de la salle :
+// icônes et splash screens s'y fondent, sans carré visible autour de la marque.
+const themeBackground = { r: 16, g: 15, b: 14 };
 const outputDir = path.join(__dirname, "../public/images/icons");
 const screenshotsDir = path.join(__dirname, "../public/images/screenshots");
 const splashDir = path.join(__dirname, "../public/images/splash");
@@ -22,8 +26,8 @@ async function generateSplashScreens() {
   await fs.mkdir(splashDir, { recursive: true });
   console.log(`\n📱 Génération des splash screens...`);
 
-  // Fond du logo sombre, pour que le logo se fonde dans l'écran sans cadre.
-  const bg = { r: 15, g: 12, b: 12 };
+  // Le fond du thème sombre, pour que le logo se fonde dans l'écran sans cadre.
+  const bg = themeBackground;
 
   for (const screen of splashScreens) {
     const { width, height } = screen;
@@ -62,10 +66,8 @@ async function generateIcons() {
       const outputPath = path.join(outputDir, `icon-${size}x${size}.png`);
 
       await sharp(sourceLogo)
-        .resize(size, size, {
-          fit: "cover",
-          background: { r: 0, g: 0, b: 0, alpha: 0 }, // Fond transparent
-        })
+        .resize(size, size, { fit: "cover" })
+        .flatten({ background: themeBackground }) // iOS refuse la transparence
         .png({
           compressionLevel: 9,
           palette: true,
@@ -81,10 +83,8 @@ async function generateIcons() {
       const outputPath = path.join(outputDir, `apple-icon-${size}x${size}.png`);
 
       await sharp(sourceLogo)
-        .resize(size, size, {
-          fit: "cover",
-          background: { r: 0, g: 0, b: 0, alpha: 0 }, // Fond transparent
-        })
+        .resize(size, size, { fit: "cover" })
+        .flatten({ background: themeBackground }) // iOS refuse la transparence
         .png({
           compressionLevel: 9,
           palette: true,
@@ -114,6 +114,7 @@ async function generateIcons() {
       const outputPath = path.join(outputDir, `${shortcut}.png`);
       await sharp(sourceLogo)
         .resize(96, 96)
+        .flatten({ background: themeBackground })
         .png({
           compressionLevel: 9,
           palette: true,

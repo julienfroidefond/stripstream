@@ -10,9 +10,15 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useTranslate } from "@/hooks/useTranslate";
 import { gsap, prefersReducedMotion, useGsapEffect } from "@/lib/gsap";
 
-/** Le logo du site, décliné pour chaque thème. */
-const LOGO_LIGHT = "/images/logostripstream-white.png";
-const LOGO_DARK = "/images/logostripstream.png";
+/**
+ * Le logo du site, décliné pour chaque thème.
+ *
+ * Variantes détourées : la marque se pose sur le fond de la page (couleur du
+ * thème + grain) sans le carré opaque des visuels PWA, qui ne peut pas
+ * coïncider avec elle.
+ */
+const LOGO_LIGHT = "/images/logo-mark-light.png";
+const LOGO_DARK = "/images/logo-mark-dark.png";
 
 interface LoginContentProps {
   searchParams: {
@@ -92,13 +98,13 @@ export function LoginContent({ searchParams }: LoginContentProps) {
           <img
             src={LOGO_DARK}
             alt=""
-            className="hidden h-9 w-9 rounded-[10px] object-cover dark:block"
+            className="hidden h-9 w-9 object-contain dark:block"
           />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={LOGO_LIGHT}
             alt=""
-            className="h-9 w-9 rounded-[10px] object-cover dark:hidden"
+            className="h-9 w-9 object-contain dark:hidden"
           />
           <span className="inline-flex flex-col leading-none">
             <span className="font-display text-base font-bold tracking-[0.06em] text-foreground sm:text-lg sm:tracking-[0.08em]">
