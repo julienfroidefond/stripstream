@@ -1,17 +1,25 @@
 "use client";
 
-import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { cn } from "@/lib/utils";
 import { gsap, prefersReducedMotion, SplitText, useGsapEffect } from "@/lib/gsap";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { VIEWPORT_MARGIN } from "@/components/motion";
-import { DirectionalSlide } from "@/components/ui/directional-slide";
 import { ProjectionBackdrop } from "@/components/ui/projection-backdrop";
+import { SwipeTrack } from "@/components/ui/swipe-track";
 
 /**
  * Vrai pour la diapositive affichée tant que l'entrée en scène du carrousel
- * n'a pas joué. Les changements de diapositive suivants passent par le jeté
- * de cartes de `DirectionalSlide` : le contenu ne rejoue pas sa cascade.
+ * n'a pas joué. Les changements de diapositive suivants passent par la piste
+ * tactile `SwipeTrack` : le contenu ne rejoue pas sa cascade.
  */
 const SpotlightStagedContext = createContext(false);
 
@@ -67,15 +75,15 @@ export function SpotlightCarousel({
   const contentRef = useRef<HTMLDivElement | null>(null);
   const [inView, setInView] = useState(false);
   const total = slides.length;
-  const [nav, setNav] = useState({ index: 0, direction: 0 });
-  const [transition, setTransition] = useState<{
-    from: SpotlightSlide;
-    direction: number;
-    offset: number;
-  } | null>(null);
+  const [index, setIndex] = useState(0);
+  const [backdropFrom, setBackdropFrom] = useState<SpotlightSlide | null>(null);
   const [staged, setStaged] = useState(true);
   const previousTotal = useRef(total);
   const firstBackdrop = useRef(true);
+  const introDone = useRef(false);
+  const introTimeline = useRef<gsap.core.Timeline | null>(null);
+  const introSplits = useRef<Array<{ revert: () => void }>>([]);
+  const backdropTimer = useRef<number | null>(null);
 
   useEffect(() => {
     if (reduce) return;
@@ -93,88 +101,145 @@ export function SpotlightCarousel({
     return () => observer.disconnect();
   }, [reduce]);
 
-  const safeIndex = total > 0 ? ((nav.index % total) + total) % total : 0;
+  const safeIndex = total > 0 ? ((index % total) + total) % total : 0;
   const slide = slides[safeIndex];
   const hasMany = total > 1;
   const revealed = Boolean(reduce) || inView;
   const currentSlideRef = useRef<SpotlightSlide | undefined>(slide);
+
   useEffect(() => {
     currentSlideRef.current = slide;
   }, [slide]);
 
-  const goTo = (target: number, direction: number, offset = 0) => {
+  /**
+   * Coupe l'entrée en scène et remet les éléments dans leur état final. Le
+   * premier appui du doigt appelle cette fonction : le geste n'attend pas la
+   * fin de la timeline, et la diapositive ne se remet pas à bouger sous lui.
+   */
+  const settleIntro = useCallback(() => {
+    if (introDone.current) return;
+    introDone.current = true;
+    introTimeline.current?.kill();
+    introTimeline.current = null;
+
+    const splits = introSplits.current;
+    introSplits.current = [];
+    splits.forEach((split) => split.revert());
+
+    const section = sectionRef.current;
+    const backdrop = backdropRef.current;
+    const content = contentRef.current;
+    if (!section || !backdrop || !content) {
+      setStaged(false);
+      return;
+    }
+
+    const stagedElements = Array.from(
+      content.querySelectorAll<HTMLElement>(
+        "[data-spot-fly], [data-spot-title], [data-spot-item]"
+      )
+    );
+    section.removeAttribute("data-spotlight-shell");
+    backdrop.removeAttribute("data-spotlight-backdrop");
+    content.removeAttribute("data-spotlight-content");
+    stagedElements.forEach((element) => {
+      element.removeAttribute("data-spot-fly");
+      element.removeAttribute("data-spot-title");
+      element.removeAttribute("data-spot-item");
+    });
+    gsap.set([section, backdrop, content, ...stagedElements], {
+      clearProps: "opacity,transform,transformOrigin",
+    });
+    setStaged(false);
+  }, []);
+
+  const showBackdropFrom = useCallback((from: SpotlightSlide | null) => {
+    if (!from) return;
+    setBackdropFrom(from);
+    if (backdropTimer.current) window.clearTimeout(backdropTimer.current);
+    backdropTimer.current = window.setTimeout(() => {
+      backdropTimer.current = null;
+      setBackdropFrom(null);
+    }, 750);
+  }, []);
+
+  useEffect(
+    () => () => {
+      if (backdropTimer.current) window.clearTimeout(backdropTimer.current);
+    },
+    []
+  );
+
+  const goTo = (target: number) => {
     if (total === 0) return;
     const next = ((target % total) + total) % total;
     if (next === safeIndex) return;
+    settleIntro();
     setStaged(false);
     if (reduce) {
-      setNav({ index: next, direction });
+      setBackdropFrom(null);
+      setIndex(next);
       return;
     }
-    setTransition({ from: slide, direction, offset });
-    setNav({ index: next, direction });
+    showBackdropFrom(slide);
+    setIndex(next);
   };
 
   useEffect(() => {
     if (total > previousTotal.current) {
       const from = currentSlideRef.current;
-      if (!reduce && from) {
-        setTransition({ from, direction: 1, offset: 0 });
-      }
+      settleIntro();
       setStaged(false);
-      setNav({ index: previousTotal.current, direction: 1 });
-    } else if (total > 0 && nav.index >= total) {
+      if (!reduce && from) showBackdropFrom(from);
+      setIndex(previousTotal.current);
+    } else if (total > 0 && index >= total) {
       const from = currentSlideRef.current;
-      if (!reduce && from) {
-        setTransition({ from, direction: -1, offset: 0 });
-      }
-      setNav({ index: Math.max(0, total - 1), direction: -1 });
+      settleIntro();
+      setStaged(false);
+      if (!reduce && from) showBackdropFrom(from);
+      setIndex(Math.max(0, total - 1));
     }
     previousTotal.current = total;
-  }, [nav.index, reduce, total]);
+  }, [index, reduce, settleIntro, showBackdropFrom, total]);
 
   useGsapEffect(
     () => {
+      if (introDone.current) return;
       const section = sectionRef.current;
       const backdrop = backdropRef.current;
       const content = contentRef.current;
       if (!section || !backdrop || !content) return;
 
-      const fliers = Array.from(content.querySelectorAll<HTMLElement>("[data-spot-fly]"));
-      const titles = Array.from(content.querySelectorAll<HTMLElement>("[data-spot-title]"));
-      const items = Array.from(content.querySelectorAll<HTMLElement>("[data-spot-item]"));
-      const settle = () => {
-        section.removeAttribute("data-spotlight-shell");
-        backdrop.removeAttribute("data-spotlight-backdrop");
-        content.removeAttribute("data-spotlight-content");
-        fliers.forEach((element) => element.removeAttribute("data-spot-fly"));
-        titles.forEach((element) => element.removeAttribute("data-spot-title"));
-        items.forEach((element) => element.removeAttribute("data-spot-item"));
-        gsap.set([section, backdrop, content, ...fliers, ...items], {
-          clearProps: "opacity,transform,transformOrigin",
-        });
-      };
-
       if (reduce || prefersReducedMotion()) {
-        settle();
+        settleIntro();
         return;
       }
 
       if (!revealed) return;
 
+      const fliers = Array.from(
+        content.querySelectorAll<HTMLElement>("[data-spot-fly]")
+      );
+      const titles = Array.from(
+        content.querySelectorAll<HTMLElement>("[data-spot-title]")
+      );
+      const items = Array.from(
+        content.querySelectorAll<HTMLElement>("[data-spot-item]")
+      );
+
       // Même entrée que le hero : la scène se redresse vers le spectateur, la
       // cover arrive du fond, les mots du titre basculent en 3D.
-      const splits = titles.map((title) => SplitText.create(title, { type: "words" }));
+      const splits = titles.map((title) =>
+        SplitText.create(title, { type: "words" })
+      );
+      introSplits.current = splits;
       const words = splits.flatMap((split) => split.words);
 
       const timeline = gsap.timeline({
         defaults: { ease: "projection" },
-        onComplete: () => {
-          splits.forEach((split) => split.revert());
-          settle();
-          setStaged(false);
-        },
+        onComplete: settleIntro,
       });
+      introTimeline.current = timeline;
 
       timeline
         .fromTo(
@@ -254,10 +319,14 @@ export function SpotlightCarousel({
 
       return () => {
         timeline.kill();
-        splits.forEach((split) => split.revert());
+        if (introTimeline.current === timeline) introTimeline.current = null;
+        if (introSplits.current === splits) {
+          introSplits.current = [];
+          splits.forEach((split) => split.revert());
+        }
       };
     },
-    { dependencies: [reduce, revealed] }
+    { dependencies: [reduce, revealed, settleIntro] }
   );
 
   useGsapEffect(
@@ -278,11 +347,20 @@ export function SpotlightCarousel({
 
   if (total === 0 || !slide) return null;
 
-  // La copie sortante n'est jamais « staged » : elle est hors du fournisseur.
-  const previousContent = transition ? transition.from.content : null;
+  const previousSlide = hasMany
+    ? slides[(safeIndex - 1 + total) % total]
+    : undefined;
+  const nextSlide = hasMany ? slides[(safeIndex + 1) % total] : undefined;
+
+  const renderAdjacent = (adjacent: SpotlightSlide | undefined) =>
+    adjacent ? (
+      <SpotlightStagedContext.Provider value={false}>
+        {adjacent.content}
+      </SpotlightStagedContext.Provider>
+    ) : null;
 
   const currentContent = (
-    <SpotlightStagedContext.Provider value={staged && !transition}>
+    <SpotlightStagedContext.Provider value={staged}>
       {slide.content}
     </SpotlightStagedContext.Provider>
   );
@@ -296,9 +374,9 @@ export function SpotlightCarousel({
       aria-label={ariaLabel}
     >
       <div ref={backdropRef} data-spotlight-backdrop className="absolute inset-0 bg-surface-1">
-        {transition?.from.backdropSrc ? (
+        {backdropFrom?.backdropSrc ? (
           <div className="absolute inset-0" aria-hidden>
-            <ProjectionBackdrop src={transition.from.backdropSrc} fadeIn={false} />
+            <ProjectionBackdrop src={backdropFrom.backdropSrc} fadeIn={false} />
           </div>
         ) : null}
         {slide.backdropSrc ? (
@@ -313,36 +391,33 @@ export function SpotlightCarousel({
         data-spotlight-content
         className="relative overflow-hidden px-5 py-5 sm:px-7 sm:py-7"
       >
-        <DirectionalSlide
+        <SwipeTrack
           activeKey={slide.key}
-          previousKey={transition?.from.key ?? null}
-          previous={previousContent}
-          direction={transition?.direction ?? nav.direction}
-          dragOffset={transition?.offset ?? 0}
+          previous={renderAdjacent(previousSlide)}
+          next={renderAdjacent(nextSlide)}
           reduce={reduce}
           swipeEnabled={hasMany}
-          onSwipe={(direction, offset) => goTo(safeIndex + direction, direction, offset)}
-          onSettled={() => setTransition(null)}
-          className={hasMany ? "cursor-grab active:cursor-grabbing" : undefined}
+          onSwipe={(direction) => goTo(safeIndex + direction)}
+          onInteractionStart={settleIntro}
         >
           {currentContent}
-        </DirectionalSlide>
+        </SwipeTrack>
 
         {(hasMany || footer) && (
           <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
             {hasMany && (
               <div role="tablist" className="flex items-center justify-center gap-2">
-                {slides.map((item, index) => (
+                {slides.map((item, position) => (
                   <button
                     key={item.key}
                     type="button"
                     role="tab"
-                    aria-selected={index === safeIndex}
-                    aria-label={`${index + 1} / ${total}`}
-                    onClick={() => goTo(index, index > safeIndex ? 1 : -1)}
+                    aria-selected={position === safeIndex}
+                    aria-label={`${position + 1} / ${total}`}
+                    onClick={() => goTo(position)}
                     className={cn(
                       "h-1.5 rounded-full transition-[width,background-color] duration-300 ease-out",
-                      index === safeIndex
+                      position === safeIndex
                         ? "w-8 bg-primary"
                         : "w-2 bg-foreground/25 hover:bg-foreground/45"
                     )}

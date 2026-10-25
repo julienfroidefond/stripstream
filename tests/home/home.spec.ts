@@ -249,4 +249,59 @@ test.describe('Home touch carousel', () => {
 
     await expect(tabs.nth(1)).toHaveAttribute('aria-selected', 'true');
   });
+
+  test('swipes a spotlight row while its intro is still playing', async ({ page }) => {
+    await selectConnection(page, 'Stub A');
+    await page.goto('/');
+
+    const row = page.locator('section').filter({
+      has: page.getByRole('heading', { name: 'Continuer la série' }),
+    });
+    await row.scrollIntoViewIfNeeded();
+    await row
+      .getByRole('button', { name: /afficher un élément à la fois/i })
+      .click();
+
+    const carousel = row.locator('[aria-roledescription="carousel"]');
+    await expect(carousel).toBeVisible();
+    await carousel.scrollIntoViewIfNeeded();
+    // L'attribut reste posé tant que la timeline d'ouverture n'est pas réglée :
+    // le geste ci-dessous doit donc l'interrompre, pas l'attendre.
+    await expect(carousel).toHaveAttribute('style', /opacity/);
+    await expect(carousel).toHaveAttribute('data-spotlight-shell', 'true');
+    const tabs = carousel.getByRole('tab');
+    await expect(tabs.first()).toHaveAttribute('aria-selected', 'true');
+
+    const box = await carousel.boundingBox();
+    if (!box) throw new Error('Spotlight has no layout box');
+
+    const client = await page.context().newCDPSession(page);
+    const startX = box.x + box.width * 0.75;
+    const y = box.y + Math.min(160, box.height * 0.3);
+    await client.send('Input.dispatchTouchEvent', {
+      type: 'touchStart',
+      touchPoints: [{ x: startX, y }],
+    });
+    for (let step = 1; step <= 8; step += 1) {
+      await client.send('Input.dispatchTouchEvent', {
+        type: 'touchMove',
+        touchPoints: [{ x: startX - (240 * step) / 8, y }],
+      });
+      await page.waitForTimeout(16);
+    }
+    await client.send('Input.dispatchTouchEvent', {
+      type: 'touchEnd',
+      touchPoints: [],
+    });
+
+    await expect(carousel).not.toHaveAttribute('data-spotlight-shell');
+    await expect(tabs.nth(1)).toHaveAttribute('aria-selected', 'true');
+    await expect(
+      carousel.getByRole('heading', { name: 'BD-A (Tome 1) 02', level: 2 })
+    ).toBeInViewport();
+
+    // Les pastilles restent utilisables après un balayage.
+    await tabs.first().click();
+    await expect(tabs.first()).toHaveAttribute('aria-selected', 'true');
+  });
 });
