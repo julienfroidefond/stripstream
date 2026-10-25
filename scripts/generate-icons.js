@@ -3,11 +3,12 @@ const fs = require("fs").promises;
 const path = require("path");
 
 const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
-// Un logo par usage : la version claire pour les icônes d'app, la sombre pour
-// les splash screens (fond sombre du site), la monochrome pour le favicon,
-// seule lisible en tout petit.
-const sourceLogo = path.join(__dirname, "../public/images/logostripstream-white.png");
-const splashLogo = path.join(__dirname, "../public/images/logostripstream.png");
+// Un seul logo pour les icônes d'app et les splash screens : la version sombre
+// (fond noir), qui s'accorde avec le thème sombre du reader et la plupart des
+// écrans d'accueil ; la monochrome reste dédiée au favicon, seule lisible en
+// tout petit.
+const sourceLogo = path.join(__dirname, "../public/images/logostripstream.png");
+const splashLogo = sourceLogo;
 const faviconLogo = path.join(__dirname, "../public/images/logostripstream-mono.png");
 const outputDir = path.join(__dirname, "../public/images/icons");
 const screenshotsDir = path.join(__dirname, "../public/images/screenshots");
