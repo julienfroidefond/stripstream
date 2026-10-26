@@ -78,7 +78,7 @@ export function BookSpotlightSlide({ book, onOpen, eyebrow }: BookSpotlightSlide
         </div>
 
         <h2 className="font-display text-3xl font-semibold leading-[1.05] tracking-tight sm:text-4xl lg:text-5xl">
-          <span {...staging.title}>{title}</span>
+          <span className="inline-block" {...staging.title}>{title}</span>
         </h2>
 
         {(showVolume || pagesLabel) && (

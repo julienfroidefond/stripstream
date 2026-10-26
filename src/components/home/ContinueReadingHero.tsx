@@ -14,7 +14,15 @@ import { LoadMoreLabel } from "@/components/ui/load-more-label";
 import { useTranslate } from "@/hooks/useTranslate";
 import { cn } from "@/lib/utils";
 import { loadHomeFeed } from "@/app/actions/home";
-import { CountUp, Magnetic, ProgressFill } from "@/components/motion";
+import {
+  CountUp,
+  holdStage,
+  landCover,
+  Magnetic,
+  ProgressFill,
+  revealTitle,
+  TITLE_SPLIT,
+} from "@/components/motion";
 import { ProjectionBackdrop } from "@/components/ui/projection-backdrop";
 import { DirectionalSlide } from "@/components/ui/directional-slide";
 import {
@@ -43,9 +51,9 @@ interface HeroSlideProps {
 }
 
 /**
- * Titre du générique : SplitText découpe le titre en mots, puis chaque mot
- * bascule en 3D depuis le fond, comme une réplique qui se relève. `autoSplit` re-découpe au resize sans rejouer
- * l'animation une fois l'ouverture terminée.
+ * Titre du générique : SplitText découpe le titre en lignes masquées, puis les
+ * mots montent derrière leur cache. `autoSplit` re-découpe au resize sans
+ * rejouer l'animation une fois l'ouverture terminée.
  */
 function HeroTitle({
   text,
@@ -77,37 +85,17 @@ function HeroTitle({
       played.current = false;
 
       const split = SplitText.create(element, {
-        type: "words",
+        ...TITLE_SPLIT,
         autoSplit: true,
         onSplit: (self) => {
           const targets = self.words;
           if (played.current) {
-            gsap.set(targets, { clearProps: "opacity,transform" });
+            gsap.set(targets, { clearProps: "transform" });
             return;
           }
           played.current = true;
-          return gsap.fromTo(
-            targets,
-            {
-              opacity: 0,
-              yPercent: 70,
-              z: -160,
-              rotateX: -95,
-              transformPerspective: 600,
-              transformOrigin: "50% 100%",
-            },
-            {
-              opacity: 1,
-              yPercent: 0,
-              z: 0,
-              rotateX: 0,
-              duration: 0.6,
-              ease: "back.out(2)",
-              stagger: 0.05,
-              // Le titre se relève pendant que la cover finit son vol.
-              delay: 0.3,
-            }
-          );
+          // Le titre monte pendant que la cover finit de se poser.
+          return revealTitle(targets, { duration: 1.1, stagger: 0.07, delay: 0.55 });
         },
       });
 
@@ -365,7 +353,7 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
     section.style.setProperty("--tilt-x", x.toFixed(3));
     section.style.setProperty("--tilt-y", y.toFixed(3));
     const motion = settle
-      ? { duration: 1.4, ease: "elastic.out(1, 0.45)" }
+      ? { duration: 1.2, ease: "projection" }
       : { duration: 0.35, ease: "out" };
     gsap.to(section.querySelectorAll('[data-hero-tilt="cover"]'), {
       rotateY: x * 22,
@@ -449,7 +437,7 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
         backdrop.removeAttribute("data-hero-backdrop");
         items.forEach((item) => item.removeAttribute("data-hero-item"));
         fliers.forEach((flier) => flier.removeAttribute("data-hero-fly"));
-        gsap.set(section, { clearProps: "opacity,transform,transformOrigin" });
+        gsap.set(section, { clearProps: "opacity,transform,transformOrigin,clipPath" });
         gsap.set(backdrop, { clearProps: "transform" });
         gsap.set([...items, ...fliers, ...glares], {
           clearProps: "opacity,transform",
@@ -463,10 +451,14 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
       }
 
       /**
-       * Ouverture en relief : la scène bascule vers le spectateur depuis
-       * l'arrière, la cover arrive du fond en tournoyant et dépasse sa place,
-       * puis un éclair de reflet et le faisceau marquent l'atterrissage.
+       * Ouverture, le seul moment de bravoure de l'accueil. L'écran s'ouvre
+       * en iris depuis le centre pendant que la salle recule (le fond se
+       * détend lentement, comme un travelling arrière) ; la cover se pose, le
+       * faisceau balaie la scène et un éclair de reflet marque l'atterrissage.
+       * Le titre monte derrière son cache (`HeroTitle`). Les rangées déjà
+       * visibles attendent la fin du premier temps fort pour entrer.
        */
+      holdStage(1.15);
       const timeline = gsap.timeline({
         defaults: { ease: "projection" },
         onComplete: () => {
@@ -476,59 +468,31 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
       });
 
       timeline
+        .fromTo(section, { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "out" }, 0)
         .fromTo(
           section,
-          {
-            opacity: 0,
-            y: 80,
-            rotateX: 24,
-            scale: 0.9,
-            transformPerspective: 1400,
-            transformOrigin: "50% 100%",
-          },
-          { opacity: 1, y: 0, rotateX: 0, scale: 1, duration: 0.7, ease: "focus" },
+          { clipPath: "inset(16% 24% 16% 24% round 32px)" },
+          { clipPath: "inset(0% 0% 0% 0% round 16px)", duration: 1.15, ease: "power4.inOut" },
           0
         )
-        .to(backdrop, { scale: 1, duration: 1.1 }, 0);
+        .to(backdrop, { scale: 1, duration: 2 }, 0);
 
       if (fliers.length > 0) {
-        timeline.fromTo(
-          fliers,
-          {
-            opacity: 0,
-            x: -160,
-            z: -700,
-            rotateY: -80,
-            rotateX: 20,
-            rotateZ: -8,
-            transformPerspective: 900,
-          },
-          {
-            opacity: 1,
-            x: 0,
-            z: 0,
-            rotateY: 0,
-            rotateX: 0,
-            rotateZ: 0,
-            duration: 0.8,
-            ease: "back.out(1.5)",
-          },
-          0.1
-        );
+        timeline.add(landCover(fliers), 0.3);
       }
 
       if (glares.length > 0) {
         timeline
-          .to(glares, { opacity: 1, duration: 0.08, ease: "power2.out" }, 0.62)
-          .to(glares, { opacity: 0, duration: 0.45, ease: "out" }, 0.7);
+          .to(glares, { opacity: 1, duration: 0.12, ease: "power2.out" }, 0.95)
+          .to(glares, { opacity: 0, duration: 0.6, ease: "out" }, 1.07);
       }
 
       if (items.length > 0) {
         timeline.fromTo(
           items,
-          { opacity: 0, y: 30 },
-          { opacity: 1, y: 0, duration: 0.45, stagger: 0.05 },
-          0.4
+          { opacity: 0, y: 20 },
+          { opacity: 1, y: 0, duration: 0.8, stagger: 0.07 },
+          0.8
         );
       }
 
@@ -541,12 +505,12 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
             {
               xPercent: 250,
               opacity: 0.9,
-              duration: 0.7,
+              duration: 1,
               ease: "power2.inOut",
             },
-            0.55
+            0.6
           )
-          .to(beam, { opacity: 0, duration: 0.3 }, 1.05);
+          .to(beam, { opacity: 0, duration: 0.4 }, 1.3);
       }
 
       return () => timeline.kill();
@@ -579,15 +543,16 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
         },
       });
 
-      // Livre pop-up qui se referme : la scène bascule en arrière pendant
-      // que la cover se décolle vers le spectateur (`--hero-progress`, CSS).
+      // Sortie en profondeur, sans culbute : le fond descend moins vite que
+      // la page, la scène recule à peine et la cover se décolle vers le
+      // spectateur (`--hero-progress`, CSS) pendant que le texte s'efface.
       timeline
-        .to(backdrop, { yPercent: 24, scale: 1.18, ease: "none" }, 0)
+        .to(backdrop, { yPercent: 24, scale: 1.14, ease: "none" }, 0)
         .to(content, { y: 40, opacity: 0, ease: "power1.in" }, 0)
         .fromTo(
           section,
           { rotateX: 0, scale: 1, transformPerspective: 1400, transformOrigin: "50% 100%" },
-          { rotateX: 18, scale: 0.92, ease: "none" },
+          { rotateX: 8, scale: 0.96, ease: "none" },
           0
         );
 

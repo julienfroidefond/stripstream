@@ -12,7 +12,13 @@ import {
 import { cn } from "@/lib/utils";
 import { gsap, prefersReducedMotion, SplitText, useGsapEffect } from "@/lib/gsap";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
-import { VIEWPORT_MARGIN } from "@/components/motion";
+import {
+  landCover,
+  revealTitle,
+  stageDelay,
+  TITLE_SPLIT,
+  VIEWPORT_MARGIN,
+} from "@/components/motion";
 import { ProjectionBackdrop } from "@/components/ui/projection-backdrop";
 import { SwipeTrack } from "@/components/ui/swipe-track";
 
@@ -25,8 +31,8 @@ const SpotlightStagedContext = createContext(false);
 
 /**
  * Marqueurs de l'entrée en scène, à étaler sur les éléments d'une diapositive :
- * `cover` arrive du fond en tournoyant, `title` voit ses mots basculer en 3D,
- * `item` remonte en cascade. Les états de départ sont en CSS.
+ * `cover` se pose, `title` voit ses mots monter derrière leur cache, `item`
+ * remonte en cascade. Les états de départ sont en CSS.
  */
 export function useSpotlightStaging() {
   const staged = useContext(SpotlightStagedContext);
@@ -227,93 +233,39 @@ export function SpotlightCarousel({
         content.querySelectorAll<HTMLElement>("[data-spot-item]")
       );
 
-      // Même entrée que le hero : la scène se redresse vers le spectateur, la
-      // cover arrive du fond, les mots du titre basculent en 3D.
-      const splits = titles.map((title) =>
-        SplitText.create(title, { type: "words" })
-      );
+      // Même vocabulaire que le hero, une octave en dessous : la scène monte
+      // et le fond recule, la cover se pose, le titre monte derrière son
+      // cache. Pas d'iris : l'ouverture reste la signature du hero.
+      const splits = titles.map((title) => SplitText.create(title, TITLE_SPLIT));
       introSplits.current = splits;
       const words = splits.flatMap((split) => split.words);
 
       const timeline = gsap.timeline({
+        delay: stageDelay(),
         defaults: { ease: "projection" },
         onComplete: settleIntro,
       });
       introTimeline.current = timeline;
 
       timeline
-        .fromTo(
-          section,
-          {
-            opacity: 0,
-            y: 70,
-            rotateX: 20,
-            scale: 0.92,
-            transformPerspective: 1400,
-            transformOrigin: "50% 100%",
-          },
-          { opacity: 1, y: 0, rotateX: 0, scale: 1, duration: 0.7, ease: "focus" },
-          0
-        )
-        .to(backdrop, { opacity: 1, scale: 1, duration: 1.1 }, 0)
-        .to(content, { opacity: 1, y: 0, duration: 0.5 }, 0.05);
+        .fromTo(section, { opacity: 0, y: 48 }, { opacity: 1, y: 0, duration: 1 }, 0)
+        .to(backdrop, { opacity: 1, scale: 1, duration: 1.6 }, 0)
+        .to(content, { opacity: 1, y: 0, duration: 0.8 }, 0.1);
 
       if (fliers.length > 0) {
-        timeline.fromTo(
-          fliers,
-          {
-            opacity: 0,
-            x: -140,
-            z: -600,
-            rotateY: -75,
-            rotateX: 18,
-            rotateZ: -7,
-            transformPerspective: 900,
-          },
-          {
-            opacity: 1,
-            x: 0,
-            z: 0,
-            rotateY: 0,
-            rotateX: 0,
-            rotateZ: 0,
-            duration: 0.8,
-            ease: "back.out(1.5)",
-          },
-          0.1
-        );
+        timeline.add(landCover(fliers, { duration: 1.1 }), 0.15);
       }
 
       if (words.length > 0) {
-        timeline.fromTo(
-          words,
-          {
-            opacity: 0,
-            yPercent: 70,
-            z: -160,
-            rotateX: -95,
-            transformPerspective: 600,
-            transformOrigin: "50% 100%",
-          },
-          {
-            opacity: 1,
-            yPercent: 0,
-            z: 0,
-            rotateX: 0,
-            duration: 0.6,
-            ease: "back.out(2)",
-            stagger: 0.05,
-          },
-          0.3
-        );
+        timeline.add(revealTitle(words), 0.35);
       }
 
       if (items.length > 0) {
         timeline.fromTo(
           items,
-          { opacity: 0, y: 30 },
-          { opacity: 1, y: 0, duration: 0.45, stagger: 0.05 },
-          0.4
+          { opacity: 0, y: 20 },
+          { opacity: 1, y: 0, duration: 0.8, stagger: 0.07 },
+          0.5
         );
       }
 

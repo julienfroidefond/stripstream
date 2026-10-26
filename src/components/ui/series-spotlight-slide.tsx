@@ -126,7 +126,7 @@ export function SeriesSpotlightSlide({
         )}
 
         <h2 className="font-display text-3xl font-semibold leading-[1.05] tracking-tight sm:text-4xl lg:text-5xl">
-          <span {...staging.title}>{series.name}</span>
+          <span className="inline-block" {...staging.title}>{series.name}</span>
         </h2>
 
         {(authorsText || series.startYear != null) && (

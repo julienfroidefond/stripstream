@@ -185,7 +185,7 @@ const ReadingListSpotlightSlide = memo(function ReadingListSpotlightSlide({
         </div>
 
         <h2 className="font-display text-3xl font-semibold leading-[1.05] tracking-tight sm:text-4xl lg:text-5xl">
-          <span {...staging.title}>{list.name}</span>
+          <span className="inline-block" {...staging.title}>{list.name}</span>
         </h2>
 
         <p
