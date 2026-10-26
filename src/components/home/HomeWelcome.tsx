@@ -6,7 +6,16 @@ import { ArrowRight, BookOpenCheck, Cable, LibraryBig, Projector, Server } from 
 import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProjectionBackdrop } from "@/components/ui/projection-backdrop";
-import { GlowLayer, Magnetic, StaggerGroup, StaggerItem, usePointerGlow } from "@/components/motion";
+import {
+  GlowLayer,
+  holdStage,
+  Magnetic,
+  revealTitle,
+  StaggerGroup,
+  StaggerItem,
+  TITLE_SPLIT,
+  usePointerGlow,
+} from "@/components/motion";
 import { gsap, prefersReducedMotion, SplitText, useGsapEffect } from "@/lib/gsap";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { useTranslate } from "@/hooks/useTranslate";
@@ -39,9 +48,9 @@ export function HomeWelcome() {
   const titleRef = useRef<HTMLHeadingElement>(null);
 
   /**
-   * Même ouverture que le hero de lecture : l'affiche se redresse vers le
-   * spectateur, les mots du titre basculent en 3D, le reste remonte en
-   * cascade. États de départ en CSS (`[data-hero-intro]`, `[data-hero-item]`).
+   * Même ouverture que le hero de lecture : l'affiche s'ouvre en iris, les
+   * mots du titre montent derrière leur cache, le reste remonte en cascade.
+   * États de départ en CSS (`[data-hero-intro]`, `[data-hero-item]`).
    */
   useGsapEffect(
     () => {
@@ -51,7 +60,7 @@ export function HomeWelcome() {
       const settle = () => {
         scene.removeAttribute("data-hero-intro");
         items.forEach((item) => item.removeAttribute("data-hero-item"));
-        gsap.set([scene, ...items], { clearProps: "opacity,transform,transformOrigin" });
+        gsap.set([scene, ...items], { clearProps: "opacity,transform,transformOrigin,clipPath" });
       };
 
       if (reduce || prefersReducedMotion()) {
@@ -59,9 +68,7 @@ export function HomeWelcome() {
         return;
       }
 
-      const split = titleRef.current
-        ? SplitText.create(titleRef.current, { type: "words" })
-        : null;
+      const split = titleRef.current ? SplitText.create(titleRef.current, TITLE_SPLIT) : null;
       const timeline = gsap.timeline({
         defaults: { ease: "projection" },
         onComplete: () => {
@@ -70,47 +77,23 @@ export function HomeWelcome() {
         },
       });
 
-      timeline.fromTo(
-        scene,
-        {
-          opacity: 0,
-          y: 80,
-          rotateX: 24,
-          scale: 0.9,
-          transformPerspective: 1400,
-          transformOrigin: "50% 100%",
-        },
-        { opacity: 1, y: 0, rotateX: 0, scale: 1, duration: 0.7, ease: "focus" },
-        0
-      );
-      if (split) {
-        timeline.fromTo(
-          split.words,
-          {
-            opacity: 0,
-            yPercent: 70,
-            z: -160,
-            rotateX: -95,
-            transformPerspective: 600,
-            transformOrigin: "50% 100%",
-          },
-          {
-            opacity: 1,
-            yPercent: 0,
-            z: 0,
-            rotateX: 0,
-            duration: 0.6,
-            ease: "back.out(2)",
-            stagger: 0.05,
-          },
-          0.25
+      holdStage(1.1);
+      timeline
+        .fromTo(scene, { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "out" }, 0)
+        .fromTo(
+          scene,
+          { clipPath: "inset(16% 24% 16% 24% round 32px)" },
+          { clipPath: "inset(0% 0% 0% 0% round 16px)", duration: 1.15, ease: "power4.inOut" },
+          0
         );
+      if (split) {
+        timeline.add(revealTitle(split.words, { duration: 1.1, stagger: 0.07 }), 0.55);
       }
       timeline.fromTo(
         items,
-        { opacity: 0, y: 30 },
-        { opacity: 1, y: 0, duration: 0.45, stagger: 0.05 },
-        0.35
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.8, stagger: 0.07 },
+        0.8
       );
 
       return () => {

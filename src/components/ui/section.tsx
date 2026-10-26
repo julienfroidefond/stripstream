@@ -3,7 +3,7 @@
 import * as React from "react";
 import { type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { VIEWPORT_MARGIN } from "@/components/motion";
+import { revealTitle, stageDelay, TITLE_SPLIT, VIEWPORT_MARGIN } from "@/components/motion";
 import { gsap, prefersReducedMotion, SplitText, useGsapEffect } from "@/lib/gsap";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
@@ -18,9 +18,9 @@ export interface SectionProps extends React.HTMLAttributes<HTMLElement> {
 }
 
 /**
- * En-tête de rangée, même relief que le hero : l'icône tombe en place et
- * rebondit, les mots du titre basculent en 3D, puis le trait d'accent se
- * trace. Les états de départ sont en CSS (`[data-section-header]`) ; la
+ * En-tête de rangée, en retenue : l'icône apparaît, les mots du titre montent
+ * derrière leur cache comme dans le générique du hero, puis le trait d'accent
+ * se trace. Les états de départ sont en CSS (`[data-section-header]`) ; la
  * cascade joue une fois, quand l'en-tête entre dans la fenêtre.
  */
 function useSectionHeaderReveal(
@@ -64,8 +64,10 @@ function useSectionHeaderReveal(
       }
       if (!revealed) return;
 
-      const split = heading ? SplitText.create(heading, { type: "words" }) : null;
+      const split = heading ? SplitText.create(heading, TITLE_SPLIT) : null;
       const timeline = gsap.timeline({
+        delay: stageDelay(),
+        defaults: { ease: "projection" },
         onComplete: () => {
           split?.revert();
           settle();
@@ -75,39 +77,18 @@ function useSectionHeaderReveal(
       if (icon) {
         timeline.fromTo(
           icon,
-          { opacity: 0, scale: 0.3, rotate: -60 },
-          { opacity: 1, scale: 1, rotate: 0, duration: 0.5, ease: "back.out(2.6)" },
+          { opacity: 0, scale: 0.6 },
+          { opacity: 1, scale: 1, duration: 0.7 },
           0
         );
       }
       if (heading && split) {
-        timeline.set(heading, { opacity: 1 }, 0.06).fromTo(
-          split.words,
-          {
-            opacity: 0,
-            yPercent: 60,
-            rotateX: -90,
-            transformPerspective: 500,
-            transformOrigin: "50% 100%",
-          },
-          {
-            opacity: 1,
-            yPercent: 0,
-            rotateX: 0,
-            duration: 0.5,
-            ease: "back.out(2)",
-            stagger: 0.05,
-          },
-          0.06
-        );
+        timeline
+          .set(heading, { opacity: 1 }, 0.05)
+          .add(revealTitle(split.words, { duration: 0.9 }), 0.05);
       }
       if (line) {
-        timeline.fromTo(
-          line,
-          { scaleX: 0 },
-          { scaleX: 1, duration: 0.45, ease: "projection" },
-          0.3
-        );
+        timeline.fromTo(line, { scaleX: 0 }, { scaleX: 1, duration: 0.8 }, 0.35);
       }
 
       return () => {

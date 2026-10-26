@@ -60,14 +60,13 @@ body.no-pinch-zoom .wall-canvas * {
 
 [data-stagger-item="deal"] {
   opacity: 0;
-  transform: perspective(900px) translate3d(70px, 0, -320px) rotateY(-35deg);
+  transform: translateX(3.5rem) scale(0.94);
 }
 
-/* La scène attend, basculée en arrière ; la cover attend au fond. */
+/* L'écran attend, refermé en iris au centre ; la cover attend en coulisse. */
 [data-hero-intro] {
   opacity: 0;
-  transform: perspective(1400px) translateY(80px) rotateX(24deg) scale(0.9);
-  transform-origin: 50% 100%;
+  clip-path: inset(16% 24% 16% 24% round 32px);
 }
 
 [data-hero-fly] {
@@ -92,8 +91,8 @@ body.no-pinch-zoom .wall-canvas * {
  * `transform` que GSAP anime sur les mêmes éléments.
  */
 .hero-depth-cover {
-  translate: 0 calc(var(--hero-progress, 0) * -140px);
-  scale: calc(1 + var(--hero-progress, 0) * 0.16);
+  translate: 0 calc(var(--hero-progress, 0) * -100px);
+  scale: calc(1 + var(--hero-progress, 0) * 0.1);
 }
 
 .hero-depth-copy {
@@ -129,8 +128,7 @@ body.no-pinch-zoom .wall-canvas * {
 
 [data-spotlight-shell] {
   opacity: 0;
-  transform: perspective(1400px) translateY(70px) rotateX(20deg) scale(0.92);
-  transform-origin: 50% 100%;
+  transform: translateY(3rem);
 }
 
 [data-spot-fly],
@@ -145,6 +143,13 @@ body.no-pinch-zoom .wall-canvas * {
 
 [data-section-header] [data-section-line] {
   transform: scaleX(0);
+}
+
+/* Cache d'une ligne de titre (SplitText) : marge pour les jambages et les
+   accents, compensée pour ne rien déplacer. */
+.title-line-mask {
+  padding-block: 0.14em;
+  margin-block: -0.14em;
 }
 
 [data-login] {
@@ -185,7 +190,8 @@ body.no-pinch-zoom .wall-canvas * {
     filter: none;
   }
 
-  [data-banner-unroll] {
+  [data-banner-unroll],
+  [data-hero-intro] {
     clip-path: none;
   }
 
@@ -222,7 +228,8 @@ body.no-pinch-zoom .wall-canvas * {
     filter: none;
   }
 
-  [data-banner-unroll] {
+  [data-banner-unroll],
+  [data-hero-intro] {
     clip-path: none;
   }
 

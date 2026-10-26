@@ -31,6 +31,58 @@ type ViewportAmount = number | "some" | "all";
 export const VIEWPORT_MARGIN = "4000px 0px -8% 0px";
 
 /* -------------------------------------------------------------------------
+ * Vocabulaire partagé de l'accueil.
+ *
+ * Un seul moment de bravoure — l'ouverture du hero — et des entrées en
+ * retenue partout ailleurs : aucune courbe à dépassement, des titres révélés
+ * derrière un cache comme un générique, des covers qui se posent sans
+ * tournoyer.
+ * ---------------------------------------------------------------------- */
+
+/**
+ * Découpage d'un titre : chaque ligne devient un cache, les mots montent
+ * derrière. Les caches portent la classe `title-line-mask`, qui leur donne de
+ * la marge pour ne pas rogner jambages et accents des titres serrés.
+ */
+export const TITLE_SPLIT = { type: "lines,words", mask: "lines", linesClass: "title-line" } as const;
+
+/** Les mots d'un titre découpé par `TITLE_SPLIT` montent derrière leur cache. */
+export function revealTitle(words: Element[], vars: gsap.TweenVars = {}): gsap.core.Tween {
+  return gsap.fromTo(
+    words,
+    { yPercent: 120 },
+    { yPercent: 0, duration: 1, ease: "projection", stagger: 0.06, ...vars }
+  );
+}
+
+/** Une cover se pose : elle remonte, grandit et se redresse, sans rebond. */
+export function landCover(targets: Element[], vars: gsap.TweenVars = {}): gsap.core.Tween {
+  return gsap.fromTo(
+    targets,
+    { opacity: 0, yPercent: 12, scale: 0.88, rotateY: -16, transformPerspective: 1000 },
+    { opacity: 1, yPercent: 0, scale: 1, rotateY: 0, duration: 1.2, ease: "projection", ...vars }
+  );
+}
+
+/**
+ * Top de scène. L'ouverture du hero réserve la scène le temps de son premier
+ * temps fort ; les rangées qui se révèlent pendant ce temps (celles déjà dans
+ * la fenêtre au chargement) attendent leur tour au lieu de jouer en même
+ * temps. Les rangées révélées plus tard au défilement n'attendent rien.
+ */
+let stageFreeAt = 0;
+
+export function holdStage(seconds: number): void {
+  stageFreeAt = Math.max(stageFreeAt, performance.now() + seconds * 1000);
+}
+
+/** Délai restant avant que la scène soit libre, en secondes. */
+export function stageDelay(): number {
+  if (typeof performance === "undefined") return 0;
+  return Math.max(0, (stageFreeAt - performance.now()) / 1000);
+}
+
+/* -------------------------------------------------------------------------
  * Stagger — une grille ou un rail se déploie carte par carte.
  *
  * Deux régimes :
@@ -66,25 +118,12 @@ const EFFECT_MOTION: Record<
     to: { opacity: 1, y: 0, scale: 1, filter: "blur(0px)" },
     duration: 1,
   },
-  // Même relief que le hero : chaque cover remonte du fond en pivotant et
-  // dépasse un peu sa place, comme une carte qu'on pose sur la table.
+  // Les affiches glissent de la droite et se posent, sans pivot ni rebond :
+  // le rail suit le hero au lieu de lui disputer la vedette.
   deal: {
-    from: {
-      opacity: 0,
-      x: 70,
-      z: -320,
-      rotateY: -35,
-      transformPerspective: 900,
-    },
-    to: {
-      opacity: 1,
-      x: 0,
-      z: 0,
-      rotateY: 0,
-      transformPerspective: 900,
-    },
-    duration: 0.6,
-    ease: "back.out(1.5)",
+    from: { opacity: 0, x: 56, scale: 0.94 },
+    to: { opacity: 1, x: 0, scale: 1 },
+    duration: 0.9,
   },
 };
 
@@ -257,9 +296,11 @@ export function StaggerItem({ children, className, style }: StaggerItemProps) {
 
       played.current = true;
       const motion = EFFECT_MOTION[effect];
-      const delay = reveal === "group"
-        ? delayChildren + waveIndex(element) * stagger
-        : scrollState.column * stagger;
+      const delay =
+        stageDelay() +
+        (reveal === "group"
+          ? delayChildren + waveIndex(element) * stagger
+          : scrollState.column * stagger);
 
       const tween = gsap.fromTo(element, motion.from, {
         ...motion.to,
