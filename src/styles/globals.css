@@ -595,7 +595,7 @@ body.no-pinch-zoom .wall-canvas * {
 
 /*
  * StripStream — "salle de projection".
- * Sol quasi noir (jamais #000) teinté chaud, couvertures seules sources de
+ * Sol quasi noir (jamais #000) teinté graphite, couvertures seules sources de
  * lumière, un accent teal unique. Pas de dégradé décoratif, pas de verre
  * (sauf la barre d'en-tête), pas d'ombre sur les éléments au repos : la
  * profondeur vient du ton (surface-1/2/3) et de l'artwork.
@@ -653,44 +653,44 @@ body.no-pinch-zoom .wall-canvas * {
   }
 
   .dark {
-    /* Encre chaude, jamais #000 */
-    --background: 30 7% 6%;
-    --background-rgb: 16, 15, 14;
-    --foreground: 40 14% 95%;
+    /* Graphite froid (~#14161A), jamais #000 */
+    --background: 220 13% 9%;
+    --background-rgb: 20, 22, 26;
+    --foreground: 220 10% 94%;
 
-    --card: 30 6% 9%;
-    --card-foreground: 40 14% 95%;
+    --card: 220 11% 11%;
+    --card-foreground: 220 10% 94%;
 
-    --popover: 30 7% 10%;
-    --popover-foreground: 40 14% 95%;
+    --popover: 220 11% 12%;
+    --popover-foreground: 220 10% 94%;
 
-    --surface-1: 30 6% 9%;
-    --surface-2: 30 5% 12%;
-    --surface-3: 30 5% 16%;
+    --surface-1: 220 11% 11%;
+    --surface-2: 220 10% 14%;
+    --surface-3: 220 9% 18%;
 
     /* L'accent est le seul élément lumineux de la page. */
     --primary: 187 72% 58%;
-    --primary-foreground: 30 10% 8%;
+    --primary-foreground: 220 14% 8%;
 
-    --secondary: 30 5% 14%;
-    --secondary-foreground: 40 14% 95%;
+    --secondary: 220 9% 16%;
+    --secondary-foreground: 220 10% 94%;
 
-    --muted: 30 5% 15%;
-    --muted-foreground: 35 9% 66%;
+    --muted: 220 9% 16%;
+    --muted-foreground: 220 7% 66%;
 
-    --accent: 187 22% 18%;
+    --accent: 200 16% 18%;
     --accent-foreground: 187 62% 84%;
 
     --destructive: 4 70% 58%;
-    --destructive-foreground: 30 10% 98%;
+    --destructive-foreground: 220 10% 98%;
 
-    --border: 30 6% 17%;
-    --input: 30 6% 17%;
+    --border: 220 9% 19%;
+    --input: 220 9% 19%;
     --ring: 187 72% 58%;
 
     --chart-1: 187 72% 58%;
     --chart-2: 36 84% 60%;
-    --chart-3: 35 9% 62%;
+    --chart-3: 220 8% 62%;
     --chart-4: 152 46% 55%;
     --chart-5: 340 62% 64%;
   }
