@@ -11,9 +11,9 @@ const sourceLogo = path.join(__dirname, "../public/images/logo-mark-dark.png");
 const splashLogo = sourceLogo;
 const faviconLogo = path.join(__dirname, "../public/images/logostripstream-mono.png");
 
-// `--background` du thème sombre (hsl(30 7% 6%)), la couleur de la salle :
+// `--background` du thème sombre (hsl(220 13% 9%)), la couleur de la salle :
 // icônes et splash screens s'y fondent, sans carré visible autour de la marque.
-const themeBackground = { r: 16, g: 15, b: 14 };
+const themeBackground = { r: 20, g: 22, b: 26 };
 const outputDir = path.join(__dirname, "../public/images/icons");
 const screenshotsDir = path.join(__dirname, "../public/images/screenshots");
 const splashDir = path.join(__dirname, "../public/images/splash");

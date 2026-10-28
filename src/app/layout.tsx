@@ -99,7 +99,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <meta name="apple-mobile-web-app-title" content="StripStream" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="theme-color" content="#F7F6F2" media="(prefers-color-scheme: light)" />
-        <meta name="theme-color" content="#100F0E" media="(prefers-color-scheme: dark)" />
+        <meta name="theme-color" content="#14161A" media="(prefers-color-scheme: dark)" />
         <meta name="msapplication-TileColor" content="#0E7C86" />
         <meta name="msapplication-tap-highlight" content="no" />
         {SPLASH_SCREENS.map((screen) => (
