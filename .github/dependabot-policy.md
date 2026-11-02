@@ -43,3 +43,23 @@ Repository settings, not code:
 `dependabot-auto-merge.yml` uses `pull_request_target` because a `pull_request`-triggered run gets a
 read-only `GITHUB_TOKEN` from Dependabot and cannot enable auto-merge. The job never checks out or
 runs code from the pull request.
+
+## Known exceptions
+
+### `minimatch` 3.1.5 (dev-only, alert dismissed)
+
+`eslint-config-next` still pulls `eslint-plugin-import`, `eslint-plugin-jsx-a11y` and
+`eslint-plugin-react`, which all pin `minimatch@^3.1.2` at their latest release (2.32.0, 6.10.2 and
+7.37.5). `minimatch@3` is therefore capped at `>=3.1.4 <4` in `pnpm.overrides`, below the `11.0.1`
+patched version of the DoS advisory (globparts amplification).
+
+**Do not widen that override.** minimatch 10+ dropped the callable default export
+(`require('minimatch')` returns `{ minimatch, filter, … }`, `__esModule: true`, no `default`), while
+the plugins do `_interopRequireDefault(require('minimatch'))` and call `.default(...)`. `pnpm lint`
+still passes with the bump because no enabled rule reaches those code paths, but any rule that uses
+glob matching (`jsx-a11y/label-has-associated-control`, `jsx-a11y/control-has-associated-label`,
+`import/order` path groups) crashes with `_minimatch.default is not a function`.
+
+The alert is dismissed as tolerable risk: the dependency is dev-only (never in the runtime image) and
+the patterns come from this repository's ESLint config, not from user input. Dismissing it also stops
+the weekly failed `npm_and_yarn` update jobs. Revisit when the three plugins move to minimatch 10+.
