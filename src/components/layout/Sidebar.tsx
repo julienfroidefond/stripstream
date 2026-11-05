@@ -87,8 +87,14 @@ export function Sidebar({
     () => {
       const entries = entriesRef.current;
       if (!entries || !isOpen || prefersReducedMotion()) return;
+      // Les liens du haut sont groupés pour resserrer leur espacement ; on
+      // anime quand même chaque entrée individuellement, puis les sections.
+      const group = entries.querySelector<HTMLElement>("[data-sidebar-nav-group]");
+      const targets = group
+        ? [...Array.from(group.children), ...Array.from(entries.children).filter((child) => child !== group)]
+        : Array.from(entries.children);
       gsap.fromTo(
-        entries.children,
+        targets,
         { opacity: 0, x: -24 },
         {
           opacity: 1,
@@ -116,30 +122,32 @@ export function Sidebar({
         id="sidebar"
       >
         <div ref={entriesRef} className="relative z-10 flex-1 space-y-4 overflow-y-auto px-3 py-4">
-          <NavButton
-            icon={Home}
-            label={t("sidebar.home")}
-            active={pathname === "/"}
-            onClick={() => handleLinkClick("/")}
-          />
-          <NavButton
-            icon={LayoutGrid}
-            label={t("sidebar.wall")}
-            active={pathname === "/wall"}
-            onClick={() => handleLinkClick("/wall")}
-          />
-          <NavButton
-            icon={Bookmark}
-            label={t("sidebar.readingLists")}
-            active={pathname === "/reading-lists" || pathname.startsWith("/reading-lists/")}
-            onClick={() => handleLinkClick("/reading-lists")}
-          />
-          <NavButton
-            icon={Star}
-            label={t("sidebar.ratings")}
-            active={pathname === "/ratings"}
-            onClick={() => handleLinkClick("/ratings")}
-          />
+          <div data-sidebar-nav-group className="space-y-1">
+            <NavButton
+              icon={Home}
+              label={t("sidebar.home")}
+              active={pathname === "/"}
+              onClick={() => handleLinkClick("/")}
+            />
+            <NavButton
+              icon={LayoutGrid}
+              label={t("sidebar.wall")}
+              active={pathname === "/wall"}
+              onClick={() => handleLinkClick("/wall")}
+            />
+            <NavButton
+              icon={Bookmark}
+              label={t("sidebar.readingLists")}
+              active={pathname === "/reading-lists" || pathname.startsWith("/reading-lists/")}
+              onClick={() => handleLinkClick("/reading-lists")}
+            />
+            <NavButton
+              icon={Star}
+              label={t("sidebar.ratings")}
+              active={pathname === "/ratings"}
+              onClick={() => handleLinkClick("/ratings")}
+            />
+          </div>
 
           {/* Favoris — streamé */}
           <Suspense fallback={favoritesSkeleton}>{favoritesSlot}</Suspense>
