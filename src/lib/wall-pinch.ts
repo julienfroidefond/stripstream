@@ -1,19 +1,12 @@
 /**
  * Le pinch du Wall.
  *
- * `@use-gesture` v10 expose, pour un pinch, `movement[0]` comme le rapport
- * entre la distance courante des doigts et celle du début du geste : 1 quand
- * les doigts n'ont pas bougé, 1,5 quand ils se sont écartés de moitié. Ce
- * n'est pas un delta autour de 0 : l'échelle de départ se multiplie donc
- * directement par ce rapport.
+ * La géométrie du geste (échelle, ancre sous les doigts) vit dans
+ * `wall-gesture.ts` ; ce module ne garde que les bornes de zoom et la garde
+ * qui empêche le clic synthétique de WebKit d'ouvrir une œuvre après un pinch.
  */
 export const MIN_WALL_ZOOM = 0.28;
 export const MAX_WALL_ZOOM = 2.4;
-
-export function pinchScale(startScale: number, ratio: number): number {
-  if (!Number.isFinite(ratio) || ratio <= 0) return startScale;
-  return startScale * ratio;
-}
 
 export function clampWallZoom(value: number, minScale: number): number {
   return Math.min(MAX_WALL_ZOOM, Math.max(minScale, value));

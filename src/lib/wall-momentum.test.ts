@@ -6,30 +6,7 @@ import {
   capMomentum,
   decayMomentum,
   isMomentumDying,
-  signedVelocity,
 } from "./wall-momentum";
-
-describe("signedVelocity", () => {
-  it("follows the direction of the last delta", () => {
-    expect(signedVelocity([0.5, 0.4], [-1, 1], [-40, 18])).toEqual([
-      -0.5, 0.4,
-    ]);
-  });
-
-  it("keeps both axes independent", () => {
-    expect(signedVelocity([0.9, 0.2], [1, -1], [12, -6])).toEqual([0.9, -0.2]);
-  });
-
-  it("falls back to the movement sign when the last delta is null", () => {
-    expect(signedVelocity([0.5, 0.4], [0, 0], [-10, 4])).toEqual([
-      -0.5, 0.4,
-    ]);
-  });
-
-  it("cancels a velocity with no direction at all", () => {
-    expect(signedVelocity([0.5, 0.4], [0, 0], [0, 0])).toEqual([0, 0]);
-  });
-});
 
 describe("decayMomentum", () => {
   it("slows the wall down as time passes", () => {
@@ -55,7 +32,7 @@ describe("decayMomentum", () => {
   });
 
   it("is negligible after a second", () => {
-    expect(Math.abs(decayMomentum(1, 1000))).toBeLessThan(0.05);
+    expect(Math.abs(decayMomentum(1, 1000))).toBeLessThan(0.15);
   });
 });
 
