@@ -4,7 +4,7 @@ import { updateTag } from "next/cache";
 import { getProvider } from "@/lib/providers/provider.factory";
 import { getAllSeriesBooks } from "@/lib/providers/series-books";
 import { PreferencesService } from "@/lib/services/preferences.service";
-import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, SERIES_BOOKS_CACHE_TAG, STATS_CACHE_TAG } from "@/constants/cacheConstants";
+import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, SERIES_BOOKS_CACHE_TAG, RATINGS_LIST_CACHE_TAG, STATS_CACHE_TAG } from "@/constants/cacheConstants";
 import { runWithConcurrency } from "@/lib/utils";
 import { AppError } from "@/utils/errors";
 
@@ -19,6 +19,7 @@ const SERIES_WRITE_CONCURRENCY = 6;
 function revalidateReadCaches(seriesId?: string | null) {
   updateTag(HOME_CACHE_TAG);
   updateTag(LIBRARY_SERIES_CACHE_TAG);
+  updateTag(RATINGS_LIST_CACHE_TAG);
   updateTag(STATS_CACHE_TAG);
   if (seriesId) {
     updateTag(`series-books:${seriesId}`);

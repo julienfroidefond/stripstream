@@ -120,6 +120,7 @@
     "connection": "Connexion",
     "home": "Accueil",
     "readingLists": "Listes de lecture",
+    "ratings": "Mes notes",
     "wall": "Le Wall",
     "account": "Mon compte",
     "favorites": {
@@ -329,6 +330,36 @@
       "unavailable": "Cette bibliothèque est actuellement indisponible",
       "coverAlt": "Couverture de {{name}}"
     }
+  },
+  "ratings": {
+    "title": "Mes notes",
+    "description": "Notez les séries que vous avez lues, d'une demi-étoile à cinq.",
+    "unavailable": "La notation des séries est disponible avec une connexion Stripstream Librarian.",
+    "anonymous": "Le mode anonyme est activé : les notes sont masquées et ne peuvent pas être modifiées.",
+    "anonymousShort": "Notes désactivées en mode anonyme",
+    "search": "Rechercher une série...",
+    "searchAction": "Rechercher",
+    "summary": {
+      "total": "Lues : {{count}}",
+      "unrated": "À noter : {{count}}",
+      "rated": "Notées : {{count}}"
+    },
+    "filters": {
+      "title": "Filtrer les séries",
+      "all": "Toutes",
+      "unrated": "À noter",
+      "rated": "Notées"
+    },
+    "pagination": {
+      "title": "Pagination",
+      "previous": "Précédent",
+      "next": "Suivant",
+      "status": "Page {{page}} / {{total}}"
+    },
+    "empty": "Aucune série lue pour le moment",
+    "emptyHint": "Terminez une série pour pouvoir la noter.",
+    "noResults": "Aucune série ne correspond",
+    "noResultsHint": "Modifiez votre recherche ou votre filtre."
   },
   "series": {
     "related": "Séries similaires",

@@ -23,4 +23,10 @@ export interface BookCoverProps extends BaseCoverProps {
 export interface SeriesCoverProps extends BaseCoverProps {
   series: NormalizedSeries;
   isAnonymous?: boolean;
+  /**
+   * Réduit l'opacité des séries entièrement lues. La page « Mes notes » ne
+   * contient que des séries lues : elle le désactive pour éviter une grille
+   * entièrement grisée.
+   */
+  dimCompleted?: boolean;
 }

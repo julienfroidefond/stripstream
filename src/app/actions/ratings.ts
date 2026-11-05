@@ -2,7 +2,7 @@
 
 import { updateTag } from "next/cache";
 import { getProvider } from "@/lib/providers/provider.factory";
-import { SERIES_RATING_CACHE_TAG } from "@/constants/cacheConstants";
+import { SERIES_RATING_CACHE_TAG, RATINGS_LIST_CACHE_TAG } from "@/constants/cacheConstants";
 import { AppError } from "@/utils/errors";
 import { getErrorMessage } from "@/utils/errors";
 import { ERROR_CODES } from "@/constants/errorCodes";
@@ -10,10 +10,12 @@ import logger from "@/lib/logger";
 
 /**
  * Invalide le cache de note pour une série après modification.
- * Ciblage granulaire : seul le tag per-id est invalidé (pas de tag global).
+ * Ciblage granulaire : seul le tag per-id est invalidé (pas de tag global),
+ * plus la liste des séries lues de la page « Mes notes ».
  */
 function revalidateRatingCache(seriesId: string) {
   updateTag(`${SERIES_RATING_CACHE_TAG}:${seriesId}`);
+  updateTag(RATINGS_LIST_CACHE_TAG);
 }
 
 export async function setSeriesRating(

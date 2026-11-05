@@ -120,6 +120,7 @@
     "connection": "Connection",
     "home": "Home",
     "readingLists": "Reading lists",
+    "ratings": "My ratings",
     "wall": "The Wall",
     "account": "My Account",
     "favorites": {
@@ -324,6 +325,36 @@
       "unavailable": "This library is currently unavailable",
       "coverAlt": "Cover of {{name}}"
     }
+  },
+  "ratings": {
+    "title": "My ratings",
+    "description": "Rate the series you have read, from half a star to five.",
+    "unavailable": "Series ratings are available with a Stripstream Librarian connection.",
+    "anonymous": "Anonymous mode is on: ratings are hidden and cannot be changed.",
+    "anonymousShort": "Ratings disabled in anonymous mode",
+    "search": "Search a series...",
+    "searchAction": "Search",
+    "summary": {
+      "total": "Read: {{count}}",
+      "unrated": "To rate: {{count}}",
+      "rated": "Rated: {{count}}"
+    },
+    "filters": {
+      "title": "Filter series",
+      "all": "All",
+      "unrated": "To rate",
+      "rated": "Rated"
+    },
+    "pagination": {
+      "title": "Pagination",
+      "previous": "Previous",
+      "next": "Next",
+      "status": "Page {{page}} / {{total}}"
+    },
+    "empty": "No read series yet",
+    "emptyHint": "Finish a series to be able to rate it.",
+    "noResults": "No matching series",
+    "noResultsHint": "Try changing your search or filter."
   },
   "series": {
     "related": "Similar series",

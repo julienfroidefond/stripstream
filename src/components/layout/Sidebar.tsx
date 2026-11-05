@@ -8,6 +8,7 @@ import {
   LogOut,
   User,
   Shield,
+  Star,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -132,6 +133,12 @@ export function Sidebar({
             label={t("sidebar.readingLists")}
             active={pathname === "/reading-lists" || pathname.startsWith("/reading-lists/")}
             onClick={() => handleLinkClick("/reading-lists")}
+          />
+          <NavButton
+            icon={Star}
+            label={t("sidebar.ratings")}
+            active={pathname === "/ratings"}
+            onClick={() => handleLinkClick("/ratings")}
           />
 
           {/* Favoris — streamé */}
