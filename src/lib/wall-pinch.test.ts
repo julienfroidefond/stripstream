@@ -12,25 +12,8 @@ import {
   createWallClickGuardState,
   endWallPinch,
   isWallClickGuarded,
-  pinchScale,
   releaseWallTouch,
 } from "./wall-pinch";
-
-describe("pinchScale", () => {
-  it("multiplies the scale at pinch start by the finger ratio", () => {
-    expect(pinchScale(0.8, 1.5)).toBeCloseTo(1.2);
-  });
-
-  it("keeps the scale unchanged when the fingers do not move", () => {
-    expect(pinchScale(0.8, 1)).toBe(0.8);
-  });
-
-  it("ignores a zero or non-finite ratio", () => {
-    expect(pinchScale(1, 0)).toBe(1);
-    expect(pinchScale(1, Number.NaN)).toBe(1);
-    expect(pinchScale(1, Number.POSITIVE_INFINITY)).toBe(1);
-  });
-});
 
 describe("clampWallZoom", () => {
   it("pins the issue's zoom contract", () => {

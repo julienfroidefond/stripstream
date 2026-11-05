@@ -118,6 +118,32 @@ test.describe('Wall filters', () => {
   });
 });
 
+test.describe('Wall gestures', () => {
+  test.skip(!hasIsolatedDatabase, 'Local E2E database unavailable');
+
+  test('pans the wall with a drag without selecting a cover', async ({ page }) => {
+    await selectConnection(page, 'Stub A');
+    await openWall(page);
+
+    const canvas = page.locator('.wall-canvas');
+    const readTransform = () =>
+      canvas.evaluate((element) => (element as HTMLElement).style.transform);
+    const before = await readTransform();
+
+    // Un glissement de souris suit le même chemin pointeur que le doigt.
+    await page.mouse.move(640, 420);
+    await page.mouse.down();
+    await page.mouse.move(520, 330, { steps: 8 });
+    await page.mouse.up();
+
+    // La caméra a bougé et le clic synthétique du relâchement est avalé :
+    // aucune plaque ne s'ouvre au passage.
+    await expect.poll(readTransform).not.toBe(before);
+    await expect(page.locator('.wall-plaque-shell')).toHaveCount(0);
+    await expect(page).toHaveURL(/\/wall$/);
+  });
+});
+
 test.describe('Wall mobile sheet', () => {
   test.skip(!hasIsolatedDatabase, 'Local E2E database unavailable');
 

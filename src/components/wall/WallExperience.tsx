@@ -1,6 +1,5 @@
 "use client";
 
-import { useGesture } from "@use-gesture/react";
 import {
   Check,
   LayoutGrid,
@@ -44,10 +43,21 @@ import {
   visibleWallTiles,
 } from "@/lib/wall-layout";
 import {
+  WALL_TAP_SLOP,
+  pinchWallCamera,
+  pushWallVelocitySample,
+  startWallPinch,
+  wallDistance,
+  wallMidpoint,
+  wallReleaseVelocity,
+  type WallPinchStart,
+  type WallPoint,
+  type WallVelocitySample,
+} from "@/lib/wall-gesture";
+import {
   capMomentum,
   decayMomentum,
   isMomentumDying,
-  signedVelocity,
 } from "@/lib/wall-momentum";
 import {
   MAX_WALL_ZOOM,
@@ -59,9 +69,7 @@ import {
   clampWallZoom,
   clearWallClickGuard,
   createWallClickGuardState,
-  endWallPinch,
   isWallClickGuarded,
-  pinchScale,
   releaseWallTouch,
 } from "@/lib/wall-pinch";
 import type { WallItem, WallRect, WallRenderTile } from "@/types/wall";
@@ -97,17 +105,6 @@ interface CameraState {
   x: number;
   y: number;
   scale: number;
-}
-
-interface DragOrigin {
-  x: number;
-  y: number;
-}
-
-interface PinchOrigin {
-  scale: number;
-  worldX: number;
-  worldY: number;
 }
 
 interface LibraryEntry {
@@ -158,7 +155,6 @@ const HOVER_DIM_EXIT_DELAY = 160;
 const FILTERS_STORAGE_SUFFIX = "wall-libraries";
 const HIDE_READ_STORAGE_SUFFIX = "wall-hide-read";
 const DRAG_CLICK_GUARD = 420;
-const DRAG_THRESHOLD = 3;
 const WHEEL_ZOOM = 0.0022;
 const ZOOM_STEP = 1.28;
 /** Seuils de recalcul de la liste des tuiles visibles pendant un geste. */
@@ -295,8 +291,8 @@ function pressFocusedTile(
  * Les séries arrivent entières, la géométrie est calculée ici à partir de la
  * sélection : changer de bibliothèque redessine le mur sans recharger la page.
  * Un seul canvas transformé porte les quatre cents affiches ; les gestes
- * (glisser, pincer) viennent de `@use-gesture`, le vol d'inertie et le
- * rubber-band restent à la main pour garder le mur « lourd ».
+ * (glisser, pincer) sont lus directement sur les événements pointeur, et
+ * l'inertie reste à la main pour garder le mur « lourd ».
  */
 export function WallExperience({ items }: WallExperienceProps) {
   const { t, currentLanguage } = useTranslate();
@@ -329,11 +325,6 @@ export function WallExperience({ items }: WallExperienceProps) {
   const clickGuardRef = useRef<WallClickGuardState | null>(null);
   const clickGuard = (clickGuardRef.current ??= createWallClickGuardState());
   const initializedRef = useRef(false);
-  const dragOriginRef = useRef<DragOrigin>({ x: 0, y: 0 });
-  const pinchRef = useRef<PinchOrigin | null>(null);
-  const dragActiveRef = useRef(false);
-  const dragNeedsRebaseRef = useRef(false);
-  const dragBlockedRef = useRef(false);
   const cameraRef = useRef<CameraState>({ x: 0, y: 0, scale: 1 });
   const momentumRafRef = useRef<number | null>(null);
 
@@ -709,21 +700,16 @@ export function WallExperience({ items }: WallExperienceProps) {
   );
 
   /**
-   * Inertie du mur : la vitesse du geste est freinée par une friction
-   * exponentielle, image par image. `@use-gesture` fournit une vitesse absolue,
-   * `signedVelocity` lui rend son sens, puis le mur ralentit progressivement.
+   * Inertie du mur : la vitesse signée du geste est freinée par une friction
+   * exponentielle, image par image. Le mur ralentit progressivement, comme une
+   * page qu'on a lancée, puis s'immobilise.
    */
   const startMomentum = useCallback(
-    (
-      velocity: readonly [number, number],
-      direction: readonly [number, number],
-      movement: readonly [number, number]
-    ) => {
+    (velocityX: number, velocityY: number) => {
       stopMomentum();
       if (reduce) return;
 
-      const [rawX, rawY] = signedVelocity(velocity, direction, movement);
-      const [startX, startY] = capMomentum(rawX, rawY);
+      const [startX, startY] = capMomentum(velocityX, velocityY);
       if (isMomentumDying(startX, startY)) return;
 
       let vx = startX;
@@ -1028,18 +1014,6 @@ export function WallExperience({ items }: WallExperienceProps) {
     else fitView();
   }, [fitView, overview, resetView]);
 
-  const settleView = useCallback(
-    (
-      velocity?: readonly [number, number],
-      direction?: readonly [number, number],
-      movement?: readonly [number, number]
-    ) => {
-      if (reduce || !velocity || !direction || !movement) return;
-      startMomentum(velocity, direction, movement);
-    },
-    [reduce, startMomentum]
-  );
-
   const goToRandom = useCallback(() => {
     if (!viewport.width || !viewport.height || visibleTiles.length === 0) {
       return;
@@ -1085,135 +1059,318 @@ export function WallExperience({ items }: WallExperienceProps) {
     y,
   ]);
 
-  const bind = useGesture(
-    {
-      onDragStart: (state) => {
-        dragBlockedRef.current = isUiTarget(state.target);
-        if (dragBlockedRef.current) return;
+  /**
+   * Gestes du mur.
+   *
+   * Un seul système d'événements pointeur pilote le glissement et le pinch :
+   * `@use-gesture` faisait tourner deux moteurs concurrents (drag limité au
+   * premier doigt, pinch séparé), ce qui provoquait des sauts au passage d'un
+   * doigt à deux et ignorait les gestes commencés dans un interstice. Ici, la
+   * caméra suit les doigts 1:1 dès le premier pixel, le pinch ancre le point
+   * saisi sous le milieu des doigts, et le relâchement emporte l'élan.
+   *
+   * Les callbacks React vivent dans `gestureApiRef` : l'effet s'attache une
+   * seule fois et lit toujours la version courante, sans réabonner les
+   * écouteurs (et perdre un geste en cours) quand `minScale` change.
+   */
+  const gestureApiRef = useRef({
+    clampZoom,
+    closePlaque,
+    markPanning,
+    setDragging,
+    setOverview,
+    startMomentum,
+    stopMomentum,
+  });
 
-        dragActiveRef.current = true;
-        stopMomentum();
-        dragOriginRef.current = { x: x.get(), y: y.get() };
-        scale.stop();
-        x.stop();
-        y.stop();
-        closePlaque();
-        setOverview(false);
-        setDragging(true);
-      },
-      onDrag: (state) => {
-        if (dragBlockedRef.current || state.pinching) return;
-        const [moveX, moveY] = state.movement;
+  useEffect(() => {
+    gestureApiRef.current = {
+      clampZoom,
+      closePlaque,
+      markPanning,
+      setDragging,
+      setOverview,
+      startMomentum,
+      stopMomentum,
+    };
+  }, [
+    clampZoom,
+    closePlaque,
+    markPanning,
+    setDragging,
+    setOverview,
+    startMomentum,
+    stopMomentum,
+  ]);
 
-        // Après un pinch, le doigt resté posé continue le drag reconnu avant
-        // le geste à deux doigts. On recale son origine sur la caméra telle
-        // qu'elle est sortie du pinch pour éviter un saut au premier mouvement.
-        if (dragNeedsRebaseRef.current) {
-          dragNeedsRebaseRef.current = false;
-          dragOriginRef.current = {
-            x: x.get() - moveX,
-            y: y.get() - moveY,
-          };
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+
+    const pointers = new Map<number, WallPoint>();
+    const ignored = new Set<number>();
+    const samples: WallVelocitySample[] = [];
+    let mode: "idle" | "pan" | "pinch" = "idle";
+    let panId: number | null = null;
+    let panStart: WallPoint = { x: 0, y: 0 };
+    let panLast: WallPoint = { x: 0, y: 0 };
+    let moved = false;
+    let pinched = false;
+    let pinchIds: [number, number] | null = null;
+    let pinchStart: WallPinchStart | null = null;
+    let pinchSpan = 1;
+    let detach: (() => void) | null = null;
+
+    const api = () => gestureApiRef.current;
+
+    const stopTweens = () => {
+      scale.stop();
+      x.stop();
+      y.stop();
+    };
+
+    const stagePoint = (point: WallPoint): WallPoint => {
+      const rect = stage.getBoundingClientRect();
+      return { x: point.x - rect.left, y: point.y - rect.top };
+    };
+
+    const resetSequence = () => {
+      mode = "idle";
+      panId = null;
+      pinchIds = null;
+      pinchStart = null;
+      moved = false;
+      pinched = false;
+      samples.length = 0;
+    };
+
+    const beginPan = (id: number) => {
+      const point = pointers.get(id);
+      if (!point) return;
+      mode = "pan";
+      panId = id;
+      panStart = point;
+      panLast = point;
+      // Un doigt resté après un pinch ne doit jamais produire un tap.
+      moved = pinched;
+      samples.length = 0;
+    };
+
+    const beginPinch = () => {
+      const ids = [...pointers.keys()].slice(0, 2);
+      const first = pointers.get(ids[0]);
+      const second = pointers.get(ids[1]);
+      if (!first || !second) return;
+
+      mode = "pinch";
+      panId = null;
+      pinchIds = [ids[0], ids[1]];
+      pinchSpan = Math.max(1, wallDistance(first, second));
+      pinchStart = startWallPinch(
+        { x: x.get(), y: y.get(), scale: scale.get() },
+        stagePoint(wallMidpoint(first, second))
+      );
+      pinched = true;
+      moved = true;
+      samples.length = 0;
+      beginWallPinch(clickGuard, performance.now());
+      api().setDragging(true);
+      api().setOverview(false);
+      api().closePlaque();
+      api().markPanning();
+    };
+
+    /** Recale le geste après l'arrivée ou le départ d'un doigt, sans saut. */
+    const syncPointers = () => {
+      if (pointers.size === 0) {
+        mode = "idle";
+        panId = null;
+        pinchIds = null;
+        pinchStart = null;
+        return;
+      }
+
+      if (pointers.size === 1) {
+        const [id] = pointers.keys();
+        if (mode !== "pan" || panId !== id) beginPan(id);
+        return;
+      }
+
+      const ids = [...pointers.keys()].slice(0, 2);
+      if (
+        mode !== "pinch" ||
+        !pinchIds ||
+        pinchIds[0] !== ids[0] ||
+        pinchIds[1] !== ids[1]
+      ) {
+        beginPinch();
+      }
+    };
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (event.pointerType === "mouse" && event.button !== 0) return;
+
+      if (pointers.size === 0 && ignored.size === 0) {
+        beginWallPress(clickGuard);
+        resetSequence();
+        attach();
+      }
+
+      // Un geste ne démarre jamais sur un contrôle du mur : le panneau garde
+      // son défilement natif et ses boutons restent de simples boutons.
+      if (isUiTarget(event.target)) {
+        ignored.add(event.pointerId);
+        return;
+      }
+      if (ignored.size > 0) return;
+
+      if (pointers.size === 0) {
+        api().stopMomentum();
+        stopTweens();
+        api().closePlaque();
+        api().setOverview(false);
+      }
+
+      pointers.set(event.pointerId, {
+        x: event.clientX,
+        y: event.clientY,
+      });
+      syncPointers();
+    };
+
+    const handlePointerMove = (event: PointerEvent) => {
+      if (!pointers.has(event.pointerId)) return;
+
+      // Souris relâchée hors de la fenêtre : aucun `pointerup` ne nous est
+      // parvenu. Le premier mouvement au retour doit terminer le geste au lieu
+      // de faire glisser le mur avec un bouton fantôme.
+      if (event.pointerType === "mouse" && event.buttons === 0) {
+        handlePointerUp(event, false);
+        return;
+      }
+
+      const next = { x: event.clientX, y: event.clientY };
+      pointers.set(event.pointerId, next);
+
+      if (mode === "pan" && panId === event.pointerId) {
+        const dx = next.x - panLast.x;
+        const dy = next.y - panLast.y;
+        panLast = next;
+        if (dx === 0 && dy === 0) return;
+
+        // 1:1 dès le premier pixel : pas de seuil qui ferait sauter le mur.
+        x.set(x.get() + dx);
+        y.set(y.get() + dy);
+        api().markPanning();
+
+        if (!moved) {
+          if (wallDistance(next, panStart) <= WALL_TAP_SLOP) return;
+          moved = true;
+          api().setDragging(true);
+          api().setOverview(false);
+          api().closePlaque();
         }
 
-        if (moveX === 0 && moveY === 0) return;
+        pushWallVelocitySample(samples, {
+          x: next.x,
+          y: next.y,
+          t: performance.now(),
+        });
+        return;
+      }
 
-        setOverview(false);
+      if (mode === "pinch" && pinchIds && pinchStart) {
+        const first = pointers.get(pinchIds[0]);
+        const second = pointers.get(pinchIds[1]);
+        if (!first || !second) return;
 
-        x.set(dragOriginRef.current.x + moveX);
-        y.set(dragOriginRef.current.y + moveY);
-      },
-      onDragEnd: (state) => {
-        dragActiveRef.current = false;
-        setDragging(false);
-        if (dragBlockedRef.current) {
-          dragBlockedRef.current = false;
-          return;
-        }
+        const camera = pinchWallCamera(
+          pinchStart,
+          stagePoint(wallMidpoint(first, second)),
+          wallDistance(first, second) / pinchSpan,
+          api().clampZoom
+        );
+        x.set(camera.x);
+        y.set(camera.y);
+        scale.set(camera.scale);
+        api().markPanning();
+      }
+    };
 
-        if (!state.tap) {
-          armWallClickGuard(
-            clickGuard,
-            performance.now(),
-            DRAG_CLICK_GUARD
-          );
-        }
+    function handlePointerUp(event: PointerEvent, recordRelease = true) {
+      if (
+        event.type === "pointerup" &&
+        event.pointerType === "mouse" &&
+        event.button !== 0
+      ) {
+        return;
+      }
+      if (ignored.delete(event.pointerId)) {
+        if (ignored.size === 0 && pointers.size === 0) detach?.();
+        return;
+      }
+      if (!pointers.delete(event.pointerId)) return;
 
-        // La vélocité du drag a été calculée pendant le pinch : la relancer
-        // ferait dériver le mur après que les doigts se sont levés. Le drapeau
-        // reste armé jusqu'à la prochaine séquence de touches pour couvrir
-        // aussi le relâchement du dernier doigt.
-        const pinched = clickGuard.pinchHappened;
-        dragNeedsRebaseRef.current = false;
-        if (pinched) return;
+      // Le point de relâchement précise la vitesse quand le dernier
+      // `pointermove` date de quelques images.
+      if (recordRelease && mode === "pan" && panId === event.pointerId && moved) {
+        pushWallVelocitySample(samples, {
+          x: event.clientX,
+          y: event.clientY,
+          t: performance.now(),
+        });
+      }
 
-        settleView(state.velocity, state.direction, state.movement);
-      },
-      onPinchStart: (state) => {
-        beginWallPinch(clickGuard, performance.now());
-        if (isUiTarget(state.target)) {
-          pinchRef.current = null;
-          return;
-        }
-        const stage = stageRef.current;
-        if (!stage) return;
+      const wasMode = mode;
+      syncPointers();
 
-        stopMomentum();
-        const rect = stage.getBoundingClientRect();
-        const startScale = scale.get();
-        const originX = state.origin[0] - rect.left;
-        const originY = state.origin[1] - rect.top;
+      if (pointers.size > 0) return;
 
-        pinchRef.current = {
-          scale: startScale,
-          worldX: (originX - x.get()) / startScale,
-          worldY: (originY - y.get()) / startScale,
-        };
-        scale.stop();
-        x.stop();
-        y.stop();
-        closePlaque();
-        setOverview(false);
-        setDragging(true);
-      },
-      onPinch: (state) => {
-        const pinch = pinchRef.current;
-        const stage = stageRef.current;
-        if (!pinch || !stage) return;
+      if (wasMode === "pan" && moved) {
+        armWallClickGuard(clickGuard, performance.now(), DRAG_CLICK_GUARD);
+        const velocity = wallReleaseVelocity(samples, performance.now());
+        if (velocity) api().startMomentum(velocity[0], velocity[1]);
+      }
+      if (pinched) {
+        releaseWallTouch(clickGuard, performance.now(), 0);
+      }
 
-        const rect = stage.getBoundingClientRect();
-        const nextScale = clampZoom(pinchScale(pinch.scale, state.movement[0]));
-        const originX = state.origin[0] - rect.left;
-        const originY = state.origin[1] - rect.top;
+      api().setDragging(false);
+      resetSequence();
+      detach?.();
+    };
 
-        scale.set(nextScale);
-        x.set(originX - pinch.worldX * nextScale);
-        y.set(originY - pinch.worldY * nextScale);
-      },
-      onPinchEnd: () => {
-        // Gestion d'état commune aux deux chemins : un pinch démarré sur une
-        // cible `[data-wall-ui]` laisse `pinchRef` à null, mais la garde doit
-        // être réarmée et le drag resté actif doit reprendre. Le rebase est
-        // sans effet de saut : il recale l'origine du drag sur la caméra
-        // courante, qui n'a pas bougé pendant ce pinch.
-        pinchRef.current = null;
-        setDragging(dragActiveRef.current);
-        dragNeedsRebaseRef.current = true;
-        endWallPinch(clickGuard, performance.now());
-      },
-    },
-    {
-      drag: {
-        threshold: DRAG_THRESHOLD,
-        preventScroll: false,
-      },
-      pinch: {
-        // Le ctrl/⌘ + molette est géré par notre listener natif : sans ça,
-        // use-gesture traite le même événement comme un pinch et double le zoom.
-        pinchOnWheel: false,
-      },
+    const handleBlur = () => {
+      pointers.clear();
+      ignored.clear();
+      api().setDragging(false);
+      resetSequence();
+      detach?.();
+    };
+
+    function attach() {
+      if (detach) return;
+      window.addEventListener("pointermove", handlePointerMove, {
+        passive: true,
+      });
+      window.addEventListener("pointerup", handlePointerUp);
+      window.addEventListener("pointercancel", handlePointerUp);
+      window.addEventListener("blur", handleBlur);
+      detach = () => {
+        window.removeEventListener("pointermove", handlePointerMove);
+        window.removeEventListener("pointerup", handlePointerUp);
+        window.removeEventListener("pointercancel", handlePointerUp);
+        window.removeEventListener("blur", handleBlur);
+        detach = null;
+      };
     }
-  );
+
+    stage.addEventListener("pointerdown", handlePointerDown, { passive: true });
+    return () => {
+      stage.removeEventListener("pointerdown", handlePointerDown);
+      detach?.();
+    };
+  }, [clickGuard, scale, x, y]);
 
   const lastSelectionRef = useRef(selectionKey);
 
@@ -1392,11 +1549,12 @@ export function WallExperience({ items }: WallExperienceProps) {
    * iOS garde parfois le pinch-zoom natif malgré `touch-action: none`,
    * particulièrement en PWA standalone. Un `touchmove` non passif à deux
    * doigts et les gestes WebKit coupent ce zoom avant qu'il ne déplace le
-   * viewport sous le mur. Le défilement à un doigt des panneaux reste intact.
+   * viewport sous le mur. Le défilement à un doigt des panneaux reste intact :
+   * leurs gestes sont ignorés en amont par `isUiTarget`.
    * Safari macOS expose aussi `maxTouchPoints` (1 sur un Mac à trackpad) : ses
    * gestes de trackpad sont donc interceptés de la même façon, ce qui est
    * voulu — `preventDefault` y bloque le zoom natif de page et le zoom du mur
-   * continue de passer par le handler `wheel` natif (`pinchOnWheel: false`).
+   * continue de passer par le handler `wheel` natif.
    */
   useEffect(() => {
     const stage = stageRef.current;
@@ -1410,30 +1568,6 @@ export function WallExperience({ items }: WallExperienceProps) {
       if (event.touches.length < 2) return;
       if (event.cancelable) event.preventDefault();
     };
-    // Un nouveau geste (premier doigt, ou souris) libère la garde du geste
-    // précédent. Le deuxième doigt d'un pinch n'est pas un nouveau geste.
-    const startFreshSequence = () => {
-      beginWallPress(clickGuard);
-      dragActiveRef.current = false;
-      dragNeedsRebaseRef.current = false;
-    };
-    const handlePointerDown = (event: PointerEvent) => {
-      if (!event.isPrimary) return;
-      startFreshSequence();
-    };
-    const handleTouchStart = (event: TouchEvent) => {
-      if (event.touches.length !== 1) return;
-      startFreshSequence();
-    };
-    // Le dernier doigt peut se lever plus de 500 ms après le premier : c'est
-    // ce relâchement final qui déclenche le clic synthétique de WebKit.
-    const armAfterLastFinger = (event: TouchEvent) => {
-      releaseWallTouch(
-        clickGuard,
-        performance.now(),
-        event.touches.length
-      );
-    };
 
     if (touchCapable) {
       stage.addEventListener("gesturestart", stopGestureZoom, {
@@ -1443,25 +1577,13 @@ export function WallExperience({ items }: WallExperienceProps) {
         passive: false,
       });
     }
-    stage.addEventListener("pointerdown", handlePointerDown, { passive: true });
-    stage.addEventListener("touchstart", handleTouchStart, { passive: true });
     stage.addEventListener("touchmove", stopMultiTouchZoom, { passive: false });
-    stage.addEventListener("touchend", armAfterLastFinger, { passive: true });
-    stage.addEventListener("touchcancel", armAfterLastFinger, {
-      passive: true,
-    });
     return () => {
       stage.removeEventListener("gesturestart", stopGestureZoom);
       stage.removeEventListener("gesturechange", stopGestureZoom);
-      stage.removeEventListener("pointerdown", handlePointerDown);
-      stage.removeEventListener("touchstart", handleTouchStart);
       stage.removeEventListener("touchmove", stopMultiTouchZoom);
-      stage.removeEventListener("touchend", armAfterLastFinger);
-      stage.removeEventListener("touchcancel", armAfterLastFinger);
     };
-    // `clickGuard` est l'objet stable lu depuis `clickGuardRef` : le lister ne
-    // relance l'effet qu'une fois, mais garde la dépendance explicite.
-  }, [clickGuard]);
+  }, []);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -1654,63 +1776,64 @@ export function WallExperience({ items }: WallExperienceProps) {
     <WallFrame>
       <div
         ref={stageRef}
-        {...bind()}
         data-dragging={dragging || undefined}
         data-panning={panning || dragging || undefined}
         data-plaque={active ? true : undefined}
         data-focusing={focusKey ? true : undefined}
         data-sheet={active?.mode === "sheet" || undefined}
         className={cn(
-          "wall-stage absolute inset-0 touch-pan-y select-none",
+          "wall-stage absolute inset-0 select-none",
           dragging ? "cursor-grabbing" : "cursor-grab"
         )}
         onClickCapture={handleClickCapture}
         onDoubleClick={handleDoubleClick}
       >
-        <div
-          ref={canvasRef}
-          className="wall-canvas absolute left-0 top-0 origin-top-left [touch-action:none]"
-          style={{ width: layout.width, height: layout.height }}
-        >
-          {visibleTiles.map((tile) => {
-            const item = visibleItems[tile.itemIndex];
-            if (!item) return null;
-            return (
-              <WallTile
-                key={tile.key}
-                item={item}
-                tile={tile}
-                active={active?.key === tile.key}
-                flash={flashKey === tile.key}
-                enter={enterTiles}
-                reduce={reduce}
-                onSelect={showFor}
-                onHover={handleTileHover}
-              />
-            );
-          })}
+        <div className="wall-surface absolute inset-0">
+          <div
+            ref={canvasRef}
+            className="wall-canvas absolute left-0 top-0 origin-top-left [touch-action:none]"
+            style={{ width: layout.width, height: layout.height }}
+          >
+            {visibleTiles.map((tile) => {
+              const item = visibleItems[tile.itemIndex];
+              if (!item) return null;
+              return (
+                <WallTile
+                  key={tile.key}
+                  item={item}
+                  tile={tile}
+                  active={active?.key === tile.key}
+                  flash={flashKey === tile.key}
+                  enter={enterTiles}
+                  reduce={reduce}
+                  onSelect={showFor}
+                  onHover={handleTileHover}
+                />
+              );
+            })}
+
+            <div
+              className="wall-dim"
+              data-visible={dimOn || undefined}
+              style={
+                dimRect
+                  ? {
+                      left: dimRect.left,
+                      top: dimRect.top,
+                      width: dimRect.width,
+                      height: dimRect.height,
+                    }
+                  : undefined
+              }
+              aria-hidden
+            />
+          </div>
 
           <div
-            className="wall-dim"
-            data-visible={dimOn || undefined}
-            style={
-              dimRect
-                ? {
-                    left: dimRect.left,
-                    top: dimRect.top,
-                    width: dimRect.width,
-                    height: dimRect.height,
-                  }
-                : undefined
-            }
+            className="wall-vignette pointer-events-none absolute inset-0"
             aria-hidden
           />
         </div>
-
-        <div
-          className="wall-vignette pointer-events-none absolute inset-0"
-          aria-hidden
-        />
 
         <div className="wall-hud pointer-events-none absolute inset-x-0 top-0 z-20">
           <div className="pl-5 pt-5 sm:pl-8 sm:pt-7">
