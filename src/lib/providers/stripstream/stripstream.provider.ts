@@ -39,7 +39,7 @@ import type {
   StripstreamSeriesRatingsResponse,
   StripstreamIndexJob,
 } from "@/types/stripstream";
-import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, SERIES_BOOKS_CACHE_TAG, SERIES_RATING_CACHE_TAG, STATS_CACHE_TAG } from "@/constants/cacheConstants";
+import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, SERIES_BOOKS_CACHE_TAG, SERIES_RATING_CACHE_TAG, RATINGS_LIST_CACHE_TAG, STATS_CACHE_TAG } from "@/constants/cacheConstants";
 
 const CACHE_TTL_LONG = 300;
 const CACHE_TTL_MED = 120;
@@ -93,6 +93,32 @@ export class StripstreamProvider implements IMediaProvider {
     return {
       items: response.items.map(StripstreamAdapter.toNormalizedSeries),
       nextCursor: null,
+      totalElements: response.total,
+      totalPages,
+    };
+  }
+
+  /**
+   * Séries entièrement lues, toutes bibliothèques confondues.
+   * `reading_status=read` côté Librarian signifie « tous les tomes lus ».
+   */
+  async getReadSeries(page = 1, limit = 200): Promise<NormalizedSeriesPage> {
+    const response = await this.client.fetch<StripstreamSeriesPage>(
+      "series",
+      {
+        reading_status: "read",
+        has_books: "true",
+        page: String(page),
+        limit: String(limit),
+        sort: "title",
+      },
+      { revalidate: CACHE_TTL_MED, tags: [RATINGS_LIST_CACHE_TAG] }
+    );
+
+    const totalPages = Math.ceil(response.total / limit);
+    return {
+      items: response.items.map(StripstreamAdapter.toNormalizedSeries),
+      nextCursor: response.page < totalPages ? String(response.page + 1) : null,
       totalElements: response.total,
       totalPages,
     };

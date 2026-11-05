@@ -65,7 +65,7 @@ The active selection is **per browser**, not global: httpOnly cookies `stripstre
 
 ## 2. Server-first data flow
 
-- Pages and layouts under `src/app/**/page.tsx` are React Server Components. The home page (`src/app/page.tsx`) resolves the provider server-side and fans out feed promises; other examples: `src/app/libraries/[libraryId]/page.tsx`, `src/app/series/[seriesId]/page.tsx`, `src/app/books/[bookId]/page.tsx`, `src/app/reading-lists/[id]/page.tsx`.
+- Pages and layouts under `src/app/**/page.tsx` are React Server Components. The home page (`src/app/page.tsx`) resolves the provider server-side and fans out feed promises; other examples: `src/app/libraries/[libraryId]/page.tsx`, `src/app/series/[seriesId]/page.tsx`, `src/app/books/[bookId]/page.tsx`, `src/app/reading-lists/[id]/page.tsx`, `src/app/ratings/page.tsx` (read series → rating cards, Stripstream only, with search/filter/pagination driven by URL search params and resolved server-side).
 - Mutations are Next.js server actions in `src/app/actions/` — 13 files: `admin.ts`, `auth.ts`, `books.ts`, `config.ts`, `favorites.ts`, `home.ts`, `library.ts`, `password.ts`, `preferences.ts`, `ratings.ts`, `read-progress.ts`, `refresh.ts`, `stripstream-config.ts`. They run server-side, use `getProvider()`, and invalidate caches (see §3).
 - Client components (`"use client"`) are reserved for browser-only concerns: event handlers, refs, effects, DOM APIs. Do not add client-side `fetch` to internal APIs where a server action exists.
 - **Exception — media streams.** The 11 route handlers under `src/app/api/` exist to stream bytes to the browser: the Komga image proxies under `src/app/api/komga/images/...` (thumbnails, first page, pages), `src/app/api/komga/books/[bookId]/pages/[pageNumber]/route.ts`, the Stripstream mirrors under `src/app/api/stripstream/images/...`, the NextAuth handler `src/app/api/auth/[...nextauth]/route.ts`, and the two search proxies (`src/app/api/provider/search/route.ts`, `src/app/api/stripstream/search/route.ts`). They exist so `<img src=...>` works with credentials kept server-side. Komga streaming is implemented in `src/lib/services/komga/image.service.ts:19-49`; identical concurrent image requests are coalesced by `requestDeduplicationService` (`src/lib/services/request-deduplication.service.ts`, used at `src/app/api/komga/books/[bookId]/pages/[pageNumber]/route.ts:34-47`). Route-by-route documentation lives in `docs/api.md`.
@@ -76,7 +76,7 @@ The active selection is **per browser**, not global: httpOnly cookies `stripstre
 
 ## 3. Caching model
 
-Provider reads are wrapped in Next.js `unstable_cache(...)`, with **9 call sites** total: 7 in `src/lib/providers/komga/komga.provider.ts:113,416,437,471,513,534,549` and 2 in `src/lib/services/favorite.service.ts:29,44`. The **Stripstream provider does not use `unstable_cache`** — it caches through fetch options (`next: { revalidate, tags }`) assembled in `src/lib/providers/stripstream/stripstream.client.ts:100-107`. Tags come from `src/constants/cacheConstants.ts:1-7`:
+Provider reads are wrapped in Next.js `unstable_cache(...)`, with **9 call sites** total: 7 in `src/lib/providers/komga/komga.provider.ts:113,416,437,471,513,534,549` and 2 in `src/lib/services/favorite.service.ts:29,44`. The **Stripstream provider does not use `unstable_cache`** — it caches through fetch options (`next: { revalidate, tags }`) assembled in `src/lib/providers/stripstream/stripstream.client.ts:100-107`. Tags come from `src/constants/cacheConstants.ts:1-8`:
 
 | Tag constant | Tag value | Scope |
 | --- | --- | --- |
@@ -86,6 +86,7 @@ Provider reads are wrapped in Next.js `unstable_cache(...)`, with **9 call sites
 | `FAVORITES_CACHE_TAG` | `favorites` | favorites |
 | `BOOK_CACHE_TAG` | `book` | single book |
 | `SERIES_RATING_CACHE_TAG` | `series-rating` | series ratings |
+| `RATINGS_LIST_CACHE_TAG` | `ratings-list` | read series listed on `/ratings` |
 | `STATS_CACHE_TAG` | `reading-stats` | reading statistics |
 
 Per-id tags narrow invalidation: `library-series:${libraryId}` (`src/lib/providers/komga/komga.provider.ts:225-226`), `series-books:${seriesId}` (`src/app/actions/read-progress.ts:18`), `series-rating:${seriesId}` (`src/app/actions/ratings.ts:16`), plus `series-recommendations` and `series-related:${seriesId}` (`src/lib/providers/stripstream/stripstream.provider.ts:541,577`). Prefer the narrow per-id tag when touching data: the global tag invalidates the whole scope and degrades the hit rate.

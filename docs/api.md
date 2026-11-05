@@ -171,14 +171,14 @@ Tous les fichiers de `src/app/actions/` commencent par `"use server"`. Les actio
 
 | Action | Rôle |
 | --- | --- |
-| `setSeriesRating` | Enregistre une note de 1 à 10 via le provider et invalide le tag de cache `series-rating:${seriesId}`. |
-| `deleteSeriesRating` | Supprime la note d'une série et invalide le même tag de cache ciblé. |
+| `setSeriesRating` | Enregistre une note de 1 à 10 via le provider et invalide le tag `series-rating:${seriesId}` ainsi que `ratings-list` (page « Mes notes »). |
+| `deleteSeriesRating` | Supprime la note d'une série et invalide les mêmes tags de cache. |
 
 ### src/app/actions/read-progress.ts
 
 | Action | Rôle |
 | --- | --- |
-| `updateReadProgress` | Enregistre la progression de lecture (page, terminé) via le provider. Ignorée en mode anonyme. Invalide toujours `home`, `library-series` et `reading-stats`, puis `series-books:${seriesId}` quand `seriesId` est fourni, sinon tous les livres de la série. |
+| `updateReadProgress` | Enregistre la progression de lecture (page, terminé) via le provider. Ignorée en mode anonyme. Invalide toujours `home`, `library-series`, `ratings-list` et `reading-stats`, puis `series-books:${seriesId}` quand `seriesId` est fourni, sinon tous les livres de la série. |
 | `deleteReadProgress` | Réinitialise la progression de lecture d'un livre et invalide les caches associés. Ignorée en mode anonyme. |
 | `updateSeriesReadStatus` | Marque **tous** les livres d'une série comme lus (`read: true`) ou non lus (`read: false`). Pagine les livres via `getAllSeriesBooks`, applique la progression livre par livre avec une concurrence bornée (`SERIES_WRITE_CONCURRENCY`), puis invalide les caches une seule fois. Renvoie `{ success, updated, total }` pour un retour « X / Y » côté UI. Ignorée en mode anonyme. |
 

@@ -312,6 +312,40 @@ export class KomgaProvider implements IMediaProvider {
     return KomgaAdapter.toNormalizedSeries(series);
   }
 
+  /**
+   * Komga n'expose pas de filtre « série entièrement lue » au niveau de la
+   * liste : on agrège les séries de chaque bibliothèque puis on garde celles
+   * dont tous les tomes sont lus. La notation restant une fonctionnalité
+   * Stripstream, cette méthode sert de repli honnête pour le contrat.
+   */
+  async getReadSeries(_page = 1, _limit = 200): Promise<NormalizedSeriesPage> {
+    const libraries = await this.getLibraries();
+    const readSeries: NormalizedSeries[] = [];
+
+    for (const library of libraries) {
+      let cursor: string | null = "1";
+      let pages = 0;
+      while (cursor && pages < 10) {
+        const page = await this.getSeries(library.id, cursor, 200);
+        readSeries.push(
+          ...page.items.filter(
+            (series) => series.bookCount > 0 && series.booksReadCount >= series.bookCount
+          )
+        );
+        cursor = page.nextCursor;
+        pages += 1;
+      }
+    }
+
+    readSeries.sort((a, b) => a.name.localeCompare(b.name));
+    return {
+      items: readSeries,
+      nextCursor: null,
+      totalElements: readSeries.length,
+      totalPages: 1,
+    };
+  }
+
   async getReadProgress(bookId: string): Promise<NormalizedReadProgress | null> {
     const book = await this.fetch<KomgaBook>(`books/${bookId}`, undefined, {
       revalidate: CACHE_TTL_SHORT,

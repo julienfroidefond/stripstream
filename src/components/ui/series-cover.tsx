@@ -22,6 +22,7 @@ export function SeriesCover({
   isAnonymous = false,
   eager = false,
   fetchPriority = "auto",
+  dimCompleted = true,
 }: SeriesCoverProps) {
   const { ref, loaded, failed, onLoad, onError } = useCoverLoaded(
     series.thumbnailUrl,
@@ -49,7 +50,7 @@ export function SeriesCover({
         className={cn(
           "absolute inset-0 h-full w-full object-cover transition-[opacity,scale] duration-600 ease-projection motion-reduce:transition-none",
           loaded
-            ? cn("scale-100", isCompleted ? "opacity-60" : "opacity-100")
+            ? cn("scale-100", isCompleted && dimCompleted ? "opacity-60" : "opacity-100")
             : "scale-[1.03] opacity-0",
           className
         )}

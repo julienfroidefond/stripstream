@@ -33,6 +33,11 @@ export interface IMediaProvider {
 
   getBooks(filter: BookListFilter): Promise<NormalizedBooksPage>;
   getBook(bookId: string): Promise<NormalizedBook>;
+  /**
+   * Séries entièrement lues par l'utilisateur, toutes bibliothèques confondues.
+   * Utilisée par la page « Mes notes » pour proposer les séries à noter.
+   */
+  getReadSeries(page?: number, limit?: number): Promise<NormalizedSeriesPage>;
   getNextBook(bookId: string): Promise<NormalizedBook | null>;
   getMissingBooks(seriesId: string): Promise<NormalizedMissingBook[]>;
 
