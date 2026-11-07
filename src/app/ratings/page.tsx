@@ -8,6 +8,7 @@ import {
   filterReadSeries,
   getReadSeries,
   paginateReadSeries,
+  parseReadSeriesSort,
   sortReadSeries,
   type ReadSeriesFilter,
 } from "@/lib/services/read-series.service";
@@ -32,7 +33,7 @@ const PAGE_SIZE = 60;
 const MAX_QUERY_LENGTH = 120;
 
 interface RatingsPageProps {
-  searchParams: Promise<{ q?: string; filter?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; filter?: string; page?: string; sort?: string }>;
 }
 
 function parseFilter(value: string | undefined): ReadSeriesFilter {
@@ -45,7 +46,7 @@ function parsePage(value: string | undefined): number {
 }
 
 export default async function RatingsPage({ searchParams }: RatingsPageProps) {
-  const [{ q, filter: rawFilter, page: rawPage }, provider, providerType] = await Promise.all([
+  const [{ q, filter: rawFilter, page: rawPage, sort: rawSort }, provider, providerType] = await Promise.all([
     searchParams,
     getProvider(),
     getActiveProviderType(),
@@ -59,11 +60,12 @@ export default async function RatingsPage({ searchParams }: RatingsPageProps) {
 
   const query = (q ?? "").slice(0, MAX_QUERY_LENGTH);
   const filter = parseFilter(rawFilter);
+  const sort = parseReadSeriesSort(rawSort);
 
   try {
     const allSeries = await getReadSeries(provider);
     const counts = countReadSeries(allSeries);
-    const matchingSeries = sortReadSeries(filterReadSeries(allSeries, query, filter));
+    const matchingSeries = sortReadSeries(filterReadSeries(allSeries, query, filter), sort);
     const slice = paginateReadSeries(matchingSeries, parsePage(rawPage), PAGE_SIZE);
 
     return (
@@ -72,6 +74,7 @@ export default async function RatingsPage({ searchParams }: RatingsPageProps) {
         counts={counts}
         query={query}
         filter={filter}
+        sort={sort}
         page={slice.page}
         totalPages={slice.totalPages}
       />

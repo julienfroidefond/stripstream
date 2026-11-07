@@ -75,18 +75,88 @@ export function filterReadSeries(
   });
 }
 
-/** Les séries à noter d'abord, puis les mieux notées, puis par titre. */
-export function sortReadSeries(series: NormalizedSeries[]): NormalizedSeries[] {
-  return [...series].sort((a, b) => {
+export type ReadSeriesSort =
+  | "to-rate"
+  | "recent"
+  | "title"
+  | "rating-desc"
+  | "rating-asc";
+
+export const DEFAULT_READ_SERIES_SORT: ReadSeriesSort = "to-rate";
+
+export function parseReadSeriesSort(value: string | undefined): ReadSeriesSort {
+  return value === "recent" ||
+    value === "title" ||
+    value === "rating-desc" ||
+    value === "rating-asc"
+    ? value
+    : DEFAULT_READ_SERIES_SORT;
+}
+
+function compareSeriesTitles(a: NormalizedSeries, b: NormalizedSeries): number {
+  return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+}
+
+/** Timestamp de dernière lecture, ou `null` si la donnée manque ou est invalide. */
+function lastReadTimestamp(series: NormalizedSeries): number | null {
+  if (!series.lastReadAt) return null;
+  const timestamp = Date.parse(series.lastReadAt);
+  return Number.isNaN(timestamp) ? null : timestamp;
+}
+
+/**
+ * Tri de la page « Mes notes ».
+ * - `to-rate` (défaut) : les séries à noter d'abord, puis les mieux notées, puis par titre.
+ * - `recent` : dernières lectures d'abord, séries sans date en dernier.
+ * - `rating-desc` / `rating-asc` : séries notées d'abord, puis les non notées, par titre.
+ * - `title` : ordre alphabétique.
+ */
+export function sortReadSeries(
+  series: NormalizedSeries[],
+  sort: ReadSeriesSort = DEFAULT_READ_SERIES_SORT
+): NormalizedSeries[] {
+  const items = [...series];
+
+  if (sort === "title") {
+    return items.sort(compareSeriesTitles);
+  }
+
+  if (sort === "recent") {
+    return items.sort((a, b) => {
+      const aTime = lastReadTimestamp(a);
+      const bTime = lastReadTimestamp(b);
+
+      if (aTime === null || bTime === null) {
+        if (aTime === bTime) return compareSeriesTitles(a, b);
+        return aTime === null ? 1 : -1;
+      }
+      if (aTime !== bTime) return bTime - aTime;
+      return compareSeriesTitles(a, b);
+    });
+  }
+
+  return items.sort((a, b) => {
     const ratingA = a.userRating ?? null;
     const ratingB = b.userRating ?? null;
 
-    if (ratingA === null && ratingB !== null) return -1;
-    if (ratingA !== null && ratingB === null) return 1;
-    if (ratingA !== null && ratingB !== null && ratingA !== ratingB) {
-      return ratingB - ratingA;
+    if (sort === "to-rate") {
+      if (ratingA === null && ratingB !== null) return -1;
+      if (ratingA !== null && ratingB === null) return 1;
+      if (ratingA !== null && ratingB !== null && ratingA !== ratingB) {
+        return ratingB - ratingA;
+      }
+      return compareSeriesTitles(a, b);
     }
-    return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+
+    // Tri explicite par note : les séries non notées passent en dernier.
+    if (ratingA === null || ratingB === null) {
+      if (ratingA === ratingB) return compareSeriesTitles(a, b);
+      return ratingA === null ? 1 : -1;
+    }
+    if (ratingA !== ratingB) {
+      return sort === "rating-desc" ? ratingB - ratingA : ratingA - ratingB;
+    }
+    return compareSeriesTitles(a, b);
   });
 }
 

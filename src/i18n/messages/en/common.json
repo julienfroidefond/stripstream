@@ -113,6 +113,13 @@
         "unread": "Unread",
         "reading": "In progress",
         "read": "Read"
+      },
+      "sort": {
+        "label": "Sort lists",
+        "updated": "Recently updated",
+        "created": "Recently created",
+        "name": "Name (A→Z)",
+        "progress": "Least advanced first"
       }
     }
   },
@@ -344,6 +351,14 @@
       "all": "All",
       "unrated": "To rate",
       "rated": "Rated"
+    },
+    "sort": {
+      "label": "Sort series",
+      "toRate": "To rate first",
+      "recent": "Recently read",
+      "ratingDesc": "Best rated first",
+      "ratingAsc": "Worst rated first",
+      "title": "Title (A→Z)"
     },
     "pagination": {
       "title": "Pagination",
