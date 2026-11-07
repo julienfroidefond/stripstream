@@ -118,6 +118,7 @@ export class StripstreamAdapter {
       name: series.name,
       bookCount: series.book_count,
       booksReadCount: series.books_read_count,
+      lastReadAt: series.last_read_at ?? null,
       thumbnailUrl,
       libraryId: series.library_id,
       summary: series.description?.trim() || null,

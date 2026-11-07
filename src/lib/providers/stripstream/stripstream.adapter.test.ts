@@ -214,6 +214,7 @@ describe("StripstreamAdapter.toNormalizedSeries", () => {
         series_status: "ONGOING",
         community_score: 4,
         user_rating: 8,
+        last_read_at: "2026-02-01T00:00:00Z",
       })
     );
 
@@ -222,6 +223,7 @@ describe("StripstreamAdapter.toNormalizedSeries", () => {
       name: "Series Name",
       bookCount: 3,
       booksReadCount: 1,
+      lastReadAt: "2026-02-01T00:00:00Z",
       libraryId: "lib-1",
       thumbnailUrl: "/api/stripstream/images/books/book-1/thumbnail",
       summary: "Description",
@@ -235,6 +237,10 @@ describe("StripstreamAdapter.toNormalizedSeries", () => {
       communityScore: 4,
       userRating: 8,
     });
+  });
+
+  it("defaults lastReadAt to null when the API omits it", () => {
+    expect(StripstreamAdapter.toNormalizedSeries(makeSeriesItem()).lastReadAt).toBeNull();
   });
 
   it("falls back to the cover URL when the first book id is missing", () => {

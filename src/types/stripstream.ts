@@ -55,6 +55,8 @@ export interface StripstreamSeriesItem {
   name: string;
   book_count: number;
   books_read_count: number;
+  /** Latest reading activity of the current user across the series' books. */
+  last_read_at?: string | null;
   first_book_id: string | null;
   first_book_updated_at?: string | null;
   library_id: string;

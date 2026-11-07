@@ -113,6 +113,13 @@
         "unread": "Non lues",
         "reading": "En cours",
         "read": "Lues"
+      },
+      "sort": {
+        "label": "Trier les listes",
+        "updated": "Récemment modifiées",
+        "created": "Récemment créées",
+        "name": "Nom (A→Z)",
+        "progress": "Moins avancées d'abord"
       }
     }
   },
@@ -349,6 +356,14 @@
       "all": "Toutes",
       "unrated": "À noter",
       "rated": "Notées"
+    },
+    "sort": {
+      "label": "Trier les séries",
+      "toRate": "À noter d'abord",
+      "recent": "Lecture récente",
+      "ratingDesc": "Mieux notées d'abord",
+      "ratingAsc": "Moins bien notées d'abord",
+      "title": "Titre (A→Z)"
     },
     "pagination": {
       "title": "Pagination",

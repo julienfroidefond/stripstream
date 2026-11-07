@@ -35,6 +35,8 @@ export interface NormalizedSeries {
   name: string;
   bookCount: number;
   booksReadCount: number;
+  /** Latest reading activity across the series' books (Stripstream only). */
+  lastReadAt?: string | null;
   thumbnailUrl: string;
   libraryId?: string;
   // Optional metadata (Komga-rich, Stripstream-sparse)

@@ -4,10 +4,12 @@ import type { IMediaProvider } from "@/lib/providers/provider.interface";
 import type { NormalizedSeries, NormalizedSeriesPage } from "@/lib/providers/types";
 import {
   countReadSeries,
+  DEFAULT_READ_SERIES_SORT,
   filterReadSeries,
   getReadSeries,
   normalizeSeriesSearch,
   paginateReadSeries,
+  parseReadSeriesSort,
   sortReadSeries,
 } from "./read-series.service";
 
@@ -141,12 +143,81 @@ describe("sortReadSeries", () => {
     ]);
   });
 
+  it("sorts by title", () => {
+    const items = [
+      series("c", { name: "C" }),
+      series("a", { name: "Á" }),
+      series("b", { name: "B" }),
+    ];
+
+    expect(sortReadSeries(items, "title").map((item) => item.id)).toEqual(["a", "b", "c"]);
+  });
+
+  it("sorts by most recent reading and leaves undated series last", () => {
+    const items = [
+      series("old", { name: "B", lastReadAt: "2026-01-01T10:00:00.000Z" }),
+      series("undated", { name: "A", lastReadAt: null }),
+      series("recent", { name: "C", lastReadAt: "2026-03-01T10:00:00.000Z" }),
+      series("missing", { name: "B" }),
+      series("invalid", { name: "C", lastReadAt: "not-a-date" }),
+    ];
+
+    expect(sortReadSeries(items, "recent").map((item) => item.id)).toEqual([
+      "recent",
+      "old",
+      "undated",
+      "missing",
+      "invalid",
+    ]);
+  });
+
+  it("sorts rated series from best to worst and leaves unrated last", () => {
+    const items = [
+      series("unrated-b", { name: "B", userRating: null }),
+      series("rated-low", { name: "A", userRating: 4 }),
+      series("unrated-a", { name: "A", userRating: null }),
+      series("rated-high", { name: "C", userRating: 10 }),
+    ];
+
+    expect(sortReadSeries(items, "rating-desc").map((item) => item.id)).toEqual([
+      "rated-high",
+      "rated-low",
+      "unrated-a",
+      "unrated-b",
+    ]);
+  });
+
+  it("sorts rated series from worst to best and leaves unrated last", () => {
+    const items = [
+      series("unrated", { name: "A", userRating: null }),
+      series("rated-high", { name: "C", userRating: 10 }),
+      series("rated-low", { name: "B", userRating: 4 }),
+    ];
+
+    expect(sortReadSeries(items, "rating-asc").map((item) => item.id)).toEqual([
+      "rated-low",
+      "rated-high",
+      "unrated",
+    ]);
+  });
+
   it("does not mutate the input", () => {
     const items = [series("a", { userRating: 2 }), series("b", { userRating: null })];
 
     sortReadSeries(items);
 
     expect(items.map((item) => item.id)).toEqual(["a", "b"]);
+  });
+});
+
+describe("parseReadSeriesSort", () => {
+  it("keeps supported sorts and falls back to the default", () => {
+    expect(parseReadSeriesSort("recent")).toBe("recent");
+    expect(parseReadSeriesSort("title")).toBe("title");
+    expect(parseReadSeriesSort("rating-desc")).toBe("rating-desc");
+    expect(parseReadSeriesSort("rating-asc")).toBe("rating-asc");
+    expect(parseReadSeriesSort("unknown")).toBe(DEFAULT_READ_SERIES_SORT);
+    expect(parseReadSeriesSort(undefined)).toBe(DEFAULT_READ_SERIES_SORT);
   });
 });
 

@@ -2,8 +2,18 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BookMarked, BookOpen, Bookmark, Search } from "lucide-react";
+import {
+  ArrowDownAZ,
+  BookMarked,
+  BookOpen,
+  Bookmark,
+  CalendarPlus,
+  History,
+  Search,
+  TrendingUp,
+} from "lucide-react";
 import { StaggerGroup, StaggerItem } from "@/components/motion";
+import { SortMenu, type SortMenuOption } from "@/components/common/SortMenu";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { Input } from "@/components/ui/input";
@@ -11,6 +21,11 @@ import { ReadingListCover } from "@/components/reading-lists/ReadingListCover";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useAnonymous } from "@/contexts/AnonymousContext";
 import { useTranslate } from "@/hooks/useTranslate";
+import {
+  DEFAULT_READING_LIST_SORT,
+  sortReadingLists,
+  type ReadingListSort,
+} from "@/lib/services/reading-lists.service";
 import { cn } from "@/lib/utils";
 import type { StripstreamReadingList } from "@/types/stripstream";
 
@@ -34,22 +49,32 @@ export function ReadingListsContent({ lists, isStripstream }: ReadingListsConten
   const router = useRouter();
   const [filter, setFilter] = useState<ReadingListFilter>("all");
   const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<ReadingListSort>(DEFAULT_READING_LIST_SORT);
 
   const filteredLists = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase();
 
-    return lists.filter((list) => {
+    const matchingLists = lists.filter((list) => {
       const matchesQuery = !normalizedQuery || list.name.toLocaleLowerCase().includes(normalizedQuery);
       const matchesFilter = filter === "all" || getReadingListStatus(list) === filter;
       return matchesQuery && matchesFilter;
     });
-  }, [filter, lists, query]);
+
+    return sortReadingLists(matchingLists, sort);
+  }, [filter, lists, query, sort]);
 
   const filters: { value: ReadingListFilter; icon: typeof Bookmark }[] = [
     { value: "all", icon: Bookmark },
     { value: "unread", icon: BookMarked },
     { value: "reading", icon: BookOpen },
     { value: "read", icon: BookMarked },
+  ];
+
+  const sortOptions: SortMenuOption[] = [
+    { value: "updated", label: t("home.reading_lists.sort.updated"), icon: History },
+    { value: "created", label: t("home.reading_lists.sort.created"), icon: CalendarPlus },
+    { value: "name", label: t("home.reading_lists.sort.name"), icon: ArrowDownAZ },
+    { value: "progress", label: t("home.reading_lists.sort.progress"), icon: TrendingUp },
   ];
 
   if (!isStripstream) {
@@ -88,20 +113,30 @@ export function ReadingListsContent({ lists, isStripstream }: ReadingListsConten
             className="pl-9"
           />
         </div>
-        <div className="flex flex-wrap gap-1.5" aria-label={t("home.reading_lists.filters.title")}>
-          {filters.map(({ value, icon: Icon }) => (
-            <Button
-              key={value}
-              type="button"
-              variant={filter === value ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setFilter(value)}
-              data-testid={`reading-list-filter-${value}`}
-            >
-              <Icon className="mr-1.5 h-3.5 w-3.5" />
-              {t(`home.reading_lists.filters.${value}`)}
-            </Button>
-          ))}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex flex-wrap gap-1.5" aria-label={t("home.reading_lists.filters.title")}>
+            {filters.map(({ value, icon: Icon }) => (
+              <Button
+                key={value}
+                type="button"
+                variant={filter === value ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setFilter(value)}
+                data-testid={`reading-list-filter-${value}`}
+              >
+                <Icon className="mr-1.5 h-3.5 w-3.5" />
+                {t(`home.reading_lists.filters.${value}`)}
+              </Button>
+            ))}
+          </div>
+
+          <SortMenu
+            value={sort}
+            options={sortOptions}
+            onChange={(value) => setSort(value as ReadingListSort)}
+            label={t("home.reading_lists.sort.label")}
+            testId="reading-list-sort"
+          />
         </div>
       </div>
 
