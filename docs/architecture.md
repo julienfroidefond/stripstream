@@ -17,6 +17,7 @@ Stripstream is a comic-reader front end; it does **not** own the library. Each u
 - home feeds — `getHomePrimaryData`, `getHomeDeferredData`, `getHomeData`, and the individual section methods;
 - read progress — `getReadProgress`, `saveReadProgress`, `resetReadProgress`;
 - series ratings — Stripstream-only; Komga returns `null` / not-supported (`provider.interface.ts:51-54`);
+- series shelf — `isShelved`, `shelveSeries`, `unshelveSeries`; Stripstream-only, Komga returns `false` / not-supported;
 - admin/utility — `scanLibrary` (returns a `{ jobId, progressSupported }` handle), `getScanStatus` (follows that job, or `unavailable` when the backend cannot report it), `getRandomBook`;
 - related/recommended series — `getRelatedSeries`, `getRecommendations`;
 - favorites — `getFavorites`, `isFavorite`, `addToFavorites`, `removeFromFavorites`;
@@ -66,7 +67,7 @@ The active selection is **per browser**, not global: httpOnly cookies `stripstre
 ## 2. Server-first data flow
 
 - Pages and layouts under `src/app/**/page.tsx` are React Server Components. The home page (`src/app/page.tsx`) resolves the provider server-side and fans out feed promises; other examples: `src/app/libraries/[libraryId]/page.tsx`, `src/app/series/[seriesId]/page.tsx`, `src/app/books/[bookId]/page.tsx`, `src/app/reading-lists/[id]/page.tsx`, `src/app/ratings/page.tsx` (read series → rating cards, Stripstream only, with search/filter/sort/pagination driven by URL search params and resolved server-side).
-- Mutations are Next.js server actions in `src/app/actions/` — 13 files: `admin.ts`, `auth.ts`, `books.ts`, `config.ts`, `favorites.ts`, `home.ts`, `library.ts`, `password.ts`, `preferences.ts`, `ratings.ts`, `read-progress.ts`, `refresh.ts`, `stripstream-config.ts`. They run server-side, use `getProvider()`, and invalidate caches (see §3).
+- Mutations are Next.js server actions in `src/app/actions/` — 14 files: `admin.ts`, `auth.ts`, `books.ts`, `config.ts`, `favorites.ts`, `home.ts`, `library.ts`, `password.ts`, `preferences.ts`, `ratings.ts`, `read-progress.ts`, `refresh.ts`, `series-shelf.ts`, `stripstream-config.ts`. They run server-side, use `getProvider()`, and invalidate caches (see §3).
 - Client components (`"use client"`) are reserved for browser-only concerns: event handlers, refs, effects, DOM APIs. Do not add client-side `fetch` to internal APIs where a server action exists.
 - **Exception — media streams.** The 11 route handlers under `src/app/api/` exist to stream bytes to the browser: the Komga image proxies under `src/app/api/komga/images/...` (thumbnails, first page, pages), `src/app/api/komga/books/[bookId]/pages/[pageNumber]/route.ts`, the Stripstream mirrors under `src/app/api/stripstream/images/...`, the NextAuth handler `src/app/api/auth/[...nextauth]/route.ts`, and the two search proxies (`src/app/api/provider/search/route.ts`, `src/app/api/stripstream/search/route.ts`). They exist so `<img src=...>` works with credentials kept server-side. Komga streaming is implemented in `src/lib/services/komga/image.service.ts:19-49`; identical concurrent image requests are coalesced by `requestDeduplicationService` (`src/lib/services/request-deduplication.service.ts`, used at `src/app/api/komga/books/[bookId]/pages/[pageNumber]/route.ts:34-47`). Route-by-route documentation lives in `docs/api.md`.
 - **Image backpressure.** Upstream image fetches pass through `imageRequestLimiter` (6 in flight, `src/lib/services/image-request-limiter.ts`), and covers have their own upstream deadline (20 s Komga, 12 s thumbnails, `THUMBNAIL_TIMEOUT_MS`). The Wall can request dozens of covers at once; without this gate a single-instance deployment and the provider collapse into timeouts that leave `<img>` elements pending forever. On the client, `useCoverLoaded` retries with a jittered backoff and, for visible covers, arms a watchdog that relaunches a stalled request; `failed` renders a title fallback instead of a black tile.
@@ -86,10 +87,11 @@ Provider reads are wrapped in Next.js `unstable_cache(...)`, with **9 call sites
 | `FAVORITES_CACHE_TAG` | `favorites` | favorites |
 | `BOOK_CACHE_TAG` | `book` | single book |
 | `SERIES_RATING_CACHE_TAG` | `series-rating` | series ratings |
+| `SERIES_SHELF_CACHE_TAG` | `series-shelf` | current reader's shelf state |
 | `RATINGS_LIST_CACHE_TAG` | `ratings-list` | read series listed on `/ratings` |
 | `STATS_CACHE_TAG` | `reading-stats` | reading statistics |
 
-Per-id tags narrow invalidation: `library-series:${libraryId}` (`src/lib/providers/komga/komga.provider.ts:225-226`), `series-books:${seriesId}` (`src/app/actions/read-progress.ts:18`), `series-rating:${seriesId}` (`src/app/actions/ratings.ts:16`), plus `series-recommendations` and `series-related:${seriesId}` (`src/lib/providers/stripstream/stripstream.provider.ts:541,577`). Prefer the narrow per-id tag when touching data: the global tag invalidates the whole scope and degrades the hit rate.
+Per-id tags narrow invalidation: `library-series:${libraryId}` (`src/lib/providers/komga/komga.provider.ts:225-226`), `series-books:${seriesId}` (`src/app/actions/read-progress.ts:18`), `series-rating:${seriesId}` (`src/app/actions/ratings.ts:16`), `series-shelf:${seriesId}` (`src/app/actions/series-shelf.ts`), plus `series-recommendations` and `series-related:${seriesId}` (`src/lib/providers/stripstream/stripstream.provider.ts:541,577`). Prefer the narrow per-id tag when touching data: the global tag invalidates the whole scope and degrades the hit rate.
 
 ### TTLs
 
@@ -104,7 +106,7 @@ The constants are per provider: `CACHE_TTL_LONG = 300`, `CACHE_TTL_MED = 120`, `
 
 ### Invalidation
 
-Server actions call `updateTag(...)` from `next/cache` (six action files: `read-progress.ts:15-21`, `config.ts:48-51`, `stripstream-config.ts:42-45`, `favorites.ts:9-11`, `ratings.ts:16`, `refresh.ts:15-28`), optionally together with `revalidatePath(...)`. `updateTag` immediately expires the tagged entries so the action's own re-render sees fresh data (Next.js 16 read-your-writes semantics).
+Server actions call `updateTag(...)` from `next/cache` (seven action files: `read-progress.ts:15-21`, `config.ts:48-51`, `stripstream-config.ts:42-45`, `favorites.ts:9-11`, `ratings.ts:16`, `series-shelf.ts`, `refresh.ts:15-28`), optionally together with `revalidatePath(...)`. `updateTag` immediately expires the tagged entries so the action's own re-render sees fresh data (Next.js 16 read-your-writes semantics).
 
 > Historical note: pre-overhaul documentation described `revalidateTag(tag, "max")`. The current code has **no `revalidateTag` call site** — the only remaining textual mention is a stale comment at `src/components/series/SeriesHeader.tsx:63`. Do not reintroduce `revalidateTag` blindly; follow the `updateTag` call sites above.
 

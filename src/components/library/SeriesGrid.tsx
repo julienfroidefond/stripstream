@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { SeriesCover } from "@/components/ui/series-cover";
 import { useTranslate } from "@/hooks/useTranslate";
 import { useAnonymous } from "@/contexts/AnonymousContext";
-import { CircleDot, CircleCheck, CirclePause, CircleX, Star } from "lucide-react";
+import { CircleDot, CircleCheck, CirclePause, CircleX, Snowflake, Star } from "lucide-react";
 import { GlowLayer, StaggerGroup, StaggerItem, usePointerGlow } from "@/components/motion";
 
 const seriesStatusMap = {
@@ -102,6 +102,16 @@ const SeriesGridItem = memo(function SeriesGridItem({
         >
           <Star className="h-3 w-3 fill-yellow-300" aria-hidden="true" />
           <span className="tabular-nums">{displayRating.toFixed(1)}</span>
+        </div>
+      )}
+      {!isAnonymous && series.shelvedAt && (
+        <div
+          className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-black/70 px-2 py-1 text-xs font-medium text-cyan-300"
+          title={t("series.header.shelf.badge")}
+          aria-label={t("series.header.shelf.badge")}
+        >
+          <Snowflake className="h-3 w-3" aria-hidden="true" />
+          <span className="hidden md:inline">{t("series.header.shelf.badge")}</span>
         </div>
       )}
       {/* Scrim neutre au-dessus de la couverture : seul dégradé légitime ici. */}

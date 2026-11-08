@@ -381,6 +381,21 @@ export class KomgaProvider implements IMediaProvider {
     throw new AppError(ERROR_CODES.SERIES.RATING_NOT_SUPPORTED);
   }
 
+  // Komga ne gère pas la mise de côté des séries — l'UI est masquée côté page
+  // (getActiveProviderType() === "stripstream"). Ces méthodes ne devraient
+  // jamais être appelées en pratique.
+  async isShelved(_seriesId: string): Promise<boolean> {
+    return false;
+  }
+
+  async shelveSeries(_seriesId: string): Promise<void> {
+    throw new AppError(ERROR_CODES.SERIES.SHELF_NOT_SUPPORTED);
+  }
+
+  async unshelveSeries(_seriesId: string): Promise<void> {
+    throw new AppError(ERROR_CODES.SERIES.SHELF_NOT_SUPPORTED);
+  }
+
   async search(query: string, limit = 6): Promise<NormalizedSearchResult[]> {
     const trimmed = query.trim();
     if (!trimmed) return [];

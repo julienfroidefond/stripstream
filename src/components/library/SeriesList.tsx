@@ -10,6 +10,7 @@ import {
   CircleDot,
   CirclePause,
   CircleX,
+  Snowflake,
   Star,
   Tag,
   User,
@@ -105,6 +106,7 @@ const SeriesListItem = memo(function SeriesListItem({ series, isCompact = false 
 
         <div className="flex min-h-5 flex-wrap items-center gap-1.5">
           {publicationStatus && <Pill className={publicationStatus.className}><publicationStatus.icon className="mr-1 h-3 w-3" />{t(`series.status.${series.seriesStatus}`)}</Pill>}
+          {!isAnonymous && series.shelvedAt && <Pill className="bg-cyan-500/10 text-cyan-600 dark:text-cyan-400"><Snowflake className="mr-1 h-3 w-3" />{t("series.header.shelf.badge")}</Pill>}
           {readingStatus && <Pill className={readingStatus.className}>{readingStatus.label}</Pill>}
           {!isCompact && tags.slice(0, 2).map((tag) => <Badge key={tag} variant="secondary" className="hidden max-w-28 gap-1 truncate px-2 py-0.5 text-[11px] font-normal text-secondary-foreground md:inline-flex"><Tag className="h-3 w-3 shrink-0" />{tag}</Badge>)}
           {!isCompact && tags.length > 2 && <Badge variant="outline" className="hidden px-1.5 py-0.5 text-[11px] text-muted-foreground md:inline-flex">+{tags.length - 2}</Badge>}

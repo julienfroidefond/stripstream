@@ -61,6 +61,11 @@ export interface IMediaProvider {
   setSeriesRating(seriesId: string, rating: number): Promise<void>;
   deleteSeriesRating(seriesId: string): Promise<void>;
 
+  // ── Series shelf (Stripstream only; Komga throws not-supported) ──────────
+  isShelved(seriesId: string): Promise<boolean>;
+  shelveSeries(seriesId: string): Promise<void>;
+  unshelveSeries(seriesId: string): Promise<void>;
+
   // ── Admin / utility ──────────────────────────────────────────────────────
   scanLibrary(libraryId: string): Promise<ScanStartResult>;
   /** Follow a scan started by `scanLibrary`; returns `unavailable` when the backend cannot report it. */
