@@ -1,0 +1,35 @@
+name: Security scan
+
+# Scans the published image — the exact digest deployed on the Mac mini — with
+# Trivy, once a week and on demand. Only *fixable* CRITICAL/HIGH findings fail
+# the job: Alpine packages flagged without a fixed version cannot be acted on
+# until the base image is rebuilt upstream, and blocking on them would make the
+# check permanently red.
+#
+# This is a drift detector, not a PR gate: it is deliberately absent from the
+# required checks and does not rebuild anything. When it turns red, either
+# rebuild the image (`workflow_dispatch` on deploy.yml) or bump the base image /
+# fix the dependency it points at.
+
+on:
+  schedule:
+    # Monday 05:00 UTC, before the working week.
+    - cron: "0 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    name: stripstream
+    runs-on: ubuntu-latest
+    steps:
+      - name: Scan julienfroidefond32/stripstream:latest
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: docker.io/julienfroidefond32/stripstream:latest
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "1"
+          format: table
