@@ -44,6 +44,17 @@ WORKDIR /app
 # Install OpenSSL (required by Prisma)
 RUN apk add --no-cache openssl libc6-compat
 
+# npm is only needed in the builder (to install pnpm) and is never used at
+# runtime: docker-entrypoint.sh calls ./node_modules/.bin/prisma and tsx
+# directly. Removing it from the final image also removes npm's bundled
+# dependencies from the CVE surface — Node 26 ships npm 11.20.0 with
+# undici 6.28.0 and brace-expansion 5.0.9, which carry HIGH advisories.
+RUN rm -rf /usr/local/lib/node_modules/npm \
+           /usr/local/lib/node_modules/corepack \
+           /usr/local/bin/npm \
+           /usr/local/bin/npx \
+           /usr/local/bin/corepack
+
 # Copy standalone output (server.js + minimal node_modules)
 COPY --from=builder /app/.next/standalone ./
 

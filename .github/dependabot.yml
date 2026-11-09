@@ -98,7 +98,7 @@ updates:
           - "minor"
           - "patch"
 
-  # ---- Dockerfile base image (node:24-alpine) ----
+  # ---- Dockerfile base image ----
   - package-ecosystem: "docker"
     directory: "/"
     schedule:

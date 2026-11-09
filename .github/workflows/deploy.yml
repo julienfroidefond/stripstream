@@ -80,6 +80,9 @@ jobs:
         if: steps.detect.outputs.deploy == 'true'
         uses: docker/build-push-action@v7
         with:
+          # Re-resolve the movable base tag (node:26-alpine) on every build:
+          # a cached base is how fixed CVEs silently stay in the image.
+          pull: true
           context: .
           platforms: ${{ env.PLATFORMS }}
           push: true

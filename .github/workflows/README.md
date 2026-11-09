@@ -13,6 +13,7 @@ retired).
 |----------|---------|------|
 | `ci.yml` | pull requests, `workflow_dispatch` | Quality gate: `pnpm install --frozen-lockfile`, `pnpm lint`, `pnpm typecheck`, `pnpm test:unit`, `pnpm build` |
 | `deploy.yml` | push to `main`, `workflow_dispatch` | Version detection, Docker image build/push to Docker Hub, then deploy on the self-hosted `mac-mini` runner |
+| `security.yml` | weekly cron, `workflow_dispatch` | Trivy scan of the published image — fixable CRITICAL/HIGH only |
 | `dependabot-auto-merge.yml` | `pull_request_target` | Queues a squash auto-merge for Dependabot minor/patch updates once the required check passes |
 | `opencode.yml` | `ai` label, `/oc` or `/opencode` mentions, PR review comments | OpenCode agent (two jobs: `issue` and `comment`) |
 
@@ -31,6 +32,8 @@ A single Dockerfile at the repository root builds the app (Next.js standalone ou
 - reads the version from `package.json` and the short SHA, and tags the image
   `latest`, `<version>` and `<version>-<sha>` under `julienfroidefond32/stripstream`;
 - pushes from a GitHub-hosted runner with a registry build cache (`buildcache` tag, `mode=max`);
+- forces `pull: true` so BuildKit re-resolves the floating `node:26-alpine` base on every build — a
+  cached base is how an already-fixed CVE silently stays in the image;
 - skips the build for non-runtime commits (`chore|docs|style|test|ci|build`) — the same types the
   version bump ignores — but never skips a `*deps*` commit, which still changes the runtime image;
 - then a `deploy` job on the self-hosted `mac-mini` runner pulls `latest` and runs
@@ -52,6 +55,21 @@ non-interactive launchd session. The `deploy` job prepends a stub `docker-creden
 (reports "no credentials" on stdout) to `PATH` so the public image pull runs anonymously. Do **not**
 set `DOCKER_CONFIG` in the runner environment: it hides the `compose` CLI plugin
 (`$DOCKER_CONFIG/cli-plugins`) and breaks `./scripts/stack.sh up`.
+
+### Image security
+
+`security.yml` scans `julienfroidefond32/stripstream:latest` every Monday with Trivy and fails only
+on **fixable** CRITICAL/HIGH findings (`ignore-unfixed: true`). Unfixed base-image CVEs are reported
+by Docker Hub but cannot be actioned until Alpine ships a fix; the scan is a drift detector, not a
+PR gate.
+
+Two rules keep the scan green:
+
+- `deploy.yml` builds with `pull: true`, so a rebuilt `node:26-alpine` is picked up even when the
+  layer cache would otherwise be reused.
+- The runner image drops `npm`/`npx`/`corepack` after the build stage: they are never used at runtime
+  and their bundled dependencies (e.g. `undici`, `brace-expansion`) are a recurring source of HIGH
+  findings. Do not add npm back for an entrypoint script — call `./node_modules/.bin/*` directly.
 
 ## Dependency updates
 
