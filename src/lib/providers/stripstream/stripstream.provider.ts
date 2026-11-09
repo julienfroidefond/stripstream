@@ -124,6 +124,32 @@ export class StripstreamProvider implements IMediaProvider {
     };
   }
 
+  /**
+   * Séries mises de côté par l'utilisateur courant, toutes bibliothèques
+   * confondues. Le filtre `shelved=true` est appliqué côté Librarian ; on
+   * refiltre côté client pour rester compatible avec un backend plus ancien
+   * qui ignorerait le paramètre.
+   */
+  async getShelvedSeries(limit = 200): Promise<NormalizedSeries[]> {
+    const response = await this.client.fetch<StripstreamSeriesPage>(
+      "series",
+      {
+        shelved: "true",
+        has_books: "true",
+        limit: String(limit),
+        sort: "title",
+      },
+      {
+        revalidate: CACHE_TTL_MED,
+        tags: [HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG],
+      }
+    );
+
+    return response.items
+      .map(StripstreamAdapter.toNormalizedSeries)
+      .filter((series) => series.shelvedAt != null);
+  }
+
   async getSeriesById(seriesId: string): Promise<NormalizedSeries | null> {
     // Try as series_id first via the direct endpoint
     const series = await this.fetchSeriesById(seriesId);

@@ -25,6 +25,7 @@ export interface SeriesShelfResult {
 function revalidateShelfCaches(seriesId: string, libraryId?: string) {
   updateTag(HOME_CACHE_TAG);
   revalidatePath("/");
+  revalidatePath("/in-progress");
   updateTag(`${SERIES_SHELF_CACHE_TAG}:${seriesId}`);
   revalidatePath(`/series/${seriesId}`);
   if (libraryId) {

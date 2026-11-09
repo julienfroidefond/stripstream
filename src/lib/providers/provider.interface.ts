@@ -30,6 +30,11 @@ export interface IMediaProvider {
 
   getSeries(libraryId: string, cursor?: string, limit?: number, unreadOnly?: boolean, search?: string, sort?: string, hasMissing?: boolean): Promise<NormalizedSeriesPage>;
   getSeriesById(seriesId: string): Promise<NormalizedSeries | null>;
+  /**
+   * Séries mises de côté par l'utilisateur courant.
+   * Stripstream uniquement : Komga ne gère pas les shelves et renvoie une liste vide.
+   */
+  getShelvedSeries(limit?: number): Promise<NormalizedSeries[]>;
 
   getBooks(filter: BookListFilter): Promise<NormalizedBooksPage>;
   getBook(bookId: string): Promise<NormalizedBook>;

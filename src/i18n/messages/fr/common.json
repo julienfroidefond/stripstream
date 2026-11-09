@@ -461,6 +461,7 @@
     },
     "shelf": {
       "shelve": "Mettre de côté",
+      "resume": "Reprendre la série",
       "shelved": "Série mise de côté",
       "resumed": "Série reprise",
       "undo": "Annuler",

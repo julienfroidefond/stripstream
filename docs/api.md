@@ -186,7 +186,7 @@ Tous les fichiers de `src/app/actions/` commencent par `"use server"`. Les actio
 
 | Action | Rôle |
 | --- | --- |
-| `shelveSeries` | Met une série de côté pour le lecteur courant via le provider (idempotent). Invalide `home`, `series-shelf:${seriesId}`, les pages `/`, `/series/${seriesId}` et `/libraries/${libraryId}` (ou le tag de liste global en secours). |
+| `shelveSeries` | Met une série de côté pour le lecteur courant via le provider (idempotent). Invalide `home`, `series-shelf:${seriesId}`, les pages `/`, `/in-progress`, `/series/${seriesId}` et `/libraries/${libraryId}` (ou le tag de liste global en secours). |
 | `unshelveSeries` | Reprend une série mise de côté et invalide les mêmes caches. |
 
 ### src/app/actions/refresh.ts

@@ -30,8 +30,9 @@ interface InProgressHeroProps {
   onToggleFavorite: () => void;
   now: number;
   canShelve?: boolean;
+  isShelved?: boolean;
   isShelving?: boolean;
-  onShelve?: () => void;
+  onToggleShelf?: () => void;
 }
 
 export function InProgressHero({
@@ -40,8 +41,9 @@ export function InProgressHero({
   onToggleFavorite,
   now,
   canShelve = false,
+  isShelved = false,
   isShelving = false,
-  onShelve,
+  onToggleShelf,
 }: InProgressHeroProps) {
   const { t } = useTranslate();
   const getBookLabel = useBookLabel();
@@ -127,12 +129,13 @@ export function InProgressHero({
                   {series.name}
                 </h2>
                 <div className="mt-1 flex shrink-0 items-center gap-1">
-                  {canShelve && onShelve && (
+                  {canShelve && onToggleShelf && (
                     <InProgressShelfButton
                       seriesId={series.id}
                       seriesName={series.name}
+                      isShelved={isShelved}
                       isShelving={isShelving}
-                      onShelve={onShelve}
+                      onToggle={onToggleShelf}
                     />
                   )}
                   <InProgressFavoriteButton

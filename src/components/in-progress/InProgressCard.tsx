@@ -31,8 +31,9 @@ interface InProgressCardProps {
   now: number;
   highlighted?: boolean;
   canShelve?: boolean;
+  isShelved?: boolean;
   isShelving?: boolean;
-  onShelve?: () => void;
+  onToggleShelf?: () => void;
 }
 
 export function InProgressCard({
@@ -42,8 +43,9 @@ export function InProgressCard({
   now,
   highlighted = false,
   canShelve = false,
+  isShelved = false,
   isShelving = false,
-  onShelve,
+  onToggleShelf,
 }: InProgressCardProps) {
   const { t } = useTranslate();
   const getBookLabel = useBookLabel();
@@ -58,7 +60,7 @@ export function InProgressCard({
         : t("inProgress.card.start")
       : t("inProgress.card.openSeries");
   const bookLabel = resumeBook ? getBookLabel(resumeBook) : null;
-  const paused = isPaused(item, now);
+  const paused = isPaused(item);
   const almostDone = remainingBooks <= 2;
   const page = currentBook?.readProgress?.page ?? 0;
   const totalPages = currentBook?.pageCount ?? 0;
@@ -122,12 +124,13 @@ export function InProgressCard({
             )}
           </div>
           <div className="flex shrink-0 items-center gap-1">
-            {canShelve && onShelve && (
+            {canShelve && onToggleShelf && (
               <InProgressShelfButton
                 seriesId={series.id}
                 seriesName={series.name}
+                isShelved={isShelved}
                 isShelving={isShelving}
-                onShelve={onShelve}
+                onToggle={onToggleShelf}
               />
             )}
             <InProgressFavoriteButton
