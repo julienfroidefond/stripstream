@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { ERROR_CODES } from "@/constants/errorCodes";
-import { getProvider } from "@/lib/providers/provider.factory";
+import {
+  getActiveProviderType,
+  getProvider,
+} from "@/lib/providers/provider.factory";
 import { FavoriteService } from "@/lib/services/favorite.service";
 import { getInProgressItems } from "@/lib/services/in-progress.service";
 import { PreferencesService } from "@/lib/services/preferences.service";
@@ -23,12 +26,17 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function InProgressPage() {
-  const [provider, preferences] = await Promise.all([
+  const [provider, preferences, providerType] = await Promise.all([
     getProvider(),
     PreferencesService.getPreferences().catch(() => null),
+    getActiveProviderType().catch(() => null),
   ]);
 
   if (!provider) redirect("/settings");
+
+  // La mise de côté est une fonctionnalité Stripstream : Komga n'expose pas
+  // d'équivalent et le bouton doit rester absent de son interface.
+  const canShelve = providerType === "stripstream";
 
   // Horodatage figé une fois par rendu serveur : le client calcule les temps
   // relatifs à partir de cette valeur, sans décalage d'hydratation.
@@ -37,7 +45,14 @@ export default async function InProgressPage() {
 
   // En mode anonyme, aucune donnée de lecture ne doit être chargée côté serveur.
   if (preferences?.anonymousMode) {
-    return <InProgressContent items={[]} favoriteIds={[]} now={now} />;
+    return (
+      <InProgressContent
+        items={[]}
+        favoriteIds={[]}
+        now={now}
+        canShelve={false}
+      />
+    );
   }
 
   try {
@@ -46,7 +61,14 @@ export default async function InProgressPage() {
       FavoriteService.getAllFavoriteIds().catch(() => []),
     ]);
 
-    return <InProgressContent items={items} favoriteIds={favoriteIds} now={now} />;
+    return (
+      <InProgressContent
+        items={items}
+        favoriteIds={favoriteIds}
+        now={now}
+        canShelve={canShelve}
+      />
+    );
   } catch (error) {
     if (
       error instanceof AppError &&

@@ -191,6 +191,10 @@ export function buildInProgressItems(
 
   const items: InProgressItem[] = [];
   for (const item of uniqueSeries) {
+    // Le backend exclut déjà les séries de côté des flux « en cours » ; on
+    // garde ce filtre pour que la page reste correcte avec un autre provider.
+    if (item.shelvedAt) continue;
+
     const bookCount = Math.max(0, item.bookCount);
     const booksReadCount = Math.max(0, item.booksReadCount);
     if (bookCount <= 0 || booksReadCount >= bookCount) continue;

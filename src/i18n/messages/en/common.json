@@ -454,6 +454,13 @@
       "removed": "Removed from favorites",
       "error": "Could not update favorites"
     },
+    "shelf": {
+      "shelve": "Set aside",
+      "shelved": "Series set aside",
+      "resumed": "Series resumed",
+      "undo": "Undo",
+      "error": "Could not update the series shelf"
+    },
     "empty": {
       "title": "No in-progress series",
       "description": "Start reading a series and find it here to pick up in one click.",

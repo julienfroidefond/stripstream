@@ -20,6 +20,7 @@ import {
   type InProgressItem,
 } from "@/lib/services/in-progress.service";
 import { InProgressFavoriteButton } from "./InProgressFavoriteButton";
+import { InProgressShelfButton } from "./InProgressShelfButton";
 import { RelativeTime } from "./RelativeTime";
 import { useBookLabel } from "./useBookLabel";
 
@@ -29,6 +30,9 @@ interface InProgressCardProps {
   onToggleFavorite: () => void;
   now: number;
   highlighted?: boolean;
+  canShelve?: boolean;
+  isShelving?: boolean;
+  onShelve?: () => void;
 }
 
 export function InProgressCard({
@@ -37,6 +41,9 @@ export function InProgressCard({
   onToggleFavorite,
   now,
   highlighted = false,
+  canShelve = false,
+  isShelving = false,
+  onShelve,
 }: InProgressCardProps) {
   const { t } = useTranslate();
   const getBookLabel = useBookLabel();
@@ -114,12 +121,22 @@ export function InProgressCard({
               <p className="truncate text-[11px] text-muted-foreground">{meta}</p>
             )}
           </div>
-          <InProgressFavoriteButton
-            seriesId={series.id}
-            seriesName={series.name}
-            isFavorite={isFavorite}
-            onToggle={onToggleFavorite}
-          />
+          <div className="flex shrink-0 items-center gap-1">
+            {canShelve && onShelve && (
+              <InProgressShelfButton
+                seriesId={series.id}
+                seriesName={series.name}
+                isShelving={isShelving}
+                onShelve={onShelve}
+              />
+            )}
+            <InProgressFavoriteButton
+              seriesId={series.id}
+              seriesName={series.name}
+              isFavorite={isFavorite}
+              onToggle={onToggleFavorite}
+            />
+          </div>
         </div>
 
         <div className="mt-1 space-y-1">

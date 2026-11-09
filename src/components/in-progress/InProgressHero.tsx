@@ -20,6 +20,7 @@ import {
   type InProgressItem,
 } from "@/lib/services/in-progress.service";
 import { InProgressFavoriteButton } from "./InProgressFavoriteButton";
+import { InProgressShelfButton } from "./InProgressShelfButton";
 import { RelativeTime } from "./RelativeTime";
 import { useBookLabel } from "./useBookLabel";
 
@@ -28,6 +29,9 @@ interface InProgressHeroProps {
   isFavorite: boolean;
   onToggleFavorite: () => void;
   now: number;
+  canShelve?: boolean;
+  isShelving?: boolean;
+  onShelve?: () => void;
 }
 
 export function InProgressHero({
@@ -35,6 +39,9 @@ export function InProgressHero({
   isFavorite,
   onToggleFavorite,
   now,
+  canShelve = false,
+  isShelving = false,
+  onShelve,
 }: InProgressHeroProps) {
   const { t } = useTranslate();
   const getBookLabel = useBookLabel();
@@ -112,20 +119,29 @@ export function InProgressHero({
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-start justify-center gap-3 sm:justify-start">
+              <div className="flex items-start justify-center gap-2 sm:justify-start">
                 <h2
                   id="in-progress-hero-title"
                   className="font-display text-3xl font-semibold leading-[1.05] tracking-tight sm:text-4xl lg:text-5xl"
                 >
                   {series.name}
                 </h2>
-                <InProgressFavoriteButton
-                  seriesId={series.id}
-                  seriesName={series.name}
-                  isFavorite={isFavorite}
-                  onToggle={onToggleFavorite}
-                  className="mt-1"
-                />
+                <div className="mt-1 flex shrink-0 items-center gap-1">
+                  {canShelve && onShelve && (
+                    <InProgressShelfButton
+                      seriesId={series.id}
+                      seriesName={series.name}
+                      isShelving={isShelving}
+                      onShelve={onShelve}
+                    />
+                  )}
+                  <InProgressFavoriteButton
+                    seriesId={series.id}
+                    seriesName={series.name}
+                    isFavorite={isFavorite}
+                    onToggle={onToggleFavorite}
+                  />
+                </div>
               </div>
               {meta && <p className="text-sm text-muted-foreground">{meta}</p>}
             </div>

@@ -25,11 +25,13 @@ import {
   X,
 } from "lucide-react";
 import { addToFavorites, removeFromFavorites } from "@/app/actions/favorites";
+import { shelveSeries, unshelveSeries } from "@/app/actions/series-shelf";
 import { SortMenu, type SortMenuOption } from "@/components/common/SortMenu";
 import { StaggerGroup, StaggerItem } from "@/components/motion";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { Input } from "@/components/ui/input";
+import { ToastAction } from "@/components/ui/toast";
 import { useToast } from "@/components/ui/use-toast";
 import { useAnonymous } from "@/contexts/AnonymousContext";
 import { useTranslate } from "@/hooks/useTranslate";
@@ -58,6 +60,7 @@ interface InProgressContentProps {
   items: InProgressItem[];
   favoriteIds: string[];
   now: number;
+  canShelve?: boolean;
 }
 
 const FILTERS: Array<{
@@ -77,7 +80,20 @@ interface FavoriteOverridesState {
   values: Map<string, boolean>;
 }
 
-export function InProgressContent({ items, favoriteIds, now }: InProgressContentProps) {
+interface ShelvedOverridesState {
+  /** Signature de la liste serveur sur laquelle portent les overrides. */
+  base: string;
+  ids: Set<string>;
+}
+
+const EMPTY_SHELVED_IDS = new Set<string>();
+
+export function InProgressContent({
+  items,
+  favoriteIds,
+  now,
+  canShelve = false,
+}: InProgressContentProps) {
   const router = useRouter();
   const { toast } = useToast();
   const { t } = useTranslate();
@@ -93,6 +109,14 @@ export function InProgressContent({ items, favoriteIds, now }: InProgressContent
   const [favoriteOverrides, setFavoriteOverrides] = useState<FavoriteOverridesState>(
     () => ({ base: favoriteIdsKey, values: new Map() })
   );
+  const itemIdsKey = useMemo(
+    () => items.map((item) => item.series.id).sort().join("|"),
+    [items]
+  );
+  const [shelvedOverrides, setShelvedOverrides] = useState<ShelvedOverridesState>(
+    () => ({ base: itemIdsKey, ids: new Set() })
+  );
+  const [shelvingIds, setShelvingIds] = useState<Set<string>>(() => new Set());
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [isDisablingAnonymous, startAnonymousTransition] = useTransition();
   const scrollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -132,6 +156,32 @@ export function InProgressContent({ items, favoriteIds, now }: InProgressContent
     [favoriteIdsKey]
   );
 
+  // Même principe que les favoris : une série mise de côté est masquée
+  // jusqu'au prochain rafraîchissement serveur, qui fait foi.
+  const shelvedIds =
+    shelvedOverrides.base === itemIdsKey
+      ? shelvedOverrides.ids
+      : EMPTY_SHELVED_IDS;
+  const visibleItems = useMemo(
+    () => items.filter((item) => !shelvedIds.has(item.series.id)),
+    [items, shelvedIds]
+  );
+
+  const setShelvedOverride = useCallback(
+    (seriesId: string, shelved: boolean) => {
+      setShelvedOverrides((current) => {
+        const ids =
+          current.base === itemIdsKey
+            ? new Set(current.ids)
+            : new Set<string>();
+        if (shelved) ids.add(seriesId);
+        else ids.delete(seriesId);
+        return { base: itemIdsKey, ids };
+      });
+    },
+    [itemIdsKey]
+  );
+
   const handleQueryChange = useCallback((value: string) => {
     setQuery(value);
     setHighlightedId(null);
@@ -150,18 +200,18 @@ export function InProgressContent({ items, favoriteIds, now }: InProgressContent
   const filteredItems = useMemo(
     () =>
       sortInProgressItems(
-        filterInProgressItems(items, query, filter, favoriteSet, now),
+        filterInProgressItems(visibleItems, query, filter, favoriteSet, now),
         sort
       ),
-    [items, query, filter, favoriteSet, now, sort]
+    [visibleItems, query, filter, favoriteSet, now, sort]
   );
 
   const stats = useMemo(
-    () => getInProgressStats(items, favoriteSet, now),
-    [items, favoriteSet, now]
+    () => getInProgressStats(visibleItems, favoriteSet, now),
+    [visibleItems, favoriteSet, now]
   );
 
-  const heroItem = items[0] ?? null;
+  const heroItem = visibleItems[0] ?? null;
   const isFiltering = query.trim() !== "" || filter !== "all";
   const visibleHeroItem =
     heroItem &&
@@ -169,7 +219,7 @@ export function InProgressContent({ items, favoriteIds, now }: InProgressContent
     !filteredItems.some((item) => item.series.id === heroItem.series.id)
       ? null
       : heroItem;
-  const showRails = !isFiltering && items.length > 3;
+  const showRails = !isFiltering && visibleItems.length > 3;
   const resumeItems = useMemo(
     () =>
       filteredItems
@@ -255,6 +305,96 @@ export function InProgressContent({ items, favoriteIds, now }: InProgressContent
     [favoriteSet, isAnonymous, router, setFavoriteOverride, t, toast]
   );
 
+  const handleUnshelve = useCallback(
+    async (item: InProgressItem) => {
+      if (isAnonymous || !canShelve) return;
+
+      try {
+        const result = await unshelveSeries(item.series.id, item.series.libraryId);
+        if (!result.success) {
+          toast({
+            title: t("inProgress.shelf.error"),
+            description: result.message,
+            variant: "destructive",
+          });
+          return;
+        }
+
+        setShelvedOverride(item.series.id, false);
+        toast({
+          title: t("inProgress.shelf.resumed"),
+          description: item.series.name,
+        });
+        router.refresh();
+      } catch (error) {
+        logger.error({ err: error }, "Erreur lors de la reprise de la série:");
+        toast({
+          title: t("inProgress.shelf.error"),
+          description: item.series.name,
+          variant: "destructive",
+        });
+      }
+    },
+    [canShelve, isAnonymous, router, setShelvedOverride, t, toast]
+  );
+
+  const handleShelve = useCallback(
+    async (item: InProgressItem) => {
+      if (isAnonymous || !canShelve || shelvingIds.has(item.series.id)) return;
+
+      setShelvingIds((current) => new Set(current).add(item.series.id));
+      try {
+        const result = await shelveSeries(item.series.id, item.series.libraryId);
+        if (!result.success) {
+          toast({
+            title: t("inProgress.shelf.error"),
+            description: result.message,
+            variant: "destructive",
+          });
+          return;
+        }
+
+        setShelvedOverride(item.series.id, true);
+        toast({
+          title: t("inProgress.shelf.shelved"),
+          description: item.series.name,
+          action: (
+            <ToastAction
+              altText={t("inProgress.shelf.undo")}
+              onClick={() => void handleUnshelve(item)}
+            >
+              {t("inProgress.shelf.undo")}
+            </ToastAction>
+          ),
+        });
+        router.refresh();
+      } catch (error) {
+        logger.error({ err: error }, "Erreur lors de la mise de côté de la série:");
+        toast({
+          title: t("inProgress.shelf.error"),
+          description: item.series.name,
+          variant: "destructive",
+        });
+      } finally {
+        setShelvingIds((current) => {
+          const next = new Set(current);
+          next.delete(item.series.id);
+          return next;
+        });
+      }
+    },
+    [
+      canShelve,
+      handleUnshelve,
+      isAnonymous,
+      router,
+      setShelvedOverride,
+      shelvingIds,
+      t,
+      toast,
+    ]
+  );
+
   const handleDisableAnonymous = useCallback(() => {
     startAnonymousTransition(async () => {
       try {
@@ -327,7 +467,7 @@ export function InProgressContent({ items, favoriteIds, now }: InProgressContent
           onDisable={handleDisableAnonymous}
           isPending={isDisablingAnonymous}
         />
-      ) : items.length === 0 ? (
+      ) : visibleItems.length === 0 ? (
         <InProgressEmptyState />
       ) : (
         <>
@@ -337,6 +477,9 @@ export function InProgressContent({ items, favoriteIds, now }: InProgressContent
               isFavorite={favoriteSet.has(visibleHeroItem.series.id)}
               onToggleFavorite={() => void handleToggleFavorite(visibleHeroItem)}
               now={now}
+              canShelve={canShelve}
+              isShelving={shelvingIds.has(visibleHeroItem.series.id)}
+              onShelve={() => void handleShelve(visibleHeroItem)}
             />
           )}
 
@@ -483,6 +626,9 @@ export function InProgressContent({ items, favoriteIds, now }: InProgressContent
                       onToggleFavorite={() => void handleToggleFavorite(item)}
                       now={now}
                       highlighted={highlightedId === item.series.id}
+                      canShelve={canShelve}
+                      isShelving={shelvingIds.has(item.series.id)}
+                      onShelve={() => void handleShelve(item)}
                     />
                   </StaggerItem>
                 ))}

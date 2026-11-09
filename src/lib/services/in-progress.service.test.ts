@@ -181,6 +181,18 @@ describe("buildInProgressItems", () => {
     ).toBeNull();
   });
 
+  it("excludes series the reader has put aside", () => {
+    const items = buildInProgressItems(
+      [
+        series("shelved", { shelvedAt: "2026-06-01T10:00:00.000Z" }),
+        series("active"),
+      ],
+      { ongoingBooks: [], onDeck: [] }
+    );
+
+    expect(items.map((item) => item.series.id)).toEqual(["active"]);
+  });
+
   it("excludes fully read and empty series", () => {
     const items = buildInProgressItems(
       [
