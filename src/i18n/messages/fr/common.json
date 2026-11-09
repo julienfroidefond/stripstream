@@ -126,6 +126,7 @@
   "sidebar": {
     "connection": "Connexion",
     "home": "Accueil",
+    "inProgress": "Séries en cours",
     "readingLists": "Listes de lecture",
     "ratings": "Mes notes",
     "wall": "Le Wall",
@@ -375,6 +376,105 @@
     "emptyHint": "Terminez une série pour pouvoir la noter.",
     "noResults": "Aucune série ne correspond",
     "noResultsHint": "Modifiez votre recherche ou votre filtre."
+  },
+  "inProgress": {
+    "title": "Mes séries en cours",
+    "description": "Reprenez là où vous vous êtes arrêté, tome après tome.",
+    "eyebrow": "Reprendre la lecture",
+    "coverLink": "Ouvrir {{title}}",
+    "gridTitle": "Séries",
+    "neverRead": "Jamais lue",
+    "justNow": "à l'instant",
+    "results_one": "{{count}} série",
+    "results_other": "{{count}} séries",
+    "reset": "Réinitialiser",
+    "hero": {
+      "resume": "Reprendre la lecture",
+      "continue": "Lire la suite",
+      "start": "Commencer la série",
+      "chooseBook": "Choisir un tome",
+      "progress": "{{read}} / {{total}} tomes lus",
+      "remaining_one": "{{count}} tome restant",
+      "remaining_other": "{{count}} tomes restants",
+      "currentBook": "Tome en cours :",
+      "nextBook": "Prochain tome :",
+      "lastReadLabel": "Dernière lecture",
+      "neverRead": "Pas encore commencée",
+      "noBook": "Aucun tome à reprendre pour le moment : ouvrez la série pour choisir votre prochain tome."
+    },
+    "stats": {
+      "total": "Séries en cours",
+      "remaining": "Tomes restants",
+      "almostDone": "Presque terminées",
+      "paused": "En pause",
+      "favorites": "Favoris",
+      "filterHint": "Cliquer pour filtrer",
+      "sortHint": "Cliquer pour trier par tomes restants"
+    },
+    "toolbar": {
+      "search": "Rechercher une série...",
+      "clearSearch": "Effacer la recherche",
+      "filtersLabel": "Filtrer les séries",
+      "sortLabel": "Trier les séries",
+      "random": "Au hasard"
+    },
+    "filters": {
+      "all": "Toutes",
+      "favorites": "Favoris",
+      "almostDone": "Presque terminées",
+      "paused": "En pause"
+    },
+    "sort": {
+      "recent": "Lecture récente",
+      "progress": "Plus avancées",
+      "remaining": "Moins de tomes restants",
+      "title": "Titre (A→Z)"
+    },
+    "rails": {
+      "resume": "Vos autres lectures",
+      "resumeDescription": "Vos lectures en attente, à portée de clic.",
+      "almostDone": "Presque terminées",
+      "almostDoneDescription": "Encore un ou deux tomes et c'est fini."
+    },
+    "card": {
+      "resume": "Reprendre",
+      "continue": "Lire la suite",
+      "start": "Commencer",
+      "openSeries": "Voir la série",
+      "read": "{{read}} / {{total}} lus",
+      "remaining_one": "{{count}} tome restant",
+      "remaining_other": "{{count}} tomes restants",
+      "current": "En cours : {{title}}",
+      "next": "À suivre : {{title}}",
+      "noBook": "Aucun tome à reprendre",
+      "neverRead": "Pas encore lue",
+      "almostDone": "Presque fini",
+      "paused": "En pause",
+      "favoriteAdd": "Ajouter aux favoris",
+      "favoriteRemove": "Retirer des favoris",
+      "favoriteBadge": "Favorite"
+    },
+    "favorite": {
+      "added": "Ajouté aux favoris",
+      "removed": "Retiré des favoris",
+      "error": "Impossible de modifier les favoris"
+    },
+    "empty": {
+      "title": "Aucune série en cours",
+      "description": "Lancez une lecture pour retrouver ici vos séries et reprendre en un clic.",
+      "action": "Explorer le Wall"
+    },
+    "noResults": {
+      "title": "Aucune série ne correspond",
+      "description": "Modifiez votre recherche ou vos filtres.",
+      "reset": "Réinitialiser les filtres"
+    },
+    "anonymous": {
+      "title": "Mode anonyme activé",
+      "description": "Vos séries en cours sont masquées. Désactivez le mode anonyme pour reprendre votre lecture.",
+      "action": "Désactiver le mode anonyme",
+      "error": "Impossible de désactiver le mode anonyme"
+    }
   },
   "series": {
     "related": "Séries similaires",

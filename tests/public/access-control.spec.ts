@@ -4,6 +4,7 @@ test.use({ storageState: { cookies: [], origins: [] } });
 
 const protectedRoutes = [
   '/',
+  '/in-progress',
   '/settings',
   '/account',
   '/admin',

@@ -3,6 +3,7 @@
 import {
   Home,
   Bookmark,
+  BookOpenCheck,
   LayoutGrid,
   Settings,
   LogOut,
@@ -128,6 +129,12 @@ export function Sidebar({
               label={t("sidebar.home")}
               active={pathname === "/"}
               onClick={() => handleLinkClick("/")}
+            />
+            <NavButton
+              icon={BookOpenCheck}
+              label={t("sidebar.inProgress")}
+              active={pathname === "/in-progress"}
+              onClick={() => handleLinkClick("/in-progress")}
             />
             <NavButton
               icon={LayoutGrid}
