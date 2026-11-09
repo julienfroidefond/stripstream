@@ -182,6 +182,13 @@ Tous les fichiers de `src/app/actions/` commencent par `"use server"`. Les actio
 | `deleteReadProgress` | Réinitialise la progression de lecture d'un livre et invalide les caches associés. Ignorée en mode anonyme. |
 | `updateSeriesReadStatus` | Marque **tous** les livres d'une série comme lus (`read: true`) ou non lus (`read: false`). Pagine les livres via `getAllSeriesBooks`, applique la progression livre par livre avec une concurrence bornée (`SERIES_WRITE_CONCURRENCY`), puis invalide les caches une seule fois. Renvoie `{ success, updated, total }` pour un retour « X / Y » côté UI. Ignorée en mode anonyme. |
 
+### src/app/actions/series-shelf.ts
+
+| Action | Rôle |
+| --- | --- |
+| `shelveSeries` | Met une série de côté pour le lecteur courant via le provider (idempotent). Invalide `home`, `series-shelf:${seriesId}`, les pages `/`, `/series/${seriesId}` et `/libraries/${libraryId}` (ou le tag de liste global en secours). |
+| `unshelveSeries` | Reprend une série mise de côté et invalide les mêmes caches. |
+
 ### src/app/actions/refresh.ts
 
 | Action | Rôle |

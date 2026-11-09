@@ -58,6 +58,8 @@ export interface NormalizedSeries {
   communityScore?: number | null;
   /** Current user's own half-star rating (1-10), null when unrated (Stripstream only). */
   userRating?: number | null;
+  /** When the current user put this series aside (Stripstream only). */
+  shelvedAt?: string | null;
 }
 
 export interface NormalizedBook {

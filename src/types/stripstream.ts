@@ -77,6 +77,8 @@ export interface StripstreamSeriesItem {
   community_score?: number | null;
   /** Current user's own half-star rating (1-10), null when unrated. */
   user_rating?: number | null;
+  /** When the current user put this series aside ("Mettre de côté"), if any. */
+  shelved_at?: string | null;
 }
 
 export interface StripstreamSeriesLookup {

@@ -431,6 +431,13 @@
         "add": "Ajouté aux favoris",
         "remove": "Retiré des favoris"
       },
+      "shelf": {
+        "shelve": "Mettre de côté",
+        "resume": "Reprendre la série",
+        "badge": "De côté",
+        "shelved": "Série mise de côté",
+        "resumed": "Série reprise"
+      },
       "markAllRead": {
         "tooltip": "Marquer tous les tomes comme lus",
         "success": {
@@ -646,6 +653,8 @@
     "SERIES_NO_BOOKS_FOUND": "Aucun livre trouvé dans la série",
     "SERIES_RATING_ERROR": "Erreur lors de l'enregistrement de la note",
     "SERIES_RATING_NOT_SUPPORTED": "La notation des séries n'est pas disponible avec ce fournisseur",
+    "SERIES_SHELF_ERROR": "Erreur lors de la mise de côté de la série",
+    "SERIES_SHELF_NOT_SUPPORTED": "La mise de côté n'est pas disponible avec ce fournisseur",
     "BOOK_NOT_FOUND": "Livre introuvable",
     "BOOK_FETCH_ERROR": "Erreur lors de la récupération du livre",
     "BOOK_PROGRESS_UPDATE_ERROR": "Erreur lors de la mise à jour de la progression",

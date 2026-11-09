@@ -36,6 +36,7 @@ export default async function SeriesPage({ params, searchParams }: PageProps) {
 
     const providerType = await getActiveProviderType();
     const canRate = providerType === "stripstream";
+    const canShelve = providerType === "stripstream";
 
     const [booksPage, series, isFavorite, missingBooks, relatedSeries, rating] = await Promise.all([
       provider.getBooks({
@@ -68,6 +69,8 @@ export default async function SeriesPage({ params, searchParams }: PageProps) {
           canRate={canRate}
           initialRating={rating?.userRating ?? null}
           providerRatings={rating?.providerRatings ?? []}
+          canShelve={canShelve}
+          initialIsShelved={series.shelvedAt != null}
         />
       </SeriesClientWrapper>
     );

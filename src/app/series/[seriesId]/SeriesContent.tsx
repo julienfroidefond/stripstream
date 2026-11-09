@@ -21,6 +21,8 @@ interface SeriesContentProps {
   canRate?: boolean;
   initialRating?: number | null;
   providerRatings?: NormalizedProviderRating[];
+  canShelve?: boolean;
+  initialIsShelved?: boolean;
 }
 
 export function SeriesContent({
@@ -36,6 +38,8 @@ export function SeriesContent({
   canRate = false,
   initialRating = null,
   providerRatings = [],
+  canShelve = false,
+  initialIsShelved = false,
 }: SeriesContentProps) {
   const { refreshSeries } = useRefresh();
 
@@ -48,6 +52,8 @@ export function SeriesContent({
         canRate={canRate}
         initialRating={initialRating}
         providerRatings={providerRatings}
+        canShelve={canShelve}
+        initialIsShelved={initialIsShelved}
       />
       <Container>
         <PaginatedBookGrid

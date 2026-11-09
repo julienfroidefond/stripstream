@@ -39,7 +39,7 @@ import type {
   StripstreamSeriesRatingsResponse,
   StripstreamIndexJob,
 } from "@/types/stripstream";
-import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, SERIES_BOOKS_CACHE_TAG, SERIES_RATING_CACHE_TAG, RATINGS_LIST_CACHE_TAG, STATS_CACHE_TAG } from "@/constants/cacheConstants";
+import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, SERIES_BOOKS_CACHE_TAG, SERIES_RATING_CACHE_TAG, SERIES_SHELF_CACHE_TAG, RATINGS_LIST_CACHE_TAG, STATS_CACHE_TAG } from "@/constants/cacheConstants";
 
 const CACHE_TTL_LONG = 300;
 const CACHE_TTL_MED = 120;
@@ -683,6 +683,21 @@ export class StripstreamProvider implements IMediaProvider {
 
   async removeFromFavorites(seriesId: string): Promise<void> {
     await this.client.fetch<unknown>(`series/${seriesId}/favorite`, undefined, { method: "DELETE" });
+  }
+
+  async isShelved(seriesId: string): Promise<boolean> {
+    return this.client.fetch<boolean>(`series/${seriesId}/shelf`, undefined, {
+      revalidate: CACHE_TTL_SHORT,
+      tags: [SERIES_SHELF_CACHE_TAG, `series-shelf:${seriesId}`],
+    });
+  }
+
+  async shelveSeries(seriesId: string): Promise<void> {
+    await this.client.fetch<unknown>(`series/${seriesId}/shelf`, undefined, { method: "PUT" });
+  }
+
+  async unshelveSeries(seriesId: string): Promise<void> {
+    await this.client.fetch<unknown>(`series/${seriesId}/shelf`, undefined, { method: "DELETE" });
   }
 
   async getRelatedSeries(seriesId: string, limit = 10): Promise<NormalizedSeries[]> {

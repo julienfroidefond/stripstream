@@ -215,6 +215,7 @@ describe("StripstreamAdapter.toNormalizedSeries", () => {
         community_score: 4,
         user_rating: 8,
         last_read_at: "2026-02-01T00:00:00Z",
+        shelved_at: "2026-03-01T00:00:00Z",
       })
     );
 
@@ -236,11 +237,16 @@ describe("StripstreamAdapter.toNormalizedSeries", () => {
       seriesStatus: "ONGOING",
       communityScore: 4,
       userRating: 8,
+      shelvedAt: "2026-03-01T00:00:00Z",
     });
   });
 
   it("defaults lastReadAt to null when the API omits it", () => {
     expect(StripstreamAdapter.toNormalizedSeries(makeSeriesItem()).lastReadAt).toBeNull();
+  });
+
+  it("defaults shelvedAt to null when the series is not shelved", () => {
+    expect(StripstreamAdapter.toNormalizedSeries(makeSeriesItem()).shelvedAt).toBeNull();
   });
 
   it("falls back to the cover URL when the first book id is missing", () => {

@@ -426,6 +426,13 @@
         "add": "Added to favorites",
         "remove": "Removed from favorites"
       },
+      "shelf": {
+        "shelve": "Set aside",
+        "resume": "Resume series",
+        "badge": "Set aside",
+        "shelved": "Series set aside",
+        "resumed": "Series resumed"
+      },
       "markAllRead": {
         "tooltip": "Mark all books as read",
         "success": {
@@ -643,6 +650,8 @@
     "SERIES_NO_BOOKS_FOUND": "No books found in series",
     "SERIES_RATING_ERROR": "Error saving rating",
     "SERIES_RATING_NOT_SUPPORTED": "Series rating is not available with this provider",
+    "SERIES_SHELF_ERROR": "Error updating the series shelf",
+    "SERIES_SHELF_NOT_SUPPORTED": "Series shelves are not available with this provider",
     "BOOK_NOT_FOUND": "Book not found",
     "BOOK_FETCH_ERROR": "Error fetching book",
     "BOOK_PROGRESS_UPDATE_ERROR": "Error updating reading progress",

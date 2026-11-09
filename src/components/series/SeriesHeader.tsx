@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 
-import { Book, BookCheck, BookOpen, BookMarked, BookX, Star, StarOff, User, CircleDot, CircleCheck, CirclePause, CircleX, Calendar, Loader2 } from "lucide-react";
+import { Book, BookCheck, BookOpen, BookMarked, BookX, ArchiveRestore, Snowflake, Star, StarOff, User, CircleDot, CircleCheck, CirclePause, CircleX, Calendar, Loader2 } from "lucide-react";
 import type { NormalizedSeries } from "@/lib/providers/types";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -27,6 +27,7 @@ import {
 import { cn } from "@/lib/utils";
 import logger from "@/lib/logger";
 import { addToFavorites, removeFromFavorites } from "@/app/actions/favorites";
+import { shelveSeries, unshelveSeries } from "@/app/actions/series-shelf";
 import { updateSeriesReadStatus } from "@/app/actions/read-progress";
 import { useAnonymous } from "@/contexts/AnonymousContext";
 import { SeriesRatingControl } from "./SeriesRatingControl";
@@ -43,6 +44,9 @@ interface SeriesHeaderProps {
   canRate?: boolean;
   initialRating?: number | null;
   providerRatings?: NormalizedProviderRating[];
+  /** La mise de côté n'est disponible qu'avec Stripstream Librarian. */
+  canShelve?: boolean;
+  initialIsShelved?: boolean;
 }
 
 export const SeriesHeader = ({
@@ -52,11 +56,15 @@ export const SeriesHeader = ({
   canRate = false,
   initialRating = null,
   providerRatings = [],
+  canShelve = false,
+  initialIsShelved = false,
 }: SeriesHeaderProps) => {
   const router = useRouter();
   const { toast } = useToast();
   const { isAnonymous } = useAnonymous();
   const [isFavorite, setIsFavorite] = useState(initialIsFavorite);
+  const [isShelved, setIsShelved] = useState(initialIsShelved);
+  const [isShelfPending, setIsShelfPending] = useState(false);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [bulkAction, setBulkAction] = useState<null | "read" | "unread">(null);
   const [isConfirmUnreadOpen, setIsConfirmUnreadOpen] = useState(false);
@@ -119,6 +127,39 @@ export const SeriesHeader = ({
             : getErrorMessage(ERROR_CODES.FAVORITE.NETWORK_ERROR),
         variant: "destructive",
       });
+    }
+  };
+
+  const handleToggleShelf = async () => {
+    setIsShelfPending(true);
+    try {
+      const action = isShelved ? unshelveSeries : shelveSeries;
+      const result = await action(series.id, series.libraryId);
+
+      if (!result.success) {
+        throw new AppError(ERROR_CODES.SERIES.SHELF_ERROR);
+      }
+
+      setIsShelved(!isShelved);
+      router.refresh();
+      toast({
+        title: t(
+          isShelved ? "series.header.shelf.resumed" : "series.header.shelf.shelved"
+        ),
+        description: series.name,
+      });
+    } catch (error) {
+      logger.error({ err: error }, "Erreur lors de la modification de la mise de côté:");
+      toast({
+        title: "Erreur",
+        description:
+          error instanceof AppError
+            ? error.message
+            : getErrorMessage(ERROR_CODES.SERIES.SHELF_ERROR),
+        variant: "destructive",
+      });
+    } finally {
+      setIsShelfPending(false);
     }
   };
 
@@ -288,6 +329,15 @@ export const SeriesHeader = ({
                   {statusInfo.label}
                 </StatusBadge>
               )}
+              {canShelve && !isAnonymous && isShelved && (
+                <StatusBadge
+                  status="info"
+                  icon={Snowflake}
+                  className="border-cyan-500/30 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400"
+                >
+                  {t("series.header.shelf.badge")}
+                </StatusBadge>
+              )}
               <span className="text-sm text-muted-foreground tabular-nums">
                 {series.bookCount === 1
                   ? t("series.header.books", { count: series.bookCount })
@@ -316,6 +366,23 @@ export const SeriesHeader = ({
                 )}
                 iconClassName={isFavorite ? "fill-yellow-400 text-yellow-400" : ""}
               />
+              {canShelve && !isAnonymous && (
+                <IconButton
+                  data-testid={isShelved ? "series-shelf-unshelve" : "series-shelf-shelve"}
+                  variant="ghost"
+                  size="icon"
+                  icon={isShelfPending ? Loader2 : isShelved ? ArchiveRestore : Snowflake}
+                  onClick={handleToggleShelf}
+                  disabled={isShelfPending}
+                  tooltip={t(
+                    isShelved ? "series.header.shelf.resume" : "series.header.shelf.shelve"
+                  )}
+                  iconClassName={cn(
+                    isShelfPending && "animate-spin",
+                    isShelved && !isShelfPending && "text-cyan-500"
+                  )}
+                />
+              )}
               {!isAnonymous && series.bookCount > 0 && (
                 <>
                   <IconButton

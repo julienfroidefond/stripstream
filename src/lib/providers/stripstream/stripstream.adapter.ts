@@ -131,6 +131,7 @@ export class StripstreamAdapter {
       seriesStatus: series.series_status ?? null,
       communityScore: series.community_score ?? null,
       userRating: series.user_rating ?? null,
+      shelvedAt: series.shelved_at ?? null,
     };
   }
 
