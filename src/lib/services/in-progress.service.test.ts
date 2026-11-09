@@ -11,7 +11,6 @@ import {
   getInProgressStats,
   getRelativeTimeParts,
   isPaused,
-  PAUSED_AFTER_DAYS,
   sortInProgressItems,
   type InProgressItem,
 } from "./in-progress.service";
@@ -181,7 +180,7 @@ describe("buildInProgressItems", () => {
     ).toBeNull();
   });
 
-  it("excludes series the reader has put aside", () => {
+  it("keeps series the reader has put aside so they can be shown as paused", () => {
     const items = buildInProgressItems(
       [
         series("shelved", { shelvedAt: "2026-06-01T10:00:00.000Z" }),
@@ -190,7 +189,9 @@ describe("buildInProgressItems", () => {
       { ongoingBooks: [], onDeck: [] }
     );
 
-    expect(items.map((item) => item.series.id)).toEqual(["active"]);
+    expect(items.map((item) => item.series.id)).toEqual(["shelved", "active"]);
+    expect(isPaused(items[0])).toBe(true);
+    expect(isPaused(items[1])).toBe(false);
   });
 
   it("excludes fully read and empty series", () => {
@@ -247,12 +248,13 @@ describe("getBookProgressPercent", () => {
 });
 
 describe("getInProgressItems", () => {
-  it("loads both feeds with the maximum limit and sorts by recent activity", async () => {
+  it("loads ongoing, shelved and continue-reading feeds with the maximum limit", async () => {
     const provider = {
       getHomeOngoingSeries: vi.fn(async () => [
         series("old", { lastReadAt: "2026-01-01T10:00:00.000Z" }),
         series("recent", { lastReadAt: "2026-06-01T10:00:00.000Z" }),
       ]),
+      getShelvedSeries: vi.fn(async () => []),
       getHomeContinueReadingData: vi.fn(async () => ({
         ongoingBooks: [],
         onDeck: [],
@@ -263,12 +265,41 @@ describe("getInProgressItems", () => {
 
     expect(items.map((item) => item.series.id)).toEqual(["recent", "old"]);
     expect(provider.getHomeOngoingSeries).toHaveBeenCalledWith(50);
+    expect(provider.getShelvedSeries).toHaveBeenCalledWith(50);
     expect(provider.getHomeContinueReadingData).toHaveBeenCalledWith(50);
+  });
+
+  it("merges shelved series into the list without duplicating ongoing ones", async () => {
+    const provider = {
+      getHomeOngoingSeries: vi.fn(async () => [series("ongoing")]),
+      getShelvedSeries: vi.fn(async () => [
+        series("shelved", { shelvedAt: "2026-06-01T10:00:00.000Z" }),
+        series("ongoing"),
+      ]),
+      getHomeContinueReadingData: vi.fn(async () => ({
+        ongoingBooks: [],
+        onDeck: [],
+      })),
+    } as unknown as IMediaProvider;
+
+    const items = await getInProgressItems(provider);
+
+    expect(items.map((item) => item.series.id).sort()).toEqual([
+      "ongoing",
+      "shelved",
+    ]);
+    expect(isPaused(items.find((item) => item.series.id === "shelved")!)).toBe(
+      true
+    );
+    expect(isPaused(items.find((item) => item.series.id === "ongoing")!)).toBe(
+      false
+    );
   });
 
   it("still returns series when the continue-reading feed fails", async () => {
     const provider = {
       getHomeOngoingSeries: vi.fn(async () => [series("s1")]),
+      getShelvedSeries: vi.fn(async () => []),
       getHomeContinueReadingData: vi.fn(async () => {
         throw new Error("feed down");
       }),
@@ -280,11 +311,29 @@ describe("getInProgressItems", () => {
     expect(items[0].resumeBook).toBeNull();
   });
 
+  it("still returns series when the shelved feed fails", async () => {
+    const provider = {
+      getHomeOngoingSeries: vi.fn(async () => [series("s1")]),
+      getShelvedSeries: vi.fn(async () => {
+        throw new Error("shelves down");
+      }),
+      getHomeContinueReadingData: vi.fn(async () => ({
+        ongoingBooks: [],
+        onDeck: [],
+      })),
+    } as unknown as IMediaProvider;
+
+    const items = await getInProgressItems(provider);
+
+    expect(items.map((item) => item.series.id)).toEqual(["s1"]);
+  });
+
   it("surfaces a failure of the ongoing series feed", async () => {
     const provider = {
       getHomeOngoingSeries: vi.fn(async () => {
         throw new Error("series down");
       }),
+      getShelvedSeries: vi.fn(async () => []),
       getHomeContinueReadingData: vi.fn(async () => ({
         ongoingBooks: [],
         onDeck: [],
@@ -296,18 +345,20 @@ describe("getInProgressItems", () => {
 });
 
 describe("isPaused", () => {
-  it("flags a series after three weeks without reading", () => {
-    const paused = inProgressItem("a", {
-      lastReadAt: new Date(NOW - (PAUSED_AFTER_DAYS + 1) * DAY).toISOString(),
-    });
+  it("relies on the reader's shelf instead of the last read date", () => {
+    const paused = inProgressItem(
+      "a",
+      { lastReadAt: "2026-06-14T10:00:00.000Z" },
+      { shelvedAt: "2026-06-01T10:00:00.000Z" }
+    );
     const active = inProgressItem("b", {
-      lastReadAt: new Date(NOW - 10 * DAY).toISOString(),
+      lastReadAt: "2026-01-01T10:00:00.000Z",
     });
     const undated = inProgressItem("c");
 
-    expect(isPaused(paused, NOW)).toBe(true);
-    expect(isPaused(active, NOW)).toBe(false);
-    expect(isPaused(undated, NOW)).toBe(false);
+    expect(isPaused(paused)).toBe(true);
+    expect(isPaused(active)).toBe(false);
+    expect(isPaused(undated)).toBe(false);
   });
 });
 
@@ -315,21 +366,22 @@ describe("filterInProgressItems", () => {
   const items = [
     inProgressItem("ete", { remainingBooks: 1 }, { name: "Été" }),
     inProgressItem("hiver", { remainingBooks: 5 }, { name: "Hiver" }),
-    inProgressItem("pause", {
-      remainingBooks: 2,
-      lastReadAt: new Date(NOW - 40 * DAY).toISOString(),
-    }),
+    inProgressItem(
+      "pause",
+      { remainingBooks: 2 },
+      { shelvedAt: "2026-06-01T10:00:00.000Z" }
+    ),
   ];
 
   it("matches an accent-insensitive query", () => {
     expect(
-      filterInProgressItems(items, "ete", "all", [], NOW).map((item) => item.series.id)
+      filterInProgressItems(items, "ete", "all", []).map((item) => item.series.id)
     ).toEqual(["ete"]);
   });
 
   it("filters favorites", () => {
     expect(
-      filterInProgressItems(items, "", "favorites", ["hiver"], NOW).map(
+      filterInProgressItems(items, "", "favorites", ["hiver"]).map(
         (item) => item.series.id
       )
     ).toEqual(["hiver"]);
@@ -337,7 +389,7 @@ describe("filterInProgressItems", () => {
 
   it("filters almost-done series", () => {
     expect(
-      filterInProgressItems(items, "", "almost-done", [], NOW).map(
+      filterInProgressItems(items, "", "almost-done", []).map(
         (item) => item.series.id
       )
     ).toEqual(["ete", "pause"]);
@@ -345,12 +397,12 @@ describe("filterInProgressItems", () => {
 
   it("filters paused series", () => {
     expect(
-      filterInProgressItems(items, "", "paused", [], NOW).map((item) => item.series.id)
+      filterInProgressItems(items, "", "paused", []).map((item) => item.series.id)
     ).toEqual(["pause"]);
   });
 
   it("combines the query with a filter", () => {
-    expect(filterInProgressItems(items, "hiver", "paused", [], NOW)).toEqual([]);
+    expect(filterInProgressItems(items, "hiver", "paused", [])).toEqual([]);
   });
 });
 
@@ -419,10 +471,11 @@ describe("sortInProgressItems", () => {
 describe("getInProgressStats", () => {
   it("counts series, remaining books, almost-done, paused and favorites", () => {
     const items = [
-      inProgressItem("a", {
-        remainingBooks: 1,
-        lastReadAt: new Date(NOW - 40 * DAY).toISOString(),
-      }),
+      inProgressItem(
+        "a",
+        { remainingBooks: 1 },
+        { shelvedAt: "2026-06-01T10:00:00.000Z" }
+      ),
       inProgressItem("b", { remainingBooks: 4 }),
       inProgressItem("c", {
         remainingBooks: 2,
@@ -430,7 +483,7 @@ describe("getInProgressStats", () => {
       }),
     ];
 
-    expect(getInProgressStats(items, ["a", "c"], NOW)).toEqual({
+    expect(getInProgressStats(items, ["a", "c"])).toEqual({
       total: 3,
       remaining: 7,
       almostDone: 2,

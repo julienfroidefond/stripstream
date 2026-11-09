@@ -456,6 +456,7 @@
     },
     "shelf": {
       "shelve": "Set aside",
+      "resume": "Resume series",
       "shelved": "Series set aside",
       "resumed": "Series resumed",
       "undo": "Undo",

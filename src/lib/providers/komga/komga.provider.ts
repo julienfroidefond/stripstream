@@ -346,6 +346,11 @@ export class KomgaProvider implements IMediaProvider {
     };
   }
 
+  // Komga ne gère pas les shelves : la pause de lecture n'existe pas.
+  async getShelvedSeries(_limit = 200): Promise<NormalizedSeries[]> {
+    return [];
+  }
+
   async getReadProgress(bookId: string): Promise<NormalizedReadProgress | null> {
     const book = await this.fetch<KomgaBook>(`books/${bookId}`, undefined, {
       revalidate: CACHE_TTL_SHORT,

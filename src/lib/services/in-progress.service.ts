@@ -3,13 +3,8 @@ import type { NormalizedBook, NormalizedSeries } from "@/lib/providers/types";
 import type { HomePrimaryData } from "@/types/home";
 import { normalizeSeriesSearch } from "@/lib/services/read-series.service";
 
-/** Les endpoints « en cours » du provider sont bornés à 50 éléments. */
+/** Les listes « en cours » et « de côté » sont bornées à 50 éléments. */
 export const IN_PROGRESS_LIMIT = 50;
-
-/** Une série est considérée en pause après trois semaines sans lecture. */
-export const PAUSED_AFTER_DAYS = 21;
-
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 export type InProgressSource = Pick<HomePrimaryData, "ongoingBooks" | "onDeck">;
 
@@ -148,8 +143,9 @@ export function getBookProgressPercent(book: NormalizedBook | null): number | nu
 /**
  * Fusionne les séries en cours avec les tomes en cours / à suivre.
  *
- * Les séries entièrement lues et les séries sans tome sont écartées : cette
- * page ne doit montrer que ce qui peut encore être repris.
+ * Les séries entièrement lues et les séries sans tome sont écartées. Les
+ * séries mises de côté sont conservées : elles restent visibles dans le
+ * filtre « En pause » et peuvent être reprises depuis la page.
  */
 export function buildInProgressItems(
   series: NormalizedSeries[],
@@ -191,10 +187,6 @@ export function buildInProgressItems(
 
   const items: InProgressItem[] = [];
   for (const item of uniqueSeries) {
-    // Le backend exclut déjà les séries de côté des flux « en cours » ; on
-    // garde ce filtre pour que la page reste correcte avec un autre provider.
-    if (item.shelvedAt) continue;
-
     const bookCount = Math.max(0, item.bookCount);
     const booksReadCount = Math.max(0, item.booksReadCount);
     if (bookCount <= 0 || booksReadCount >= bookCount) continue;
@@ -224,43 +216,41 @@ export function buildInProgressItems(
 /**
  * Charge les séries en cours de la connexion active.
  *
- * Le flux de reprise est un bonus : s'il échoue, la liste des séries reste
- * exploitable (les cartes renvoient alors vers la page de la série). En
- * revanche, l'échec de la liste des séries doit remonter à la page.
+ * Le flux de reprise et les séries mises de côté sont des bonus : s'ils
+ * échouent, la liste des séries reste exploitable (les cartes renvoient alors
+ * vers la page de la série). En revanche, l'échec de la liste des séries doit
+ * remonter à la page.
  */
 export async function getInProgressItems(
   provider: IMediaProvider
 ): Promise<InProgressItem[]> {
-  const [series, continueReading] = await Promise.all([
+  const [series, shelvedSeries, continueReading] = await Promise.all([
     provider.getHomeOngoingSeries(IN_PROGRESS_LIMIT),
+    provider.getShelvedSeries(IN_PROGRESS_LIMIT).catch(() => []),
     provider
       .getHomeContinueReadingData(IN_PROGRESS_LIMIT)
       .catch(() => null),
   ]);
 
   return sortInProgressItems(
-    buildInProgressItems(series, continueReading ?? { ongoingBooks: [], onDeck: [] }),
+    buildInProgressItems(
+      [...series, ...shelvedSeries],
+      continueReading ?? { ongoingBooks: [], onDeck: [] }
+    ),
     DEFAULT_IN_PROGRESS_SORT
   );
 }
 
-/** Vrai si la dernière lecture connue remonte à plus de trois semaines. */
-export function isPaused(
-  item: InProgressItem,
-  now: number = Date.now(),
-  pausedAfterDays: number = PAUSED_AFTER_DAYS
-): boolean {
-  const timestamp = parseTimestamp(item.lastReadAt);
-  if (timestamp === null) return false;
-  return now - timestamp > pausedAfterDays * DAY_MS;
+/** Vrai si la série a été mise de côté par le lecteur courant. */
+export function isPaused(item: InProgressItem): boolean {
+  return item.series.shelvedAt != null;
 }
 
 export function filterInProgressItems(
   items: InProgressItem[],
   query: string,
   filter: InProgressFilter,
-  favoriteIds: Iterable<string>,
-  now: number = Date.now()
+  favoriteIds: Iterable<string>
 ): InProgressItem[] {
   const normalizedQuery = normalizedKey(query);
   const favorites = new Set(favoriteIds);
@@ -268,7 +258,7 @@ export function filterInProgressItems(
   return items.filter((item) => {
     if (filter === "favorites" && !favorites.has(item.series.id)) return false;
     if (filter === "almost-done" && item.remainingBooks > 2) return false;
-    if (filter === "paused" && !isPaused(item, now)) return false;
+    if (filter === "paused" && !isPaused(item)) return false;
     return (
       !normalizedQuery ||
       normalizedKey(item.series.name).includes(normalizedQuery)
@@ -317,8 +307,7 @@ export function sortInProgressItems(
 
 export function getInProgressStats(
   items: InProgressItem[],
-  favoriteIds: Iterable<string>,
-  now: number = Date.now()
+  favoriteIds: Iterable<string>
 ): InProgressStats {
   const favorites = new Set(favoriteIds);
   let remaining = 0;
@@ -329,7 +318,7 @@ export function getInProgressStats(
   for (const item of items) {
     remaining += item.remainingBooks;
     if (item.remainingBooks <= 2) almostDone += 1;
-    if (isPaused(item, now)) paused += 1;
+    if (isPaused(item)) paused += 1;
     if (favorites.has(item.series.id)) favoriteCount += 1;
   }
 
