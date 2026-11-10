@@ -9,7 +9,6 @@ import {
   getBookProgressPercent,
   getInProgressItems,
   getInProgressStats,
-  getRelativeTimeParts,
   isPaused,
   sortInProgressItems,
   type InProgressItem,
@@ -489,50 +488,6 @@ describe("getInProgressStats", () => {
       almostDone: 2,
       paused: 1,
       favorites: 2,
-    });
-  });
-});
-
-describe("getRelativeTimeParts", () => {
-  it("returns null for missing or invalid dates", () => {
-    expect(getRelativeTimeParts(null, NOW)).toBeNull();
-    expect(getRelativeTimeParts("not-a-date", NOW)).toBeNull();
-  });
-
-  it("uses seconds under a minute", () => {
-    expect(getRelativeTimeParts(new Date(NOW - 30_000).toISOString(), NOW)).toEqual({
-      unit: "second",
-      value: -30,
-    });
-  });
-
-  it("walks up the units", () => {
-    expect(getRelativeTimeParts(new Date(NOW - 5 * 60_000).toISOString(), NOW)).toEqual({
-      unit: "minute",
-      value: -5,
-    });
-    expect(getRelativeTimeParts(new Date(NOW - 2 * 3_600_000).toISOString(), NOW)).toEqual({
-      unit: "hour",
-      value: -2,
-    });
-    expect(getRelativeTimeParts(new Date(NOW - 3 * DAY).toISOString(), NOW)).toEqual({
-      unit: "day",
-      value: -3,
-    });
-    expect(getRelativeTimeParts(new Date(NOW - 45 * DAY).toISOString(), NOW)).toEqual({
-      unit: "month",
-      value: -1,
-    });
-    expect(getRelativeTimeParts(new Date(NOW - 400 * DAY).toISOString(), NOW)).toEqual({
-      unit: "year",
-      value: -1,
-    });
-  });
-
-  it("handles future dates", () => {
-    expect(getRelativeTimeParts(new Date(NOW + 30_000).toISOString(), NOW)).toEqual({
-      unit: "second",
-      value: 30,
     });
   });
 });

@@ -1,4 +1,7 @@
+import type { ReactNode } from "react";
+
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 /**
  * Les squelettes de route reprennent les classes des vrais écrans (bandeau,
@@ -12,6 +15,8 @@ const GRID = {
   books: "grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5",
   /** Grille des listes de lecture, avec légende sous la couverture. */
   lists: "grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6",
+  /** Grille des séries en cours : couvertures seules. */
+  inProgress: "grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6",
 } as const;
 
 type GridVariant = keyof typeof GRID;
@@ -52,6 +57,66 @@ function PageHeading() {
     <div className="space-y-3">
       <Skeleton className="h-9 w-56" />
       <Skeleton className="h-5 w-80 max-w-full" />
+    </div>
+  );
+}
+
+/** Silhouette du PageHeader commun aux pages de collection. */
+function PageHeaderSkeleton({
+  titleClassName = "w-56",
+  meta,
+}: {
+  titleClassName?: string;
+  meta?: ReactNode;
+}) {
+  return (
+    <header className="space-y-3">
+      <div className="flex items-center gap-3">
+        <Skeleton className="h-11 w-11 rounded-xl" />
+        <div className="space-y-1">
+          <Skeleton className={cn("h-9 max-w-full", titleClassName)} />
+          <Skeleton className="h-5 w-80 max-w-full" />
+        </div>
+      </div>
+      {meta && (
+        <div className="flex flex-wrap items-center gap-2 text-xs">{meta}</div>
+      )}
+    </header>
+  );
+}
+
+const CHIP_WIDTHS = ["w-20", "w-24", "w-28", "w-20"] as const;
+
+/** Silhouette de la CollectionToolbar : recherche, filtres, tri et action. */
+function CollectionToolbarSkeleton({
+  filters = 4,
+  sort = true,
+  action = false,
+}: {
+  filters?: number;
+  sort?: boolean;
+  action?: boolean;
+}) {
+  return (
+    <div className="flex flex-col gap-3 rounded-2xl bg-surface-1 p-3 sm:flex-row sm:flex-wrap sm:items-center">
+      <Skeleton className="h-10 w-full rounded-md sm:w-auto sm:min-w-56 sm:flex-1" />
+      <div className="flex flex-wrap items-center gap-1.5">
+        {Array.from({ length: filters }).map((_, index) => (
+          <Skeleton
+            key={index}
+            className={cn(
+              "h-9 rounded-md",
+              CHIP_WIDTHS[index % CHIP_WIDTHS.length]
+            )}
+          />
+        ))}
+        {sort && (
+          <Skeleton className="h-9 w-14 rounded-full min-[380px]:w-32" />
+        )}
+        {action && (
+          <Skeleton className="h-9 w-10 rounded-full min-[380px]:w-24" />
+        )}
+      </div>
     </div>
   );
 }
@@ -187,25 +252,25 @@ export function ReadingListSkeleton() {
 export function ReadingListsSkeleton() {
   return (
     <main className="mx-auto max-w-(--breakpoint-2xl) space-y-8 px-2 py-8 sm:px-6 lg:px-8">
-      <header className="space-y-2">
-        <div className="flex items-center gap-3">
-          <Skeleton className="h-11 w-11 rounded-xl" />
-          <div className="space-y-2">
-            <Skeleton className="h-8 w-52" />
-            <Skeleton className="h-5 w-72" />
-          </div>
-        </div>
-      </header>
-      <div className="flex flex-col gap-3 rounded-2xl bg-surface-1 p-3 sm:flex-row sm:items-center">
-        <Skeleton className="h-10 flex-1 rounded-lg" />
-        <div className="flex flex-wrap gap-1.5">
-          <Skeleton className="h-9 w-24 rounded-lg" />
-          <Skeleton className="h-9 w-28 rounded-lg" />
-          <Skeleton className="h-9 w-28 rounded-lg" />
-          <Skeleton className="h-9 w-20 rounded-lg" />
-        </div>
-      </div>
+      <PageHeaderSkeleton titleClassName="w-52" />
+      <CollectionToolbarSkeleton filters={4} />
       <CoverGrid count={20} variant="lists" />
+    </main>
+  );
+}
+
+/** Page « En cours » : en-tête, barre de recherche/filtres, grille de couvertures. */
+export function InProgressSkeleton() {
+  return (
+    <main className="mx-auto max-w-(--breakpoint-2xl) space-y-8 px-2 py-8 pb-12 sm:px-6 lg:px-8">
+      <PageHeaderSkeleton
+        titleClassName="w-48"
+        meta={<Skeleton className="h-5 w-24 rounded-full" />}
+      />
+      <section className="space-y-5">
+        <CollectionToolbarSkeleton filters={4} action />
+        <CoverGrid count={18} variant="inProgress" />
+      </section>
     </main>
   );
 }
@@ -214,29 +279,18 @@ export function ReadingListsSkeleton() {
 export function RatingsSkeleton() {
   return (
     <main className="mx-auto max-w-(--breakpoint-2xl) space-y-8 px-2 py-8 sm:px-6 lg:px-8">
-      <header className="space-y-3">
-        <div className="flex items-center gap-3">
-          <Skeleton className="h-11 w-11 rounded-xl" />
-          <div className="space-y-2">
-            <Skeleton className="h-9 w-48" />
-            <Skeleton className="h-5 w-72 max-w-full" />
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Skeleton className="h-5 w-20 rounded-full" />
-          <Skeleton className="h-5 w-24 rounded-full" />
-          <Skeleton className="h-5 w-20 rounded-full" />
-        </div>
-      </header>
+      <PageHeaderSkeleton
+        titleClassName="w-48"
+        meta={
+          <>
+            <Skeleton className="h-5 w-20 rounded-full" />
+            <Skeleton className="h-5 w-24 rounded-full" />
+            <Skeleton className="h-5 w-20 rounded-full" />
+          </>
+        }
+      />
 
-      <div className="flex flex-col gap-3 rounded-2xl bg-surface-1 p-3 sm:flex-row sm:items-center">
-        <Skeleton className="h-10 flex-1 rounded-md" />
-        <div className="flex flex-wrap gap-1.5">
-          <Skeleton className="h-9 w-20 rounded-md" />
-          <Skeleton className="h-9 w-24 rounded-md" />
-          <Skeleton className="h-9 w-24 rounded-md" />
-        </div>
-      </div>
+      <CollectionToolbarSkeleton filters={3} />
 
       <div className={GRID.lists}>
         {Array.from({ length: 18 }).map((_, index) => (

@@ -11,6 +11,8 @@ interface InProgressShelfButtonProps {
   isShelved: boolean;
   isShelving: boolean;
   onToggle: () => void;
+  /** `overlay` pose le bouton sur une couverture, `surface` sur un fond de page. */
+  tone?: "surface" | "overlay";
   className?: string;
 }
 
@@ -20,6 +22,7 @@ export function InProgressShelfButton({
   isShelved,
   isShelving,
   onToggle,
+  tone = "surface",
   className,
 }: InProgressShelfButtonProps) {
   const { t } = useTranslate();
@@ -30,7 +33,7 @@ export function InProgressShelfButton({
   return (
     <IconButton
       icon={isShelving ? Loader2 : isShelved ? ArchiveRestore : Snowflake}
-      variant="secondary"
+      variant="ghost"
       size="icon"
       tooltip={label}
       aria-label={`${label}: ${seriesName}`}
@@ -42,13 +45,13 @@ export function InProgressShelfButton({
           : `in-progress-shelve-${seriesId}`
       }
       className={cn(
-        "h-8 w-8 shrink-0 rounded-full shadow-sm ring-1 ring-border/50",
+        "h-8 w-8 shrink-0 rounded-full",
+        tone === "overlay"
+          ? "bg-black/60 text-white hover:bg-black/80"
+          : "bg-surface-2 text-foreground hover:bg-surface-3",
         className
       )}
-      iconClassName={cn(
-        "h-4 w-4",
-        isShelving ? "animate-spin" : "text-cyan-500"
-      )}
+      iconClassName={cn("h-4 w-4", isShelving && "animate-spin")}
     />
   );
 }
