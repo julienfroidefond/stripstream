@@ -1,22 +1,21 @@
 "use client";
-import React from "react";
 
 import type { NormalizedSeries } from "@/lib/providers/types";
 import { communityScoreToTen } from "@/lib/providers/ratings";
-import { useRouter } from "next/navigation";
-import { memo, useCallback } from "react";
+import { memo } from "react";
 import { cn } from "@/lib/utils";
 import { SeriesCover } from "@/components/ui/series-cover";
+import { CoverCard, CoverEdge } from "@/components/ui/cover-card";
 import { useTranslate } from "@/hooks/useTranslate";
 import { useAnonymous } from "@/contexts/AnonymousContext";
 import { CircleDot, CircleCheck, CirclePause, CircleX, Snowflake, Star } from "lucide-react";
-import { GlowLayer, StaggerGroup, StaggerItem, usePointerGlow } from "@/components/motion";
+import { StaggerGroup, StaggerItem } from "@/components/motion";
 
 const seriesStatusMap = {
-  ongoing: { className: "bg-blue-500/10 text-blue-500", icon: CircleDot },
-  ended: { className: "bg-green-500/10 text-green-500", icon: CircleCheck },
-  hiatus: { className: "bg-yellow-500/10 text-yellow-500", icon: CirclePause },
-  cancelled: { className: "bg-red-500/10 text-red-500", icon: CircleX },
+  ongoing: { className: "bg-blue-500/10 text-blue-600 dark:text-blue-400", icon: CircleDot },
+  ended: { className: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400", icon: CircleCheck },
+  hiatus: { className: "bg-amber-500/10 text-amber-600 dark:text-amber-400", icon: CirclePause },
+  cancelled: { className: "bg-red-500/10 text-red-600 dark:text-red-400", icon: CircleX },
 } as const;
 
 interface SeriesGridProps {
@@ -34,14 +33,14 @@ const getReadingStatusInfo = (
   if (series.bookCount === 0) {
     return {
       label: t("series.status.noBooks"),
-      className: "bg-yellow-500/10 text-yellow-500",
+      className: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
     };
   }
 
   if (series.bookCount === series.booksReadCount) {
     return {
       label: t("series.status.read"),
-      className: "bg-green-500/10 text-green-500",
+      className: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
     };
   }
 
@@ -51,13 +50,13 @@ const getReadingStatusInfo = (
         read: series.booksReadCount,
         total: series.bookCount,
       }),
-      className: "bg-primary/15 text-primary",
+      className: "bg-primary/10 text-primary",
     };
   }
 
   return {
     label: t("series.status.unread"),
-    className: "bg-yellow-500/10 text-yellow-500",
+    className: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
   };
 };
 
@@ -65,91 +64,83 @@ const SeriesGridItem = memo(function SeriesGridItem({
   series,
   isAnonymous,
   showRating,
-  onOpen,
 }: {
   series: NormalizedSeries;
   isAnonymous: boolean;
   showRating: boolean;
-  onOpen: (id: string) => void;
 }) {
   const { t } = useTranslate();
-  const cardRef = React.useRef<HTMLButtonElement>(null);
-  const handleGlow = usePointerGlow(cardRef);
   const statusInfo = getReadingStatusInfo(series, t);
   const seriesStatusEntry = series.seriesStatus
     ? seriesStatusMap[series.seriesStatus as keyof typeof seriesStatusMap]
     : null;
+  const StatusIcon = seriesStatusEntry?.icon;
   const displayRating = showRating ? communityScoreToTen(series.communityScore) : null;
+  const isShelved = !isAnonymous && Boolean(series.shelvedAt);
 
   return (
-    <button
-      ref={cardRef}
-      onMouseMove={handleGlow}
-      onClick={() => onOpen(series.id)}
-      className={cn(
-        "group relative block w-full aspect-2/3 overflow-hidden rounded-xl bg-card ring-1 ring-border/50 transition-shadow duration-300 ease-out hover:ring-border"
-      )}
-    >
-      <SeriesCover
-        series={series}
-        alt={t("series.coverAlt", { title: series.name })}
-        isAnonymous={isAnonymous}
-      />
-      {displayRating !== null && (
-        <div
-          className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-black/70 px-2 py-1 text-xs font-medium text-yellow-300"
-          title={t("series.filters.sortRating")}
-        >
-          <Star className="h-3 w-3 fill-yellow-300" aria-hidden="true" />
-          <span className="tabular-nums">{displayRating.toFixed(1)}</span>
-        </div>
-      )}
-      {!isAnonymous && series.shelvedAt && (
-        <div
-          className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-black/70 px-2 py-1 text-xs font-medium text-cyan-300"
-          title={t("series.header.shelf.badge")}
-          aria-label={t("series.header.shelf.badge")}
-        >
-          <Snowflake className="h-3 w-3" aria-hidden="true" />
-          <span className="hidden md:inline">{t("series.header.shelf.badge")}</span>
-        </div>
-      )}
-      {/* Scrim neutre au-dessus de la couverture : seul dégradé légitime ici. */}
-      <div className="absolute inset-x-0 bottom-0 translate-y-full space-y-2 bg-linear-to-t from-black via-black/75 to-transparent p-4 transition-transform duration-200 group-hover:translate-y-0">{/* taste-skill-ignore */}
-        <h3 className="font-medium text-sm text-white line-clamp-2">{series.name}</h3>
-        <div className="flex items-center gap-2 flex-wrap">
-          {seriesStatusEntry && (
-            <span className={`px-2 py-0.5 rounded-full text-xs flex items-center gap-1 ${seriesStatusEntry.className}`}>
-              <seriesStatusEntry.icon className="h-3 w-3" />
-              {t(`series.status.${series.seriesStatus}`)}
-            </span>
-          )}
-          {!isAnonymous && (
-            <span className={`px-2 py-0.5 rounded-full text-xs ${statusInfo.className}`}>
-              {statusInfo.label}
-            </span>
-          )}
-          <span className="text-xs text-white/80">
-            {t("series.books", { count: series.bookCount })}
+    <CoverCard
+      href={`/series/${series.id}`}
+      ariaLabel={t("series.coverLink", { title: series.name })}
+      cover={
+        <>
+          <SeriesCover
+            series={series}
+            alt={t("series.coverAlt", { title: series.name })}
+            isAnonymous={isAnonymous}
+          />
+          <CoverEdge />
+        </>
+      }
+      badge={
+        displayRating !== null ? (
+          <span
+            className="absolute right-2 top-2 z-30 flex items-center gap-1 rounded-full bg-background/90 px-2 py-1 text-xs font-medium text-amber-600 shadow-sm ring-1 ring-border/60 backdrop-blur-sm dark:text-amber-400"
+            title={t("series.filters.sortRating")}
+          >
+            <Star className="h-3 w-3 fill-current" aria-hidden="true" />
+            <span className="tabular-nums">{displayRating.toFixed(1)}</span>
           </span>
-        </div>
+        ) : null
+      }
+    >
+      <h3 className="line-clamp-2 text-sm font-medium leading-tight transition-colors group-hover:text-primary">
+        {series.name}
+      </h3>
+      <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
+        {seriesStatusEntry && StatusIcon && (
+          <span
+            className={cn(
+              "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5",
+              seriesStatusEntry.className
+            )}
+          >
+            <StatusIcon className="h-3 w-3" aria-hidden="true" />
+            {t(`series.status.${series.seriesStatus}`)}
+          </span>
+        )}
+        {!isAnonymous && (
+          <span className={cn("rounded-full px-1.5 py-0.5", statusInfo.className)}>
+            {statusInfo.label}
+          </span>
+        )}
+        {isShelved && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-cyan-500/10 px-1.5 py-0.5 text-cyan-600 dark:text-cyan-400">
+            <Snowflake className="h-3 w-3" aria-hidden="true" />
+            {t("series.header.shelf.badge")}
+          </span>
+        )}
+        <span className="tabular-nums">
+          {t("series.books", { count: series.bookCount })}
+        </span>
       </div>
-      <GlowLayer />
-    </button>
+    </CoverCard>
   );
 });
 
 export function SeriesGrid({ series, isCompact = false, showRating = false }: SeriesGridProps) {
-  const router = useRouter();
   const { t } = useTranslate();
   const { isAnonymous } = useAnonymous();
-
-  const handleOpenSeries = useCallback(
-    (id: string) => {
-      router.push(`/series/${id}`);
-    },
-    [router]
-  );
 
   if (!series.length) {
     return (
@@ -162,7 +153,7 @@ export function SeriesGrid({ series, isCompact = false, showRating = false }: Se
   return (
     <StaggerGroup
       className={cn(
-        "grid gap-4 md:gap-5",
+        "grid gap-x-4 gap-y-7 md:gap-x-5",
         isCompact
           ? "grid-cols-3 sm:grid-cols-4 lg:grid-cols-6"
           : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5"
@@ -172,12 +163,11 @@ export function SeriesGrid({ series, isCompact = false, showRating = false }: Se
       stagger={0.09}
     >
       {series.map((seriesItem) => (
-        <StaggerItem key={seriesItem.id}>
+        <StaggerItem key={seriesItem.id} className="relative h-full">
           <SeriesGridItem
             series={seriesItem}
             isAnonymous={isAnonymous}
             showRating={showRating}
-            onOpen={handleOpenSeries}
           />
         </StaggerItem>
       ))}

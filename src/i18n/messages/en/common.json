@@ -453,6 +453,7 @@
     },
     "empty": "No series available",
     "coverAlt": "Cover of {title}",
+    "coverLink": "View series {title}",
     "status": {
       "noBooks": "No books",
       "read": "Read",
@@ -562,6 +563,7 @@
     "missing": "{{count}} missing volume(s)",
     "missingLabel": "Missing",
     "coverAlt": "Cover of {{title}}",
+    "coverLink": "View book {{title}}",
     "defaultCoverAlt": "Cover image",
     "status": {
       "unread": "Unread",

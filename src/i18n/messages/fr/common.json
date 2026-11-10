@@ -458,6 +458,7 @@
     },
     "empty": "Aucune série disponible",
     "coverAlt": "Couverture de {title}",
+    "coverLink": "Voir la série {title}",
     "status": {
       "noBooks": "Pas de tomes",
       "read": "Lu",
@@ -565,6 +566,7 @@
     "missing": "{{count}} tome(s) manquant(s)",
     "missingLabel": "Manquant",
     "coverAlt": "Couverture de {{title}}",
+    "coverLink": "Voir le tome {{title}}",
     "defaultCoverAlt": "Image de couverture",
     "status": {
       "unread": "Non lu",

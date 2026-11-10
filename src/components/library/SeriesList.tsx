@@ -18,9 +18,12 @@ import {
 import type { NormalizedSeries } from "@/lib/providers/types";
 import { communityScoreToTen } from "@/lib/providers/ratings";
 import { SeriesCover } from "@/components/ui/series-cover";
+import { BookCoverScene } from "@/components/ui/book-cover-scene";
+import { CoverEdge } from "@/components/ui/cover-card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useTranslate } from "@/hooks/useTranslate";
+import { useCoverInteraction } from "@/hooks/useCoverInteraction";
 import { useAnonymous } from "@/contexts/AnonymousContext";
 import { cn, formatDate } from "@/lib/utils";
 import { StaggerGroup, StaggerItem } from "@/components/motion";
@@ -55,6 +58,7 @@ const SeriesListItem = memo(function SeriesListItem({ series, isCompact = false 
   const router = useRouter();
   const { t } = useTranslate();
   const { isAnonymous } = useAnonymous();
+  const { active, handlers } = useCoverInteraction<HTMLButtonElement>();
   const isCompleted = !isAnonymous && series.bookCount > 0 && series.bookCount === series.booksReadCount;
   const progress = series.bookCount ? (series.booksReadCount / series.bookCount) * 100 : 0;
   const readingStatus = !isAnonymous ? getReadingStatus(series, t) : null;
@@ -66,24 +70,38 @@ const SeriesListItem = memo(function SeriesListItem({ series, isCompact = false 
     <button
       type="button"
       onClick={() => router.push(`/series/${series.id}`)}
+      {...handlers}
       className={cn(
-        "group relative flex w-full items-stretch gap-3 overflow-hidden rounded-2xl bg-card p-2.5 text-left transition-colors duration-200 hover:bg-surface-2 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring sm:gap-4 sm:p-3",
+        "group relative flex w-full items-center gap-3 rounded-2xl bg-card p-2.5 text-left transition-colors duration-200 hover:bg-surface-2 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring sm:gap-4 sm:p-3",
         !isCompact && "sm:p-4",
         isCompleted && "opacity-70"
       )}
     >
-      <div className={cn("relative aspect-3/2 shrink-0 overflow-hidden rounded-xl bg-surface-2", isCompact ? "w-16 sm:w-[4.5rem]" : "w-24 sm:w-28")}>
-        <SeriesCover
-          series={series}
-          alt={t("series.coverAlt", { title: series.name })}
-          isAnonymous={isAnonymous}
-          showProgressUi={false}
+      <div className={cn("relative shrink-0", isCompact ? "w-12 sm:w-14" : "w-20 sm:w-24")}>
+        <BookCoverScene
+          active={active}
+          contained
+          className="w-full"
+          cover={
+            <>
+              <SeriesCover
+                series={series}
+                alt={t("series.coverAlt", { title: series.name })}
+                isAnonymous={isAnonymous}
+                showProgressUi={false}
+              />
+              <CoverEdge />
+            </>
+          }
+          badge={
+            rating !== null ? (
+              <span className="absolute bottom-1 left-1 z-30 inline-flex items-center gap-1 rounded-md bg-background/90 px-1.5 py-0.5 text-[10px] font-bold text-amber-600 shadow-sm ring-1 ring-border/60 backdrop-blur-sm dark:text-amber-400 sm:hidden">
+                <Star className="h-2.5 w-2.5 fill-current" />
+                {rating.toFixed(1)}
+              </span>
+            ) : null
+          }
         />
-        {rating !== null && (
-          <span className="absolute bottom-1 left-1 inline-flex items-center gap-1 rounded-md bg-black/75 px-1.5 py-0.5 text-[10px] font-bold text-amber-300 sm:hidden">
-            <Star className="h-2.5 w-2.5 fill-current" />{rating.toFixed(1)}
-          </span>
-        )}
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5 py-0.5 sm:gap-2">

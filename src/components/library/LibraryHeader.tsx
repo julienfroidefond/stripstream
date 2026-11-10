@@ -7,6 +7,8 @@ import { RefreshButton } from "./RefreshButton";
 import { ScanButton } from "./ScanButton";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { SeriesCover } from "@/components/ui/series-cover";
+import { BookCoverScene } from "@/components/ui/book-cover-scene";
+import { CoverEdge } from "@/components/ui/cover-card";
 import { useTranslate } from "@/hooks/useTranslate";
 import { ProjectionBackdrop } from "@/components/ui/projection-backdrop";
 import { useBannerScene } from "@/components/motion";
@@ -75,16 +77,25 @@ export function LibraryHeader({
         <div className="flex w-full items-end gap-5 md:gap-8" data-banner-content>
           <div
             {...fly}
-            className="relative aspect-2/3 w-[92px] shrink-0 overflow-hidden rounded-xl bg-surface-1 ring-1 ring-border md:w-[136px]"
+            className="relative aspect-2/3 w-[92px] shrink-0 md:w-[136px]"
           >
             {featured ? (
-              <SeriesCover
-                series={featured}
-                alt={t("library.coverAlt", { name: library.name })}
-                showProgressUi={false}
+              <BookCoverScene
+                contained
+                className="w-full"
+                cover={
+                  <>
+                    <SeriesCover
+                      series={featured}
+                      alt={t("library.coverAlt", { name: library.name })}
+                      showProgressUi={false}
+                    />
+                    <CoverEdge />
+                  </>
+                }
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-surface-3">
+              <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-xl bg-surface-3 ring-1 ring-border">
                 <Library className="h-10 w-10 text-primary" />
               </div>
             )}

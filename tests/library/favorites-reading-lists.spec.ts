@@ -39,7 +39,7 @@ test.describe('Favorites and reading lists', () => {
 
     await page.goto('/reading-lists/list-a');
     await expect(page.getByRole('heading', { name: 'E2E Reading List' }).first()).toBeVisible();
-    await expect(page.getByRole('button', { name: /BD-A|series-a/i }).first()).toBeVisible();
+    await expect(page.getByRole('link', { name: /BD-A|series-a/i }).first()).toBeVisible();
     await expect(page.getByTestId('reading-list-status').first()).toHaveText(/Lu|Read/);
   });
 
