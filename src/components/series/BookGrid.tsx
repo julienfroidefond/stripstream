@@ -25,7 +25,6 @@ interface BookCardProps {
   book: NormalizedBook;
   onBookClick: (book: NormalizedBook) => void;
   onSuccess: (book: NormalizedBook, action: "read" | "unread") => void;
-  isCompact?: boolean;
 }
 
 const MissingBookCard = memo(function MissingBookCard({ book }: { book: NormalizedBook }) {
@@ -66,7 +65,6 @@ const BookCard = memo(function BookCard({
   book,
   onBookClick,
   onSuccess,
-  isCompact = false,
 }: BookCardProps) {
   const { t } = useTranslate();
   const { isAnonymous } = useAnonymous();
@@ -141,14 +139,6 @@ const BookCard = memo(function BookCard({
         ) : null
       }
     >
-      <h3
-        className={cn(
-          "line-clamp-2 text-sm font-medium leading-tight transition-colors group-hover:text-primary",
-          isCompact && "line-clamp-1"
-        )}
-      >
-        {title}
-      </h3>
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
         {book.number && (
           <span>{t("navigation.volume", { number: book.number })}</span>
@@ -211,7 +201,6 @@ export function BookGrid({ books, onBookClick, isCompact = false, onRefresh }: B
               book={book}
               onBookClick={onBookClick}
               onSuccess={handleOnSuccess}
-              isCompact={isCompact}
             />
           </StaggerItem>
         )
