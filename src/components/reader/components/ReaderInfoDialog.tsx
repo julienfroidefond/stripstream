@@ -7,7 +7,7 @@ import { useAnonymous } from "@/contexts/AnonymousContext";
 import type { NormalizedBook } from "@/lib/providers/types";
 import type { ReaderInfo } from "../types";
 import { useTranslation } from "react-i18next";
-import { useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import { CountUp } from "@/components/motion";
 import { gsap, prefersReducedMotion, SplitText, useGsapEffect } from "@/lib/gsap";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
@@ -33,8 +33,15 @@ export function ReaderInfoDialog({
   const { t } = useTranslation();
   const { isAnonymous } = useAnonymous();
   const reduce = usePrefersReducedMotion();
-  const contentRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLSpanElement>(null);
+  /**
+   * Radix ne monte le contenu du dialogue qu'après l'effet de layout de
+   * `Presence` qui déclenche l'ouverture. Une ref simple serait donc encore
+   * vide quand l'effet GSAP s'exécute : on attend que le nœud soit réellement
+   * monté pour lancer l'entrée en scène.
+   */
+  const [content, setContent] = useState<HTMLDivElement | null>(null);
+  const contentRef = useCallback((node: HTMLDivElement | null) => setContent(node), []);
   /** Marqueurs d'entrée en scène, états de départ en CSS. */
   const fly = reduce ? {} : { "data-hero-fly": "" };
   const item = reduce ? {} : { "data-hero-item": "" };
@@ -43,7 +50,6 @@ export function ReaderInfoDialog({
   // en 3D, les blocs remontent en cascade — le langage de l'accueil.
   useGsapEffect(
     () => {
-      const content = contentRef.current;
       if (!open || !content) return;
       const fliers = Array.from(content.querySelectorAll<HTMLElement>("[data-hero-fly]"));
       const items = Array.from(content.querySelectorAll<HTMLElement>("[data-hero-item]"));
@@ -94,7 +100,7 @@ export function ReaderInfoDialog({
         split?.revert();
       };
     },
-    { dependencies: [open, reduce] }
+    { dependencies: [open, content, reduce] }
   );
   // Le pourcentage se compte : on découpe la phrase traduite autour du nombre.
   const percentLabel = (progress: number) => {
