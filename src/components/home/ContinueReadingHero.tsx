@@ -10,7 +10,9 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, BookOpen } from "lucide-react";
 import type { NormalizedBook, NormalizedSeries } from "@/lib/providers/types";
 import { Button } from "@/components/ui/button";
+import { BookCoverScene } from "@/components/ui/book-cover-scene";
 import { LoadMoreLabel } from "@/components/ui/load-more-label";
+import { useCoverInteraction } from "@/hooks/useCoverInteraction";
 import { useTranslate } from "@/hooks/useTranslate";
 import { cn } from "@/lib/utils";
 import { CONTINUE_READING_PAGE_SIZE } from "@/constants/homeConstants";
@@ -146,6 +148,7 @@ function HeroSlide({
   onResume,
 }: HeroSlideProps) {
   const { t } = useTranslate();
+  const { active, handlers } = useCoverInteraction<HTMLButtonElement>();
 
   const target = book.seriesId?.trim() ?? "";
   const targetLower = target.toLowerCase();
@@ -202,30 +205,42 @@ function HeroSlide({
           type="button"
           data-testid="home-hero-cover"
           onClick={() => onResume(book)}
-          className="hero-cover-shadow relative block aspect-2/3 w-[168px] overflow-hidden rounded-xl sm:w-[196px]"
+          {...handlers}
+          className="hero-cover-shadow group relative block aspect-2/3 w-[168px] rounded-xl focus-visible:outline-hidden sm:w-[196px]"
           aria-label={t("home.hero.resume")}
         >
-          {/* Le liseré est porté par la cover elle-même, pas par le cadre. */}
-          <span className="relative block h-full w-full">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={book.thumbnailUrl}
-              alt={t("home.hero.coverAlt", { title: bookTitle })}
-              loading="eager"
-              draggable={false}
-              className="h-full w-full object-cover"
-            />
-            <span
-              aria-hidden
-              className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-inset ring-border"
-            />
-            {/* Reflet : il glisse sur la cover avec l'inclinaison. */}
-            <span
-              aria-hidden
-              data-hero-glare
-              className="hero-glare pointer-events-none absolute inset-0 rounded-xl opacity-0 transition-opacity duration-500 group-hover:opacity-100 motion-reduce:hidden"
-            />
-          </span>
+          <BookCoverScene
+            active={active}
+            contained
+            className="w-full"
+            cover={
+              <>
+                {/* Le liseré est porté par la cover elle-même, pas par le cadre. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={book.thumbnailUrl}
+                  alt={t("home.hero.coverAlt", { title: bookTitle })}
+                  loading="eager"
+                  draggable={false}
+                  className="h-full w-full object-cover"
+                />
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 rounded-[2px_6px_6px_2px] ring-1 ring-inset ring-border"
+                />
+                {/* Reflet : il glisse sur la cover avec l'inclinaison. */}
+                <span
+                  aria-hidden
+                  data-hero-glare
+                  className="hero-glare pointer-events-none absolute inset-0 rounded-[2px_6px_6px_2px] opacity-0 transition-opacity duration-500 group-hover:opacity-100 motion-reduce:hidden"
+                />
+              </>
+            }
+          />
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-0 z-30 rounded-[2px_6px_6px_2px] opacity-0 ring-2 ring-ring ring-offset-2 ring-offset-background transition-opacity duration-150 group-focus-visible:opacity-100"
+          />
         </button>
       </div>
 

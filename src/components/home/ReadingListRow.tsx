@@ -1,9 +1,10 @@
 "use client";
 
-import { memo, useCallback, useRef, useState, useTransition } from "react";
+import { memo, useCallback, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, BookOpen, Bookmark } from "lucide-react";
-import { ReadingListCover } from "@/components/reading-lists/ReadingListCover";
+import { ReadingListCard } from "@/components/reading-lists/ReadingListCard";
+import { ReadingListCoverStack } from "@/components/reading-lists/ReadingListCoverStack";
 import { ScrollContainer } from "@/components/ui/scroll-container";
 import { LoadMoreLabel } from "@/components/ui/load-more-label";
 import { Section } from "@/components/ui/section";
@@ -12,19 +13,17 @@ import { CarouselViewToggle } from "@/components/ui/carousel-view-toggle";
 import { SpotlightCarousel, useSpotlightStaging } from "@/components/ui/spotlight-carousel";
 import { useTranslate } from "@/hooks/useTranslate";
 import { useCarouselViewMode } from "@/hooks/useCarouselViewMode";
+import { useCoverInteraction } from "@/hooks/useCoverInteraction";
 import { useAnonymous } from "@/contexts/AnonymousContext";
 import { StripstreamAdapter } from "@/lib/providers/stripstream/stripstream.adapter";
-import { cn } from "@/lib/utils";
 import type { StripstreamReadingList } from "@/types/stripstream";
 import { loadHomeFeed } from "@/app/actions/home";
 import {
   CountUp,
-  GlowLayer,
   Magnetic,
   ProgressFill,
   StaggerGroup,
   StaggerItem,
-  usePointerGlow,
 } from "@/components/motion";
 
 interface ReadingListRowProps {
@@ -32,6 +31,14 @@ interface ReadingListRowProps {
 }
 
 const ITEMS_PER_PAGE = 8;
+
+function getReadingListStatus(
+  list: StripstreamReadingList
+): "unread" | "reading" | "read" {
+  if (list.book_count > 0 && list.books_read_count >= list.book_count) return "read";
+  if (list.books_read_count > 0) return "reading";
+  return "unread";
+}
 
 export function ReadingListRow({ lists }: ReadingListRowProps) {
   const router = useRouter();
@@ -105,7 +112,14 @@ export function ReadingListRow({ lists }: ReadingListRowProps) {
           >
             {loadedLists.map((list) => (
               <StaggerItem key={list.id} className="shrink-0">
-                <ReadingListCard list={list} onClick={handleOpenList} />
+                <div className="w-[160px] sm:w-[188px]">
+                  <ReadingListCard
+                    list={list}
+                    status={getReadingListStatus(list)}
+                    testId={`home-reading-list-${list.id}`}
+                    showHoverOverlay
+                  />
+                </div>
               </StaggerItem>
             ))}
             {hasMore && (
@@ -132,11 +146,6 @@ export function ReadingListRow({ lists }: ReadingListRowProps) {
   );
 }
 
-interface ReadingListCardProps {
-  list: StripstreamReadingList;
-  onClick: (id: string) => void;
-}
-
 const ReadingListSpotlightSlide = memo(function ReadingListSpotlightSlide({
   list,
   onOpen,
@@ -154,23 +163,23 @@ const ReadingListSpotlightSlide = memo(function ReadingListSpotlightSlide({
   const description = list.description?.trim() || null;
 
   const staging = useSpotlightStaging();
+  const { active, handlers } = useCoverInteraction<HTMLButtonElement>();
 
   return (
     <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:gap-9">
-      {/* L'enveloppe fixe capte le survol, le bouton seul se soulève. */}
-      <div className="group mx-auto shrink-0 sm:mx-0">
+      <div className="mx-auto shrink-0 sm:mx-0">
         <button
           type="button"
           onClick={() => onOpen(list.id)}
           {...staging.cover}
-          className="relative block aspect-2/3 w-[168px] overflow-hidden rounded-xl bg-surface-2 sm:w-[196px] transition-transform duration-350 ease-out group-hover:-translate-y-2.5 group-hover:-rotate-2 group-hover:scale-104 motion-reduce:transition-none motion-reduce:group-hover:translate-none motion-reduce:group-hover:rotate-none motion-reduce:group-hover:scale-none"
+          {...handlers}
+          className="group relative block w-[168px] focus-visible:outline-hidden sm:w-[196px]"
           aria-label={t("navigation.openReadingList")}
         >
-          <ReadingListCover
-            covers={list.preview_covers}
-            alt={list.name}
-            className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-projection group-hover:scale-[1.07] motion-reduce:transition-none"
-            placeholderClassName="bg-surface-2"
+          <ReadingListCoverStack covers={list.preview_covers} active={active} />
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-0 z-30 rounded-[2px_6px_6px_2px] opacity-0 ring-2 ring-ring ring-offset-2 ring-offset-background transition-opacity duration-150 group-focus-visible:opacity-100"
           />
         </button>
       </div>
@@ -237,53 +246,5 @@ const ReadingListSpotlightSlide = memo(function ReadingListSpotlightSlide({
         </div>
       </div>
     </div>
-  );
-});
-
-const ReadingListCard = memo(function ReadingListCard({ list, onClick }: ReadingListCardProps) {
-  const { t } = useTranslate();
-  const { isAnonymous } = useAnonymous();
-  const glowRef = useRef<HTMLButtonElement>(null);
-  const handleGlow = usePointerGlow(glowRef);
-  const isCompleted =
-    !isAnonymous && list.book_count > 0 && list.books_read_count >= list.book_count;
-
-  return (
-    <button
-      type="button"
-      ref={glowRef}
-      onMouseMove={handleGlow}
-      data-testid={`home-reading-list-${list.id}`}
-      onClick={() => onClick(list.id)}
-      className={cn(
-        "group relative flex w-[160px] shrink-0 flex-col gap-1.5 sm:w-[188px]",
-        isCompleted && "opacity-70"
-      )}
-    >
-      {/* Cover */}
-      <div className="relative aspect-2/3 w-full overflow-hidden rounded-xl bg-surface-2 ring-1 ring-border/60 transition-[translate,box-shadow] duration-500 ease-projection group-hover:-translate-y-2 group-hover:ring-border motion-reduce:transition-none">
-        <ReadingListCover
-          covers={list.preview_covers}
-          alt={list.name}
-          className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-projection group-hover:scale-[1.07] motion-reduce:transition-none"
-          placeholderClassName="bg-surface-2"
-        />
-
-        {/* Hover overlay */}
-        <div className="absolute inset-0 flex flex-col justify-end bg-linear-to-t from-black/80 via-black/30 to-transparent p-2.5 opacity-0 transition-opacity duration-300 group-hover:opacity-100">{/* taste-skill-ignore: scrim neutre au-dessus de la couverture */}
-          <p className="line-clamp-2 text-left text-xs font-semibold text-white">{list.name}</p>
-        </div>
-
-        <GlowLayer />
-      </div>
-
-      {/* Title + count */}
-      <div className="flex flex-col gap-0.5 px-0.5">
-        <p className="line-clamp-1 text-left text-sm font-medium leading-tight">{list.name}</p>
-        <p className="text-left text-[11px] text-muted-foreground">
-          {t("home.reading_lists.series_count", { count: list.series_count })}
-        </p>
-      </div>
-    </button>
   );
 });

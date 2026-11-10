@@ -82,6 +82,8 @@
       }
     },
     "title": "Accueil",
+    "coverLinkSeries": "Voir la série {{title}}",
+    "coverLinkBook": "Voir {{title}}",
     "sections": {
       "favorites": "Séries favorites",
       "continue_series": "Continuer la série",

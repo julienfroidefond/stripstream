@@ -3,10 +3,12 @@
 import { ArrowRight, BookOpen, FileText } from "lucide-react";
 
 import { BookCover } from "@/components/ui/book-cover";
+import { BookCoverScene } from "@/components/ui/book-cover-scene";
 import { Button } from "@/components/ui/button";
 import { useSpotlightStaging } from "@/components/ui/spotlight-carousel";
 import { CountUp, Magnetic, ProgressFill } from "@/components/motion";
 import { useAnonymous } from "@/contexts/AnonymousContext";
+import { useCoverInteraction } from "@/hooks/useCoverInteraction";
 import { useTranslate } from "@/hooks/useTranslate";
 import type { NormalizedBook } from "@/lib/providers/types";
 
@@ -26,6 +28,7 @@ export function BookSpotlightSlide({ book, onOpen, eyebrow }: BookSpotlightSlide
   const { isAnonymous } = useAnonymous();
 
   const staging = useSpotlightStaging();
+  const { active, handlers } = useCoverInteraction<HTMLButtonElement>();
 
   const volumeLabel = book.number ? t("navigation.volume", { number: book.number }) : null;
   const title = book.title?.trim() || volumeLabel || "";
@@ -49,21 +52,45 @@ export function BookSpotlightSlide({ book, onOpen, eyebrow }: BookSpotlightSlide
 
   return (
     <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:gap-9">
-      {/* L'enveloppe fixe capte le survol, le bouton seul se soulève. */}
-      <div className="group/cover mx-auto shrink-0 sm:mx-0">
+      <div className="mx-auto shrink-0 sm:mx-0">
         <button
           type="button"
           onClick={onOpen}
           {...staging.cover}
-          className="relative block aspect-2/3 w-[168px] overflow-hidden rounded-xl bg-surface-2 sm:w-[196px] transition-transform duration-350 ease-out group-hover/cover:-translate-y-2.5 group-hover/cover:-rotate-2 group-hover/cover:scale-104 motion-reduce:transition-none motion-reduce:group-hover/cover:translate-none motion-reduce:group-hover/cover:rotate-none motion-reduce:group-hover/cover:scale-none"
+          {...handlers}
+          className="group relative block w-[168px] focus-visible:outline-hidden sm:w-[196px]"
           aria-label={ctaLabel}
         >
-          <BookCover
-            book={book}
-            alt={title}
-            showControls={false}
-            showProgressUi={false}
-            overlayVariant="home"
+          <BookCoverScene
+            active={active}
+            contained
+            className="w-full"
+            cover={
+              <>
+                <BookCover
+                  book={book}
+                  alt={t("books.coverAlt", { title })}
+                  showControls={false}
+                  showProgressUi={false}
+                  showOverlay={false}
+                />
+                <div className="pointer-events-none absolute inset-0 z-20 flex flex-col justify-end bg-black/60 p-3 opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100">
+                  <h3 className="line-clamp-2 text-left text-sm font-medium text-white">{title}</h3>
+                  {!isAnonymous && (
+                    <p className="mt-1 text-left text-xs text-white/80">
+                      {t("books.status.progress", {
+                        current: currentPage,
+                        total: book.pageCount,
+                      })}
+                    </p>
+                  )}
+                </div>
+              </>
+            }
+          />
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-0 z-30 rounded-[2px_6px_6px_2px] opacity-0 ring-2 ring-ring ring-offset-2 ring-offset-background transition-opacity duration-150 group-focus-visible:opacity-100"
           />
         </button>
       </div>

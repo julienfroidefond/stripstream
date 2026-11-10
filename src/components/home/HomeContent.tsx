@@ -70,18 +70,19 @@ export function HomeCarouselSkeleton({ icon }: { icon: LucideIcon }) {
   );
 }
 
-/** Rangée « Mes listes » : couverture puis légende de deux lignes. */
+/** Rangée « Mes listes » : couverture puis légende de trois lignes. */
 export function HomeReadingListSkeleton({ icon }: { icon: LucideIcon }) {
   return (
     <section className="space-y-5">
       <SkeletonSectionHeader icon={icon} />
       <div className="flex gap-4 overflow-hidden pb-4">
         {Array.from({ length: SKELETON_COVERS }).map((_, index) => (
-          <div key={index} className="flex w-[160px] shrink-0 flex-col gap-1.5 sm:w-[188px]">
+          <div key={index} className="flex w-[160px] shrink-0 flex-col gap-2 sm:w-[188px]">
             <Skeleton className="aspect-2/3 w-full rounded-xl" />
-            <div className="flex flex-col gap-0.5 px-0.5">
+            <div className="space-y-0.5 px-0.5">
               <Skeleton className="h-[18px] w-4/5 rounded" />
               <Skeleton className="h-4 w-1/2 rounded" />
+              <Skeleton className="h-4 w-2/3 rounded" />
             </div>
           </div>
         ))}

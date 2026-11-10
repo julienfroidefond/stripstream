@@ -10,7 +10,7 @@ import { ScrollContainer } from "@/components/ui/scroll-container";
 import { LoadMoreLabel } from "@/components/ui/load-more-label";
 import { Section } from "@/components/ui/section";
 import { History, Sparkles, Clock, LibraryBig, BookOpen, Heart } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { BookCoverScene } from "@/components/ui/book-cover-scene";
 import { Button } from "@/components/ui/button";
 import { CarouselViewToggle } from "@/components/ui/carousel-view-toggle";
 import { SpotlightCarousel } from "@/components/ui/spotlight-carousel";
@@ -133,7 +133,7 @@ export function MediaRow({ titleKey, items, iconName, featuredHeader = false, te
           >
             {loadedItems.map((item) => (
               <StaggerItem key={item.id} className="shrink-0">
-                <MediaCard item={item} onClick={onItemClick} />
+                <MediaCard item={item} />
               </StaggerItem>
             ))}
             {hasMore && (
@@ -162,23 +162,20 @@ export function MediaRow({ titleKey, items, iconName, featuredHeader = false, te
 
 interface MediaCardProps {
   item: NormalizedSeries | NormalizedBook;
-  onClick: (item: NormalizedSeries | NormalizedBook) => void;
 }
 
-const MediaCard = memo(function MediaCard({ item, onClick }: MediaCardProps) {
+const MediaCard = memo(function MediaCard({ item }: MediaCardProps) {
   return isSeries(item) ? (
-    <SeriesMediaCard series={item} onClick={onClick} />
+    <SeriesMediaCard series={item} />
   ) : (
-    <BookMediaCard book={item} onClick={onClick} />
+    <BookMediaCard book={item} />
   );
 });
 
 const SeriesMediaCard = memo(function SeriesMediaCard({
   series,
-  onClick,
 }: {
   series: NormalizedSeries;
-  onClick: (item: NormalizedSeries | NormalizedBook) => void;
 }) {
   const { t } = useTranslate();
   const { isAnonymous } = useAnonymous();
@@ -186,70 +183,98 @@ const SeriesMediaCard = memo(function SeriesMediaCard({
   const handleGlow = usePointerGlow(cardRef);
 
   return (
-    // Le survol est capté par l'enveloppe fixe : soulever la carte survolée
-    // la ferait sortir de sous le curseur, puis retomber, en boucle.
-    <div className="group/lift">
-      <Card
-        ref={cardRef}
-        onMouseMove={handleGlow}
-        onClick={() => onClick(series)}
-        className="group relative flex w-[188px] cursor-pointer flex-col overflow-hidden rounded-xl bg-surface-2 ring-1 ring-border/60 transition-[translate,box-shadow] duration-500 ease-projection group-hover/lift:-translate-y-2 hover:ring-border sm:w-[200px] motion-reduce:transition-none"
-      >
-        <div className="relative aspect-2/3 overflow-hidden bg-surface-2">
-          <div className="absolute inset-0 transition-transform duration-700 ease-projection group-hover:scale-[1.07] motion-reduce:transition-none">
+    <div
+      ref={cardRef}
+      onMouseMove={handleGlow}
+      className="group relative w-[188px] sm:w-[200px]"
+    >
+      <BookCoverScene
+        href={`/series/${series.id}`}
+        ariaLabel={t("home.coverLinkSeries", { title: series.name })}
+        contained
+        className="w-full"
+        linkClassName="focus-visible:outline-hidden"
+        cover={
+          <>
             <SeriesCover
               series={series}
-              alt={`Couverture de ${series.name}`}
+              alt={t("series.coverAlt", { title: series.name })}
               isAnonymous={isAnonymous}
             />
-          </div>
-          <div className="absolute inset-0 flex flex-col justify-end bg-linear-to-t from-black/80 via-black/40 to-transparent p-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100">{/* taste-skill-ignore: scrim neutre au-dessus de la couverture */}
-            <h3 className="font-display text-sm font-medium text-white line-clamp-2">{series.name}</h3>
-            <p className="text-xs text-white/80 mt-1">
-              {t("series.books", { count: series.bookCount })}
-            </p>
-          </div>
-          <GlowLayer />
-        </div>
-      </Card>
+            <div className="pointer-events-none absolute inset-0 z-20 flex flex-col justify-end bg-linear-to-t from-black/80 via-black/40 to-transparent p-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100">{/* taste-skill-ignore: scrim neutre au-dessus de la couverture */}
+              <h3 className="font-display text-sm font-medium text-white line-clamp-2">{series.name}</h3>
+              <p className="mt-1 text-xs text-white/80">
+                {t("series.books", { count: series.bookCount })}
+              </p>
+            </div>
+            <GlowLayer />
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-0 z-20 rounded-[2px_6px_6px_2px] ring-1 ring-inset ring-border/60"
+            />
+          </>
+        }
+      />
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-0 z-30 rounded-[2px_6px_6px_2px] opacity-0 ring-2 ring-ring ring-offset-2 ring-offset-background transition-opacity duration-150 group-focus-within:opacity-100"
+      />
     </div>
   );
 });
 
-const BookMediaCard = memo(function BookMediaCard({
-  book,
-  onClick,
-}: {
-  book: NormalizedBook;
-  onClick: (item: NormalizedSeries | NormalizedBook) => void;
-}) {
+const BookMediaCard = memo(function BookMediaCard({ book }: { book: NormalizedBook }) {
   const { t } = useTranslate();
+  const { isAnonymous } = useAnonymous();
   const glowRef = useRef<HTMLDivElement>(null);
   const handleGlow = usePointerGlow(glowRef);
-  const title = book.title || (book.number ? t("navigation.volume", { number: book.number }) : "");
+  const title =
+    book.title ||
+    (book.number ? t("navigation.volume", { number: book.number }) : t("books.defaultCoverAlt"));
 
   return (
-    // Le survol est capté par l'enveloppe fixe : soulever la carte survolée
-    // la ferait sortir de sous le curseur, puis retomber, en boucle.
-    <div className="group/lift">
-      <Card
-        ref={glowRef}
-        onMouseMove={handleGlow}
-        onClick={() => onClick(book)}
-        className="group relative flex w-[188px] cursor-pointer flex-col overflow-hidden rounded-xl bg-surface-2 ring-1 ring-border/60 transition-[translate,box-shadow] duration-500 ease-projection group-hover/lift:-translate-y-2 hover:ring-border sm:w-[200px] motion-reduce:transition-none"
-      >
-        <div className="relative aspect-2/3 overflow-hidden bg-surface-2">
-          <div className="absolute inset-0 transition-transform duration-700 ease-projection group-hover:scale-[1.07] motion-reduce:transition-none">
+    <div
+      ref={glowRef}
+      onMouseMove={handleGlow}
+      className="group relative w-[188px] sm:w-[200px]"
+    >
+      <BookCoverScene
+        href={`/books/${book.id}`}
+        ariaLabel={t("home.coverLinkBook", { title })}
+        contained
+        className="w-full"
+        linkClassName="focus-visible:outline-hidden"
+        cover={
+          <>
             <BookCover
               book={book}
-              alt={`Couverture de ${title}`}
+              alt={t("books.coverAlt", { title })}
               showControls={false}
-              overlayVariant="home"
+              showOverlay={false}
             />
-          </div>
-          <GlowLayer />
-        </div>
-      </Card>
+            <div className="pointer-events-none absolute inset-0 z-20 flex flex-col justify-end bg-linear-to-t from-black/80 via-black/40 to-transparent p-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100">{/* taste-skill-ignore: scrim neutre au-dessus de la couverture */}
+              <h3 className="font-display text-sm font-medium text-white line-clamp-2">{title}</h3>
+              {!isAnonymous && book.pageCount > 0 && (
+                <p className="mt-1 text-xs text-white/80">
+                  {t("books.status.progress", {
+                    current: book.readProgress?.page ?? 0,
+                    total: book.pageCount,
+                  })}
+                </p>
+              )}
+            </div>
+            <GlowLayer />
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-0 z-20 rounded-[2px_6px_6px_2px] ring-1 ring-inset ring-border/60"
+            />
+          </>
+        }
+      />
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-0 z-30 rounded-[2px_6px_6px_2px] opacity-0 ring-2 ring-ring ring-offset-2 ring-offset-background transition-opacity duration-150 group-focus-within:opacity-100"
+      />
     </div>
   );
 });
