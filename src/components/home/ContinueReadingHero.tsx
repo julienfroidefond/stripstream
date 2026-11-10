@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { LoadMoreLabel } from "@/components/ui/load-more-label";
 import { useTranslate } from "@/hooks/useTranslate";
 import { cn } from "@/lib/utils";
+import { CONTINUE_READING_PAGE_SIZE } from "@/constants/homeConstants";
 import { loadHomeFeed } from "@/app/actions/home";
 import {
   CountUp,
@@ -39,7 +40,23 @@ interface ContinueReadingHeroProps {
   series?: NormalizedSeries[];
 }
 
-const ITEMS_PER_PAGE = 8;
+const ITEMS_PER_PAGE = CONTINUE_READING_PAGE_SIZE;
+
+/** Ajoute les séries manquantes au pool sans écraser les métadonnées déjà chargées. */
+function mergeSeriesPools(
+  current: NormalizedSeries[],
+  incoming: NormalizedSeries[]
+): NormalizedSeries[] {
+  if (incoming.length === 0) return current;
+  const seen = new Set(current.map((series) => series.id));
+  const merged = [...current];
+  for (const series of incoming) {
+    if (seen.has(series.id)) continue;
+    seen.add(series.id);
+    merged.push(series);
+  }
+  return merged;
+}
 
 interface HeroSlideProps {
   book: NormalizedBook;
@@ -298,6 +315,7 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
     offset: number;
   } | null>(null);
   const [loadedBooks, setLoadedBooks] = useState(books.slice(0, ITEMS_PER_PAGE));
+  const [seriesPool, setSeriesPool] = useState(series ?? []);
   const [hasMore, setHasMore] = useState(books.length > ITEMS_PER_PAGE);
   const [isPending, startTransition] = useTransition();
   const sectionRef = useRef<HTMLElement | null>(null);
@@ -404,6 +422,7 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
     startTransition(async () => {
       const result = await loadHomeFeed("continue-reading", firstNew);
       setLoadedBooks(result.items as NormalizedBook[]);
+      setSeriesPool((current) => mergeSeriesPools(current, result.series ?? []));
       setHasMore(result.hasMore);
       // La suite se pose sur la première nouveauté : le clic se voit.
       if (result.items.length > firstNew) {
@@ -664,7 +683,7 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
               <HeroSlide
                 key={`previous-${transition.from.id}`}
                 book={transition.from}
-                series={series}
+                series={seriesPool}
                 staged={false}
                 intro={false}
                 reduce={reduce}
@@ -685,7 +704,7 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
           <HeroSlide
             key={book.id}
             book={book}
-            series={series}
+            series={seriesPool}
             staged={staged}
             intro={staged}
             reduce={reduce}

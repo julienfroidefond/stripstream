@@ -145,7 +145,7 @@ Tous les fichiers de `src/app/actions/` commencent par `"use server"`. Les actio
 
 | Action | Rôle |
 | --- | --- |
-| `loadHomeFeed` | Charge une section paginée de la home : `continue-reading`, `ongoing`, `favorites`, `reading-lists`, `latest-series`, `recently-read` ou `recommendations`. |
+| `loadHomeFeed` | Charge une section paginée de la home : `continue-reading`, `ongoing`, `favorites`, `reading-lists`, `latest-series`, `recently-read` ou `recommendations`. Pour `continue-reading`, renvoie aussi `series`, les séries des tomes nouvellement chargés, afin que le hero conserve nom, résumé et genres après « Voir plus ». |
 
 ### src/app/actions/library.ts
 
