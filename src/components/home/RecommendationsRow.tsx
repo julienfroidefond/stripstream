@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, memo, useRef, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Wand2, Sparkles } from "lucide-react";
+import { BookCoverScene } from "@/components/ui/book-cover-scene";
 import { SeriesCover } from "@/components/ui/series-cover";
 import { LoadMoreLabel } from "@/components/ui/load-more-label";
 import { ScrollContainer } from "@/components/ui/scroll-container";
@@ -14,6 +16,7 @@ import { SeriesSpotlightSlide } from "@/components/ui/series-spotlight-slide";
 import { SeriesMatchReasonBadges } from "@/components/ui/series-match-reasons";
 import { useTranslate } from "@/hooks/useTranslate";
 import { useCarouselViewMode } from "@/hooks/useCarouselViewMode";
+import { useCoverInteraction } from "@/hooks/useCoverInteraction";
 import { useAnonymous } from "@/contexts/AnonymousContext";
 import type { NormalizedSeries } from "@/lib/providers/types";
 import { loadHomeFeed } from "@/app/actions/home";
@@ -132,36 +135,49 @@ export function RecommendationsRow({ series, initialHasMore = false }: Recommend
 /* ── Card (classic rail) ───────────────────────────────────────────────────── */
 
 const RecommendationCard = memo(function RecommendationCard({ series: s }: { series: NormalizedSeries }) {
-  const router = useRouter();
+  const { t } = useTranslate();
   const { isAnonymous } = useAnonymous();
-  const glowRef = useRef<HTMLButtonElement>(null);
+  const { active, handlers } = useCoverInteraction<HTMLAnchorElement>();
+  const glowRef = useRef<HTMLAnchorElement>(null);
   const handleGlow = usePointerGlow(glowRef);
 
   return (
-    <button
-      type="button"
+    <Link
+      href={`/series/${s.id}`}
       ref={glowRef}
+      aria-label={t("home.coverLinkSeries", { title: s.name })}
       onMouseMove={handleGlow}
-      onClick={() => router.push(`/series/${s.id}`)}
-      className="group relative flex w-[160px] shrink-0 flex-col gap-1.5 sm:w-[188px]"
+      {...handlers}
+      className="group relative flex w-[160px] shrink-0 flex-col gap-1.5 focus-visible:outline-hidden sm:w-[188px]"
     >
-      <div className="relative aspect-2/3 w-full overflow-hidden rounded-xl bg-surface-2 ring-1 ring-border/60 transition-[translate,box-shadow] duration-500 ease-projection group-hover:-translate-y-2 group-hover:ring-border motion-reduce:transition-none">
-        <div className="absolute inset-0 transition-transform duration-700 ease-projection group-hover:scale-[1.07] motion-reduce:transition-none">
-          <SeriesCover
-            series={s}
-            alt={s.name}
-            isAnonymous={isAnonymous}
-            showProgressUi={false}
-          />
-        </div>
+      <div className="relative w-full">
+        <BookCoverScene
+          active={active}
+          contained
+          className="w-full"
+          cover={
+            <>
+              <SeriesCover
+                series={s}
+                alt={t("series.coverAlt", { title: s.name })}
+                isAnonymous={isAnonymous}
+                showProgressUi={false}
+              />
 
-        <div className="absolute inset-0 flex flex-col justify-end bg-linear-to-t from-black/80 via-black/30 to-transparent p-2.5 opacity-0 transition-opacity duration-300 group-hover:opacity-100">{/* taste-skill-ignore: scrim neutre au-dessus de la couverture */}
-          <p className="line-clamp-2 text-left text-xs font-semibold text-white">{s.name}</p>
-        </div>
+              <SeriesMatchReasonBadges reasons={s.matchReasons} className="z-30" />
 
-        <SeriesMatchReasonBadges reasons={s.matchReasons} />
-
-        <GlowLayer />
+              <GlowLayer />
+              <span
+                aria-hidden
+                className="pointer-events-none absolute inset-0 z-20 rounded-[2px_6px_6px_2px] ring-1 ring-inset ring-border/60"
+              />
+            </>
+          }
+        />
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-0 z-30 rounded-[2px_6px_6px_2px] opacity-0 ring-2 ring-ring ring-offset-2 ring-offset-background transition-opacity duration-150 group-focus-visible:opacity-100"
+        />
       </div>
 
       {s.becauseOf && s.becauseOf.length > 0 && (
@@ -170,6 +186,6 @@ const RecommendationCard = memo(function RecommendationCard({ series: s }: { ser
           <span className="font-medium text-foreground/70">{s.becauseOf.join(", ")}</span>
         </p>
       )}
-    </button>
+    </Link>
   );
 });

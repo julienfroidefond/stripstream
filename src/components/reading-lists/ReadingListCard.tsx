@@ -15,9 +15,11 @@ type ReadingListStatus = "unread" | "reading" | "read";
 interface ReadingListCardProps {
   list: StripstreamReadingList;
   status: ReadingListStatus;
+  /** Identifiant E2E spécifique à une surface (accueil, page listes…). */
+  testId?: string;
 }
 
-export function ReadingListCard({ list, status }: ReadingListCardProps) {
+export function ReadingListCard({ list, status, testId }: ReadingListCardProps) {
   const { t } = useTranslate();
   const { isAnonymous } = useAnonymous();
   const [hovered, setHovered] = useState(false);
@@ -52,7 +54,7 @@ export function ReadingListCard({ list, status }: ReadingListCardProps) {
   return (
     <Link
       href={`/reading-lists/${list.id}`}
-      data-testid={`reading-list-card-${list.id}`}
+      data-testid={testId ?? `reading-list-card-${list.id}`}
       title={list.name}
       onPointerEnter={handlePointerEnter}
       onPointerLeave={handlePointerLeave}

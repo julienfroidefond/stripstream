@@ -82,6 +82,8 @@
       }
     },
     "title": "Home",
+    "coverLinkSeries": "View series {{title}}",
+    "coverLinkBook": "View {{title}}",
     "sections": {
       "favorites": "Favorite series",
       "continue_series": "Continue series",
