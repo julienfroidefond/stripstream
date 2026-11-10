@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Flame, PauseCircle } from "lucide-react";
+import { Flame, PauseCircle, Play } from "lucide-react";
+import { BookCoverScene } from "@/components/ui/book-cover-scene";
 import { SeriesCover } from "@/components/ui/series-cover";
 import { useTranslate } from "@/hooks/useTranslate";
 import { cn } from "@/lib/utils";
@@ -31,11 +32,27 @@ export function InProgressCard({
   onToggleShelf,
 }: InProgressCardProps) {
   const { t } = useTranslate();
-  const { series, resumeBook, remainingBooks } = item;
+  const { series, currentBook, resumeBook, remainingBooks } = item;
 
-  const resumeHref = resumeBook ? `/books/${resumeBook.id}` : `/series/${series.id}`;
+  const resumeHref = resumeBook ? `/books/${resumeBook.id}` : null;
+  const resumeLabel = resumeBook
+    ? currentBook
+      ? t("inProgress.card.resume")
+      : series.booksReadCount > 0
+        ? t("inProgress.card.continue")
+        : t("inProgress.card.start")
+    : null;
   const paused = isPaused(item);
   const almostDone = remainingBooks <= 2;
+  const progressLabel =
+    series.bookCount > 0
+      ? t(
+          series.bookCount === 1
+            ? "inProgress.card.progress"
+            : "inProgress.card.progress_plural",
+          { read: series.booksReadCount, count: series.bookCount }
+        )
+      : t("series.status.noBooks");
 
   return (
     <article
@@ -43,65 +60,90 @@ export function InProgressCard({
       data-series-id={series.id}
       data-testid={`in-progress-card-${series.id}`}
       aria-label={series.name}
-      className="group/card h-full"
+      className="flex h-full flex-col gap-2"
     >
-      <div className="relative">
-        <Link
-          href={resumeHref}
-          className={cn(
-            "relative block aspect-2/3 overflow-hidden rounded-xl bg-surface-2",
-            "transition-[box-shadow,translate] duration-500 ease-projection motion-reduce:transition-none",
-            "group-hover/card:-translate-y-0.5",
-            highlighted && "ring-2 ring-primary ring-offset-2 ring-offset-background"
-          )}
-          aria-label={t("inProgress.coverLink", { title: series.name })}
-        >
-          <span className="absolute inset-0 block overflow-hidden rounded-xl">
-            <span className="block h-full w-full transition-transform duration-700 ease-projection group-hover/card:scale-[1.04] motion-reduce:transition-none">
-              <SeriesCover
-                series={series}
-                alt={t("series.coverAlt", { title: series.name })}
-              />
-            </span>
-          </span>
-
-          {paused ? (
-            <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/70 px-2 py-0.5 text-[11px] font-semibold text-white">
+      <BookCoverScene
+        href={`/series/${series.id}`}
+        ariaLabel={t("inProgress.coverLink", { title: series.name })}
+        highlighted={highlighted}
+        cover={
+          <SeriesCover
+            series={series}
+            alt={t("series.coverAlt", { title: series.name })}
+          />
+        }
+        badge={
+          paused ? (
+            <span className="absolute left-2 top-2 z-30 inline-flex items-center gap-1 rounded-full bg-black/70 px-2 py-0.5 text-[11px] font-semibold text-white">
               <PauseCircle className="h-3 w-3" />
               {t("inProgress.card.paused")}
             </span>
           ) : almostDone ? (
-            <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[11px] font-semibold text-primary-foreground">
+            <span className="absolute left-2 top-2 z-30 inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[11px] font-semibold text-primary-foreground">
               <Flame className="h-3 w-3" />
               {t("inProgress.card.almostDone")}
             </span>
-          ) : null}
-        </Link>
+          ) : null
+        }
+        overlay={
+          resumeHref &&
+          resumeLabel && (
+            <div className="pointer-events-none absolute inset-x-2 bottom-2 z-10 flex justify-center">
+              <Link
+                href={resumeHref}
+                data-testid={`in-progress-resume-${series.id}`}
+                aria-label={`${resumeLabel} — ${series.name}`}
+                className={cn(
+                  "pointer-events-auto inline-flex h-8 max-w-full items-center gap-1.5 rounded-full px-3",
+                  "bg-black/70 text-xs font-semibold text-white shadow-lg",
+                  "transition-[opacity,translate,background-color] duration-200 ease-out",
+                  "hover:bg-black/85 motion-reduce:transition-none",
+                  // Au pointeur fin, l'action se révèle au survol. Sur mobile
+                  // (pointeur grossier), elle reste visible et tappable.
+                  "pointer-fine:pointer-events-none pointer-fine:translate-y-1 pointer-fine:opacity-0",
+                  "pointer-fine:group-hover/card:pointer-events-auto pointer-fine:group-hover/card:translate-y-0 pointer-fine:group-hover/card:opacity-100",
+                  "pointer-fine:group-focus-within/card:pointer-events-auto pointer-fine:group-focus-within/card:translate-y-0 pointer-fine:group-focus-within/card:opacity-100"
+                )}
+              >
+                <Play className="h-3.5 w-3.5 shrink-0 fill-current" aria-hidden />
+                <span className="truncate">{resumeLabel}</span>
+              </Link>
+            </div>
+          )
+        }
+      />
 
-        <div
-          className={cn(
-            "absolute right-2 top-2 z-10 flex gap-1",
-            "pointer-fine:opacity-0 pointer-fine:transition-opacity pointer-fine:duration-200",
-            "pointer-fine:group-hover/card:opacity-100 pointer-fine:group-focus-within/card:opacity-100"
-          )}
+      <div className="space-y-0.5 px-0.5">
+        <Link
+          href={`/series/${series.id}`}
+          className="line-clamp-1 font-medium leading-tight transition-colors hover:text-primary"
         >
-          {canShelve && onToggleShelf && (
-            <InProgressShelfButton
+          {series.name}
+        </Link>
+        <div className="flex items-center justify-between gap-2">
+          <p
+            className="min-w-0 truncate text-xs text-muted-foreground"
+            title={progressLabel}
+          >
+            {progressLabel}
+          </p>
+          <div className="flex shrink-0 items-center gap-1">
+            {canShelve && onToggleShelf && (
+              <InProgressShelfButton
+                seriesId={series.id}
+                seriesName={series.name}
+                isShelved={isShelved}
+                isShelving={isShelving}
+                onToggle={onToggleShelf}
+              />
+            )}
+            <InProgressFavoriteButton
               seriesId={series.id}
               seriesName={series.name}
-              isShelved={isShelved}
-              isShelving={isShelving}
-              onToggle={onToggleShelf}
-              tone="overlay"
+              isFavorite={isFavorite}
+              onToggle={onToggleFavorite}
             />
-          )}
-          <InProgressFavoriteButton
-            seriesId={series.id}
-            seriesName={series.name}
-            isFavorite={isFavorite}
-            onToggle={onToggleFavorite}
-            tone="overlay"
-          />
+          </div>
         </div>
       </div>
     </article>

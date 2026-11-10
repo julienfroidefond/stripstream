@@ -342,6 +342,7 @@
   "ratings": {
     "title": "Mes notes",
     "description": "Notez les séries que vous avez lues, d'une demi-étoile à cinq.",
+    "coverLink": "Voir la série {{title}}",
     "unavailable": "La notation des séries est disponible avec une connexion Stripstream Librarian.",
     "anonymous": "Le mode anonyme est activé : les notes sont masquées et ne peuvent pas être modifiées.",
     "anonymousShort": "Notes désactivées en mode anonyme",
@@ -380,7 +381,7 @@
   "inProgress": {
     "title": "Mes séries en cours",
     "description": "Reprenez là où vous vous êtes arrêté, tome après tome.",
-    "coverLink": "Ouvrir {{title}}",
+    "coverLink": "Voir la série {{title}}",
     "gridTitle": "Séries",
     "results_one": "{{count}} série",
     "results_other": "{{count}} séries",
@@ -407,8 +408,13 @@
     "card": {
       "almostDone": "Presque fini",
       "paused": "En pause",
+      "resume": "Reprendre",
+      "continue": "Continuer",
+      "start": "Commencer",
       "favoriteAdd": "Ajouter aux favoris",
-      "favoriteRemove": "Retirer des favoris"
+      "favoriteRemove": "Retirer des favoris",
+      "progress": "{{read}}/{{count}} lu",
+      "progress_plural": "{{read}}/{{count}} lus"
     },
     "favorite": {
       "added": "Ajouté aux favoris",

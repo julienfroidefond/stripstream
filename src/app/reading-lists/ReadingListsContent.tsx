@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   ArrowDownAZ,
   BookMarked,
@@ -19,16 +18,13 @@ import { PageHeader } from "@/components/common/PageHeader";
 import { SearchField } from "@/components/common/SearchField";
 import { SortMenu, type SortMenuOption } from "@/components/common/SortMenu";
 import { Container } from "@/components/ui/container";
-import { ReadingListCover } from "@/components/reading-lists/ReadingListCover";
-import { StatusBadge } from "@/components/ui/status-badge";
-import { useAnonymous } from "@/contexts/AnonymousContext";
+import { ReadingListCard } from "@/components/reading-lists/ReadingListCard";
 import { useTranslate } from "@/hooks/useTranslate";
 import {
   DEFAULT_READING_LIST_SORT,
   sortReadingLists,
   type ReadingListSort,
 } from "@/lib/services/reading-lists.service";
-import { cn } from "@/lib/utils";
 import type { StripstreamReadingList } from "@/types/stripstream";
 
 type ReadingListFilter = "all" | "unread" | "reading" | "read";
@@ -47,8 +43,6 @@ interface ReadingListsContentProps {
 
 export function ReadingListsContent({ lists, isStripstream }: ReadingListsContentProps) {
   const { t } = useTranslate();
-  const { isAnonymous } = useAnonymous();
-  const router = useRouter();
   const [filter, setFilter] = useState<ReadingListFilter>("all");
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<ReadingListSort>(DEFAULT_READING_LIST_SORT);
@@ -140,47 +134,11 @@ export function ReadingListsContent({ lists, isStripstream }: ReadingListsConten
           effect="settle"
           stagger={0.09}
         >
-          {filteredLists.map((list) => {
-            const status = getReadingListStatus(list);
-            const isCompleted = !isAnonymous && status === "read";
-
-            return (
-              <StaggerItem key={list.id}>
-                <button
-                  type="button"
-                  data-testid={`reading-list-card-${list.id}`}
-                  onClick={() => router.push(`/reading-lists/${list.id}`)}
-                  className={cn("group flex w-full flex-col gap-2 text-left transition-opacity", isCompleted && "opacity-70")}
-                >
-                  <div className="relative aspect-2/3 overflow-hidden rounded-xl bg-surface-2">
-                    <ReadingListCover
-                      covers={list.preview_covers}
-                      alt={list.name}
-                      className="absolute inset-0 h-full w-full object-cover"
-                    />
-                    {!isAnonymous && (
-                      <StatusBadge
-                        status={status === "read" ? "success" : status === "reading" ? "reading" : "unread"}
-                        className="absolute right-2 top-2 bg-background/90 px-1.5 py-0.5 text-[10px]"
-                      >
-                        {t(`home.reading_lists.filters.${status}`)}
-                      </StatusBadge>
-                    )}
-                    <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/85 via-black/35 to-transparent p-3 pt-10 opacity-0 transition-opacity group-hover:opacity-100">{/* taste-skill-ignore: scrim neutre au-dessus de la couverture */}
-                      <p className="line-clamp-2 text-sm font-semibold text-white">{list.name}</p>
-                    </div>
-                  </div>
-                  <div className="space-y-0.5 px-0.5">
-                    <p className="line-clamp-1 font-medium leading-tight">{list.name}</p>
-                    <p className="text-xs text-muted-foreground">{t("home.reading_lists.series_count", { count: list.series_count })}</p>
-                    {!isAnonymous && list.book_count > 0 && (
-                      <p className="text-xs text-muted-foreground">{t("series.status.progress", { read: list.books_read_count, total: list.book_count })}</p>
-                    )}
-                  </div>
-                </button>
-              </StaggerItem>
-            );
-          })}
+          {filteredLists.map((list) => (
+            <StaggerItem key={list.id}>
+              <ReadingListCard list={list} status={getReadingListStatus(list)} />
+            </StaggerItem>
+          ))}
         </StaggerGroup>
       ) : (
         <div data-testid="reading-list-filter-empty" className="flex min-h-64 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border bg-muted/30 p-8 text-center">
