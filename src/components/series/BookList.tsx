@@ -47,6 +47,7 @@ const BookListItem = memo(function BookListItem({ book, onBookClick, onSuccess, 
   const title =
     book.title ||
     (book.number ? t("navigation.volume", { number: book.number }) : "");
+  const summary = book.summary?.trim() || null;
 
   const handleLinkClick = (event: ReactMouseEvent<HTMLAnchorElement>) => {
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
@@ -216,6 +217,16 @@ const BookListItem = memo(function BookListItem({ book, onBookClick, onSuccess, 
             </span>
           </div>
         </div>
+
+        {/* Description du tome */}
+        {summary && (
+          <p
+            className="line-clamp-2 text-sm leading-relaxed text-muted-foreground/90"
+            title={summary}
+          >
+            {summary}
+          </p>
+        )}
 
         {/* Barre de progression */}
         {hasReadProgress && !isRead && currentPage > 0 && (

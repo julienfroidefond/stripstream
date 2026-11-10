@@ -178,6 +178,16 @@ describe("StripstreamAdapter.toNormalizedBook", () => {
       ).readProgress
     ).toEqual({ page: 9, completed: true, lastReadAt: null });
   });
+
+  it("trims the list summary and nulls out whitespace-only summaries", () => {
+    expect(
+      StripstreamAdapter.toNormalizedBook(makeBookItem({ summary: "  hi  " })).summary
+    ).toBe("hi");
+    expect(
+      StripstreamAdapter.toNormalizedBook(makeBookItem({ summary: "   " })).summary
+    ).toBeNull();
+    expect(StripstreamAdapter.toNormalizedBook(makeBookItem()).summary).toBeNull();
+  });
 });
 
 describe("StripstreamAdapter.toNormalizedBookDetails", () => {

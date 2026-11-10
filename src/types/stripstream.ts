@@ -17,6 +17,8 @@ export interface StripstreamBookItem {
   series_id?: string | null;
   thumbnail_url?: string | null;
   volume?: number | null;
+  /** Per-book summary, exposed by the books list endpoint. */
+  summary?: string | null;
 }
 
 export interface StripstreamBookDetails {
