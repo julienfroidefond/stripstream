@@ -53,7 +53,7 @@ export function PaginatedBookGrid({
   const {
     itemsPerPage: preferenceItemsPerPage,
     handlePageSizeChange: persistPageSizeChange,
-    handleViewModeToggle: persistViewModeToggle,
+    handleBooksViewModeToggle: persistBooksViewModeToggle,
   } = useDisplayPreferences();
   const { preferences, updatePreferences } = usePreferences();
   const { t } = useTranslate();
@@ -152,7 +152,7 @@ export function PaginatedBookGrid({
           ...preferences.displayMode,
           compact: nextCompactMode,
           itemsPerPage: nextSize,
-          viewMode,
+          booksViewMode: viewMode,
         },
       });
 
@@ -166,9 +166,9 @@ export function PaginatedBookGrid({
   const handleViewModeToggle = useCallback(
     async (nextViewMode: "grid" | "list") => {
       setViewMode(nextViewMode);
-      await persistViewModeToggle(nextViewMode);
+      await persistBooksViewModeToggle(nextViewMode);
     },
-    [persistViewModeToggle]
+    [persistBooksViewModeToggle]
   );
 
   const handleBookClick = useCallback(

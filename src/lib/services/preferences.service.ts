@@ -7,7 +7,7 @@ import type { UserPreferences, BackgroundPreferences } from "@/types/preferences
 import { defaultPreferences } from "@/types/preferences";
 import type { User } from "@/types/komga";
 import type { Prisma } from "@/generated/prisma/client";
-import { normalizeGridPageSize } from "@/lib/pageSize";
+import { normalizeDisplayMode } from "@/lib/display-preferences";
 
 export class PreferencesService {
   static async getCurrentUser(): Promise<User> {
@@ -31,19 +31,13 @@ export class PreferencesService {
         return { ...defaultPreferences };
       }
 
-      const displayMode = preferences.displayMode as UserPreferences["displayMode"];
-      const compact = displayMode?.compact ?? defaultPreferences.displayMode.compact;
+      const displayMode = preferences.displayMode as Partial<UserPreferences["displayMode"]> | null;
 
       return {
         showThumbnails: preferences.showThumbnails,
         showOnlyUnread: preferences.showOnlyUnread,
         anonymousMode: preferences.anonymousMode,
-        displayMode: {
-          ...defaultPreferences.displayMode,
-          ...displayMode,
-          itemsPerPage: normalizeGridPageSize(displayMode?.itemsPerPage, compact),
-          viewMode: displayMode?.viewMode || defaultPreferences.displayMode.viewMode,
-        },
+        displayMode: normalizeDisplayMode(displayMode),
         background: {
           ...defaultPreferences.background,
           ...(preferences.background as unknown as BackgroundPreferences),
@@ -76,7 +70,8 @@ export class PreferencesService {
         updateData.showThumbnails = preferences.showThumbnails;
       if (preferences.showOnlyUnread !== undefined)
         updateData.showOnlyUnread = preferences.showOnlyUnread;
-      if (preferences.displayMode !== undefined) updateData.displayMode = preferences.displayMode;
+      if (preferences.displayMode !== undefined)
+        updateData.displayMode = normalizeDisplayMode(preferences.displayMode);
       if (preferences.background !== undefined) {
         updateData.background = {
           ...defaultPreferences.background,
@@ -112,7 +107,7 @@ export class PreferencesService {
           showThumbnails: preferences.showThumbnails ?? defaultPreferences.showThumbnails,
           showOnlyUnread: preferences.showOnlyUnread ?? defaultPreferences.showOnlyUnread,
           anonymousMode: preferences.anonymousMode ?? defaultPreferences.anonymousMode,
-          displayMode: preferences.displayMode ?? defaultPreferences.displayMode,
+          displayMode: normalizeDisplayMode(preferences.displayMode),
           background: (preferences.background ??
             defaultPreferences.background) as unknown as Prisma.InputJsonValue,
           readerPrefetchCount: preferences.readerPrefetchCount ?? 5,
@@ -131,7 +126,9 @@ export class PreferencesService {
         showThumbnails: updatedPreferences.showThumbnails,
         showOnlyUnread: updatedPreferences.showOnlyUnread,
         anonymousMode: updatedPreferences.anonymousMode,
-        displayMode: updatedPreferences.displayMode as UserPreferences["displayMode"],
+        displayMode: normalizeDisplayMode(
+          updatedPreferences.displayMode as Partial<UserPreferences["displayMode"]> | null
+        ),
         background: {
           ...defaultPreferences.background,
           ...(updatedPreferences.background as unknown as BackgroundPreferences),

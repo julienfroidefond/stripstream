@@ -65,7 +65,7 @@ export function SeriesContent({
           showOnlyUnread={unreadOnly}
           pageSize={pageSize}
           initialCompact={preferences.displayMode.compact}
-          initialViewMode={preferences.displayMode.viewMode || "grid"}
+          initialViewMode={preferences.displayMode.booksViewMode || "grid"}
           missingBooks={missingBooks}
         />
         {relatedSeries.length > 0 && (

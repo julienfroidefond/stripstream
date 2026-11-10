@@ -10,6 +10,7 @@ import { useState, useEffect, useCallback, useRef, useTransition } from "react";
 import type { NormalizedSeries } from "@/lib/providers/types";
 import { SearchInput } from "./SearchInput";
 import { useTranslate } from "@/hooks/useTranslate";
+import { usePreferences } from "@/contexts/PreferencesContext";
 import { PageSizeSelect } from "@/components/common/PageSizeSelect";
 import { CompactModeButton } from "@/components/common/CompactModeButton";
 import { ViewModeButton } from "@/components/common/ViewModeButton";
@@ -62,6 +63,7 @@ export function PaginatedSeriesGrid({
 
   const effectivePageSize = normalizeGridPageSize(pageSize || currentPageSize, isCompact);
   const { t } = useTranslate();
+  const { preferences } = usePreferences();
 
   const persistPreferences = useCallback(async (payload: Parameters<typeof updatePreferencesAction>[0]) => {
     try {
@@ -141,13 +143,14 @@ export function PaginatedSeriesGrid({
 
       await persistPreferences({
         displayMode: {
+          ...preferences.displayMode,
           compact: isCompact,
           itemsPerPage: nextSize,
           viewMode,
         },
       });
     },
-    [captureLayout, isCompact, updateUrlParams, persistPreferences, viewMode]
+    [captureLayout, isCompact, preferences.displayMode, updateUrlParams, persistPreferences, viewMode]
   );
 
   const handleCompactModeToggle = useCallback(
@@ -163,13 +166,21 @@ export function PaginatedSeriesGrid({
 
       await persistPreferences({
         displayMode: {
+          ...preferences.displayMode,
           compact: nextCompactMode,
           itemsPerPage: nextSize,
           viewMode,
         },
       });
     },
-    [captureLayout, effectivePageSize, updateUrlParams, persistPreferences, viewMode]
+    [
+      captureLayout,
+      effectivePageSize,
+      preferences.displayMode,
+      updateUrlParams,
+      persistPreferences,
+      viewMode,
+    ]
   );
 
   const handleMissingToggle = useCallback(async () => {
@@ -200,13 +211,14 @@ export function PaginatedSeriesGrid({
 
       await persistPreferences({
         displayMode: {
+          ...preferences.displayMode,
           compact: isCompact,
           itemsPerPage: effectivePageSize,
           viewMode: nextViewMode,
         },
       });
     },
-    [isCompact, effectivePageSize, persistPreferences]
+    [isCompact, effectivePageSize, persistPreferences, preferences.displayMode]
   );
 
   // Calculate start and end indices for display

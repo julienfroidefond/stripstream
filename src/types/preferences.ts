@@ -21,7 +21,10 @@ export interface UserPreferences {
   displayMode: {
     compact: boolean;
     itemsPerPage: number;
+    /** Vue des séries dans une bibliothèque. */
     viewMode: "grid" | "list";
+    /** Vue des tomes dans une série. */
+    booksViewMode: "grid" | "list";
   };
   background: BackgroundPreferences;
   readerPrefetchCount: number;
@@ -44,6 +47,7 @@ export const defaultPreferences: UserPreferences = {
     compact: false,
     itemsPerPage: 30,
     viewMode: "grid",
+    booksViewMode: "grid",
   },
   background: {
     type: "default",
