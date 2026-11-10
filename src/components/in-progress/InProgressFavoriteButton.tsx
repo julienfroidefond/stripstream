@@ -41,9 +41,12 @@ export function InProgressFavoriteButton({
       className={cn(
         "h-8 w-8 shrink-0 rounded-full",
         tone === "overlay"
-          ? "bg-black/60 text-white hover:bg-black/80"
-          : "bg-surface-2 text-foreground hover:bg-surface-3",
-        isFavorite && "bg-rose-500 text-white hover:bg-rose-500/90",
+          ? "bg-black/60 text-white hover:bg-black/80 hover:text-white"
+          : "bg-surface-2 text-foreground hover:bg-surface-3 hover:text-rose-500",
+        isFavorite &&
+          (tone === "overlay"
+            ? "bg-rose-500 text-white hover:bg-rose-500/90 hover:text-white"
+            : "text-rose-500 hover:text-rose-500"),
         className
       )}
       iconClassName={cn("h-4 w-4", isFavorite && "fill-current")}

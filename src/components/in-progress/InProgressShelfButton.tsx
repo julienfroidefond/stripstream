@@ -47,7 +47,7 @@ export function InProgressShelfButton({
       className={cn(
         "h-8 w-8 shrink-0 rounded-full",
         tone === "overlay"
-          ? "bg-black/60 text-white hover:bg-black/80"
+          ? "bg-black/60 text-white hover:bg-black/80 hover:text-white"
           : "bg-surface-2 text-foreground hover:bg-surface-3",
         className
       )}

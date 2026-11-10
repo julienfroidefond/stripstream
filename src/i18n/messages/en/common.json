@@ -337,6 +337,7 @@
   "ratings": {
     "title": "My ratings",
     "description": "Rate the series you have read, from half a star to five.",
+    "coverLink": "View series {{title}}",
     "unavailable": "Series ratings are available with a Stripstream Librarian connection.",
     "anonymous": "Anonymous mode is on: ratings are hidden and cannot be changed.",
     "anonymousShort": "Ratings disabled in anonymous mode",
@@ -375,7 +376,7 @@
   "inProgress": {
     "title": "My in-progress series",
     "description": "Pick up right where you left off, volume after volume.",
-    "coverLink": "Open {{title}}",
+    "coverLink": "View series {{title}}",
     "gridTitle": "Series",
     "results_one": "{{count}} series",
     "results_other": "{{count}} series",
@@ -402,8 +403,13 @@
     "card": {
       "almostDone": "Almost done",
       "paused": "Paused",
+      "resume": "Resume",
+      "continue": "Continue",
+      "start": "Start",
       "favoriteAdd": "Add to favorites",
-      "favoriteRemove": "Remove from favorites"
+      "favoriteRemove": "Remove from favorites",
+      "progress": "{{read}}/{{count}} read",
+      "progress_plural": "{{read}}/{{count}} read"
     },
     "favorite": {
       "added": "Added to favorites",

@@ -21,6 +21,7 @@ import { PageHeader } from "@/components/common/PageHeader";
 import { SearchField } from "@/components/common/SearchField";
 import { SortMenu, type SortMenuOption } from "@/components/common/SortMenu";
 import { SeriesRatingControl } from "@/components/series/SeriesRatingControl";
+import { BookCoverScene } from "@/components/ui/book-cover-scene";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { SeriesCover } from "@/components/ui/series-cover";
@@ -183,22 +184,26 @@ export function RatingsContent({
           {series.map((item) => (
             <StaggerItem key={item.id}>
               <article className="flex h-full flex-col gap-2" data-testid={`rated-series-${item.id}`}>
-                <Link
+                <BookCoverScene
                   href={`/series/${item.id}`}
-                  className="group relative block aspect-2/3 overflow-hidden rounded-xl bg-surface-2"
-                >
-                  <SeriesCover
-                    series={item}
-                    alt={t("series.coverAlt", { title: item.name })}
-                    isAnonymous={isAnonymous}
-                    dimCompleted={false}
-                  />
-                  {!isAnonymous && item.userRating == null && (
-                    <span className="absolute right-2 top-2 rounded-full bg-background/90 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-foreground">
-                      {t("ratings.filters.unrated")}
-                    </span>
-                  )}
-                </Link>
+                  ariaLabel={t("ratings.coverLink", { title: item.name })}
+                  linkClassName="group"
+                  cover={
+                    <SeriesCover
+                      series={item}
+                      alt={t("series.coverAlt", { title: item.name })}
+                      isAnonymous={isAnonymous}
+                      dimCompleted={false}
+                    />
+                  }
+                  badge={
+                    !isAnonymous && item.userRating == null ? (
+                      <span className="absolute right-2 top-2 z-30 rounded-full bg-background/90 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-foreground">
+                        {t("ratings.filters.unrated")}
+                      </span>
+                    ) : null
+                  }
+                />
 
                 <div className="space-y-0.5 px-0.5">
                   <Link
