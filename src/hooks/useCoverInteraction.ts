@@ -37,7 +37,13 @@ export function useCoverInteraction<T extends HTMLElement>() {
   };
 
   const handleFocus = (event: ReactFocusEvent<T>) => {
-    if (event.currentTarget.matches(":focus-visible")) setFocused(true);
+    // Les handlers peuvent être portés par une ligne qui contient plusieurs
+    // liens : `currentTarget` n'est alors pas focusable, seul `target` porte
+    // l'état `:focus-visible`.
+    const target = event.target;
+    if (target instanceof HTMLElement && target.matches(":focus-visible")) {
+      setFocused(true);
+    }
   };
 
   const handleBlur = (event: ReactFocusEvent<T>) => {

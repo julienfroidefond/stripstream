@@ -10,9 +10,9 @@ import { cn } from "@/lib/utils";
  */
 const GRID = {
   /** Grille du catalogue (SeriesGrid). */
-  series: "grid grid-cols-2 gap-4 sm:grid-cols-3 md:gap-5 lg:grid-cols-5",
+  series: "grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-3 md:gap-x-5 lg:grid-cols-5",
   /** Grille des tomes (BookGrid). */
-  books: "grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5",
+  books: "grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-3 md:gap-x-5 lg:grid-cols-5",
   /** Grille des listes de lecture, avec légende sous la couverture. */
   lists: "grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6",
   /** Grille des séries en cours : couvertures seules. */
@@ -23,6 +23,19 @@ type GridVariant = keyof typeof GRID;
 
 function Cover({ className }: { className?: string }) {
   return <Skeleton className={className ?? "aspect-2/3 w-full rounded-xl"} />;
+}
+
+function CoverCaptionSkeleton({ variant }: { variant: "series" | "books" }) {
+  return (
+    <div className="space-y-1 px-0.5">
+      <Skeleton className="h-4 w-4/5 rounded" />
+      <div className="flex flex-wrap items-center gap-1.5">
+        {variant === "series" && <Skeleton className="h-3.5 w-14 rounded-full" />}
+        <Skeleton className="h-3.5 w-12 rounded-full" />
+        <Skeleton className="h-3.5 w-10 rounded" />
+      </div>
+    </div>
+  );
 }
 
 function CoverGrid({ count = 20, variant = "series" }: { count?: number; variant?: GridVariant }) {
@@ -43,10 +56,27 @@ function CoverGrid({ count = 20, variant = "series" }: { count?: number; variant
     );
   }
 
+  if (variant === "inProgress") {
+    return (
+      <div className={GRID.inProgress}>
+        {Array.from({ length: count }).map((_, index) => (
+          <Cover key={index} />
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className={GRID[variant]}>
       {Array.from({ length: count }).map((_, index) => (
-        <Cover key={index} className={variant === "books" ? "aspect-2/3 w-full rounded-lg" : undefined} />
+        <div key={index} className="flex flex-col gap-2">
+          <Cover
+            className={
+              variant === "books" ? "aspect-2/3 w-full rounded-lg" : undefined
+            }
+          />
+          <CoverCaptionSkeleton variant={variant} />
+        </div>
       ))}
     </div>
   );

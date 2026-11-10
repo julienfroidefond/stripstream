@@ -67,4 +67,43 @@ test.describe('Library browsing', () => {
     await expect(page).toHaveURL(/\/series\/[^/]+/);
     await expect(page.getByRole('heading').first()).toBeVisible();
   });
+
+  test.describe('view modes', () => {
+    test.afterEach(async ({ page }) => {
+      await page.goto('/libraries/lib-a');
+      const libraryToGrid = page.getByRole('button', { name: /Vue grille|Grid view/i });
+      if (await libraryToGrid.isVisible()) {
+        await libraryToGrid.click();
+        await expect(page.getByRole('button', { name: /Vue liste|List view/i })).toBeVisible();
+      }
+
+      await page.goto('/series/series-a');
+      const booksToGrid = page.getByRole('button', { name: /Vue grille|Grid view/i });
+      if (await booksToGrid.isVisible()) {
+        await booksToGrid.click();
+        await expect(page.getByRole('button', { name: /Vue liste|List view/i })).toBeVisible();
+      }
+    });
+
+    test('defaults the library and book views to grid independently', async ({ page }) => {
+      // A fresh preference opens the library in grid mode.
+      await expect(page.getByRole('button', { name: /Vue liste|List view/i })).toBeVisible();
+
+      // Switching the library to list must not change the book view.
+      await page.getByRole('button', { name: /Vue liste|List view/i }).click();
+      await expect(page.getByRole('button', { name: /Vue grille|Grid view/i })).toBeVisible();
+
+      await page.goto('/series/series-a');
+      await expect(page.getByRole('button', { name: /Vue liste|List view/i })).toBeVisible();
+
+      // The book view persists its own list choice, without touching the library.
+      await page.getByRole('button', { name: /Vue liste|List view/i }).click();
+      await expect(page.getByRole('button', { name: /Vue grille|Grid view/i })).toBeVisible();
+      await page.reload();
+      await expect(page.getByRole('button', { name: /Vue grille|Grid view/i })).toBeVisible();
+
+      await page.goto('/libraries/lib-a');
+      await expect(page.getByRole('button', { name: /Vue grille|Grid view/i })).toBeVisible();
+    });
+  });
 });

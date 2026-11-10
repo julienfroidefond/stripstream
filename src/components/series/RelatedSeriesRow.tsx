@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { Sparkles } from "lucide-react";
 import { SeriesCover } from "@/components/ui/series-cover";
+import { CoverCard, CoverEdge } from "@/components/ui/cover-card";
 import { ScrollContainer } from "@/components/ui/scroll-container";
 import { Section } from "@/components/ui/section";
 import { CarouselViewToggle } from "@/components/ui/carousel-view-toggle";
@@ -60,7 +61,7 @@ export function RelatedSeriesRow({ series }: RelatedSeriesRowProps) {
           arrowRightLabel={t("navigation.scrollRight")}
         >
           {series.map((s) => (
-            <RelatedSeriesCard key={s.id} series={s} onOpen={openSeries} />
+            <RelatedSeriesCard key={s.id} series={s} />
           ))}
         </ScrollContainer>
       )}
@@ -68,29 +69,34 @@ export function RelatedSeriesRow({ series }: RelatedSeriesRowProps) {
   );
 }
 
-function RelatedSeriesCard({
-  series: s,
-  onOpen,
-}: {
-  series: NormalizedSeries;
-  onOpen: (id: string) => void;
-}) {
+function RelatedSeriesCard({ series }: { series: NormalizedSeries }) {
+  const { t } = useTranslate();
   const { isAnonymous } = useAnonymous();
 
   return (
-    <button
-      type="button"
-      onClick={() => onOpen(s.id)}
-      className="group relative aspect-2/3 w-[160px] shrink-0 overflow-hidden rounded-xl bg-surface-2 sm:w-[188px]"
+    <CoverCard
+      href={`/series/${series.id}`}
+      ariaLabel={t("series.coverLink", { title: series.name })}
+      className="w-[160px] shrink-0 sm:w-[188px]"
+      cover={
+        <>
+          <SeriesCover
+            series={series}
+            alt={t("series.coverAlt", { title: series.name })}
+            isAnonymous={isAnonymous}
+            showProgressUi={false}
+          />
+          <CoverEdge />
+        </>
+      }
+      badge={<SeriesMatchReasonBadges reasons={series.matchReasons} className="z-30" />}
     >
-      <SeriesCover series={s} alt={s.name} isAnonymous={isAnonymous} showProgressUi={false} />
-
-      {/* hover overlay with title */}
-      <div className="absolute inset-0 flex flex-col justify-end bg-linear-to-t from-black/80 via-black/30 to-transparent p-3 opacity-0 transition-opacity duration-200 group-hover:opacity-100">{/* taste-skill-ignore: scrim neutre au-dessus de la couverture */}
-        <p className="line-clamp-2 text-left text-sm font-medium text-white">{s.name}</p>
-      </div>
-
-      <SeriesMatchReasonBadges reasons={s.matchReasons} />
-    </button>
+      <p className="line-clamp-2 text-sm font-medium leading-tight transition-colors group-hover:text-primary">
+        {series.name}
+      </p>
+      <p className="text-xs text-muted-foreground">
+        {t("series.books", { count: series.bookCount })}
+      </p>
+    </CoverCard>
   );
 }

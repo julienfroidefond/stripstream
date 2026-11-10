@@ -47,6 +47,19 @@ export function useDisplayPreferences() {
     }
   };
 
+  const handleBooksViewModeToggle = async (booksViewMode: "grid" | "list") => {
+    try {
+      await updatePreferences({
+        displayMode: {
+          ...preferences.displayMode,
+          booksViewMode,
+        },
+      });
+    } catch (error) {
+      logger.error({ err: error }, "Erreur lors de la mise à jour du mode d'affichage des tomes");
+    }
+  };
+
   return {
     isCompact: preferences.displayMode.compact,
     itemsPerPage: normalizeGridPageSize(
@@ -54,8 +67,10 @@ export function useDisplayPreferences() {
       preferences.displayMode.compact
     ),
     viewMode: preferences.displayMode.viewMode || "grid",
+    booksViewMode: preferences.displayMode.booksViewMode || "grid",
     handleCompactToggle,
     handlePageSizeChange,
     handleViewModeToggle,
+    handleBooksViewModeToggle,
   };
 }

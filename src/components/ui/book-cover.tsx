@@ -10,7 +10,7 @@ import { cn, formatDate } from "@/lib/utils";
 import { useAnonymous } from "@/contexts/AnonymousContext";
 
 // Fonction utilitaire pour obtenir les informations de statut de lecture
-const getReadingStatusInfo = (
+export const getBookReadingStatusInfo = (
   book: BookCoverProps["book"],
   t: (key: string, options?: { [key: string]: string | number }) => string
 ) => {
@@ -76,7 +76,9 @@ function BookCoverContent({
   const totalPages = book.pageCount;
   const showProgress = Boolean(!isAnonymous && showProgressUi && totalPages > 0 && currentPage > 0 && !isCompleted);
 
-  const statusInfo = isAnonymous ? { label: "", className: "" } : getReadingStatusInfo(book, t);
+  const statusInfo = isAnonymous
+    ? { label: "", className: "" }
+    : getBookReadingStatusInfo(book, t);
   const isRead = isAnonymous ? false : (book.readProgress?.completed || false);
   const hasReadProgress = isAnonymous ? false : (book.readProgress !== null || currentPage > 0);
 

@@ -12,6 +12,8 @@ import { ERROR_CODES } from "@/constants/errorCodes";
 import { getErrorMessage } from "@/utils/errors";
 import { useTranslate } from "@/hooks/useTranslate";
 import { SeriesCover } from "@/components/ui/series-cover";
+import { BookCoverScene } from "@/components/ui/book-cover-scene";
+import { CoverEdge } from "@/components/ui/cover-card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { IconButton } from "@/components/ui/icon-button";
 import {
@@ -260,12 +262,21 @@ export const SeriesHeader = ({
           {/* Image principale */}
           <div
             {...fly}
-            className="relative aspect-2/3 w-[132px] shrink-0 overflow-hidden rounded-xl bg-surface-2 ring-1 ring-border md:w-[168px]"
+            className="relative aspect-2/3 w-[132px] shrink-0 md:w-[168px]"
           >
-            <SeriesCover
-              series={series}
-              alt={t("series.header.coverAlt", { title: series.name })}
-              showProgressUi={false}
+            <BookCoverScene
+              contained
+              className="w-full"
+              cover={
+                <>
+                  <SeriesCover
+                    series={series}
+                    alt={t("series.header.coverAlt", { title: series.name })}
+                    showProgressUi={false}
+                  />
+                  <CoverEdge />
+                </>
+              }
             />
           </div>
 

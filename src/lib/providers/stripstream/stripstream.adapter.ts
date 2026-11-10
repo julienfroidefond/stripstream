@@ -79,6 +79,7 @@ export class StripstreamAdapter {
               lastReadAt: book.reading_last_read_at ?? null,
             },
       volumeType: book.volume_type ?? null,
+      summary: book.summary?.trim() || null,
     };
   }
 
