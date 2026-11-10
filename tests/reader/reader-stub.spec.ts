@@ -98,7 +98,14 @@ test.describe('Reader against the deterministic Komga fixture', () => {
     await expect(page.locator('#thumbnails-container')).toBeHidden();
 
     await page.getByTestId('reader-info').click({ force: true });
-    await expect(page.getByRole('dialog')).toBeVisible();
+    const infoDialog = page.getByRole('dialog');
+    await expect(infoDialog).toBeVisible();
+    // Regression: the entrance animation only starts once Radix has mounted the
+    // portal content. Before that fix the hero blocks stayed at opacity 0, so
+    // `toBeVisible` still passed. The markers are removed when the timeline
+    // settles, which doubles as proof that the blocks are actually painted.
+    await expect(infoDialog.locator('[data-hero-item], [data-hero-fly]')).toHaveCount(0, { timeout: 10_000 });
+    await expect(infoDialog).toContainText('BD-A (Tome 1)');
     await page.getByRole('button', { name: /close|fermer/i }).first().click();
 
     const directionLabel = await page.getByRole('button', { name: /direction|sens/i }).getAttribute('aria-label');
