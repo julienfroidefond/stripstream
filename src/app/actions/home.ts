@@ -2,7 +2,9 @@
 
 import { getProvider } from "@/lib/providers/provider.factory";
 import { FavoriteService } from "@/lib/services/favorite.service";
+import { resolveSeriesPool } from "@/lib/services/home.service";
 import { getContinueReading } from "@/components/home/HomeContent";
+import { CONTINUE_READING_PAGE_SIZE } from "@/constants/homeConstants";
 import type { NormalizedBook, NormalizedSeries } from "@/lib/providers/types";
 import type { StripstreamReadingList } from "@/types/stripstream";
 
@@ -20,20 +22,32 @@ export type HomeFeedItem = NormalizedBook | NormalizedSeries | StripstreamReadin
 export interface HomeFeedResult {
   items: HomeFeedItem[];
   hasMore: boolean;
+  /**
+   * Séries qui portent les nouveaux tomes (feed `continue-reading`
+   * uniquement), pour que le hero retrouve nom/résumé/genres après « Voir plus ».
+   */
+  series?: NormalizedSeries[];
 }
 
 export async function loadHomeFeed(feed: HomeFeed, visibleCount: number): Promise<HomeFeedResult> {
   const provider = await getProvider();
   if (!provider) return { items: [], hasMore: false };
 
-  const requestedCount = visibleCount + 8;
+  const requestedCount = visibleCount + CONTINUE_READING_PAGE_SIZE;
   const queryLimit = requestedCount + 1;
   let items: HomeFeedItem[];
+  let series: NormalizedSeries[] | undefined;
 
   switch (feed) {
-    case "continue-reading":
-      items = getContinueReading(await provider.getHomeContinueReadingData(queryLimit));
+    case "continue-reading": {
+      const books = getContinueReading(await provider.getHomeContinueReadingData(queryLimit));
+      items = books;
+      series = await resolveSeriesPool(
+        provider,
+        books.slice(visibleCount, requestedCount)
+      );
       break;
+    }
     case "ongoing":
       items = await provider.getHomeOngoingSeries(queryLimit);
       break;
@@ -54,8 +68,11 @@ export async function loadHomeFeed(feed: HomeFeed, visibleCount: number): Promis
       break;
   }
 
+  const visibleItems = items.slice(0, requestedCount);
+
   return {
-    items: items.slice(0, requestedCount),
+    items: visibleItems,
     hasMore: items.length > requestedCount,
+    series,
   };
 }

@@ -1,5 +1,8 @@
 import { Suspense } from "react";
 import { getProvider } from "@/lib/providers/provider.factory";
+import type { IMediaProvider } from "@/lib/providers/provider.interface";
+import { resolveSeriesPool } from "@/lib/services/home.service";
+import { CONTINUE_READING_PAGE_SIZE } from "@/constants/homeConstants";
 import {
   getContinueReading,
   getSeriesPool,
@@ -92,6 +95,7 @@ async function HomeStreamingContent() {
         </Suspense>
         <Suspense fallback={<HomeHeroSkeleton />}>
           <ContinueReadingSection
+            provider={provider}
             continueReadingPromise={continueReadingPromise}
             ongoingPromise={ongoingPromise}
             isAnonymous={isAnonymous}
@@ -142,6 +146,7 @@ async function HomeStreamingContent() {
 }
 
 interface ContinueReadingSectionProps {
+  provider: IMediaProvider;
   continueReadingPromise: Promise<
     HomeFeedState<Pick<HomePrimaryData, "ongoingBooks" | "onDeck"> | null>
   >;
@@ -150,6 +155,7 @@ interface ContinueReadingSectionProps {
 }
 
 async function ContinueReadingSection({
+  provider,
   continueReadingPromise,
   ongoingPromise,
   isAnonymous,
@@ -168,8 +174,17 @@ async function ContinueReadingSection({
   const continueReading = getContinueReading(continueReadingData);
   if (continueReading.length === 0) return null;
 
+  // Le pool « ongoing » est borné : on résout en plus les séries des tomes
+  // affichés par le hero, sinon un tome sans série connue n'affiche que son
+  // numéro (nom/résumé/genres/auteurs manquants).
+  const heroSeries = await resolveSeriesPool(
+    provider,
+    continueReading.slice(0, CONTINUE_READING_PAGE_SIZE),
+    ongoing
+  );
+
   const seriesPool = getSeriesPool({
-    heroSeries: [],
+    heroSeries,
     ongoing,
     favorites: [],
   });
