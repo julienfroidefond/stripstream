@@ -13,10 +13,12 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { StaggerGroup, StaggerItem } from "@/components/motion";
+import { CollectionToolbar } from "@/components/common/CollectionToolbar";
+import { FilterChips } from "@/components/common/FilterChips";
+import { PageHeader } from "@/components/common/PageHeader";
+import { SearchField } from "@/components/common/SearchField";
 import { SortMenu, type SortMenuOption } from "@/components/common/SortMenu";
-import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
-import { Input } from "@/components/ui/input";
 import { ReadingListCover } from "@/components/reading-lists/ReadingListCover";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useAnonymous } from "@/contexts/AnonymousContext";
@@ -91,45 +93,36 @@ export function ReadingListsContent({ lists, isStripstream }: ReadingListsConten
 
   return (
     <Container as="main" className="space-y-8" data-testid="reading-lists-page">
-      <header className="space-y-2">
-        <div className="flex items-center gap-3">
-          <div className="rounded-xl bg-primary/10 p-2.5 text-primary"><Bookmark className="h-6 w-6" /></div>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">{t("home.reading_lists.title")}</h1>
-            <p className="text-muted-foreground">{t("home.reading_lists.description")}</p>
-          </div>
-        </div>
-      </header>
+      <PageHeader
+        icon={Bookmark}
+        title={t("home.reading_lists.title")}
+        description={t("home.reading_lists.description")}
+      />
 
-      <div className="flex flex-col gap-3 rounded-2xl bg-surface-1 p-3 sm:flex-row sm:items-center">
-        <div className="relative flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
+      <CollectionToolbar
+        search={
+          <SearchField
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder={t("home.reading_lists.search")}
             aria-label={t("home.reading_lists.search")}
             data-testid="reading-list-search"
-            className="pl-9"
           />
-        </div>
-        <div className="flex flex-wrap items-center gap-1.5">
-          <div className="flex flex-wrap gap-1.5" aria-label={t("home.reading_lists.filters.title")}>
-            {filters.map(({ value, icon: Icon }) => (
-              <Button
-                key={value}
-                type="button"
-                variant={filter === value ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setFilter(value)}
-                data-testid={`reading-list-filter-${value}`}
-              >
-                <Icon className="mr-1.5 h-3.5 w-3.5" />
-                {t(`home.reading_lists.filters.${value}`)}
-              </Button>
-            ))}
-          </div>
-
+        }
+        filters={
+          <FilterChips
+            items={filters.map(({ value, icon }) => ({
+              value,
+              label: t(`home.reading_lists.filters.${value}`),
+              icon,
+            }))}
+            value={filter}
+            onChange={(value) => setFilter(value)}
+            ariaLabel={t("home.reading_lists.filters.title")}
+            testIdPrefix="reading-list-filter"
+          />
+        }
+        sort={
           <SortMenu
             value={sort}
             options={sortOptions}
@@ -137,8 +130,8 @@ export function ReadingListsContent({ lists, isStripstream }: ReadingListsConten
             label={t("home.reading_lists.sort.label")}
             testId="reading-list-sort"
           />
-        </div>
-      </div>
+        }
+      />
 
       {filteredLists.length ? (
         <StaggerGroup

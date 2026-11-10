@@ -38,13 +38,6 @@ export interface InProgressStats {
   favorites: number;
 }
 
-export type RelativeTimeUnit = "second" | "minute" | "hour" | "day" | "month" | "year";
-
-export interface RelativeTimeParts {
-  unit: RelativeTimeUnit;
-  value: number;
-}
-
 function normalizedKey(value: string): string {
   return normalizeSeriesSearch(value.trim());
 }
@@ -329,35 +322,4 @@ export function getInProgressStats(
     paused,
     favorites: favoriteCount,
   };
-}
-
-/**
- * Découpe une date en unité relative, sans dépendre de la locale.
- * Le rendu (`Intl.RelativeTimeFormat`) reste côté client.
- */
-export function getRelativeTimeParts(
-  value: string | null | undefined,
-  now: number
-): RelativeTimeParts | null {
-  const timestamp = parseTimestamp(value);
-  if (timestamp === null) return null;
-
-  const diffSeconds = Math.round((timestamp - now) / 1000);
-  const absolute = Math.abs(diffSeconds);
-
-  if (absolute < 60) return { unit: "second", value: diffSeconds };
-
-  const diffMinutes = Math.round(diffSeconds / 60);
-  if (Math.abs(diffMinutes) < 60) return { unit: "minute", value: diffMinutes };
-
-  const diffHours = Math.round(diffMinutes / 60);
-  if (Math.abs(diffHours) < 24) return { unit: "hour", value: diffHours };
-
-  const diffDays = Math.round(diffHours / 24);
-  if (Math.abs(diffDays) < 30) return { unit: "day", value: diffDays };
-
-  const diffMonths = Math.round(diffDays / 30);
-  if (Math.abs(diffMonths) < 12) return { unit: "month", value: diffMonths };
-
-  return { unit: "year", value: Math.round(diffMonths / 12) };
 }

@@ -55,7 +55,7 @@ export function SortMenu({
           )}
         >
           <Icon className="h-4 w-4" />
-          <span className="ml-2 hidden whitespace-nowrap min-[420px]:inline">
+          <span className="ml-2 hidden whitespace-nowrap min-[380px]:inline">
             {selected?.label}
           </span>
           <ChevronDown className="ml-1 h-3.5 w-3.5 opacity-60" />

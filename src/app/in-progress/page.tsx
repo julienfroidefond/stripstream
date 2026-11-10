@@ -38,18 +38,12 @@ export default async function InProgressPage() {
   // d'équivalent et le bouton doit rester absent de son interface.
   const canShelve = providerType === "stripstream";
 
-  // Horodatage figé une fois par rendu serveur : le client calcule les temps
-  // relatifs à partir de cette valeur, sans décalage d'hydratation.
-  // eslint-disable-next-line react-hooks/purity
-  const now = Date.now();
-
   // En mode anonyme, aucune donnée de lecture ne doit être chargée côté serveur.
   if (preferences?.anonymousMode) {
     return (
       <InProgressContent
         items={[]}
         favoriteIds={[]}
-        now={now}
         canShelve={false}
       />
     );
@@ -65,7 +59,6 @@ export default async function InProgressPage() {
       <InProgressContent
         items={items}
         favoriteIds={favoriteIds}
-        now={now}
         canShelve={canShelve}
       />
     );

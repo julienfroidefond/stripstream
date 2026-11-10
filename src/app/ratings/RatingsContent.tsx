@@ -15,11 +15,14 @@ import {
   StarOff,
 } from "lucide-react";
 import { StaggerGroup, StaggerItem } from "@/components/motion";
+import { CollectionToolbar } from "@/components/common/CollectionToolbar";
+import { FilterChips } from "@/components/common/FilterChips";
+import { PageHeader } from "@/components/common/PageHeader";
+import { SearchField } from "@/components/common/SearchField";
 import { SortMenu, type SortMenuOption } from "@/components/common/SortMenu";
 import { SeriesRatingControl } from "@/components/series/SeriesRatingControl";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
-import { Input } from "@/components/ui/input";
 import { SeriesCover } from "@/components/ui/series-cover";
 import { useAnonymous } from "@/contexts/AnonymousContext";
 import { useTranslate } from "@/hooks/useTranslate";
@@ -95,33 +98,28 @@ export function RatingsContent({
 
   return (
     <Container as="main" className="space-y-8" data-testid="ratings-page" aria-busy={isPending}>
-      <header className="space-y-3">
-        <div className="flex items-center gap-3">
-          <div className="rounded-xl bg-primary/10 p-2.5 text-primary">
-            <Star className="h-6 w-6" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">{t("ratings.title")}</h1>
-            <p className="text-muted-foreground">{t("ratings.description")}</p>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          <span className="rounded-full bg-secondary px-2.5 py-0.5 font-semibold text-secondary-foreground">
-            {t("ratings.summary.total", { count: counts.total })}
-          </span>
-          {counts.unrated > 0 && (
-            <span className="rounded-full bg-primary px-2.5 py-0.5 font-semibold text-primary-foreground">
-              {t("ratings.summary.unrated", { count: counts.unrated })}
+      <PageHeader
+        icon={Star}
+        title={t("ratings.title")}
+        description={t("ratings.description")}
+        meta={
+          <>
+            <span className="rounded-full bg-secondary px-2.5 py-0.5 font-semibold text-secondary-foreground">
+              {t("ratings.summary.total", { count: counts.total })}
             </span>
-          )}
-          {counts.rated > 0 && (
-            <span className="rounded-full border border-border px-2.5 py-0.5 font-semibold text-muted-foreground">
-              {t("ratings.summary.rated", { count: counts.rated })}
-            </span>
-          )}
-        </div>
-      </header>
+            {counts.unrated > 0 && (
+              <span className="rounded-full bg-primary px-2.5 py-0.5 font-semibold text-primary-foreground">
+                {t("ratings.summary.unrated", { count: counts.unrated })}
+              </span>
+            )}
+            {counts.rated > 0 && (
+              <span className="rounded-full border border-border px-2.5 py-0.5 font-semibold text-muted-foreground">
+                {t("ratings.summary.rated", { count: counts.rated })}
+              </span>
+            )}
+          </>
+        }
+      />
 
       {isAnonymous && (
         <p className="rounded-xl border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
@@ -130,51 +128,40 @@ export function RatingsContent({
       )}
 
       {counts.total > 0 && (
-        <div className="flex flex-col gap-3 rounded-2xl bg-surface-1 p-3 sm:flex-row sm:items-center">
-          <Form action="/ratings" role="search" className="relative flex-1">
-            {filter !== "all" && <input type="hidden" name="filter" value={filter} />}
-            {sort !== DEFAULT_READ_SERIES_SORT && (
-              <input type="hidden" name="sort" value={sort} />
-            )}
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              key={query}
-              name="q"
-              defaultValue={query}
-              placeholder={t("ratings.search")}
-              aria-label={t("ratings.search")}
-              data-testid="ratings-search"
-              className="pl-9"
+        <CollectionToolbar
+          search={
+            <Form action="/ratings" role="search" className="w-full">
+              {filter !== "all" && <input type="hidden" name="filter" value={filter} />}
+              {sort !== DEFAULT_READ_SERIES_SORT && (
+                <input type="hidden" name="sort" value={sort} />
+              )}
+              <SearchField
+                key={query}
+                name="q"
+                defaultValue={query}
+                placeholder={t("ratings.search")}
+                aria-label={t("ratings.search")}
+                data-testid="ratings-search"
+              />
+              <button type="submit" className="sr-only">
+                {t("ratings.searchAction")}
+              </button>
+            </Form>
+          }
+          filters={
+            <FilterChips
+              items={filters.map(({ value, icon }) => ({
+                value,
+                label: t(`ratings.filters.${value}`),
+                icon,
+                href: buildHref(value),
+              }))}
+              value={filter}
+              ariaLabel={t("ratings.filters.title")}
+              testIdPrefix="ratings-filter"
             />
-            <button type="submit" className="sr-only">
-              {t("ratings.searchAction")}
-            </button>
-          </Form>
-
-          <div className="flex flex-wrap items-center gap-1.5">
-            <nav
-              className="flex flex-wrap gap-1.5"
-              aria-label={t("ratings.filters.title")}
-            >
-              {filters.map(({ value, icon: Icon }) => (
-                <Button
-                  key={value}
-                  asChild
-                  variant={filter === value ? "default" : "ghost"}
-                  size="sm"
-                >
-                  <Link
-                    href={buildHref(value)}
-                    aria-current={filter === value ? "page" : undefined}
-                    data-testid={`ratings-filter-${value}`}
-                  >
-                    <Icon className="mr-1.5 h-3.5 w-3.5" />
-                    {t(`ratings.filters.${value}`)}
-                  </Link>
-                </Button>
-              ))}
-            </nav>
-
+          }
+          sort={
             <SortMenu
               value={sort}
               options={sortOptions}
@@ -182,8 +169,8 @@ export function RatingsContent({
               label={t("ratings.sort.label")}
               testId="ratings-sort"
             />
-          </div>
-        </div>
+          }
+        />
       )}
 
       {series.length > 0 ? (

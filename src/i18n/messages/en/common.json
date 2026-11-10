@@ -375,37 +375,11 @@
   "inProgress": {
     "title": "My in-progress series",
     "description": "Pick up right where you left off, volume after volume.",
-    "eyebrow": "Back to reading",
     "coverLink": "Open {{title}}",
     "gridTitle": "Series",
-    "neverRead": "Never read",
-    "justNow": "just now",
     "results_one": "{{count}} series",
     "results_other": "{{count}} series",
     "reset": "Reset",
-    "hero": {
-      "resume": "Resume reading",
-      "continue": "Read next",
-      "start": "Start the series",
-      "chooseBook": "Choose a volume",
-      "progress": "{{read}} / {{total}} volumes read",
-      "remaining_one": "{{count}} volume left",
-      "remaining_other": "{{count}} volumes left",
-      "currentBook": "Current volume:",
-      "nextBook": "Next volume:",
-      "lastReadLabel": "Last read",
-      "neverRead": "Not started yet",
-      "noBook": "No volume to resume right now: open the series to choose your next volume."
-    },
-    "stats": {
-      "total": "In-progress series",
-      "remaining": "Volumes left",
-      "almostDone": "Almost done",
-      "paused": "Paused",
-      "favorites": "Favorites",
-      "filterHint": "Click to filter",
-      "sortHint": "Click to sort by volumes left"
-    },
     "toolbar": {
       "search": "Search a series...",
       "clearSearch": "Clear search",
@@ -425,29 +399,11 @@
       "remaining": "Fewest volumes left",
       "title": "Title (A→Z)"
     },
-    "rails": {
-      "resume": "Your other reads",
-      "resumeDescription": "Your open reads, one click away.",
-      "almostDone": "Almost done",
-      "almostDoneDescription": "One or two volumes and you're done."
-    },
     "card": {
-      "resume": "Resume",
-      "continue": "Read next",
-      "start": "Start",
-      "openSeries": "View series",
-      "read": "{{read}} / {{total}} read",
-      "remaining_one": "{{count}} volume left",
-      "remaining_other": "{{count}} volumes left",
-      "current": "Reading: {{title}}",
-      "next": "Next: {{title}}",
-      "noBook": "No volume to resume",
-      "neverRead": "Not read yet",
       "almostDone": "Almost done",
       "paused": "Paused",
       "favoriteAdd": "Add to favorites",
-      "favoriteRemove": "Remove from favorites",
-      "favoriteBadge": "Favorite"
+      "favoriteRemove": "Remove from favorites"
     },
     "favorite": {
       "added": "Added to favorites",
