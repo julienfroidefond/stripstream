@@ -74,17 +74,6 @@ export function BookSpotlightSlide({ book, onOpen, eyebrow }: BookSpotlightSlide
                   showProgressUi={false}
                   showOverlay={false}
                 />
-                <div className="pointer-events-none absolute inset-0 z-20 flex flex-col justify-end bg-black/60 p-3 opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100">
-                  <h3 className="line-clamp-2 text-left text-sm font-medium text-white">{title}</h3>
-                  {!isAnonymous && (
-                    <p className="mt-1 text-left text-xs text-white/80">
-                      {t("books.status.progress", {
-                        current: currentPage,
-                        total: book.pageCount,
-                      })}
-                    </p>
-                  )}
-                </div>
               </>
             }
           />

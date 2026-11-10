@@ -164,10 +164,6 @@ const RecommendationCard = memo(function RecommendationCard({ series: s }: { ser
                 showProgressUi={false}
               />
 
-              <div className="pointer-events-none absolute inset-0 z-20 flex flex-col justify-end bg-linear-to-t from-black/80 via-black/30 to-transparent p-2.5 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100">{/* taste-skill-ignore: scrim neutre au-dessus de la couverture */}
-                <p className="line-clamp-2 text-left text-xs font-semibold text-white">{s.name}</p>
-              </div>
-
               <SeriesMatchReasonBadges reasons={s.matchReasons} className="z-30" />
 
               <GlowLayer />

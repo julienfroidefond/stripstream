@@ -201,12 +201,6 @@ const SeriesMediaCard = memo(function SeriesMediaCard({
               alt={t("series.coverAlt", { title: series.name })}
               isAnonymous={isAnonymous}
             />
-            <div className="pointer-events-none absolute inset-0 z-20 flex flex-col justify-end bg-linear-to-t from-black/80 via-black/40 to-transparent p-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100">{/* taste-skill-ignore: scrim neutre au-dessus de la couverture */}
-              <h3 className="font-display text-sm font-medium text-white line-clamp-2">{series.name}</h3>
-              <p className="mt-1 text-xs text-white/80">
-                {t("series.books", { count: series.bookCount })}
-              </p>
-            </div>
             <GlowLayer />
             <span
               aria-hidden
@@ -225,7 +219,6 @@ const SeriesMediaCard = memo(function SeriesMediaCard({
 
 const BookMediaCard = memo(function BookMediaCard({ book }: { book: NormalizedBook }) {
   const { t } = useTranslate();
-  const { isAnonymous } = useAnonymous();
   const glowRef = useRef<HTMLDivElement>(null);
   const handleGlow = usePointerGlow(glowRef);
   const title =
@@ -252,17 +245,6 @@ const BookMediaCard = memo(function BookMediaCard({ book }: { book: NormalizedBo
               showControls={false}
               showOverlay={false}
             />
-            <div className="pointer-events-none absolute inset-0 z-20 flex flex-col justify-end bg-linear-to-t from-black/80 via-black/40 to-transparent p-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100">{/* taste-skill-ignore: scrim neutre au-dessus de la couverture */}
-              <h3 className="font-display text-sm font-medium text-white line-clamp-2">{title}</h3>
-              {!isAnonymous && book.pageCount > 0 && (
-                <p className="mt-1 text-xs text-white/80">
-                  {t("books.status.progress", {
-                    current: book.readProgress?.page ?? 0,
-                    total: book.pageCount,
-                  })}
-                </p>
-              )}
-            </div>
             <GlowLayer />
             <span
               aria-hidden

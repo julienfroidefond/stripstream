@@ -17,16 +17,9 @@ interface ReadingListCardProps {
   status: ReadingListStatus;
   /** Identifiant E2E spécifique à une surface (accueil, page listes…). */
   testId?: string;
-  /** Voile de survol repris de l'ancienne carte d'accueil. */
-  showHoverOverlay?: boolean;
 }
 
-export function ReadingListCard({
-  list,
-  status,
-  testId,
-  showHoverOverlay = false,
-}: ReadingListCardProps) {
+export function ReadingListCard({ list, status, testId }: ReadingListCardProps) {
   const { t } = useTranslate();
   const { isAnonymous } = useAnonymous();
   const [hovered, setHovered] = useState(false);
@@ -77,13 +70,6 @@ export function ReadingListCard({
     >
       <div className="relative">
         <ReadingListCoverStack covers={list.preview_covers} active={active} />
-        {showHoverOverlay && (
-          <div className="pointer-events-none absolute inset-0 z-20 flex flex-col justify-end bg-linear-to-t from-black/80 via-black/30 to-transparent p-2.5 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100">
-            <p className="line-clamp-2 text-left text-xs font-semibold text-white">
-              {list.name}
-            </p>
-          </div>
-        )}
         {!isAnonymous && (
           <StatusBadge
             status={status === "read" ? "success" : status === "reading" ? "reading" : "unread"}

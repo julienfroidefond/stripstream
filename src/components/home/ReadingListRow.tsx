@@ -117,7 +117,6 @@ export function ReadingListRow({ lists }: ReadingListRowProps) {
                     list={list}
                     status={getReadingListStatus(list)}
                     testId={`home-reading-list-${list.id}`}
-                    showHoverOverlay
                   />
                 </div>
               </StaggerItem>
