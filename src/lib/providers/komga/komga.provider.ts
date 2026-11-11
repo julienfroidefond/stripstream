@@ -709,12 +709,4 @@ export class KomgaProvider implements IMediaProvider {
   getBookThumbnailUrl(bookId: string): string {
     return `/api/komga/images/books/${bookId}/thumbnail`;
   }
-
-  getSeriesThumbnailUrl(seriesId: string): string {
-    return `/api/komga/images/series/${seriesId}/thumbnail`;
-  }
-
-  getBookPageUrl(bookId: string, pageNumber: number): string {
-    return `/api/komga/images/books/${bookId}/pages/${pageNumber}`;
-  }
 }

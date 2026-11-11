@@ -44,6 +44,7 @@ function book(
     volume: null,
     pageCount: 100,
     thumbnailUrl: "",
+    media: { pageUrlTemplate: "/pages/{page}", thumbnailUrlTemplate: "/pages/{page}" },
     readProgress: null,
     ...overrides,
   };

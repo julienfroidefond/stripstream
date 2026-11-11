@@ -8,8 +8,10 @@ import type {
   StripstreamRelatedSeriesItem,
   StripstreamRecommendedSeriesItem,
 } from "@/types/stripstream";
+import { BOOK_PAGE_TOKEN } from "../book-media";
 import type {
   NormalizedBook,
+  NormalizedBookMedia,
   NormalizedSeries,
   NormalizedLibrary,
   NormalizedReadProgress,
@@ -21,6 +23,16 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 export class StripstreamAdapter {
   private static bookThumbnail(bookId: string): string {
     return `/api/stripstream/images/books/${bookId}/thumbnail`;
+  }
+
+  private static bookMedia(bookId: string): NormalizedBookMedia {
+    const pageUrlTemplate = `/api/stripstream/images/books/${bookId}/pages/${BOOK_PAGE_TOKEN}`;
+    return {
+      pageUrlTemplate,
+      // The backend has no separate page-thumbnail endpoint; the page proxy is
+      // the thumbnail source too.
+      thumbnailUrlTemplate: pageUrlTemplate,
+    };
   }
 
   /**
@@ -69,7 +81,8 @@ export class StripstreamAdapter {
       seriesName: book.series ?? null,
       volume: book.volume ?? null,
       pageCount: book.page_count ?? 0,
-      thumbnailUrl: `/api/stripstream/images/books/${book.id}/thumbnail`,
+      thumbnailUrl: StripstreamAdapter.bookThumbnail(book.id),
+      media: StripstreamAdapter.bookMedia(book.id),
       downloadUrl: `/api/stripstream/books/${book.id}/file`,
       readProgress:
         book.reading_status === "unread" && !book.reading_current_page
@@ -97,7 +110,8 @@ export class StripstreamAdapter {
       seriesName: book.series ?? null,
       volume: book.volume ?? null,
       pageCount: book.page_count ?? 0,
-      thumbnailUrl: `/api/stripstream/images/books/${book.id}/thumbnail`,
+      thumbnailUrl: StripstreamAdapter.bookThumbnail(book.id),
+      media: StripstreamAdapter.bookMedia(book.id),
       downloadUrl: `/api/stripstream/books/${book.id}/file`,
       readProgress:
         book.reading_status === "unread" && !book.reading_current_page

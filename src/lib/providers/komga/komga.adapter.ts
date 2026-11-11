@@ -1,12 +1,21 @@
 import type { KomgaBook, KomgaSeries, KomgaLibrary, ReadProgress } from "@/types/komga";
+import { BOOK_PAGE_TOKEN } from "../book-media";
 import type {
   NormalizedBook,
+  NormalizedBookMedia,
   NormalizedSeries,
   NormalizedLibrary,
   NormalizedReadProgress,
 } from "../types";
 
 export class KomgaAdapter {
+  private static bookMedia(bookId: string): NormalizedBookMedia {
+    return {
+      pageUrlTemplate: `/api/komga/images/books/${bookId}/pages/${BOOK_PAGE_TOKEN}`,
+      thumbnailUrlTemplate: `/api/komga/images/books/${bookId}/pages/${BOOK_PAGE_TOKEN}/thumbnail`,
+    };
+  }
+
   static toNormalizedReadProgress(rp: ReadProgress | null): NormalizedReadProgress | null {
     if (!rp) return null;
     return {
@@ -27,6 +36,7 @@ export class KomgaAdapter {
       volume: typeof book.number === "number" ? book.number : null,
       pageCount: book.media?.pagesCount ?? 0,
       thumbnailUrl: `/api/komga/images/books/${book.id}/thumbnail`,
+      media: KomgaAdapter.bookMedia(book.id),
       downloadUrl: `/api/komga/books/${book.id}/file`,
       readProgress: KomgaAdapter.toNormalizedReadProgress(book.readProgress),
       summary: book.metadata?.summary?.trim() || null,

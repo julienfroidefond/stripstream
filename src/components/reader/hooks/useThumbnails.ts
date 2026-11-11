@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { resolveBookMediaUrl } from "@/lib/providers/book-media";
 import type { NormalizedBook } from "@/lib/providers/types";
 
 interface UseThumbnailsProps {
@@ -14,14 +15,9 @@ export const useThumbnails = ({ book, currentPage }: UseThumbnailsProps) => {
   }, []);
 
   const getThumbnailUrl = useCallback(
-    (pageNumber: number) => {
-      // Derive page URL from the book's thumbnailUrl provider pattern
-      if (book.thumbnailUrl.startsWith("/api/stripstream/")) {
-        return `/api/stripstream/images/books/${book.id}/pages/${pageNumber}`;
-      }
-      return `/api/komga/images/books/${book.id}/pages/${pageNumber}/thumbnail?zero_based=true`;
-    },
-    [book.id, book.thumbnailUrl]
+    (pageNumber: number) =>
+      resolveBookMediaUrl(book.media.thumbnailUrlTemplate, pageNumber),
+    [book.media.thumbnailUrlTemplate]
   );
 
   // Dérivé directement pendant le rendu (fenêtre désactivée : seule la page courante est visible).

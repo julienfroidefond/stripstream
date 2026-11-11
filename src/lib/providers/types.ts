@@ -62,6 +62,17 @@ export interface NormalizedSeries {
   shelvedAt?: string | null;
 }
 
+/**
+ * Local proxy URL templates for one book's media. `{page}` is replaced by a
+ * 1-based page number, so the reader never derives URLs from `thumbnailUrl`.
+ */
+export interface NormalizedBookMedia {
+  /** Full-page image template. */
+  pageUrlTemplate: string;
+  /** Page-thumbnail image template. */
+  thumbnailUrlTemplate: string;
+}
+
 export interface NormalizedBook {
   id: string;
   libraryId: string;
@@ -78,6 +89,8 @@ export interface NormalizedBook {
   volume: number | null;
   pageCount: number;
   thumbnailUrl: string;
+  /** Reader media contract; provider adapters own the route shape. */
+  media: NormalizedBookMedia;
   /**
    * Local proxy URL that streams the original source file (CBZ/CBR/PDF/EPUB).
    * Built by each provider adapter, exactly like `thumbnailUrl`, so the UI never

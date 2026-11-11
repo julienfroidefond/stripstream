@@ -16,7 +16,12 @@ export type MediaRef =
       /** Query string brute conservée pour le provider Stripstream. */
       query?: string;
     }
-  | { kind: "book-page-thumbnail"; bookId: string; pageNumber: number }
+  | {
+      kind: "book-page-thumbnail";
+      bookId: string;
+      /** Numéro de page côté client, base 1. */
+      pageNumber: number;
+    }
   | { kind: "book-cover"; bookId: string }
   | { kind: "series-cover"; seriesId: string };
 

@@ -17,6 +17,10 @@ function makeBook(overrides: Partial<NormalizedBook> = {}): NormalizedBook {
     volume: null,
     pageCount: 10,
     thumbnailUrl: "/api/komga/images/books/book-1/thumbnail",
+    media: {
+      pageUrlTemplate: "/api/komga/images/books/book-1/pages/{page}",
+      thumbnailUrlTemplate: "/api/komga/images/books/book-1/pages/{page}/thumbnail",
+    },
     readProgress: null,
     ...overrides,
   };
@@ -27,9 +31,13 @@ afterEach(() => {
 });
 
 describe("useThumbnails", () => {
-  it("derives Stripstream page image URLs from the provider pattern", () => {
+  it("uses the book's thumbnail template instead of branching on the provider", () => {
     const book = makeBook({
       thumbnailUrl: "/api/stripstream/images/books/book-1/thumbnail",
+      media: {
+        pageUrlTemplate: "/api/stripstream/images/books/book-1/pages/{page}",
+        thumbnailUrlTemplate: "/api/stripstream/images/books/book-1/pages/{page}",
+      },
     });
     const { result } = renderHook(() =>
       useThumbnails({ book, currentPage: 3 })
@@ -40,13 +48,13 @@ describe("useThumbnails", () => {
     );
   });
 
-  it("falls back to the Komga zero-based thumbnail endpoint", () => {
+  it("resolves the Komga page-thumbnail template with a 1-based page", () => {
     const { result } = renderHook(() =>
       useThumbnails({ book: makeBook(), currentPage: 3 })
     );
 
     expect(result.current.getThumbnailUrl(2)).toBe(
-      "/api/komga/images/books/book-1/pages/2/thumbnail?zero_based=true"
+      "/api/komga/images/books/book-1/pages/2/thumbnail"
     );
   });
 

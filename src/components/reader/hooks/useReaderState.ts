@@ -12,6 +12,7 @@ import { useTouchNavigation } from "./useTouchNavigation";
 import { resolveReaderShortcut } from "./keyboardShortcuts";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { updatePreferences } from "@/app/actions/preferences";
+import { resolveBookMediaUrl } from "@/lib/providers/book-media";
 import type { ReaderBackground } from "@/types/preferences";
 
 export function useReaderState({ book, pages, onClose, nextBook }: BookReaderProps) {
@@ -25,12 +26,12 @@ export function useReaderState({ book, pages, onClose, nextBook }: BookReaderPro
   const totalPages = pages.length;
 
   const bookPageUrlBuilder = useCallback(
-    (pageNum: number) => book.thumbnailUrl.replace("/thumbnail", `/pages/${pageNum}`),
-    [book.thumbnailUrl]
+    (pageNum: number) => resolveBookMediaUrl(book.media.pageUrlTemplate, pageNum),
+    [book.media.pageUrlTemplate]
   );
   const nextBookPageUrlBuilder = useCallback(
     (pageNum: number) =>
-      nextBook ? nextBook.thumbnailUrl.replace("/thumbnail", `/pages/${pageNum}`) : "",
+      nextBook ? resolveBookMediaUrl(nextBook.media.pageUrlTemplate, pageNum) : "",
     [nextBook]
   );
 

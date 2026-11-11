@@ -64,6 +64,16 @@ A provider-neutral description of the bytes a media route asks for:
 raw query string, never a provider URL. Owners: `src/lib/media/types.ts`
 (`MediaRef`) and the route declarations (`createMediaRoute`).
 
+## Book media contract
+
+The two local proxy URL templates a `NormalizedBook` carries for the reader:
+`media.pageUrlTemplate` and `media.thumbnailUrlTemplate`. Both contain a
+`{page}` token filled with a 1-based page number by `resolveBookMediaUrl`;
+provider adapters own the route shape, and the Komga transport owns the
+conversion to Komga's zero-based pages. Owners:
+`src/lib/providers/types.ts` (`NormalizedBookMedia`),
+`src/lib/providers/book-media.ts`, `src/lib/media/komga-paths.ts`.
+
 ## Media transport
 
 The adapter that turns a `MediaRef` into a provider request and normalizes the

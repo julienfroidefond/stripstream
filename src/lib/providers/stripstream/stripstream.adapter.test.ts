@@ -138,6 +138,10 @@ describe("StripstreamAdapter.toNormalizedBook", () => {
       volume: null,
       pageCount: 0,
       thumbnailUrl: "/api/stripstream/images/books/book-1/thumbnail",
+      media: {
+        pageUrlTemplate: "/api/stripstream/images/books/book-1/pages/{page}",
+        thumbnailUrlTemplate: "/api/stripstream/images/books/book-1/pages/{page}",
+      },
       downloadUrl: "/api/stripstream/books/book-1/file",
       readProgress: null,
       volumeType: "volume",
@@ -204,6 +208,10 @@ describe("StripstreamAdapter.toNormalizedBookDetails", () => {
     const normalized = StripstreamAdapter.toNormalizedBookDetails(details);
     expect(normalized.seriesId).toBe("uuid-1");
     expect(normalized.seriesName).toBe("Name");
+    expect(normalized.media).toEqual({
+      pageUrlTemplate: "/api/stripstream/images/books/book-1/pages/{page}",
+      thumbnailUrlTemplate: "/api/stripstream/images/books/book-1/pages/{page}",
+    });
   });
 
   it("keeps a name-only payload out of seriesId", () => {
