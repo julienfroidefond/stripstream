@@ -36,6 +36,7 @@ import {
   useGsapEffect,
 } from "@/lib/gsap";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
+import { resolveHeroSummary } from "./heroSummary";
 
 interface ContinueReadingHeroProps {
   books: NormalizedBook[];
@@ -160,17 +161,7 @@ function HeroSlide({
         item.name.trim().toLowerCase() === targetLower
     ) ?? null;
   const seriesName = matchedSeries?.name ?? null;
-  const summary = (() => {
-    const fromBook = book.summary?.trim();
-    if (fromBook) return fromBook;
-    const fromSeries = matchedSeries?.summary?.trim();
-    if (fromSeries) return fromSeries;
-    const genres = matchedSeries?.genres?.filter(Boolean).slice(0, 3) ?? [];
-    if (genres.length > 0) return genres.join(" • ");
-    const author = matchedSeries?.authors?.find((item) => item.name)?.name;
-    if (author) return author;
-    return null;
-  })();
+  const summary = resolveHeroSummary(book, matchedSeries);
 
   const currentPage = book.readProgress?.page ?? 0;
   const totalPages = book.pageCount;
