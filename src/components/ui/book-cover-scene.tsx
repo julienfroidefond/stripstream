@@ -226,63 +226,76 @@ export function BookCoverScene({
 
   const scene = (
     <>
-      {/* Dos du livre, légèrement plus petit que la couverture. Il garde des
-          angles droits comme le bloc de pages, pour ne pas empiler les
-          arrondis derrière la tranche. */}
+      {/* Tant que la vignette n'est pas décodée, le livre entier est masqué
+          (voir `globals.css`) : on ne montre pas un dos et une face noirs qui
+          se transforment ensuite en couverture. Le squelette tient la place. */}
       <span
         aria-hidden
-        className="pointer-events-none absolute left-[2%] top-[2%] z-0 h-[96%] w-[96%] bg-[#111] shadow-[2px_2px_5px_rgba(0,0,0,0.4)]"
-      />
-
-      {/* Tranches de pages : elles dépassent à droite au survol. Le papier
-          garde des angles droits, comme un vrai bloc de pages. */}
-      <span
-        aria-hidden
-        className="pointer-events-none absolute left-[5%] top-[3%] z-[1] h-[94%] w-[90%]"
-      >
-        <span
-          ref={firstPageRef}
-          className="absolute inset-y-0 right-0 w-[98%] border border-black/20 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.15)]"
-        />
-        <span
-          ref={secondPageRef}
-          className="absolute inset-y-0 right-0 w-[98%] border border-black/20 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.15)]"
-        />
-        <span className="absolute inset-y-0 right-0 w-[98%] border border-black/20 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.15)]" />
-      </span>
-
-      {/* Couverture : elle pivote autour de sa tranche gauche. */}
-      <span
-        ref={coverRef}
         className={cn(
-          "absolute inset-0 z-10 block origin-left overflow-hidden bg-surface-2 will-change-transform",
+          "cover-scene-skeleton skeleton-reveal pointer-events-none absolute inset-0 bg-surface-2",
           BOOK_RADIUS
         )}
-        style={{
-          boxShadow: contained ? CLOSED_SHADOW_CONTAINED : CLOSED_SHADOW,
-          transform: "perspective(2000px) rotateY(0deg) translateX(0px) scaleX(1)",
-        }}
-      >
-        {cover}
+      />
 
+      <div className="cover-scene-book absolute inset-0">
+        {/* Dos du livre, légèrement plus petit que la couverture. Il garde des
+            angles droits comme le bloc de pages, pour ne pas empiler les
+            arrondis derrière la tranche. */}
         <span
-          ref={gutterRef}
           aria-hidden
-          className="pointer-events-none absolute inset-y-0 left-4 z-20 w-5 border-l-2 border-black/10 bg-gradient-to-r from-white/20 to-transparent"
-        />
-        <span
-          ref={lightRef}
-          aria-hidden
-          className="pointer-events-none absolute inset-0 z-20 bg-gradient-to-r from-transparent to-white/50 opacity-10 mix-blend-overlay"
+          className="pointer-events-none absolute left-[2%] top-[2%] z-0 h-[96%] w-[96%] bg-[#111] shadow-[2px_2px_5px_rgba(0,0,0,0.4)]"
         />
 
-        {badge}
-      </span>
+        {/* Tranches de pages : elles dépassent à droite au survol. Le papier
+            garde des angles droits, comme un vrai bloc de pages. */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute left-[5%] top-[3%] z-[1] h-[94%] w-[90%]"
+        >
+          <span
+            ref={firstPageRef}
+            className="absolute inset-y-0 right-0 w-[98%] border border-black/20 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.15)]"
+          />
+          <span
+            ref={secondPageRef}
+            className="absolute inset-y-0 right-0 w-[98%] border border-black/20 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.15)]"
+          />
+          <span className="absolute inset-y-0 right-0 w-[98%] border border-black/20 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.15)]" />
+        </span>
+
+        {/* Couverture : elle pivote autour de sa tranche gauche. */}
+        <span
+          ref={coverRef}
+          className={cn(
+            "absolute inset-0 z-10 block origin-left overflow-hidden bg-surface-2 will-change-transform",
+            BOOK_RADIUS
+          )}
+          style={{
+            boxShadow: contained ? CLOSED_SHADOW_CONTAINED : CLOSED_SHADOW,
+            transform: "perspective(2000px) rotateY(0deg) translateX(0px) scaleX(1)",
+          }}
+        >
+          {cover}
+
+          <span
+            ref={gutterRef}
+            aria-hidden
+            className="pointer-events-none absolute inset-y-0 left-4 z-20 w-5 border-l-2 border-black/10 bg-gradient-to-r from-white/20 to-transparent"
+          />
+          <span
+            ref={lightRef}
+            aria-hidden
+            className="pointer-events-none absolute inset-0 z-20 bg-gradient-to-r from-transparent to-white/50 opacity-10 mix-blend-overlay"
+          />
+
+          {badge}
+        </span>
+      </div>
     </>
   );
 
   return (
-    <div className={cn("group/card relative", className)} {...handlers}>
+    <div className={cn("cover-scene group/card relative", className)} {...handlers}>
       {href ? (
         <Link
           href={href}

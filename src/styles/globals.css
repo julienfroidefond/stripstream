@@ -131,6 +131,31 @@ body.no-pinch-zoom .wall-canvas * {
   }
 }
 
+/*
+ * Couverture 3D : le livre n'est dessiné qu'une fois la vignette décodée.
+ * Sinon on voyait d'abord le dos et la tranche autour d'une face noire, puis
+ * l'image apparaissait en fondu. `BookCover`/`SeriesCover` exposent leur état
+ * dans `data-cover-state` ; un squelette neutre tient la place entre-temps.
+ * Hors scène 3D (Wall, lecteur), la cover garde son fondu habituel.
+ */
+.cover-scene-skeleton {
+  display: none;
+}
+
+.cover-scene:has([data-cover-state="loading"]) .cover-scene-skeleton {
+  display: block;
+}
+
+.cover-scene:has([data-cover-state="loading"]) .cover-scene-book {
+  visibility: hidden;
+}
+
+/* La cover est déjà décodée quand le livre se montre : pas de fondu depuis
+   le fond de la scène. */
+.cover-scene .cover-scene-book img {
+  transition: none;
+}
+
 [data-spotlight-shell] {
   opacity: 0;
   transform: translateY(3rem);

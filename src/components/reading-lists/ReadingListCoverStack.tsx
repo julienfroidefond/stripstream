@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { BookMarked } from "lucide-react";
 import { BookCoverScene } from "@/components/ui/book-cover-scene";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
@@ -46,6 +46,19 @@ export function ReadingListCoverStack({
     .filter((source) => !failedSources.has(source))
     .slice(0, MAX_VISIBLE_COVERS);
   const [frontCover, ...backCovers] = visibleSources;
+
+  // La scène 3D n'apparaît qu'une fois la vignette décodée. `useCoverLoaded`
+  // n'est pas réutilisé ici : un échec doit basculer tout de suite sur la
+  // couverture suivante de la pile, sans relance.
+  const frontRef = useRef<HTMLImageElement>(null);
+  const [loadedSource, setLoadedSource] = useState<string | null>(null);
+  const frontLoaded = frontCover !== undefined && loadedSource === frontCover;
+
+  useEffect(() => {
+    const image = frontRef.current;
+    if (!frontCover || !image?.complete || image.naturalWidth === 0) return;
+    setLoadedSource(frontCover);
+  }, [frontCover]);
 
   const markFailed = (source: string) => {
     setFailedSources((previous) => {
@@ -109,9 +122,12 @@ export function ReadingListCoverStack({
         className="z-20"
         cover={
           <img
+            ref={frontRef}
             src={frontCover}
             alt=""
             loading="lazy"
+            data-cover-state={frontLoaded ? "loaded" : "loading"}
+            onLoad={() => setLoadedSource(frontCover)}
             onError={() => markFailed(frontCover)}
             className="absolute inset-0 h-full w-full object-cover"
           />

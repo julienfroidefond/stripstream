@@ -12,6 +12,7 @@ import type { ResumeEntry } from "@/lib/resume/resume-state";
 import { Button } from "@/components/ui/button";
 import { BookCoverScene } from "@/components/ui/book-cover-scene";
 import { LoadMoreLabel } from "@/components/ui/load-more-label";
+import { useCoverLoaded } from "@/hooks/useCoverLoaded";
 import { useCoverInteraction } from "@/hooks/useCoverInteraction";
 import { useFeedPagination } from "@/hooks/useFeedPagination";
 import { useTranslate } from "@/hooks/useTranslate";
@@ -133,6 +134,12 @@ function HeroSlide({
   const { active, handlers } = useCoverInteraction<HTMLButtonElement>();
 
   const { book, series: matchedSeries, progressPercent } = entry;
+  const {
+    ref: coverRef,
+    status: coverStatus,
+    onLoad: onCoverLoad,
+    onError: onCoverError,
+  } = useCoverLoaded(book.thumbnailUrl, { eager: true });
   const seriesName = matchedSeries?.name ?? null;
   const summary = resolveHeroSummary(book, matchedSeries);
 
@@ -180,10 +187,14 @@ function HeroSlide({
                 {/* Le liseré est porté par la cover elle-même, pas par le cadre. */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
+                  ref={coverRef}
                   src={book.thumbnailUrl}
                   alt={t("home.hero.coverAlt", { title: bookTitle })}
                   loading="eager"
                   draggable={false}
+                  data-cover-state={coverStatus}
+                  onLoad={onCoverLoad}
+                  onError={onCoverError}
                   className="h-full w-full object-cover"
                 />
                 <span
