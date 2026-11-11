@@ -1,7 +1,8 @@
 import type { IMediaProvider } from "@/lib/providers/provider.interface";
 import type { NormalizedBook, NormalizedSeries } from "@/lib/providers/types";
 import type { HomePrimaryData } from "@/types/home";
-import { normalizeSeriesSearch } from "@/lib/services/read-series.service";
+import { indexSeries, matchSeries, seriesKey } from "@/lib/resume/identity";
+import { getSeriesProgressPercent } from "@/lib/resume/resume-state";
 
 /** Les listes « en cours » et « de côté » sont bornées à 50 éléments. */
 export const IN_PROGRESS_LIMIT = 50;
@@ -38,10 +39,6 @@ export interface InProgressStats {
   favorites: number;
 }
 
-function normalizedKey(value: string): string {
-  return normalizeSeriesSearch(value.trim());
-}
-
 function parseTimestamp(value: string | null | undefined): number | null {
   if (!value) return null;
   const timestamp = Date.parse(value);
@@ -62,54 +59,6 @@ function isBookInProgress(book: NormalizedBook): boolean {
   return progress.page !== null || Boolean(progress.lastReadAt);
 }
 
-function seriesIndex(series: NormalizedSeries[]): {
-  byId: Map<string, NormalizedSeries>;
-  byName: Map<string, NormalizedSeries[]>;
-} {
-  const byId = new Map<string, NormalizedSeries>();
-  const byName = new Map<string, NormalizedSeries[]>();
-
-  for (const item of series) {
-    byId.set(item.id, item);
-    const key = normalizedKey(item.name);
-    const bucket = byName.get(key);
-    if (bucket) bucket.push(item);
-    else byName.set(key, [item]);
-  }
-
-  return { byId, byName };
-}
-
-/**
- * Retrouve la série d'un tome. `seriesId` peut être un identifiant ou, pour
- * Stripstream, le nom de la série quand la liste de tomes ne fournit pas
- * `series_id`. La bibliothèque départage les homonymes.
- */
-function resolveSeries(
-  book: NormalizedBook,
-  index: ReturnType<typeof seriesIndex>
-): NormalizedSeries | null {
-  const target = book.seriesId?.trim();
-  if (!target) return null;
-
-  const byId = index.byId.get(target);
-  if (byId) return byId;
-
-  const candidates = index.byName.get(normalizedKey(target));
-  if (!candidates || candidates.length === 0) return null;
-  if (candidates.length === 1) return candidates[0];
-
-  const exactLibrary = candidates.find(
-    (item) => item.libraryId && book.libraryId && item.libraryId === book.libraryId
-  );
-  if (exactLibrary) return exactLibrary;
-
-  const unknownLibrary = candidates.find(
-    (item) => !item.libraryId || !book.libraryId
-  );
-  return unknownLibrary ?? candidates[0];
-}
-
 function pickMostRecentBook(
   current: NormalizedBook | null,
   candidate: NormalizedBook
@@ -120,17 +69,6 @@ function pickMostRecentBook(
 
 function sortTitle(a: InProgressItem, b: InProgressItem): number {
   return a.series.name.localeCompare(b.series.name, undefined, { sensitivity: "base" });
-}
-
-/**
- * Avancement du tome en cours, en pourcentage. Retourne `null` quand le tome
- * n'a pas de pagination exploitable (le pourcentage de série prend le relais).
- */
-export function getBookProgressPercent(book: NormalizedBook | null): number | null {
-  const page = book?.readProgress?.page ?? 0;
-  const total = book?.pageCount ?? 0;
-  if (page <= 0 || total <= 0) return null;
-  return Math.min(100, Math.round((page / total) * 100));
 }
 
 /**
@@ -152,12 +90,12 @@ export function buildInProgressItems(
     uniqueSeries.push(item);
   }
 
-  const index = seriesIndex(uniqueSeries);
+  const index = indexSeries(uniqueSeries);
   const currentBySeries = new Map<string, NormalizedBook>();
   const nextBySeries = new Map<string, NormalizedBook>();
 
   for (const book of source.ongoingBooks ?? []) {
-    const matched = resolveSeries(book, index);
+    const matched = matchSeries(book.seriesId, book.libraryId, index);
     if (!matched) continue;
     currentBySeries.set(
       matched.id,
@@ -166,7 +104,7 @@ export function buildInProgressItems(
   }
 
   for (const book of source.onDeck ?? []) {
-    const matched = resolveSeries(book, index);
+    const matched = matchSeries(book.seriesId, book.libraryId, index);
     if (!matched) continue;
     if (isBookInProgress(book)) {
       currentBySeries.set(
@@ -194,10 +132,7 @@ export function buildInProgressItems(
       nextBook,
       resumeBook: currentBook ?? nextBook,
       remainingBooks,
-      progressPercent: Math.min(
-        100,
-        Math.max(0, Math.round((booksReadCount / bookCount) * 100))
-      ),
+      progressPercent: getSeriesProgressPercent(item),
       lastReadAt:
         item.lastReadAt ?? currentBook?.readProgress?.lastReadAt ?? null,
     });
@@ -245,7 +180,7 @@ export function filterInProgressItems(
   filter: InProgressFilter,
   favoriteIds: Iterable<string>
 ): InProgressItem[] {
-  const normalizedQuery = normalizedKey(query);
+  const normalizedQuery = seriesKey(query);
   const favorites = new Set(favoriteIds);
 
   return items.filter((item) => {
@@ -254,7 +189,7 @@ export function filterInProgressItems(
     if (filter === "paused" && !isPaused(item)) return false;
     return (
       !normalizedQuery ||
-      normalizedKey(item.series.name).includes(normalizedQuery)
+      seriesKey(item.series.name).includes(normalizedQuery)
     );
   });
 }

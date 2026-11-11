@@ -6,7 +6,6 @@ import {
   buildInProgressItems,
   DEFAULT_IN_PROGRESS_SORT,
   filterInProgressItems,
-  getBookProgressPercent,
   getInProgressItems,
   getInProgressStats,
   isPaused,
@@ -230,19 +229,6 @@ describe("buildInProgressItems", () => {
 
     expect(items).toHaveLength(1);
     expect(items[0].lastReadAt).toBe("2026-06-12T10:00:00.000Z");
-  });
-});
-
-describe("getBookProgressPercent", () => {
-  it("computes page progress and ignores books without pagination", () => {
-    const reading = book("b1", {
-      pageCount: 200,
-      readProgress: { page: 50, completed: false, lastReadAt: null },
-    });
-
-    expect(getBookProgressPercent(reading)).toBe(25);
-    expect(getBookProgressPercent(book("b2"))).toBeNull();
-    expect(getBookProgressPercent(null)).toBeNull();
   });
 });
 

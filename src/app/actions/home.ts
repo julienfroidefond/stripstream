@@ -2,14 +2,17 @@
 
 import { getProvider } from "@/lib/providers/provider.factory";
 import { FavoriteService } from "@/lib/services/favorite.service";
-import { resolveSeriesPool } from "@/lib/services/home.service";
-import { getContinueReading } from "@/components/home/HomeContent";
 import { CONTINUE_READING_PAGE_SIZE } from "@/constants/homeConstants";
+import {
+  buildResumeEntries,
+  mergeResumeBooks,
+  type ResumeEntry,
+} from "@/lib/resume/resume-state";
+import { resolveSeriesPool } from "@/lib/resume/series-pool";
 import type { NormalizedBook, NormalizedSeries } from "@/lib/providers/types";
 import type { StripstreamReadingList } from "@/types/stripstream";
 
 export type HomeFeed =
-  | "continue-reading"
   | "ongoing"
   | "favorites"
   | "reading-lists"
@@ -22,11 +25,38 @@ export type HomeFeedItem = NormalizedBook | NormalizedSeries | StripstreamReadin
 export interface HomeFeedResult {
   items: HomeFeedItem[];
   hasMore: boolean;
-  /**
-   * Séries qui portent les nouveaux tomes (feed `continue-reading`
-   * uniquement), pour que le hero retrouve nom/résumé/genres après « Voir plus ».
-   */
-  series?: NormalizedSeries[];
+}
+
+export interface ContinueReadingPage {
+  /** Uniquement les nouveaux tomes : le hero ajoute la page à sa liste. */
+  items: ResumeEntry[];
+  hasMore: boolean;
+}
+
+/**
+ * Charge la page suivante du hero « Reprendre la lecture ».
+ *
+ * `visibleCount` est le nombre de tomes déjà affichés. La réponse ne contient
+ * que les nouveaux tomes, avec leur série et leur progression déjà résolues :
+ * le hero n'a plus à fusionner ni à matcher côté client.
+ */
+export async function loadContinueReading(
+  visibleCount: number
+): Promise<ContinueReadingPage> {
+  const provider = await getProvider();
+  if (!provider) return { items: [], hasMore: false };
+
+  const requestedCount = visibleCount + CONTINUE_READING_PAGE_SIZE;
+  const books = mergeResumeBooks(
+    await provider.getHomeContinueReadingData(requestedCount + 1)
+  );
+  const newBooks = books.slice(visibleCount, requestedCount);
+  const series = await resolveSeriesPool(provider, newBooks);
+
+  return {
+    items: buildResumeEntries(newBooks, series),
+    hasMore: books.length > requestedCount,
+  };
 }
 
 export async function loadHomeFeed(feed: HomeFeed, visibleCount: number): Promise<HomeFeedResult> {
@@ -36,18 +66,8 @@ export async function loadHomeFeed(feed: HomeFeed, visibleCount: number): Promis
   const requestedCount = visibleCount + CONTINUE_READING_PAGE_SIZE;
   const queryLimit = requestedCount + 1;
   let items: HomeFeedItem[];
-  let series: NormalizedSeries[] | undefined;
 
   switch (feed) {
-    case "continue-reading": {
-      const books = getContinueReading(await provider.getHomeContinueReadingData(queryLimit));
-      items = books;
-      series = await resolveSeriesPool(
-        provider,
-        books.slice(visibleCount, requestedCount)
-      );
-      break;
-    }
     case "ongoing":
       items = await provider.getHomeOngoingSeries(queryLimit);
       break;
@@ -73,6 +93,5 @@ export async function loadHomeFeed(feed: HomeFeed, visibleCount: number): Promis
   return {
     items: visibleItems,
     hasMore: items.length > requestedCount,
-    series,
   };
 }

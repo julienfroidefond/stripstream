@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { IMediaProvider } from "@/lib/providers/provider.interface";
 import type { NormalizedBook, NormalizedSeries } from "@/lib/providers/types";
-import { resolveSeriesPool } from "./home.service";
+import { resolveSeriesPool } from "./series-pool";
 
 function series(
   id: string,
@@ -171,5 +171,51 @@ describe("resolveSeriesPool", () => {
 
     expect(pool.map((item) => item.id)).toEqual(["s2"]);
     expect(provider.getSeries).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not query when the known pool already has the book's library", async () => {
+    const provider = makeProvider();
+    const known = [
+      series("a", { name: "Same", libraryId: "lib-a" }),
+      series("b", { name: "Same", libraryId: "lib-b" }),
+    ];
+
+    const pool = await resolveSeriesPool(
+      asProvider(provider),
+      [book("b1", { libraryId: "lib-b", seriesId: "Same" })],
+      known
+    );
+
+    expect(pool).toEqual(known);
+    expect(provider.getSeries).not.toHaveBeenCalled();
+    expect(provider.getSeriesById).not.toHaveBeenCalled();
+  });
+
+  it("resolves the same name separately for two libraries", async () => {
+    const provider = makeProvider();
+    provider.getSeries.mockImplementation(async (libraryId) => ({
+      items: [series(`s-${libraryId}`, { name: "Same", libraryId })],
+      nextCursor: null,
+    }));
+    const known = [series("s-lib-a", { name: "Same", libraryId: "lib-a" })];
+
+    const pool = await resolveSeriesPool(
+      asProvider(provider),
+      [
+        book("b1", { libraryId: "lib-a", seriesId: "Same" }),
+        book("b2", { libraryId: "lib-b", seriesId: "Same" }),
+      ],
+      known
+    );
+
+    expect(pool.map((item) => item.id)).toEqual(["s-lib-a", "s-lib-b"]);
+    expect(provider.getSeries).toHaveBeenCalledTimes(1);
+    expect(provider.getSeries).toHaveBeenCalledWith(
+      "lib-b",
+      undefined,
+      20,
+      false,
+      "Same"
+    );
   });
 });

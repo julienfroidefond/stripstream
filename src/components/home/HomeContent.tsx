@@ -1,38 +1,6 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import type { HomeData, HomePrimaryData } from "@/types/home";
 import { Wand2 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-
-export function getContinueReading(data: Pick<HomePrimaryData, "ongoingBooks" | "onDeck">) {
-  // Merge onDeck (next unread per series) and ongoingBooks (currently reading),
-  // deduplicate by id, onDeck first
-  const items = [...(data.onDeck ?? []), ...(data.ongoingBooks ?? [])];
-  const seen = new Set<string>();
-  return items.filter((item) => {
-    if (seen.has(item.id)) return false;
-    seen.add(item.id);
-    return true;
-  });
-}
-
-export function getSeriesPool(
-  data: Pick<HomePrimaryData, "heroSeries" | "ongoing"> & Pick<HomeData, "favorites">
-) {
-  // Largest series pool we can offer the hero for name/summary lookups.
-  // heroSeries first because it's fetched specifically for these books and
-  // is the most reliable source of summary/genres/authors.
-  const items = [
-    ...(data.heroSeries ?? []),
-    ...(data.ongoing ?? []),
-    ...(data.favorites ?? []),
-  ];
-  const seen = new Set<string>();
-  return items.filter((s) => {
-    if (seen.has(s.id)) return false;
-    seen.add(s.id);
-    return true;
-  });
-}
 
 /**
  * Les squelettes reprennent au pixel la structure des rangées réelles
