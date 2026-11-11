@@ -62,7 +62,7 @@ The active selection is **per browser**, not global: httpOnly cookies `stripstre
 
 ### Favorites scoping
 
-`Favorite` is scoped per `(userId, komgaConfigId | stripstreamConfigId, seriesId)`: the two mutually exclusive unique constraints are declared at `prisma/schema.prisma:110-111`, and `prisma/migrations/20260505000000_dedupe_favorites/migration.sql` deleted orphans, deduped per `(userId, seriesId)` (preferring the active config) and remapped survivors — the migration is explicitly idempotent. `FavoriteService` resolves the active `(provider, configId)` pair (`src/lib/services/favorite.service.ts:75-80`); Komga favorites are read/written in SQLite with `FAVORITES_CACHE_TAG` caching (`favorite.service.ts:23-59`), while Stripstream favorites are delegated to the provider API (`favorite.service.ts:85-88, 99-103, 148-152, 189-191`). This is why favorites do not leak across configs.
+`Favorite` is scoped per `(userId, komgaConfigId | stripstreamConfigId, seriesId)`: the two mutually exclusive unique constraints are declared at `prisma/schema.prisma:110-111`, and `prisma/migrations/20260505000000_dedupe_favorites/migration.sql` deleted orphans, deduped per `(userId, seriesId)` (preferring the active config) and remapped survivors — the migration is explicitly idempotent. `FavoriteService` resolves the active `(provider, configId)` pair once (`src/lib/services/favorite.service.ts:160-172`) and picks an internal `FavoriteStore` (`:26-32`): `createKomgaStore` (`:80`) reads/writes SQLite, `createBackendStore` (`:146`) delegates to the provider API. Reads degrade (`false` / `[]`), writes throw (`ADD_ERROR` / `DELETE_ERROR`), and only a confirmed provider `null` prunes a Komga row (`:130-139`). SQLite favorites are not cached; Stripstream favorite fetches are tagged `FAVORITES_CACHE_TAG` in the provider (`stripstream.provider.ts:703,711`). This is why favorites do not leak across configs.
 
 ## 2. Server-first data flow
 
@@ -77,7 +77,9 @@ The active selection is **per browser**, not global: httpOnly cookies `stripstre
 
 ## 3. Caching model
 
-Provider reads are wrapped in Next.js `unstable_cache(...)`, with **9 call sites** total: 7 in `src/lib/providers/komga/komga.provider.ts:113,416,437,471,513,534,549` and 2 in `src/lib/services/favorite.service.ts:29,44`. The **Stripstream provider does not use `unstable_cache`** — it caches through fetch options (`next: { revalidate, tags }`) assembled in `src/lib/providers/stripstream/stripstream.client.ts:100-107`. Tags come from `src/constants/cacheConstants.ts:1-8`:
+Provider reads are wrapped in Next.js `unstable_cache(...)` in `src/lib/providers/komga/komga.provider.ts`, with **7 call sites**: the shared request wrapper (`:116`) and the six home reads (`:482,503,537,579,600,615`). `FavoriteService` no longer caches: SQLite reads are direct, Stripstream reads go through the provider. The **Stripstream provider does not use `unstable_cache`** — it caches through fetch options (`next: { revalidate, tags }`) assembled in `src/lib/providers/stripstream/stripstream.client.ts:100-107`.
+
+Tags and per-id tag builders live in `src/constants/cacheConstants.ts`. Providers ask the `cacheTags` vocabulary for an entity (`cacheTags.seriesBooks(id)`, `cacheTags.librarySeries(id)`, …), so renaming a tag breaks at compile time instead of silently orphaning entries:
 
 | Tag constant | Tag value | Scope |
 | --- | --- | --- |
@@ -85,13 +87,14 @@ Provider reads are wrapped in Next.js `unstable_cache(...)`, with **9 call sites
 | `LIBRARY_SERIES_CACHE_TAG` | `library-series` | library series listing |
 | `SERIES_BOOKS_CACHE_TAG` | `series-books` | books of a series |
 | `FAVORITES_CACHE_TAG` | `favorites` | favorites |
-| `BOOK_CACHE_TAG` | `book` | single book |
 | `SERIES_RATING_CACHE_TAG` | `series-rating` | series ratings |
 | `SERIES_SHELF_CACHE_TAG` | `series-shelf` | current reader's shelf state |
 | `RATINGS_LIST_CACHE_TAG` | `ratings-list` | read series listed on `/ratings` |
 | `STATS_CACHE_TAG` | `reading-stats` | reading statistics |
+| `SERIES_RELATED_CACHE_TAG` | `series-related` | related series (TTL only) |
+| `SERIES_RECOMMENDATIONS_CACHE_TAG` | `series-recommendations` | recommendations (TTL only) |
 
-Per-id tags narrow invalidation: `library-series:${libraryId}` (`src/lib/providers/komga/komga.provider.ts:225-226`), `series-books:${seriesId}` (`src/app/actions/read-progress.ts:18`), `series-rating:${seriesId}` (`src/app/actions/ratings.ts:16`), `series-shelf:${seriesId}` (`src/app/actions/series-shelf.ts`), plus `series-recommendations` and `series-related:${seriesId}` (`src/lib/providers/stripstream/stripstream.provider.ts:541,577`). Prefer the narrow per-id tag when touching data: the global tag invalidates the whole scope and degrades the hit rate.
+Per-id tags narrow invalidation: `cacheTags.librarySeries(id)`, `cacheTags.libraryBooks(id)`, `cacheTags.seriesBooks(id)`, `cacheTags.seriesRating(id)`, `cacheTags.seriesShelf(id)`, `cacheTags.seriesRelated(id)`. Prefer the narrow per-id tag when touching data: the global tag invalidates the whole scope and degrades the hit rate. The `series-related` and `series-recommendations` entries are TTL-only — no mutation invalidates them deliberately. A tag without a producing read is dead weight: do not invalidate one.
 
 ### TTLs
 
@@ -99,16 +102,27 @@ The constants are per provider: `CACHE_TTL_LONG = 300`, `CACHE_TTL_MED = 120`, `
 
 | Read | TTL | Anchor |
 | --- | --- | --- |
-| `getLibraries()` | 300 s (5 min) | `komga.provider.ts:191` |
-| `getSeries()` (library series listing) | 120 s (2 min), tag `library-series:${libraryId}` | `komga.provider.ts:225-226` |
-| Home sections (continue reading, ongoing, latest, recently read, reading lists, primary/deferred wrappers) | 120 s (2 min), tag `HOME_CACHE_TAG` | `komga.provider.ts:418,439,507,528,543,558`; `stripstream.provider.ts:329,343,354,365,376` |
-| Single-book / estimate lookups | 30 s | `komga.provider.ts:297,313,355,360` |
+| `getLibraries()` | 300 s (5 min) | `komga.provider.ts:193-195` |
+| `getSeries()` (library series listing) | 120 s (2 min), tags `library-series` + `library-series:${libraryId}` | `komga.provider.ts:229-230` |
+| Home sections (continue reading, ongoing, latest, recently read, reading lists, primary/deferred wrappers) | 120 s (2 min), tag `HOME_CACHE_TAG` | `komga.provider.ts:482,503,537,579,600,615`; `stripstream.provider.ts:397,411,422,433,444` |
+| `getBook()` / `getSeriesById()` | 30 s / 120 s | `komga.provider.ts:301,311` |
 
 ### Invalidation
 
-Server actions call `updateTag(...)` from `next/cache` (seven action files: `read-progress.ts:15-21`, `config.ts:48-51`, `stripstream-config.ts:42-45`, `favorites.ts:9-11`, `ratings.ts:16`, `series-shelf.ts`, `refresh.ts:15-28`), optionally together with `revalidatePath(...)`. `updateTag` immediately expires the tagged entries so the action's own re-render sees fresh data (Next.js 16 read-your-writes semantics).
+Server actions do not assemble tag lists themselves: they call a recipe from `src/lib/cache/invalidation.ts`. Each recipe is the single owner of the mapping “what changed → which cache entries and routes depend on it”:
 
-> Historical note: pre-overhaul documentation described `revalidateTag(tag, "max")`. The current code has **no `revalidateTag` call site** — the only remaining textual mention is a stale comment at `src/components/series/SeriesHeader.tsx:63`. Do not reintroduce `revalidateTag` blindly; follow the `updateTag` call sites above.
+| Recipe | Called by | Invalidates |
+| --- | --- | --- |
+| `invalidateReadProgress(seriesId?)` | `actions/read-progress.ts` | home, library series, ratings list, stats, `series-books:${id}` (global `series-books` when the series is unknown) |
+| `invalidateSeriesRating(seriesId)` | `actions/ratings.ts` | `series-rating:${id}`, ratings list |
+| `invalidateSeriesShelf(seriesId, libraryId?)` | `actions/series-shelf.ts` | home, `series-shelf:${id}`, the library's series list, and the matching routes |
+| `invalidateFavorites()` | `actions/favorites.ts` | favorites, home |
+| `invalidateConnectionChange()` | `actions/config.ts`, `actions/stripstream-config.ts` | home, library series, series books, favorites; `/settings` and `/` |
+| `invalidateForRefresh(scope, id)` | `actions/refresh.ts` (thin wrapper) | only the requested scope; `series` also targets `series-books:${id}` so a list first cached from another route is refreshed |
+
+Recipes call `updateTag(...)`, plus `revalidatePath(...)` where a route payload is affected. `updateTag` immediately expires the tagged entries so the action's own re-render sees fresh data (Next.js 16 read-your-writes semantics). The module imports `next/cache` and must only be imported from Server Actions / Route Handlers, never during render.
+
+> Historical note: pre-overhaul documentation described `revalidateTag(tag, "max")`. The current code has **no `revalidateTag` call site** — the only remaining textual mention is a stale comment at `src/components/series/SeriesHeader.tsx:63`. Do not reintroduce `revalidateTag` blindly; follow the recipes above.
 
 `force-dynamic` was deliberately removed from the image proxy routes so the handlers' `Cache-Control` headers take effect (`src/app/api/komga/books/[bookId]/pages/[pageNumber]/route.ts:54` sets `public, max-age=31536000`; `src/lib/services/komga/image.service.ts:41` uses `public, max-age=..., immutable`; the Stripstream page route uses `max-age=86400` at `src/app/api/stripstream/images/books/[bookId]/pages/[pageNumber]/route.ts:41`). Do not reintroduce it there. `force-dynamic` remains intentional on the settings/admin/account pages (`src/app/settings/page.tsx:9`, `src/app/admin/page.tsx:7`, `src/app/account/page.tsx:7`).
 

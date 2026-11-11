@@ -39,7 +39,7 @@ import type {
   StripstreamSeriesRatingsResponse,
   StripstreamIndexJob,
 } from "@/types/stripstream";
-import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, SERIES_BOOKS_CACHE_TAG, SERIES_RATING_CACHE_TAG, SERIES_SHELF_CACHE_TAG, RATINGS_LIST_CACHE_TAG, STATS_CACHE_TAG, FAVORITES_CACHE_TAG } from "@/constants/cacheConstants";
+import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, SERIES_BOOKS_CACHE_TAG, SERIES_RATING_CACHE_TAG, SERIES_SHELF_CACHE_TAG, RATINGS_LIST_CACHE_TAG, STATS_CACHE_TAG, FAVORITES_CACHE_TAG, cacheTags } from "@/constants/cacheConstants";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 
@@ -87,7 +87,7 @@ export class StripstreamProvider implements IMediaProvider {
       params,
       {
         revalidate: CACHE_TTL_MED,
-        tags: [LIBRARY_SERIES_CACHE_TAG, `library-series:${libraryId}`],
+        tags: [LIBRARY_SERIES_CACHE_TAG, cacheTags.librarySeries(libraryId)],
       }
     );
 
@@ -296,8 +296,8 @@ export class StripstreamProvider implements IMediaProvider {
     params.page = String(pageNumber);
 
     const granularTags: string[] = [SERIES_BOOKS_CACHE_TAG];
-    if (params.series) granularTags.push(`series-books:${params.series}`);
-    if (filter.libraryId) granularTags.push(`library-books:${filter.libraryId}`);
+    if (params.series) granularTags.push(cacheTags.seriesBooks(params.series));
+    if (filter.libraryId) granularTags.push(cacheTags.libraryBooks(filter.libraryId));
 
     const response = await this.client.fetch<StripstreamBooksPage>("books", params, {
       revalidate: CACHE_TTL_MED,
@@ -482,7 +482,7 @@ export class StripstreamProvider implements IMediaProvider {
       const response = await this.client.fetch<StripstreamSeriesRatingsResponse>(
         `series/${seriesId}/ratings`,
         undefined,
-        { revalidate: CACHE_TTL_SHORT, tags: [SERIES_RATING_CACHE_TAG, `series-rating:${seriesId}`] }
+        { revalidate: CACHE_TTL_SHORT, tags: [SERIES_RATING_CACHE_TAG, cacheTags.seriesRating(seriesId)] }
       );
       return {
         userRating: response.user_rating,
@@ -689,7 +689,7 @@ export class StripstreamProvider implements IMediaProvider {
       const items = await this.client.fetch<StripstreamRecommendedSeriesItem[]>(
         `series/recommendations`,
         { limit: String(limit) },
-        { revalidate: CACHE_TTL_MED, tags: [`series-recommendations`] }
+        { revalidate: CACHE_TTL_MED, tags: [cacheTags.seriesRecommendations] }
       );
       return items.map(StripstreamAdapter.toNormalizedRecommendedSeries);
     } catch {
@@ -723,7 +723,7 @@ export class StripstreamProvider implements IMediaProvider {
   async isShelved(seriesId: string): Promise<boolean> {
     return this.client.fetch<boolean>(`series/${seriesId}/shelf`, undefined, {
       revalidate: CACHE_TTL_SHORT,
-      tags: [SERIES_SHELF_CACHE_TAG, `series-shelf:${seriesId}`],
+      tags: [SERIES_SHELF_CACHE_TAG, cacheTags.seriesShelf(seriesId)],
     });
   }
 
@@ -740,7 +740,7 @@ export class StripstreamProvider implements IMediaProvider {
       const items = await this.client.fetch<StripstreamRelatedSeriesItem[]>(
         `series/${seriesId}/related`,
         { limit: String(limit) },
-        { revalidate: CACHE_TTL_MED, tags: [`series-related:${seriesId}`] }
+        { revalidate: CACHE_TTL_MED, tags: [cacheTags.seriesRelated(seriesId)] }
       );
       return items.map(StripstreamAdapter.toNormalizedRelatedSeries);
     } catch {
