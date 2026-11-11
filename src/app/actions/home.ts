@@ -2,7 +2,8 @@
 
 import { getProvider } from "@/lib/providers/provider.factory";
 import { FavoriteService } from "@/lib/services/favorite.service";
-import { CONTINUE_READING_PAGE_SIZE } from "@/constants/homeConstants";
+import { HOME_FEED_PAGE_SIZE } from "@/constants/homeConstants";
+import { paginateFeed, type FeedPage } from "@/lib/home/feed-page";
 import {
   buildResumeEntries,
   mergeResumeBooks,
@@ -22,49 +23,56 @@ export type HomeFeed =
 
 export type HomeFeedItem = NormalizedBook | NormalizedSeries | StripstreamReadingList;
 
-export interface HomeFeedResult {
-  items: HomeFeedItem[];
-  hasMore: boolean;
-}
+/** Une page d'un flux de l'accueil : seuls les nouveaux éléments sont renvoyés. */
+export type HomeFeedPage = FeedPage<HomeFeedItem>;
 
-export interface ContinueReadingPage {
-  /** Uniquement les nouveaux tomes : le hero ajoute la page à sa liste. */
-  items: ResumeEntry[];
-  hasMore: boolean;
-}
+/** Une page du hero : seuls les nouveaux tomes sont renvoyés. */
+export type ContinueReadingPage = FeedPage<ResumeEntry>;
 
 /**
  * Charge la page suivante du hero « Reprendre la lecture ».
  *
- * `visibleCount` est le nombre de tomes déjà affichés. La réponse ne contient
- * que les nouveaux tomes, avec leur série et leur progression déjà résolues :
- * le hero n'a plus à fusionner ni à matcher côté client.
+ * `offset` est le nombre de tomes déjà affichés. La réponse ne contient que la
+ * nouvelle page, avec la série et la progression déjà résolues : le hero
+ * n'a plus à fusionner ni à matcher côté client.
  */
 export async function loadContinueReading(
-  visibleCount: number
+  offset: number
 ): Promise<ContinueReadingPage> {
   const provider = await getProvider();
   if (!provider) return { items: [], hasMore: false };
 
-  const requestedCount = visibleCount + CONTINUE_READING_PAGE_SIZE;
+  const start = Math.max(0, offset);
+  const pageEnd = start + HOME_FEED_PAGE_SIZE;
   const books = mergeResumeBooks(
-    await provider.getHomeContinueReadingData(requestedCount + 1)
+    await provider.getHomeContinueReadingData(pageEnd + 1)
   );
-  const newBooks = books.slice(visibleCount, requestedCount);
-  const series = await resolveSeriesPool(provider, newBooks);
+  const page = paginateFeed(books, start, HOME_FEED_PAGE_SIZE);
+  const series = await resolveSeriesPool(provider, page.items);
 
   return {
-    items: buildResumeEntries(newBooks, series),
-    hasMore: books.length > requestedCount,
+    items: buildResumeEntries(page.items, series),
+    hasMore: page.hasMore,
   };
 }
 
-export async function loadHomeFeed(feed: HomeFeed, visibleCount: number): Promise<HomeFeedResult> {
+/**
+ * Charge une page d'un flux de l'accueil à partir de `offset`.
+ *
+ * Chaque flux est lu avec un élément de sonde en plus (`pageEnd + 1`) pour
+ * connaître `hasMore` sans requête de comptage. Seule la page demandée est
+ * renvoyée : la politique de pagination reste côté client, dans un seul module.
+ */
+export async function loadHomeFeed(
+  feed: HomeFeed,
+  offset: number
+): Promise<HomeFeedPage> {
   const provider = await getProvider();
   if (!provider) return { items: [], hasMore: false };
 
-  const requestedCount = visibleCount + CONTINUE_READING_PAGE_SIZE;
-  const queryLimit = requestedCount + 1;
+  const start = Math.max(0, offset);
+  const pageEnd = start + HOME_FEED_PAGE_SIZE;
+  const queryLimit = pageEnd + 1;
   let items: HomeFeedItem[];
 
   switch (feed) {
@@ -88,10 +96,5 @@ export async function loadHomeFeed(feed: HomeFeed, visibleCount: number): Promis
       break;
   }
 
-  const visibleItems = items.slice(0, requestedCount);
-
-  return {
-    items: visibleItems,
-    hasMore: items.length > requestedCount,
-  };
+  return paginateFeed(items, start, HOME_FEED_PAGE_SIZE);
 }

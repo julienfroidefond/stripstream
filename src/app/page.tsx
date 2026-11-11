@@ -6,7 +6,7 @@ import {
   buildResumeEntries,
   mergeResumeBooks,
 } from "@/lib/resume/resume-state";
-import { CONTINUE_READING_PAGE_SIZE } from "@/constants/homeConstants";
+import { HOME_FEED_PAGE_SIZE } from "@/constants/homeConstants";
 import {
   HomeCarouselSkeleton,
   HomeHeroSkeleton,
@@ -30,7 +30,7 @@ import type { NormalizedBook, NormalizedSeries } from "@/lib/providers/types";
 import type { HomePrimaryData } from "@/types/home";
 import type { StripstreamReadingList } from "@/types/stripstream";
 
-const HOMEPAGE_INITIAL_QUERY_LIMIT = 9;
+const HOMEPAGE_INITIAL_QUERY_LIMIT = HOME_FEED_PAGE_SIZE + 1;
 
 interface HomeFeedState<T> {
   data: T;
@@ -179,13 +179,13 @@ async function ContinueReadingSection({
   // Le pool « ongoing » est borné : on résout en plus les séries des tomes
   // affichés par le hero, sinon un tome sans série connue n'affiche que son
   // numéro (nom/résumé/genres/auteurs manquants).
-  const books = continueReading.slice(0, CONTINUE_READING_PAGE_SIZE);
+  const books = continueReading.slice(0, HOME_FEED_PAGE_SIZE);
   const heroSeries = await resolveSeriesPool(provider, books, ongoing);
 
   return (
     <ContinueReadingHero
       initialItems={buildResumeEntries(books, heroSeries)}
-      initialHasMore={continueReading.length > CONTINUE_READING_PAGE_SIZE}
+      initialHasMore={continueReading.length > HOME_FEED_PAGE_SIZE}
     />
   );
 }

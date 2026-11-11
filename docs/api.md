@@ -145,8 +145,8 @@ Tous les fichiers de `src/app/actions/` commencent par `"use server"`. Les actio
 
 | Action | Rôle |
 | --- | --- |
-| `loadContinueReading` | Charge la page suivante du hero « Reprendre la lecture ». `visibleCount` est le nombre de tomes déjà affichés ; l'action renvoie uniquement les nouveaux tomes, déjà résolus en entrées de reprise (`book`, `series`, `progressPercent`). Le hero ajoute la page à sa liste et n'a plus à fusionner ni à matcher côté client. |
-| `loadHomeFeed` | Charge une section paginée de la home : `ongoing`, `favorites`, `reading-lists`, `latest-series`, `recently-read` ou `recommendations`. |
+| `loadContinueReading` | Charge la page suivante du hero « Reprendre la lecture ». `offset` est le nombre de tomes déjà affichés ; l'action renvoie uniquement la nouvelle page, déjà résolue en entrées de reprise (`book`, `series`, `progressPercent`). Le hero ajoute la page à sa liste et n'a plus à fusionner ni à matcher côté client. |
+| `loadHomeFeed` | Charge une page d'une section de la home : `ongoing`, `favorites`, `reading-lists`, `latest-series`, `recently-read` ou `recommendations`. `offset` est le nombre d'éléments déjà affichés ; l'action renvoie `{ items, hasMore }` pour la seule nouvelle page. |
 
 ### src/app/actions/library.ts
 

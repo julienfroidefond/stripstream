@@ -3,7 +3,6 @@
 import {
   useRef,
   useState,
-  useTransition,
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { useRouter } from "next/navigation";
@@ -14,7 +13,9 @@ import { Button } from "@/components/ui/button";
 import { BookCoverScene } from "@/components/ui/book-cover-scene";
 import { LoadMoreLabel } from "@/components/ui/load-more-label";
 import { useCoverInteraction } from "@/hooks/useCoverInteraction";
+import { useFeedPagination } from "@/hooks/useFeedPagination";
 import { useTranslate } from "@/hooks/useTranslate";
+import { HOME_FEED_PAGE_SIZE } from "@/constants/homeConstants";
 import { cn } from "@/lib/utils";
 import { loadContinueReading } from "@/app/actions/home";
 import {
@@ -290,9 +291,32 @@ export function ContinueReadingHero({ initialItems, initialHasMore }: ContinueRe
     direction: number;
     offset: number;
   } | null>(null);
-  const [loadedItems, setLoadedItems] = useState(initialItems);
-  const [hasMore, setHasMore] = useState(initialHasMore);
-  const [isPending, startTransition] = useTransition();
+  const {
+    items: loadedItems,
+    hasMore,
+    isPending,
+    loadMore,
+  } = useFeedPagination<ResumeEntry>({
+    initialItems,
+    initialHasMore,
+    pageSize: HOME_FEED_PAGE_SIZE,
+    loadPage: loadContinueReading,
+    onPageAppended: (_page, previousItems) => {
+      const previousTotal = previousItems.length;
+      const previousIndex =
+        previousTotal > 0
+          ? ((index % previousTotal) + previousTotal) % previousTotal
+          : 0;
+      const previousEntry = previousItems[previousIndex];
+
+      // La suite se pose sur la première nouveauté : le clic se voit.
+      setIntroPlayed(true);
+      if (!reduce && previousEntry) {
+        setTransition({ from: previousEntry, direction: 1, offset: 0 });
+      }
+      setIndex(previousTotal);
+    },
+  });
   const sectionRef = useRef<HTMLElement | null>(null);
   const sceneBackdropRef = useRef<HTMLDivElement | null>(null);
   const introBackdropRef = useRef<HTMLDivElement | null>(null);
@@ -391,25 +415,6 @@ export function ContinueReadingHero({ initialItems, initialHasMore }: ContinueRe
   const handleHeroPointerLeave = (event: ReactPointerEvent<HTMLElement>) => {
     if (reduce || !introDone || event.pointerType !== "mouse") return;
     tiltScene(0, 0, true);
-  };
-
-  const handleLoadMore = () => {
-    const firstNew = loadedItems.length;
-    startTransition(async () => {
-      const result = await loadContinueReading(firstNew);
-      if (result.items.length === 0) {
-        setHasMore(result.hasMore);
-        return;
-      }
-      setLoadedItems((current) => [...current, ...result.items]);
-      setHasMore(result.hasMore);
-      // La suite se pose sur la première nouveauté : le clic se voit.
-      setIntroPlayed(true);
-      if (!reduce) {
-        setTransition({ from: entry, direction: 1, offset: 0 });
-      }
-      setIndex(firstNew);
-    });
   };
 
   useGsapEffect(
@@ -719,7 +724,7 @@ export function ContinueReadingHero({ initialItems, initialHasMore }: ContinueRe
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={handleLoadMore}
+                onClick={loadMore}
                 disabled={isPending}
                 aria-busy={isPending}
                 className="disabled:opacity-100"

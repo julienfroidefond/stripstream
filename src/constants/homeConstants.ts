@@ -1,2 +1,2 @@
-/** Nombre de tomes chargés par page dans le hero « Reprendre la lecture ». */
-export const CONTINUE_READING_PAGE_SIZE = 8;
+/** Nombre d'éléments chargés par page par le hero et les rangées de l'accueil. */
+export const HOME_FEED_PAGE_SIZE = 8;
