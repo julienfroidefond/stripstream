@@ -5,6 +5,7 @@ import { RotateCw } from "lucide-react";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { cn } from "@/lib/utils";
 import type { FitMode } from "../hooks/useFitMode";
+import type { PageImage } from "../hooks/useImageLoader";
 import { planTurn, type PageRect, type ReaderSnapshot, type TurnPlan } from "../hooks/pageTurn";
 import { PageTurnOverlay } from "./PageTurnOverlay";
 
@@ -20,11 +21,9 @@ function measure(image: HTMLImageElement | null): PageRect | null {
 
 interface PageDisplayProps {
   currentPage: number;
-  pages: number[];
   isDoublePage: boolean;
   shouldShowDoublePage: (page: number) => boolean;
-  imageBlobUrls: Record<number, string>;
-  imageErrors: Record<number | string, boolean>;
+  getPageImage: (pageNum: number) => PageImage;
   onRetryImage: (pageNum: number) => void;
   isRTL: boolean;
   fitMode: FitMode;
@@ -83,11 +82,9 @@ function imageClassNameFor(fitMode: FitMode, isLoading: boolean) {
 
 export function PageDisplay({
   currentPage,
-  pages: _pages,
   isDoublePage,
   shouldShowDoublePage,
-  imageBlobUrls,
-  imageErrors,
+  getPageImage,
   onRetryImage,
   isRTL,
   fitMode,
@@ -95,12 +92,14 @@ export function PageDisplay({
   startBump,
 }: PageDisplayProps) {
   // États dérivés directement pendant le rendu (pas de setState dans un effet).
-  const currentBlobUrl = imageBlobUrls[currentPage];
-  const nextBlobUrl = imageBlobUrls[currentPage + 1];
-  const isLoading = !currentBlobUrl;
-  const hasError = !!imageErrors[currentPage];
-  const secondPageLoading = !nextBlobUrl;
-  const secondPageHasError = !!imageErrors[currentPage + 1];
+  const currentImage = getPageImage(currentPage);
+  const nextImage = getPageImage(currentPage + 1);
+  const currentBlobUrl = currentImage.url;
+  const nextBlobUrl = nextImage.url;
+  const isLoading = currentImage.isLoading;
+  const hasError = currentImage.error;
+  const secondPageLoading = nextImage.isLoading;
+  const secondPageHasError = nextImage.error;
 
   const showSecondPage = isDoublePage && shouldShowDoublePage(currentPage);
 
@@ -115,12 +114,21 @@ export function PageDisplay({
   const turnIdRef = useRef(0);
   const [turn, setTurn] = useState<{ id: number; plan: TurnPlan; duration: number } | null>(null);
 
+  // Les URLs changent quand un blob arrive ; le snapshot les lit au moment de
+  // la mesure sans recréer le callback à chaque image.
+  const currentBlobUrlRef = useRef(currentBlobUrl);
+  const nextBlobUrlRef = useRef(nextBlobUrl);
+  useLayoutEffect(() => {
+    currentBlobUrlRef.current = currentBlobUrl;
+    nextBlobUrlRef.current = nextBlobUrl;
+  }, [currentBlobUrl, nextBlobUrl]);
+
   const takeSnapshot = useCallback((): ReaderSnapshot => {
-    const first = { url: currentBlobUrl ?? null, rect: measure(page1Ref.current) };
+    const first = { url: currentBlobUrlRef.current, rect: measure(page1Ref.current) };
     if (!showSecondPage) return { currentPage, slots: [first] };
-    const second = { url: nextBlobUrl ?? null, rect: measure(page2Ref.current) };
+    const second = { url: nextBlobUrlRef.current, rect: measure(page2Ref.current) };
     return { currentPage, slots: isRTL ? [second, first] : [first, second] };
-  }, [currentPage, currentBlobUrl, nextBlobUrl, showSecondPage, isRTL]);
+  }, [currentPage, showSecondPage, isRTL]);
 
   // Une image décodée après le rendu, ou une fenêtre redimensionnée, change
   // le cadre des pages : la mesure suit.
@@ -222,7 +230,7 @@ export function PageDisplay({
       >
         {/* Page 1 */}
         <div className={pageWrapperClass(true)}>
-          {isLoading && !hasError && !imageErrors[currentPage] && (
+          {isLoading && !hasError && (
             <div className="absolute inset-0 flex items-center justify-center z-10 opacity-0 animate-fade-in">
               <div className="relative">
                 <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary/20"></div>
@@ -233,15 +241,15 @@ export function PageDisplay({
               </div>
             </div>
           )}
-          {hasError || imageErrors[currentPage] ? (
+          {hasError ? (
             <ErrorPlaceholder onRetry={() => onRetryImage(currentPage)} />
-          ) : imageBlobUrls[currentPage] ? (
+          ) : currentBlobUrl ? (
             <>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 ref={page1Ref}
-                key={`page-${currentPage}-${imageBlobUrls[currentPage]}`}
-                src={imageBlobUrls[currentPage]}
+                key={`page-${currentPage}-${currentBlobUrl}`}
+                src={currentBlobUrl}
                 onLoad={refreshSnapshot}
                 alt={`Page ${currentPage}`}
                 className={imageClassNameFor(fitMode, isLoading)}
@@ -254,7 +262,7 @@ export function PageDisplay({
         {/* Page 2 (double page) */}
         {showSecondPage && (
           <div className={pageWrapperClass(false)}>
-            {secondPageLoading && !secondPageHasError && !imageErrors[currentPage + 1] && (
+            {secondPageLoading && !secondPageHasError && (
               <div className="absolute inset-0 flex items-center justify-center z-10 opacity-0 animate-fade-in">
                 <div className="relative">
                   <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary/20"></div>
@@ -265,15 +273,15 @@ export function PageDisplay({
                 </div>
               </div>
             )}
-            {secondPageHasError || imageErrors[currentPage + 1] ? (
+            {secondPageHasError ? (
               <ErrorPlaceholder onRetry={() => onRetryImage(currentPage + 1)} />
-            ) : imageBlobUrls[currentPage + 1] ? (
+            ) : nextBlobUrl ? (
               <>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   ref={page2Ref}
-                  key={`page-${currentPage + 1}-${imageBlobUrls[currentPage + 1]}`}
-                  src={imageBlobUrls[currentPage + 1]}
+                  key={`page-${currentPage + 1}-${nextBlobUrl}`}
+                  src={nextBlobUrl}
                   onLoad={refreshSnapshot}
                   alt={`Page ${currentPage + 1}`}
                   className={imageClassNameFor(fitMode, secondPageLoading)}

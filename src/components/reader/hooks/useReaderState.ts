@@ -58,23 +58,6 @@ export function useReaderState({ book, pages, onClose, nextBook }: BookReaderPro
     [nextBook, nextBookPageUrlBuilder]
   );
 
-  const {
-    imageBlobUrls,
-    imageErrors,
-    prefetchImage,
-    retryImage,
-    prefetchPages,
-    prefetchNextBook,
-    cancelAllPrefetches,
-    evictOutsideWindow,
-    prefetchCount,
-  } = useImageLoader({
-    pageUrlBuilder: bookPageUrlBuilder,
-    pages,
-    prefetchCount: preferences.readerPrefetchCount,
-    nextBook: nextBookForLoader,
-  });
-
   const { currentPage, showEndMessage, startBump, navigateToPage, handlePreviousPage, handleNextPage } =
     usePageNavigation({
       book,
@@ -84,6 +67,15 @@ export function useReaderState({ book, pages, onClose, nextBook }: BookReaderPro
       onClose,
       nextBook,
     });
+
+  const { getPageImage, retryImage, cancelAllPrefetches } = useImageLoader({
+    pageUrlBuilder: bookPageUrlBuilder,
+    pages,
+    currentPage,
+    shouldShowDoublePage,
+    prefetchCount: preferences.readerPrefetchCount,
+    nextBook: nextBookForLoader,
+  });
 
   useTouchNavigation({
     onPreviousPage: handlePreviousPage,
@@ -112,50 +104,6 @@ export function useReaderState({ book, pages, onClose, nextBook }: BookReaderPro
       document.body.classList.add("no-pinch-zoom");
     };
   }, []);
-
-  // Prefetch + éviction de la fenêtre cache à chaque changement de page
-  useEffect(() => {
-    const visiblePages: number[] = [];
-    if (isDoublePage && shouldShowDoublePage(currentPage)) {
-      visiblePages.push(currentPage, currentPage + 1);
-    } else {
-      visiblePages.push(currentPage);
-    }
-
-    console.debug(`[reader/state] page=${currentPage} visible=[${visiblePages.join(",")}] doublePage=${isDoublePage}`);
-    Promise.all(visiblePages.map((page) => prefetchImage(page))).catch((err) => {
-      console.warn(`[reader/state] prefetch failed page=${currentPage}`, err);
-    });
-
-    const concurrency = isDoublePage && shouldShowDoublePage(currentPage) ? 2 : 4;
-    prefetchPages(currentPage, prefetchCount, visiblePages, concurrency);
-
-    if (
-      isDoublePage &&
-      shouldShowDoublePage(currentPage) &&
-      currentPage + prefetchCount < totalPages
-    ) {
-      prefetchPages(currentPage + prefetchCount, 1, visiblePages, concurrency);
-    }
-
-    const pagesFromEnd = totalPages - currentPage;
-    if (pagesFromEnd <= prefetchCount && nextBook) {
-      prefetchNextBook(prefetchCount);
-    }
-
-    evictOutsideWindow(currentPage);
-  }, [
-    currentPage,
-    isDoublePage,
-    shouldShowDoublePage,
-    prefetchImage,
-    prefetchPages,
-    prefetchNextBook,
-    evictOutsideWindow,
-    prefetchCount,
-    totalPages,
-    nextBook,
-  ]);
 
   const handleCloseReader = useCallback(
     (page: number) => {
@@ -272,8 +220,7 @@ export function useReaderState({ book, pages, onClose, nextBook }: BookReaderPro
     fitMode,
     pageTurn: preferences.readerPageTurn,
     startBump,
-    imageBlobUrls,
-    imageErrors,
+    getPageImage,
     shouldShowDoublePage,
     onPreviousPage: handlePreviousPage,
     onNextPage: handleNextPage,
