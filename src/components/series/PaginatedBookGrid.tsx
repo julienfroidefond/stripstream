@@ -2,9 +2,8 @@
 
 import { BookGrid } from "./BookGrid";
 import { BookList } from "./BookList";
-import { Pagination } from "@/components/ui/Pagination";
+import { CollectionShell } from "@/components/common/CollectionShell";
 import { useRouter } from "next/navigation";
-import { cn } from "@/lib/utils";
 import { useState, useCallback, useMemo } from "react";
 import type { NormalizedBook, NormalizedMissingBook } from "@/lib/providers/types";
 import { useTranslate } from "@/hooks/useTranslate";
@@ -124,25 +123,45 @@ export function PaginatedBookGrid({
     void persistPreferences({ hideMissingBooks: next });
   }, [captureLayout, hideMissing, persistPreferences]);
 
-  // Calculate start and end indices for display
-  const startIndex = (currentPage - 1) * effectivePageSize + 1;
-  const endIndex = Math.min(currentPage * effectivePageSize, totalElements);
-
-  const getShowingText = () => {
-    if (!totalElements) return t("books.empty");
-
-    return t("books.display.showing", {
-      start: startIndex,
-      end: endIndex,
-      total: totalElements,
-    });
-  };
+  const specialBooksSection =
+    specialBooks.length > 0 ? (
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-muted-foreground">{t("books.special")}</h3>
+        {viewMode === "grid" ? (
+          <BookGrid
+            books={specialBooks}
+            onBookClick={handleBookClick}
+            isCompact={isCompact}
+            onRefresh={onRefresh}
+          />
+        ) : (
+          <BookList
+            books={specialBooks}
+            onBookClick={handleBookClick}
+            isCompact={isCompact}
+            onRefresh={onRefresh}
+          />
+        )}
+      </div>
+    ) : null;
 
   return (
-    <div className="space-y-8 py-8">
-      <div className="flex flex-col gap-4">
-        <p className="text-sm text-muted-foreground text-right">{getShowingText()}</p>
-        <div className="flex items-center justify-end gap-2 flex-wrap">
+    <CollectionShell
+      className="py-8"
+      toolbarAlign="end"
+      showingKey="books.display.showing"
+      emptyText={t("books.empty")}
+      pageKey="books.display.page"
+      currentPage={currentPage}
+      totalPages={totalPages}
+      pageSize={effectivePageSize}
+      totalElements={totalElements}
+      busy={isNavigating}
+      gridRef={gridRef}
+      onPageChange={handlePageChange}
+      footer={specialBooksSection}
+      toolbar={
+        <>
           <PageSizeSelect
             pageSize={effectivePageSize}
             isCompact={isCompact}
@@ -154,69 +173,24 @@ export function PaginatedBookGrid({
           {missingBooks.length > 0 && (
             <MissingFilterButton active={hideMissing} onToggle={toggleHideMissing} />
           )}
-        </div>
-      </div>
-
-      {/* Pendant la navigation, la grille s'atténue et recule un peu ; elle est
-          remontée à chaque nouveau contenu, et toutes ses cartes rejouent leur
-          entrée. */}
-      <div
-        ref={gridRef}
-        aria-busy={isNavigating}
-        className={cn(
-          "transition-[opacity,scale] duration-300 ease-projection motion-reduce:transition-none",
-          isNavigating && "pointer-events-none scale-[0.985] opacity-45"
-        )}
-      >
-        {viewMode === "grid" ? (
-          <BookGrid
-            books={displayBooks}
-            onBookClick={handleBookClick}
-            isCompact={isCompact}
-            onRefresh={onRefresh}
-          />
-        ) : (
-          <BookList
-            books={displayBooks}
-            onBookClick={handleBookClick}
-            isCompact={isCompact}
-            onRefresh={onRefresh}
-          />
-        )}
-      </div>
-
-      {specialBooks.length > 0 && (
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-muted-foreground">{t("books.special")}</h3>
-          {viewMode === "grid" ? (
-            <BookGrid
-              books={specialBooks}
-              onBookClick={handleBookClick}
-              isCompact={isCompact}
-              onRefresh={onRefresh}
-            />
-          ) : (
-            <BookList
-              books={specialBooks}
-              onBookClick={handleBookClick}
-              isCompact={isCompact}
-              onRefresh={onRefresh}
-            />
-          )}
-        </div>
-      )}
-
-      <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
-        <p className="text-sm text-muted-foreground order-2 sm:order-1">
-          {t("books.display.page", { current: currentPage, total: totalPages })}
-        </p>
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
-          className="order-1 sm:order-2"
+        </>
+      }
+    >
+      {viewMode === "grid" ? (
+        <BookGrid
+          books={displayBooks}
+          onBookClick={handleBookClick}
+          isCompact={isCompact}
+          onRefresh={onRefresh}
         />
-      </div>
-    </div>
+      ) : (
+        <BookList
+          books={displayBooks}
+          onBookClick={handleBookClick}
+          isCompact={isCompact}
+          onRefresh={onRefresh}
+        />
+      )}
+    </CollectionShell>
   );
 }

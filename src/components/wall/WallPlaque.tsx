@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { usePresence } from "@/components/motion";
 import { SplitText } from "@/lib/gsap";
 import { useTranslate } from "@/hooks/useTranslate";
-import { isWallItemComplete } from "@/lib/wall-filter";
+import { getSeriesReadingState } from "@/lib/series-reading-status";
 import type { WallItem } from "@/types/wall";
 import { cn } from "@/lib/utils";
 
@@ -122,10 +122,10 @@ export function WallPlaque({ item, placement, open, onClose }: WallPlaqueProps) 
     },
   });
 
-  const progress =
-    item.bookCount > 0 ? Math.min(1, Math.max(0, item.booksReadCount / item.bookCount)) : 0;
-  const complete = isWallItemComplete(item);
-  const started = item.booksReadCount > 0;
+  const readingState = getSeriesReadingState(item);
+  const progress = readingState.progress;
+  const complete = readingState.status === "read";
+  const started = readingState.read > 0;
   const volumeLabel =
     item.bookCount > 1
       ? t("wall.volumes", { count: item.bookCount })
@@ -169,8 +169,10 @@ export function WallPlaque({ item, placement, open, onClose }: WallPlaqueProps) 
             {complete
               ? t("wall.completed")
               : started
-                ? t("wall.progress", { read: item.booksReadCount, total: item.bookCount })
-                : t("wall.unread")}
+                ? t("wall.progress", { read: readingState.read, total: readingState.total })
+                : readingState.status === "no-books"
+                  ? t("series.status.noBooks")
+                  : t("wall.unread")}
           </p>
           <div className="wall-plaque-progress-track" aria-hidden>
             <div

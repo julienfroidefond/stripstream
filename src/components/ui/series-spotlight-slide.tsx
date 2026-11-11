@@ -23,6 +23,7 @@ import { CountUp, Magnetic, ProgressFill } from "@/components/motion";
 import { useAnonymous } from "@/contexts/AnonymousContext";
 import { useCoverInteraction } from "@/hooks/useCoverInteraction";
 import { useTranslate } from "@/hooks/useTranslate";
+import { getSeriesReadingState } from "@/lib/series-reading-status";
 import type { NormalizedSeries } from "@/lib/providers/types";
 
 const SERIES_STATUS: Record<
@@ -74,11 +75,9 @@ export function SeriesSpotlightSlide({
     (genres.length > 0 ? genres.slice(0, 3).join(" • ") : null) ||
     authorsText;
   const seriesStatus = series.seriesStatus ? SERIES_STATUS[series.seriesStatus] : undefined;
-  const hasProgress =
-    !isAnonymous && series.bookCount > 0 && series.booksReadCount > 0;
-  const percent = hasProgress
-    ? Math.min(100, Math.round((series.booksReadCount / series.bookCount) * 100))
-    : 0;
+  const readingState = getSeriesReadingState(series);
+  const hasProgress = !isAnonymous && readingState.read > 0;
+  const percent = hasProgress ? readingState.percent : 0;
 
   return (
     <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:gap-9">
@@ -205,8 +204,8 @@ export function SeriesSpotlightSlide({
               </span>
               <span className="tabular-nums">
                 {t("series.header.status.progress", {
-                  read: series.booksReadCount,
-                  total: series.bookCount,
+                  read: readingState.read,
+                  total: readingState.total,
                 })}
               </span>
             </div>

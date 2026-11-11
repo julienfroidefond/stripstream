@@ -4,6 +4,7 @@ import { ProgressBar } from "./progress-bar";
 import { BookX, CircleDot, CircleCheck, CirclePause, CircleX, type LucideIcon } from "lucide-react";
 import type { SeriesCoverProps } from "./cover-utils";
 import { useCoverLoaded } from "@/hooks/useCoverLoaded";
+import { getSeriesReadingState } from "@/lib/series-reading-status";
 import { cn } from "@/lib/utils";
 
 
@@ -28,11 +29,16 @@ export function SeriesCover({
     series.thumbnailUrl,
     { eager }
   );
-  const isCompleted = isAnonymous ? false : series.bookCount === series.booksReadCount;
+  const readingState = getSeriesReadingState(series);
+  const isCompleted = !isAnonymous && readingState.status === "read";
 
-  const readBooks = isAnonymous ? 0 : series.booksReadCount;
-  const totalBooks = series.bookCount;
-  const showProgress = Boolean(!isAnonymous && showProgressUi && totalBooks > 0 && readBooks > 0 && !isCompleted);
+  const readBooks = isAnonymous ? 0 : readingState.read;
+  const totalBooks = readingState.total;
+  const showProgress = Boolean(
+    !isAnonymous &&
+      showProgressUi &&
+      readingState.status === "in-progress"
+  );
   const missingCount = series.missingCount;
   const statusStyle = series.seriesStatus ? seriesStatusStyles[series.seriesStatus] : null;
 

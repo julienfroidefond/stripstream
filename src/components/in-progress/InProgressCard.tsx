@@ -6,6 +6,7 @@ import { BookCoverScene } from "@/components/ui/book-cover-scene";
 import { SeriesCover } from "@/components/ui/series-cover";
 import { useTranslate } from "@/hooks/useTranslate";
 import { cn } from "@/lib/utils";
+import { getSeriesReadingState } from "@/lib/series-reading-status";
 import { isPaused, type InProgressItem } from "@/lib/services/in-progress.service";
 import { InProgressFavoriteButton } from "./InProgressFavoriteButton";
 import { InProgressShelfButton } from "./InProgressShelfButton";
@@ -44,13 +45,14 @@ export function InProgressCard({
     : null;
   const paused = isPaused(item);
   const almostDone = remainingBooks <= 2;
+  const readingState = getSeriesReadingState(series);
   const progressLabel =
-    series.bookCount > 0
+    readingState.total > 0
       ? t(
-          series.bookCount === 1
+          readingState.total === 1
             ? "inProgress.card.progress"
             : "inProgress.card.progress_plural",
-          { read: series.booksReadCount, count: series.bookCount }
+          { read: readingState.read, count: readingState.total }
         )
       : t("series.status.noBooks");
 

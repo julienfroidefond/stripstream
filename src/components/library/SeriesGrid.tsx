@@ -8,6 +8,7 @@ import { SeriesCover } from "@/components/ui/series-cover";
 import { CoverCard, CoverEdge } from "@/components/ui/cover-card";
 import { useTranslate } from "@/hooks/useTranslate";
 import { useAnonymous } from "@/contexts/AnonymousContext";
+import { useSeriesReadingStatus } from "@/components/ui/series-reading-status";
 import { CircleDot, CircleCheck, CirclePause, CircleX, Snowflake, Star } from "lucide-react";
 import { StaggerGroup, StaggerItem } from "@/components/motion";
 
@@ -25,41 +26,6 @@ interface SeriesGridProps {
   showRating?: boolean;
 }
 
-// Utility function to get reading status info
-const getReadingStatusInfo = (
-  series: NormalizedSeries,
-  t: (key: string, options?: { [key: string]: string | number }) => string
-) => {
-  if (series.bookCount === 0) {
-    return {
-      label: t("series.status.noBooks"),
-      className: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-    };
-  }
-
-  if (series.bookCount === series.booksReadCount) {
-    return {
-      label: t("series.status.read"),
-      className: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-    };
-  }
-
-  if (series.booksReadCount > 0) {
-    return {
-      label: t("series.status.progress", {
-        read: series.booksReadCount,
-        total: series.bookCount,
-      }),
-      className: "bg-primary/10 text-primary",
-    };
-  }
-
-  return {
-    label: t("series.status.unread"),
-    className: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-  };
-};
-
 const SeriesGridItem = memo(function SeriesGridItem({
   series,
   isAnonymous,
@@ -70,7 +36,7 @@ const SeriesGridItem = memo(function SeriesGridItem({
   showRating: boolean;
 }) {
   const { t } = useTranslate();
-  const statusInfo = getReadingStatusInfo(series, t);
+  const statusInfo = useSeriesReadingStatus(series);
   const seriesStatusEntry = series.seriesStatus
     ? seriesStatusMap[series.seriesStatus as keyof typeof seriesStatusMap]
     : null;

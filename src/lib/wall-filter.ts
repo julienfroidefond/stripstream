@@ -1,23 +1,18 @@
 import type { WallItem } from "@/types/wall";
+import { isSeriesRead } from "@/lib/series-reading-status";
 
 /**
  * Le Wall — filtres côté client.
  *
  * Le mur est déjà chargé en entier : filtrer ne demande aucun aller-retour
- * serveur. Une série est « terminée » quand elle compte au moins un tome et
- * que le nombre de tomes lus l'atteint (`booksRead >= bookCount`).
- *
- * Divergence assumée avec les badges de la bibliothèque, qui testent l'égalité
- * stricte (`bookCount === booksReadCount`, cf. `SeriesList`/`SeriesGrid`) : ce
- * `>=` reprend la règle historique de `WallPlaque`. Avec des données
- * fournisseur incohérentes (`booksReadCount > bookCount`), le mur masque donc
- * la série là où la bibliothèque l'affiche encore « en cours ».
+ * serveur. Une série est « terminée » quand le module de statut de lecture la
+ * résout comme lue : au moins un tome, et tous les tomes lus (les données
+ * fournisseur sur-lues sont bornées par ce même module).
  */
 export function isWallItemComplete(
   item: Pick<WallItem, "bookCount" | "booksReadCount">
 ): boolean {
-  const booksRead = Number.isFinite(item.booksReadCount) ? item.booksReadCount : 0;
-  return item.bookCount > 0 && booksRead >= item.bookCount;
+  return isSeriesRead(item);
 }
 
 export function filterWallItems(

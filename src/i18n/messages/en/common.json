@@ -470,6 +470,8 @@
     "completed": "completed",
     "filters": {
       "title": "Filters",
+      "explore": "Explore",
+      "seriesTitle": "Series",
       "showAll": "Show all",
       "unread": "Unread",
       "search": "Search series...",
