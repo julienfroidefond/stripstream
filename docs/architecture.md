@@ -11,12 +11,12 @@ Stripstream is a comic-reader front end; it does **not** own the library. Each u
 
 ### The interface
 
-`IMediaProvider` is defined at `src/lib/providers/provider.interface.ts:23-80`. It covers:
+`IMediaProvider` is defined at `src/lib/providers/provider.interface.ts:26-100`. It covers:
 
 - collections — `getLibraries`, `getLibraryById`, `getSeries`, `getSeriesById`, `getBooks`, `getBook`, `getNextBook`, `getMissingBooks`;
-- home feeds — `getHomePrimaryData`, `getHomeDeferredData`, `getHomeData`, and the individual section methods;
+- home feeds — the individual section methods (`getHomeContinueReadingData`, `getHomeOngoingSeries`, `getHomeLatestSeries`, `getHomeRecentlyRead`, `getHomeReadingLists`); the page composes them itself;
 - read progress — `getReadProgress`, `saveReadProgress`, `resetReadProgress`;
-- series ratings — Stripstream-only; Komga returns `null` / not-supported (`provider.interface.ts:51-54`);
+- series ratings — Stripstream-only; Komga returns `null` / not-supported (`provider.interface.ts:62-64`);
 - series shelf — `isShelved`, `shelveSeries`, `unshelveSeries`; Stripstream-only, Komga returns `false` / not-supported;
 - admin/utility — `scanLibrary` (returns a `{ jobId, progressSupported }` handle), `getScanStatus` (follows that job, or `unavailable` when the backend cannot report it), `getRandomBook`;
 - related/recommended series — `getRelatedSeries`, `getRecommendations`;
@@ -133,7 +133,7 @@ Recipes call `updateTag(...)`, plus `revalidatePath(...)` where a route payload 
 - Codes are declared in `src/constants/errorCodes.ts:3-112`, grouped per domain: `AUTH`, `KOMGA`, `STRIPSTREAM`, `CONFIG`, `LIBRARY`, `SERIES`, `BOOK`, `FAVORITE`, `PREFERENCES`, `UI`, `IMAGE`, `HOME`, `MIDDLEWARE`, `CLIENT`, `ADMIN`.
 - Provider HTTP errors map to status-aware codes via `codeForHttpStatus(status, codes)` (`src/utils/http-error.ts:16-22`): 401 → `UNAUTHORIZED`, 403 → `FORBIDDEN`, 404 → `NOT_FOUND`, 5xx → `SERVER_ERROR`, otherwise `HTTP_ERROR`. `isConnectionError()` (`http-error.ts:39-47`) detects network failures so they can be logged as warnings.
 - User-facing messages are localized under `errors.${code}` in `src/i18n/messages/en/common.json` (block at `:387`) and `src/i18n/messages/fr/common.json` (`:390`). Add keys to **both** locales.
-- Home tolerance: the home page fans out each feed as its own promise with an individual `.catch(...)` (`src/app/page.tsx:42-53`), so one failing feed renders empty instead of breaking the page. `KomgaProvider.getHomeContinueReadingData` uses `Promise.allSettled` over its two Komga calls and throws only when *every* call rejects (`src/lib/providers/komga/komga.provider.ts:469-509`); partial results degrade to empty lists. `getHomeData()` itself still combines the primary and deferred feeds with `Promise.all` (`komga.provider.ts:460-467`), so it fails as a whole.
+- Home tolerance: the home page fans out each feed as its own promise with an individual `.catch(...)` (`src/app/page.tsx:67-84`), so one failing feed renders empty instead of breaking the page. `KomgaProvider.getHomeContinueReadingData` uses `Promise.allSettled` over its two Komga calls and throws only when *every* call rejects (`src/lib/providers/komga/komga.provider.ts:481-521`); partial results degrade to empty lists.
 - Credential-touching connection tests are gated by `requireUserId()` + `checkRateLimit` — keep that pattern for similar actions (`testKomgaConnection` in `src/app/actions/config.ts`; `testStripstreamConnection` in `src/app/actions/stripstream-config.ts:54-83`).
 
 ## 5. Reader
