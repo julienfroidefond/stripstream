@@ -1,6 +1,6 @@
 import { KomgaImageService, THUMBNAIL_TIMEOUT_MS } from "./image.service";
 import { PreferencesService } from "../preferences.service";
-import { ConfigDBService } from "../config-db.service";
+import { requireConnectionForProvider } from "@/lib/connections";
 import { ERROR_CODES } from "../../../constants/errorCodes";
 import { AppError } from "../../../utils/errors";
 import { codeForHttpStatus } from "@/utils/http-error";
@@ -41,8 +41,7 @@ export class KomgaBookService {
    */
   static async streamFile(bookId: string): Promise<Response> {
     try {
-      const config = await ConfigDBService.getConfig();
-      if (!config) throw new AppError(ERROR_CODES.KOMGA.MISSING_CONFIG);
+      const config = await requireConnectionForProvider("komga");
 
       const url = new URL(`${config.url}/api/v1/books/${bookId}/file`).toString();
       const response = await fetch(url, {

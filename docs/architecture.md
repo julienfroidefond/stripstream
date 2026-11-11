@@ -36,17 +36,17 @@ Both backends normalize into shared types in `src/lib/providers/types.ts`; ratin
 
 `NormalizedBook` keeps the series reference explicit: `seriesId` is the provider series id (never a title) and is `null` when the endpoint omits it; `seriesName` is the title and only a fallback. `matchSeries` (`src/lib/resume/identity.ts`) applies the id-first rule, `resolveBookSeries` (`src/lib/resume/series-pool.ts`) is the single network fallback for name-only rows, and `getSeriesById` never receives a series name. Stripstream's first-book-id fallback remains for legacy search URLs.
 
-### Factory
+### Factory and connection resolution
 
-Server code must request the active provider through `getProvider()` (`src/lib/providers/provider.factory.ts:8-36`):
+Server code must request the active provider through `getProvider()` (`src/lib/providers/provider.factory.ts`):
 
 ```ts
 const provider = await getProvider();
 ```
 
-The factory resolves the current user, resolves the active connection, dynamically imports the matching provider and instantiates it with the connection's URL and **decrypted** credentials (`src/lib/credentials.ts`). It returns `null` when there is no authenticated user or no usable config. **Never bypass this** — constructing `KomgaProvider`/`StripstreamProvider` directly breaks multi-config support.
+The factory delegates connection selection to `@/lib/connections` (`resolveActiveConnection`) and construction to `createProvider(connection)`. It returns `null` when there is no authenticated user or no usable config. **Never bypass this** — constructing `KomgaProvider`/`StripstreamProvider` directly breaks multi-config support.
 
-Direct construction still exists in a few places and is the exception, not the pattern: `new KomgaProvider` appears only in `src/lib/providers/provider.factory.ts:34`; `new StripstreamProvider` appears in the factory itself (`src/lib/providers/provider.factory.ts:26,67`, the latter for the reading-list detail helper) and in the Stripstream connection-test actions `testStripstreamConnection` (`src/app/actions/stripstream-config.ts:72`, caller-supplied token, never stored) and `testStripstreamConfigById` (`src/app/actions/stripstream-config.ts:206`, token read straight from the DB row and decrypted). The Komga-side connection tests (`testKomgaConnection`, `testKomgaConfigById` in `src/app/actions/config.ts`) bypass the factory too, with raw `fetch` calls.
+`createProvider(connection)` (`src/lib/providers/provider.factory.ts`) is now the only application constructor: it dynamically imports the matching provider and passes the URL plus **decrypted** credentials. Connection tests go through the same factory via `testConnection(connection)` (`src/lib/connections/probe.ts`), so there is no parallel `fetch` + `Authorization` path.
 
 ### Server URL validation
 
@@ -58,7 +58,19 @@ The residual SSRF surface (an authenticated user chooses which server the instan
 
 A user can hold multiple `KomgaConfig` and `StripstreamConfig` rows (`prisma/schema.prisma`). The migration `prisma/migrations/20260429000000_multi_config/migration.sql` rebuilt both tables: it renamed existing single configs to "Default" and replaced `@unique(userId)` with `@unique(userId, name)`, preserving rows via `INSERT ... SELECT`.
 
-The active selection is **per browser**, not global: httpOnly cookies `stripstream-active-provider`, `stripstream-active-komga-config`, `stripstream-active-stripstream-config` (`src/lib/active-connection.ts:5-7`) are resolved by `getActiveConnection()` (`src/lib/active-connection.ts:24-67`), which validates the cookie's config id against the user's rows and falls back to the user's first config. `setActiveConnection()` (`src/lib/active-connection.ts:69-88`) writes the cookies; the settings actions call it (`src/app/actions/config.ts:254`, `src/app/actions/stripstream-config.ts:228`).
+The active selection is **per browser**, not global: httpOnly cookies `stripstream-active-provider`, `stripstream-active-komga-config`, `stripstream-active-stripstream-config` (`src/lib/connections/active.ts`) are resolved by `getActiveConnection()`, which validates the cookie's config id against the user's rows and falls back to the user's first config. `setActiveConnection()` writes the cookies; the settings actions reach it through `activateConnection()` (`src/lib/connections/manage.ts`).
+
+### One connection module
+
+All connection paths live under `src/lib/connections/`, with `index.ts` as the only public seam:
+
+- `active.ts` — per-browser cookie selection (`getActiveConnection`, `setActiveConnection`).
+- `resolve.ts` — selection, decryption, fallback, ad-hoc connection builders, `resolveActiveConnection`, `resolveConnectionForProvider`, `getStoredConnection` and `requireConnectionForProvider`.
+- `manage.ts` — `listConnections`, `saveConnection`, `deleteConnection`, `activateConnection`, plus cache invalidation.
+- `probe.ts` — the shared 5/30 s connection-test budget and `testConnection` / `testStoredConnection` through the provider factory.
+- `types.ts` — resolved-connection and summary types.
+
+The fallback is uniform: the requested provider's active config, otherwise its first config; Stripstream then falls back to `STRIPSTREAM_URL` / `STRIPSTREAM_TOKEN`, Komga has no environment fallback. A provider-specific request (`resolveConnectionForProvider("komga" | "stripstream")`) therefore still finds that provider's bytes when the other provider is selected. `getStoredConnection` deliberately does **not** fall back, so "test this config" never tests another one. Credentials are decrypted in `resolve.ts`; mutations encrypt in `manage.ts`. Settings actions, `getProvider`, the Komga image/book/series services and the Stripstream image/file routes all consume this module; `ConfigDBService` and `stripstream-config-resolver` no longer exist.
 
 > Legacy note: the `User.activeProvider` / `activeKomgaConfigId` / `activeStripstreamConfigId` columns still exist in `prisma/schema.prisma:19-21` but are not read by current application code — the cookie resolver above is the live mechanism.
 
@@ -184,7 +196,7 @@ Hand-write the SQL, preserve rows, make it idempotent so re-runs are no-ops, and
 
 ## 9. Rate limiting
 
-`checkRateLimit(key, { limit, windowMs })` in `src/utils/rate-limit.ts:30-53` is an in-memory, per-process `Map` (`:13`). It resets on every redeploy and is not shared across instances (documented in the file header, `:1-6`). That is acceptable for the current single-instance SQLite-bound deployment; if the app scales horizontally it must move to a shared store. It is used by the provider connection tests (limit 5 / 30 s; `src/app/actions/config.ts:18-19`, `src/app/actions/stripstream-config.ts:18-19,54-69`) and by auth flows (`ERROR_CODES.AUTH.RATE_LIMITED`).
+`checkRateLimit(key, { limit, windowMs })` in `src/utils/rate-limit.ts:30-53` is an in-memory, per-process `Map` (`:13`). It resets on every redeploy and is not shared across instances (documented in the file header, `:1-6`). That is acceptable for the current single-instance SQLite-bound deployment; if the app scales horizontally it must move to a shared store. It is used by the provider connection tests (limit 5 / 30 s; `checkConnectionTestRateLimit` in `src/lib/connections/probe.ts`, called by both config action files) and by auth flows (`ERROR_CODES.AUTH.RATE_LIMITED`).
 
 ## 10. PWA / offline state
 
@@ -194,7 +206,7 @@ The app is installable as a PWA shell only: `public/manifest.json` is linked fro
 
 ### (a) Provider credentials are encrypted at rest
 
-- The Komga `authHeader` and the Stripstream `token` are stored with an AES-256-GCM envelope (`enc:v1:<iv>:<tag>:<ciphertext>`) produced by `src/lib/credentials.ts`. The key comes from `CREDENTIALS_ENCRYPTION_KEY` (32 bytes base64 or 64 hex characters). Encryption happens at the write boundary (`src/app/actions/config.ts`, `src/app/actions/stripstream-config.ts`, `src/lib/services/config-db.service.ts`); decryption at the read boundary (`src/lib/providers/provider.factory.ts`, `src/lib/providers/stripstream/stripstream-config-resolver.ts`, `ConfigDBService.getConfig()`, the `test*ConfigById` actions).
+- The Komga `authHeader` and the Stripstream `token` are stored with an AES-256-GCM envelope (`enc:v1:<iv>:<tag>:<ciphertext>`) produced by `src/lib/credentials.ts`. The key comes from `CREDENTIALS_ENCRYPTION_KEY` (32 bytes base64 or 64 hex characters). Encryption happens at the write boundary (`src/app/actions/config.ts` and `src/app/actions/stripstream-config.ts`, both through `src/lib/connections/manage.ts`); decryption happens in `src/lib/connections/resolve.ts` before a provider or probe receives the connection.
 - Legacy plaintext rows keep working: a value without the `enc:v1:` prefix is returned as-is. `pnpm encrypt-credentials` migrates them idempotently (it skips already-encrypted rows); in production run it inside the container (`docker exec <container> ./node_modules/.bin/tsx scripts/encrypt-credentials.ts`, the runner image has no pnpm). It is a script rather than a Prisma migration on purpose: migrations are plain SQL run in environments that may not hold the key (CI, container boot, fresh clone), and SQLite cannot compute AES-256-GCM. See `ENV.md`.
 - Without `CREDENTIALS_ENCRYPTION_KEY`, writes fall back to plaintext with a logged warning so an upgrade never bricks the app, but reading an already-encrypted row fails loudly (`CREDENTIALS_MISSING_ENCRYPTION_KEY`) instead of failing silently.
 - Residual limitation: the key lives in the process environment next to the database, so an attacker with full host access can read both. Losing or rotating the key makes stored credentials unreadable — they must be re-entered in the settings.
@@ -208,14 +220,13 @@ The app is installable as a PWA shell only: `public/manifest.json` is linked fro
 
 ### (c) Unit-test coverage is partial
 
-Vitest runs the unit suite (`pnpm test:unit`; config `vitest.config.ts`; tests colocated as `src/**/*.test.ts`). Default environment is `node` for pure logic; files that need a DOM opt in per-file with a `// @vitest-environment jsdom` docblock (plus `@testing-library/react`). It currently covers the reader eviction helper (`src/components/reader/hooks/imageEviction.ts`), the page-image lifetime (`src/components/reader/hooks/useImageLoader.ts` and `blobUrlRegistry.ts`: visible-page fetch, single/double mode, dedupe, eviction, unmount revocation, next-book prefetch, retry), the page-turn helper (`src/components/reader/hooks/pageTurn.ts`), the reader navigation/double-page hooks (`src/components/reader/hooks/usePageNavigation.ts`, `useDoublePageMode.ts`), the reader keyboard resolver (`src/components/reader/hooks/keyboardShortcuts.ts`), the error helpers (`src/utils/errors.ts`, `src/utils/image-errors.ts`), the generic utilities (`src/lib/utils.ts`), the toast reducer (`src/components/ui/use-toast.ts`), `src/lib/pageSize.ts`, `src/lib/storage.ts`, `src/lib/providers/scan-status.ts`, `src/utils/http-error.ts`, `src/utils/rate-limit.ts`, `src/lib/providers/ratings.ts`, the Stripstream config resolver (`src/lib/providers/stripstream/stripstream-config-resolver.ts`, with a mocked Prisma client), the credential encryption helpers (`src/lib/credentials.ts`, `src/lib/credentials-migration.ts`) and both provider adapters (Komga + Stripstream normalization). Heavier browser flows that require real paint (page-turn animation, reader gestures) remain exercised through the Playwright E2E suite under `tests/`. The minimum quality gate is `pnpm lint` (0 warnings) + `pnpm typecheck` + `pnpm test:unit`; E2E (`pnpm test:e2e`) is run separately.
+Vitest runs the unit suite (`pnpm test:unit`; config `vitest.config.ts`; tests colocated as `src/**/*.test.ts`). Default environment is `node` for pure logic; files that need a DOM opt in per-file with a `// @vitest-environment jsdom` docblock (plus `@testing-library/react`). It currently covers the reader eviction helper (`src/components/reader/hooks/imageEviction.ts`), the page-image lifetime (`src/components/reader/hooks/useImageLoader.ts` and `blobUrlRegistry.ts`: visible-page fetch, single/double mode, dedupe, eviction, unmount revocation, next-book prefetch, retry), the page-turn helper (`src/components/reader/hooks/pageTurn.ts`), the reader navigation/double-page hooks (`src/components/reader/hooks/usePageNavigation.ts`, `useDoublePageMode.ts`), the reader keyboard resolver (`src/components/reader/hooks/keyboardShortcuts.ts`), the error helpers (`src/utils/errors.ts`, `src/utils/image-errors.ts`), the generic utilities (`src/lib/utils.ts`), the toast reducer (`src/components/ui/use-toast.ts`), `src/lib/pageSize.ts`, `src/lib/storage.ts`, `src/lib/providers/scan-status.ts`, `src/utils/http-error.ts`, `src/utils/rate-limit.ts`, `src/lib/providers/ratings.ts`, the connection module (`src/lib/connections/resolve.ts`, `manage.ts`, `probe.ts`, with mocked Prisma/factory), the credential encryption helpers (`src/lib/credentials.ts`, `src/lib/credentials-migration.ts`) and both provider adapters (Komga + Stripstream normalization). Heavier browser flows that require real paint (page-turn animation, reader gestures) remain exercised through the Playwright E2E suite under `tests/`. The minimum quality gate is `pnpm lint` (0 warnings) + `pnpm typecheck` + `pnpm test:unit`; E2E (`pnpm test:e2e`) is run separately.
 
 ### (d) Minor open backlog (last codebase audit)
 
 - **Reader page bounds** — `usePageNavigation` now guards and clamps page numbers (`src/components/reader/hooks/usePageNavigation.ts:98,118,127,142`); the remaining risk is untested edge cases (empty page list, double-page on the last page). Partially mitigated.
 - **Unstable list keys in skeletons** — `src/components/skeletons/RouteSkeletons.tsx:7,107` still renders `key={index}`; replace with stable keys.
 - **Unlogged `Promise.allSettled` rejections** — `src/app/settings/page.tsx:22-30` silently ignores rejected branches, and `KomgaProvider.getHomeContinueReadingData` degrades partial failures to empty arrays without logging the reasons (`src/lib/providers/komga/komga.provider.ts:489-499`). Add `logger.warn` on rejected results.
-- **`ConfigDBService.getConfig()` misnaming** — the generic name returns only the active **Komga** config (`src/lib/services/config-db.service.ts:59-82`); rename to `getActiveKomgaConfig()` or make it polymorphic.
 - **`AbortController` cleanup** — `useImageLoader` relies on the trailing `.finally()` to delete controllers/promises (`src/components/reader/hooks/useImageLoader.ts:266-270`); there is no defensive `try/catch` inside the cleanup, so a catastrophic throw before it would leak entries in the tracking maps.
 
 ### (e) Library scan progress depends on the backend

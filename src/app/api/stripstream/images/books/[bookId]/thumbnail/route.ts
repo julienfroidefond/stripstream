@@ -2,8 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { createHash } from "node:crypto";
 import { getCurrentUser } from "@/lib/auth-utils";
-import { getActiveConnection } from "@/lib/active-connection";
-import { getResolvedStripstreamConfig } from "@/lib/providers/stripstream/stripstream-config-resolver";
+import { resolveConnectionForProvider } from "@/lib/connections";
 import { StripstreamClient } from "@/lib/providers/stripstream/stripstream.client";
 import { AppError } from "@/utils/errors";
 import { ERROR_CODES } from "@/constants/errorCodes";
@@ -28,14 +27,7 @@ export async function GET(
     }
 
     const userId = parseInt(user.id, 10);
-    const activeConnection = await getActiveConnection(userId);
-    if (activeConnection.provider !== "stripstream") {
-      throw new AppError(ERROR_CODES.STRIPSTREAM.MISSING_CONFIG);
-    }
-    const config = await getResolvedStripstreamConfig(
-      userId,
-      activeConnection.configId ?? undefined
-    );
+    const config = await resolveConnectionForProvider("stripstream", userId);
     if (!config) {
       throw new AppError(ERROR_CODES.STRIPSTREAM.MISSING_CONFIG);
     }

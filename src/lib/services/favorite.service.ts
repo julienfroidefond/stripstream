@@ -1,6 +1,6 @@
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "../auth-utils";
-import { getActiveConnection } from "@/lib/active-connection";
+import { getActiveConnection } from "@/lib/connections";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
 import { isConnectionError } from "../../utils/http-error";

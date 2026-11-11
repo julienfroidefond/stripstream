@@ -724,10 +724,10 @@ export class StripstreamProvider implements IMediaProvider {
     }
   }
 
-  async testConnection(): Promise<{ ok: boolean; error?: string }> {
+  async testConnection(): Promise<{ ok: boolean; error?: string; libraryCount?: number }> {
     try {
-      await this.client.fetch<StripstreamLibraryResponse[]>("libraries");
-      return { ok: true };
+      const libraries = await this.client.fetch<StripstreamLibraryResponse[]>("libraries");
+      return { ok: true, libraryCount: libraries.length };
     } catch (error) {
       return { ok: false, error: error instanceof Error ? error.message : "Connexion échouée" };
     }

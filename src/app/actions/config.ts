@@ -1,18 +1,17 @@
 "use server";
 
-import prisma from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth-utils";
+import { requireUserId } from "@/lib/auth-utils";
+import {
+  activateConnection,
+  checkConnectionTestRateLimit,
+  connectionFromKomgaCredentials,
+  deleteConnection,
+  listConnections,
+  saveConnection,
+  testConnection,
+  testStoredConnection,
+} from "@/lib/connections";
 import { AppError } from "@/utils/errors";
-import { ERROR_CODES } from "@/constants/errorCodes";
-import { invalidateConnectionChange } from "@/lib/cache/invalidation";
-import { checkRateLimit } from "@/utils/rate-limit";
-import { normalizeServerUrl } from "@/utils/server-url";
-import { getActiveConnection, setActiveConnection } from "@/lib/active-connection";
-import { buildKomgaAuthHeader, decryptSecret, encryptSecret } from "@/lib/credentials";
-import type { KomgaLibrary } from "@/types/komga";
-
-const TEST_CONNECTION_LIMIT = 5;
-const TEST_CONNECTION_WINDOW_MS = 30_000;
 
 export interface KomgaConfigSummary {
   id: number;
@@ -30,10 +29,8 @@ interface SaveKomgaInput {
   password?: string;
 }
 
-async function requireUserId(): Promise<number> {
-  const user = await getCurrentUser();
-  if (!user) throw new AppError(ERROR_CODES.AUTH.UNAUTHENTICATED);
-  return parseInt(user.id, 10);
+function rateLimitedMessage(retryAfterSeconds: number): string {
+  return `Trop de tentatives. Réessaie dans ${retryAfterSeconds}s.`;
 }
 
 export async function testKomgaConnection(
@@ -43,39 +40,22 @@ export async function testKomgaConnection(
 ): Promise<{ success: boolean; message: string }> {
   try {
     const userId = await requireUserId();
-    const rl = checkRateLimit(`test-komga:${userId}`, {
-      limit: TEST_CONNECTION_LIMIT,
-      windowMs: TEST_CONNECTION_WINDOW_MS,
-    });
-    if (!rl.allowed) {
-      return {
-        success: false,
-        message: `Trop de tentatives. Réessaie dans ${Math.ceil(rl.resetMs / 1000)}s.`,
-      };
+    const rateLimit = checkConnectionTestRateLimit("komga", userId);
+    if (!rateLimit.allowed) {
+      return { success: false, message: rateLimitedMessage(rateLimit.retryAfterSeconds) };
     }
 
-    const authHeader = buildKomgaAuthHeader(username, password);
-    const url = new URL(`${normalizeServerUrl(serverUrl)}/api/v1/libraries`).toString();
-    const headers = new Headers({
-      Authorization: `Basic ${authHeader}`,
-      Accept: "application/json",
-    });
-
-    // L'URL est un serveur auto-hébergé fourni par un utilisateur authentifié,
-    // validée par `normalizeServerUrl` (http(s) uniquement, sans credentials
-    // ni endpoint de métadonnées). Le SSRF est borné et correspond à la
-    // fonctionnalité même de l'application.
-    // codeql[js/request-forgery]
-    const response = await fetch(url, { headers });
-
-    if (!response.ok) {
-      throw new AppError(ERROR_CODES.KOMGA.CONNECTION_ERROR);
+    const result = await testConnection(
+      connectionFromKomgaCredentials(serverUrl, username, password)
+    );
+    if (!result.ok) {
+      return { success: false, message: result.error ?? "Erreur lors de la connexion" };
     }
 
-    const libraries: KomgaLibrary[] = await response.json();
+    const count = result.libraryCount ?? 0;
     return {
       success: true,
-      message: `Connexion réussie ! ${libraries.length} bibliothèque${libraries.length > 1 ? "s" : ""} trouvée${libraries.length > 1 ? "s" : ""}`,
+      message: `Connexion réussie ! ${count} bibliothèque${count > 1 ? "s" : ""} trouvée${count > 1 ? "s" : ""}`,
     };
   } catch (error) {
     if (error instanceof AppError) {
@@ -88,18 +68,7 @@ export async function testKomgaConnection(
 export async function listKomgaConfigs(): Promise<KomgaConfigSummary[]> {
   try {
     const userId = await requireUserId();
-    const [configs, activeConnection] = await Promise.all([
-      prisma.komgaConfig.findMany({
-        where: { userId },
-        orderBy: { createdAt: "asc" },
-        select: { id: true, name: true, url: true, username: true },
-      }),
-      getActiveConnection(userId),
-    ]);
-    return configs.map((c) => ({
-      ...c,
-      isActive: activeConnection.provider === "komga" && activeConnection.configId === c.id,
-    }));
+    return (await listConnections(userId)).komga;
   } catch {
     return [];
   }
@@ -123,38 +92,28 @@ export async function saveKomgaConfig(
       return { success: false, message: "Nom, URL et identifiant sont requis" };
     }
 
-    const url = normalizeServerUrl(rawUrl);
-
-    if (input.id) {
-      const existing = await prisma.komgaConfig.findFirst({
-        where: { id: input.id, userId },
-        select: { id: true, authHeader: true },
-      });
-      if (!existing) {
-        return { success: false, message: "Configuration introuvable" };
-      }
-      const authHeader = input.password
-        ? encryptSecret(buildKomgaAuthHeader(username, input.password))
-        : existing.authHeader;
-      await prisma.komgaConfig.update({
-        where: { id: input.id },
-        data: { name, url, username, authHeader },
-      });
-      invalidateConnectionChange();
-      return { success: true, message: "Configuration mise à jour", id: input.id };
-    }
-
-    if (!input.password) {
+    if (!input.id && !input.password) {
       return { success: false, message: "Le mot de passe est requis pour une nouvelle config" };
     }
 
-    const authHeader = encryptSecret(buildKomgaAuthHeader(username, input.password));
-    const created = await prisma.komgaConfig.create({
-      data: { userId, name, url, username, authHeader },
-    });
+    const saved = await saveConnection(
+      {
+        provider: "komga",
+        id: input.id,
+        name,
+        url: rawUrl,
+        username,
+        password: input.password,
+      },
+      userId
+    );
+    if (!saved) return { success: false, message: "Configuration introuvable" };
 
-    invalidateConnectionChange();
-    return { success: true, message: "Configuration créée", id: created.id };
+    return {
+      success: true,
+      message: input.id ? "Configuration mise à jour" : "Configuration créée",
+      id: saved.id,
+    };
   } catch (error) {
     if (error instanceof AppError) {
       return { success: false, message: error.message };
@@ -171,15 +130,8 @@ export async function deleteKomgaConfig(
 ): Promise<{ success: boolean; message: string }> {
   try {
     const userId = await requireUserId();
-    const config = await prisma.komgaConfig.findFirst({
-      where: { id, userId },
-      select: { id: true },
-    });
-    if (!config) return { success: false, message: "Configuration introuvable" };
-
-    await prisma.komgaConfig.delete({ where: { id } });
-
-    invalidateConnectionChange();
+    const deleted = await deleteConnection("komga", id, userId);
+    if (!deleted) return { success: false, message: "Configuration introuvable" };
     return { success: true, message: "Configuration supprimée" };
   } catch {
     return { success: false, message: "Erreur lors de la suppression" };
@@ -194,35 +146,21 @@ export async function testKomgaConfigById(
 ): Promise<{ success: boolean; message: string }> {
   try {
     const userId = await requireUserId();
-    const rl = checkRateLimit(`test-komga:${userId}`, {
-      limit: TEST_CONNECTION_LIMIT,
-      windowMs: TEST_CONNECTION_WINDOW_MS,
-    });
-    if (!rl.allowed) {
-      return {
-        success: false,
-        message: `Trop de tentatives. Réessaie dans ${Math.ceil(rl.resetMs / 1000)}s.`,
-      };
+    const rateLimit = checkConnectionTestRateLimit("komga", userId);
+    if (!rateLimit.allowed) {
+      return { success: false, message: rateLimitedMessage(rateLimit.retryAfterSeconds) };
     }
-    const config = await prisma.komgaConfig.findFirst({
-      where: { id, userId },
-      select: { url: true, authHeader: true },
-    });
-    if (!config) return { success: false, message: "Configuration introuvable" };
 
-    const url = new URL(`${normalizeServerUrl(config.url)}/api/v1/libraries`).toString();
-    const headers = new Headers({
-      Authorization: `Basic ${decryptSecret(config.authHeader)}`,
-      Accept: "application/json",
-    });
-    const response = await fetch(url, { headers });
-    if (!response.ok) {
-      return { success: false, message: `Connexion échouée (${response.status})` };
+    const result = await testStoredConnection("komga", id, userId);
+    if (!result) return { success: false, message: "Configuration introuvable" };
+    if (!result.ok) {
+      return { success: false, message: result.error ?? "Erreur lors du test de connexion" };
     }
-    const libraries: KomgaLibrary[] = await response.json();
+
+    const count = result.libraryCount ?? 0;
     return {
       success: true,
-      message: `Connexion réussie ! ${libraries.length} bibliothèque${libraries.length > 1 ? "s" : ""}`,
+      message: `Connexion réussie ! ${count} bibliothèque${count > 1 ? "s" : ""} trouvée${count > 1 ? "s" : ""}`,
     };
   } catch (error) {
     if (error instanceof AppError) {
@@ -237,18 +175,8 @@ export async function setActiveKomgaConfig(
 ): Promise<{ success: boolean; message: string }> {
   try {
     const userId = await requireUserId();
-    const config = await prisma.komgaConfig.findFirst({
-      where: { id, userId },
-      select: { id: true, name: true },
-    });
+    const config = await activateConnection("komga", id, userId);
     if (!config) return { success: false, message: "Configuration introuvable" };
-
-    await setActiveConnection("komga", id);
-
-    // Expire provider caches and revalidate the home segment so the action
-    // response itself carries the newly active connection's data. The client
-    // also calls router.refresh() to settle the view.
-    invalidateConnectionChange();
     return { success: true, message: `Komga actif : ${config.name}` };
   } catch {
     return { success: false, message: "Erreur lors du changement de config" };
