@@ -66,11 +66,9 @@ export const BookReader = memo(function BookReader(props: BookReaderProps) {
 
       <PageDisplay
         currentPage={s.currentPage}
-        pages={s.pages}
         isDoublePage={s.isDoublePage}
         shouldShowDoublePage={s.shouldShowDoublePage}
-        imageBlobUrls={s.imageBlobUrls}
-        imageErrors={s.imageErrors}
+        getPageImage={s.getPageImage}
         onRetryImage={s.onRetryImage}
         isRTL={s.isRTL}
         fitMode={s.fitMode}

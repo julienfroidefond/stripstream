@@ -1,10 +1,17 @@
 /* eslint-disable no-console */
 import { useState, useCallback, useEffect, useRef } from "react";
+import { BlobUrlRegistry, type ImageKey } from "./blobUrlRegistry";
 import { computeEvictionKeys } from "./imageEviction";
 
 interface ImageDimensions {
   width: number;
   height: number;
+}
+
+export interface PageImage {
+  url: string | null;
+  error: boolean;
+  isLoading: boolean;
 }
 
 const RETRY_BACKOFFS_MS = [800, 1600] as const;
@@ -31,11 +38,11 @@ function sleep(ms: number, signal: AbortSignal): Promise<void> {
   });
 }
 
-type ImageKey = number | string; // Support both numeric pages and prefixed keys like "next-1"
-
 interface UseImageLoaderProps {
   pageUrlBuilder: (pageNum: number) => string;
   pages: number[];
+  currentPage: number;
+  shouldShowDoublePage: (pageNum: number) => boolean;
   prefetchCount?: number; // Nombre de pages à précharger (défaut: 5)
   nextBook?: { getPageUrl: (pageNum: number) => string; pages: number[] } | null; // Livre suivant pour prefetch
 }
@@ -43,20 +50,24 @@ interface UseImageLoaderProps {
 export function useImageLoader({
   pageUrlBuilder,
   pages: _pages,
+  currentPage,
+  shouldShowDoublePage,
   prefetchCount = 5,
   nextBook,
 }: UseImageLoaderProps) {
   // NOTE (perf): état groupé par image (loadedImages / imageBlobUrls / imageErrors).
-  // Regrouper ces trois slices dans un seul état par clé (ex. Record<ImageKey, {dims, url, error}>)
-  // réduirait le nombre de setState par fetch, mais c'est risqué car de nombreux callbacks
-  // (evictOutsideWindow, prefetchKey, retryImage) lisent/écrivent chaque slice séparément via
-  // des refs. Laissé tel quel : refactorisation non triviale, à traiter séparément.
+  // Les URLs vivent aussi dans BlobUrlRegistry, source de vérité synchrone pour le
+  // cleanup ; les dimensions et erreurs gardent leurs refs pour les callbacks.
+  // Regrouper ces slices dans un seul état par clé réduirait le nombre de setState
+  // par fetch, mais c'est risqué car de nombreux callbacks (evictOutsideWindow,
+  // prefetchKey, retryImage) lisent/écrivent chaque slice séparément. Laissé tel
+  // quel : refactorisation non triviale, à traiter séparément.
   const [loadedImages, setLoadedImages] = useState<Record<ImageKey, ImageDimensions>>({});
   const [imageBlobUrls, setImageBlobUrls] = useState<Record<ImageKey, string>>({});
   const [imageErrors, setImageErrors] = useState<Record<ImageKey, boolean>>({});
   const loadedImagesRef = useRef(loadedImages);
-  const imageBlobUrlsRef = useRef(imageBlobUrls);
   const imageErrorsRef = useRef(imageErrors);
+  const [blobUrls] = useState(() => new BlobUrlRegistry());
   const isMountedRef = useRef(true);
   const pendingFetchesRef = useRef<Set<ImageKey>>(new Set());
   const abortControllersRef = useRef<Map<ImageKey, AbortController>>(new Map());
@@ -65,10 +76,6 @@ export function useImageLoader({
   useEffect(() => {
     loadedImagesRef.current = loadedImages;
   }, [loadedImages]);
-
-  useEffect(() => {
-    imageBlobUrlsRef.current = imageBlobUrls;
-  }, [imageBlobUrls]);
 
   useEffect(() => {
     imageErrorsRef.current = imageErrors;
@@ -103,7 +110,7 @@ export function useImageLoader({
   // (clés "next-N") et les fetches en cours sont préservés.
   const evictOutsideWindow = useCallback((currentPage: number) => {
     const keysToEvict = computeEvictionKeys(
-      Object.keys(imageBlobUrlsRef.current),
+      blobUrls.keys(),
       currentPage,
       EVICTION_BEHIND,
       EVICTION_AHEAD,
@@ -114,10 +121,7 @@ export function useImageLoader({
 
     console.debug(`[reader/image] evict: ${keysToEvict.length} pages (window ${currentPage - EVICTION_BEHIND}–${currentPage + EVICTION_AHEAD}), keys:`, keysToEvict);
 
-    keysToEvict.forEach((key) => {
-      const url = imageBlobUrlsRef.current[key];
-      if (url) URL.revokeObjectURL(url);
-    });
+    keysToEvict.forEach((key) => blobUrls.delete(key));
 
     setImageBlobUrls((prev) => {
       const next = { ...prev };
@@ -140,7 +144,7 @@ export function useImageLoader({
       });
       return changed ? next : prev;
     });
-  }, []);
+  }, [blobUrls]);
 
   const runWithConcurrency = useCallback(
     async <T,>(items: T[], worker: (item: T) => Promise<void>, concurrency = PREFETCH_CONCURRENCY) => {
@@ -186,11 +190,8 @@ export function useImageLoader({
             ...prev,
             [key]: { width: img.naturalWidth, height: img.naturalHeight },
           }));
-          setImageBlobUrls((prev) => {
-            const previous = prev[key];
-            if (previous && previous !== blobUrl) URL.revokeObjectURL(previous);
-            return { ...prev, [key]: blobUrl };
-          });
+          blobUrls.set(key, blobUrl);
+          setImageBlobUrls((prev) => ({ ...prev, [key]: blobUrl }));
           setImageErrors((prev) => {
             if (!prev[key]) return prev;
             const next = { ...prev };
@@ -207,7 +208,7 @@ export function useImageLoader({
         img.src = blobUrl;
       });
     },
-    []
+    [blobUrls]
   );
 
   // Prefetch générique avec retry exponential backoff (3 tentatives au total).
@@ -218,7 +219,7 @@ export function useImageLoader({
       if (!isMountedRef.current) return;
 
       const hasDimensions = loadedImagesRef.current[key];
-      const hasBlobUrl = imageBlobUrlsRef.current[key];
+      const hasBlobUrl = blobUrls.has(key);
       if (hasDimensions && hasBlobUrl) return;
 
       const existingPromise = loadingPromisesRef.current.get(key);
@@ -273,7 +274,7 @@ export function useImageLoader({
       loadingPromisesRef.current.set(key, promise);
       return promise;
     },
-    [fetchAndDecodeOnce]
+    [blobUrls, fetchAndDecodeOnce]
   );
 
   const prefetchImage = useCallback(
@@ -311,7 +312,7 @@ export function useImageLoader({
         const pageNum = startPage + i;
         if (pageNum <= _pages.length && !excludeSet.has(pageNum)) {
           const hasDimensions = loadedImagesRef.current[pageNum];
-          const hasBlobUrl = imageBlobUrlsRef.current[pageNum];
+          const hasBlobUrl = blobUrls.has(pageNum);
           const isPending = pendingFetchesRef.current.has(pageNum);
           const hasError = imageErrorsRef.current[pageNum];
 
@@ -329,7 +330,7 @@ export function useImageLoader({
         );
       }
     },
-    [prefetchImage, prefetchCount, _pages.length, runWithConcurrency]
+    [blobUrls, prefetchImage, prefetchCount, _pages.length, runWithConcurrency]
   );
 
   // Prefetch pages from next book (clés préfixées "next-N" pour éviter les conflits)
@@ -343,7 +344,7 @@ export function useImageLoader({
         const pageNum = i + 1; // Pages du livre suivant commencent à 1
         const key = `next-${pageNum}`;
         const hasDimensions = loadedImagesRef.current[key];
-        const hasBlobUrl = imageBlobUrlsRef.current[key];
+        const hasBlobUrl = blobUrls.has(key);
         const isPending = pendingFetchesRef.current.has(key);
 
         if ((!hasDimensions || !hasBlobUrl) && !isPending) {
@@ -359,35 +360,66 @@ export function useImageLoader({
         );
       }
     },
-    [nextBook, prefetchCount, runWithConcurrency, prefetchKey]
+    [blobUrls, nextBook, prefetchCount, runWithConcurrency, prefetchKey]
   );
 
-  // Cleanup blob URLs on unmount only
+  // Le loader possède la politique de mémoire : prefetch et éviction suivent
+  // la position du reader sans que `useReaderState` ait à l'orchestrer.
+  useEffect(() => {
+    const spread = shouldShowDoublePage(currentPage);
+    const visiblePages = spread ? [currentPage, currentPage + 1] : [currentPage];
+
+    console.debug(`[reader/image] page=${currentPage} visible=[${visiblePages.join(",")}] doublePage=${spread}`);
+    Promise.all(visiblePages.map((page) => prefetchImage(page))).catch((err) => {
+      console.warn(`[reader/image] prefetch failed page=${currentPage}`, err);
+    });
+
+    const concurrency = spread ? 2 : 4;
+    prefetchPages(currentPage, prefetchCount, visiblePages, concurrency);
+
+    if (spread && currentPage + prefetchCount < _pages.length) {
+      prefetchPages(currentPage + prefetchCount, 1, visiblePages, concurrency);
+    }
+
+    const pagesFromEnd = _pages.length - currentPage;
+    if (pagesFromEnd <= prefetchCount && nextBook) {
+      prefetchNextBook(prefetchCount);
+    }
+
+    evictOutsideWindow(currentPage);
+  }, [
+    currentPage,
+    shouldShowDoublePage,
+    prefetchImage,
+    prefetchPages,
+    prefetchNextBook,
+    evictOutsideWindow,
+    prefetchCount,
+    _pages.length,
+    nextBook,
+  ]);
+
+  // Le registre est la source de vérité : même un blob décodé juste avant
+  // l'unmount est présent ici, donc révoqué.
   useEffect(() => {
     return () => {
-      const urls = Object.values(imageBlobUrlsRef.current).filter(Boolean);
-      console.debug(`[reader/image] unmount: revoking ${urls.length} blob URLs`);
-      urls.forEach((url) => URL.revokeObjectURL(url));
+      console.debug(`[reader/image] unmount: revoking ${blobUrls.size} blob URLs`);
+      blobUrls.clear();
     };
-  }, []);
+  }, [blobUrls]);
 
-  const isPageLoading = useCallback(
-    (pageNum: number) => pendingFetchesRef.current.has(pageNum),
-    []
+  const getPageImage = useCallback(
+    (pageNum: number): PageImage => ({
+      url: imageBlobUrls[pageNum] ?? null,
+      error: Boolean(imageErrors[pageNum]),
+      isLoading: !imageBlobUrls[pageNum],
+    }),
+    [imageBlobUrls, imageErrors]
   );
 
   return {
-    loadedImages,
-    imageBlobUrls,
-    imageErrors,
-    prefetchImage,
+    getPageImage,
     retryImage,
-    prefetchPages,
-    prefetchNextBook,
     cancelAllPrefetches,
-    evictOutsideWindow,
-    getPageUrl,
-    prefetchCount,
-    isPageLoading,
   };
 }
