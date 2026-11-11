@@ -112,6 +112,16 @@ deduplication. The route never sees credentials or provider paths. Owners:
 `src/lib/media/komga.transport.ts`, `stripstream.transport.ts`,
 `media-route-core.ts`; cache and error shape: `policies.ts`.
 
+## Provider transport
+
+The shared JSON request lifecycle for both providers: URL assembly, auth
+headers, Next cache options, one retry, the 15 s timeout, empty-body handling
+and HTTP/network error mapping. A provider only supplies a policy (origin and
+path prefix, headers, HTTP-to-error codes, retry rule, cache key). Owner:
+`src/lib/providers/provider-transport.ts`; policies:
+`komga.transport-policy.ts` and `stripstream.transport-policy.ts`. Unlike the
+media transport, it carries JSON API calls (reads and mutations), not bytes.
+
 ## Wall phase
 
 The Wall's interaction state: `idle` (tilt and hover allowed), `pan` (a
