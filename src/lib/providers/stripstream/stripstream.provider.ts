@@ -11,6 +11,8 @@ import type {
   NormalizedMissingBook,
   NormalizedSeriesRating,
   NormalizedReadingStats,
+  NormalizedReadingList,
+  NormalizedReadingListDetail,
   ScanStartResult,
   ScanStatus,
 } from "../types";
@@ -49,6 +51,8 @@ const CACHE_TTL_MED = 120;
 const CACHE_TTL_SHORT = 30;
 
 export class StripstreamProvider implements IMediaProvider {
+  readonly supportsReadingLists = true;
+
   private client: StripstreamClient;
 
   constructor(url: string, token: string) {
@@ -418,17 +422,23 @@ export class StripstreamProvider implements IMediaProvider {
     return booksPage.items.map(StripstreamAdapter.toNormalizedBook);
   }
 
-  async getHomeReadingLists(): Promise<StripstreamReadingList[]> {
+  async getReadingLists(): Promise<NormalizedReadingList[]> {
     const homeOpts = { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] };
-    return this.client.fetch<StripstreamReadingList[]>("reading-lists", undefined, homeOpts);
+    const lists = await this.client.fetch<StripstreamReadingList[]>(
+      "reading-lists",
+      undefined,
+      homeOpts
+    );
+    return lists.map(StripstreamAdapter.toNormalizedReadingList);
   }
 
-  async getReadingListDetail(id: string): Promise<StripstreamReadingListDetail> {
-    return this.client.fetch<StripstreamReadingListDetail>(
+  async getReadingListDetail(id: string): Promise<NormalizedReadingListDetail> {
+    const detail = await this.client.fetch<StripstreamReadingListDetail>(
       `reading-lists/${id}`,
       undefined,
       { revalidate: CACHE_TTL_MED }
     );
+    return StripstreamAdapter.toNormalizedReadingListDetail(detail);
   }
 
   async getReadProgress(bookId: string): Promise<NormalizedReadProgress | null> {

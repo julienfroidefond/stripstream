@@ -22,26 +22,21 @@ import { ReadingListCard } from "@/components/reading-lists/ReadingListCard";
 import { useTranslate } from "@/hooks/useTranslate";
 import {
   DEFAULT_READING_LIST_SORT,
+  getReadingListStatus,
   sortReadingLists,
   type ReadingListSort,
+  type ReadingListStatus,
 } from "@/lib/services/reading-lists.service";
-import type { StripstreamReadingList } from "@/types/stripstream";
+import type { NormalizedReadingList } from "@/lib/providers/types";
 
-type ReadingListFilter = "all" | "unread" | "reading" | "read";
-type ReadingListStatus = Exclude<ReadingListFilter, "all">;
-
-function getReadingListStatus(list: StripstreamReadingList): ReadingListStatus {
-  if (list.book_count > 0 && list.books_read_count >= list.book_count) return "read";
-  if (list.books_read_count > 0) return "reading";
-  return "unread";
-}
+type ReadingListFilter = "all" | ReadingListStatus;
 
 interface ReadingListsContentProps {
-  lists: StripstreamReadingList[];
-  isStripstream: boolean;
+  lists: NormalizedReadingList[];
+  available: boolean;
 }
 
-export function ReadingListsContent({ lists, isStripstream }: ReadingListsContentProps) {
+export function ReadingListsContent({ lists, available }: ReadingListsContentProps) {
   const { t } = useTranslate();
   const [filter, setFilter] = useState<ReadingListFilter>("all");
   const [query, setQuery] = useState("");
@@ -73,7 +68,7 @@ export function ReadingListsContent({ lists, isStripstream }: ReadingListsConten
     { value: "progress", label: t("home.reading_lists.sort.progress"), icon: TrendingUp },
   ];
 
-  if (!isStripstream) {
+  if (!available) {
     return (
       <Container as="main" className="flex min-h-[55vh] flex-col items-center justify-center gap-4 text-center">
         <div className="rounded-2xl bg-muted p-4"><Bookmark className="h-9 w-9 text-muted-foreground" /></div>

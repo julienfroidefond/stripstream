@@ -9,11 +9,12 @@ import type {
   NormalizedMissingBook,
   NormalizedSeriesRating,
   NormalizedReadingStats,
+  NormalizedReadingList,
+  NormalizedReadingListDetail,
   ScanStartResult,
   ScanStatus,
 } from "./types";
 import type { HomePrimaryData } from "@/types/home";
-import type { StripstreamReadingList } from "@/types/stripstream";
 
 export interface BookListFilter {
   libraryId?: string;
@@ -51,7 +52,13 @@ export interface IMediaProvider {
   getHomeOngoingSeries(limit?: number): Promise<NormalizedSeries[]>;
   getHomeLatestSeries(limit?: number): Promise<NormalizedSeries[]>;
   getHomeRecentlyRead(limit?: number): Promise<NormalizedBook[]>;
-  getHomeReadingLists(): Promise<StripstreamReadingList[]>;
+
+  // ── Reading lists (Stripstream only) ─────────────────────────────────────
+  /** Whether the active backend exposes user reading lists. */
+  readonly supportsReadingLists: boolean;
+  getReadingLists(): Promise<NormalizedReadingList[]>;
+  /** Returns null when the backend does not expose reading lists. */
+  getReadingListDetail(id: string): Promise<NormalizedReadingListDetail | null>;
 
   // ── Read progress ────────────────────────────────────────────────────────
   getReadProgress(bookId: string): Promise<NormalizedReadProgress | null>;

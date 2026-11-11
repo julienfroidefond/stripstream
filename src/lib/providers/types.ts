@@ -63,6 +63,37 @@ export interface NormalizedSeries {
 }
 
 /**
+ * A reading list as shown on the home row and the dedicated page. Preview
+ * covers are resolved to displayable URLs by the provider adapter.
+ */
+export interface NormalizedReadingList {
+  id: string;
+  name: string;
+  description: string | null;
+  seriesCount: number;
+  /** Total books across every series in the list. */
+  bookCount: number;
+  /** Books read by the current user across the list. */
+  booksReadCount: number;
+  previewCovers: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * A reading list detail. The items are already normalized series, so the
+ * client never has to know which backend produced the list.
+ */
+export interface NormalizedReadingListDetail {
+  id: string;
+  name: string;
+  description: string | null;
+  items: NormalizedSeries[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
  * Local proxy URL templates for one book's media. `{page}` is replaced by a
  * 1-based page number, so the reader never derives URLs from `thumbnailUrl`.
  */

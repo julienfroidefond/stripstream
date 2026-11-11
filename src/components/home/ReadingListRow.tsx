@@ -10,21 +10,13 @@ import { Button } from "@/components/ui/button";
 import { useTranslate } from "@/hooks/useTranslate";
 import { useCoverInteraction } from "@/hooks/useCoverInteraction";
 import { useAnonymous } from "@/contexts/AnonymousContext";
-import { StripstreamAdapter } from "@/lib/providers/stripstream/stripstream.adapter";
-import type { StripstreamReadingList } from "@/types/stripstream";
+import type { NormalizedReadingList } from "@/lib/providers/types";
+import { getReadingListStatus } from "@/lib/services/reading-lists.service";
 import { FeedRow } from "@/components/home/FeedRow";
 import { CountUp, Magnetic, ProgressFill } from "@/components/motion";
 
 interface ReadingListRowProps {
-  lists: StripstreamReadingList[];
-}
-
-function getReadingListStatus(
-  list: StripstreamReadingList
-): "unread" | "reading" | "read" {
-  if (list.book_count > 0 && list.books_read_count >= list.book_count) return "read";
-  if (list.books_read_count > 0) return "reading";
-  return "unread";
+  lists: NormalizedReadingList[];
 }
 
 export function ReadingListRow({ lists }: ReadingListRowProps) {
@@ -56,7 +48,7 @@ export function ReadingListRow({ lists }: ReadingListRowProps) {
         </div>
       )}
       renderSlide={(list) => ({
-        backdropSrc: StripstreamAdapter.resolveReadingListPreviewCover(list.preview_covers?.[0]),
+        backdropSrc: list.previewCovers[0],
         content: <ReadingListSpotlightSlide list={list} onOpen={handleOpenList} />,
       })}
     />
@@ -67,15 +59,15 @@ const ReadingListSpotlightSlide = memo(function ReadingListSpotlightSlide({
   list,
   onOpen,
 }: {
-  list: StripstreamReadingList;
+  list: NormalizedReadingList;
   onOpen: (id: string) => void;
 }) {
   const { t } = useTranslate();
   const { isAnonymous } = useAnonymous();
   const hasProgress =
-    !isAnonymous && list.book_count > 0 && list.books_read_count > 0;
+    !isAnonymous && list.bookCount > 0 && list.booksReadCount > 0;
   const percent = hasProgress
-    ? Math.min(100, Math.round((list.books_read_count / list.book_count) * 100))
+    ? Math.min(100, Math.round((list.booksReadCount / list.bookCount) * 100))
     : 0;
   const description = list.description?.trim() || null;
 
@@ -93,7 +85,7 @@ const ReadingListSpotlightSlide = memo(function ReadingListSpotlightSlide({
           className="group relative block w-[168px] focus-visible:outline-hidden sm:w-[196px]"
           aria-label={t("navigation.openReadingList")}
         >
-          <ReadingListCoverStack covers={list.preview_covers} active={active} />
+          <ReadingListCoverStack covers={list.previewCovers} active={active} />
           <span
             aria-hidden
             className="pointer-events-none absolute inset-0 z-30 rounded-[2px_6px_6px_2px] opacity-0 ring-2 ring-ring ring-offset-2 ring-offset-background transition-opacity duration-150 group-focus-visible:opacity-100"
@@ -118,7 +110,7 @@ const ReadingListSpotlightSlide = memo(function ReadingListSpotlightSlide({
           className="text-sm text-muted-foreground sm:text-base"
           {...staging.item}
         >
-          {t("home.reading_lists.series_count", { count: list.series_count })}
+          {t("home.reading_lists.series_count", { count: list.seriesCount })}
         </p>
 
         {description && (
@@ -141,8 +133,8 @@ const ReadingListSpotlightSlide = memo(function ReadingListSpotlightSlide({
               </span>
               <span className="tabular-nums">
                 {t("series.header.status.progress", {
-                  read: list.books_read_count,
-                  total: list.book_count,
+                  read: list.booksReadCount,
+                  total: list.bookCount,
                 })}
               </span>
             </div>

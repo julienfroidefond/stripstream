@@ -4,6 +4,8 @@ import type {
   StripstreamSeriesItem,
   StripstreamLibraryResponse,
   StripstreamReadingProgressResponse,
+  StripstreamReadingList,
+  StripstreamReadingListDetail,
   StripstreamReadingListItem,
   StripstreamRelatedSeriesItem,
   StripstreamRecommendedSeriesItem,
@@ -12,6 +14,8 @@ import { BOOK_PAGE_TOKEN } from "../book-media";
 import type {
   NormalizedBook,
   NormalizedBookMedia,
+  NormalizedReadingList,
+  NormalizedReadingListDetail,
   NormalizedSeries,
   NormalizedLibrary,
   NormalizedReadProgress,
@@ -58,6 +62,39 @@ export class StripstreamAdapter {
     return UUID_RE.test(cover)
       ? StripstreamAdapter.bookThumbnail(cover)
       : cover;
+  }
+
+  static toNormalizedReadingList(list: StripstreamReadingList): NormalizedReadingList {
+    return {
+      id: list.id,
+      name: list.name,
+      description: list.description?.trim() || null,
+      seriesCount: list.series_count,
+      bookCount: list.book_count,
+      booksReadCount: list.books_read_count,
+      previewCovers: Array.from(
+        new Set(
+          (list.preview_covers ?? [])
+            .map(StripstreamAdapter.resolveReadingListPreviewCover)
+            .filter(Boolean)
+        )
+      ),
+      createdAt: list.created_at,
+      updatedAt: list.updated_at,
+    };
+  }
+
+  static toNormalizedReadingListDetail(
+    detail: StripstreamReadingListDetail
+  ): NormalizedReadingListDetail {
+    return {
+      id: detail.id,
+      name: detail.name,
+      description: detail.description?.trim() || null,
+      items: detail.items.map(StripstreamAdapter.toNormalizedReadingListSeries),
+      createdAt: detail.created_at,
+      updatedAt: detail.updated_at,
+    };
   }
 
   static toNormalizedReadProgress(

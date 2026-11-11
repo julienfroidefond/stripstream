@@ -10,8 +10,11 @@ import {
   type ResumeEntry,
 } from "@/lib/resume/resume-state";
 import { resolveSeriesPool } from "@/lib/resume/series-pool";
-import type { NormalizedBook, NormalizedSeries } from "@/lib/providers/types";
-import type { StripstreamReadingList } from "@/types/stripstream";
+import type {
+  NormalizedBook,
+  NormalizedReadingList,
+  NormalizedSeries,
+} from "@/lib/providers/types";
 
 export type HomeFeed =
   | "ongoing"
@@ -21,7 +24,7 @@ export type HomeFeed =
   | "recently-read"
   | "recommendations";
 
-export type HomeFeedItem = NormalizedBook | NormalizedSeries | StripstreamReadingList;
+export type HomeFeedItem = NormalizedBook | NormalizedSeries | NormalizedReadingList;
 
 /** Une page d'un flux de l'accueil : seuls les nouveaux éléments sont renvoyés. */
 export type HomeFeedPage = FeedPage<HomeFeedItem>;
@@ -83,7 +86,7 @@ export async function loadHomeFeed(
       items = await FavoriteService.listFavorites();
       break;
     case "reading-lists":
-      items = await provider.getHomeReadingLists();
+      items = await provider.getReadingLists();
       break;
     case "latest-series":
       items = await provider.getHomeLatestSeries(queryLimit);

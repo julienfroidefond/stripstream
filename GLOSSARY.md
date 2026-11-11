@@ -44,6 +44,16 @@ the final flush. Navigation emits `track(page)` intents. Owners:
 `src/components/reader/hooks/useReadProgressSession.ts` (React lifecycle and
 the `updateReadProgress` adapter).
 
+## Reading list
+
+A curated, ordered set of series exposed by Stripstream Librarian only. The
+provider contract normalizes it to `NormalizedReadingList` (summary) and
+`NormalizedReadingListDetail` (series items); `supportsReadingLists` gates the
+dedicated page and Komga returns an empty collection. Preview covers are
+resolved to displayable URLs at the provider boundary. Status and totals owner:
+`src/lib/services/reading-lists.service.ts` (`getReadingListStatus`,
+`getReadingListTotals`).
+
 ## Preference write
 
 The client-side policy for changing `UserPreferences`: optimistic merge,

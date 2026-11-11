@@ -8,13 +8,16 @@ import { Container } from "@/components/ui/container";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useAnonymous } from "@/contexts/AnonymousContext";
 import { useTranslate } from "@/hooks/useTranslate";
-import { StripstreamAdapter } from "@/lib/providers/stripstream/stripstream.adapter";
-import type { StripstreamReadingListDetail } from "@/types/stripstream";
+import type { NormalizedReadingListDetail } from "@/lib/providers/types";
+import {
+  getReadingListStatus,
+  getReadingListTotals,
+} from "@/lib/services/reading-lists.service";
 import { useBannerScene } from "@/components/motion";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
 interface ReadingListContentProps {
-  detail: StripstreamReadingListDetail;
+  detail: NormalizedReadingListDetail;
 }
 
 export function ReadingListContent({ detail }: ReadingListContentProps) {
@@ -28,22 +31,22 @@ export function ReadingListContent({ detail }: ReadingListContentProps) {
   const fly = reduce ? {} : { "data-hero-fly": "" };
   const item = reduce ? {} : { "data-hero-item": "" };
   const [failedBannerCover, setFailedBannerCover] = useState<string | null>(null);
-  const series = detail.items.map(StripstreamAdapter.toNormalizedReadingListSeries);
+  const series = detail.items;
   const bannerCovers = series.map((item) => item.thumbnailUrl).filter(Boolean);
   const bannerCover =
     bannerCovers.find((cover) => cover !== failedBannerCover) ?? "";
-  const totalBooks = detail.items.reduce((total, item) => total + item.book_count, 0);
-  const readBooks = detail.items.reduce((total, item) => total + item.books_read_count, 0);
-  const allSeriesRead =
-    detail.items.length > 0 &&
-    detail.items.every((item) => item.book_count > 0 && item.books_read_count >= item.book_count);
-  const readingStatus = isAnonymous || totalBooks === 0
+  const totals = getReadingListTotals(detail.items);
+  const status = getReadingListStatus(totals);
+  const readingStatus = isAnonymous || totals.bookCount === 0
     ? null
-    : allSeriesRead
+    : status === "read"
       ? { label: t("series.header.status.read"), status: "success" as const, icon: BookMarked }
-      : readBooks > 0
+      : status === "reading"
         ? {
-            label: t("series.header.status.progress", { read: readBooks, total: totalBooks }),
+            label: t("series.header.status.progress", {
+              read: totals.booksReadCount,
+              total: totals.bookCount,
+            }),
             status: "reading" as const,
             icon: BookOpen,
           }

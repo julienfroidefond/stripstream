@@ -4,6 +4,8 @@ import type {
   StripstreamBookDetails,
   StripstreamBookItem,
   StripstreamLibraryResponse,
+  StripstreamReadingList,
+  StripstreamReadingListDetail,
   StripstreamReadingListItem,
   StripstreamRecommendedSeriesItem,
   StripstreamRelatedSeriesItem,
@@ -80,6 +82,37 @@ function makeReadingListItem(
     position: 0,
     book_count: 3,
     books_read_count: 1,
+    ...overrides,
+  };
+}
+
+function makeReadingList(
+  overrides: Partial<StripstreamReadingList> = {}
+): StripstreamReadingList {
+  return {
+    id: "list-1",
+    name: "Reading List",
+    description: "  A curated list  ",
+    series_count: 2,
+    book_count: 8,
+    books_read_count: 3,
+    preview_covers: [],
+    created_at: "2026-01-01T00:00:00Z",
+    updated_at: "2026-02-01T00:00:00Z",
+    ...overrides,
+  };
+}
+
+function makeReadingListDetail(
+  overrides: Partial<StripstreamReadingListDetail> = {}
+): StripstreamReadingListDetail {
+  return {
+    id: "list-1",
+    name: "Reading List",
+    description: "A curated list",
+    items: [makeReadingListItem()],
+    created_at: "2026-01-01T00:00:00Z",
+    updated_at: "2026-02-01T00:00:00Z",
     ...overrides,
   };
 }
@@ -408,6 +441,71 @@ describe("StripstreamAdapter.resolveReadingListPreviewCover", () => {
   it("returns an empty string for missing or sentinel covers", () => {
     expect(StripstreamAdapter.resolveReadingListPreviewCover(null)).toBe("");
     expect(StripstreamAdapter.resolveReadingListPreviewCover(SENTINEL)).toBe("");
+  });
+});
+
+describe("StripstreamAdapter.toNormalizedReadingList", () => {
+  const bookId = "2b7c1c3e-5b0f-4a3e-9d0e-1f2a3b4c5d6e";
+  const bookCover = `/api/stripstream/images/books/${bookId}/thumbnail`;
+  const rawCover = "https://covers.example/series.jpg";
+
+  it("maps the list fields and resolves preview covers", () => {
+    expect(
+      StripstreamAdapter.toNormalizedReadingList(
+        makeReadingList({
+          preview_covers: [bookId, bookId, rawCover, SENTINEL],
+        })
+      )
+    ).toEqual({
+      id: "list-1",
+      name: "Reading List",
+      description: "A curated list",
+      seriesCount: 2,
+      bookCount: 8,
+      booksReadCount: 3,
+      previewCovers: [bookCover, rawCover],
+      createdAt: "2026-01-01T00:00:00Z",
+      updatedAt: "2026-02-01T00:00:00Z",
+    });
+  });
+
+  it("normalizes an empty description to null", () => {
+    expect(
+      StripstreamAdapter.toNormalizedReadingList(
+        makeReadingList({ description: "   " })
+      ).description
+    ).toBeNull();
+  });
+});
+
+describe("StripstreamAdapter.toNormalizedReadingListDetail", () => {
+  it("maps the detail and its items to normalized series", () => {
+    expect(
+      StripstreamAdapter.toNormalizedReadingListDetail(makeReadingListDetail())
+    ).toEqual({
+      id: "list-1",
+      name: "Reading List",
+      description: "A curated list",
+      items: [
+        {
+          id: "list-1",
+          name: "List Name",
+          bookCount: 3,
+          booksReadCount: 1,
+          thumbnailUrl: "/api/stripstream/images/books/book-1/thumbnail",
+          libraryId: "lib-1",
+          summary: null,
+          authors: [],
+          genres: [],
+          tags: [],
+          createdAt: null,
+          missingCount: null,
+          seriesStatus: null,
+        },
+      ],
+      createdAt: "2026-01-01T00:00:00Z",
+      updatedAt: "2026-02-01T00:00:00Z",
+    });
   });
 });
 
