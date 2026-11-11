@@ -24,7 +24,6 @@ import { gsap } from "@/lib/gsap";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { useTranslate } from "@/hooks/useTranslate";
 import { useUserScope } from "@/contexts/UserScopeContext";
-import { buildStorageKey } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 import {
   WALL_FOCUS_DURATION,
@@ -34,12 +33,6 @@ import {
   type WallFocusMode,
 } from "@/lib/wall-camera";
 import { wallPreloadUrls } from "@/lib/wall-cover";
-import {
-  filterWallItems,
-  isWallItemComplete,
-  parseStoredHideRead,
-  parseStoredWallLibraries,
-} from "@/lib/wall-filter";
 import { isWallUiTarget } from "@/lib/wall-gesture";
 import {
   buildWallLayout,
@@ -61,16 +54,12 @@ import {
 } from "./WallPlaque";
 import { WallTile } from "./WallTile";
 import { useWallCamera } from "./useWallCamera";
+import { useWallFilters } from "./useWallFilters";
 import { useWallGestures } from "./useWallGestures";
 import { useWallPhase } from "./useWallPhase";
 
 interface WallExperienceProps {
   items: WallItem[];
-}
-
-interface LibraryEntry {
-  name: string;
-  count: number;
 }
 
 const SHEET_BREAKPOINT = 900;
@@ -89,9 +78,6 @@ const HOVER_DIM_DELAY = 220;
  * changement de tuile ferait clignoter le voile.
  */
 const HOVER_DIM_EXIT_DELAY = 160;
-/** Filtres retenus d'une visite à l'autre, par utilisateur. */
-const FILTERS_STORAGE_SUFFIX = "wall-libraries";
-const HIDE_READ_STORAGE_SUFFIX = "wall-hide-read";
 const ZOOM_STEP = 1.28;
 
 function hoverIsFine(): boolean {
@@ -192,135 +178,32 @@ export function WallExperience({ items }: WallExperienceProps) {
   const [flashKey, setFlashKey] = useState<string | null>(null);
   const [enterTiles, setEnterTiles] = useState(true);
   const [dimOn, setDimOn] = useState(false);
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const [selectedLibraries, setSelectedLibraries] = useState<
-    ReadonlySet<string>
-  >(() => new Set());
-  const [hideRead, setHideRead] = useState(false);
 
-  const libraries = useMemo<LibraryEntry[]>(() => {
-    const counts = new Map<string, number>();
-    for (const item of items) {
-      counts.set(item.libraryName, (counts.get(item.libraryName) ?? 0) + 1);
-    }
-    return Array.from(counts, ([name, count]) => ({ name, count })).sort(
-      (first, second) =>
-        first.name.localeCompare(second.name, currentLanguage, {
-          sensitivity: "base",
-        })
-    );
-  }, [items, currentLanguage]);
-
-  // Les filtres sont retenus par utilisateur. La lecture attend une frame
-  // après l'hydratation : le serveur ne connaît pas `localStorage`.
+  // Les filtres sont retenus par utilisateur. La session possède la lecture,
+  // le write gate, les items visibles et la clé de composition ; le composant
+  // ne garde que la présentation du panneau et de la plaque.
   const scope = useUserScope();
-  const filtersStorageKey = buildStorageKey(scope, FILTERS_STORAGE_SUFFIX);
-  const hideReadStorageKey = buildStorageKey(scope, HIDE_READ_STORAGE_SUFFIX);
-  const filtersRestoredRef = useRef(false);
-  const filtersHydratedRef = useRef(false);
-  const skipEntranceRef = useRef(false);
-
-  useEffect(() => {
-    if (filtersRestoredRef.current) return;
-    filtersRestoredRef.current = true;
-
-    let storedLibraries: string | null = null;
-    let storedHideRead: string | null = null;
-    try {
-      storedLibraries = window.localStorage.getItem(filtersStorageKey);
-      storedHideRead = window.localStorage.getItem(hideReadStorageKey);
-    } catch {
-      // Un stockage inaccessible ne doit pas empêcher le mur de s'ouvrir.
-      filtersHydratedRef.current = true;
-      return;
-    }
-
-    const available = new Set(libraries.map((library) => library.name));
-    const restoredLibraries = parseStoredWallLibraries(
-      storedLibraries,
-      available
-    );
-    const restoredHideRead = parseStoredHideRead(storedHideRead);
-
-    if (restoredLibraries.length === 0 && !restoredHideRead) {
-      filtersHydratedRef.current = true;
-      return;
-    }
-
-    skipEntranceRef.current = true;
-    // Volontairement pas de cancel : en StrictMode, le nettoyage du premier
-    // passage annulerait la restauration avant même qu'elle ait eu lieu.
-    window.requestAnimationFrame(() => {
-      filtersHydratedRef.current = true;
-      if (restoredLibraries.length > 0) {
-        setSelectedLibraries(new Set(restoredLibraries));
-      }
-      if (restoredHideRead) setHideRead(true);
-    });
-  }, [filtersStorageKey, hideReadStorageKey, libraries]);
-
-  useEffect(() => {
-    if (!filtersHydratedRef.current) return;
-    try {
-      window.localStorage.setItem(
-        filtersStorageKey,
-        JSON.stringify([...selectedLibraries].sort())
-      );
-    } catch {
-      // Même garde qu'à la lecture : un stockage plein ou désactivé ne doit
-      // pas faire tomber le mur.
-    }
-  }, [filtersStorageKey, selectedLibraries]);
-
-  useEffect(() => {
-    if (!filtersHydratedRef.current) return;
-    try {
-      window.localStorage.setItem(hideReadStorageKey, String(hideRead));
-    } catch {
-      // Idem : la préférence n'est simplement pas retenue.
-    }
-  }, [hideRead, hideReadStorageKey]);
-
-  const visibleItems = useMemo(
-    () => filterWallItems(items, selectedLibraries, hideRead),
-    [hideRead, items, selectedLibraries]
-  );
-
-  // Un filtre qui vide le mur referme le panneau : sur mobile, la feuille de
-  // filtres couvrirait l'état vide et son bouton de réinitialisation.
-  const hadVisibleItemsRef = useRef(false);
-  useEffect(() => {
-    const hadVisibleItems = hadVisibleItemsRef.current;
-    hadVisibleItemsRef.current = visibleItems.length > 0;
-    if (hadVisibleItems && visibleItems.length === 0) setFiltersOpen(false);
-  }, [visibleItems.length]);
-
-  const completedCount = useMemo(
-    () =>
-      filterWallItems(items, selectedLibraries, false).filter(
-        isWallItemComplete
-      ).length,
-    [items, selectedLibraries]
-  );
-
-  // La clé de sélection sert de graine : le même filtre redonne toujours le
-  // même mur, un autre filtre ouvre une composition différente.
-  const selectionKey = useMemo(() => {
-    if (selectedLibraries.size === 0 && !hideRead) return "all";
-    return JSON.stringify({
-      libraries: [...selectedLibraries].sort(),
-      hideRead,
-    });
-  }, [hideRead, selectedLibraries]);
+  const {
+    libraries,
+    selectedLibraries,
+    hideRead,
+    visibleItems,
+    visibleLibraryCount,
+    completedCount,
+    selectionKey,
+    panelOpen,
+    togglePanel,
+    closePanel,
+    toggleLibrary: toggleLibraryFilter,
+    toggleHideRead: toggleHideReadFilter,
+    showAllLibraries: clearLibraries,
+    showAllItems: clearFilters,
+    consumeEntranceSkip,
+  } = useWallFilters({ items, scope, language: currentLanguage });
 
   const layout = useMemo(
     () => buildWallLayout(selectionKey),
     [selectionKey]
-  );
-
-  const visibleLibraryCount = useMemo(
-    () => new Set(visibleItems.map((item) => item.libraryName)).size,
-    [visibleItems]
   );
 
   const seedOffset = useMemo(
@@ -415,12 +298,14 @@ export function WallExperience({ items }: WallExperienceProps) {
     resetHover();
     closePlaque();
     clearFlash();
-    if (skipEntranceRef.current) {
-      skipEntranceRef.current = false;
-    } else {
-      replayEntrance();
-    }
-  }, [clearFlash, closePlaque, replayEntrance, resetHover]);
+    if (!consumeEntranceSkip()) replayEntrance();
+  }, [
+    clearFlash,
+    closePlaque,
+    consumeEntranceSkip,
+    replayEntrance,
+    resetHover,
+  ]);
 
   // La caméra possède ses MotionNumbers, ses cadrages et l'inertie ; les
   // gestes ne font que lui parler. La composition ne garde que les tuiles,
@@ -605,38 +490,31 @@ export function WallExperience({ items }: WallExperienceProps) {
 
   const toggleFilters = useCallback(() => {
     closePlaque();
-    setFiltersOpen((open) => !open);
-  }, [closePlaque]);
+    togglePanel();
+  }, [closePlaque, togglePanel]);
 
   const toggleLibrary = useCallback(
     (name: string) => {
       closePlaque();
-      setSelectedLibraries((previous) => {
-        if (previous.size === 0) return new Set([name]);
-        const next = new Set(previous);
-        if (next.has(name)) next.delete(name);
-        else next.add(name);
-        return next;
-      });
+      toggleLibraryFilter(name);
     },
-    [closePlaque]
+    [closePlaque, toggleLibraryFilter]
   );
 
   const toggleHideRead = useCallback(() => {
     closePlaque();
-    setHideRead((hidden) => !hidden);
-  }, [closePlaque]);
+    toggleHideReadFilter();
+  }, [closePlaque, toggleHideReadFilter]);
 
   const showAllLibraries = useCallback(() => {
     closePlaque();
-    setSelectedLibraries(new Set());
-  }, [closePlaque]);
+    clearLibraries();
+  }, [clearLibraries, closePlaque]);
 
   const showAllItems = useCallback(() => {
     closePlaque();
-    setSelectedLibraries(new Set());
-    setHideRead(false);
-  }, [closePlaque]);
+    clearFilters();
+  }, [clearFilters, closePlaque]);
 
   const resetView = useCallback(() => {
     if (!viewport.width || !viewport.height) return;
@@ -721,10 +599,10 @@ export function WallExperience({ items }: WallExperienceProps) {
 
       if (event.key === "Escape") {
         closePlaque();
-        setFiltersOpen(false);
+        closePanel();
         return;
       }
-      if (filtersOpen) return;
+      if (panelOpen) return;
 
       if (event.key === "+" || event.key === "=") {
         event.preventDefault();
@@ -756,8 +634,9 @@ export function WallExperience({ items }: WallExperienceProps) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [
     clickGuard,
+    closePanel,
     closePlaque,
-    filtersOpen,
+    panelOpen,
     goToRandom,
     resetView,
     toggleOverview,
@@ -817,7 +696,7 @@ export function WallExperience({ items }: WallExperienceProps) {
   }
 
   const scrimRef = useRef<HTMLButtonElement>(null);
-  const scrimRendered = usePresence(filtersOpen, scrimRef, {
+  const scrimRendered = usePresence(panelOpen, scrimRef, {
     enter: (timeline, scrim) => {
       timeline.fromTo(scrim, { opacity: 0 }, { opacity: 1, duration: 0.25 });
     },
@@ -828,7 +707,7 @@ export function WallExperience({ items }: WallExperienceProps) {
 
   // Le panneau de filtres bascule vers le spectateur depuis son bord bas.
   const filtersRef = useRef<HTMLDivElement>(null);
-  const filtersRendered = usePresence(filtersOpen, filtersRef, {
+  const filtersRendered = usePresence(panelOpen, filtersRef, {
     enter: (timeline, panel, still) => {
       timeline.fromTo(
         panel,
@@ -997,7 +876,7 @@ export function WallExperience({ items }: WallExperienceProps) {
             tabIndex={-1}
             aria-label={t("wall.filters.close")}
             className="wall-filter-scrim absolute inset-0 z-20"
-            onClick={() => setFiltersOpen(false)}
+            onClick={() => closePanel()}
           />
         )}
 
@@ -1005,7 +884,7 @@ export function WallExperience({ items }: WallExperienceProps) {
           data-wall-ui
           className={cn(
             "wall-zoom absolute bottom-4 left-4 z-30 flex items-center gap-1 sm:bottom-6 sm:left-6",
-            filtersOpen && "pointer-events-none opacity-60"
+            panelOpen && "pointer-events-none opacity-60"
           )}
         >
           <button
@@ -1173,7 +1052,7 @@ export function WallExperience({ items }: WallExperienceProps) {
               data-testid="wall-filter-trigger"
               className={cn(
                 "wall-control wall-control-wide wall-filter-trigger",
-                (filtersOpen ||
+                (panelOpen ||
                   selectedLibraries.size > 0 ||
                   hideRead) &&
                   "is-active"
@@ -1181,7 +1060,7 @@ export function WallExperience({ items }: WallExperienceProps) {
               onClick={toggleFilters}
               aria-label={t("wall.filters.label")}
               aria-haspopup="dialog"
-              aria-expanded={filtersOpen}
+              aria-expanded={panelOpen}
               title={t("wall.filters.label")}
             >
               <SlidersHorizontal className="h-4 w-4" />
@@ -1234,7 +1113,7 @@ export function WallExperience({ items }: WallExperienceProps) {
           </button>
         </div>
 
-        {!filtersOpen && (
+        {!panelOpen && (
           <p className="wall-hint pointer-events-none absolute bottom-6 left-1/2 z-20 hidden -translate-x-1/2 lg:block">
             {t("wall.hint")}
           </p>
