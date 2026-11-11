@@ -129,3 +129,13 @@ export function wallReleaseVelocity(
 
   return [vx, vy];
 }
+
+/**
+ * Les panneaux, boutons et champs du mur gardent leurs gestes natifs : un
+ * glissement commencé sur `[data-wall-ui]` ne déplace jamais la caméra.
+ */
+export function isWallUiTarget(target: EventTarget | null): boolean {
+  return (
+    target instanceof Element && Boolean(target.closest("[data-wall-ui]"))
+  );
+}
