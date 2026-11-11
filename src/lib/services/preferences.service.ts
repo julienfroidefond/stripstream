@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
 import { cache } from "react";
+import { unstable_rethrow } from "next/navigation";
 import { getCurrentUser } from "../auth-utils";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
@@ -53,6 +54,7 @@ export class PreferencesService {
         hideMissingBooks: preferences.hideMissingBooks,
       };
     } catch (error) {
+      unstable_rethrow(error);
       if (error instanceof AppError) {
         throw error;
       }

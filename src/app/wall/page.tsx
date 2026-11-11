@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 
-import { getProvider } from "@/lib/providers/provider.factory";
 import { getWallItems } from "@/lib/services/wall.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
-import { AppError } from "@/utils/errors";
+import { loadSurface } from "@/lib/surfaces/load-surface";
 import { WallExperience } from "@/components/wall/WallExperience";
 import { WallEmpty } from "@/components/wall/WallEmpty";
 import { WallError } from "@/components/wall/WallError";
@@ -22,26 +20,19 @@ export const metadata: Metadata = {
  * les filtres puissent redessiner le mur sans rechargement.
  */
 export default async function WallPage() {
-  // `redirect` lève une exception de contrôle : on garde le hors-try pour ne
-  // jamais l'avaler dans le filet d'erreur du mur.
-  const provider = await getProvider();
-  if (!provider) redirect("/settings");
+  const surface = await loadSurface({
+    name: "wall",
+    fallbackCode: ERROR_CODES.WALL.FETCH_ERROR,
+    load: ({ provider }) => getWallItems(provider),
+  });
 
-  try {
-    const items = await getWallItems(provider);
-    if (items.length === 0) return <WallEmpty />;
-
-    return <WallExperience items={items} />;
-  } catch (error) {
-    if (
-      error instanceof AppError &&
-      (error.code === ERROR_CODES.KOMGA.MISSING_CONFIG ||
-        error.code === ERROR_CODES.STRIPSTREAM.MISSING_CONFIG)
-    ) {
-      redirect("/settings");
-    }
-
-    const code = error instanceof AppError ? error.code : ERROR_CODES.WALL.FETCH_ERROR;
-    return <WallError code={code} />;
+  if (surface.status === "ready") {
+    return surface.data.length === 0 ? <WallEmpty /> : <WallExperience items={surface.data} />;
   }
+
+  return (
+    <WallError
+      code={surface.status === "error" ? surface.code : ERROR_CODES.WALL.FETCH_ERROR}
+    />
+  );
 }

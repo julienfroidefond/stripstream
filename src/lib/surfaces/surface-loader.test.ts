@@ -1,0 +1,199 @@
+import { describe, expect, it, vi } from "vitest";
+import { ERROR_CODES } from "@/constants/errorCodes";
+import { AppError } from "@/utils/errors";
+import { defaultPreferences, type UserPreferences } from "@/types/preferences";
+import type { IMediaProvider } from "@/lib/providers/provider.interface";
+import {
+  loadSurfaceWithDependencies,
+  type LoadSurfaceOptions,
+  type SurfaceLoaderDependencies,
+} from "./surface-loader";
+
+const provider = { id: "provider" } as unknown as IMediaProvider;
+
+function dependencies(
+  overrides: Partial<SurfaceLoaderDependencies> = {}
+): SurfaceLoaderDependencies {
+  return {
+    getProvider: vi.fn(async () => provider),
+    getActiveProviderType: vi.fn(async () => "komga" as const),
+    getPreferences: vi.fn(async () => ({ ...defaultPreferences })),
+    redirect: vi.fn((url: string): never => {
+      throw new Error(`redirect:${url}`);
+    }),
+    rethrow: vi.fn(),
+    ...overrides,
+  };
+}
+
+function options<T>(
+  load: LoadSurfaceOptions<T>["load"],
+  overrides: Partial<LoadSurfaceOptions<T>> = {}
+): LoadSurfaceOptions<T> {
+  return {
+    name: "test",
+    fallbackCode: ERROR_CODES.SERIES.FETCH_ERROR,
+    load,
+    ...overrides,
+  };
+}
+
+describe("loadSurface", () => {
+  it("resolves provider, type and preferences once, then loads data", async () => {
+    const deps = dependencies();
+    const load = vi.fn(async () => ({ value: 42 }));
+
+    const result = await loadSurfaceWithDependencies(options(load), deps);
+
+    expect(result).toMatchObject({
+      status: "ready",
+      data: { value: 42 },
+      context: { provider, providerType: "komga" },
+    });
+    expect(load).toHaveBeenCalledTimes(1);
+  });
+
+  it("redirects to settings when no provider is configured", async () => {
+    const deps = dependencies({ getProvider: vi.fn(async () => null) });
+
+    await expect(loadSurfaceWithDependencies(options(async () => null), deps)).rejects.toThrow(
+      "redirect:/settings"
+    );
+  });
+
+  it("can return the unavailable state instead of redirecting", async () => {
+    const deps = dependencies({ getProvider: vi.fn(async () => null) });
+
+    const result = await loadSurfaceWithDependencies(
+      options(async () => null, { missingProvider: "unavailable" }),
+      deps
+    );
+
+    expect(result).toEqual({ status: "unavailable", reason: "no-provider" });
+  });
+
+  it("short-circuits an anonymous surface without calling load", async () => {
+    const deps = dependencies({
+      getPreferences: vi.fn(async () => ({ ...defaultPreferences, anonymousMode: true })),
+    });
+    const load = vi.fn(async () => []);
+
+    const result = await loadSurfaceWithDependencies(options(load, { anonymous: "empty" }), deps);
+
+    expect(result.status).toBe("anonymous-empty");
+    expect(load).not.toHaveBeenCalled();
+  });
+
+  it("loads an anonymous surface when the page allows it", async () => {
+    const deps = dependencies({
+      getPreferences: vi.fn(async () => ({ ...defaultPreferences, anonymousMode: true })),
+    });
+    const load = vi.fn(async () => []);
+
+    const result = await loadSurfaceWithDependencies(options(load), deps);
+
+    expect(result.status).toBe("ready");
+    expect(load).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns unavailable when the active provider type does not match", async () => {
+    const deps = dependencies({ getActiveProviderType: vi.fn(async () => "komga" as const) });
+
+    const result = await loadSurfaceWithDependencies(
+      options(async () => null, { requireProviderType: "stripstream" }),
+      deps
+    );
+
+    expect(result).toEqual({ status: "unavailable", reason: "unsupported-provider" });
+  });
+
+  it("falls back to default preferences without failing the page", async () => {
+    const deps = dependencies({
+      getPreferences: vi.fn(async () => {
+        throw new Error("no session");
+      }),
+    });
+    const load = vi.fn(async (context: { preferences: UserPreferences }) => context.preferences);
+
+    const result = await loadSurfaceWithDependencies(options(load), deps);
+
+    expect(result.status).toBe("ready");
+    if (result.status === "ready") {
+      expect(result.data).toEqual(defaultPreferences);
+      expect(result.context.isAnonymous).toBe(false);
+    }
+  });
+
+  it("maps AppError from the loader to its code", async () => {
+    const result = await loadSurfaceWithDependencies(
+      options(async () => {
+        throw new AppError(ERROR_CODES.LIBRARY.NOT_FOUND);
+      }),
+      dependencies()
+    );
+
+    expect(result).toEqual({ status: "error", code: ERROR_CODES.LIBRARY.NOT_FOUND });
+  });
+
+  it("uses the fallback code for an unexpected loader error", async () => {
+    const result = await loadSurfaceWithDependencies(
+      options(async () => {
+        throw new Error("boom");
+      }),
+      dependencies()
+    );
+
+    expect(result).toEqual({ status: "error", code: ERROR_CODES.SERIES.FETCH_ERROR });
+  });
+
+  it("redirects when the loader reports missing provider configuration", async () => {
+    const deps = dependencies();
+
+    await expect(
+      loadSurfaceWithDependencies(
+        options(async () => {
+          throw new AppError(ERROR_CODES.KOMGA.MISSING_CONFIG);
+        }),
+        deps
+      )
+    ).rejects.toThrow("redirect:/settings");
+  });
+
+  it("rethrows Next.js control-flow errors from context resolution", async () => {
+    const bailout = Object.assign(new Error("Dynamic server usage"), {
+      digest: "DYNAMIC_SERVER_USAGE",
+    });
+    const deps = dependencies({
+      getPreferences: vi.fn(async () => {
+        throw bailout;
+      }),
+      rethrow: vi.fn((error: unknown): never => {
+        throw error;
+      }),
+    });
+
+    await expect(loadSurfaceWithDependencies(options(async () => null), deps)).rejects.toBe(
+      bailout
+    );
+  });
+
+  it("rethrows Next.js control-flow errors from the data loader", async () => {
+    const redirectSignal = Object.assign(new Error("NEXT_REDIRECT"), {
+      digest: "NEXT_REDIRECT;replace;/settings;307;",
+    });
+    const deps = dependencies({
+      rethrow: vi.fn((error: unknown): never => {
+        throw error;
+      }),
+    });
+
+    await expect(
+      loadSurfaceWithDependencies(
+        options(async () => {
+          throw redirectSignal;
+        }),
+        deps
+      )
+    ).rejects.toBe(redirectSignal);
+  });
+});

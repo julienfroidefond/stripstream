@@ -673,6 +673,7 @@
     }
   },
   "errors": {
+    "PROVIDER_NOT_CONFIGURED": "Aucun fournisseur multimédia n'est configuré",
     "MONGODB_MISSING_URI": "URI MongoDB manquante",
     "MONGODB_CONNECTION_FAILED": "Erreur lors de la connexion à MongoDB",
     "AUTH_UNAUTHENTICATED": "Non authentifié",
@@ -715,8 +716,12 @@
     "STRIPSTREAM_NOT_FOUND": "Ressource Stripstream introuvable (HTTP 404). L'URL du serveur est peut-être incorrecte.",
     "STRIPSTREAM_SERVER_ERROR": "Le serveur Stripstream rencontre un problème (HTTP 5xx). Réessaie plus tard.",
     "CONFIG_INVALID_URL": "URL de serveur invalide. Utilise une URL http(s) sans identifiants, paramètres ni adresse de métadonnées.",
+    "CONFIG_NOT_FOUND": "Configuration introuvable",
     "CONFIG_SAVE_ERROR": "Erreur lors de la sauvegarde de la configuration",
     "CONFIG_FETCH_ERROR": "Erreur lors de la récupération de la configuration",
+    "CONFIG_TEST_ERROR": "Erreur lors du test de la configuration",
+    "CONFIG_DELETE_ERROR": "Erreur lors de la suppression de la configuration",
+    "CONFIG_ACTIVATE_ERROR": "Erreur lors de l'activation de la configuration",
     "CONFIG_TTL_SAVE_ERROR": "Erreur lors de la sauvegarde des TTL",
     "CONFIG_TTL_FETCH_ERROR": "Erreur lors de la récupération des TTL",
     "CREDENTIALS_MISSING_ENCRYPTION_KEY": "Des identifiants chiffrés ont été trouvés mais CREDENTIALS_ENCRYPTION_KEY est absente. Renseigne la clé utilisée pour les chiffrer.",

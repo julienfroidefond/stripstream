@@ -1,49 +1,33 @@
 "use server";
 
-import { getProvider } from "@/lib/providers/provider.factory";
 import { invalidateSeriesShelf } from "@/lib/cache/invalidation";
 import { ERROR_CODES } from "@/constants/errorCodes";
-import { AppError, getErrorMessage } from "@/utils/errors";
-import logger from "@/lib/logger";
+import {
+  runProviderAction,
+  type ActionResult,
+} from "@/lib/actions/action-runner";
 
-export interface SeriesShelfResult {
-  success: boolean;
-  message: string;
-}
+export type SeriesShelfResult = ActionResult;
 
 async function updateShelf(
   seriesId: string,
   shelved: boolean,
   libraryId?: string
 ): Promise<SeriesShelfResult> {
-  try {
-    const provider = await getProvider();
-    if (!provider) return { success: false, message: "Provider non configuré" };
-
-    if (shelved) {
-      await provider.shelveSeries(seriesId);
-    } else {
-      await provider.unshelveSeries(seriesId);
-    }
-
-    invalidateSeriesShelf(seriesId, libraryId);
-    return {
-      success: true,
-      message: shelved ? "Série mise de côté" : "Série reprise",
-    };
-  } catch (error) {
-    logger.error(
-      { err: error, seriesId, shelved },
-      "Erreur lors de la modification de la mise de côté"
-    );
-    if (error instanceof AppError) {
-      return { success: false, message: error.message };
-    }
-    return {
-      success: false,
-      message: getErrorMessage(ERROR_CODES.SERIES.SHELF_ERROR),
-    };
-  }
+  return runProviderAction({
+    name: shelved ? "shelveSeries" : "unshelveSeries",
+    fallbackCode: ERROR_CODES.SERIES.SHELF_ERROR,
+    logContext: { seriesId, shelved, libraryId },
+    invalidate: () => invalidateSeriesShelf(seriesId, libraryId),
+    execute: async ({ provider }) => {
+      if (shelved) {
+        await provider.shelveSeries(seriesId);
+      } else {
+        await provider.unshelveSeries(seriesId);
+      }
+      return { message: shelved ? "Série mise de côté" : "Série reprise" };
+    },
+  });
 }
 
 /** Met une série de côté pour le lecteur courant (idempotent). */

@@ -8,8 +8,15 @@ import type {
   ResolvedConnection,
 } from "./types";
 
-const TEST_CONNECTION_LIMIT = 5;
-const TEST_CONNECTION_WINDOW_MS = 30_000;
+export const CONNECTION_TEST_RATE_LIMIT = {
+  limit: 5,
+  windowMs: 30_000,
+} as const;
+
+/** Clé du budget partagé par les deux providers et les actions de config. */
+export function connectionTestRateLimitKey(provider: ProviderType, userId: number): string {
+  return `test-${provider}:${userId}`;
+}
 
 /**
  * Budget partagé par les deux providers : la clé inclut le provider pour que
@@ -19,9 +26,9 @@ export function checkConnectionTestRateLimit(
   provider: ProviderType,
   userId: number
 ): ConnectionTestRateLimit {
-  const result = checkRateLimit(`test-${provider}:${userId}`, {
-    limit: TEST_CONNECTION_LIMIT,
-    windowMs: TEST_CONNECTION_WINDOW_MS,
+  const result = checkRateLimit(connectionTestRateLimitKey(provider, userId), {
+    limit: CONNECTION_TEST_RATE_LIMIT.limit,
+    windowMs: CONNECTION_TEST_RATE_LIMIT.windowMs,
   });
 
   return {

@@ -1,6 +1,4 @@
 import { Suspense } from "react";
-import { getProvider } from "@/lib/providers/provider.factory";
-import type { IMediaProvider } from "@/lib/providers/provider.interface";
 import { resolveSeriesPool } from "@/lib/resume/series-pool";
 import {
   buildResumeEntries,
@@ -21,11 +19,10 @@ import { ReadingListRow } from "@/components/home/ReadingListRow";
 import { DeferredRecommendations } from "@/components/home/DeferredRecommendations";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { ERROR_CODES } from "@/constants/errorCodes";
-import { AppError } from "@/utils/errors";
 import { FavoriteService } from "@/lib/services/favorite.service";
-import { PreferencesService } from "@/lib/services/preferences.service";
-import { redirect } from "next/navigation";
+import { loadSurface } from "@/lib/surfaces/load-surface";
 import { Bookmark, Heart, History, LibraryBig, Sparkles } from "lucide-react";
+import type { IMediaProvider } from "@/lib/providers/provider.interface";
 import type { NormalizedBook, NormalizedSeries } from "@/lib/providers/types";
 import type { HomePrimaryData } from "@/types/home";
 import type { StripstreamReadingList } from "@/types/stripstream";
@@ -55,96 +52,111 @@ export default function HomePage() {
 }
 
 async function HomeStreamingContent() {
-  try {
-    const [provider, preferences] = await Promise.all([
-      getProvider(),
-      PreferencesService.getPreferences().catch(() => null),
-    ]);
-    if (!provider) return <HomeWelcome />;
+  const surface = await loadSurface({
+    name: "home",
+    fallbackCode: ERROR_CODES.HOME.FETCH_ERROR,
+    missingProvider: "unavailable",
+    load: async ({ provider, isAnonymous }) => {
+      const continueReadingPromise = settleHomeFeed(
+        provider.getHomeContinueReadingData(HOMEPAGE_INITIAL_QUERY_LIMIT),
+        null
+      );
+      const ongoingPromise = settleHomeFeed(
+        provider.getHomeOngoingSeries(HOMEPAGE_INITIAL_QUERY_LIMIT),
+        []
+      );
+      const favoritesPromise = FavoriteService.listFavorites().catch(() => []);
+      const readingListsPromise = settleHomeFeed(provider.getHomeReadingLists(), []);
+      const latestSeriesPromise = settleHomeFeed(
+        provider.getHomeLatestSeries(HOMEPAGE_INITIAL_QUERY_LIMIT),
+        []
+      );
+      const recentlyReadPromise = settleHomeFeed(
+        provider.getHomeRecentlyRead(HOMEPAGE_INITIAL_QUERY_LIMIT),
+        []
+      );
 
-    const isAnonymous = preferences?.anonymousMode ?? false;
+      return {
+        isAnonymous,
+        continueReadingPromise,
+        ongoingPromise,
+        favoritesPromise,
+        readingListsPromise,
+        latestSeriesPromise,
+        recentlyReadPromise,
+      };
+    },
+  });
 
-    const continueReadingPromise = settleHomeFeed(
-      provider.getHomeContinueReadingData(HOMEPAGE_INITIAL_QUERY_LIMIT),
-      null
-    );
-    const ongoingPromise = settleHomeFeed(
-      provider.getHomeOngoingSeries(HOMEPAGE_INITIAL_QUERY_LIMIT),
-      []
-    );
-    const favoritesPromise = FavoriteService.listFavorites().catch(() => []);
-    const readingListsPromise = settleHomeFeed(provider.getHomeReadingLists(), []);
-    const latestSeriesPromise = settleHomeFeed(
-      provider.getHomeLatestSeries(HOMEPAGE_INITIAL_QUERY_LIMIT),
-      []
-    );
-    const recentlyReadPromise = settleHomeFeed(
-      provider.getHomeRecentlyRead(HOMEPAGE_INITIAL_QUERY_LIMIT),
-      []
-    );
-    return (
-      <div className="space-y-10 pb-2">
-        <Suspense fallback={null}>
-          <HomeProviderErrorState
-            feedPromises={[
-              continueReadingPromise,
-              ongoingPromise,
-              readingListsPromise,
-              latestSeriesPromise,
-              recentlyReadPromise,
-            ]}
-          />
-        </Suspense>
-        <Suspense fallback={<HomeHeroSkeleton />}>
-          <ContinueReadingSection
-            provider={provider}
-            continueReadingPromise={continueReadingPromise}
-            ongoingPromise={ongoingPromise}
-            isAnonymous={isAnonymous}
-          />
-        </Suspense>
+  if (surface.status === "unavailable") return <HomeWelcome />;
 
-        <Suspense fallback={<HomeCarouselSkeleton icon={LibraryBig} />}>
-          <OngoingSection ongoingPromise={ongoingPromise} isAnonymous={isAnonymous} />
-        </Suspense>
-
-        <Suspense fallback={<HomeCarouselSkeleton icon={Heart} />}>
-          <FavoritesSection favoritesPromise={favoritesPromise} />
-        </Suspense>
-
-        <Suspense fallback={<HomeRecommendationSkeleton />}>
-          <DeferredRecommendations isAnonymous={isAnonymous} />
-        </Suspense>
-
-        <Suspense fallback={<HomeReadingListSkeleton icon={Bookmark} />}>
-          <ReadingListsSection readingListsPromise={readingListsPromise} />
-        </Suspense>
-
-        <Suspense fallback={<HomeCarouselSkeleton icon={Sparkles} />}>
-          <LatestSeriesSection latestSeriesPromise={latestSeriesPromise} />
-        </Suspense>
-
-        <Suspense fallback={<HomeCarouselSkeleton icon={History} />}>
-          <RecentlyReadSection recentlyReadPromise={recentlyReadPromise} />
-        </Suspense>
-      </div>
-    );
-  } catch (error) {
-    if (error instanceof AppError && (
-      error.code === ERROR_CODES.KOMGA.MISSING_CONFIG ||
-      error.code === ERROR_CODES.STRIPSTREAM.MISSING_CONFIG
-    )) {
-      redirect("/settings");
-    }
-
-    const errorCode = error instanceof AppError ? error.code : ERROR_CODES.HOME.FETCH_ERROR;
-
+  if (surface.status !== "ready") {
     return (
       <main className="container mx-auto px-4 py-8">
-        <ErrorMessage errorCode={errorCode} />
+        <ErrorMessage
+          errorCode={surface.status === "error" ? surface.code : ERROR_CODES.HOME.FETCH_ERROR}
+        />
       </main>
     );
   }
+
+  const {
+    isAnonymous,
+    continueReadingPromise,
+    ongoingPromise,
+    favoritesPromise,
+    readingListsPromise,
+    latestSeriesPromise,
+    recentlyReadPromise,
+  } = surface.data;
+
+  return (
+    <div className="space-y-10 pb-2">
+      <Suspense fallback={null}>
+        <HomeProviderErrorState
+          feedPromises={[
+            continueReadingPromise,
+            ongoingPromise,
+            readingListsPromise,
+            latestSeriesPromise,
+            recentlyReadPromise,
+          ]}
+        />
+      </Suspense>
+      <Suspense fallback={<HomeHeroSkeleton />}>
+        <ContinueReadingSection
+          provider={surface.context.provider}
+          continueReadingPromise={continueReadingPromise}
+          ongoingPromise={ongoingPromise}
+          isAnonymous={isAnonymous}
+        />
+      </Suspense>
+
+      <Suspense fallback={<HomeCarouselSkeleton icon={LibraryBig} />}>
+        <OngoingSection ongoingPromise={ongoingPromise} isAnonymous={isAnonymous} />
+      </Suspense>
+
+      <Suspense fallback={<HomeCarouselSkeleton icon={Heart} />}>
+        <FavoritesSection favoritesPromise={favoritesPromise} />
+      </Suspense>
+
+      <Suspense fallback={<HomeRecommendationSkeleton />}>
+        <DeferredRecommendations isAnonymous={isAnonymous} />
+      </Suspense>
+
+      <Suspense fallback={<HomeReadingListSkeleton icon={Bookmark} />}>
+        <ReadingListsSection readingListsPromise={readingListsPromise} />
+      </Suspense>
+
+      <Suspense fallback={<HomeCarouselSkeleton icon={Sparkles} />}>
+        <LatestSeriesSection latestSeriesPromise={latestSeriesPromise} />
+      </Suspense>
+
+      <Suspense fallback={<HomeCarouselSkeleton icon={History} />}>
+        <RecentlyReadSection recentlyReadPromise={recentlyReadPromise} />
+      </Suspense>
+    </div>
+  );
 }
 
 interface ContinueReadingSectionProps {
