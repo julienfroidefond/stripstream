@@ -15,7 +15,8 @@ import type {
   ScanStatus,
 } from "../types";
 import type { HomePrimaryData } from "@/types/home";
-import { StripstreamClient } from "./stripstream.client";
+import { createStripstreamClient } from "./stripstream.client";
+import type { StripstreamClient } from "./stripstream.client";
 import { StripstreamAdapter } from "./stripstream.adapter";
 import { selectApprovedMetadataLink } from "./metadata-links";
 import { scanStateFromIndexJobStatus } from "../scan-status";
@@ -51,7 +52,7 @@ export class StripstreamProvider implements IMediaProvider {
   private client: StripstreamClient;
 
   constructor(url: string, token: string) {
-    this.client = new StripstreamClient(url, token);
+    this.client = createStripstreamClient(url, token);
   }
 
   async getLibraries(): Promise<NormalizedLibrary[]> {

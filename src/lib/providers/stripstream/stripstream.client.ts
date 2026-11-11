@@ -22,6 +22,14 @@ interface FetchOptions extends RequestInit {
   tags?: string[];
 }
 
+/**
+ * Seul point de construction du client média. Le provider et le transport
+ * passent par ici pour garder l'URL, le token et les délais au même endroit.
+ */
+export function createStripstreamClient(url: string, token: string): StripstreamClient {
+  return new StripstreamClient(url, token);
+}
+
 const RETRYABLE_CODES = new Set([
   "EAI_AGAIN",    // DNS transient failure
   "ENOTFOUND",    // DNS resolution failure (Docker restart)

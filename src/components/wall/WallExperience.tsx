@@ -62,18 +62,10 @@ import {
 import { WallTile } from "./WallTile";
 import { useWallCamera } from "./useWallCamera";
 import { useWallGestures } from "./useWallGestures";
+import { useWallPhase } from "./useWallPhase";
 
 interface WallExperienceProps {
   items: WallItem[];
-}
-
-interface ActivePlaqueState {
-  key: string;
-  index: number;
-  mode: "anchor" | "sheet";
-  anchor: WallPlaqueAnchor | null;
-  /** Hauteur maximale réservée à la feuille pour que l'affiche reste au-dessus. */
-  sheetMaxHeight?: number;
 }
 
 interface LibraryEntry {
@@ -182,17 +174,21 @@ export function WallExperience({ items }: WallExperienceProps) {
   const zoomLabelRef = useRef<HTMLSpanElement>(null);
   const flashTimerRef = useRef<number | null>(null);
   const entranceTimerRef = useRef<number | null>(null);
-  const revealTimerRef = useRef<number | null>(null);
   /** Rend au mur l'affiche visée par le vol en cours. */
   const settleFocusRef = useRef<(() => void) | null>(null);
+  const settleFocus = useCallback(() => {
+    settleFocusRef.current?.();
+    settleFocusRef.current = null;
+  }, []);
+  const wallPhase = useWallPhase({ reduce, onSettleFocus: settleFocus });
+  const { active, phase, tiltAllowed, focus, close, beginPan, endPan } =
+    wallPhase;
+  const closePlaque = close;
   // Init paresseuse : `useRef(createWallClickGuardState())` recréerait l'objet
   // à chaque rendu pour ne conserver que le premier.
   const clickGuardRef = useRef<WallClickGuardState | null>(null);
   const clickGuard = (clickGuardRef.current ??= createWallClickGuardState());
 
-  const [active, setActive] = useState<ActivePlaqueState | null>(null);
-  /** Œuvre visée pendant le vol de la caméra, avant que la plaque se pose. */
-  const [focusKey, setFocusKey] = useState<string | null>(null);
   const [flashKey, setFlashKey] = useState<string | null>(null);
   const [enterTiles, setEnterTiles] = useState(true);
   const [dimOn, setDimOn] = useState(false);
@@ -382,21 +378,6 @@ export function WallExperience({ items }: WallExperienceProps) {
     [clearHoverTimer]
   );
 
-  const cancelReveal = useCallback(() => {
-    if (revealTimerRef.current !== null) {
-      window.clearTimeout(revealTimerRef.current);
-      revealTimerRef.current = null;
-    }
-  }, []);
-
-  const closePlaque = useCallback(() => {
-    cancelReveal();
-    settleFocusRef.current?.();
-    settleFocusRef.current = null;
-    setActive(null);
-    setFocusKey(null);
-  }, [cancelReveal]);
-
   const clearFlash = useCallback(() => {
     if (flashTimerRef.current !== null) {
       window.clearTimeout(flashTimerRef.current);
@@ -474,6 +455,8 @@ export function WallExperience({ items }: WallExperienceProps) {
     stageRef,
     clickGuard,
     camera: wallCamera,
+    onPanStart: beginPan,
+    onPanEnd: endPan,
   });
 
   const visibleTiles = useMemo(
@@ -550,8 +533,6 @@ export function WallExperience({ items }: WallExperienceProps) {
       const stage = stageRef.current;
       if (!stage) return;
 
-      closePlaque();
-
       const stageRect = stage.getBoundingClientRect();
       const fine = hoverIsFine();
       const mode: WallFocusMode =
@@ -570,13 +551,6 @@ export function WallExperience({ items }: WallExperienceProps) {
       const next = wallFocusCamera(tile, target, clampZoom);
       animateView(next.scale, next.x, next.y, duration, "focus");
       setOverview(false);
-      // La salle reste éteinte pendant tout le vol : le voile ne se rallume
-      // pas quand la caméra part, il attend la plaque (`data-plaque`).
-      setFocusKey(tile.key);
-
-      // L'affiche visée passe devant le voile pendant le vol et répond au clic.
-      settleFocusRef.current?.();
-      settleFocusRef.current = pressFocusedTile(stage, tile, reduce);
 
       let anchor: WallPlaqueAnchor | null = null;
       if (mode === "anchor") {
@@ -611,23 +585,22 @@ export function WallExperience({ items }: WallExperienceProps) {
         anchor = { left, top, width: panelWidth, side };
       }
 
-      // La plaque arrive pendant le vol, quand l'affiche est déjà lancée.
-      const delay = reduce ? 0 : Math.max(300, duration * 1000 - 300);
-      revealTimerRef.current = window.setTimeout(() => {
-        revealTimerRef.current = null;
-        settleFocusRef.current?.();
-        settleFocusRef.current = null;
-        setFocusKey(null);
-        setActive({
+      // La salle reste éteinte pendant tout le vol : le voile ne se rallume
+      // pas quand la caméra part, il attend la plaque (`data-plaque`).
+      focus(
+        {
           key: tile.key,
           index: tile.itemIndex,
           mode,
           anchor,
           sheetMaxHeight,
-        });
-      }, delay);
+        },
+        duration
+      );
+      // L'affiche visée passe devant le voile pendant le vol et répond au clic.
+      settleFocusRef.current = pressFocusedTile(stage, tile, reduce);
     },
-    [animateView, clampZoom, closePlaque, reduce, setOverview]
+    [animateView, clampZoom, focus, reduce, setOverview]
   );
 
   const toggleFilters = useCallback(() => {
@@ -796,12 +769,13 @@ export function WallExperience({ items }: WallExperienceProps) {
       const timers = [
         flashTimerRef,
         entranceTimerRef,
-        revealTimerRef,
         hoverTimerRef,
       ];
       for (const timer of timers) {
         if (timer.current !== null) window.clearTimeout(timer.current);
       }
+      settleFocusRef.current?.();
+      settleFocusRef.current = null;
     };
   }, []);
 
@@ -906,10 +880,10 @@ export function WallExperience({ items }: WallExperienceProps) {
       <div
         ref={stageRef}
         data-dragging={dragging || undefined}
-        data-panning={panning || dragging || undefined}
-        data-plaque={active ? true : undefined}
-        data-focusing={focusKey ? true : undefined}
-        data-sheet={active?.mode === "sheet" || undefined}
+        data-panning={panning || dragging || phase === "pan" || undefined}
+        data-plaque={phase === "plaque" || phase === "sheet" || undefined}
+        data-focusing={phase === "focus" || undefined}
+        data-sheet={phase === "sheet" || undefined}
         className={cn(
           "wall-stage absolute inset-0 select-none",
           dragging ? "cursor-grabbing" : "cursor-grab"
@@ -935,6 +909,9 @@ export function WallExperience({ items }: WallExperienceProps) {
                   flash={flashKey === tile.key}
                   enter={enterTiles}
                   reduce={reduce}
+                  tiltAllowed={
+                    !reduce && tiltAllowed && !panning && !dragging
+                  }
                   onSelect={showFor}
                   onHover={handleTileHover}
                 />

@@ -7,7 +7,6 @@ import { SeriesCover } from "@/components/ui/series-cover";
 import { wallItemToSeries } from "@/lib/wall-cover";
 import type { WallItem, WallRenderTile } from "@/types/wall";
 import { cn } from "@/lib/utils";
-import { prefersReducedMotion } from "@/lib/gsap";
 
 /** Pose de survol d'une affiche : soulèvement, inclinaison, traction. */
 interface TiltPose {
@@ -24,13 +23,9 @@ const POSE_KEYS = Object.keys(REST) as (keyof TiltPose)[];
 const TILT_SMOOTHING = 0.2;
 const TILT_EPSILON = 0.002;
 
-/** Mêmes conditions que l'ancien `:hover` CSS : souris fine, mur au repos. */
-function canTilt(link: HTMLElement): boolean {
-  if (prefersReducedMotion()) return false;
-  if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return false;
-  if (link.hasAttribute("data-active") || link.hasAttribute("data-focus")) return false;
-  const stage = link.closest(".wall-stage");
-  return !stage?.hasAttribute("data-panning") && !stage?.hasAttribute("data-plaque");
+/** Le pointeur doit encore autoriser le survol pour incliner l'affiche. */
+function pointerAllowsTilt(): boolean {
+  return window.matchMedia("(hover: hover) and (pointer: fine)").matches;
 }
 
 export interface WallTileProps {
@@ -41,6 +36,8 @@ export interface WallTileProps {
   /** L'animation d'entrée n'est jouée qu'à l'ouverture du mur. */
   enter: boolean;
   reduce: boolean;
+  /** Le mur autorise l'inclinaison : au repos, sans vol ni plaque. */
+  tiltAllowed: boolean;
   onSelect: (tile: WallRenderTile) => void;
   /** Signale le survol d'une copie (le voile du fond attend un instant). */
   onHover: (key: string, hovered: boolean) => void;
@@ -60,6 +57,7 @@ function WallTileComponent({
   flash,
   enter,
   reduce,
+  tiltAllowed,
   onSelect,
   onHover,
 }: WallTileProps) {
@@ -93,6 +91,7 @@ function WallTileComponent({
     raf: null as number | null,
     last: 0,
   });
+  const tiltAllowedRef = useRef(tiltAllowed);
 
   const runTilt = useCallback(() => {
     const state = tiltRef.current;
@@ -109,7 +108,9 @@ function WallTileComponent({
       const elapsed = Math.min(64, now - state.last);
       state.last = now;
       const k = 1 - Math.pow(1 - TILT_SMOOTHING, elapsed / (1000 / 60));
-      const target = state.hovered && canTilt(link) ? state.target : REST;
+      const tilting =
+        state.hovered && tiltAllowedRef.current && pointerAllowsTilt();
+      const target = tilting ? state.target : REST;
 
       let settled = true;
       for (const key of POSE_KEYS) {
@@ -119,7 +120,7 @@ function WallTileComponent({
       }
 
       const pose = state.current;
-      if (settled && !state.hovered) {
+      if (settled && !tilting) {
         frame.style.removeProperty("transform");
         state.current = { ...REST };
         state.raf = null;
@@ -141,6 +142,13 @@ function WallTileComponent({
       if (state.raf !== null) window.cancelAnimationFrame(state.raf);
     };
   }, []);
+
+  useEffect(() => {
+    tiltAllowedRef.current = tiltAllowed;
+    if (!tiltAllowed && (tiltRef.current.hovered || tiltRef.current.raf !== null)) {
+      runTilt();
+    }
+  }, [runTilt, tiltAllowed]);
 
   const handlePointerMove = useCallback(
     (event: React.PointerEvent<HTMLAnchorElement>) => {
@@ -245,6 +253,7 @@ function sameWallTile(previous: WallTileProps, next: WallTileProps): boolean {
     previous.flash === next.flash &&
     previous.enter === next.enter &&
     previous.reduce === next.reduce &&
+    previous.tiltAllowed === next.tiltAllowed &&
     previous.onSelect === next.onSelect &&
     previous.onHover === next.onHover
   );

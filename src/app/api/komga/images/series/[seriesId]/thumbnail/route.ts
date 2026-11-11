@@ -1,62 +1,8 @@
-import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
-import { KomgaSeriesService } from "@/lib/services/komga/series.service";
-import { ERROR_CODES } from "@/constants/errorCodes";
-import { AppError } from "@/utils/errors";
-import { getErrorMessage } from "@/utils/errors";
-import { findHttpStatus } from "@/utils/image-errors";
-import logger from "@/lib/logger";
+import { createMediaRoute } from "@/lib/media/media-route";
+import { MEDIA_POLICIES } from "@/lib/media/policies";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ seriesId: string }> }
-) {
-  try {
-    const seriesId: string = (await params).seriesId;
-    const response = await KomgaSeriesService.getCover(seriesId, request.headers);
-    return response;
-  } catch (error) {
-    logger.error({ err: error }, "Erreur lors de la récupération de la miniature de la série");
-
-    // Chercher un status HTTP 404 dans la chaîne d'erreurs
-    const httpStatus = findHttpStatus(error);
-
-    if (httpStatus === 404) {
-      const seriesId: string = (await params).seriesId;
-      logger.info(`Image not found for series: ${seriesId}`);
-      return NextResponse.json(
-        {
-          error: {
-            code: ERROR_CODES.IMAGE.FETCH_ERROR,
-            name: "Image not found",
-            message: "Image not found",
-          },
-        },
-        { status: 404 }
-      );
-    }
-
-    if (error instanceof AppError) {
-      return NextResponse.json(
-        {
-          error: {
-            code: error.code,
-            name: "Image fetch error",
-            message: getErrorMessage(error.code),
-          },
-        },
-        { status: 500 }
-      );
-    }
-    return NextResponse.json(
-      {
-        error: {
-          code: ERROR_CODES.IMAGE.FETCH_ERROR,
-          name: "Image fetch error",
-          message: getErrorMessage(ERROR_CODES.IMAGE.FETCH_ERROR),
-        },
-      },
-      { status: 500 }
-    );
-  }
-}
+export const GET = createMediaRoute({
+  provider: "komga",
+  policy: MEDIA_POLICIES.komgaImage,
+  ref: ({ seriesId }) => ({ kind: "series-cover", seriesId }),
+});
