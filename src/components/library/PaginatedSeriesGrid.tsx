@@ -3,22 +3,18 @@
 import { SeriesGrid } from "./SeriesGrid";
 import { SeriesList } from "./SeriesList";
 import { Pagination } from "@/components/ui/Pagination";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { useGridFlip, useGridFlipPlayback } from "@/components/motion";
-import { useState, useEffect, useCallback, useRef, useTransition } from "react";
+import { useState, useCallback } from "react";
 import type { NormalizedSeries } from "@/lib/providers/types";
 import { SearchInput } from "./SearchInput";
 import { useTranslate } from "@/hooks/useTranslate";
-import { usePreferences } from "@/contexts/PreferencesContext";
+import { usePaginatedGrid } from "@/hooks/usePaginatedGrid";
 import { PageSizeSelect } from "@/components/common/PageSizeSelect";
 import { CompactModeButton } from "@/components/common/CompactModeButton";
 import { ViewModeButton } from "@/components/common/ViewModeButton";
 import { UnreadFilterButton } from "@/components/common/UnreadFilterButton";
 import { SortButton } from "@/components/common/SortButton";
 import { MissingFilterButton } from "@/components/common/MissingFilterButton";
-import { updatePreferences as updatePreferencesAction } from "@/app/actions/preferences";
-import { normalizeGridPageSize } from "@/lib/pageSize";
 
 interface PaginatedSeriesGridProps {
   series: NormalizedSeries[];
@@ -39,7 +35,7 @@ export function PaginatedSeriesGrid({
   series,
   currentPage,
   totalPages,
-  totalElements: _totalElements,
+  totalElements,
   defaultShowOnlyUnread,
   showOnlyUnread: initialShowOnlyUnread,
   pageSize,
@@ -49,139 +45,34 @@ export function PaginatedSeriesGrid({
   hasMissing: initialHasMissing,
   canSortByRating = false,
 }: PaginatedSeriesGridProps) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const [showOnlyUnread, setShowOnlyUnread] = useState(initialShowOnlyUnread);
-  const [isCompact, setIsCompact] = useState(initialCompact);
-  const [viewMode, setViewMode] = useState<"grid" | "list">(initialViewMode);
-  const [currentPageSize, setCurrentPageSize] = useState(
-    normalizeGridPageSize(pageSize || 30, initialCompact)
-  );
+  const {
+    effectivePageSize,
+    isCompact,
+    viewMode,
+    showOnlyUnread,
+    isNavigating,
+    gridRef,
+    captureLayout,
+    updateUrlParams,
+    persistPreferences,
+    handlePageChange,
+    handlePageSizeChange,
+    handleCompactModeToggle,
+    handleViewModeToggle,
+    handleUnreadFilter,
+  } = usePaginatedGrid({
+    contentKey: series.map((item) => item.id).join(","),
+    showOnlyUnread: initialShowOnlyUnread,
+    defaultShowOnlyUnread,
+    pageSize: pageSize ?? 30,
+    initialCompact,
+    initialViewMode,
+    viewModePreference: "viewMode",
+  });
+
   const [currentSort, setCurrentSort] = useState(initialSort);
   const [showMissing, setShowMissing] = useState(initialHasMissing);
-
-  const effectivePageSize = normalizeGridPageSize(pageSize || currentPageSize, isCompact);
   const { t } = useTranslate();
-  const { preferences } = usePreferences();
-
-  const persistPreferences = useCallback(async (payload: Parameters<typeof updatePreferencesAction>[0]) => {
-    try {
-      await updatePreferencesAction(payload);
-    } catch (error) {
-      console.error("Erreur lors de la sauvegarde des préférences:", error);
-    }
-  }, []);
-
-  // La grille reste en place, atténuée, le temps que la nouvelle page arrive.
-  const [isNavigating, startNavigation] = useTransition();
-  /** Change avec le contenu affiché : la grille est alors remontée. */
-  const gridKey = series.map((item) => item.id).join(",");
-  // Compact, tri, filtres : les cartes glissent vers leur nouvelle place.
-  const gridRef = useRef<HTMLDivElement>(null);
-  const gridFlip = useGridFlip(gridRef);
-  const captureLayout = gridFlip.capture;
-  useGridFlipPlayback(gridFlip, `${isCompact ? "compact" : "full"}:${gridKey}`);
-
-  const updateUrlParams = useCallback(
-    async (
-      updates: Record<string, string | null>,
-      replace: boolean = false,
-      { dim = true }: { dim?: boolean } = {}
-    ) => {
-      const params = new URLSearchParams(searchParams.toString());
-
-      Object.entries(updates).forEach(([key, value]) => {
-        if (value === null) {
-          params.delete(key);
-        } else {
-          params.set(key, value);
-        }
-      });
-
-      if (replace) {
-        await router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-      } else {
-        const navigate = () => router.push(`${pathname}?${params.toString()}`, { scroll: false });
-        // La grille ne s'atténue que si son contenu va être remplacé ; un
-        // changement de mise en page (compact, taille) glisse directement.
-        if (dim) startNavigation(navigate);
-        else navigate();
-      }
-    },
-    [router, pathname, searchParams]
-  );
-
-  // Apply default filter on initial load
-  useEffect(() => {
-    if (defaultShowOnlyUnread && !searchParams.has("unread")) {
-      updateUrlParams({ page: "1", unread: "true" }, true);
-    }
-  }, [defaultShowOnlyUnread, pathname, router, searchParams, updateUrlParams]);
-
-  const handlePageChange = useCallback(
-    async (page: number) => {
-      await updateUrlParams({ page: page.toString() });
-    },
-    [updateUrlParams]
-  );
-
-  const handleUnreadFilter = useCallback(async () => {
-    captureLayout();
-    const newUnreadState = !showOnlyUnread;
-    setShowOnlyUnread(newUnreadState);
-    await updateUrlParams({ page: "1", unread: newUnreadState ? "true" : "false" });
-    await persistPreferences({ showOnlyUnread: newUnreadState });
-  }, [captureLayout, showOnlyUnread, updateUrlParams, persistPreferences]);
-
-  const handlePageSizeChange = useCallback(
-    async (size: number) => {
-      captureLayout();
-      const nextSize = normalizeGridPageSize(size, isCompact);
-      setCurrentPageSize(nextSize);
-      await updateUrlParams({ page: "1", size: nextSize.toString() }, false, { dim: false });
-
-      await persistPreferences({
-        displayMode: {
-          ...preferences.displayMode,
-          compact: isCompact,
-          itemsPerPage: nextSize,
-          viewMode,
-        },
-      });
-    },
-    [captureLayout, isCompact, preferences.displayMode, updateUrlParams, persistPreferences, viewMode]
-  );
-
-  const handleCompactModeToggle = useCallback(
-    async (nextCompactMode: boolean) => {
-      captureLayout();
-      setIsCompact(nextCompactMode);
-      const nextSize = normalizeGridPageSize(effectivePageSize, nextCompactMode);
-      setCurrentPageSize(nextSize);
-
-      if (nextSize !== effectivePageSize) {
-        await updateUrlParams({ page: "1", size: nextSize.toString() }, false, { dim: false });
-      }
-
-      await persistPreferences({
-        displayMode: {
-          ...preferences.displayMode,
-          compact: nextCompactMode,
-          itemsPerPage: nextSize,
-          viewMode,
-        },
-      });
-    },
-    [
-      captureLayout,
-      effectivePageSize,
-      preferences.displayMode,
-      updateUrlParams,
-      persistPreferences,
-      viewMode,
-    ]
-  );
 
   const handleMissingToggle = useCallback(async () => {
     captureLayout();
@@ -202,36 +93,20 @@ export function PaginatedSeriesGrid({
     })();
     setCurrentSort(nextSort);
     await updateUrlParams({ page: "1", sort: nextSort === "title" ? null : nextSort });
-    await persistPreferences({ defaultSortOrder: nextSort as "title" | "latest" | "community_score" });
+    await persistPreferences({ defaultSortOrder: nextSort });
   }, [captureLayout, currentSort, canSortByRating, updateUrlParams, persistPreferences]);
-
-  const handleViewModeToggle = useCallback(
-    async (nextViewMode: "grid" | "list") => {
-      setViewMode(nextViewMode);
-
-      await persistPreferences({
-        displayMode: {
-          ...preferences.displayMode,
-          compact: isCompact,
-          itemsPerPage: effectivePageSize,
-          viewMode: nextViewMode,
-        },
-      });
-    },
-    [isCompact, effectivePageSize, persistPreferences, preferences.displayMode]
-  );
 
   // Calculate start and end indices for display
   const startIndex = (currentPage - 1) * effectivePageSize + 1;
-  const endIndex = Math.min(currentPage * effectivePageSize, _totalElements);
+  const endIndex = Math.min(currentPage * effectivePageSize, totalElements);
 
   const getShowingText = () => {
-    if (!_totalElements) return t("series.empty");
+    if (!totalElements) return t("series.empty");
 
     return t("books.display.showing", {
       start: startIndex,
       end: endIndex,
-      total: _totalElements,
+      total: totalElements,
     });
   };
 

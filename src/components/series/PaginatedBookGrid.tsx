@@ -3,20 +3,18 @@
 import { BookGrid } from "./BookGrid";
 import { BookList } from "./BookList";
 import { Pagination } from "@/components/ui/Pagination";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { useGridFlip, useGridFlipPlayback } from "@/components/motion";
-import { useState, useEffect, useCallback, useMemo, useRef, useTransition } from "react";
+import { useState, useCallback, useMemo } from "react";
 import type { NormalizedBook, NormalizedMissingBook } from "@/lib/providers/types";
 import { useTranslate } from "@/hooks/useTranslate";
-import { useDisplayPreferences } from "@/hooks/useDisplayPreferences";
+import { usePaginatedGrid } from "@/hooks/usePaginatedGrid";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { PageSizeSelect } from "@/components/common/PageSizeSelect";
 import { CompactModeButton } from "@/components/common/CompactModeButton";
 import { ViewModeButton } from "@/components/common/ViewModeButton";
 import { UnreadFilterButton } from "@/components/common/UnreadFilterButton";
 import { MissingFilterButton } from "@/components/common/MissingFilterButton";
-import { normalizeGridPageSize } from "@/lib/pageSize";
 import { splitBooksByVolumeType } from "./bookGrouping";
 
 interface PaginatedBookGridProps {
@@ -47,136 +45,9 @@ export function PaginatedBookGrid({
   missingBooks = [],
 }: PaginatedBookGridProps) {
   const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const [showOnlyUnread, setShowOnlyUnread] = useState(initialShowOnlyUnread);
-  const {
-    itemsPerPage: preferenceItemsPerPage,
-    handlePageSizeChange: persistPageSizeChange,
-    handleBooksViewModeToggle: persistBooksViewModeToggle,
-  } = useDisplayPreferences();
-  const { preferences, updatePreferences } = usePreferences();
+  const { preferences } = usePreferences();
   const { t } = useTranslate();
-  const [isCompact, setIsCompact] = useState(initialCompact);
-  const [viewMode, setViewMode] = useState<"grid" | "list">(initialViewMode);
   const [hideMissing, setHideMissing] = useState(preferences.hideMissingBooks);
-  const effectivePageSize = normalizeGridPageSize(pageSize || preferenceItemsPerPage, isCompact);
-
-  // Compact, filtres, tomes manquants : les cartes glissent vers leur place.
-  const gridRef = useRef<HTMLDivElement>(null);
-  const gridFlip = useGridFlip(gridRef);
-  const captureLayout = gridFlip.capture;
-
-
-  // La grille reste en place, atténuée, le temps que la nouvelle page arrive.
-  const [isNavigating, startNavigation] = useTransition();
-
-  const updateUrlParams = useCallback(
-    async (
-      updates: Record<string, string | null>,
-      replace: boolean = false,
-      { dim = true }: { dim?: boolean } = {}
-    ) => {
-      const params = new URLSearchParams(searchParams.toString());
-
-      Object.entries(updates).forEach(([key, value]) => {
-        if (value === null) {
-          params.delete(key);
-        } else {
-          params.set(key, value);
-        }
-      });
-
-      if (replace) {
-        await router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-      } else {
-        const navigate = () => router.push(`${pathname}?${params.toString()}`, { scroll: false });
-        // La grille ne s'atténue que si son contenu va être remplacé ; un
-        // changement de mise en page (compact, taille) glisse directement.
-        if (dim) startNavigation(navigate);
-        else navigate();
-      }
-    },
-    [router, pathname, searchParams]
-  );
-
-  // Apply default filter on initial load
-  useEffect(() => {
-    if (defaultShowOnlyUnread && !searchParams.has("unread")) {
-      updateUrlParams({ page: "1", unread: "true" }, true);
-    }
-  }, [defaultShowOnlyUnread, pathname, router, searchParams, updateUrlParams]);
-
-  const handlePageChange = useCallback(
-    async (page: number) => {
-      await updateUrlParams({ page: page.toString() });
-    },
-    [updateUrlParams]
-  );
-
-  const handleUnreadFilter = useCallback(async () => {
-    captureLayout();
-    const newUnreadState = !showOnlyUnread;
-    setShowOnlyUnread(newUnreadState);
-    await updateUrlParams({
-      page: "1",
-      unread: newUnreadState ? "true" : "false",
-    });
-    // Sauvegarder la préférence dans la base de données
-    try {
-      await updatePreferences({ showOnlyUnread: newUnreadState });
-    } catch (error) {
-      // Log l'erreur mais ne bloque pas l'utilisateur
-      console.error("Erreur lors de la sauvegarde de la préférence:", error);
-    }
-  }, [captureLayout, showOnlyUnread, updateUrlParams, updatePreferences]);
-
-  const handlePageSizeChange = useCallback(
-    async (size: number) => {
-      captureLayout();
-      const nextSize = normalizeGridPageSize(size, isCompact);
-      await persistPageSizeChange(nextSize);
-      await updateUrlParams({ page: "1", size: nextSize.toString() }, false, { dim: false });
-    },
-    [captureLayout, isCompact, persistPageSizeChange, updateUrlParams]
-  );
-
-  const handleCompactModeToggle = useCallback(
-    async (nextCompactMode: boolean) => {
-      captureLayout();
-      setIsCompact(nextCompactMode);
-
-      const nextSize = normalizeGridPageSize(effectivePageSize, nextCompactMode);
-      await updatePreferences({
-        displayMode: {
-          ...preferences.displayMode,
-          compact: nextCompactMode,
-          itemsPerPage: nextSize,
-          booksViewMode: viewMode,
-        },
-      });
-
-      if (nextSize !== effectivePageSize) {
-        await updateUrlParams({ page: "1", size: nextSize.toString() }, false, { dim: false });
-      }
-    },
-    [captureLayout, effectivePageSize, preferences.displayMode, viewMode, updateUrlParams, updatePreferences]
-  );
-
-  const handleViewModeToggle = useCallback(
-    async (nextViewMode: "grid" | "list") => {
-      setViewMode(nextViewMode);
-      await persistBooksViewModeToggle(nextViewMode);
-    },
-    [persistBooksViewModeToggle]
-  );
-
-  const handleBookClick = useCallback(
-    (book: NormalizedBook) => {
-      router.push(`/books/${book.id}`);
-    },
-    [router]
-  );
 
   const { regularBooks, specialBooks } = useMemo(() => splitBooksByVolumeType(books), [books]);
 
@@ -210,9 +81,38 @@ export function PaginatedBookGrid({
   }, [regularBooks, missingBooks, hideMissing]);
 
   /** Identifie le contenu affiché : sa variation déclenche le glissement. */
-  const gridKey = displayBooks.map((book) => book.id).join(",");
+  const contentKey = useMemo(() => displayBooks.map((book) => book.id).join(","), [displayBooks]);
 
-  useGridFlipPlayback(gridFlip, `${isCompact ? "compact" : "full"}:${gridKey}`);
+  const {
+    effectivePageSize,
+    isCompact,
+    viewMode,
+    showOnlyUnread,
+    isNavigating,
+    gridRef,
+    captureLayout,
+    persistPreferences,
+    handlePageChange,
+    handlePageSizeChange,
+    handleCompactModeToggle,
+    handleViewModeToggle,
+    handleUnreadFilter,
+  } = usePaginatedGrid({
+    contentKey,
+    showOnlyUnread: initialShowOnlyUnread,
+    defaultShowOnlyUnread,
+    pageSize,
+    initialCompact,
+    initialViewMode,
+    viewModePreference: "booksViewMode",
+  });
+
+  const handleBookClick = useCallback(
+    (book: NormalizedBook) => {
+      router.push(`/books/${book.id}`);
+    },
+    [router]
+  );
 
   const toggleHideMissing = useCallback(() => {
     captureLayout();
@@ -221,8 +121,8 @@ export function PaginatedBookGrid({
     // Hors de l'updater de `setHideMissing` : React l'exécute pendant le rendu,
     // et la server action met à jour le routeur (« Cannot update a component
     // while rendering a different component »).
-    updatePreferences({ hideMissingBooks: next }).catch((_err: unknown) => undefined);
-  }, [captureLayout, hideMissing, updatePreferences]);
+    void persistPreferences({ hideMissingBooks: next });
+  }, [captureLayout, hideMissing, persistPreferences]);
 
   // Calculate start and end indices for display
   const startIndex = (currentPage - 1) * effectivePageSize + 1;
