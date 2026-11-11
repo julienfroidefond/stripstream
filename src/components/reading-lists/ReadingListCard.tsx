@@ -7,13 +7,12 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { ReadingListCoverStack } from "./ReadingListCoverStack";
 import { useAnonymous } from "@/contexts/AnonymousContext";
 import { useTranslate } from "@/hooks/useTranslate";
+import type { NormalizedReadingList } from "@/lib/providers/types";
+import type { ReadingListStatus } from "@/lib/services/reading-lists.service";
 import { cn } from "@/lib/utils";
-import type { StripstreamReadingList } from "@/types/stripstream";
-
-type ReadingListStatus = "unread" | "reading" | "read";
 
 interface ReadingListCardProps {
-  list: StripstreamReadingList;
+  list: NormalizedReadingList;
   status: ReadingListStatus;
   /** Identifiant E2E spécifique à une surface (accueil, page listes…). */
   testId?: string;
@@ -69,7 +68,7 @@ export function ReadingListCard({ list, status, testId }: ReadingListCardProps) 
       )}
     >
       <div className="relative">
-        <ReadingListCoverStack covers={list.preview_covers} active={active} />
+        <ReadingListCoverStack covers={list.previewCovers} active={active} />
         {!isAnonymous && (
           <StatusBadge
             status={status === "read" ? "success" : status === "reading" ? "reading" : "unread"}
@@ -84,13 +83,13 @@ export function ReadingListCard({ list, status, testId }: ReadingListCardProps) 
           {list.name}
         </p>
         <p className="text-xs text-muted-foreground">
-          {t("home.reading_lists.series_count", { count: list.series_count })}
+          {t("home.reading_lists.series_count", { count: list.seriesCount })}
         </p>
-        {!isAnonymous && list.book_count > 0 && (
+        {!isAnonymous && list.bookCount > 0 && (
           <p className="text-xs text-muted-foreground">
             {t("series.status.progress", {
-              read: list.books_read_count,
-              total: list.book_count,
+              read: list.booksReadCount,
+              total: list.bookCount,
             })}
           </p>
         )}

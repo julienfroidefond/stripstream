@@ -11,19 +11,20 @@ Stripstream is a comic-reader front end; it does **not** own the library. Each u
 
 ### The interface
 
-`IMediaProvider` is defined at `src/lib/providers/provider.interface.ts:26-98`. It covers:
+`IMediaProvider` is defined at `src/lib/providers/provider.interface.ts:27-105`. It covers:
 
 - collections — `getLibraries`, `getLibraryById`, `getSeries`, `getSeriesById`, `getBooks`, `getBook`, `getNextBook`, `getMissingBooks`;
-- home feeds — the individual section methods (`getHomeContinueReadingData`, `getHomeOngoingSeries`, `getHomeLatestSeries`, `getHomeRecentlyRead`, `getHomeReadingLists`); the page composes them itself;
+- home feeds — the individual section methods (`getHomeContinueReadingData`, `getHomeOngoingSeries`, `getHomeLatestSeries`, `getHomeRecentlyRead`); the page composes them itself;
+- reading lists — `supportsReadingLists`, `getReadingLists`, `getReadingListDetail`; Stripstream-only, while Komga returns `false`, an empty list and `null`. The shared `NormalizedReadingList` / `NormalizedReadingListDetail` models carry displayable preview-cover URLs, so client components never import a provider adapter;
 - read progress — `getReadProgress`, `saveReadProgress`, `resetReadProgress`;
-- series ratings — Stripstream-only; Komga returns `null` / not-supported (`provider.interface.ts:62-64`);
+- series ratings — Stripstream-only; Komga returns `null` / not-supported (`provider.interface.ts:68-71`);
 - series shelf — `isShelved`, `shelveSeries`, `unshelveSeries`; Stripstream-only, Komga returns `false` / not-supported;
 - admin/utility — `scanLibrary` (returns a `{ jobId, progressSupported }` handle), `getScanStatus` (follows that job, or `unavailable` when the backend cannot report it), `getRandomBook`;
 - related/recommended series — `getRelatedSeries`, `getRecommendations`;
 - favorites — `getFavorites`, `isFavorite`, `addToFavorites`, `removeFromFavorites`;
 - search — `search`;
 - connection test — `testConnection`;
-- URL builder that returns a local proxy URL — `getBookThumbnailUrl` (`provider.interface.ts:96-97`).
+- URL builder that returns a local proxy URL — `getBookThumbnailUrl` (`provider.interface.ts:103-104`).
 
 Concrete implementations:
 

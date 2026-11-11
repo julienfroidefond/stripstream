@@ -23,9 +23,12 @@ import { FavoriteService } from "@/lib/services/favorite.service";
 import { loadSurface } from "@/lib/surfaces/load-surface";
 import { Bookmark, Heart, History, LibraryBig, Sparkles } from "lucide-react";
 import type { IMediaProvider } from "@/lib/providers/provider.interface";
-import type { NormalizedBook, NormalizedSeries } from "@/lib/providers/types";
+import type {
+  NormalizedBook,
+  NormalizedReadingList,
+  NormalizedSeries,
+} from "@/lib/providers/types";
 import type { HomePrimaryData } from "@/types/home";
-import type { StripstreamReadingList } from "@/types/stripstream";
 
 const HOMEPAGE_INITIAL_QUERY_LIMIT = HOME_FEED_PAGE_SIZE + 1;
 
@@ -66,7 +69,7 @@ async function HomeStreamingContent() {
         []
       );
       const favoritesPromise = FavoriteService.listFavorites().catch(() => []);
-      const readingListsPromise = settleHomeFeed(provider.getHomeReadingLists(), []);
+      const readingListsPromise = settleHomeFeed(provider.getReadingLists(), []);
       const latestSeriesPromise = settleHomeFeed(
         provider.getHomeLatestSeries(HOMEPAGE_INITIAL_QUERY_LIMIT),
         []
@@ -240,7 +243,7 @@ async function FavoritesSection({ favoritesPromise }: { favoritesPromise: Promis
 async function ReadingListsSection({
   readingListsPromise,
 }: {
-  readingListsPromise: Promise<HomeFeedState<StripstreamReadingList[]>>;
+  readingListsPromise: Promise<HomeFeedState<NormalizedReadingList[]>>;
 }) {
   const readingLists = (await readingListsPromise).data;
   if (readingLists.length === 0) return null;

@@ -7,10 +7,10 @@ export default async function ReadingListsPage() {
   const surface = await loadSurface({
     name: "reading-lists",
     fallbackCode: ERROR_CODES.STRIPSTREAM.CONNECTION_ERROR,
-    load: async ({ provider, providerType }) => {
-      const isStripstream = providerType === "stripstream";
-      const lists = isStripstream ? await provider.getHomeReadingLists() : [];
-      return { lists, isStripstream };
+    load: async ({ provider }) => {
+      const available = provider.supportsReadingLists;
+      const lists = available ? await provider.getReadingLists() : [];
+      return { lists, available };
     },
   });
 
@@ -27,7 +27,7 @@ export default async function ReadingListsPage() {
   return (
     <ReadingListsContent
       lists={surface.data.lists}
-      isStripstream={surface.data.isStripstream}
+      available={surface.data.available}
     />
   );
 }

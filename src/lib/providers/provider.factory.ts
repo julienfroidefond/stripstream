@@ -8,7 +8,6 @@ import type {
 } from "@/lib/connections/types";
 import type { IMediaProvider } from "./provider.interface";
 import type { ProviderType } from "./types";
-import type { StripstreamReadingListDetail } from "@/types/stripstream";
 
 /**
  * Seul point de construction des providers. Les actions, les probes et les
@@ -43,20 +42,3 @@ export const getActiveProviderType = cache(async (): Promise<ProviderType | null
   const userId = parseInt(user.id, 10);
   return (await getActiveConnection(userId)).provider;
 });
-
-/**
- * Fetches the detail of a reading list (Stripstream-only feature).
- * Returns null if the active provider is not Stripstream or the user is not authenticated.
- */
-export async function fetchReadingListDetail(
-  id: string
-): Promise<StripstreamReadingListDetail | null> {
-  const user = await getCurrentUser();
-  if (!user) return null;
-
-  const connection = await resolveActiveConnection(parseInt(user.id, 10));
-  if (connection?.provider !== "stripstream") return null;
-
-  const provider = await createStripstreamProvider(connection);
-  return provider.getReadingListDetail(id);
-}

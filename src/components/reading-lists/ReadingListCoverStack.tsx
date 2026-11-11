@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { BookMarked } from "lucide-react";
 import { BookCoverScene } from "@/components/ui/book-cover-scene";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
-import { StripstreamAdapter } from "@/lib/providers/stripstream/stripstream.adapter";
 import { cn } from "@/lib/utils";
 
 interface ReadingListCoverStackProps {
@@ -29,14 +28,7 @@ export function ReadingListCoverStack({
   const reduceMotion = usePrefersReducedMotion();
   const fanned = active && !reduceMotion;
   const sources = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          (covers ?? [])
-            .map(StripstreamAdapter.resolveReadingListPreviewCover)
-            .filter(Boolean)
-        )
-      ),
+    () => Array.from(new Set((covers ?? []).filter(Boolean))),
     [covers]
   );
   const [failedSources, setFailedSources] = useState<ReadonlySet<string>>(

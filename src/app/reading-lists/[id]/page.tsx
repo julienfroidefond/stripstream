@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { fetchReadingListDetail } from "@/lib/providers/provider.factory";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { loadSurface } from "@/lib/surfaces/load-surface";
 import { ReadingListContent } from "./ReadingListContent";
@@ -15,7 +14,7 @@ export default async function ReadingListPage({ params }: PageProps) {
     name: "reading-list-detail",
     fallbackCode: ERROR_CODES.STRIPSTREAM.NOT_FOUND,
     missingProvider: "unavailable",
-    load: () => fetchReadingListDetail(id),
+    load: ({ provider }) => provider.getReadingListDetail(id),
   });
 
   if (surface.status !== "ready" || !surface.data) notFound();

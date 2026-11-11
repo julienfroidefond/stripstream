@@ -10,11 +10,12 @@ import type {
   NormalizedMissingBook,
   NormalizedSeriesRating,
   NormalizedReadingStats,
+  NormalizedReadingList,
+  NormalizedReadingListDetail,
   ScanStartResult,
   ScanStatus,
 } from "../types";
 import type { HomePrimaryData } from "@/types/home";
-import type { StripstreamReadingList } from "@/types/stripstream";
 import { KomgaAdapter } from "./komga.adapter";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
@@ -43,6 +44,8 @@ const CACHE_TTL_SHORT = 30;
 const TIMEOUT_MS = 15000;
 
 export class KomgaProvider implements IMediaProvider {
+  readonly supportsReadingLists = false;
+
   private config: AuthConfig;
 
   constructor(url: string, authHeader: string) {
@@ -570,8 +573,12 @@ export class KomgaProvider implements IMediaProvider {
     )();
   }
 
-  async getHomeReadingLists(): Promise<StripstreamReadingList[]> {
+  async getReadingLists(): Promise<NormalizedReadingList[]> {
     return [];
+  }
+
+  async getReadingListDetail(): Promise<NormalizedReadingListDetail | null> {
+    return null;
   }
 
   async resetReadProgress(bookId: string): Promise<void> {
