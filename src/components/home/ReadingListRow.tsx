@@ -1,36 +1,23 @@
 "use client";
 
-import { memo, useCallback, useState, useTransition } from "react";
+import { memo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, BookOpen, Bookmark } from "lucide-react";
 import { ReadingListCard } from "@/components/reading-lists/ReadingListCard";
 import { ReadingListCoverStack } from "@/components/reading-lists/ReadingListCoverStack";
-import { ScrollContainer } from "@/components/ui/scroll-container";
-import { LoadMoreLabel } from "@/components/ui/load-more-label";
-import { Section } from "@/components/ui/section";
+import { useSpotlightStaging } from "@/components/ui/spotlight-carousel";
 import { Button } from "@/components/ui/button";
-import { CarouselViewToggle } from "@/components/ui/carousel-view-toggle";
-import { SpotlightCarousel, useSpotlightStaging } from "@/components/ui/spotlight-carousel";
 import { useTranslate } from "@/hooks/useTranslate";
-import { useCarouselViewMode } from "@/hooks/useCarouselViewMode";
 import { useCoverInteraction } from "@/hooks/useCoverInteraction";
 import { useAnonymous } from "@/contexts/AnonymousContext";
 import { StripstreamAdapter } from "@/lib/providers/stripstream/stripstream.adapter";
 import type { StripstreamReadingList } from "@/types/stripstream";
-import { loadHomeFeed } from "@/app/actions/home";
-import {
-  CountUp,
-  Magnetic,
-  ProgressFill,
-  StaggerGroup,
-  StaggerItem,
-} from "@/components/motion";
+import { FeedRow } from "@/components/home/FeedRow";
+import { CountUp, Magnetic, ProgressFill } from "@/components/motion";
 
 interface ReadingListRowProps {
   lists: StripstreamReadingList[];
 }
-
-const ITEMS_PER_PAGE = 8;
 
 function getReadingListStatus(
   list: StripstreamReadingList
@@ -42,19 +29,6 @@ function getReadingListStatus(
 
 export function ReadingListRow({ lists }: ReadingListRowProps) {
   const router = useRouter();
-  const { t } = useTranslate();
-  const [loadedLists, setLoadedLists] = useState(lists.slice(0, ITEMS_PER_PAGE));
-  const [hasMore, setHasMore] = useState(lists.length > ITEMS_PER_PAGE);
-  const [isPending, startTransition] = useTransition();
-  const { viewMode, toggleViewMode } = useCarouselViewMode("home-reading-lists-view-mode");
-
-  const handleLoadMore = () => {
-    startTransition(async () => {
-      const result = await loadHomeFeed("reading-lists", loadedLists.length);
-      setLoadedLists(result.items as StripstreamReadingList[]);
-      setHasMore(result.hasMore);
-    });
-  };
 
   const handleOpenList = useCallback(
     (id: string) => {
@@ -63,85 +37,29 @@ export function ReadingListRow({ lists }: ReadingListRowProps) {
     [router]
   );
 
-  if (!lists.length) return null;
-
   return (
-    <Section
-      data-testid="home-reading-lists"
-      title={t("home.sections.reading_lists")}
+    <FeedRow
+      titleKey="home.sections.reading_lists"
       icon={Bookmark}
-      className="space-y-5"
-      headerClassName="pb-1"
-      actions={<CarouselViewToggle viewMode={viewMode} onToggle={toggleViewMode} />}
-    >
-      {viewMode === "spotlight" ? (
-        <SpotlightCarousel
-          ariaLabel={t("home.sections.reading_lists")}
-          slides={loadedLists.map((list) => ({
-            key: list.id,
-            backdropSrc: StripstreamAdapter.resolveReadingListPreviewCover(list.preview_covers?.[0]),
-            content: <ReadingListSpotlightSlide list={list} onOpen={handleOpenList} />,
-          }))}
-          footer={
-            hasMore ? (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleLoadMore}
-                disabled={isPending}
-                aria-busy={isPending}
-                className="disabled:opacity-100"
-              >
-                <LoadMoreLabel
-                  pending={isPending}
-                  label={t("navigation.loadMore")}
-                  loadingLabel={t("navigation.loading")}
-                />
-              </Button>
-            ) : undefined
-          }
-        />
-      ) : (
-        <StaggerGroup stagger={0.05} effect="deal" amount={0.25}>
-          <ScrollContainer
-            showArrows={true}
-            scrollAmount={400}
-            arrowLeftLabel={t("navigation.scrollLeft")}
-            arrowRightLabel={t("navigation.scrollRight")}
-          >
-            {loadedLists.map((list) => (
-              <StaggerItem key={list.id} className="shrink-0">
-                <div className="w-[160px] sm:w-[188px]">
-                  <ReadingListCard
-                    list={list}
-                    status={getReadingListStatus(list)}
-                    testId={`home-reading-list-${list.id}`}
-                  />
-                </div>
-              </StaggerItem>
-            ))}
-            {hasMore && (
-              <StaggerItem className="shrink-0">
-                <button
-                  type="button"
-                  onClick={handleLoadMore}
-                  disabled={isPending}
-                  aria-busy={isPending}
-                  className="flex min-h-[282px] w-[150px] items-center justify-center rounded-xl border border-dashed border-border text-sm font-medium text-muted-foreground transition-colors hover:border-primary/60 hover:text-foreground sm:min-h-[300px]"
-                >
-                  <LoadMoreLabel
-                  pending={isPending}
-                  label={t("navigation.loadMore")}
-                  loadingLabel={t("navigation.loading")}
-                />
-                </button>
-              </StaggerItem>
-            )}
-          </ScrollContainer>
-        </StaggerGroup>
+      initialItems={lists}
+      feed="reading-lists"
+      testId="home-reading-lists"
+      viewModeKey="home-reading-lists-view-mode"
+      getKey={(list) => list.id}
+      renderCard={(list) => (
+        <div className="w-[160px] sm:w-[188px]">
+          <ReadingListCard
+            list={list}
+            status={getReadingListStatus(list)}
+            testId={`home-reading-list-${list.id}`}
+          />
+        </div>
       )}
-    </Section>
+      renderSlide={(list) => ({
+        backdropSrc: StripstreamAdapter.resolveReadingListPreviewCover(list.preview_covers?.[0]),
+        content: <ReadingListSpotlightSlide list={list} onOpen={handleOpenList} />,
+      })}
+    />
   );
 }
 

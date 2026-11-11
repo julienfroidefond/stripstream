@@ -1,28 +1,19 @@
 "use client";
 
-import { useState, memo, useRef, useTransition } from "react";
+import { memo, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Wand2, Sparkles } from "lucide-react";
 import { BookCoverScene } from "@/components/ui/book-cover-scene";
 import { SeriesCover } from "@/components/ui/series-cover";
-import { LoadMoreLabel } from "@/components/ui/load-more-label";
-import { ScrollContainer } from "@/components/ui/scroll-container";
-import { Section } from "@/components/ui/section";
-import { Button } from "@/components/ui/button";
-import { CarouselViewToggle } from "@/components/ui/carousel-view-toggle";
-import { SpotlightCarousel } from "@/components/ui/spotlight-carousel";
 import { SeriesSpotlightSlide } from "@/components/ui/series-spotlight-slide";
 import { SeriesMatchReasonBadges } from "@/components/ui/series-match-reasons";
 import { useTranslate } from "@/hooks/useTranslate";
-import { useCarouselViewMode } from "@/hooks/useCarouselViewMode";
 import { useCoverInteraction } from "@/hooks/useCoverInteraction";
 import { useAnonymous } from "@/contexts/AnonymousContext";
 import type { NormalizedSeries } from "@/lib/providers/types";
-import { loadHomeFeed } from "@/app/actions/home";
-import { GlowLayer, StaggerGroup, StaggerItem, usePointerGlow } from "@/components/motion";
-
-const ITEMS_PER_PAGE = 8;
+import { FeedRow } from "@/components/home/FeedRow";
+import { GlowLayer, usePointerGlow } from "@/components/motion";
 
 interface RecommendationsRowProps {
   series: NormalizedSeries[];
@@ -33,102 +24,32 @@ interface RecommendationsRowProps {
 export function RecommendationsRow({ series, initialHasMore = false }: RecommendationsRowProps) {
   const { t } = useTranslate();
   const router = useRouter();
-  const { viewMode, toggleViewMode } = useCarouselViewMode("recommendations-view-mode", {
-    defaultMode: "spotlight",
-  });
-  const [loadedSeries, setLoadedSeries] = useState(series.slice(0, ITEMS_PER_PAGE));
-  const [hasMore, setHasMore] = useState(initialHasMore || series.length > ITEMS_PER_PAGE);
-  const [isPending, startTransition] = useTransition();
-
-  const handleLoadMore = () => {
-    startTransition(async () => {
-      const result = await loadHomeFeed("recommendations", loadedSeries.length);
-      setLoadedSeries(result.items as NormalizedSeries[]);
-      setHasMore(result.hasMore);
-    });
-  };
-
-  if (!series.length) return null;
-
-  const loadMoreFooter = hasMore ? (
-    <Button
-      type="button"
-      variant="outline"
-      size="sm"
-      onClick={handleLoadMore}
-      disabled={isPending}
-      aria-busy={isPending}
-      className="disabled:opacity-100"
-    >
-      <LoadMoreLabel
-                  pending={isPending}
-                  label={t("navigation.loadMore")}
-                  loadingLabel={t("navigation.loading")}
-                />
-    </Button>
-  ) : undefined;
 
   return (
-    <Section
-      title={t("home.sections.recommendations")}
+    <FeedRow
+      titleKey="home.sections.recommendations"
       icon={Wand2}
-      className="space-y-5"
-      headerClassName="pb-1"
-      actions={<CarouselViewToggle viewMode={viewMode} onToggle={toggleViewMode} />}
-    >
-      {viewMode === "spotlight" ? (
-        <SpotlightCarousel
-          ariaLabel={t("home.sections.recommendations")}
-          slides={loadedSeries.map((item) => ({
-            key: item.id,
-            backdropSrc: item.thumbnailUrl,
-            content: (
-              <SeriesSpotlightSlide
-                series={item}
-                onOpen={() => router.push(`/series/${item.id}`)}
-                ctaLabel={t("home.recommendations.discover")}
-                eyebrow={t("navigation.seriesLabel")}
-                showMatchReasons
-                becauseOf={item.becauseOf}
-              />
-            ),
-          }))}
-          footer={loadMoreFooter}
-        />
-      ) : (
-        <StaggerGroup stagger={0.05} effect="deal" amount={0.25}>
-          <ScrollContainer
-            showArrows={true}
-            scrollAmount={400}
-            arrowLeftLabel={t("navigation.scrollLeft")}
-            arrowRightLabel={t("navigation.scrollRight")}
-          >
-            {loadedSeries.map((s) => (
-              <StaggerItem key={s.id} className="shrink-0">
-                <RecommendationCard series={s} />
-              </StaggerItem>
-            ))}
-            {hasMore && (
-              <StaggerItem className="shrink-0">
-                <button
-                  type="button"
-                  onClick={handleLoadMore}
-                  disabled={isPending}
-                  aria-busy={isPending}
-                  className="flex min-h-[282px] w-[150px] items-center justify-center rounded-xl border border-dashed border-border text-sm font-medium text-muted-foreground transition-colors hover:border-primary/60 hover:text-foreground sm:min-h-[300px]"
-                >
-                  <LoadMoreLabel
-                  pending={isPending}
-                  label={t("navigation.loadMore")}
-                  loadingLabel={t("navigation.loading")}
-                />
-                </button>
-              </StaggerItem>
-            )}
-          </ScrollContainer>
-        </StaggerGroup>
-      )}
-    </Section>
+      initialItems={series}
+      initialHasMore={initialHasMore}
+      feed="recommendations"
+      viewModeKey="recommendations-view-mode"
+      defaultViewMode="spotlight"
+      getKey={(item) => item.id}
+      renderCard={(item) => <RecommendationCard series={item} />}
+      renderSlide={(item) => ({
+        backdropSrc: item.thumbnailUrl,
+        content: (
+          <SeriesSpotlightSlide
+            series={item}
+            onOpen={() => router.push(`/series/${item.id}`)}
+            ctaLabel={t("home.recommendations.discover")}
+            eyebrow={t("navigation.seriesLabel")}
+            showMatchReasons
+            becauseOf={item.becauseOf}
+          />
+        ),
+      })}
+    />
   );
 }
 
