@@ -2,6 +2,7 @@ import type { IMediaProvider } from "@/lib/providers/provider.interface";
 import type { NormalizedBook, NormalizedSeriesRating } from "@/lib/providers/types";
 import type { ReaderInfo } from "@/lib/reader/types";
 import { getActiveProviderType } from "@/lib/providers/provider.factory";
+import { resolveBookSeries } from "@/lib/resume/series-pool";
 import logger from "@/lib/logger";
 
 export interface ReaderData {
@@ -32,12 +33,12 @@ async function getReaderInfo(
     totalInSeries: null,
   };
 
-  if (!book.seriesId) {
+  if (!book.seriesId && !book.seriesName) {
     return fallbackInfo;
   }
 
   try {
-    const series = await provider.getSeriesById(book.seriesId);
+    const series = await resolveBookSeries(provider, book);
     if (!series) {
       return fallbackInfo;
     }
@@ -49,7 +50,7 @@ async function getReaderInfo(
       // Charge au maximum 100 tomes pour le calcul de position : un full-load
       // de série géante est inutile pour la position du tome courant.
       const seriesBooks = await provider.getBooks({
-        seriesName: series.id,
+        seriesId: series.id,
         limit: Math.min(Math.max(series.bookCount || 0, 24), 100),
       });
       const orderedBooks = [...seriesBooks.items].sort(sortBooksBySeriesPosition);

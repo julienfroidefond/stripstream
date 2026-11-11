@@ -191,6 +191,7 @@ export function PaginatedBookGrid({
       title: mb.title,
       number: String(mb.volumeNumber),
       seriesId: null,
+      seriesName: null,
       volume: mb.volumeNumber,
       pageCount: 0,
       thumbnailUrl: mb.coverUrl ?? "",

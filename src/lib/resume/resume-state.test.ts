@@ -32,6 +32,7 @@ function book(
     title: `Tome ${id}`,
     number: id,
     seriesId: "s1",
+    seriesName: null,
     volume: null,
     pageCount: 100,
     thumbnailUrl: "",
@@ -150,7 +151,7 @@ describe("buildResumeEntries", () => {
 
   it("matches a series name without case or accents", () => {
     const [entry] = buildResumeEntries(
-      [book("b1", { seriesId: "ete" })],
+      [book("b1", { seriesId: null, seriesName: "ete" })],
       [series("s1", { name: "Été" })]
     );
 
@@ -159,7 +160,7 @@ describe("buildResumeEntries", () => {
 
   it("uses the library to disambiguate same-name series", () => {
     const [entry] = buildResumeEntries(
-      [book("b1", { libraryId: "lib-b", seriesId: "same" })],
+      [book("b1", { libraryId: "lib-b", seriesId: null, seriesName: "same" })],
       [
         series("a", { name: "Same", libraryId: "lib-a" }),
         series("b", { name: "Same", libraryId: "lib-b" }),
@@ -171,7 +172,7 @@ describe("buildResumeEntries", () => {
 
   it("prefers an exact library match over a candidate without a library", () => {
     const [entry] = buildResumeEntries(
-      [book("b1", { libraryId: "lib-b", seriesId: "same" })],
+      [book("b1", { libraryId: "lib-b", seriesId: null, seriesName: "same" })],
       [
         series("unknown", { name: "Same" }),
         series("known", { name: "Same", libraryId: "lib-b" }),

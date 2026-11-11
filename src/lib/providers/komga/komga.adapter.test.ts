@@ -117,6 +117,7 @@ describe("KomgaAdapter.toNormalizedBook", () => {
       title: "Metadata Title",
       number: "1",
       seriesId: "series-1",
+      seriesName: "Series One",
       volume: 1,
       pageCount: 42,
       thumbnailUrl: "/api/komga/images/books/book-1/thumbnail",
@@ -167,7 +168,9 @@ describe("KomgaAdapter.toNormalizedBook", () => {
 
   it("returns a null seriesId when absent", () => {
     const book = makeBook({ seriesId: undefined as unknown as string });
-    expect(KomgaAdapter.toNormalizedBook(book).seriesId).toBeNull();
+    const normalized = KomgaAdapter.toNormalizedBook(book);
+    expect(normalized.seriesId).toBeNull();
+    expect(normalized.seriesName).toBe("Series One");
   });
 });
 

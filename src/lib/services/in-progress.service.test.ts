@@ -40,6 +40,7 @@ function book(
     title: `Tome ${id}`,
     number: id,
     seriesId: "s1",
+    seriesName: null,
     volume: null,
     pageCount: 100,
     thumbnailUrl: "",
@@ -135,7 +136,7 @@ describe("buildInProgressItems", () => {
 
   it("matches a book by series name when the provider only exposes the name", () => {
     const [item] = buildInProgressItems([series("s1", { name: "Été" })], {
-      ongoingBooks: [book("b1", { seriesId: "ete" })],
+      ongoingBooks: [book("b1", { seriesId: null, seriesName: "ete" })],
       onDeck: [],
     });
 
@@ -149,7 +150,7 @@ describe("buildInProgressItems", () => {
         series("b", { name: "Same", libraryId: "lib-b" }),
       ],
       {
-        ongoingBooks: [book("b1", { seriesId: "same", libraryId: "lib-b" })],
+        ongoingBooks: [book("b1", { seriesId: null, seriesName: "same", libraryId: "lib-b" })],
         onDeck: [],
       }
     );
@@ -165,7 +166,7 @@ describe("buildInProgressItems", () => {
         series("known", { name: "Same", libraryId: "lib-b" }),
       ],
       {
-        ongoingBooks: [book("b1", { seriesId: "same", libraryId: "lib-b" })],
+        ongoingBooks: [book("b1", { seriesId: null, seriesName: "same", libraryId: "lib-b" })],
         onDeck: [],
       }
     );

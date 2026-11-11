@@ -23,7 +23,7 @@ export async function getAllSeriesBooks(
 
   for (let page = 0; page < MAX_PAGES; page += 1) {
     const result = await provider.getBooks({
-      seriesName: seriesId,
+      seriesId,
       cursor,
       limit: SERIES_BOOKS_PAGE_SIZE,
       unreadOnly: false,

@@ -12,11 +12,15 @@ present it. Owner: `src/lib/resume/resume-state.ts` — `mergeResumeBooks`,
 
 ## Series identity
 
-The rule that maps a book to its series when `seriesId` can be an id (Komga) or
-a title (Stripstream). Order: exact id, normalized title, same-library
-candidate, candidate without a library, first candidate. Owner:
-`src/lib/resume/identity.ts` (`matchSeries`). `resolveSeriesPool` applies the
-same comparison when it asks the provider for a missing series.
+The rule that maps a book to its series from its explicit reference. A
+`NormalizedBook` carries two fields: `seriesId` is the provider series id and
+is never a title; `seriesName` is the display name used only as a fallback when
+the endpoint omits the id. `matchSeries` tries the exact id first, then the
+normalized title, then the same-library candidate, a candidate without a
+library, and finally the first candidate. Owner:
+`src/lib/resume/identity.ts` (`matchSeries`, `bookSeriesRef`).
+`resolveBookSeries` (`src/lib/resume/series-pool.ts`) is the single network
+fallback for name-only rows; `resolveSeriesPool` reuses it for the home feeds.
 
 ## On deck
 

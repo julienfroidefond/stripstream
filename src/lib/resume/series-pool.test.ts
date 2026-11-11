@@ -28,6 +28,7 @@ function book(
     title: `Tome ${id}`,
     number: id,
     seriesId: "s1",
+    seriesName: null,
     volume: null,
     pageCount: 100,
     thumbnailUrl: "",
@@ -64,7 +65,7 @@ describe("resolveSeriesPool", () => {
 
     const pool = await resolveSeriesPool(
       asProvider(provider),
-      [book("b1", { seriesId: "s1" }), book("b2", { seriesId: "Été" })],
+      [book("b1", { seriesId: "s1" }), book("b2", { seriesId: null, seriesName: "Été" })],
       known
     );
 
@@ -100,7 +101,7 @@ describe("resolveSeriesPool", () => {
 
     const pool = await resolveSeriesPool(
       asProvider(provider),
-      [book("b1", { libraryId: "lib-2", seriesId: "Été" })]
+      [book("b1", { libraryId: "lib-2", seriesId: null, seriesName: "Été" })]
     );
 
     expect(provider.getSeriesById).not.toHaveBeenCalled();
@@ -129,32 +130,58 @@ describe("resolveSeriesPool", () => {
     expect(provider.getSeriesById).toHaveBeenCalledTimes(1);
   });
 
-  it("skips books without a series id and keeps the known pool intact", async () => {
+  it("skips books without a series reference and keeps the known pool intact", async () => {
     const provider = makeProvider();
     const known = [series("s1")];
 
     const pool = await resolveSeriesPool(
       asProvider(provider),
-      [book("b1", { seriesId: null }), book("b2", { seriesId: "   " })],
+      [
+        book("b1", { seriesId: null, seriesName: null }),
+        book("b2", { seriesId: "   ", seriesName: "   " }),
+      ],
       known
     );
 
     expect(pool).toEqual(known);
     expect(provider.getSeriesById).not.toHaveBeenCalled();
+    expect(provider.getSeries).not.toHaveBeenCalled();
   });
 
-  it("keeps the pool when series lookups fail", async () => {
+  it("keeps the pool when both series lookup paths fail", async () => {
     const provider = makeProvider();
     provider.getSeriesById.mockRejectedValue(new Error("not found"));
     provider.getSeries.mockRejectedValue(new Error("search down"));
 
     const pool = await resolveSeriesPool(
       asProvider(provider),
-      [book("b1", { seriesId: "missing" })],
+      [
+        book("b1", { seriesId: "missing-id" }),
+        book("b2", { seriesId: null, seriesName: "Missing" }),
+      ],
       [series("s1")]
     );
 
     expect(pool).toEqual([series("s1")]);
+    expect(provider.getSeriesById).toHaveBeenCalledWith("missing-id");
+    expect(provider.getSeries).toHaveBeenCalled();
+  });
+
+  it("resolves by id even when the pool has a same-name series", async () => {
+    const provider = makeProvider();
+    provider.getSeriesById.mockImplementation(async (seriesId) =>
+      series(seriesId, { name: "Same" })
+    );
+
+    const pool = await resolveSeriesPool(
+      asProvider(provider),
+      [book("b1", { seriesId: "other", seriesName: "Same" })],
+      [series("known", { name: "Same", libraryId: "lib-1" })]
+    );
+
+    expect(provider.getSeriesById).toHaveBeenCalledWith("other");
+    expect(provider.getSeries).not.toHaveBeenCalled();
+    expect(pool.map((item) => item.id)).toEqual(["known", "other"]);
   });
 
   it("reuses a series already resolved for the same name", async () => {
@@ -165,8 +192,8 @@ describe("resolveSeriesPool", () => {
     });
 
     const pool = await resolveSeriesPool(asProvider(provider), [
-      book("b1", { seriesId: "Été" }),
-      book("b2", { seriesId: "Été" }),
+      book("b1", { seriesId: null, seriesName: "Été" }),
+      book("b2", { seriesId: null, seriesName: "Été" }),
     ]);
 
     expect(pool.map((item) => item.id)).toEqual(["s2"]);
@@ -182,7 +209,7 @@ describe("resolveSeriesPool", () => {
 
     const pool = await resolveSeriesPool(
       asProvider(provider),
-      [book("b1", { libraryId: "lib-b", seriesId: "Same" })],
+      [book("b1", { libraryId: "lib-b", seriesId: null, seriesName: "Same" })],
       known
     );
 
@@ -202,8 +229,8 @@ describe("resolveSeriesPool", () => {
     const pool = await resolveSeriesPool(
       asProvider(provider),
       [
-        book("b1", { libraryId: "lib-a", seriesId: "Same" }),
-        book("b2", { libraryId: "lib-b", seriesId: "Same" }),
+        book("b1", { libraryId: "lib-a", seriesId: null, seriesName: "Same" }),
+        book("b2", { libraryId: "lib-b", seriesId: null, seriesName: "Same" }),
       ],
       known
     );
