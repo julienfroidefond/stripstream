@@ -28,10 +28,33 @@ import type { WallCameraController } from "./useWallCamera";
 const DRAG_CLICK_GUARD = 420;
 const WHEEL_ZOOM = 0.0022;
 
+/**
+ * Les gestes n'utilisent qu'une tranche de la caméra. Le contrat explicite
+ * évite de leur donner accès au cadrage, à l'overview ou à l'inertie qu'ils
+ * ne pilotent pas.
+ */
+export type WallGestureCamera = Pick<
+  WallCameraController,
+  | "x"
+  | "y"
+  | "scale"
+  | "clampZoom"
+  | "cancelView"
+  | "markPanning"
+  | "startMomentum"
+  | "stopMomentum"
+  | "zoomAt"
+  | "beginInteraction"
+>;
+
 interface UseWallGesturesOptions {
   stageRef: RefObject<HTMLDivElement | null>;
   clickGuard: WallClickGuardState;
-  camera: WallCameraController;
+  camera: WallGestureCamera;
+  /** Le premier doigt accepté ouvre la phase de déplacement. */
+  onPanStart?: () => void;
+  /** Le dernier doigt relâché referme la phase de déplacement. */
+  onPanEnd?: () => void;
 }
 
 /**
@@ -53,6 +76,8 @@ export function useWallGestures({
   stageRef,
   clickGuard,
   camera,
+  onPanStart,
+  onPanEnd,
 }: UseWallGesturesOptions): { dragging: boolean } {
   const [dragging, setDragging] = useState(false);
   const { x, y, scale } = camera;
@@ -60,6 +85,11 @@ export function useWallGestures({
   const apiRef = useRef(camera);
   useEffect(() => {
     apiRef.current = camera;
+  });
+
+  const callbacksRef = useRef({ onPanStart, onPanEnd });
+  useEffect(() => {
+    callbacksRef.current = { onPanStart, onPanEnd };
   });
 
   useEffect(() => {
@@ -80,6 +110,7 @@ export function useWallGestures({
     let pinchStart: WallPinchStart | null = null;
     let pinchSpan = 1;
     let detach: (() => void) | null = null;
+    let gestureActive = false;
 
     const stagePoint = (point: WallPoint): WallPoint => {
       const rect = stage.getBoundingClientRect();
@@ -175,7 +206,11 @@ export function useWallGestures({
       }
       if (ignored.size > 0) return;
 
-      if (pointers.size === 0) api().beginInteraction();
+      if (pointers.size === 0) {
+        api().beginInteraction();
+        gestureActive = true;
+        callbacksRef.current.onPanStart?.();
+      }
 
       pointers.set(event.pointerId, {
         x: event.clientX,
@@ -280,6 +315,10 @@ export function useWallGestures({
         releaseWallTouch(clickGuard, performance.now(), 0);
       }
 
+      if (gestureActive) {
+        gestureActive = false;
+        callbacksRef.current.onPanEnd?.();
+      }
       setDragging(false);
       resetSequence();
       detach?.();
@@ -288,6 +327,10 @@ export function useWallGestures({
     const handleBlur = () => {
       pointers.clear();
       ignored.clear();
+      if (gestureActive) {
+        gestureActive = false;
+        callbacksRef.current.onPanEnd?.();
+      }
       setDragging(false);
       resetSequence();
       detach?.();

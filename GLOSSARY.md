@@ -55,3 +55,29 @@ The discriminated result returned by server actions that use the action
 runner: a success carries `success: true`, `code: "OK"` and a message; a
 failure carries `success: false`, the stable `ErrorCode` and a message, plus
 optional partial data. Owner: `src/lib/actions/action-runner.ts`.
+
+## Media ref
+
+A provider-neutral description of the bytes a media route asks for:
+`book-file`, `book-page`, `book-page-thumbnail`, `book-cover` or
+`series-cover`. It carries ids, the 1-based page number and (Stripstream) the
+raw query string, never a provider URL. Owners: `src/lib/media/types.ts`
+(`MediaRef`) and the route declarations (`createMediaRoute`).
+
+## Media transport
+
+The adapter that turns a `MediaRef` into a provider request and normalizes the
+response. The Komga transport wraps the book/image/series services; the
+Stripstream transport uses the shared client factory, limiter and
+deduplication. The route never sees credentials or provider paths. Owners:
+`src/lib/media/komga.transport.ts`, `stripstream.transport.ts`,
+`media-route-core.ts`; cache and error shape: `policies.ts`.
+
+## Wall phase
+
+The Wall's interaction state: `idle` (tilt and hover allowed), `pan` (a
+pointer gesture is active), `focus` (the camera is flying to a cover),
+`plaque` (the anchored panel is open) or `sheet` (the mobile bottom sheet is
+open). Owner: `useWallPhase` (`src/components/wall/useWallPhase.ts`) with the
+pure transition table in `src/lib/wall-phase.ts`; `WallTile` receives
+`tiltAllowed` instead of inspecting stage attributes.

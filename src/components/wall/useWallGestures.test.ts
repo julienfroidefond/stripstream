@@ -184,6 +184,45 @@ describe("useWallGestures", () => {
     expect(spies.startMomentum).not.toHaveBeenCalled();
   });
 
+  it("brackets the gesture with pan start and end callbacks", () => {
+    const { stage, stageRef } = makeStage();
+    const { camera } = makeCamera();
+    const clickGuard = createWallClickGuardState();
+    const onPanStart = vi.fn();
+    const onPanEnd = vi.fn();
+    renderHook(() =>
+      useWallGestures({
+        stageRef,
+        clickGuard,
+        camera,
+        onPanStart,
+        onPanEnd,
+      })
+    );
+
+    act(() => {
+      stage.dispatchEvent(pointerEvent("pointerdown", { x: 100, y: 100 }));
+    });
+    expect(onPanStart).toHaveBeenCalledTimes(1);
+    expect(onPanEnd).not.toHaveBeenCalled();
+
+    act(() => {
+      window.dispatchEvent(
+        pointerEvent("pointerup", { x: 100, y: 100 }, { buttons: 0 })
+      );
+    });
+    expect(onPanEnd).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      stage.dispatchEvent(pointerEvent("pointerdown", { x: 100, y: 100 }));
+      window.dispatchEvent(
+        pointerEvent("pointerup", { x: 100, y: 100 }, { buttons: 0 })
+      );
+    });
+    expect(onPanStart).toHaveBeenCalledTimes(2);
+    expect(onPanEnd).toHaveBeenCalledTimes(2);
+  });
+
   it("never starts a gesture on a wall control", () => {
     const { stage, spies } = setup();
     const panel = document.createElement("aside");

@@ -3,7 +3,7 @@
 Canonical guide for engineers and coding agents working on Stripstream. Claude Code should follow this file too.
 
 ## Project Structure & Module Organization
-- `src/app/`: Next.js App Router pages (`page.tsx`), layouts, the 11 `route.ts` handlers, and server actions under `src/app/actions/`.
+- `src/app/`: Next.js App Router pages (`page.tsx`), layouts, the `route.ts` handlers, and server actions under `src/app/actions/`.
 - `src/components/`: UI and feature components (`home/`, `reader/`, `layout/`, `ui/`).
 - `src/lib/`: shared services (`services/`), media providers (`providers/`), auth, logger, utilities.
 - `src/lib/providers/`: the media-provider abstraction (interface, factory, Komga + Stripstream implementations).

@@ -18,11 +18,8 @@ export const THUMBNAIL_TIMEOUT_MS = 12000;
  * Stream une image depuis le serveur Komga actif (URL + Basic Auth de la
  * KomgaConfig active).
  *
- * Note d'archi : Stripstream a son propre flot via `StripstreamClient.fetchImage`
- * appelé depuis les routes `/api/stripstream/images/...`. Il n'y a volontairement
- * pas de dispatcher commun car les deux backends servent leurs images via des
- * URLs distinctes (`/api/komga/images/...` vs `/api/stripstream/images/...`)
- * encodées dès la phase d'adaptation par chaque provider.
+ * Ce service reste le détail amont de Komga ; les routes passent par le
+ * transport média (`src/lib/media`) qui normalise cache, 304 et erreurs.
  */
 export class KomgaImageService {
   static async streamImage(
