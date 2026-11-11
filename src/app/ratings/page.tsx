@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 import { ERROR_CODES } from "@/constants/errorCodes";
-import { getActiveProviderType, getProvider } from "@/lib/providers/provider.factory";
 import {
   countReadSeries,
   filterReadSeries,
@@ -12,7 +10,7 @@ import {
   sortReadSeries,
   type ReadSeriesFilter,
 } from "@/lib/services/read-series.service";
-import { AppError } from "@/utils/errors";
+import { loadSurface } from "@/lib/surfaces/load-surface";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import frMessages from "@/i18n/messages/fr/common.json";
 import enMessages from "@/i18n/messages/en/common.json";
@@ -46,53 +44,54 @@ function parsePage(value: string | undefined): number {
 }
 
 export default async function RatingsPage({ searchParams }: RatingsPageProps) {
-  const [{ q, filter: rawFilter, page: rawPage, sort: rawSort }, provider, providerType] = await Promise.all([
-    searchParams,
-    getProvider(),
-    getActiveProviderType(),
-  ]);
-
-  if (!provider) redirect("/settings");
-
-  if (providerType !== "stripstream") {
-    return <RatingsUnavailable />;
-  }
+  const { q, filter: rawFilter, page: rawPage, sort: rawSort } = await searchParams;
 
   const query = (q ?? "").slice(0, MAX_QUERY_LENGTH);
   const filter = parseFilter(rawFilter);
   const sort = parseReadSeriesSort(rawSort);
 
-  try {
-    const allSeries = await getReadSeries(provider);
-    const counts = countReadSeries(allSeries);
-    const matchingSeries = sortReadSeries(filterReadSeries(allSeries, query, filter), sort);
-    const slice = paginateReadSeries(matchingSeries, parsePage(rawPage), PAGE_SIZE);
+  const surface = await loadSurface({
+    name: "ratings",
+    fallbackCode: ERROR_CODES.SERIES.FETCH_ERROR,
+    requireProviderType: "stripstream",
+    load: async ({ provider }) => {
+      const allSeries = await getReadSeries(provider);
+      const counts = countReadSeries(allSeries);
+      const matchingSeries = sortReadSeries(filterReadSeries(allSeries, query, filter), sort);
+      const slice = paginateReadSeries(matchingSeries, parsePage(rawPage), PAGE_SIZE);
 
-    return (
-      <RatingsContent
-        series={slice.items}
-        counts={counts}
-        query={query}
-        filter={filter}
-        sort={sort}
-        page={slice.page}
-        totalPages={slice.totalPages}
-      />
-    );
-  } catch (error) {
-    if (
-      error instanceof AppError &&
-      (error.code === ERROR_CODES.KOMGA.MISSING_CONFIG ||
-        error.code === ERROR_CODES.STRIPSTREAM.MISSING_CONFIG)
-    ) {
-      redirect("/settings");
-    }
+      return {
+        series: slice.items,
+        counts,
+        page: slice.page,
+        totalPages: slice.totalPages,
+      };
+    },
+  });
 
-    const errorCode = error instanceof AppError ? error.code : ERROR_CODES.SERIES.FETCH_ERROR;
+  if (surface.status === "unavailable") {
+    return <RatingsUnavailable />;
+  }
+
+  if (surface.status !== "ready") {
     return (
       <main className="container mx-auto px-4 py-8">
-        <ErrorMessage errorCode={errorCode} />
+        <ErrorMessage
+          errorCode={surface.status === "error" ? surface.code : ERROR_CODES.SERIES.FETCH_ERROR}
+        />
       </main>
     );
   }
+
+  return (
+    <RatingsContent
+      series={surface.data.series}
+      counts={surface.data.counts}
+      query={query}
+      filter={filter}
+      sort={sort}
+      page={surface.data.page}
+      totalPages={surface.data.totalPages}
+    />
+  );
 }

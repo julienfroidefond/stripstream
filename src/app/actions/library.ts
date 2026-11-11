@@ -5,10 +5,13 @@ import { getProvider } from "@/lib/providers/provider.factory";
 import type { ScanStatus } from "@/lib/providers/types";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
+import {
+  ActionError,
+  runProviderAction,
+  type ActionResult,
+} from "@/lib/actions/action-runner";
 
-export interface ScanActionResult {
-  success: boolean;
-  message: string;
+interface ScanActionData {
   /** Backend job id when the scan can be followed, otherwise null. */
   jobId: string | null;
   /** True when `getScanStatus` can report progress for this scan. */
@@ -17,35 +20,38 @@ export interface ScanActionResult {
   forbidden?: boolean;
 }
 
+export type ScanActionResult = ActionResult<ScanActionData>;
+
 /** Only backend-generated ids are accepted back from the client. */
 const JOB_ID_PATTERN = /^[A-Za-z0-9-]{1,64}$/;
 
+function scanFailureData(error: unknown): Partial<ScanActionData> {
+  return {
+    jobId: null,
+    progressSupported: false,
+    forbidden:
+      error instanceof AppError &&
+      (error.code === ERROR_CODES.KOMGA.FORBIDDEN ||
+        error.code === ERROR_CODES.STRIPSTREAM.FORBIDDEN),
+  };
+}
+
 export async function scanLibrary(libraryId: string): Promise<ScanActionResult> {
-  const noProgress = { jobId: null, progressSupported: false } as const;
-
-  try {
-    const provider = await getProvider();
-    if (!provider) return { success: false, message: "Provider non configuré", ...noProgress };
-
-    const result = await provider.scanLibrary(libraryId);
-
-    revalidatePath(`/libraries/${libraryId}`);
-    revalidatePath("/libraries");
-
-    return { success: true, message: "Scan lancé", ...result };
-  } catch (error) {
-    if (error instanceof AppError) {
-      return {
-        success: false,
-        message: error.message,
-        ...noProgress,
-        forbidden:
-          error.code === ERROR_CODES.KOMGA.FORBIDDEN ||
-          error.code === ERROR_CODES.STRIPSTREAM.FORBIDDEN,
-      };
-    }
-    return { success: false, message: "Erreur lors du scan", ...noProgress };
-  }
+  return runProviderAction<ScanActionData>({
+    name: "scanLibrary",
+    fallbackCode: ERROR_CODES.LIBRARY.SCAN_ERROR,
+    fallbackMessage: "Erreur lors du scan",
+    logContext: { libraryId },
+    failureData: scanFailureData,
+    invalidate: () => {
+      revalidatePath(`/libraries/${libraryId}`);
+      revalidatePath("/libraries");
+    },
+    execute: async ({ provider }) => {
+      const result = await provider.scanLibrary(libraryId);
+      return { message: "Scan lancé", ...result };
+    },
+  });
 }
 
 /**
@@ -68,25 +74,35 @@ export async function getScanStatus(libraryId: string, jobId: string): Promise<S
 
 export async function getRandomBookFromLibraries(
   libraryIds: string[]
-): Promise<{ success: boolean; thumbnailUrl?: string; message?: string }> {
-  try {
-    if (!libraryIds.length) {
-      return { success: false, message: "Au moins une bibliothèque doit être sélectionnée" };
-    }
+): Promise<ActionResult<{ thumbnailUrl: string }>> {
+  return runProviderAction<{ thumbnailUrl: string }>({
+    name: "getRandomBookFromLibraries",
+    fallbackCode: ERROR_CODES.LIBRARY.FETCH_ERROR,
+    fallbackMessage: "Erreur lors de la récupération d'un livre aléatoire",
+    logContext: { libraryIds },
+    guard: () => {
+      if (!libraryIds.length) {
+        throw new ActionError(
+          ERROR_CODES.LIBRARY.FETCH_ERROR,
+          {},
+          "Au moins une bibliothèque doit être sélectionnée"
+        );
+      }
+    },
+    execute: async ({ provider }) => {
+      const bookId = await provider.getRandomBook(libraryIds);
+      if (!bookId) {
+        throw new ActionError(
+          ERROR_CODES.BOOK.NOT_FOUND,
+          {},
+          "Aucun livre trouvé dans les bibliothèques sélectionnées"
+        );
+      }
 
-    const provider = await getProvider();
-    if (!provider) return { success: false, message: "Provider non configuré" };
-
-    const bookId = await provider.getRandomBook(libraryIds);
-    if (!bookId) {
-      return { success: false, message: "Aucun livre trouvé dans les bibliothèques sélectionnées" };
-    }
-
-    return { success: true, thumbnailUrl: provider.getBookThumbnailUrl(bookId) };
-  } catch (error) {
-    if (error instanceof AppError) {
-      return { success: false, message: error.message };
-    }
-    return { success: false, message: "Erreur lors de la récupération d'un livre aléatoire" };
-  }
+      return {
+        message: "Livre aléatoire trouvé",
+        thumbnailUrl: provider.getBookThumbnailUrl(bookId),
+      };
+    },
+  });
 }

@@ -1,15 +1,9 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 import { ERROR_CODES } from "@/constants/errorCodes";
-import {
-  getActiveProviderType,
-  getProvider,
-} from "@/lib/providers/provider.factory";
 import { FavoriteService } from "@/lib/services/favorite.service";
 import { getInProgressItems } from "@/lib/services/in-progress.service";
-import { PreferencesService } from "@/lib/services/preferences.service";
-import { AppError } from "@/utils/errors";
+import { loadSurface } from "@/lib/surfaces/load-surface";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import frMessages from "@/i18n/messages/fr/common.json";
 import enMessages from "@/i18n/messages/en/common.json";
@@ -26,57 +20,41 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function InProgressPage() {
-  const [provider, preferences, providerType] = await Promise.all([
-    getProvider(),
-    PreferencesService.getPreferences().catch(() => null),
-    getActiveProviderType().catch(() => null),
-  ]);
+  const surface = await loadSurface({
+    name: "in-progress",
+    fallbackCode: ERROR_CODES.SERIES.FETCH_ERROR,
+    anonymous: "empty",
+    load: async ({ provider, providerType }) => {
+      const [items, favoriteIds] = await Promise.all([
+        getInProgressItems(provider),
+        FavoriteService.getAllFavoriteIds().catch(() => []),
+      ]);
 
-  if (!provider) redirect("/settings");
+      // La mise de côté est une fonctionnalité Stripstream : Komga n'expose pas
+      // d'équivalent et le bouton doit rester absent de son interface.
+      return {
+        items,
+        favoriteIds,
+        canShelve: providerType === "stripstream",
+      };
+    },
+  });
 
-  // La mise de côté est une fonctionnalité Stripstream : Komga n'expose pas
-  // d'équivalent et le bouton doit rester absent de son interface.
-  const canShelve = providerType === "stripstream";
-
-  // En mode anonyme, aucune donnée de lecture ne doit être chargée côté serveur.
-  if (preferences?.anonymousMode) {
-    return (
-      <InProgressContent
-        items={[]}
-        favoriteIds={[]}
-        canShelve={false}
-      />
-    );
+  if (surface.status === "anonymous-empty") {
+    return <InProgressContent items={[]} favoriteIds={[]} canShelve={false} />;
   }
 
-  try {
-    const [items, favoriteIds] = await Promise.all([
-      getInProgressItems(provider),
-      FavoriteService.getAllFavoriteIds().catch(() => []),
-    ]);
-
-    return (
-      <InProgressContent
-        items={items}
-        favoriteIds={favoriteIds}
-        canShelve={canShelve}
-      />
-    );
-  } catch (error) {
-    if (
-      error instanceof AppError &&
-      (error.code === ERROR_CODES.KOMGA.MISSING_CONFIG ||
-        error.code === ERROR_CODES.STRIPSTREAM.MISSING_CONFIG)
-    ) {
-      redirect("/settings");
-    }
-
-    const errorCode =
-      error instanceof AppError ? error.code : ERROR_CODES.SERIES.FETCH_ERROR;
+  if (surface.status !== "ready") {
     return (
       <main className="container mx-auto px-4 py-8">
-        <ErrorMessage errorCode={errorCode} />
+        <ErrorMessage
+          errorCode={surface.status === "error" ? surface.code : ERROR_CODES.SERIES.FETCH_ERROR}
+        />
       </main>
     );
   }
+
+  const { items, favoriteIds, canShelve } = surface.data;
+
+  return <InProgressContent items={items} favoriteIds={favoriteIds} canShelve={canShelve} />;
 }

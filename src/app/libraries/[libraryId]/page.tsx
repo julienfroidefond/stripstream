@@ -1,17 +1,21 @@
-import { PreferencesService } from "@/lib/services/preferences.service";
-import { getProvider, getActiveProviderType } from "@/lib/providers/provider.factory";
 import { LibraryClientWrapper } from "./LibraryClientWrapper";
 import { LibraryContent } from "./LibraryContent";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { AppError } from "@/utils/errors";
 import { ERROR_CODES } from "@/constants/errorCodes";
-import type { UserPreferences } from "@/types/preferences";
-import { redirect } from "next/navigation";
 import { normalizeGridPageSize } from "@/lib/pageSize";
+import { loadSurface } from "@/lib/surfaces/load-surface";
 
 interface PageProps {
   params: Promise<{ libraryId: string }>;
-  searchParams: Promise<{ page?: string; unread?: string; search?: string; size?: string; sort?: string; missing?: string }>;
+  searchParams: Promise<{
+    page?: string;
+    unread?: string;
+    search?: string;
+    size?: string;
+    sort?: string;
+    missing?: string;
+  }>;
 }
 
 const DEFAULT_PAGE_SIZE = 30;
@@ -23,64 +27,86 @@ export default async function LibraryPage({ params, searchParams }: PageProps) {
   ]);
 
   const currentPage = page ? parseInt(page) : 1;
-  const preferences: UserPreferences = await PreferencesService.getPreferences();
-  const isCompact = preferences.displayMode?.compact ?? false;
 
-  // Utiliser le paramètre d'URL s'il existe, sinon utiliser la préférence utilisateur
-  const unreadOnly = unread !== undefined ? unread === "true" : preferences.showOnlyUnread;
-  const effectivePageSize = normalizeGridPageSize(
-    size ? parseInt(size) : preferences.displayMode?.itemsPerPage || DEFAULT_PAGE_SIZE,
-    isCompact
-  );
-  const effectiveSort = sort ?? preferences.defaultSortOrder ?? "title";
-  const effectiveMissing = missing !== undefined ? missing === "true" : preferences.showMissingBooks === false ? false : undefined;
+  const surface = await loadSurface({
+    name: "library",
+    fallbackCode: ERROR_CODES.SERIES.FETCH_ERROR,
+    load: async ({ provider, providerType, preferences }) => {
+      const isCompact = preferences.displayMode?.compact ?? false;
 
-  try {
-    const provider = await getProvider();
-    if (!provider) redirect("/settings");
+      // Utiliser le paramètre d'URL s'il existe, sinon utiliser la préférence utilisateur
+      const unreadOnly = unread !== undefined ? unread === "true" : preferences.showOnlyUnread;
+      const effectivePageSize = normalizeGridPageSize(
+        size ? parseInt(size) : preferences.displayMode?.itemsPerPage || DEFAULT_PAGE_SIZE,
+        isCompact
+      );
+      const effectiveSort = sort ?? preferences.defaultSortOrder ?? "title";
+      const effectiveMissing =
+        missing !== undefined
+          ? missing === "true"
+          : preferences.showMissingBooks === false
+            ? false
+            : undefined;
 
-    const providerType = await getActiveProviderType();
-    const canSortByRating = providerType === "stripstream";
-    // Si l'utilisateur a sauvegardé "community_score" puis basculé sur Komga
-    // (qui ne supporte pas ce tri), on retombe sur le tri par titre.
-    const safeSort = !canSortByRating && effectiveSort === "community_score" ? "title" : effectiveSort;
+      const canSortByRating = providerType === "stripstream";
+      // Si l'utilisateur a sauvegardé "community_score" puis basculé sur Komga
+      // (qui ne supporte pas ce tri), on retombe sur le tri par titre.
+      const safeSort =
+        !canSortByRating && effectiveSort === "community_score" ? "title" : effectiveSort;
 
-    const [seriesPage, library] = await Promise.all([
-      provider.getSeries(libraryId, String(currentPage), effectivePageSize, unreadOnly, search, safeSort, effectiveMissing === true),
-      provider.getLibraryById(libraryId),
-    ]);
+      const [seriesPage, library] = await Promise.all([
+        provider.getSeries(
+          libraryId,
+          String(currentPage),
+          effectivePageSize,
+          unreadOnly,
+          search,
+          safeSort,
+          effectiveMissing === true
+        ),
+        provider.getLibraryById(libraryId),
+      ]);
 
-    if (!library) throw new AppError(ERROR_CODES.LIBRARY.NOT_FOUND);
+      if (!library) throw new AppError(ERROR_CODES.LIBRARY.NOT_FOUND);
 
-    return (
-      <LibraryClientWrapper libraryId={libraryId}>
-        <LibraryContent
-          library={library}
-          series={seriesPage}
-          currentPage={currentPage}
-          preferences={preferences}
-          unreadOnly={unreadOnly}
-          pageSize={effectivePageSize}
-          sort={safeSort}
-          hasMissing={effectiveMissing === true}
-          canSortByRating={canSortByRating}
-        />
-      </LibraryClientWrapper>
-    );
-  } catch (error) {
-    if (error instanceof AppError && (
-      error.code === ERROR_CODES.KOMGA.MISSING_CONFIG ||
-      error.code === ERROR_CODES.STRIPSTREAM.MISSING_CONFIG
-    )) {
-      redirect("/settings");
-    }
+      return {
+        library,
+        seriesPage,
+        preferences,
+        unreadOnly,
+        effectivePageSize,
+        safeSort,
+        hasMissing: effectiveMissing === true,
+        canSortByRating,
+      };
+    },
+  });
 
-    const errorCode = error instanceof AppError ? error.code : ERROR_CODES.SERIES.FETCH_ERROR;
-
+  if (surface.status !== "ready") {
     return (
       <main className="container mx-auto px-4 py-8">
-        <ErrorMessage errorCode={errorCode} />
+        <ErrorMessage
+          errorCode={surface.status === "error" ? surface.code : ERROR_CODES.SERIES.FETCH_ERROR}
+        />
       </main>
     );
   }
+
+  const data = surface.data;
+
+  return (
+    <LibraryClientWrapper libraryId={libraryId}>
+      <LibraryContent
+        library={data.library}
+        series={data.seriesPage}
+        currentPage={currentPage}
+        preferences={data.preferences}
+        unreadOnly={data.unreadOnly}
+        pageSize={data.effectivePageSize}
+        sort={data.safeSort}
+        hasMissing={data.hasMissing}
+        canSortByRating={data.canSortByRating}
+      />
+    </LibraryClientWrapper>
+  );
 }

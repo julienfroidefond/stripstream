@@ -39,3 +39,19 @@ next book and the series progress. Owner:
 
 The home hero built from the two feeds above. "Continue reading" is the
 surface; "resume state" is the data policy behind it.
+
+## Page surface
+
+A page's data-backed view plus the context it needs to render (active provider,
+provider type, preferences, anonymous mode). `loadSurface` resolves that
+context once and returns one of four terminal states: `ready`,
+`anonymous-empty`, `unavailable` or `error`. Owners:
+`src/lib/surfaces/load-surface.ts` (Next wiring) and
+`src/lib/surfaces/surface-loader.ts` (pure state machine).
+
+## Action result
+
+The discriminated result returned by server actions that use the action
+runner: a success carries `success: true`, `code: "OK"` and a message; a
+failure carries `success: false`, the stable `ErrorCode` and a message, plus
+optional partial data. Owner: `src/lib/actions/action-runner.ts`.

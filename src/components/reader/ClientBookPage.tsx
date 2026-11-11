@@ -27,8 +27,11 @@ export function ClientBookPage({ bookId, initialData, initialError }: ClientBook
       setError(null);
 
       const result = await getBookData(bookId);
-      if (!result.success || !result.data) {
-        throw new Error(result.message || ERROR_CODES.BOOK.PAGES_FETCH_ERROR);
+      if (!result.success) {
+        throw new Error(result.code);
+      }
+      if (!result.data) {
+        throw new Error(ERROR_CODES.BOOK.PAGES_FETCH_ERROR);
       }
 
       setData(result.data);

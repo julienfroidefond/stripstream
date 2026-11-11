@@ -40,7 +40,9 @@ export {
 } from "./manage";
 
 export {
+  CONNECTION_TEST_RATE_LIMIT,
   checkConnectionTestRateLimit,
+  connectionTestRateLimitKey,
   testConnection,
   testStoredConnection,
 } from "./probe";

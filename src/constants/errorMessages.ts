@@ -1,6 +1,9 @@
 import { ERROR_CODES } from "./errorCodes";
 
 export const ERROR_MESSAGES: Record<string, string> = {
+  // Providers
+  [ERROR_CODES.PROVIDER.NOT_CONFIGURED]: "No media provider is configured",
+
   // Middleware
   [ERROR_CODES.MIDDLEWARE.UNAUTHORIZED]: "Unauthorized access",
   [ERROR_CODES.MIDDLEWARE.INVALID_TOKEN]: "Invalid or expired session",
@@ -99,8 +102,12 @@ export const ERROR_MESSAGES: Record<string, string> = {
   // Config
   [ERROR_CODES.CONFIG.INVALID_URL]:
     "Invalid server URL. Use an http(s) URL without credentials, query string or metadata endpoint.",
+  [ERROR_CODES.CONFIG.NOT_FOUND]: "Configuration not found",
   [ERROR_CODES.CONFIG.SAVE_ERROR]: "Error saving configuration",
   [ERROR_CODES.CONFIG.FETCH_ERROR]: "Error fetching configuration",
+  [ERROR_CODES.CONFIG.TEST_ERROR]: "Error testing configuration",
+  [ERROR_CODES.CONFIG.DELETE_ERROR]: "Error deleting configuration",
+  [ERROR_CODES.CONFIG.ACTIVATE_ERROR]: "Error activating configuration",
   [ERROR_CODES.CONFIG.TTL_SAVE_ERROR]: "Error saving TTL configuration",
   [ERROR_CODES.CONFIG.TTL_FETCH_ERROR]: "Error fetching TTL configuration",
 

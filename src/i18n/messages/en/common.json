@@ -670,6 +670,7 @@
     }
   },
   "errors": {
+    "PROVIDER_NOT_CONFIGURED": "No media provider is configured",
     "MONGODB_MISSING_URI": "MongoDB URI missing",
     "MONGODB_CONNECTION_FAILED": "MongoDB connection failed",
     "AUTH_UNAUTHENTICATED": "Unauthenticated",
@@ -712,8 +713,12 @@
     "STRIPSTREAM_NOT_FOUND": "Stripstream resource not found (HTTP 404). The server URL might be wrong.",
     "STRIPSTREAM_SERVER_ERROR": "Stripstream server issue (HTTP 5xx). Try again later.",
     "CONFIG_INVALID_URL": "Invalid server URL. Use an http(s) URL without credentials, query string or metadata endpoint.",
+    "CONFIG_NOT_FOUND": "Configuration not found",
     "CONFIG_SAVE_ERROR": "Error saving configuration",
     "CONFIG_FETCH_ERROR": "Error fetching configuration",
+    "CONFIG_TEST_ERROR": "Error testing configuration",
+    "CONFIG_DELETE_ERROR": "Error deleting configuration",
+    "CONFIG_ACTIVATE_ERROR": "Error activating configuration",
     "CONFIG_TTL_SAVE_ERROR": "Error saving TTL configuration",
     "CONFIG_TTL_FETCH_ERROR": "Error fetching TTL configuration",
     "CREDENTIALS_MISSING_ENCRYPTION_KEY": "Encrypted credentials found but CREDENTIALS_ENCRYPTION_KEY is missing. Set the key that was used to encrypt them.",

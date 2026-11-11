@@ -1,0 +1,252 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ERROR_CODES } from "@/constants/errorCodes";
+import { AppError } from "@/utils/errors";
+import {
+  ACTION_OK,
+  ActionError,
+  runAction,
+  runProviderAction,
+} from "./action-runner";
+import type { IMediaProvider } from "@/lib/providers/provider.interface";
+import type { UserPreferences } from "@/types/preferences";
+
+vi.mock("@/lib/providers/provider.factory", () => ({
+  getProvider: vi.fn(),
+}));
+
+vi.mock("@/lib/auth-utils", () => ({
+  requireUserId: vi.fn(),
+}));
+
+vi.mock("@/lib/services/preferences.service", () => ({
+  PreferencesService: {
+    getPreferences: vi.fn(),
+  },
+}));
+
+vi.mock("@/lib/logger", () => ({
+  default: {
+    warn: vi.fn(),
+    error: vi.fn(),
+  },
+}));
+
+const { getProvider } = await import("@/lib/providers/provider.factory");
+const { PreferencesService } = await import("@/lib/services/preferences.service");
+const { requireUserId } = await import("@/lib/auth-utils");
+
+const provider = {} as IMediaProvider;
+const preferences = {
+  anonymousMode: false,
+} as UserPreferences;
+
+beforeEach(() => {
+  vi.mocked(getProvider).mockReset();
+  vi.mocked(PreferencesService.getPreferences).mockReset();
+  vi.mocked(getProvider).mockResolvedValue(provider);
+  vi.mocked(PreferencesService.getPreferences).mockResolvedValue(preferences);
+});
+
+describe("runProviderAction", () => {
+  it("resolves the provider, runs the mutation and invalidates once", async () => {
+    const execute = vi.fn(async () => ({ message: "ok" }));
+    const invalidate = vi.fn();
+
+    const result = await runProviderAction({
+      name: "test",
+      fallbackCode: ERROR_CODES.SERIES.FETCH_ERROR,
+      execute,
+      invalidate,
+    });
+
+    expect(execute).toHaveBeenCalledWith({
+      userId: null,
+      preferences: null,
+      provider,
+    });
+    expect(invalidate).toHaveBeenCalledTimes(1);
+    expect(result).toMatchObject({
+      success: true,
+      code: ACTION_OK,
+      message: "ok",
+    });
+  });
+
+  it("returns flat success fields instead of nesting them under data", async () => {
+    const result = await runProviderAction<{ updated: number; total: number }>({
+      name: "test",
+      fallbackCode: ERROR_CODES.BOOK.PROGRESS_UPDATE_ERROR,
+      execute: async () => ({ message: "partial", updated: 2, total: 3 }),
+    });
+
+    expect(result).toMatchObject({
+      success: true,
+      message: "partial",
+      updated: 2,
+      total: 3,
+    });
+  });
+
+  it("fails with a stable code when no provider is configured", async () => {
+    vi.mocked(getProvider).mockResolvedValue(null);
+    const execute = vi.fn();
+
+    const result = await runProviderAction({
+      name: "test",
+      fallbackCode: ERROR_CODES.SERIES.FETCH_ERROR,
+      execute,
+    });
+
+    expect(result).toMatchObject({
+      success: false,
+      code: ERROR_CODES.PROVIDER.NOT_CONFIGURED,
+    });
+    expect(execute).not.toHaveBeenCalled();
+  });
+
+  it("skips the mutation in anonymous mode without resolving the provider", async () => {
+    vi.mocked(PreferencesService.getPreferences).mockResolvedValue({
+      ...preferences,
+      anonymousMode: true,
+    });
+    const execute = vi.fn();
+
+    const result = await runProviderAction({
+      name: "test",
+      fallbackCode: ERROR_CODES.BOOK.PROGRESS_UPDATE_ERROR,
+      skipAnonymous: { message: "ignored", data: { updated: 0, total: 0 } },
+      execute,
+    });
+
+    expect(getProvider).not.toHaveBeenCalled();
+    expect(execute).not.toHaveBeenCalled();
+    expect(result).toMatchObject({
+      success: true,
+      message: "ignored",
+      updated: 0,
+      total: 0,
+    });
+  });
+
+  it("maps AppError to its code and skips invalidation", async () => {
+    const invalidate = vi.fn();
+
+    const result = await runProviderAction({
+      name: "test",
+      fallbackCode: ERROR_CODES.SERIES.FETCH_ERROR,
+      execute: async () => {
+        throw new AppError(ERROR_CODES.SERIES.RATING_ERROR);
+      },
+      invalidate,
+    });
+
+    expect(result).toMatchObject({
+      success: false,
+      code: ERROR_CODES.SERIES.RATING_ERROR,
+    });
+    expect(invalidate).not.toHaveBeenCalled();
+  });
+
+  it("keeps partial progress from an ActionError", async () => {
+    const result = await runProviderAction<{ updated: number; total: number }>({
+      name: "test",
+      fallbackCode: ERROR_CODES.BOOK.PROGRESS_UPDATE_ERROR,
+      execute: async () => {
+        throw new ActionError(
+          ERROR_CODES.BOOK.PROGRESS_UPDATE_ERROR,
+          { updated: 1, total: 3 },
+          "Mise à jour partielle"
+        );
+      },
+    });
+
+    expect(result).toMatchObject({
+      success: false,
+      code: ERROR_CODES.BOOK.PROGRESS_UPDATE_ERROR,
+      message: "Mise à jour partielle",
+      updated: 1,
+      total: 3,
+    });
+  });
+
+  it("uses the fallback code and failure data for an unexpected error", async () => {
+    const result = await runProviderAction<{ jobId: string | null; forbidden?: boolean }>({
+      name: "test",
+      fallbackCode: ERROR_CODES.LIBRARY.SCAN_ERROR,
+      execute: async () => {
+        throw new Error("boom");
+      },
+      failureData: () => ({ jobId: null }),
+    });
+
+    expect(result).toMatchObject({
+      success: false,
+      code: ERROR_CODES.LIBRARY.SCAN_ERROR,
+      jobId: null,
+    });
+  });
+});
+
+describe("runAction", () => {
+  it("does not resolve a provider and still maps errors", async () => {
+    const result = await runAction({
+      name: "test",
+      fallbackCode: ERROR_CODES.FAVORITE.ADD_ERROR,
+      execute: async () => {
+        throw new AppError(ERROR_CODES.AUTH.UNAUTHENTICATED);
+      },
+    });
+
+    expect(getProvider).not.toHaveBeenCalled();
+    expect(result).toMatchObject({
+      success: false,
+      code: ERROR_CODES.AUTH.UNAUTHENTICATED,
+    });
+  });
+
+  it("requires a session and applies the rate-limit gate before executing", async () => {
+    vi.mocked(requireUserId).mockResolvedValue(7);
+    const key = `test-rate-${Date.now()}-${Math.random()}`;
+    const execute = vi.fn(async () => ({ message: "ok" }));
+    const options = {
+      name: "test",
+      fallbackCode: ERROR_CODES.CONFIG.TEST_ERROR,
+      requireUser: true,
+      rateLimit: {
+        key: () => key,
+        limit: 1,
+        windowMs: 60_000,
+        message: (seconds: number) => `retry in ${seconds}s`,
+      },
+      execute,
+    };
+
+    const first = await runAction(options);
+    const second = await runAction(options);
+
+    expect(first).toMatchObject({ success: true });
+    expect(second).toMatchObject({
+      success: false,
+      code: ERROR_CODES.AUTH.RATE_LIMITED,
+      message: expect.stringMatching(/^retry in /),
+    });
+    expect(execute).toHaveBeenCalledTimes(1);
+  });
+
+  it("uses a custom fallback message for unexpected errors", async () => {
+    const result = await runAction({
+      name: "test",
+      fallbackCode: ERROR_CODES.CONFIG.SAVE_ERROR,
+      fallbackMessage: "Erreur personnalisée",
+      execute: async () => {
+        throw new Error("boom");
+      },
+    });
+
+    expect(result).toMatchObject({
+      success: false,
+      code: ERROR_CODES.CONFIG.SAVE_ERROR,
+      message: "Erreur personnalisée",
+    });
+  });
+});
