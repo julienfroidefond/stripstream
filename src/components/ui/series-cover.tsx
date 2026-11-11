@@ -24,7 +24,7 @@ export function SeriesCover({
   fetchPriority = "auto",
   dimCompleted = true,
 }: SeriesCoverProps) {
-  const { ref, loaded, failed, onLoad, onError } = useCoverLoaded(
+  const { ref, status, loaded, failed, onLoad, onError } = useCoverLoaded(
     series.thumbnailUrl,
     { eager }
   );
@@ -37,7 +37,7 @@ export function SeriesCover({
   const statusStyle = series.seriesStatus ? seriesStatusStyles[series.seriesStatus] : null;
 
   return (
-    <div className="relative w-full h-full">
+    <div className="relative w-full h-full" data-cover-state={status}>
       <img
         ref={ref}
         src={series.thumbnailUrl}

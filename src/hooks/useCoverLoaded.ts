@@ -234,5 +234,5 @@ export function useCoverLoaded(
     [retry, src]
   );
 
-  return { ref, loaded, failed, onLoad, onError };
+  return { ref, status, loaded, failed, onLoad, onError };
 }

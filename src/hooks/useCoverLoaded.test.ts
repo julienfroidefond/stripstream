@@ -14,7 +14,7 @@ function Harness({
   src?: string;
   eager?: boolean;
 }) {
-  const { ref, loaded, failed, onLoad, onError } = useCoverLoaded(src, {
+  const { ref, status, loaded, failed, onLoad, onError } = useCoverLoaded(src, {
     eager,
   });
   return createElement("img", {
@@ -23,6 +23,7 @@ function Harness({
     alt: "cover",
     onLoad,
     onError,
+    "data-status": status,
     "data-loaded": String(loaded),
     "data-failed": String(failed),
   });
@@ -68,10 +69,12 @@ describe("useCoverLoaded", () => {
     render(createElement(Harness));
 
     const image = getCover();
+    expect(image.dataset.status).toBe("loading");
     expect(retryParam(image)).toBeNull();
 
     fireEvent.load(image);
 
+    expect(image.dataset.status).toBe("loaded");
     expect(image.dataset.loaded).toBe("true");
     expect(image.dataset.failed).toBe("false");
   });
@@ -116,6 +119,7 @@ describe("useCoverLoaded", () => {
     });
     fireEvent.error(image);
 
+    expect(image.dataset.status).toBe("failed");
     expect(image.dataset.loaded).toBe("false");
     expect(image.dataset.failed).toBe("true");
   });
@@ -138,6 +142,7 @@ describe("useCoverLoaded", () => {
 
     const image = getCover();
 
+    expect(image.dataset.status).toBe("loaded");
     expect(image.dataset.loaded).toBe("true");
     expect(retryParam(image)).toBeNull();
   });
@@ -147,12 +152,13 @@ describe("useCoverLoaded", () => {
     const { rerender } = render(createElement(Harness));
 
     fireEvent.load(getCover());
-    expect(getCover().dataset.loaded).toBe("true");
+    expect(getCover().dataset.status).toBe("loaded");
 
     rerender(
       createElement(Harness, { src: "http://localhost/api/cover-2.jpg" })
     );
 
+    expect(getCover().dataset.status).toBe("loading");
     expect(getCover().dataset.loaded).toBe("false");
     expect(getCover().src).toContain("cover-2.jpg");
   });

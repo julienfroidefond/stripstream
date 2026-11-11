@@ -65,7 +65,7 @@ function BookCoverContent({
 }: BookCoverProps) {
   const { t } = useTranslate();
   const { isAnonymous } = useAnonymous();
-  const { ref, loaded, failed, onLoad, onError } = useCoverLoaded(
+  const { ref, status, loaded, failed, onLoad, onError } = useCoverLoaded(
     book.thumbnailUrl.trim(),
     { eager }
   );
@@ -92,7 +92,7 @@ function BookCoverContent({
 
   return (
     <>
-      <div className="relative w-full h-full">
+      <div className="relative w-full h-full" data-cover-state={status}>
         <img
           ref={ref}
           src={book.thumbnailUrl.trim()}
