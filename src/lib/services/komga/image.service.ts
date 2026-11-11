@@ -1,4 +1,4 @@
-import { ConfigDBService } from "../config-db.service";
+import { requireConnectionForProvider } from "@/lib/connections";
 import { ERROR_CODES } from "../../../constants/errorCodes";
 import { AppError } from "../../../utils/errors";
 import { imageRequestLimiter } from "../image-request-limiter";
@@ -32,8 +32,7 @@ export class KomgaImageService {
     timeoutMs: number = IMAGE_TIMEOUT_MS
   ): Promise<Response> {
     try {
-      const config = await ConfigDBService.getConfig();
-      if (!config) throw new AppError(ERROR_CODES.KOMGA.MISSING_CONFIG);
+      const config = await requireConnectionForProvider("komga");
 
       const url = new URL(`${config.url}/api/v1/${path}`).toString();
       const headers = new Headers({

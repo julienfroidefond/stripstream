@@ -697,10 +697,10 @@ export class KomgaProvider implements IMediaProvider {
     throw new Error("Favorites are managed locally for Komga");
   }
 
-  async testConnection(): Promise<{ ok: boolean; error?: string }> {
+  async testConnection(): Promise<{ ok: boolean; error?: string; libraryCount?: number }> {
     try {
-      await this.fetch<KomgaLibrary[]>("libraries");
-      return { ok: true };
+      const libraries = await this.fetch<KomgaLibrary[]>("libraries");
+      return { ok: true, libraryCount: libraries.length };
     } catch (error) {
       return { ok: false, error: error instanceof Error ? error.message : "Connexion échouée" };
     }

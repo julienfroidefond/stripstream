@@ -11,7 +11,7 @@ vi.mock("@/lib/prisma", () => ({
   },
 }));
 
-vi.mock("@/lib/active-connection", () => ({ getActiveConnection: vi.fn() }));
+vi.mock("@/lib/connections", () => ({ getActiveConnection: vi.fn() }));
 vi.mock("@/lib/providers/provider.factory", () => ({ getProvider: vi.fn() }));
 vi.mock("@/lib/auth-utils", () => ({ getCurrentUser: vi.fn() }));
 vi.mock("@/lib/logger", () => ({
@@ -19,7 +19,7 @@ vi.mock("@/lib/logger", () => ({
 }));
 
 import prisma from "@/lib/prisma";
-import { getActiveConnection } from "@/lib/active-connection";
+import { getActiveConnection } from "@/lib/connections";
 import { getProvider } from "@/lib/providers/provider.factory";
 import { getCurrentUser } from "@/lib/auth-utils";
 import logger from "@/lib/logger";

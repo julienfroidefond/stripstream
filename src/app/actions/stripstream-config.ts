@@ -1,18 +1,17 @@
 "use server";
 
-import prisma from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth-utils";
-import { StripstreamProvider } from "@/lib/providers/stripstream/stripstream.provider";
+import { requireUserId } from "@/lib/auth-utils";
+import {
+  activateConnection,
+  checkConnectionTestRateLimit,
+  connectionFromStripstreamToken,
+  deleteConnection,
+  listConnections,
+  saveConnection,
+  testConnection,
+  testStoredConnection,
+} from "@/lib/connections";
 import { AppError } from "@/utils/errors";
-import { ERROR_CODES } from "@/constants/errorCodes";
-import { invalidateConnectionChange } from "@/lib/cache/invalidation";
-import { checkRateLimit } from "@/utils/rate-limit";
-import { normalizeServerUrl } from "@/utils/server-url";
-import { getActiveConnection, setActiveConnection } from "@/lib/active-connection";
-import { decryptSecret, encryptSecret } from "@/lib/credentials";
-
-const TEST_CONNECTION_LIMIT = 5;
-const TEST_CONNECTION_WINDOW_MS = 30_000;
 
 export interface StripstreamConfigSummary {
   id: number;
@@ -28,10 +27,8 @@ interface SaveStripstreamInput {
   token?: string;
 }
 
-async function requireUserId(): Promise<number> {
-  const user = await getCurrentUser();
-  if (!user) throw new AppError(ERROR_CODES.AUTH.UNAUTHENTICATED);
-  return parseInt(user.id, 10);
+function rateLimitedMessage(retryAfterSeconds: number): string {
+  return `Trop de tentatives. Réessaie dans ${retryAfterSeconds}s.`;
 }
 
 export async function testStripstreamConnection(
@@ -40,19 +37,12 @@ export async function testStripstreamConnection(
 ): Promise<{ success: boolean; message: string }> {
   try {
     const userId = await requireUserId();
-    const rl = checkRateLimit(`test-stripstream:${userId}`, {
-      limit: TEST_CONNECTION_LIMIT,
-      windowMs: TEST_CONNECTION_WINDOW_MS,
-    });
-    if (!rl.allowed) {
-      return {
-        success: false,
-        message: `Trop de tentatives. Réessaie dans ${Math.ceil(rl.resetMs / 1000)}s.`,
-      };
+    const rateLimit = checkConnectionTestRateLimit("stripstream", userId);
+    if (!rateLimit.allowed) {
+      return { success: false, message: rateLimitedMessage(rateLimit.retryAfterSeconds) };
     }
 
-    const provider = new StripstreamProvider(url, token);
-    const result = await provider.testConnection();
+    const result = await testConnection(connectionFromStripstreamToken(url, token));
     if (!result.ok) {
       return { success: false, message: result.error ?? "Connexion échouée" };
     }
@@ -68,18 +58,7 @@ export async function testStripstreamConnection(
 export async function listStripstreamConfigs(): Promise<StripstreamConfigSummary[]> {
   try {
     const userId = await requireUserId();
-    const [configs, activeConnection] = await Promise.all([
-      prisma.stripstreamConfig.findMany({
-        where: { userId },
-        orderBy: { createdAt: "asc" },
-        select: { id: true, name: true, url: true },
-      }),
-      getActiveConnection(userId),
-    ]);
-    return configs.map((c) => ({
-      ...c,
-      isActive: activeConnection.provider === "stripstream" && activeConnection.configId === c.id,
-    }));
+    return (await listConnections(userId)).stripstream;
   } catch {
     return [];
   }
@@ -102,36 +81,27 @@ export async function saveStripstreamConfig(
       return { success: false, message: "Nom et URL sont requis" };
     }
 
-    const url = normalizeServerUrl(rawUrl);
-
-    if (input.id) {
-      const existing = await prisma.stripstreamConfig.findFirst({
-        where: { id: input.id, userId },
-        select: { id: true, token: true },
-      });
-      if (!existing) {
-        return { success: false, message: "Configuration introuvable" };
-      }
-      const tokenInput = input.token?.trim();
-      const token = tokenInput ? encryptSecret(tokenInput) : existing.token;
-      await prisma.stripstreamConfig.update({
-        where: { id: input.id },
-        data: { name, url, token },
-      });
-      invalidateConnectionChange();
-      return { success: true, message: "Configuration mise à jour", id: input.id };
-    }
-
-    if (!input.token?.trim()) {
+    if (!input.id && !input.token?.trim()) {
       return { success: false, message: "Le token est requis pour une nouvelle config" };
     }
 
-    const created = await prisma.stripstreamConfig.create({
-      data: { userId, name, url, token: encryptSecret(input.token.trim()) },
-    });
+    const saved = await saveConnection(
+      {
+        provider: "stripstream",
+        id: input.id,
+        name,
+        url: rawUrl,
+        token: input.token,
+      },
+      userId
+    );
+    if (!saved) return { success: false, message: "Configuration introuvable" };
 
-    invalidateConnectionChange();
-    return { success: true, message: "Configuration créée", id: created.id };
+    return {
+      success: true,
+      message: input.id ? "Configuration mise à jour" : "Configuration créée",
+      id: saved.id,
+    };
   } catch (error) {
     if (error instanceof AppError) {
       return { success: false, message: error.message };
@@ -148,15 +118,8 @@ export async function deleteStripstreamConfig(
 ): Promise<{ success: boolean; message: string }> {
   try {
     const userId = await requireUserId();
-    const config = await prisma.stripstreamConfig.findFirst({
-      where: { id, userId },
-      select: { id: true },
-    });
-    if (!config) return { success: false, message: "Configuration introuvable" };
-
-    await prisma.stripstreamConfig.delete({ where: { id } });
-
-    invalidateConnectionChange();
+    const deleted = await deleteConnection("stripstream", id, userId);
+    if (!deleted) return { success: false, message: "Configuration introuvable" };
     return { success: true, message: "Configuration supprimée" };
   } catch {
     return { success: false, message: "Erreur lors de la suppression" };
@@ -171,24 +134,13 @@ export async function testStripstreamConfigById(
 ): Promise<{ success: boolean; message: string }> {
   try {
     const userId = await requireUserId();
-    const rl = checkRateLimit(`test-stripstream:${userId}`, {
-      limit: TEST_CONNECTION_LIMIT,
-      windowMs: TEST_CONNECTION_WINDOW_MS,
-    });
-    if (!rl.allowed) {
-      return {
-        success: false,
-        message: `Trop de tentatives. Réessaie dans ${Math.ceil(rl.resetMs / 1000)}s.`,
-      };
+    const rateLimit = checkConnectionTestRateLimit("stripstream", userId);
+    if (!rateLimit.allowed) {
+      return { success: false, message: rateLimitedMessage(rateLimit.retryAfterSeconds) };
     }
-    const config = await prisma.stripstreamConfig.findFirst({
-      where: { id, userId },
-      select: { url: true, token: true },
-    });
-    if (!config) return { success: false, message: "Configuration introuvable" };
 
-    const provider = new StripstreamProvider(config.url, decryptSecret(config.token));
-    const result = await provider.testConnection();
+    const result = await testStoredConnection("stripstream", id, userId);
+    if (!result) return { success: false, message: "Configuration introuvable" };
     if (!result.ok) {
       return { success: false, message: result.error ?? "Connexion échouée" };
     }
@@ -203,21 +155,10 @@ export async function setActiveStripstreamConfig(
 ): Promise<{ success: boolean; message: string }> {
   try {
     const userId = await requireUserId();
-    const config = await prisma.stripstreamConfig.findFirst({
-      where: { id, userId },
-      select: { id: true, name: true },
-    });
+    const config = await activateConnection("stripstream", id, userId);
     if (!config) return { success: false, message: "Configuration introuvable" };
-
-    await setActiveConnection("stripstream", id);
-
-    // Expire provider caches and revalidate the home segment so the action
-    // response itself carries the newly active connection's data. The client
-    // also calls router.refresh() to settle the view.
-    invalidateConnectionChange();
     return { success: true, message: `Stripstream actif : ${config.name}` };
   } catch {
     return { success: false, message: "Erreur lors du changement de config" };
   }
 }
-

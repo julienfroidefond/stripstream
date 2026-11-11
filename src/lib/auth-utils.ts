@@ -1,5 +1,7 @@
 import { auth } from "@/lib/auth";
 import { cache } from "react";
+import { ERROR_CODES } from "@/constants/errorCodes";
+import { AppError } from "@/utils/errors";
 import type { UserData } from "@/lib/services/auth-server.service";
 
 export const getCurrentUser = cache(async (): Promise<UserData | null> => {
@@ -16,6 +18,13 @@ export const getCurrentUser = cache(async (): Promise<UserData | null> => {
     authenticated: true,
   };
 });
+
+/** Identifiant numérique du user courant, ou `AUTH_UNAUTHENTICATED`. */
+export async function requireUserId(): Promise<number> {
+  const user = await getCurrentUser();
+  if (!user) throw new AppError(ERROR_CODES.AUTH.UNAUTHENTICATED);
+  return parseInt(user.id, 10);
+}
 
 export async function isAdmin(): Promise<boolean> {
   const user = await getCurrentUser();

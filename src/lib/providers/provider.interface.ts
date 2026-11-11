@@ -91,7 +91,7 @@ export interface IMediaProvider {
   search(query: string, limit?: number): Promise<NormalizedSearchResult[]>;
 
   // ── Connection ───────────────────────────────────────────────────────────
-  testConnection(): Promise<{ ok: boolean; error?: string }>;
+  testConnection(): Promise<{ ok: boolean; error?: string; libraryCount?: number }>;
 
   // ── URL builders (return local proxy URLs) ───────────────────────────────
   getBookThumbnailUrl(bookId: string): string;
