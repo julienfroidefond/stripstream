@@ -1,20 +1,9 @@
 import type { IMediaProvider } from "@/lib/providers/provider.interface";
 import type { NormalizedBook, NormalizedSeries } from "@/lib/providers/types";
+import { indexSeries, matchSeries, seriesKey, type SeriesIndex } from "./identity";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-function normalize(value: string): string {
-  return value.trim().toLowerCase();
-}
-
-function isSameSeries(series: NormalizedSeries, target: string): boolean {
-  return (
-    series.id === target ||
-    series.name === target ||
-    normalize(series.name) === normalize(target)
-  );
-}
 
 /**
  * Retrouve une série par l'identifiant porté par le tome, ou par son nom.
@@ -41,7 +30,7 @@ async function resolveSeries(
         false,
         target
       );
-      const match = page.items.find((series) => isSameSeries(series, target));
+      const match = matchSeries(target, book.libraryId, indexSeries(page.items));
       if (match) return match;
     } catch {
       // Repli sur la résolution par identifiant ci-dessous.
@@ -49,6 +38,41 @@ async function resolveSeries(
   }
 
   return provider.getSeriesById(target).catch(() => null);
+}
+
+/**
+ * Clé de déduplication des résolutions. Deux homonymes de bibliothèques
+ * différentes sont deux séries distinctes ; un identifiant reste unique quelle
+ * que soit la casse.
+ */
+function missingKey(target: string, libraryId: string): string {
+  if (UUID_RE.test(target)) return `id:${seriesKey(target)}`;
+  return `name:${seriesKey(target)}@${libraryId}`;
+}
+
+/**
+ * Vrai si le pool contient déjà la série du tome.
+ *
+ * Un homonyme d'une autre bibliothèque ne suffit pas : on tentera de résoudre
+ * la série de la bibliothèque du tome, puis on retombera sur cet homonyme si
+ * la résolution échoue (comportement de `matchSeries`).
+ */
+function isCoveredByPool(
+  pool: readonly NormalizedSeries[],
+  index: SeriesIndex,
+  target: string,
+  libraryId: string
+): boolean {
+  if (UUID_RE.test(target)) {
+    return pool.some(
+      (series) => series.id.toLowerCase() === target.toLowerCase()
+    );
+  }
+
+  const matched = matchSeries(target, libraryId, index);
+  if (!matched) return false;
+  if (matched.libraryId && matched.libraryId !== libraryId) return false;
+  return true;
 }
 
 /**
@@ -62,22 +86,20 @@ async function resolveSeries(
  */
 export async function resolveSeriesPool(
   provider: IMediaProvider,
-  books: NormalizedBook[],
-  known: NormalizedSeries[] = []
+  books: readonly NormalizedBook[],
+  known: readonly NormalizedSeries[] = []
 ): Promise<NormalizedSeries[]> {
   const pool = [...known];
   const seen = new Set(pool.map((series) => series.id));
+  const index = indexSeries(pool);
   const missing = new Map<string, { target: string; book: NormalizedBook }>();
 
   for (const book of books) {
     const target = book.seriesId?.trim();
     if (!target) continue;
 
-    const key = normalize(target);
-    if (
-      pool.some((series) => isSameSeries(series, target)) ||
-      missing.has(key)
-    ) {
+    const key = missingKey(target, book.libraryId);
+    if (isCoveredByPool(pool, index, target, book.libraryId) || missing.has(key)) {
       continue;
     }
     missing.set(key, { target, book });

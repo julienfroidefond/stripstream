@@ -8,15 +8,15 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, BookOpen } from "lucide-react";
-import type { NormalizedBook, NormalizedSeries } from "@/lib/providers/types";
+import type { NormalizedBook } from "@/lib/providers/types";
+import type { ResumeEntry } from "@/lib/resume/resume-state";
 import { Button } from "@/components/ui/button";
 import { BookCoverScene } from "@/components/ui/book-cover-scene";
 import { LoadMoreLabel } from "@/components/ui/load-more-label";
 import { useCoverInteraction } from "@/hooks/useCoverInteraction";
 import { useTranslate } from "@/hooks/useTranslate";
 import { cn } from "@/lib/utils";
-import { CONTINUE_READING_PAGE_SIZE } from "@/constants/homeConstants";
-import { loadHomeFeed } from "@/app/actions/home";
+import { loadContinueReading } from "@/app/actions/home";
 import {
   CountUp,
   holdStage,
@@ -39,31 +39,12 @@ import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { resolveHeroSummary } from "./heroSummary";
 
 interface ContinueReadingHeroProps {
-  books: NormalizedBook[];
-  series?: NormalizedSeries[];
-}
-
-const ITEMS_PER_PAGE = CONTINUE_READING_PAGE_SIZE;
-
-/** Ajoute les séries manquantes au pool sans écraser les métadonnées déjà chargées. */
-function mergeSeriesPools(
-  current: NormalizedSeries[],
-  incoming: NormalizedSeries[]
-): NormalizedSeries[] {
-  if (incoming.length === 0) return current;
-  const seen = new Set(current.map((series) => series.id));
-  const merged = [...current];
-  for (const series of incoming) {
-    if (seen.has(series.id)) continue;
-    seen.add(series.id);
-    merged.push(series);
-  }
-  return merged;
+  initialItems: ResumeEntry[];
+  initialHasMore: boolean;
 }
 
 interface HeroSlideProps {
-  book: NormalizedBook;
-  series?: NormalizedSeries[];
+  entry: ResumeEntry;
   staged: boolean;
   intro: boolean;
   reduce: boolean;
@@ -141,8 +122,7 @@ function HeroTitle({
  * sortante, pour qu'elle ne rejoue pas son entrée en scène.
  */
 function HeroSlide({
-  book,
-  series,
+  entry,
   staged,
   intro,
   reduce,
@@ -151,24 +131,14 @@ function HeroSlide({
   const { t } = useTranslate();
   const { active, handlers } = useCoverInteraction<HTMLButtonElement>();
 
-  const target = book.seriesId?.trim() ?? "";
-  const targetLower = target.toLowerCase();
-  const matchedSeries =
-    series?.find(
-      (item) =>
-        item.id === target ||
-        item.name === target ||
-        item.name.trim().toLowerCase() === targetLower
-    ) ?? null;
+  const { book, series: matchedSeries, progressPercent } = entry;
   const seriesName = matchedSeries?.name ?? null;
   const summary = resolveHeroSummary(book, matchedSeries);
 
   const currentPage = book.readProgress?.page ?? 0;
   const totalPages = book.pageCount;
-  const hasProgress = currentPage > 0 && totalPages > 0;
-  const percent = hasProgress
-    ? Math.min(100, Math.round((currentPage / totalPages) * 100))
-    : 0;
+  const hasProgress = progressPercent !== null;
+  const percent = progressPercent ?? 0;
 
   const volumeLabel = book.number
     ? t("home.hero.tomeLabel", { number: book.number })
@@ -307,7 +277,7 @@ function HeroSlide({
   );
 }
 
-export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps) {
+export function ContinueReadingHero({ initialItems, initialHasMore }: ContinueReadingHeroProps) {
   const router = useRouter();
   const { t } = useTranslate();
   const reduce = usePrefersReducedMotion();
@@ -316,13 +286,12 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
   /** L'inclinaison à la souris et la profondeur au scroll attendent l'ouverture. */
   const [introDone, setIntroDone] = useState(false);
   const [transition, setTransition] = useState<{
-    from: NormalizedBook;
+    from: ResumeEntry;
     direction: number;
     offset: number;
   } | null>(null);
-  const [loadedBooks, setLoadedBooks] = useState(books.slice(0, ITEMS_PER_PAGE));
-  const [seriesPool, setSeriesPool] = useState(series ?? []);
-  const [hasMore, setHasMore] = useState(books.length > ITEMS_PER_PAGE);
+  const [loadedItems, setLoadedItems] = useState(initialItems);
+  const [hasMore, setHasMore] = useState(initialHasMore);
   const [isPending, startTransition] = useTransition();
   const sectionRef = useRef<HTMLElement | null>(null);
   const sceneBackdropRef = useRef<HTMLDivElement | null>(null);
@@ -333,7 +302,7 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
   const glowRef = useRef<HTMLDivElement | null>(null);
   const parallaxRef = useRef<HTMLDivElement | null>(null);
   const firstBackdrop = useRef(true);
-  const [firstBookId] = useState<string | null>(loadedBooks[0]?.id ?? null);
+  const [firstBookId] = useState<string | null>(initialItems[0]?.book.id ?? null);
   /**
    * La mise en scène (cover posée dans son cadre, texte qui monte) ne joue
    * qu'à l'ouverture. Le carrousel change de diapositive ensuite : le geste se
@@ -341,10 +310,11 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
    * chaque fois.
    */
 
-  const total = loadedBooks.length;
+  const total = loadedItems.length;
   const hasMany = total > 1;
   const safeIndex = total > 0 ? ((index % total) + total) % total : 0;
-  const book = loadedBooks[safeIndex];
+  const entry = loadedItems[safeIndex];
+  const book = entry?.book;
   const staged = Boolean(book) && !introPlayed && !transition && book.id === firstBookId;
 
   const goTo = (target: number, direction: number, offset = 0) => {
@@ -357,7 +327,7 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
       setTransition(null);
       return;
     }
-    setTransition({ from: book, direction, offset });
+    setTransition({ from: entry, direction, offset });
     setIndex(next);
   };
 
@@ -424,20 +394,21 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
   };
 
   const handleLoadMore = () => {
-    const firstNew = loadedBooks.length;
+    const firstNew = loadedItems.length;
     startTransition(async () => {
-      const result = await loadHomeFeed("continue-reading", firstNew);
-      setLoadedBooks(result.items as NormalizedBook[]);
-      setSeriesPool((current) => mergeSeriesPools(current, result.series ?? []));
+      const result = await loadContinueReading(firstNew);
+      if (result.items.length === 0) {
+        setHasMore(result.hasMore);
+        return;
+      }
+      setLoadedItems((current) => [...current, ...result.items]);
       setHasMore(result.hasMore);
       // La suite se pose sur la première nouveauté : le clic se voit.
-      if (result.items.length > firstNew) {
-        setIntroPlayed(true);
-        if (!reduce && book) {
-          setTransition({ from: book, direction: 1, offset: 0 });
-        }
-        setIndex(firstNew);
+      setIntroPlayed(true);
+      if (!reduce) {
+        setTransition({ from: entry, direction: 1, offset: 0 });
       }
+      setIndex(firstNew);
     });
   };
 
@@ -617,7 +588,7 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
     { dependencies: [book?.id, reduce] }
   );
 
-  if (total === 0 || !book) return null;
+  if (total === 0 || !book || !entry) return null;
 
   return (
     <section
@@ -639,7 +610,7 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
           <div ref={introBackdropRef} data-hero-backdrop className="absolute inset-0">
             {transition ? (
               <div className="absolute inset-0" aria-hidden>
-                <ProjectionBackdrop src={transition.from.thumbnailUrl} fadeIn={false} />
+                <ProjectionBackdrop src={transition.from.book.thumbnailUrl} fadeIn={false} />
               </div>
             ) : null}
             <div
@@ -683,13 +654,12 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
       >
         <DirectionalSlide
           activeKey={book.id}
-          previousKey={transition?.from.id ?? null}
+          previousKey={transition?.from.book.id ?? null}
           previous={
             transition ? (
               <HeroSlide
-                key={`previous-${transition.from.id}`}
-                book={transition.from}
-                series={seriesPool}
+                key={`previous-${transition.from.book.id}`}
+                entry={transition.from}
                 staged={false}
                 intro={false}
                 reduce={reduce}
@@ -709,8 +679,7 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
         >
           <HeroSlide
             key={book.id}
-            book={book}
-            series={seriesPool}
+            entry={entry}
             staged={staged}
             intro={staged}
             reduce={reduce}
@@ -726,9 +695,9 @@ export function ContinueReadingHero({ books, series }: ContinueReadingHeroProps)
                 aria-label={t("home.hero.label")}
                 className="flex items-center justify-center gap-2"
               >
-                {loadedBooks.map((item, position) => (
+                {loadedItems.map((item, position) => (
                   <button
-                    key={item.id}
+                    key={item.book.id}
                     role="tab"
                     aria-selected={position === safeIndex}
                     aria-label={`${position + 1} / ${total}`}

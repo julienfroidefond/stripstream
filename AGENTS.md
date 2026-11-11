@@ -93,6 +93,7 @@ Dependency automation and its grouping/auto-merge policy: [`.github/dependabot-p
 - `docs/ecosystem.md`: the two-repo layout (this reader + the Stripstream Librarian backend).
 - `src/lib/credentials.ts`: credential encryption at rest (+ `credentials-migration.ts`, `scripts/encrypt-credentials.ts`).
 - `src/lib/providers/`: provider abstraction. Start here for backend questions.
+- `src/lib/resume/`: resume state (feed merge, series identity, book/series progress) and the provider-backed series pool. Vocabulary: `GLOSSARY.md`.
 - `src/app/actions/`: all server-side mutations.
 - `prisma/schema.prisma`: data model (multi-config + favorites scoping).
 - `prisma/migrations/`: examples of the SQLite manual rebuild pattern.
