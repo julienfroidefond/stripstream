@@ -1,17 +1,11 @@
 "use server";
 
-import { revalidatePath, updateTag } from "next/cache";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-utils";
 import { StripstreamProvider } from "@/lib/providers/stripstream/stripstream.provider";
 import { AppError } from "@/utils/errors";
 import { ERROR_CODES } from "@/constants/errorCodes";
-import {
-  FAVORITES_CACHE_TAG,
-  HOME_CACHE_TAG,
-  LIBRARY_SERIES_CACHE_TAG,
-  SERIES_BOOKS_CACHE_TAG,
-} from "@/constants/cacheConstants";
+import { invalidateConnectionChange } from "@/lib/cache/invalidation";
 import { checkRateLimit } from "@/utils/rate-limit";
 import { normalizeServerUrl } from "@/utils/server-url";
 import { getActiveConnection, setActiveConnection } from "@/lib/active-connection";
@@ -38,19 +32,6 @@ async function requireUserId(): Promise<number> {
   const user = await getCurrentUser();
   if (!user) throw new AppError(ERROR_CODES.AUTH.UNAUTHENTICATED);
   return parseInt(user.id, 10);
-}
-
-function expireProviderCaches() {
-  updateTag(HOME_CACHE_TAG);
-  updateTag(LIBRARY_SERIES_CACHE_TAG);
-  updateTag(SERIES_BOOKS_CACHE_TAG);
-  updateTag(FAVORITES_CACHE_TAG);
-}
-
-function revalidateConnectionCaches() {
-  revalidatePath("/settings");
-  revalidatePath("/");
-  expireProviderCaches();
 }
 
 export async function testStripstreamConnection(
@@ -137,7 +118,7 @@ export async function saveStripstreamConfig(
         where: { id: input.id },
         data: { name, url, token },
       });
-      revalidateConnectionCaches();
+      invalidateConnectionChange();
       return { success: true, message: "Configuration mise à jour", id: input.id };
     }
 
@@ -149,7 +130,7 @@ export async function saveStripstreamConfig(
       data: { userId, name, url, token: encryptSecret(input.token.trim()) },
     });
 
-    revalidateConnectionCaches();
+    invalidateConnectionChange();
     return { success: true, message: "Configuration créée", id: created.id };
   } catch (error) {
     if (error instanceof AppError) {
@@ -175,7 +156,7 @@ export async function deleteStripstreamConfig(
 
     await prisma.stripstreamConfig.delete({ where: { id } });
 
-    revalidateConnectionCaches();
+    invalidateConnectionChange();
     return { success: true, message: "Configuration supprimée" };
   } catch {
     return { success: false, message: "Erreur lors de la suppression" };
@@ -233,7 +214,7 @@ export async function setActiveStripstreamConfig(
     // Expire provider caches and revalidate the home segment so the action
     // response itself carries the newly active connection's data. The client
     // also calls router.refresh() to settle the view.
-    revalidateConnectionCaches();
+    invalidateConnectionChange();
     return { success: true, message: `Stripstream actif : ${config.name}` };
   } catch {
     return { success: false, message: "Erreur lors du changement de config" };

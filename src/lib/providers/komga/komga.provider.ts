@@ -32,7 +32,7 @@ import type { KomgaBook, KomgaSeries, KomgaLibrary } from "@/types/komga";
 import type { LibraryResponse } from "@/types/library";
 import type { AuthConfig } from "@/types/auth";
 import logger from "@/lib/logger";
-import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, SERIES_BOOKS_CACHE_TAG, STATS_CACHE_TAG } from "@/constants/cacheConstants";
+import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, SERIES_BOOKS_CACHE_TAG, STATS_CACHE_TAG, cacheTags } from "@/constants/cacheConstants";
 import { unstable_cache } from "next/cache";
 
 type KomgaCondition = Record<string, unknown>;
@@ -227,7 +227,7 @@ export class KomgaProvider implements IMediaProvider {
         method: "POST",
         body: JSON.stringify(searchBody),
         revalidate: CACHE_TTL_MED,
-        tags: [LIBRARY_SERIES_CACHE_TAG, `library-series:${libraryId}`],
+        tags: [LIBRARY_SERIES_CACHE_TAG, cacheTags.librarySeries(libraryId)],
       }
     );
 
@@ -273,8 +273,8 @@ export class KomgaProvider implements IMediaProvider {
     }
 
     const granularTags: string[] = [SERIES_BOOKS_CACHE_TAG];
-    if (filter.seriesName) granularTags.push(`series-books:${filter.seriesName}`);
-    if (filter.libraryId) granularTags.push(`library-books:${filter.libraryId}`);
+    if (filter.seriesName) granularTags.push(cacheTags.seriesBooks(filter.seriesName));
+    if (filter.libraryId) granularTags.push(cacheTags.libraryBooks(filter.libraryId));
 
     const response = await this.fetch<LibraryResponse<KomgaBook>>(
       "books/list",

@@ -1,22 +1,15 @@
 "use server";
 
-import { updateTag } from "next/cache";
 import { FavoriteService } from "@/lib/services/favorite.service";
+import { invalidateFavorites } from "@/lib/cache/invalidation";
 import { AppError } from "@/utils/errors";
-import { FAVORITES_CACHE_TAG, HOME_CACHE_TAG } from "@/constants/cacheConstants";
-
-function revalidateFavoritesCaches() {
-  updateTag(FAVORITES_CACHE_TAG);
-  // La home affiche les favoris → invalider aussi pour que la liste soit à jour.
-  updateTag(HOME_CACHE_TAG);
-}
 
 export async function addToFavorites(
   seriesId: string
 ): Promise<{ success: boolean; message: string }> {
   try {
     await FavoriteService.addToFavorites(seriesId);
-    revalidateFavoritesCaches();
+    invalidateFavorites();
     return { success: true, message: "Série ajoutée aux favoris" };
   } catch (error) {
     if (error instanceof AppError) {
@@ -31,7 +24,7 @@ export async function removeFromFavorites(
 ): Promise<{ success: boolean; message: string }> {
   try {
     await FavoriteService.removeFromFavorites(seriesId);
-    revalidateFavoritesCaches();
+    invalidateFavorites();
     return { success: true, message: "Série retirée des favoris" };
   } catch (error) {
     if (error instanceof AppError) {

@@ -1,32 +1,14 @@
 "use server";
 
-import { updateTag } from "next/cache";
 import { getProvider } from "@/lib/providers/provider.factory";
+import { invalidateReadProgress } from "@/lib/cache/invalidation";
 import { getAllSeriesBooks } from "@/lib/providers/series-books";
 import { PreferencesService } from "@/lib/services/preferences.service";
-import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, SERIES_BOOKS_CACHE_TAG, RATINGS_LIST_CACHE_TAG, STATS_CACHE_TAG } from "@/constants/cacheConstants";
 import { runWithConcurrency } from "@/lib/utils";
 import { AppError } from "@/utils/errors";
 
 /** Nombre d'écritures de progression simultanées lors d'un marquage de série. */
 const SERIES_WRITE_CONCURRENCY = 6;
-
-/**
- * Invalide les caches après modification d'une progression.
- * Si `seriesId` est fourni, on cible uniquement `series-books:${seriesId}`
- * au lieu d'invalider toutes les listes de livres → meilleur hit rate.
- */
-function revalidateReadCaches(seriesId?: string | null) {
-  updateTag(HOME_CACHE_TAG);
-  updateTag(LIBRARY_SERIES_CACHE_TAG);
-  updateTag(RATINGS_LIST_CACHE_TAG);
-  updateTag(STATS_CACHE_TAG);
-  if (seriesId) {
-    updateTag(`series-books:${seriesId}`);
-  } else {
-    updateTag(SERIES_BOOKS_CACHE_TAG);
-  }
-}
 
 export async function updateReadProgress(
   bookId: string,
@@ -44,7 +26,7 @@ export async function updateReadProgress(
     if (!provider) return { success: false, message: "Provider non configuré" };
 
     await provider.saveReadProgress(bookId, page, completed);
-    revalidateReadCaches(seriesId);
+    invalidateReadProgress(seriesId);
 
     return { success: true, message: "Progression mise à jour" };
   } catch (error) {
@@ -69,7 +51,7 @@ export async function deleteReadProgress(
     if (!provider) return { success: false, message: "Provider non configuré" };
 
     await provider.resetReadProgress(bookId);
-    revalidateReadCaches(seriesId);
+    invalidateReadProgress(seriesId);
 
     return { success: true, message: "Progression supprimée" };
   } catch (error) {
@@ -111,7 +93,7 @@ export async function updateSeriesReadStatus(
 
     const books = await getAllSeriesBooks(provider, seriesId);
     if (books.length === 0) {
-      revalidateReadCaches(seriesId);
+      invalidateReadProgress(seriesId);
       return { success: true, message: "Aucun livre dans cette série", updated: 0, total: 0 };
     }
 
@@ -124,7 +106,7 @@ export async function updateSeriesReadStatus(
           : provider.resetReadProgress(book.id)
     );
 
-    revalidateReadCaches(seriesId);
+    invalidateReadProgress(seriesId);
 
     if (failed === 0) {
       return { success: true, message: "Série mise à jour", updated: succeeded, total: books.length };
