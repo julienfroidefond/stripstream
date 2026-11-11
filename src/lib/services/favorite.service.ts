@@ -1,13 +1,13 @@
-import { unstable_cache } from "next/cache";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "../auth-utils";
 import { getActiveConnection } from "@/lib/active-connection";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
-import { FAVORITES_CACHE_TAG } from "../../constants/cacheConstants";
+import { isConnectionError } from "../../utils/http-error";
 import { getProvider } from "@/lib/providers/provider.factory";
-import type { User } from "@/types/komga";
+import type { IMediaProvider } from "@/lib/providers/provider.interface";
 import type { NormalizedSeries } from "@/lib/providers/types";
+import type { Prisma } from "@/generated/prisma/client";
 import logger from "@/lib/logger";
 
 type ProviderType = "komga" | "stripstream";
@@ -15,127 +15,193 @@ type ProviderType = "komga" | "stripstream";
 interface ActiveContext {
   userId: number;
   provider: ProviderType;
-  /** id de la config (komga ou stripstream) à laquelle scoper les favoris */
   configId: number | null;
 }
 
-// Lecture cachée par (userId, provider, configId, seriesId), invalidée via FAVORITES_CACHE_TAG.
-const cachedIsFavorite = (
-  userId: number,
-  provider: ProviderType,
-  configId: number | null,
-  seriesId: string
-) =>
-  unstable_cache(
-    async () => {
-      if (configId === null) return false;
-      const where =
-        provider === "komga"
-          ? { userId, seriesId, komgaConfigId: configId }
-          : { userId, seriesId, stripstreamConfigId: configId };
-      const favorite = await prisma.favorite.findFirst({ where });
-      return !!favorite;
-    },
-    ["favorite-is", String(userId), provider, String(configId ?? "none"), seriesId],
-    { tags: [FAVORITES_CACHE_TAG] }
-  )();
+/**
+ * Seam interne : les deux implémentations diffèrent par l'endroit où vit le
+ * favori, pas par ce qu'un appelant peut en faire. `list` ne renvoie que des
+ * séries qui existent encore.
+ */
+interface FavoriteStore {
+  listIds(): Promise<string[]>;
+  isFavorite(seriesId: string): Promise<boolean>;
+  add(seriesId: string): Promise<void>;
+  remove(seriesId: string): Promise<void>;
+  list(): Promise<NormalizedSeries[]>;
+}
 
-const cachedFavoriteIds = (userId: number, provider: ProviderType, configId: number | null) =>
-  unstable_cache(
-    async () => {
-      if (configId === null) return [];
-      const where =
-        provider === "komga"
-          ? { userId, komgaConfigId: configId }
-          : { userId, stripstreamConfigId: configId };
-      const favorites = await prisma.favorite.findMany({
-        where,
-        select: { seriesId: true },
+type Hydration =
+  | { id: string; status: "found"; series: NormalizedSeries }
+  | { id: string; status: "missing" }
+  | { id: string; status: "failed" };
+
+/** Piscine de concurrence bornée : on ne lance pas N requêtes d'un coup. */
+const HYDRATION_CONCURRENCY = 3;
+
+function komgaScope(
+  userId: number,
+  configId: number,
+  seriesId?: string
+): Prisma.FavoriteWhereInput {
+  return seriesId === undefined
+    ? { userId, komgaConfigId: configId }
+    : { userId, komgaConfigId: configId, seriesId };
+}
+
+function logReadFailure(
+  error: unknown,
+  meta: Record<string, unknown>,
+  message: string
+): void {
+  const payload = { err: error, ...meta };
+  // Un provider injoignable n'est pas une erreur applicative : pas de spam.
+  if (isConnectionError(error)) logger.warn(payload, message);
+  else logger.error(payload, message);
+}
+
+/**
+ * `null` porté par le provider signifie « absence confirmée » ; une exception
+ * signifie « panne ». Seule la première justifie de retirer le favori.
+ */
+async function hydrateFavorite(
+  provider: IMediaProvider,
+  id: string
+): Promise<Hydration> {
+  try {
+    const series = await provider.getSeriesById(id);
+    return series ? { id, status: "found", series } : { id, status: "missing" };
+  } catch (error) {
+    logReadFailure(error, { seriesId: id }, "Favorite series lookup failed");
+    return { id, status: "failed" };
+  }
+}
+
+function createKomgaStore(
+  userId: number,
+  configId: number,
+  provider: IMediaProvider | null
+): FavoriteStore {
+  const listIds = async (): Promise<string[]> => {
+    const rows = await prisma.favorite.findMany({
+      where: komgaScope(userId, configId),
+      select: { seriesId: true },
+    });
+    return rows.map((row) => row.seriesId);
+  };
+
+  return {
+    listIds,
+    async isFavorite(seriesId) {
+      const row = await prisma.favorite.findFirst({
+        where: komgaScope(userId, configId, seriesId),
+        select: { id: true },
       });
-      return favorites.map((f) => f.seriesId);
+      return row !== null;
     },
-    ["favorite-ids", String(userId), provider, String(configId ?? "none")],
-    { tags: [FAVORITES_CACHE_TAG] }
-  )();
+    async add(seriesId) {
+      // upsert manuel : la contrainte unique dépend de la colonne config concernée
+      const row = await prisma.favorite.findFirst({
+        where: komgaScope(userId, configId, seriesId),
+        select: { id: true },
+      });
+      if (row) return;
+      await prisma.favorite.create({
+        data: { userId, seriesId, provider: "komga", komgaConfigId: configId },
+      });
+    },
+    async remove(seriesId) {
+      await prisma.favorite.deleteMany({
+        where: komgaScope(userId, configId, seriesId),
+      });
+    },
+    async list() {
+      if (!provider) throw new AppError(ERROR_CODES.FAVORITE.FETCH_ERROR);
+
+      const ids = await listIds();
+      if (ids.length === 0) return [];
+
+      const outcomes: Hydration[] = [];
+      for (let i = 0; i < ids.length; i += HYDRATION_CONCURRENCY) {
+        const chunk = ids.slice(i, i + HYDRATION_CONCURRENCY);
+        outcomes.push(...(await Promise.all(chunk.map((id) => hydrateFavorite(provider, id)))));
+      }
+
+      // Seule une absence confirmée nettoie la ligne. Une lecture en échec la
+      // conserve : le favori revient au prochain rendu réussi.
+      const missing = outcomes
+        .filter((outcome): outcome is Extract<Hydration, { status: "missing" }> => outcome.status === "missing")
+        .map((outcome) => outcome.id);
+      if (missing.length > 0) {
+        await prisma.favorite.deleteMany({
+          where: { userId, komgaConfigId: configId, seriesId: { in: missing } },
+        });
+      }
+
+      return outcomes.flatMap((outcome) => (outcome.status === "found" ? [outcome.series] : []));
+    },
+  };
+}
+
+function createBackendStore(provider: IMediaProvider): FavoriteStore {
+  return {
+    async listIds() {
+      const favorites = await provider.getFavorites();
+      return favorites.map((series) => series.id);
+    },
+    isFavorite: (seriesId) => provider.isFavorite(seriesId),
+    add: (seriesId) => provider.addToFavorites(seriesId),
+    remove: (seriesId) => provider.removeFromFavorites(seriesId),
+    list: () => provider.getFavorites(),
+  };
+}
 
 export class FavoriteService {
-  private static async getCurrentUser(): Promise<User> {
+  private static async requireContext(): Promise<ActiveContext> {
     const user = await getCurrentUser();
     if (!user) {
       throw new AppError(ERROR_CODES.AUTH.UNAUTHENTICATED);
     }
-    return user;
+    const userId = parseInt(user.id, 10);
+    const connection = await getActiveConnection(userId);
+    return {
+      userId,
+      provider: connection.provider,
+      configId: connection.configId,
+    };
   }
 
   /**
-   * Résout le contexte actif de l'utilisateur :
-   *   - le type de provider courant (komga/stripstream)
-   *   - l'id de la config active correspondante (peut être null si aucune)
+   * Une seule résolution de connexion pour toutes les opérations. `null`
+   * signifie « aucune configuration utilisable », pas une panne : les lectures
+   * dégradent, les écritures échouent explicitement.
    */
-  private static async getActiveContext(): Promise<ActiveContext> {
-    const user = await FavoriteService.getCurrentUser();
-    const userId = parseInt(user.id, 10);
-    const activeConnection = await getActiveConnection(userId);
-    return { userId, provider: activeConnection.provider, configId: activeConnection.configId };
+  private static async resolveStore(ctx: ActiveContext): Promise<FavoriteStore | null> {
+    const provider = await getProvider();
+    if (ctx.provider === "stripstream") {
+      return provider ? createBackendStore(provider) : null;
+    }
+    if (ctx.configId === null) return null;
+    return createKomgaStore(ctx.userId, ctx.configId, provider);
   }
 
   static async isFavorite(seriesId: string): Promise<boolean> {
     try {
-      const ctx = await this.getActiveContext();
-      if (ctx.provider === "stripstream") {
-        const provider = await getProvider();
-        return provider ? provider.isFavorite(seriesId) : false;
-      }
-      return await cachedIsFavorite(ctx.userId, ctx.provider, ctx.configId, seriesId);
+      const ctx = await FavoriteService.requireContext();
+      const store = await FavoriteService.resolveStore(ctx);
+      return store ? await store.isFavorite(seriesId) : false;
     } catch (error) {
-      logger.error({ err: error, seriesId }, "Erreur lors de la vérification du favori");
+      logReadFailure(error, { seriesId }, "Favorite status check failed");
       return false;
     }
   }
 
   static async addToFavorites(seriesId: string): Promise<void> {
     try {
-      const ctx = await this.getActiveContext();
-      if (ctx.provider === "stripstream") {
-        const provider = await getProvider();
-        if (!provider) throw new AppError(ERROR_CODES.FAVORITE.ADD_ERROR);
-        await provider.addToFavorites(seriesId);
-        return;
-      }
-      if (ctx.configId === null) {
-        throw new AppError(ERROR_CODES.FAVORITE.ADD_ERROR);
-      }
-
-      const data =
-        ctx.provider === "komga"
-          ? {
-              userId: ctx.userId,
-              seriesId,
-              provider: "komga",
-              komgaConfigId: ctx.configId,
-            }
-          : {
-              userId: ctx.userId,
-              seriesId,
-              provider: "stripstream",
-              stripstreamConfigId: ctx.configId,
-            };
-
-      // upsert manuel : la contrainte unique dépend de la colonne config concernée
-      const existing =
-        ctx.provider === "komga"
-          ? await prisma.favorite.findFirst({
-              where: { userId: ctx.userId, seriesId, komgaConfigId: ctx.configId },
-              select: { id: true },
-            })
-          : await prisma.favorite.findFirst({
-              where: { userId: ctx.userId, seriesId, stripstreamConfigId: ctx.configId },
-              select: { id: true },
-            });
-
-      if (!existing) {
-        await prisma.favorite.create({ data });
-      }
+      const ctx = await FavoriteService.requireContext();
+      const store = await FavoriteService.resolveStore(ctx);
+      if (!store) throw new AppError(ERROR_CODES.FAVORITE.ADD_ERROR);
+      await store.add(seriesId);
     } catch (error) {
       if (error instanceof AppError) throw error;
       throw new AppError(ERROR_CODES.FAVORITE.ADD_ERROR, {}, error);
@@ -144,106 +210,34 @@ export class FavoriteService {
 
   static async removeFromFavorites(seriesId: string): Promise<void> {
     try {
-      const ctx = await this.getActiveContext();
-      if (ctx.provider === "stripstream") {
-        const provider = await getProvider();
-        if (!provider) throw new AppError(ERROR_CODES.FAVORITE.DELETE_ERROR);
-        await provider.removeFromFavorites(seriesId);
-        return;
-      }
-      if (ctx.configId === null) return;
-
-      const where =
-        ctx.provider === "komga"
-          ? { userId: ctx.userId, seriesId, komgaConfigId: ctx.configId }
-          : { userId: ctx.userId, seriesId, stripstreamConfigId: ctx.configId };
-      await prisma.favorite.deleteMany({ where });
+      const ctx = await FavoriteService.requireContext();
+      const store = await FavoriteService.resolveStore(ctx);
+      if (!store) throw new AppError(ERROR_CODES.FAVORITE.DELETE_ERROR);
+      await store.remove(seriesId);
     } catch (error) {
+      if (error instanceof AppError) throw error;
       throw new AppError(ERROR_CODES.FAVORITE.DELETE_ERROR, {}, error);
     }
   }
 
   static async getAllFavoriteIds(): Promise<string[]> {
-    const ctx = await this.getActiveContext();
-    if (ctx.provider === "stripstream") {
-      const provider = await getProvider();
-      return provider ? (await provider.getFavorites()).map((series) => series.id) : [];
+    try {
+      const ctx = await FavoriteService.requireContext();
+      const store = await FavoriteService.resolveStore(ctx);
+      return store ? await store.listIds() : [];
+    } catch (error) {
+      logReadFailure(error, {}, "Favorite ids fetch failed");
+      return [];
     }
-    return cachedFavoriteIds(ctx.userId, ctx.provider, ctx.configId);
   }
 
-  /**
-   * Récupère les favoris enrichis (NormalizedSeries) de l'utilisateur courant
-   * en combinant les IDs cachés avec un appel `getSeriesById` au provider actif.
-   * Si une série n'existe plus (provider 404), elle est silencieusement retirée
-   * des favoris pour éviter les listes pollués.
-   */
-  static async listFavorites(context?: {
-    requestPath?: string;
-    requestPathname?: string;
-  }): Promise<NormalizedSeries[]> {
+  static async listFavorites(): Promise<NormalizedSeries[]> {
     try {
-      const ctx = await this.getActiveContext();
-      const activeProvider = await getProvider();
-
-      if (ctx.provider === "stripstream") {
-        return activeProvider ? await activeProvider.getFavorites() : [];
-      }
-
-      const [favoriteIds, provider] = await Promise.all([
-        FavoriteService.getAllFavoriteIds(),
-        Promise.resolve(activeProvider),
-      ]);
-
-      if (favoriteIds.length === 0 || !provider) {
-        return [];
-      }
-
-      // Piscine de concurrence bornée : on ne lance pas 2N requêtes d'un coup
-      // (getSeriesById + cleanup éventuel par favori). Le cache Next déduplique
-      // les appels redondants au sein d'un même rendu serveur.
-      const CONCURRENCY = 3;
-      const results: (NormalizedSeries | null)[] = [];
-
-      const fetchOne = async (id: string): Promise<NormalizedSeries | null> => {
-        try {
-          return await provider.getSeriesById(id);
-        } catch (error) {
-          logger.error(
-            {
-              err: error,
-              seriesId: id,
-              requestPath: context?.requestPath,
-              requestPathname: context?.requestPathname,
-            },
-            "Error fetching favorite series"
-          );
-          // Cleanup silencieux : la série n'existe plus côté provider
-          try {
-            await FavoriteService.removeFromFavorites(id);
-          } catch {
-            // ignore cleanup errors
-          }
-          return null;
-        }
-      };
-
-      for (let i = 0; i < favoriteIds.length; i += CONCURRENCY) {
-        const chunk = favoriteIds.slice(i, i + CONCURRENCY);
-        const chunkResults = await Promise.all(chunk.map(fetchOne));
-        results.push(...chunkResults);
-      }
-
-      return results.filter((s): s is NormalizedSeries => s !== null);
+      const ctx = await FavoriteService.requireContext();
+      const store = await FavoriteService.resolveStore(ctx);
+      return store ? await store.list() : [];
     } catch (error) {
-      logger.error(
-        {
-          err: error,
-          requestPath: context?.requestPath,
-          requestPathname: context?.requestPathname,
-        },
-        "Error fetching favorites"
-      );
+      logReadFailure(error, {}, "Favorites fetch failed");
       return [];
     }
   }
