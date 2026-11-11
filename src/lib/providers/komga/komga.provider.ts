@@ -13,7 +13,7 @@ import type {
   ScanStartResult,
   ScanStatus,
 } from "../types";
-import type { HomeData, HomeDeferredData, HomePrimaryData } from "@/types/home";
+import type { HomePrimaryData } from "@/types/home";
 import type { StripstreamReadingList } from "@/types/stripstream";
 import { KomgaAdapter } from "./komga.adapter";
 import { ERROR_CODES } from "@/constants/errorCodes";
@@ -476,61 +476,6 @@ export class KomgaProvider implements IMediaProvider {
 
   async getMissingBooks(): Promise<NormalizedMissingBook[]> {
     return [];
-  }
-
-  async getHomePrimaryData(): Promise<HomePrimaryData> {
-    return unstable_cache(
-      () => this.fetchHomePrimaryData(),
-      ["komga-home-primary", this.config.serverUrl, this.config.authHeader],
-      { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] }
-    )();
-  }
-
-  private async fetchHomePrimaryData(): Promise<HomePrimaryData> {
-    const [continueReadingData, ongoing] = await Promise.all([
-      this.getHomeContinueReadingData(),
-      this.getHomeOngoingSeries(),
-    ]);
-
-    return {
-      ongoing,
-      ongoingBooks: continueReadingData.ongoingBooks,
-      onDeck: continueReadingData.onDeck,
-    };
-  }
-
-  async getHomeDeferredData(): Promise<HomeDeferredData> {
-    return unstable_cache(
-      () => this.fetchHomeDeferredData(),
-      ["komga-home-deferred", this.config.serverUrl, this.config.authHeader],
-      { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] }
-    )();
-  }
-
-  private async fetchHomeDeferredData(): Promise<HomeDeferredData> {
-    const [recentlyRead, latestSeries, readingLists] = await Promise.all([
-      this.getHomeRecentlyRead(),
-      this.getHomeLatestSeries(),
-      this.getHomeReadingLists(),
-    ]);
-
-    return {
-      recentlyRead,
-      latestSeries,
-      readingLists,
-    };
-  }
-
-  async getHomeData(): Promise<HomeData> {
-    const [primaryData, deferredData] = await Promise.all([
-      this.getHomePrimaryData(),
-      this.getHomeDeferredData(),
-    ]);
-
-    return {
-      ...primaryData,
-      ...deferredData,
-    };
   }
 
   async getHomeContinueReadingData(limit = 10): Promise<Pick<HomePrimaryData, "ongoingBooks" | "onDeck">> {

@@ -14,7 +14,7 @@ import type {
   ScanStartResult,
   ScanStatus,
 } from "../types";
-import type { HomeData, HomeDeferredData, HomePrimaryData } from "@/types/home";
+import type { HomePrimaryData } from "@/types/home";
 import { StripstreamClient } from "./stripstream.client";
 import { StripstreamAdapter } from "./stripstream.adapter";
 import { selectApprovedMetadataLink } from "./metadata-links";
@@ -356,41 +356,6 @@ export class StripstreamProvider implements IMediaProvider {
     } catch {
       return null;
     }
-  }
-
-  async getHomePrimaryData(): Promise<HomePrimaryData> {
-    const [continueReadingData, ongoing] = await Promise.all([
-      this.getHomeContinueReadingData(),
-      this.getHomeOngoingSeries(),
-    ]);
-
-    return {
-      ongoing,
-      ongoingBooks: continueReadingData.ongoingBooks,
-      onDeck: continueReadingData.onDeck,
-    };
-  }
-
-  async getHomeDeferredData(): Promise<HomeDeferredData> {
-    const [recentlyRead, latestSeries, readingLists] = await Promise.all([
-      this.getHomeRecentlyRead(),
-      this.getHomeLatestSeries(),
-      this.getHomeReadingLists(),
-    ]);
-
-    return { recentlyRead, latestSeries, readingLists };
-  }
-
-  async getHomeData(): Promise<HomeData> {
-    const [primaryData, deferredData] = await Promise.all([
-      this.getHomePrimaryData(),
-      this.getHomeDeferredData(),
-    ]);
-
-    return {
-      ...primaryData,
-      ...deferredData,
-    };
   }
 
   async getHomeContinueReadingData(limit = 20): Promise<Pick<HomePrimaryData, "ongoingBooks" | "onDeck">> {

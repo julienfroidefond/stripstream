@@ -12,7 +12,7 @@ import type {
   ScanStartResult,
   ScanStatus,
 } from "./types";
-import type { HomeData, HomeDeferredData, HomePrimaryData } from "@/types/home";
+import type { HomePrimaryData } from "@/types/home";
 import type { StripstreamReadingList } from "@/types/stripstream";
 
 export interface BookListFilter {
@@ -52,9 +52,6 @@ export interface IMediaProvider {
   getHomeLatestSeries(limit?: number): Promise<NormalizedSeries[]>;
   getHomeRecentlyRead(limit?: number): Promise<NormalizedBook[]>;
   getHomeReadingLists(): Promise<StripstreamReadingList[]>;
-  getHomePrimaryData(): Promise<HomePrimaryData>;
-  getHomeDeferredData(): Promise<HomeDeferredData>;
-  getHomeData(): Promise<HomeData>;
 
   // ── Read progress ────────────────────────────────────────────────────────
   getReadProgress(bookId: string): Promise<NormalizedReadProgress | null>;
