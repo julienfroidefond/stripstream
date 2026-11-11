@@ -18,7 +18,7 @@ import {
 } from "react";
 import { preload } from "react-dom";
 
-import { useCameraStyle, useMotionNumber, useMotionNumberEvent } from "@/lib/motion-value";
+import { useMotionNumberEvent } from "@/lib/motion-value";
 import { usePresence } from "@/components/motion";
 import { gsap } from "@/lib/gsap";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
@@ -26,6 +26,13 @@ import { useTranslate } from "@/hooks/useTranslate";
 import { useUserScope } from "@/contexts/UserScopeContext";
 import { buildStorageKey } from "@/lib/storage";
 import { cn } from "@/lib/utils";
+import {
+  WALL_FOCUS_DURATION,
+  sheetMaxHeightFor,
+  wallFocusCamera,
+  wallFocusRect,
+  type WallFocusMode,
+} from "@/lib/wall-camera";
 import { wallPreloadUrls } from "@/lib/wall-cover";
 import {
   filterWallItems,
@@ -33,44 +40,17 @@ import {
   parseStoredHideRead,
   parseStoredWallLibraries,
 } from "@/lib/wall-filter";
+import { isWallUiTarget } from "@/lib/wall-gesture";
 import {
-  WALL_CELL_WIDTH,
-  WALL_PATCH_HEIGHT,
-  WALL_PATCH_WIDTH,
-  WALL_TILE_ASPECT,
   buildWallLayout,
   hashId,
   visibleWallTiles,
 } from "@/lib/wall-layout";
 import {
-  WALL_TAP_SLOP,
-  pinchWallCamera,
-  pushWallVelocitySample,
-  startWallPinch,
-  wallDistance,
-  wallMidpoint,
-  wallReleaseVelocity,
-  type WallPinchStart,
-  type WallPoint,
-  type WallVelocitySample,
-} from "@/lib/wall-gesture";
-import {
-  capMomentum,
-  decayMomentum,
-  isMomentumDying,
-} from "@/lib/wall-momentum";
-import {
-  MAX_WALL_ZOOM,
-  MIN_WALL_ZOOM,
   type WallClickGuardState,
-  armWallClickGuard,
-  beginWallPinch,
-  beginWallPress,
-  clampWallZoom,
   clearWallClickGuard,
   createWallClickGuardState,
   isWallClickGuarded,
-  releaseWallTouch,
 } from "@/lib/wall-pinch";
 import type { WallItem, WallRect, WallRenderTile } from "@/types/wall";
 import { WallFrame } from "./WallFrame";
@@ -80,14 +60,11 @@ import {
   type WallPlaquePlacement,
 } from "./WallPlaque";
 import { WallTile } from "./WallTile";
+import { useWallCamera } from "./useWallCamera";
+import { useWallGestures } from "./useWallGestures";
 
 interface WallExperienceProps {
   items: WallItem[];
-}
-
-interface Viewport {
-  width: number;
-  height: number;
 }
 
 interface ActivePlaqueState {
@@ -99,14 +76,6 @@ interface ActivePlaqueState {
   sheetMaxHeight?: number;
 }
 
-type FocusMode = "anchor" | "sheet";
-
-interface CameraState {
-  x: number;
-  y: number;
-  scale: number;
-}
-
 interface LibraryEntry {
   name: string;
   count: number;
@@ -116,29 +85,6 @@ const SHEET_BREAKPOINT = 900;
 const PANEL_MIN_WIDTH = 300;
 const PANEL_MAX_WIDTH = 376;
 const PANEL_GAP = 26;
-/**
- * Taille de l'affiche une fois centrée : 52 % de la hauteur du cadre, sans
- * dépasser 480 px ni 42 % de la largeur. Sur un cadre étroit, la feuille prend
- * le bas de l'écran : l'affiche monte un peu et s'élargit pour rester lisible.
- */
-const FOCUS_HEIGHT_RATIO = 0.52;
-const FOCUS_SHEET_HEIGHT_RATIO = 0.4;
-const FOCUS_MAX_HEIGHT = 480;
-const FOCUS_MAX_WIDTH_RATIO = 0.42;
-const FOCUS_SHEET_MAX_WIDTH_RATIO = 0.68;
-/**
- * Feuille tactile : on lui réserve 46 % de la hauteur (sans jamais dépasser
- * 74 % de l'écran), et l'affiche se centre dans l'espace restant. Ainsi la
- * feuille ne recouvre jamais la couverture, même quand le résumé est long.
- */
-const SHEET_MAX_RATIO = 0.46;
-const SHEET_ABSOLUTE_RATIO = 0.74;
-const SHEET_MIN_HEIGHT = 220;
-const SHEET_GAP = 16;
-/** Durée du vol de la tuile vers son plein cadre. */
-const FOCUS_DURATION = 0.72;
-/** Le survol ne doit pas « coller » aux tuiles qui défilent sous le curseur. */
-const PAN_IDLE = 150;
 /**
  * Le fond noir n'arrive qu'après une courte pause sur une affiche. En enchaînant
  * les survols, la salle reste donc éclairée : la lumière ne tombe que lorsqu'on
@@ -154,91 +100,12 @@ const HOVER_DIM_EXIT_DELAY = 160;
 /** Filtres retenus d'une visite à l'autre, par utilisateur. */
 const FILTERS_STORAGE_SUFFIX = "wall-libraries";
 const HIDE_READ_STORAGE_SUFFIX = "wall-hide-read";
-const DRAG_CLICK_GUARD = 420;
-const WHEEL_ZOOM = 0.0022;
 const ZOOM_STEP = 1.28;
-/** Seuils de recalcul de la liste des tuiles visibles pendant un geste. */
-const CAMERA_SYNC_DISTANCE = 18;
-const CAMERA_SYNC_ZOOM = 0.02;
-
-/**
- * Échelle d'ouverture : on ne cherche pas à faire tenir tout le motif dans le
- * cadre (les couvertures seraient illisibles), mais à en montrer quelques
- * colonnes à taille d'affiche. La couverture reste le sujet.
- */
-function initialScaleFor(viewport: Viewport, minScale: number): number {
-  if (!viewport.width || !viewport.height) return 1;
-  const targetColumns =
-    viewport.width < 680 ? 4.2 : viewport.width < 1100 ? 6.4 : 8.4;
-  const target = viewport.width / (WALL_CELL_WIDTH * targetColumns);
-  return Math.min(1.12, Math.max(minScale, target));
-}
 
 function hoverIsFine(): boolean {
   return (
     typeof window !== "undefined" &&
     window.matchMedia("(hover: hover) and (pointer: fine)").matches
-  );
-}
-
-/**
- * Rect final de l'affiche centrée, dans le repère du cadre. C'est la même
- * géométrie qui sert à calculer la caméra et à poser la plaque : la tuile
- * cliquée est la seule à bouger, elle devient elle-même l'affiche.
- */
-function sheetMaxHeightFor(viewport: Viewport): number {
-  return Math.round(
-    Math.min(
-      viewport.height * SHEET_ABSOLUTE_RATIO,
-      Math.max(SHEET_MIN_HEIGHT, viewport.height * SHEET_MAX_RATIO)
-    )
-  );
-}
-
-function focusRectFor(
-  viewport: Viewport,
-  mode: FocusMode,
-  sheetMaxHeight = 0
-): WallRect | null {
-  if (viewport.width <= 0 || viewport.height <= 0) return null;
-
-  const aspect = WALL_TILE_ASPECT;
-  const availableHeight =
-    mode === "sheet"
-      ? Math.max(120, viewport.height - sheetMaxHeight - SHEET_GAP * 2)
-      : viewport.height;
-  let height = Math.min(
-    FOCUS_MAX_HEIGHT,
-    availableHeight,
-    viewport.height *
-      (mode === "sheet" ? FOCUS_SHEET_HEIGHT_RATIO : FOCUS_HEIGHT_RATIO)
-  );
-  let width = height * aspect;
-  const maxWidth =
-    viewport.width *
-    (mode === "sheet" ? FOCUS_SHEET_MAX_WIDTH_RATIO : FOCUS_MAX_WIDTH_RATIO);
-  if (width > maxWidth) {
-    width = maxWidth;
-    height = width / aspect;
-  }
-
-  width = Math.round(width);
-  height = Math.round(height);
-  const centerY =
-    mode === "sheet"
-      ? SHEET_GAP + availableHeight / 2
-      : viewport.height / 2;
-  return {
-    left: Math.round((viewport.width - width) / 2),
-    top: Math.round(centerY - height / 2),
-    width,
-    height,
-  };
-}
-
-function isUiTarget(target: EventTarget | null): boolean {
-  return (
-    target instanceof Element && Boolean(target.closest("[data-wall-ui]"))
   );
 }
 
@@ -318,35 +185,14 @@ export function WallExperience({ items }: WallExperienceProps) {
   const revealTimerRef = useRef<number | null>(null);
   /** Rend au mur l'affiche visée par le vol en cours. */
   const settleFocusRef = useRef<(() => void) | null>(null);
-  const panIdleTimerRef = useRef<number | null>(null);
-  const cameraRafRef = useRef<number | null>(null);
   // Init paresseuse : `useRef(createWallClickGuardState())` recréerait l'objet
   // à chaque rendu pour ne conserver que le premier.
   const clickGuardRef = useRef<WallClickGuardState | null>(null);
   const clickGuard = (clickGuardRef.current ??= createWallClickGuardState());
-  const initializedRef = useRef(false);
-  const cameraRef = useRef<CameraState>({ x: 0, y: 0, scale: 1 });
-  const momentumRafRef = useRef<number | null>(null);
 
-  // La caméra vit hors de React : les gestes l'écrivent à chaque frame, GSAP
-  // la fait glisser, et `useCameraStyle` la répercute sur le canvas.
-  const x = useMotionNumber(0);
-  const y = useMotionNumber(0);
-  const scale = useMotionNumber(1);
-  const canvasOpacity = useMotionNumber(0);
-  const canvasRef = useRef<HTMLDivElement>(null);
-  useCameraStyle(canvasRef, { x, y, scale, opacity: canvasOpacity });
-
-  // Taille du cadre observée, jamais devinée : l'hydratation ne dépend pas
-  // d'un `window.innerWidth` divergent entre serveur et client.
-  const [viewport, setViewport] = useState<Viewport>({ width: 0, height: 0 });
-  const [camera, setCamera] = useState<CameraState>({ x: 0, y: 0, scale: 1 });
   const [active, setActive] = useState<ActivePlaqueState | null>(null);
   /** Œuvre visée pendant le vol de la caméra, avant que la plaque se pose. */
   const [focusKey, setFocusKey] = useState<string | null>(null);
-  const [dragging, setDragging] = useState(false);
-  const [panning, setPanning] = useState(false);
-  const [overview, setOverview] = useState(false);
   const [flashKey, setFlashKey] = useState<string | null>(null);
   const [enterTiles, setEnterTiles] = useState(true);
   const [dimOn, setDimOn] = useState(false);
@@ -488,27 +334,147 @@ export function WallExperience({ items }: WallExperienceProps) {
     [selectionKey, visibleItems.length]
   );
 
-  /**
-   * Zoom minimal : le mur est un motif répété, on peut donc reculer bien plus
-   * loin qu'une seule plaque. Le plancher évite simplement de rendre des
-   * centaines de vignettes illisibles ; les copies voisines sont virtualisées.
-   */
-  const minScale = useMemo(() => {
-    if (!viewport.width || !viewport.height) return MIN_WALL_ZOOM;
-    return Math.min(
-      MAX_WALL_ZOOM,
-      Math.max(
-        MIN_WALL_ZOOM,
-        (viewport.width / layout.width) * 0.5,
-        (viewport.height / layout.height) * 0.5
-      )
-    );
-  }, [layout.height, layout.width, viewport.height, viewport.width]);
+  // Le fond ne s'éteint qu'après une courte pause sur une affiche. En enchaînant
+  // les survols, la salle reste donc éclairée au lieu de rester en mode sombre.
+  const hoveredRef = useRef<string | null>(null);
+  const hoverTimerRef = useRef<number | null>(null);
 
-  const clampZoom = useCallback(
-    (value: number) => clampWallZoom(value, minScale),
-    [minScale]
+  const clearHoverTimer = useCallback(() => {
+    if (hoverTimerRef.current !== null) {
+      window.clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = null;
+    }
+  }, []);
+
+  const resetHover = useCallback(() => {
+    clearHoverTimer();
+    hoveredRef.current = null;
+    setDimOn(false);
+  }, [clearHoverTimer]);
+
+  const handleTileHover = useCallback(
+    (key: string, hovered: boolean) => {
+      const next = hovered
+        ? key
+        : hoveredRef.current === key
+          ? null
+          : hoveredRef.current;
+      if (next === hoveredRef.current) return;
+
+      hoveredRef.current = next;
+      clearHoverTimer();
+
+      if (next) {
+        // Le noir n'arrive qu'après une pause, jamais pendant un enchaînement
+        // de survols : la salle reste allumée tant qu'on visite les affiches.
+        hoverTimerRef.current = window.setTimeout(() => {
+          setDimOn(true);
+          hoverTimerRef.current = null;
+        }, HOVER_DIM_DELAY);
+        return;
+      }
+
+      hoverTimerRef.current = window.setTimeout(() => {
+        setDimOn(false);
+        hoverTimerRef.current = null;
+      }, HOVER_DIM_EXIT_DELAY);
+    },
+    [clearHoverTimer]
   );
+
+  const cancelReveal = useCallback(() => {
+    if (revealTimerRef.current !== null) {
+      window.clearTimeout(revealTimerRef.current);
+      revealTimerRef.current = null;
+    }
+  }, []);
+
+  const closePlaque = useCallback(() => {
+    cancelReveal();
+    settleFocusRef.current?.();
+    settleFocusRef.current = null;
+    setActive(null);
+    setFocusKey(null);
+  }, [cancelReveal]);
+
+  const clearFlash = useCallback(() => {
+    if (flashTimerRef.current !== null) {
+      window.clearTimeout(flashTimerRef.current);
+      flashTimerRef.current = null;
+    }
+    setFlashKey(null);
+  }, []);
+
+  /**
+   * La vague d'ouverture : les affiches se posent en cascade. Elle ne rejoue
+   * que sur une action franche (changement de filtre), jamais quand une tuile
+   * virtualisée revient dans le cadre — c'était la source du clignotement.
+   */
+  const replayEntrance = useCallback(() => {
+    if (entranceTimerRef.current !== null) {
+      window.clearTimeout(entranceTimerRef.current);
+      entranceTimerRef.current = null;
+    }
+    if (reduce) {
+      setEnterTiles(false);
+      return;
+    }
+    setEnterTiles(true);
+    entranceTimerRef.current = window.setTimeout(() => {
+      entranceTimerRef.current = null;
+      setEnterTiles(false);
+    }, 1500);
+  }, [reduce]);
+
+  const handleCameraMoved = useCallback(() => {
+    if (hoveredRef.current) resetHover();
+  }, [resetHover]);
+
+  const handleSelectionChange = useCallback(() => {
+    resetHover();
+    closePlaque();
+    clearFlash();
+    if (skipEntranceRef.current) {
+      skipEntranceRef.current = false;
+    } else {
+      replayEntrance();
+    }
+  }, [clearFlash, closePlaque, replayEntrance, resetHover]);
+
+  // La caméra possède ses MotionNumbers, ses cadrages et l'inertie ; les
+  // gestes ne font que lui parler. La composition ne garde que les tuiles,
+  // la plaque, les filtres et le rendu.
+  const wallCamera = useWallCamera({
+    stageRef,
+    layout,
+    reduce,
+    selectionKey,
+    onCameraMoved: handleCameraMoved,
+    onInteractionStart: closePlaque,
+    onSelectionChange: handleSelectionChange,
+  });
+  const {
+    x,
+    y,
+    scale,
+    camera,
+    viewport,
+    canvasRef,
+    overview,
+    setOverview,
+    panning,
+    animateView,
+    zoomBy,
+    clampZoom,
+    resetToInitial,
+    fitView,
+  } = wallCamera;
+
+  const { dragging } = useWallGestures({
+    stageRef,
+    clickGuard,
+    camera: wallCamera,
+  });
 
   const visibleTiles = useMemo(
     () =>
@@ -558,54 +524,6 @@ export function WallExperience({ items }: WallExperienceProps) {
     };
   }, [visibleTiles]);
 
-  // Le fond ne s'éteint qu'après une courte pause sur une affiche. En enchaînant
-  // les survols, la salle reste donc éclairée au lieu de rester en mode sombre.
-  const hoveredRef = useRef<string | null>(null);
-  const hoverTimerRef = useRef<number | null>(null);
-
-  const clearHoverTimer = useCallback(() => {
-    if (hoverTimerRef.current !== null) {
-      window.clearTimeout(hoverTimerRef.current);
-      hoverTimerRef.current = null;
-    }
-  }, []);
-
-  const resetHover = useCallback(() => {
-    clearHoverTimer();
-    hoveredRef.current = null;
-    setDimOn(false);
-  }, [clearHoverTimer]);
-
-  const handleTileHover = useCallback(
-    (key: string, hovered: boolean) => {
-      const next = hovered
-        ? key
-        : hoveredRef.current === key
-          ? null
-          : hoveredRef.current;
-      if (next === hoveredRef.current) return;
-
-      hoveredRef.current = next;
-      clearHoverTimer();
-
-      if (next) {
-        // Le noir n'arrive qu'après une pause, jamais pendant un enchaînement
-        // de survols : la salle reste allumée tant qu'on visite les affiches.
-        hoverTimerRef.current = window.setTimeout(() => {
-          setDimOn(true);
-          hoverTimerRef.current = null;
-        }, HOVER_DIM_DELAY);
-        return;
-      }
-
-      hoverTimerRef.current = window.setTimeout(() => {
-        setDimOn(false);
-        hoverTimerRef.current = null;
-      }, HOVER_DIM_EXIT_DELAY);
-    },
-    [clearHoverTimer]
-  );
-
   const updateZoomLabel = useCallback((value: number) => {
     if (zoomLabelRef.current) {
       zoomLabelRef.current.textContent = `${Math.round(value * 100)}%`;
@@ -614,176 +532,12 @@ export function WallExperience({ items }: WallExperienceProps) {
 
   useMotionNumberEvent(scale, updateZoomLabel);
 
-  /**
-   * La liste des tuiles rendues est recalculée par React, pas à chaque pixel
-   * du geste : le canvas, lui, suit les MotionValues image par image. On ne
-   * réveille donc React qu'après un déplacement ou un zoom significatif.
-   */
-  const syncCamera = useCallback(
-    (force = false) => {
-      const next = { x: x.get(), y: y.get(), scale: scale.get() };
-      const previous = cameraRef.current;
-      const moved =
-        Math.abs(next.x - previous.x) + Math.abs(next.y - previous.y);
-      const zoomed =
-        previous.scale > 0
-          ? Math.abs(next.scale - previous.scale) / previous.scale
-          : 1;
-
-      if (
-        !force &&
-        moved < CAMERA_SYNC_DISTANCE &&
-        zoomed < CAMERA_SYNC_ZOOM
-      ) {
-        return;
-      }
-
-      cameraRef.current = next;
-      setCamera(next);
-      // La caméra a bougé : la tuile sous le curseur n'est plus celle qu'on
-      // regardait, on rallume la salle.
-      if (hoveredRef.current) resetHover();
-    },
-    [resetHover, scale, x, y]
-  );
-
-  const scheduleCameraSync = useCallback(() => {
-    if (cameraRafRef.current !== null) return;
-    cameraRafRef.current = window.requestAnimationFrame(() => {
-      cameraRafRef.current = null;
-      syncCamera(false);
-    });
-  }, [syncCamera]);
-
-  useMotionNumberEvent(x, scheduleCameraSync);
-  useMotionNumberEvent(y, scheduleCameraSync);
-  useMotionNumberEvent(scale, scheduleCameraSync);
-
-  /** Toute animation programmée reprend la main : l'inertie s'efface. */
-  const stopMomentum = useCallback(() => {
-    if (momentumRafRef.current !== null) {
-      window.cancelAnimationFrame(momentumRafRef.current);
-      momentumRafRef.current = null;
-    }
-  }, []);
-
-  /**
-   * Pendant un geste, les tuiles passent sous le curseur : le survol serait
-   * un stroboscope. On coupe l'effet de focus jusqu'à ce que la main s'arrête.
-   */
-  const markPanning = useCallback(() => {
-    setPanning(true);
-    if (panIdleTimerRef.current !== null) {
-      window.clearTimeout(panIdleTimerRef.current);
-    }
-    panIdleTimerRef.current = window.setTimeout(() => {
-      panIdleTimerRef.current = null;
-      setPanning(false);
-    }, PAN_IDLE);
-  }, []);
-
-  const animateView = useCallback(
-    (
-      nextScale: number,
-      nextX: number,
-      nextY: number,
-      duration = 0.8,
-      ease = "projection"
-    ) => {
-      stopMomentum();
-      const tween = { duration: reduce ? 0 : duration, ease };
-      scale.animateTo(nextScale, tween);
-      x.animateTo(nextX, tween);
-      y.animateTo(nextY, tween);
-    },
-    [reduce, scale, stopMomentum, x, y]
-  );
-
-  /**
-   * Inertie du mur : la vitesse signée du geste est freinée par une friction
-   * exponentielle, image par image. Le mur ralentit progressivement, comme une
-   * page qu'on a lancée, puis s'immobilise.
-   */
-  const startMomentum = useCallback(
-    (velocityX: number, velocityY: number) => {
-      stopMomentum();
-      if (reduce) return;
-
-      const [startX, startY] = capMomentum(velocityX, velocityY);
-      if (isMomentumDying(startX, startY)) return;
-
-      let vx = startX;
-      let vy = startY;
-      let last = performance.now();
-      markPanning();
-
-      const step = (now: number) => {
-        // Un onglet en arrière-plan peut sauter plusieurs secondes : on borne
-        // le pas pour éviter une téléportation du mur au retour.
-        const elapsed = Math.min(64, Math.max(0, now - last));
-        last = now;
-        vx = decayMomentum(vx, elapsed);
-        vy = decayMomentum(vy, elapsed);
-
-        x.set(x.get() + vx * elapsed);
-        y.set(y.get() + vy * elapsed);
-        markPanning();
-
-        if (isMomentumDying(vx, vy)) {
-          momentumRafRef.current = null;
-          return;
-        }
-        momentumRafRef.current = window.requestAnimationFrame(step);
-      };
-
-      momentumRafRef.current = window.requestAnimationFrame(step);
-    },
-    [markPanning, reduce, stopMomentum, x, y]
-  );
-
-  const cancelReveal = useCallback(() => {
-    if (revealTimerRef.current !== null) {
-      window.clearTimeout(revealTimerRef.current);
-      revealTimerRef.current = null;
-    }
-  }, []);
-
-  const closePlaque = useCallback(() => {
-    cancelReveal();
-    settleFocusRef.current?.();
-    settleFocusRef.current = null;
-    setActive(null);
-    setFocusKey(null);
-  }, [cancelReveal]);
-
-  const clearFlash = useCallback(() => {
-    if (flashTimerRef.current !== null) {
-      window.clearTimeout(flashTimerRef.current);
-      flashTimerRef.current = null;
-    }
-    setFlashKey(null);
-  }, []);
-
-  /**
-   * La vague d'ouverture : les affiches se posent en cascade. Elle ne rejoue
-   * que sur une action franche (changement de filtre), jamais quand une tuile
-   * virtualisée revient dans le cadre — c'était la source du clignotement.
-   */
-  const replayEntrance = useCallback(() => {
-    if (entranceTimerRef.current !== null) {
-      window.clearTimeout(entranceTimerRef.current);
-      entranceTimerRef.current = null;
-    }
-    if (reduce) {
-      setEnterTiles(false);
-      return;
-    }
-    setEnterTiles(true);
-    entranceTimerRef.current = window.setTimeout(() => {
-      entranceTimerRef.current = null;
-      setEnterTiles(false);
-    }, 1500);
-  }, [reduce]);
+  // Le cadrage initial est posé dans un effet interne à `useWallCamera`, avant
+  // que cet abonnement (déclaré après) n'existe. Sans cette amorce, le libellé
+  // resterait vide en mouvement réduit, où aucune animation ne vient le réveiller.
+  useEffect(() => {
+    updateZoomLabel(scale.get());
+  }, [scale, updateZoomLabel, viewport.height, viewport.width]);
 
   /**
    * Ouvre une œuvre en la faisant venir au centre : c'est la tuile cliquée
@@ -792,7 +546,7 @@ export function WallExperience({ items }: WallExperienceProps) {
    * tactile, elle devient une feuille et l'affiche remonte pour rester visible.
    */
   const showFor = useCallback(
-    (tile: WallRenderTile, duration = FOCUS_DURATION) => {
+    (tile: WallRenderTile, duration = WALL_FOCUS_DURATION) => {
       const stage = stageRef.current;
       if (!stage) return;
 
@@ -800,26 +554,21 @@ export function WallExperience({ items }: WallExperienceProps) {
 
       const stageRect = stage.getBoundingClientRect();
       const fine = hoverIsFine();
-      const mode: FocusMode =
+      const mode: WallFocusMode =
         fine && stageRect.width >= SHEET_BREAKPOINT && stageRect.height >= 460
           ? "anchor"
           : "sheet";
       const sheetMaxHeight =
         mode === "sheet" ? sheetMaxHeightFor(stageRect) : undefined;
-      const target = focusRectFor(
+      const target = wallFocusRect(
         { width: stageRect.width, height: stageRect.height },
         mode,
         sheetMaxHeight
       );
       if (!target) return;
 
-      const nextScale = clampZoom(target.width / tile.width);
-      const nextX =
-        target.left + target.width / 2 - (tile.x + tile.width / 2) * nextScale;
-      const nextY =
-        target.top + target.height / 2 - (tile.y + tile.height / 2) * nextScale;
-
-      animateView(nextScale, nextX, nextY, duration, "focus");
+      const next = wallFocusCamera(tile, target, clampZoom);
+      animateView(next.scale, next.x, next.y, duration, "focus");
       setOverview(false);
       // La salle reste éteinte pendant tout le vol : le voile ne se rallume
       // pas quand la caméra part, il attend la plaque (`data-plaque`).
@@ -878,7 +627,7 @@ export function WallExperience({ items }: WallExperienceProps) {
         });
       }, delay);
     },
-    [animateView, clampZoom, closePlaque, reduce]
+    [animateView, clampZoom, closePlaque, reduce, setOverview]
   );
 
   const toggleFilters = useCallback(() => {
@@ -916,98 +665,11 @@ export function WallExperience({ items }: WallExperienceProps) {
     setHideRead(false);
   }, [closePlaque]);
 
-  const zoomAt = useCallback(
-    (nextScaleValue: number, clientX: number, clientY: number) => {
-      const stage = stageRef.current;
-      if (!stage) return;
-
-      const nextScale = clampZoom(nextScaleValue);
-      const currentScale = scale.get();
-      if (Math.abs(nextScale - currentScale) < 0.0005) return;
-
-      stopMomentum();
-      closePlaque();
-      const rect = stage.getBoundingClientRect();
-      const focusX = clientX - rect.left;
-      const focusY = clientY - rect.top;
-      const worldX = (focusX - x.get()) / currentScale;
-      const worldY = (focusY - y.get()) / currentScale;
-
-      scale.set(nextScale);
-      x.set(focusX - worldX * nextScale);
-      y.set(focusY - worldY * nextScale);
-      setOverview(false);
-    },
-    [clampZoom, closePlaque, scale, stopMomentum, x, y]
-  );
-
-  const zoomBy = useCallback(
-    (factor: number) => {
-      const stage = stageRef.current;
-      if (!stage) return;
-      const rect = stage.getBoundingClientRect();
-      scale.stop();
-      x.stop();
-      y.stop();
-      zoomAt(
-        scale.get() * factor,
-        rect.left + rect.width / 2,
-        rect.top + rect.height / 2
-      );
-    },
-    [scale, x, y, zoomAt]
-  );
-
   const resetView = useCallback(() => {
     if (!viewport.width || !viewport.height) return;
-    closePlaque();
     clearFlash();
-    const nextScale = initialScaleFor(viewport, minScale);
-    animateView(
-      nextScale,
-      viewport.width / 2 - (WALL_PATCH_WIDTH / 2) * nextScale,
-      viewport.height / 2 - (WALL_PATCH_HEIGHT / 2) * nextScale,
-      0.9
-    );
-    setOverview(false);
-  }, [
-    animateView,
-    clearFlash,
-    closePlaque,
-    minScale,
-    viewport,
-  ]);
-
-  const fitView = useCallback(() => {
-    if (!viewport.width || !viewport.height) return;
-    closePlaque();
-    const nextScale = clampZoom(minScale);
-    const currentScale = scale.get();
-    const worldX =
-      currentScale > 0
-        ? (viewport.width / 2 - x.get()) / currentScale
-        : WALL_PATCH_WIDTH / 2;
-    const worldY =
-      currentScale > 0
-        ? (viewport.height / 2 - y.get()) / currentScale
-        : WALL_PATCH_HEIGHT / 2;
-    animateView(
-      nextScale,
-      viewport.width / 2 - worldX * nextScale,
-      viewport.height / 2 - worldY * nextScale,
-      1
-    );
-    setOverview(true);
-  }, [
-    animateView,
-    clampZoom,
-    closePlaque,
-    minScale,
-    scale,
-    viewport,
-    x,
-    y,
-  ]);
+    resetToInitial(0.9);
+  }, [clearFlash, resetToInitial, viewport]);
 
   const toggleOverview = useCallback(() => {
     if (overview) resetView();
@@ -1058,532 +720,6 @@ export function WallExperience({ items }: WallExperienceProps) {
     x,
     y,
   ]);
-
-  /**
-   * Gestes du mur.
-   *
-   * Un seul système d'événements pointeur pilote le glissement et le pinch :
-   * `@use-gesture` faisait tourner deux moteurs concurrents (drag limité au
-   * premier doigt, pinch séparé), ce qui provoquait des sauts au passage d'un
-   * doigt à deux et ignorait les gestes commencés dans un interstice. Ici, la
-   * caméra suit les doigts 1:1 dès le premier pixel, le pinch ancre le point
-   * saisi sous le milieu des doigts, et le relâchement emporte l'élan.
-   *
-   * Les callbacks React vivent dans `gestureApiRef` : l'effet s'attache une
-   * seule fois et lit toujours la version courante, sans réabonner les
-   * écouteurs (et perdre un geste en cours) quand `minScale` change.
-   */
-  const gestureApiRef = useRef({
-    clampZoom,
-    closePlaque,
-    markPanning,
-    setDragging,
-    setOverview,
-    startMomentum,
-    stopMomentum,
-  });
-
-  useEffect(() => {
-    gestureApiRef.current = {
-      clampZoom,
-      closePlaque,
-      markPanning,
-      setDragging,
-      setOverview,
-      startMomentum,
-      stopMomentum,
-    };
-  }, [
-    clampZoom,
-    closePlaque,
-    markPanning,
-    setDragging,
-    setOverview,
-    startMomentum,
-    stopMomentum,
-  ]);
-
-  useEffect(() => {
-    const stage = stageRef.current;
-    if (!stage) return;
-
-    const pointers = new Map<number, WallPoint>();
-    const ignored = new Set<number>();
-    const samples: WallVelocitySample[] = [];
-    let mode: "idle" | "pan" | "pinch" = "idle";
-    let panId: number | null = null;
-    let panStart: WallPoint = { x: 0, y: 0 };
-    let panLast: WallPoint = { x: 0, y: 0 };
-    let moved = false;
-    let pinched = false;
-    let pinchIds: [number, number] | null = null;
-    let pinchStart: WallPinchStart | null = null;
-    let pinchSpan = 1;
-    let detach: (() => void) | null = null;
-
-    const api = () => gestureApiRef.current;
-
-    const stopTweens = () => {
-      scale.stop();
-      x.stop();
-      y.stop();
-    };
-
-    const stagePoint = (point: WallPoint): WallPoint => {
-      const rect = stage.getBoundingClientRect();
-      return { x: point.x - rect.left, y: point.y - rect.top };
-    };
-
-    const resetSequence = () => {
-      mode = "idle";
-      panId = null;
-      pinchIds = null;
-      pinchStart = null;
-      moved = false;
-      pinched = false;
-      samples.length = 0;
-    };
-
-    const beginPan = (id: number) => {
-      const point = pointers.get(id);
-      if (!point) return;
-      mode = "pan";
-      panId = id;
-      panStart = point;
-      panLast = point;
-      // Un doigt resté après un pinch ne doit jamais produire un tap.
-      moved = pinched;
-      samples.length = 0;
-    };
-
-    const beginPinch = () => {
-      const ids = [...pointers.keys()].slice(0, 2);
-      const first = pointers.get(ids[0]);
-      const second = pointers.get(ids[1]);
-      if (!first || !second) return;
-
-      mode = "pinch";
-      panId = null;
-      pinchIds = [ids[0], ids[1]];
-      pinchSpan = Math.max(1, wallDistance(first, second));
-      pinchStart = startWallPinch(
-        { x: x.get(), y: y.get(), scale: scale.get() },
-        stagePoint(wallMidpoint(first, second))
-      );
-      pinched = true;
-      moved = true;
-      samples.length = 0;
-      beginWallPinch(clickGuard, performance.now());
-      api().setDragging(true);
-      api().setOverview(false);
-      api().closePlaque();
-      api().markPanning();
-    };
-
-    /** Recale le geste après l'arrivée ou le départ d'un doigt, sans saut. */
-    const syncPointers = () => {
-      if (pointers.size === 0) {
-        mode = "idle";
-        panId = null;
-        pinchIds = null;
-        pinchStart = null;
-        return;
-      }
-
-      if (pointers.size === 1) {
-        const [id] = pointers.keys();
-        if (mode !== "pan" || panId !== id) beginPan(id);
-        return;
-      }
-
-      const ids = [...pointers.keys()].slice(0, 2);
-      if (
-        mode !== "pinch" ||
-        !pinchIds ||
-        pinchIds[0] !== ids[0] ||
-        pinchIds[1] !== ids[1]
-      ) {
-        beginPinch();
-      }
-    };
-
-    const handlePointerDown = (event: PointerEvent) => {
-      if (event.pointerType === "mouse" && event.button !== 0) return;
-
-      if (pointers.size === 0 && ignored.size === 0) {
-        beginWallPress(clickGuard);
-        resetSequence();
-        attach();
-      }
-
-      // Un geste ne démarre jamais sur un contrôle du mur : le panneau garde
-      // son défilement natif et ses boutons restent de simples boutons.
-      if (isUiTarget(event.target)) {
-        ignored.add(event.pointerId);
-        return;
-      }
-      if (ignored.size > 0) return;
-
-      if (pointers.size === 0) {
-        api().stopMomentum();
-        stopTweens();
-        api().closePlaque();
-        api().setOverview(false);
-      }
-
-      pointers.set(event.pointerId, {
-        x: event.clientX,
-        y: event.clientY,
-      });
-      syncPointers();
-    };
-
-    const handlePointerMove = (event: PointerEvent) => {
-      if (!pointers.has(event.pointerId)) return;
-
-      // Souris relâchée hors de la fenêtre : aucun `pointerup` ne nous est
-      // parvenu. Le premier mouvement au retour doit terminer le geste au lieu
-      // de faire glisser le mur avec un bouton fantôme.
-      if (event.pointerType === "mouse" && event.buttons === 0) {
-        handlePointerUp(event, false);
-        return;
-      }
-
-      const next = { x: event.clientX, y: event.clientY };
-      pointers.set(event.pointerId, next);
-
-      if (mode === "pan" && panId === event.pointerId) {
-        const dx = next.x - panLast.x;
-        const dy = next.y - panLast.y;
-        panLast = next;
-        if (dx === 0 && dy === 0) return;
-
-        // 1:1 dès le premier pixel : pas de seuil qui ferait sauter le mur.
-        x.set(x.get() + dx);
-        y.set(y.get() + dy);
-        api().markPanning();
-
-        if (!moved) {
-          if (wallDistance(next, panStart) <= WALL_TAP_SLOP) return;
-          moved = true;
-          api().setDragging(true);
-          api().setOverview(false);
-          api().closePlaque();
-        }
-
-        pushWallVelocitySample(samples, {
-          x: next.x,
-          y: next.y,
-          t: performance.now(),
-        });
-        return;
-      }
-
-      if (mode === "pinch" && pinchIds && pinchStart) {
-        const first = pointers.get(pinchIds[0]);
-        const second = pointers.get(pinchIds[1]);
-        if (!first || !second) return;
-
-        const camera = pinchWallCamera(
-          pinchStart,
-          stagePoint(wallMidpoint(first, second)),
-          wallDistance(first, second) / pinchSpan,
-          api().clampZoom
-        );
-        x.set(camera.x);
-        y.set(camera.y);
-        scale.set(camera.scale);
-        api().markPanning();
-      }
-    };
-
-    function handlePointerUp(event: PointerEvent, recordRelease = true) {
-      if (
-        event.type === "pointerup" &&
-        event.pointerType === "mouse" &&
-        event.button !== 0
-      ) {
-        return;
-      }
-      if (ignored.delete(event.pointerId)) {
-        if (ignored.size === 0 && pointers.size === 0) detach?.();
-        return;
-      }
-      if (!pointers.delete(event.pointerId)) return;
-
-      // Le point de relâchement précise la vitesse quand le dernier
-      // `pointermove` date de quelques images.
-      if (recordRelease && mode === "pan" && panId === event.pointerId && moved) {
-        pushWallVelocitySample(samples, {
-          x: event.clientX,
-          y: event.clientY,
-          t: performance.now(),
-        });
-      }
-
-      const wasMode = mode;
-      syncPointers();
-
-      if (pointers.size > 0) return;
-
-      if (wasMode === "pan" && moved) {
-        armWallClickGuard(clickGuard, performance.now(), DRAG_CLICK_GUARD);
-        const velocity = wallReleaseVelocity(samples, performance.now());
-        if (velocity) api().startMomentum(velocity[0], velocity[1]);
-      }
-      if (pinched) {
-        releaseWallTouch(clickGuard, performance.now(), 0);
-      }
-
-      api().setDragging(false);
-      resetSequence();
-      detach?.();
-    };
-
-    const handleBlur = () => {
-      pointers.clear();
-      ignored.clear();
-      api().setDragging(false);
-      resetSequence();
-      detach?.();
-    };
-
-    function attach() {
-      if (detach) return;
-      window.addEventListener("pointermove", handlePointerMove, {
-        passive: true,
-      });
-      window.addEventListener("pointerup", handlePointerUp);
-      window.addEventListener("pointercancel", handlePointerUp);
-      window.addEventListener("blur", handleBlur);
-      detach = () => {
-        window.removeEventListener("pointermove", handlePointerMove);
-        window.removeEventListener("pointerup", handlePointerUp);
-        window.removeEventListener("pointercancel", handlePointerUp);
-        window.removeEventListener("blur", handleBlur);
-        detach = null;
-      };
-    }
-
-    stage.addEventListener("pointerdown", handlePointerDown, { passive: true });
-    return () => {
-      stage.removeEventListener("pointerdown", handlePointerDown);
-      detach?.();
-    };
-  }, [clickGuard, scale, x, y]);
-
-  const lastSelectionRef = useRef(selectionKey);
-
-  // Première mise au point : le mur est déjà là, il se règle une fois.
-  useEffect(() => {
-    if (
-      initializedRef.current ||
-      !viewport.width ||
-      !viewport.height
-    ) {
-      return;
-    }
-    initializedRef.current = true;
-
-    const nextScale = initialScaleFor(viewport, minScale);
-    const nextX =
-      viewport.width / 2 - (WALL_PATCH_WIDTH / 2) * nextScale;
-    const nextY =
-      viewport.height / 2 - (WALL_PATCH_HEIGHT / 2) * nextScale;
-    if (reduce) {
-      scale.set(nextScale);
-      x.set(nextX);
-      y.set(nextY);
-      updateZoomLabel(nextScale);
-      syncCamera(true);
-      canvasOpacity.set(1);
-    } else {
-      // Travelling d'arrivée : la caméra part plus loin du mur et avance
-      // jusqu'au cadrage, centre fixe. Comme le centre dépend linéairement de
-      // l'échelle, interpoler x, y et l'échelle sur la même courbe le garde.
-      const fromScale = nextScale * 0.72;
-      scale.set(fromScale);
-      x.set(viewport.width / 2 - (WALL_PATCH_WIDTH / 2) * fromScale);
-      y.set(viewport.height / 2 - (WALL_PATCH_HEIGHT / 2) * fromScale);
-      updateZoomLabel(fromScale);
-      syncCamera(true);
-      const dolly = { duration: 1.3, ease: "focus" };
-      scale.animateTo(nextScale, dolly);
-      x.animateTo(nextX, dolly);
-      y.animateTo(nextY, dolly);
-      canvasOpacity.animateTo(1, { duration: 0.7 });
-    }
-  }, [
-    canvasOpacity,
-    minScale,
-    reduce,
-    scale,
-    syncCamera,
-    updateZoomLabel,
-    viewport,
-    x,
-    y,
-  ]);
-
-  // Nouveau filtre : le mur se redessine et le regard repart du centre.
-  useEffect(() => {
-    if (!initializedRef.current) return;
-    if (lastSelectionRef.current === selectionKey) return;
-    lastSelectionRef.current = selectionKey;
-    resetHover();
-
-    closePlaque();
-    setOverview(false);
-    clearFlash();
-    if (skipEntranceRef.current) {
-      skipEntranceRef.current = false;
-    } else {
-      replayEntrance();
-    }
-
-    if (!viewport.width || !viewport.height) return;
-    const nextScale = initialScaleFor(viewport, minScale);
-    animateView(
-      nextScale,
-      viewport.width / 2 - (WALL_PATCH_WIDTH / 2) * nextScale,
-      viewport.height / 2 - (WALL_PATCH_HEIGHT / 2) * nextScale,
-      0.8
-    );
-  }, [
-    animateView,
-    clearFlash,
-    closePlaque,
-    minScale,
-    replayEntrance,
-    resetHover,
-    selectionKey,
-    viewport,
-  ]);
-
-  // Un cadre qui change de taille garde le centre du regard et le zoom légal.
-  useEffect(() => {
-    if (!initializedRef.current || !viewport.width || !viewport.height) {
-      return;
-    }
-    const current = scale.get();
-    const nextScale = clampZoom(current);
-
-    if (Math.abs(nextScale - current) > 0.001) {
-      const worldX =
-        current > 0
-          ? (viewport.width / 2 - x.get()) / current
-          : WALL_PATCH_WIDTH / 2;
-      const worldY =
-        current > 0
-          ? (viewport.height / 2 - y.get()) / current
-          : WALL_PATCH_HEIGHT / 2;
-      scale.set(nextScale);
-      x.set(viewport.width / 2 - worldX * nextScale);
-      y.set(viewport.height / 2 - worldY * nextScale);
-    }
-    syncCamera(true);
-  }, [clampZoom, scale, syncCamera, viewport, x, y]);
-
-  useEffect(() => {
-    const stage = stageRef.current;
-    if (!stage) return;
-
-    const update = () => {
-      setViewport({
-        width: Math.round(stage.clientWidth),
-        height: Math.round(stage.clientHeight),
-      });
-    };
-
-    update();
-    const observer = new ResizeObserver(update);
-    observer.observe(stage);
-    return () => observer.disconnect();
-  }, []);
-
-  const handleWheel = useCallback(
-    (event: WheelEvent) => {
-      const stage = stageRef.current;
-      if (!stage) return;
-      if (isUiTarget(event.target)) return;
-
-      event.preventDefault();
-      stopMomentum();
-      scale.stop();
-      x.stop();
-      y.stop();
-      markPanning();
-
-      if (event.ctrlKey || event.metaKey) {
-        const factor = Math.exp(-event.deltaY * WHEEL_ZOOM);
-        zoomAt(scale.get() * factor, event.clientX, event.clientY);
-        return;
-      }
-
-      closePlaque();
-      setOverview(false);
-
-      const multiplier = event.deltaMode === 1 ? 18 : 1;
-      x.set(x.get() - event.deltaX * multiplier);
-      y.set(y.get() - event.deltaY * multiplier);
-    },
-    [
-      closePlaque,
-      markPanning,
-      scale,
-      stopMomentum,
-      x,
-      y,
-      zoomAt,
-    ]
-  );
-
-  useEffect(() => {
-    const stage = stageRef.current;
-    if (!stage) return;
-    stage.addEventListener("wheel", handleWheel, { passive: false });
-    return () => stage.removeEventListener("wheel", handleWheel);
-  }, [handleWheel]);
-
-  /**
-   * iOS garde parfois le pinch-zoom natif malgré `touch-action: none`,
-   * particulièrement en PWA standalone. Un `touchmove` non passif à deux
-   * doigts et les gestes WebKit coupent ce zoom avant qu'il ne déplace le
-   * viewport sous le mur. Le défilement à un doigt des panneaux reste intact :
-   * leurs gestes sont ignorés en amont par `isUiTarget`.
-   * Safari macOS expose aussi `maxTouchPoints` (1 sur un Mac à trackpad) : ses
-   * gestes de trackpad sont donc interceptés de la même façon, ce qui est
-   * voulu — `preventDefault` y bloque le zoom natif de page et le zoom du mur
-   * continue de passer par le handler `wheel` natif.
-   */
-  useEffect(() => {
-    const stage = stageRef.current;
-    if (!stage) return;
-    const touchCapable = navigator.maxTouchPoints > 0;
-
-    const stopGestureZoom = (event: Event) => {
-      if (event.cancelable) event.preventDefault();
-    };
-    const stopMultiTouchZoom = (event: TouchEvent) => {
-      if (event.touches.length < 2) return;
-      if (event.cancelable) event.preventDefault();
-    };
-
-    if (touchCapable) {
-      stage.addEventListener("gesturestart", stopGestureZoom, {
-        passive: false,
-      });
-      stage.addEventListener("gesturechange", stopGestureZoom, {
-        passive: false,
-      });
-    }
-    stage.addEventListener("touchmove", stopMultiTouchZoom, { passive: false });
-    return () => {
-      stage.removeEventListener("gesturestart", stopGestureZoom);
-      stage.removeEventListener("gesturechange", stopGestureZoom);
-      stage.removeEventListener("touchmove", stopMultiTouchZoom);
-    };
-  }, []);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -1661,17 +797,10 @@ export function WallExperience({ items }: WallExperienceProps) {
         flashTimerRef,
         entranceTimerRef,
         revealTimerRef,
-        panIdleTimerRef,
         hoverTimerRef,
       ];
       for (const timer of timers) {
         if (timer.current !== null) window.clearTimeout(timer.current);
-      }
-      if (cameraRafRef.current !== null) {
-        window.cancelAnimationFrame(cameraRafRef.current);
-      }
-      if (momentumRafRef.current !== null) {
-        window.cancelAnimationFrame(momentumRafRef.current);
       }
     };
   }, []);
@@ -1758,7 +887,7 @@ export function WallExperience({ items }: WallExperienceProps) {
       event.stopPropagation();
       return;
     }
-    if (!isUiTarget(event.target)) closePlaque();
+    if (!isWallUiTarget(event.target)) closePlaque();
   };
 
   const handleDoubleClick = (event: React.MouseEvent<HTMLDivElement>) => {
