@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from "react";
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef, useSyncExternalStore } from "react";
 import { useSession } from "next-auth/react";
 import { ERROR_CODES } from "../constants/errorCodes";
 import { AppError } from "../utils/errors";
@@ -8,10 +8,21 @@ import type { UserPreferences } from "@/types/preferences";
 import { defaultPreferences } from "@/types/preferences";
 import logger from "@/lib/logger";
 import { updatePreferences as updatePreferencesAction } from "@/app/actions/preferences";
+import {
+  PreferencesWriter,
+  type PreferencesPatch,
+  type PreferencesWriteOptions,
+} from "@/lib/preferences/preferences-writer";
+import { useToast } from "@/components/ui/use-toast";
+import { useTranslate } from "@/hooks/useTranslate";
 
-interface PreferencesContextType {
+export interface PreferencesContextType {
   preferences: UserPreferences;
-  updatePreferences: (newPreferences: Partial<UserPreferences>) => Promise<UserPreferences | undefined>;
+  updatePreferences: (
+    newPreferences: PreferencesPatch,
+    options?: PreferencesWriteOptions
+  ) => Promise<boolean>;
+  flushPreferences: () => Promise<void>;
   isLoading: boolean;
 }
 
@@ -25,11 +36,62 @@ export function PreferencesProvider({
   initialPreferences?: UserPreferences;
 }) {
   const { status } = useSession();
-  const [preferences, setPreferences] = useState<UserPreferences>(
-    initialPreferences || defaultPreferences
-  );
+  const { t } = useTranslate();
+  const { toast } = useToast();
   const hasSyncedAuthenticatedPreferences = useRef(false);
+
+  const persistPreferences = useCallback(
+    async (patch: PreferencesPatch): Promise<UserPreferences> => {
+      const result = await updatePreferencesAction(patch);
+
+      if (!result.success) {
+        throw new AppError(ERROR_CODES.PREFERENCES.UPDATE_ERROR);
+      }
+
+      return result.data;
+    },
+    []
+  );
+
+  // Le writer est créé une seule fois : les changements de langue ou de toast
+  // passent par `setNotify`, ils ne réinitialisent pas l'état optimiste.
+  const [writer] = useState(
+    () =>
+      new PreferencesWriter({
+        initial: initialPreferences || defaultPreferences,
+        persist: persistPreferences,
+      })
+  );
+
+  const preferences = useSyncExternalStore(
+    writer.subscribe,
+    writer.getSnapshot,
+    writer.getSnapshot
+  );
   const isLoading = false;
+
+  useEffect(() => {
+    writer.setNotify((event) => {
+      if (event.type === "failed") {
+        logger.error({ err: event.error }, "Erreur lors de la mise à jour des préférences");
+        if (event.feedback !== "silent") {
+          toast({
+            variant: "destructive",
+            title: t("settings.error.title"),
+            description: t("settings.error.message"),
+          });
+        }
+        return;
+      }
+
+      if (event.feedback === "all") {
+        toast({
+          title: t("settings.title"),
+          description: t("settings.komga.messages.configSaved"),
+        });
+      }
+    });
+  }, [t, toast, writer]);
 
   // Check if we have valid initial preferences from server
   const hasValidInitialPreferences =
@@ -41,43 +103,47 @@ export function PreferencesProvider({
       hasValidInitialPreferences &&
       !hasSyncedAuthenticatedPreferences.current
     ) {
-      setPreferences(initialPreferences);
+      writer.reset(initialPreferences || defaultPreferences);
       hasSyncedAuthenticatedPreferences.current = true;
       return;
     }
 
     if (status === "unauthenticated") {
       // Reset to defaults when user logs out
-      setPreferences(defaultPreferences);
+      writer.reset(defaultPreferences);
       hasSyncedAuthenticatedPreferences.current = false;
     }
-  }, [status, hasValidInitialPreferences, initialPreferences]);
+  }, [status, hasValidInitialPreferences, initialPreferences, writer]);
 
-  const updatePreferences = useCallback(async (newPreferences: Partial<UserPreferences>): Promise<UserPreferences | undefined> => {
-    try {
-      const result = await updatePreferencesAction(newPreferences);
-
-      if (!result.success) {
-        throw new AppError(ERROR_CODES.PREFERENCES.UPDATE_ERROR);
+  // Dernière chance pour les sliders : quitter la page ne doit pas perdre la
+  // valeur affichée. Le flush de démontage couvre aussi les transitions.
+  useEffect(() => {
+    const flush = () => {
+      void writer.flush();
+    };
+    const flushWhenHidden = () => {
+      if (document.visibilityState === "hidden") {
+        flush();
       }
+    };
 
-      if (result.data) {
-        setPreferences((prev) => ({
-          ...prev,
-          ...result.data,
-        }));
-      }
-
-      return result.data;
-    } catch (error) {
-      logger.error({ err: error }, "Erreur lors de la mise à jour des préférences");
-      throw error;
-    }
-  }, []);
+    window.addEventListener("pagehide", flush);
+    document.addEventListener("visibilitychange", flushWhenHidden);
+    return () => {
+      window.removeEventListener("pagehide", flush);
+      document.removeEventListener("visibilitychange", flushWhenHidden);
+      flush();
+    };
+  }, [writer]);
 
   const contextValue = useMemo(
-    () => ({ preferences, updatePreferences, isLoading }),
-    [preferences, updatePreferences, isLoading]
+    () => ({
+      preferences,
+      updatePreferences: writer.update,
+      flushPreferences: writer.flush,
+      isLoading,
+    }),
+    [preferences, writer, isLoading]
   );
 
   return <PreferencesContext.Provider value={contextValue}>{children}</PreferencesContext.Provider>;

@@ -44,6 +44,16 @@ the final flush. Navigation emits `track(page)` intents. Owners:
 `src/components/reader/hooks/useReadProgressSession.ts` (React lifecycle and
 the `updateReadProgress` adapter).
 
+## Preference write
+
+The client-side policy for changing `UserPreferences`: optimistic merge,
+coalescing of continuous controls, serialized server writes, rollback to the
+last confirmed snapshot, auth reset and one feedback event per batch. Owners:
+`src/lib/preferences/preferences-writer.ts` (pure policy) and
+`src/contexts/PreferencesContext.tsx` (server action, snapshot and toast
+adapter). `feedback` is `silent`, `errors` or `all`; `flushPreferences()`
+commits the last slider value.
+
 ## Continue reading
 
 The home hero built from the two feeds above. "Continue reading" is the

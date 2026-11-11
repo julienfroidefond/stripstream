@@ -352,8 +352,7 @@ export function InProgressContent({
       try {
         await toggleAnonymous();
         router.refresh();
-      } catch (error) {
-        logger.error({ err: error }, "Erreur lors de la désactivation du mode anonyme:");
+      } catch {
         toast({
           title: t("inProgress.anonymous.error"),
           variant: "destructive",

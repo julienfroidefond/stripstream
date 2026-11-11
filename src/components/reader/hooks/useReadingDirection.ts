@@ -1,16 +1,15 @@
 import { useState } from "react";
 import type { ReadingDirection } from "@/types/preferences";
-import { updatePreferences } from "@/app/actions/preferences";
+import { usePreferences } from "@/contexts/PreferencesContext";
 
 export const useReadingDirection = (initial: ReadingDirection = "ltr") => {
+  const { updatePreferences } = usePreferences();
   const [direction, setDirection] = useState<ReadingDirection>(initial);
 
   const toggleDirection = () => {
-    // La server action reste hors de l'updater : React l'exécute pendant le
-    // rendu, et l'action met à jour le routeur.
     const next = direction === "ltr" ? "rtl" : "ltr";
     setDirection(next);
-    updatePreferences({ readingDirection: next }).catch((_err: unknown) => undefined);
+    void updatePreferences({ readingDirection: next });
   };
 
   return {

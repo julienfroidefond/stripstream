@@ -5,7 +5,6 @@ import { useCallback, useEffect, useRef, useState, useTransition, type RefObject
 import { useGridFlip, useGridFlipPlayback } from "@/components/motion";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { normalizeGridPageSize } from "@/lib/pageSize";
-import logger from "@/lib/logger";
 import type { SortOrder, UserPreferences } from "@/types/preferences";
 
 export type GridViewMode = "grid" | "list";
@@ -159,12 +158,9 @@ export function usePaginatedGrid({
 
   const persistPreferences = useCallback(
     async (next: Partial<UserPreferences>) => {
-      try {
-        await updatePreferences(next);
-      } catch (error) {
-        // Une préférence non enregistrée ne doit pas bloquer la navigation.
-        logger.error({ err: error }, "Erreur lors de la sauvegarde des préférences");
-      }
+      // Le writer applique le rollback ; une préférence non enregistrée ne doit
+      // pas bloquer la navigation ni l'état local de la grille.
+      await updatePreferences(next);
     },
     [updatePreferences]
   );

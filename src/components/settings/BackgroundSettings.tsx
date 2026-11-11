@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useTranslate } from "@/hooks/useTranslate";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { Label } from "@/components/ui/label";
@@ -15,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Checkbox } from "@/components/ui/checkbox";
 import { SliderControl } from "@/components/ui/slider-control";
 import type { NormalizedLibrary } from "@/lib/providers/types";
-import logger from "@/lib/logger";
+import type { PreferencesPatch } from "@/lib/preferences/preferences-writer";
 
 interface BackgroundSettingsProps {
   initialLibraries: NormalizedLibrary[];
@@ -24,61 +24,59 @@ interface BackgroundSettingsProps {
 export function BackgroundSettings({ initialLibraries }: BackgroundSettingsProps) {
   const { t } = useTranslate();
   const { toast } = useToast();
-  const { preferences, updatePreferences } = usePreferences();
+  const { preferences, updatePreferences, flushPreferences } = usePreferences();
   const [customImageUrl, setCustomImageUrl] = useState(preferences.background.imageUrl || "");
-  const [libraries] = useState<NormalizedLibrary[]>(initialLibraries || []);
-  const [selectedLibraries, setSelectedLibraries] = useState<string[]>(
-    preferences.background.komgaLibraries || []
+
+  const komgaConfigValid = initialLibraries.length > 0;
+  const selectedLibraries = useMemo(
+    () => preferences.background.komgaLibraries ?? [],
+    [preferences.background.komgaLibraries]
   );
 
-  const komgaConfigValid = libraries.length > 0;
+  const save = useCallback(
+    (patch: PreferencesPatch) => {
+      void updatePreferences(patch, { feedback: "all" });
+    },
+    [updatePreferences]
+  );
 
-  const handleBackgroundTypeChange = useCallback(async (type: BackgroundType) => {
-    try {
-      await updatePreferences({
+  const saveContinuous = useCallback(
+    (patch: PreferencesPatch) => {
+      void updatePreferences(patch, { coalesce: true, feedback: "errors" });
+    },
+    [updatePreferences]
+  );
+
+  const flushContinuous = useCallback(() => {
+    void flushPreferences();
+  }, [flushPreferences]);
+
+  const handleBackgroundTypeChange = useCallback(
+    (type: BackgroundType) => {
+      save({
         background: {
           ...preferences.background,
           type,
         },
       });
-      toast({
-        title: t("settings.title"),
-        description: t("settings.komga.messages.configSaved"),
-      });
-    } catch (error) {
-      logger.error({ err: error }, "Erreur:");
-      toast({
-        variant: "destructive",
-        title: t("settings.error.title"),
-        description: t("settings.error.message"),
-      });
-    }
-  }, [preferences.background, updatePreferences, toast, t]);
+    },
+    [preferences.background, save]
+  );
 
-  const handleGradientSelect = useCallback(async (gradient: string) => {
-    try {
-      await updatePreferences({
+  const handleGradientSelect = useCallback(
+    (gradient: string) => {
+      save({
         background: {
           ...preferences.background,
           type: "gradient",
           gradient,
         },
       });
-      toast({
-        title: t("settings.title"),
-        description: t("settings.komga.messages.configSaved"),
-      });
-    } catch (error) {
-      logger.error({ err: error }, "Erreur:");
-      toast({
-        variant: "destructive",
-        title: t("settings.error.title"),
-        description: t("settings.error.message"),
-      });
-    }
-  }, [preferences.background, updatePreferences, toast, t]);
+    },
+    [preferences.background, save]
+  );
 
-  const handleCustomImageSave = useCallback(async () => {
+  const handleCustomImageSave = useCallback(() => {
     if (!customImageUrl.trim()) {
       toast({
         variant: "destructive",
@@ -88,72 +86,54 @@ export function BackgroundSettings({ initialLibraries }: BackgroundSettingsProps
       return;
     }
 
-    try {
-      await updatePreferences({
+    save({
+      background: {
+        ...preferences.background,
+        type: "image",
+        imageUrl: customImageUrl,
+      },
+    });
+  }, [customImageUrl, preferences.background, save, t, toast]);
+
+  const handleOpacityChange = useCallback(
+    (value: number) => {
+      saveContinuous({
         background: {
           ...preferences.background,
-          type: "image",
-          imageUrl: customImageUrl,
+          opacity: value,
         },
       });
-      toast({
-        title: t("settings.title"),
-        description: t("settings.komga.messages.configSaved"),
-      });
-    } catch (error) {
-      logger.error({ err: error }, "Erreur:");
-      toast({
-        variant: "destructive",
-        title: t("settings.error.title"),
-        description: t("settings.error.message"),
-      });
-    }
-  }, [customImageUrl, preferences.background, updatePreferences, toast, t]);
+    },
+    [preferences.background, saveContinuous]
+  );
 
-  const handleOpacityChange = useCallback(async (value: number[]) => {
-    try {
-      await updatePreferences({
+  const handleBlurChange = useCallback(
+    (value: number) => {
+      saveContinuous({
         background: {
           ...preferences.background,
-          opacity: value[0],
+          blur: value,
         },
       });
-    } catch (error) {
-      logger.error({ err: error }, "Erreur:");
-    }
-  }, [preferences.background, updatePreferences]);
+    },
+    [preferences.background, saveContinuous]
+  );
 
-  const handleBlurChange = useCallback(async (value: number[]) => {
-    try {
-      await updatePreferences({
-        background: {
-          ...preferences.background,
-          blur: value[0],
-        },
-      });
-    } catch (error) {
-      logger.error({ err: error }, "Erreur:");
-    }
-  }, [preferences.background, updatePreferences]);
+  const handleLibraryToggle = useCallback(
+    (libraryId: string) => {
+      const newSelection = selectedLibraries.includes(libraryId)
+        ? selectedLibraries.filter((id) => id !== libraryId)
+        : [...selectedLibraries, libraryId];
 
-  const handleLibraryToggle = useCallback(async (libraryId: string) => {
-    const newSelection = selectedLibraries.includes(libraryId)
-      ? selectedLibraries.filter((id) => id !== libraryId)
-      : [...selectedLibraries, libraryId];
-
-    setSelectedLibraries(newSelection);
-
-    try {
-      await updatePreferences({
+      save({
         background: {
           ...preferences.background,
           komgaLibraries: newSelection,
         },
       });
-    } catch (error) {
-      logger.error({ err: error }, "Erreur:");
-    }
-  }, [selectedLibraries, preferences.background, updatePreferences]);
+    },
+    [preferences.background, save, selectedLibraries]
+  );
 
   return (
     <Card>
@@ -263,7 +243,7 @@ export function BackgroundSettings({ initialLibraries }: BackgroundSettingsProps
             <div className="space-y-3">
               <Label>Bibliothèques</Label>
               <div className="space-y-2">
-                {libraries.map((library) => (
+                {initialLibraries.map((library) => (
                   <div key={library.id} className="flex items-center space-x-2">
                     <Checkbox
                       id={`lib-${library.id}`}
@@ -298,7 +278,8 @@ export function BackgroundSettings({ initialLibraries }: BackgroundSettingsProps
                 step={5}
                 unit="%"
                 description="Contrôle la transparence du contenu par rapport au background"
-                onChange={(value) => handleOpacityChange([value])}
+                onChange={handleOpacityChange}
+                onCommit={flushContinuous}
               />
 
               <SliderControl
@@ -309,7 +290,8 @@ export function BackgroundSettings({ initialLibraries }: BackgroundSettingsProps
                 step={1}
                 unit="px"
                 description="Applique un effet de flou au background"
-                onChange={(value) => handleBlurChange([value])}
+                onChange={handleBlurChange}
+                onCommit={flushContinuous}
               />
             </>
           )}

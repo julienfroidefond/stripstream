@@ -1,7 +1,9 @@
 "use client";
 
-import React, { createContext, useContext, useMemo, useCallback, useState } from "react";
+import React, { createContext, useContext, useMemo, useCallback } from "react";
 import { usePreferences } from "@/contexts/PreferencesContext";
+import { AppError } from "@/utils/errors";
+import { ERROR_CODES } from "@/constants/errorCodes";
 
 interface AnonymousContextType {
   isAnonymous: boolean;
@@ -12,18 +14,14 @@ const AnonymousContext = createContext<AnonymousContextType | undefined>(undefin
 
 export function AnonymousProvider({ children }: { children: React.ReactNode }) {
   const { preferences, updatePreferences } = usePreferences();
-  const [isAnonymous, setIsAnonymous] = useState(preferences.anonymousMode);
+  const isAnonymous = preferences.anonymousMode;
 
   const toggleAnonymous = useCallback(async () => {
-    const next = !isAnonymous;
-    setIsAnonymous(next);
-    try {
-      await updatePreferences({ anonymousMode: next });
-    } catch (error) {
-      setIsAnonymous(!next);
-      throw error;
+    const saved = await updatePreferences({ anonymousMode: !preferences.anonymousMode });
+    if (!saved) {
+      throw new AppError(ERROR_CODES.PREFERENCES.UPDATE_ERROR);
     }
-  }, [isAnonymous, updatePreferences]);
+  }, [preferences.anonymousMode, updatePreferences]);
 
   const contextValue = useMemo(
     () => ({ isAnonymous, toggleAnonymous }),

@@ -11,17 +11,16 @@ import { usePageNavigation } from "./usePageNavigation";
 import { useTouchNavigation } from "./useTouchNavigation";
 import { resolveReaderShortcut } from "./keyboardShortcuts";
 import { usePreferences } from "@/contexts/PreferencesContext";
-import { updatePreferences } from "@/app/actions/preferences";
 import { resolveBookMediaUrl } from "@/lib/providers/book-media";
 import type { ReaderBackground } from "@/types/preferences";
 
 export function useReaderState({ book, pages, onClose, nextBook }: BookReaderProps) {
-  const { preferences } = usePreferences();
+  const { preferences, updatePreferences } = usePreferences();
   const [showControls, setShowControls] = useState(false);
   const [showThumbnails, setShowThumbnails] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
-  const [readerBackground, setReaderBackground] = useState<ReaderBackground>(preferences.readerBackground);
+  const readerBackground = preferences.readerBackground;
 
   const totalPages = pages.length;
 
@@ -192,9 +191,8 @@ export function useReaderState({ book, pages, onClose, nextBook }: BookReaderPro
   const onToggleInfo = useCallback(() => setShowInfo((prev) => !prev), []);
   const onToggleShortcuts = useCallback(() => setShowShortcuts((prev) => !prev), []);
   const onReaderBackgroundChange = useCallback((background: ReaderBackground) => {
-    setReaderBackground(background);
-    updatePreferences({ readerBackground: background }).catch(() => undefined);
-  }, []);
+    void updatePreferences({ readerBackground: background });
+  }, [updatePreferences]);
   const onInfoOpenChange = useCallback((open: boolean) => setShowInfo(open), []);
   const onShortcutsOpenChange = useCallback((open: boolean) => setShowShortcuts(open), []);
   const onToggleFullscreen = useCallback(

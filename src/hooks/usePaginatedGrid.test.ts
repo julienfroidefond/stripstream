@@ -42,10 +42,6 @@ vi.mock("@/contexts/PreferencesContext", () => ({
   }),
 }));
 
-vi.mock("@/lib/logger", () => ({
-  default: { error: vi.fn() },
-}));
-
 function renderGrid(overrides: Partial<Parameters<typeof usePaginatedGrid>[0]> = {}) {
   return renderHook(() =>
     usePaginatedGrid({
@@ -66,7 +62,7 @@ describe("usePaginatedGrid", () => {
     mocks.push.mockReset();
     mocks.replace.mockReset();
     mocks.capture.mockReset();
-    mocks.updatePreferences.mockReset().mockResolvedValue(undefined);
+    mocks.updatePreferences.mockReset().mockResolvedValue(true);
     mocks.searchParams = new URLSearchParams();
   });
 
@@ -151,7 +147,7 @@ describe("usePaginatedGrid", () => {
   });
 
   it("keeps the local view mode when preference persistence fails", async () => {
-    mocks.updatePreferences.mockRejectedValueOnce(new Error("offline"));
+    mocks.updatePreferences.mockResolvedValueOnce(false);
     const { result } = renderGrid();
 
     await act(async () => {
