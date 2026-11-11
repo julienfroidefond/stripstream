@@ -156,6 +156,73 @@ describe("usePageNavigation", () => {
     });
   });
 
+  describe("progress session", () => {
+    it("flushes the primed initial page on unmount", () => {
+      const { unmount } = renderNav();
+
+      unmount();
+
+      expect(hoisted.updateReadProgressMock).toHaveBeenCalledWith(
+        "book-1",
+        1,
+        false,
+        "series-1"
+      );
+    });
+
+    it("flushes the latest page on unmount before the debounce fires", () => {
+      const { result, unmount } = renderNav();
+
+      act(() => {
+        result.current.navigateToPage(3);
+      });
+      unmount();
+
+      expect(hoisted.updateReadProgressMock).toHaveBeenCalledTimes(1);
+      expect(hoisted.updateReadProgressMock).toHaveBeenCalledWith(
+        "book-1",
+        3,
+        false,
+        "series-1"
+      );
+    });
+
+    it("does not duplicate an immediate last-page write on unmount", () => {
+      const { result, unmount } = renderNav();
+
+      act(() => {
+        result.current.navigateToPage(5);
+      });
+      expect(hoisted.updateReadProgressMock).toHaveBeenCalledTimes(1);
+
+      unmount();
+      expect(hoisted.updateReadProgressMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("cancels a pending write when anonymous mode activates", () => {
+      vi.useFakeTimers();
+      try {
+        const { result, rerender, unmount } = renderNav();
+
+        act(() => {
+          result.current.navigateToPage(3);
+        });
+
+        hoisted.anonymous.value = true;
+        rerender();
+
+        act(() => {
+          vi.advanceTimersByTime(600);
+        });
+        unmount();
+
+        expect(hoisted.updateReadProgressMock).not.toHaveBeenCalled();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+  });
+
   describe("handleNextPage", () => {
     it("advances by one page in single-page mode", () => {
       const { result } = renderNav();

@@ -35,6 +35,15 @@ series). The in-progress page turns it into cards with the current book, the
 next book and the series progress. Owner:
 `src/lib/services/in-progress.service.ts`.
 
+## Read progress session
+
+The write policy for the reader's current page: the trackable cursor, the
+500 ms debounce, immediate completion at the last page, serialized writes and
+the final flush. Navigation emits `track(page)` intents. Owners:
+`src/lib/reader/read-progress-session.ts` (pure policy) and
+`src/components/reader/hooks/useReadProgressSession.ts` (React lifecycle and
+the `updateReadProgress` adapter).
+
 ## Continue reading
 
 The home hero built from the two feeds above. "Continue reading" is the
