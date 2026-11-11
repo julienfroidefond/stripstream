@@ -25,6 +25,7 @@ import { Progress } from "@/components/ui/progress";
 import { useTranslate } from "@/hooks/useTranslate";
 import { useCoverInteraction } from "@/hooks/useCoverInteraction";
 import { useAnonymous } from "@/contexts/AnonymousContext";
+import { useSeriesReadingStatus } from "@/components/ui/series-reading-status";
 import { cn, formatDate } from "@/lib/utils";
 import { StaggerGroup, StaggerItem } from "@/components/motion";
 
@@ -40,16 +41,6 @@ const seriesStatusMap = {
   cancelled: { className: "bg-red-500/10 text-red-600 dark:text-red-400", icon: CircleX },
 } as const;
 
-function getReadingStatus(
-  series: NormalizedSeries,
-  t: (key: string, options?: { [key: string]: string | number }) => string
-) {
-  if (series.bookCount === 0) return { label: t("series.status.noBooks"), className: "bg-amber-500/10 text-amber-600 dark:text-amber-400" };
-  if (series.bookCount === series.booksReadCount) return { label: t("series.status.read"), className: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" };
-  if (series.booksReadCount > 0) return { label: t("series.status.progress", { read: series.booksReadCount, total: series.bookCount }), className: "bg-primary/10 text-primary" };
-  return { label: t("series.status.unread"), className: "bg-amber-500/10 text-amber-600 dark:text-amber-400" };
-}
-
 function Pill({ className, children }: { className: string; children: React.ReactNode }) {
   return <Badge variant="outline" className={cn("border-current/15 px-2 py-0.5 text-[11px] font-medium", className)}>{children}</Badge>;
 }
@@ -59,9 +50,9 @@ const SeriesListItem = memo(function SeriesListItem({ series, isCompact = false 
   const { t } = useTranslate();
   const { isAnonymous } = useAnonymous();
   const { active, handlers } = useCoverInteraction<HTMLButtonElement>();
-  const isCompleted = !isAnonymous && series.bookCount > 0 && series.bookCount === series.booksReadCount;
-  const progress = series.bookCount ? (series.booksReadCount / series.bookCount) * 100 : 0;
-  const readingStatus = !isAnonymous ? getReadingStatus(series, t) : null;
+  const readingStatus = useSeriesReadingStatus(series);
+  const isCompleted = !isAnonymous && readingStatus.status === "read";
+  const progress = readingStatus.percent;
   const publicationStatus = series.seriesStatus ? seriesStatusMap[series.seriesStatus as keyof typeof seriesStatusMap] : null;
   const rating = communityScoreToTen(series.communityScore);
   const tags = Array.from(new Set([...(series.genres ?? []), ...(series.tags ?? [])]));
@@ -125,13 +116,13 @@ const SeriesListItem = memo(function SeriesListItem({ series, isCompact = false 
         <div className="flex min-h-5 flex-wrap items-center gap-1.5">
           {publicationStatus && <Pill className={publicationStatus.className}><publicationStatus.icon className="mr-1 h-3 w-3" />{t(`series.status.${series.seriesStatus}`)}</Pill>}
           {!isAnonymous && series.shelvedAt && <Pill className="bg-cyan-500/10 text-cyan-600 dark:text-cyan-400"><Snowflake className="mr-1 h-3 w-3" />{t("series.header.shelf.badge")}</Pill>}
-          {readingStatus && <Pill className={readingStatus.className}>{readingStatus.label}</Pill>}
+          {readingStatus && !isAnonymous && <Pill className={readingStatus.className}>{readingStatus.label}</Pill>}
           {!isCompact && tags.slice(0, 2).map((tag) => <Badge key={tag} variant="secondary" className="hidden max-w-28 gap-1 truncate px-2 py-0.5 text-[11px] font-normal text-secondary-foreground md:inline-flex"><Tag className="h-3 w-3 shrink-0" />{tag}</Badge>)}
           {!isCompact && tags.length > 2 && <Badge variant="outline" className="hidden px-1.5 py-0.5 text-[11px] text-muted-foreground md:inline-flex">+{tags.length - 2}</Badge>}
         </div>
 
-        {!isAnonymous && series.bookCount > 0 && series.booksReadCount > 0 && !isCompleted && (
-          <div className="mt-0.5 flex items-center gap-2.5"><Progress value={progress} className="h-1.5 max-w-48 flex-1" /><span className="text-[11px] tabular-nums text-muted-foreground">{Math.round(progress)}% {t("series.completed")}</span></div>
+        {!isAnonymous && readingStatus.status === "in-progress" && (
+          <div className="mt-0.5 flex items-center gap-2.5"><Progress value={progress} className="h-1.5 max-w-48 flex-1" /><span className="text-[11px] tabular-nums text-muted-foreground">{progress}% {t("series.completed")}</span></div>
         )}
       </div>
     </button>

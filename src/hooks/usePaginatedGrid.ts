@@ -6,10 +6,16 @@ import { useGridFlip, useGridFlipPlayback } from "@/components/motion";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { normalizeGridPageSize } from "@/lib/pageSize";
 import logger from "@/lib/logger";
-import type { UserPreferences } from "@/types/preferences";
+import type { SortOrder, UserPreferences } from "@/types/preferences";
 
 export type GridViewMode = "grid" | "list";
 type ViewModePreference = "viewMode" | "booksViewMode";
+
+const SEARCH_DEBOUNCE_MS = 300;
+
+function normalizeSortOrder(value: string | undefined): SortOrder {
+  return value === "latest" || value === "community_score" ? value : "title";
+}
 
 interface UsePaginatedGridOptions {
   /** Identité du contenu affiché : sa variation rejoue le glissement des cartes. */
@@ -23,6 +29,14 @@ interface UsePaginatedGridOptions {
   initialViewMode: GridViewMode;
   /** Champ de préférence où persister le mode d'affichage de cette grille. */
   viewModePreference: ViewModePreference;
+  /** Recherche déjà présente dans l'URL. */
+  initialSearch?: string;
+  /** Tri déjà résolu côté serveur. */
+  initialSort?: string;
+  /** Active le tri par note communautaire dans le cycle du bouton. */
+  canSortByRating?: boolean;
+  /** Filtre « tomes manquants » déjà résolu côté serveur. */
+  initialHasMissing?: boolean;
 }
 
 export interface PaginatedGridController {
@@ -30,6 +44,10 @@ export interface PaginatedGridController {
   isCompact: boolean;
   viewMode: GridViewMode;
   showOnlyUnread: boolean;
+  searchTerm: string;
+  isSearchPending: boolean;
+  sort: SortOrder;
+  showMissing: boolean;
   isNavigating: boolean;
   gridRef: RefObject<HTMLDivElement | null>;
   /** Mémorise la position des cartes avant une action de mise en page. */
@@ -46,6 +64,9 @@ export interface PaginatedGridController {
   handleCompactModeToggle: (nextCompactMode: boolean) => Promise<void>;
   handleViewModeToggle: (nextViewMode: GridViewMode) => Promise<void>;
   handleUnreadFilter: () => Promise<void>;
+  handleSearchChange: (term: string) => void;
+  handleSortToggle: () => Promise<void>;
+  handleMissingToggle: () => Promise<void>;
 }
 
 function viewModePatch(
@@ -72,6 +93,10 @@ export function usePaginatedGrid({
   initialCompact,
   initialViewMode,
   viewModePreference,
+  initialSearch = "",
+  initialSort,
+  canSortByRating = false,
+  initialHasMissing = false,
 }: UsePaginatedGridOptions): PaginatedGridController {
   const router = useRouter();
   const pathname = usePathname();
@@ -81,7 +106,11 @@ export function usePaginatedGrid({
   const [showOnlyUnread, setShowOnlyUnread] = useState(initialShowOnlyUnread);
   const [isCompact, setIsCompact] = useState(initialCompact);
   const [viewMode, setViewMode] = useState<GridViewMode>(initialViewMode);
+  const [searchTerm, setSearchTerm] = useState(initialSearch);
+  const [sort, setSort] = useState<SortOrder>(() => normalizeSortOrder(initialSort));
+  const [showMissing, setShowMissing] = useState(initialHasMissing);
   const [isNavigating, startNavigation] = useTransition();
+  const [isSearchPending, startSearchTransition] = useTransition();
 
   const effectivePageSize = normalizeGridPageSize(pageSize, isCompact);
 
@@ -90,13 +119,22 @@ export function usePaginatedGrid({
   const captureLayout = gridFlip.capture;
   useGridFlipPlayback(gridFlip, `${isCompact ? "compact" : "full"}:${contentKey}`);
 
+  /**
+   * Le debounce et les actions lisent les paramètres au moment du
+   * déclenchement : un rendu intermédiaire ne doit pas figer une URL périmée.
+   */
+  const searchParamsRef = useRef(searchParams);
+  useEffect(() => {
+    searchParamsRef.current = searchParams;
+  }, [searchParams]);
+
   const updateUrlParams = useCallback(
     async (
       updates: Record<string, string | null>,
       replace: boolean = false,
       { dim = true }: { dim?: boolean } = {}
     ) => {
-      const params = new URLSearchParams(searchParams.toString());
+      const params = new URLSearchParams(searchParamsRef.current.toString());
 
       Object.entries(updates).forEach(([key, value]) => {
         if (value === null) {
@@ -116,7 +154,7 @@ export function usePaginatedGrid({
         else navigate();
       }
     },
-    [router, pathname, searchParams]
+    [router, pathname]
   );
 
   const persistPreferences = useCallback(
@@ -161,6 +199,57 @@ export function usePaginatedGrid({
     await updateUrlParams({ page: "1", unread: next ? "true" : "false" });
     await persistPreferences({ showOnlyUnread: next });
   }, [captureLayout, showOnlyUnread, updateUrlParams, persistPreferences]);
+
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const commitSearch = useCallback(
+    (term: string) => {
+      startSearchTransition(() => {
+        void updateUrlParams(
+          { page: "1", search: term.trim() ? term : null },
+          true
+        );
+      });
+    },
+    [updateUrlParams]
+  );
+
+  const handleSearchChange = useCallback(
+    (term: string) => {
+      setSearchTerm(term);
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+      searchTimerRef.current = setTimeout(() => commitSearch(term), SEARCH_DEBOUNCE_MS);
+    },
+    [commitSearch]
+  );
+
+  useEffect(
+    () => () => {
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    },
+    []
+  );
+
+  const handleSortToggle = useCallback(async () => {
+    captureLayout();
+    // Cycle : title → latest → (community_score si Stripstream) → title
+    const nextSort: SortOrder = (() => {
+      if (sort === "title") return "latest";
+      if (sort === "latest") return canSortByRating ? "community_score" : "title";
+      return "title";
+    })();
+    setSort(nextSort);
+    await updateUrlParams({ page: "1", sort: nextSort === "title" ? null : nextSort });
+    await persistPreferences({ defaultSortOrder: nextSort });
+  }, [captureLayout, sort, canSortByRating, updateUrlParams, persistPreferences]);
+
+  const handleMissingToggle = useCallback(async () => {
+    captureLayout();
+    const next = !showMissing;
+    setShowMissing(next);
+    await updateUrlParams({ page: "1", missing: next ? "true" : null });
+    await persistPreferences({ showMissingBooks: next });
+  }, [captureLayout, showMissing, updateUrlParams, persistPreferences]);
 
   const handlePageSizeChange = useCallback(
     async (size: number) => {
@@ -211,6 +300,10 @@ export function usePaginatedGrid({
     isCompact,
     viewMode,
     showOnlyUnread,
+    searchTerm,
+    isSearchPending,
+    sort,
+    showMissing,
     isNavigating,
     gridRef,
     captureLayout,
@@ -221,5 +314,8 @@ export function usePaginatedGrid({
     handleCompactModeToggle,
     handleViewModeToggle,
     handleUnreadFilter,
+    handleSearchChange,
+    handleSortToggle,
+    handleMissingToggle,
   };
 }

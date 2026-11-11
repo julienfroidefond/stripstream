@@ -23,6 +23,7 @@ export function LibraryContent({
   currentPage,
   preferences,
   unreadOnly,
+  search,
   pageSize,
   sort,
   hasMissing,
@@ -49,6 +50,7 @@ export function LibraryContent({
           sort={sort}
           hasMissing={hasMissing}
           canSortByRating={canSortByRating}
+          search={search}
         />
       </Container>
     </>

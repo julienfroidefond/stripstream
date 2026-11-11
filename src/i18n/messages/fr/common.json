@@ -475,6 +475,8 @@
     "completed": "complété",
     "filters": {
       "title": "Filtres",
+      "explore": "Explorer",
+      "seriesTitle": "Séries",
       "showAll": "Afficher tout",
       "unread": "À lire",
       "search": "Rechercher une série...",

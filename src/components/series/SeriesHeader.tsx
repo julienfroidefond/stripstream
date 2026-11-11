@@ -12,6 +12,8 @@ import { ERROR_CODES } from "@/constants/errorCodes";
 import { getErrorMessage } from "@/utils/errors";
 import { useTranslate } from "@/hooks/useTranslate";
 import { SeriesCover } from "@/components/ui/series-cover";
+import { getSeriesReadingStatusLabel } from "@/components/ui/series-reading-status";
+import { getSeriesReadingState } from "@/lib/series-reading-status";
 import { BookCoverScene } from "@/components/ui/book-cover-scene";
 import { CoverEdge } from "@/components/ui/cover-card";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -195,34 +197,35 @@ export const SeriesHeader = ({
   };
 
   const getReadingStatusInfo = () => {
-    const { bookCount, booksReadCount } = series;
-    const booksUnreadCount = bookCount - booksReadCount;
-    const booksInProgressCount = bookCount - (booksReadCount + booksUnreadCount);
+    const readingState = getSeriesReadingState(series);
+    const label = getSeriesReadingStatusLabel(t, readingState);
 
-    if (booksReadCount === bookCount) {
-      return {
-        label: t("series.header.status.read"),
-        status: "success" as const,
-        icon: BookMarked,
-      };
+    switch (readingState.status) {
+      case "no-books":
+        return {
+          label,
+          status: "warning" as const,
+          icon: BookX,
+        };
+      case "read":
+        return {
+          label,
+          status: "success" as const,
+          icon: BookMarked,
+        };
+      case "in-progress":
+        return {
+          label,
+          status: "reading" as const,
+          icon: BookOpen,
+        };
+      case "unread":
+        return {
+          label,
+          status: "unread" as const,
+          icon: Book,
+        };
     }
-
-    if (booksInProgressCount > 0 || (booksReadCount > 0 && booksReadCount < bookCount)) {
-      return {
-        label: t("series.header.status.progress", {
-          read: booksReadCount,
-          total: bookCount,
-        }),
-        status: "reading" as const,
-        icon: BookOpen,
-      };
-    }
-
-    return {
-      label: t("series.header.status.unread"),
-      status: "unread" as const,
-      icon: Book,
-    };
   };
 
   const getSeriesStatusInfo = () => {
@@ -402,7 +405,10 @@ export const SeriesHeader = ({
                     size="icon"
                     icon={bulkAction === "read" ? Loader2 : BookCheck}
                     onClick={() => handleBulkReadStatus(true)}
-                    disabled={bulkAction !== null || series.booksReadCount >= series.bookCount}
+                    disabled={
+                      bulkAction !== null ||
+                      getSeriesReadingState(series).status === "read"
+                    }
                     tooltip={t("series.header.markAllRead.tooltip")}
                     iconClassName={bulkAction === "read" ? "animate-spin" : ""}
                   />

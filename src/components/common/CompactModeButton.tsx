@@ -1,12 +1,11 @@
-import { useDisplayPreferences } from "@/hooks/useDisplayPreferences";
 import { useTranslate } from "@/hooks/useTranslate";
 import { LayoutGrid, LayoutTemplate } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface CompactModeButtonProps {
-  onToggle?: (isCompact: boolean) => void;
-  isCompact?: boolean;
+  isCompact: boolean;
+  onToggle: (isCompact: boolean) => Promise<void> | void;
   className?: string;
 }
 
@@ -46,28 +45,6 @@ function CompactModeButtonBase({
   );
 }
 
-function CompactModeButtonUncontrolled({
-  onToggle,
-  className,
-}: Pick<CompactModeButtonProps, "onToggle" | "className">) {
-  const { isCompact, handleCompactToggle } = useDisplayPreferences();
-
-  const handleToggle = async (nextCompactMode: boolean) => {
-    await handleCompactToggle(nextCompactMode);
-    onToggle?.(nextCompactMode);
-  };
-
-  return (
-    <CompactModeButtonBase isCompact={isCompact} onToggle={handleToggle} className={className} />
-  );
-}
-
 export function CompactModeButton({ onToggle, isCompact, className }: CompactModeButtonProps) {
-  const isControlled = typeof isCompact === "boolean" && typeof onToggle === "function";
-
-  if (isControlled) {
-    return <CompactModeButtonBase isCompact={isCompact} onToggle={onToggle} className={className} />;
-  }
-
-  return <CompactModeButtonUncontrolled onToggle={onToggle} className={className} />;
+  return <CompactModeButtonBase isCompact={isCompact} onToggle={onToggle} className={className} />;
 }
