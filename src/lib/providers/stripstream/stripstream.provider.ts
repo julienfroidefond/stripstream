@@ -737,12 +737,4 @@ export class StripstreamProvider implements IMediaProvider {
   getBookThumbnailUrl(bookId: string): string {
     return `/api/stripstream/images/books/${bookId}/thumbnail`;
   }
-
-  getSeriesThumbnailUrl(seriesId: string): string {
-    return `/api/stripstream/images/books/${seriesId}/thumbnail`;
-  }
-
-  getBookPageUrl(bookId: string, pageNumber: number): string {
-    return `/api/stripstream/images/books/${bookId}/pages/${pageNumber}`;
-  }
 }

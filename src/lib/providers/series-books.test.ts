@@ -15,6 +15,7 @@ function makeBook(id: string): NormalizedBook {
     volume: null,
     pageCount: 10,
     thumbnailUrl: "",
+    media: { pageUrlTemplate: "/pages/{page}", thumbnailUrlTemplate: "/pages/{page}" },
     readProgress: null,
   };
 }

@@ -14,6 +14,7 @@ function makeBook(id: string, volumeType: string | null): NormalizedBook {
     volume: null,
     pageCount: 0,
     thumbnailUrl: "",
+    media: { pageUrlTemplate: "/pages/{page}", thumbnailUrlTemplate: "/pages/{page}" },
     readProgress: null,
     volumeType,
   };

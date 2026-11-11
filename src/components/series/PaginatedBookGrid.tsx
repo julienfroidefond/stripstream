@@ -65,6 +65,7 @@ export function PaginatedBookGrid({
       volume: mb.volumeNumber,
       pageCount: 0,
       thumbnailUrl: mb.coverUrl ?? "",
+      media: { pageUrlTemplate: "", thumbnailUrlTemplate: "" },
       readProgress: null,
       volumeType: "_missing",
     }));

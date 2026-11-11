@@ -3,6 +3,7 @@ import { KomgaImageService } from "@/lib/services/komga/image.service";
 import { KomgaSeriesService } from "@/lib/services/komga/series.service";
 import { requestDeduplicationService } from "@/lib/services/request-deduplication.service";
 
+import { komgaPagePath, komgaPageThumbnailPath } from "./komga-paths";
 import type { MediaRef, MediaTransport, MediaTransportContext } from "./types";
 
 interface PagePayload {
@@ -47,7 +48,7 @@ async function fetchPagePayload(
 
   return requestDeduplicationService.deduplicate(key, async () => {
     const response = await KomgaImageService.streamImage(
-      `books/${ref.bookId}/pages/${ref.pageNumber - 1}?zero_based=true`,
+      komgaPagePath(ref.bookId, ref.pageNumber),
       undefined,
       context.headers
     );
@@ -102,7 +103,7 @@ export const komgaMediaTransport: MediaTransport = {
         return pageResponse(await fetchPagePayload(ref, context));
       case "book-page-thumbnail":
         return KomgaImageService.streamImage(
-          `books/${ref.bookId}/pages/${ref.pageNumber}/thumbnail?zero_based=true`,
+          komgaPageThumbnailPath(ref.bookId, ref.pageNumber),
           undefined,
           context.headers
         );

@@ -11,7 +11,7 @@ Stripstream is a comic-reader front end; it does **not** own the library. Each u
 
 ### The interface
 
-`IMediaProvider` is defined at `src/lib/providers/provider.interface.ts:26-100`. It covers:
+`IMediaProvider` is defined at `src/lib/providers/provider.interface.ts:26-98`. It covers:
 
 - collections — `getLibraries`, `getLibraryById`, `getSeries`, `getSeriesById`, `getBooks`, `getBook`, `getNextBook`, `getMissingBooks`;
 - home feeds — the individual section methods (`getHomeContinueReadingData`, `getHomeOngoingSeries`, `getHomeLatestSeries`, `getHomeRecentlyRead`, `getHomeReadingLists`); the page composes them itself;
@@ -23,7 +23,7 @@ Stripstream is a comic-reader front end; it does **not** own the library. Each u
 - favorites — `getFavorites`, `isFavorite`, `addToFavorites`, `removeFromFavorites`;
 - search — `search`;
 - connection test — `testConnection`;
-- URL builders that return local proxy URLs — `getBookThumbnailUrl`, `getSeriesThumbnailUrl`, `getBookPageUrl` (`provider.interface.ts:76-79`).
+- URL builder that returns a local proxy URL — `getBookThumbnailUrl` (`provider.interface.ts:96-97`).
 
 Concrete implementations:
 
@@ -35,6 +35,8 @@ Concrete implementations:
 Both backends normalize into shared types in `src/lib/providers/types.ts`; rating helpers live in `src/lib/providers/ratings.ts`.
 
 `NormalizedBook` keeps the series reference explicit: `seriesId` is the provider series id (never a title) and is `null` when the endpoint omits it; `seriesName` is the title and only a fallback. `matchSeries` (`src/lib/resume/identity.ts`) applies the id-first rule, `resolveBookSeries` (`src/lib/resume/series-pool.ts`) is the single network fallback for name-only rows, and `getSeriesById` never receives a series name. Stripstream's first-book-id fallback remains for legacy search URLs.
+
+`NormalizedBook.media` is the reader's media contract: each adapter emits `pageUrlTemplate` and `thumbnailUrlTemplate` with a `{page}` token, and the reader fills it through `resolveBookMediaUrl` (`src/lib/providers/book-media.ts`). Templates are 1-based; the Komga transport owns the conversion to Komga's zero-based API (`src/lib/media/komga-paths.ts`). Never derive page URLs from `thumbnailUrl`.
 
 ### Factory and connection resolution
 

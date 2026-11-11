@@ -26,6 +26,7 @@ function makeBook(over: Partial<NormalizedBook> = {}): NormalizedBook {
     volume: 1,
     pageCount: 20,
     thumbnailUrl: "",
+    media: { pageUrlTemplate: "/pages/{page}", thumbnailUrlTemplate: "/pages/{page}" },
     readProgress: null,
     ...over,
   };

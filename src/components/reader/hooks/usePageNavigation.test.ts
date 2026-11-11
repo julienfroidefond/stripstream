@@ -35,6 +35,10 @@ function makeBook(overrides: Partial<NormalizedBook> = {}): NormalizedBook {
     volume: 1,
     pageCount: 5,
     thumbnailUrl: "/api/komga/images/books/book-1/thumbnail",
+    media: {
+      pageUrlTemplate: "/api/komga/images/books/book-1/pages/{page}",
+      thumbnailUrlTemplate: "/api/komga/images/books/book-1/pages/{page}/thumbnail",
+    },
     readProgress: null,
     ...overrides,
   };

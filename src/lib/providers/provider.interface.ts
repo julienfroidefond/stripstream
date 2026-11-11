@@ -93,8 +93,6 @@ export interface IMediaProvider {
   // ── Connection ───────────────────────────────────────────────────────────
   testConnection(): Promise<{ ok: boolean; error?: string; libraryCount?: number }>;
 
-  // ── URL builders (return local proxy URLs) ───────────────────────────────
+  // ── URL builder (returns a local proxy URL) ───────────────────────────────
   getBookThumbnailUrl(bookId: string): string;
-  getSeriesThumbnailUrl(seriesId: string): string;
-  getBookPageUrl(bookId: string, pageNumber: number): string;
 }
