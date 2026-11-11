@@ -17,7 +17,7 @@ import type { StripstreamReadingList } from "@/types/stripstream";
 
 export interface BookListFilter {
   libraryId?: string;
-  seriesName?: string;
+  seriesId?: string;
   cursor?: string;
   limit?: number;
   unreadOnly?: boolean;

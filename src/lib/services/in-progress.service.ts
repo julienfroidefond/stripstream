@@ -1,7 +1,7 @@
 import type { IMediaProvider } from "@/lib/providers/provider.interface";
 import type { NormalizedBook, NormalizedSeries } from "@/lib/providers/types";
 import type { HomePrimaryData } from "@/types/home";
-import { indexSeries, matchSeries, seriesKey } from "@/lib/resume/identity";
+import { bookSeriesRef, indexSeries, matchSeries, seriesKey } from "@/lib/resume/identity";
 import { getSeriesProgressPercent } from "@/lib/resume/resume-state";
 
 /** Les listes « en cours » et « de côté » sont bornées à 50 éléments. */
@@ -95,7 +95,7 @@ export function buildInProgressItems(
   const nextBySeries = new Map<string, NormalizedBook>();
 
   for (const book of source.ongoingBooks ?? []) {
-    const matched = matchSeries(book.seriesId, book.libraryId, index);
+    const matched = matchSeries(bookSeriesRef(book), book.libraryId, index);
     if (!matched) continue;
     currentBySeries.set(
       matched.id,
@@ -104,7 +104,7 @@ export function buildInProgressItems(
   }
 
   for (const book of source.onDeck ?? []) {
-    const matched = matchSeries(book.seriesId, book.libraryId, index);
+    const matched = matchSeries(bookSeriesRef(book), book.libraryId, index);
     if (!matched) continue;
     if (isBookInProgress(book)) {
       currentBySeries.set(

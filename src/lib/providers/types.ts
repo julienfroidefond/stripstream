@@ -67,7 +67,14 @@ export interface NormalizedBook {
   libraryId: string;
   title: string;
   number: string | null;
+  /**
+   * Provider series id, or `null` when the endpoint omits it. Never a title.
+   */
   seriesId: string | null;
+  /**
+   * Series title, used only when `seriesId` is absent (name-only endpoints).
+   */
+  seriesName: string | null;
   volume: number | null;
   pageCount: number;
   thumbnailUrl: string;
@@ -89,6 +96,18 @@ export interface NormalizedMissingBook {
   coverUrl: string | null;
 }
 
+/**
+ * Reference to the series that owns a book.
+ *
+ * `id` is the provider series id and is authoritative when present. `name` is
+ * a display fallback for endpoints that only expose the series title; it is
+ * never treated as an id.
+ */
+export interface SeriesRef {
+  id: string | null;
+  name: string | null;
+}
+
 export interface NormalizedProviderRating {
   provider: string;
   rating: number;
@@ -106,8 +125,8 @@ export interface NormalizedSeriesRating {
 export interface NormalizedSearchResult {
   id: string;
   title: string;
+  /** Series name for book results. Never an id. */
   seriesTitle?: string | null;
-  seriesId?: string | null;
   href: string;
   coverUrl: string;
   type: "series" | "book";

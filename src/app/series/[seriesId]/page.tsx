@@ -40,7 +40,7 @@ export default async function SeriesPage({ params, searchParams }: PageProps) {
 
     const [booksPage, series, isFavorite, missingBooks, relatedSeries, rating] = await Promise.all([
       provider.getBooks({
-        seriesName: seriesId,
+        seriesId,
         cursor: String(currentPage),
         limit: effectivePageSize,
         unreadOnly,

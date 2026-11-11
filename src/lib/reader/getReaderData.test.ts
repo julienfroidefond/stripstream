@@ -22,6 +22,7 @@ function makeBook(over: Partial<NormalizedBook> = {}): NormalizedBook {
     title: "Book 1",
     number: null,
     seriesId: "series-1",
+    seriesName: null,
     volume: 1,
     pageCount: 20,
     thumbnailUrl: "",
@@ -46,12 +47,16 @@ function makeBooksPage(): NormalizedBooksPage {
 
 interface StubOptions {
   seriesId?: string | null;
+  seriesName?: string | null;
   rating?: NormalizedSeriesRating | null;
   ratingThrows?: boolean;
 }
 
 function makeProvider(options: StubOptions = {}) {
-  const book = makeBook({ seriesId: options.seriesId === undefined ? "series-1" : options.seriesId });
+  const book = makeBook({
+    seriesId: options.seriesId === undefined ? "series-1" : options.seriesId,
+    seriesName: options.seriesName === undefined ? null : options.seriesName,
+  });
   const getSeriesRating = options.ratingThrows
     ? vi.fn(async (): Promise<NormalizedSeriesRating | null> => {
         throw new Error("boom");
@@ -62,6 +67,7 @@ function makeProvider(options: StubOptions = {}) {
     getBook: vi.fn(async () => book),
     getNextBook: vi.fn(async () => null),
     getSeriesById: vi.fn(async () => makeSeries()),
+    getSeries: vi.fn(async () => ({ items: [makeSeries()], nextCursor: null })),
     getBooks: vi.fn(async () => makeBooksPage()),
     getSeriesRating,
   } as unknown as IMediaProvider & { getSeriesRating: ReturnType<typeof vi.fn> };
@@ -120,5 +126,38 @@ describe("getReaderData — series rating", () => {
     const data = await getReaderData(provider, "book-1");
 
     expect(data.seriesRating).toBeNull();
+  });
+});
+
+describe("getReaderData — series resolution", () => {
+  beforeEach(() => {
+    getActiveProviderTypeMock.mockReset();
+    getActiveProviderTypeMock.mockResolvedValue("stripstream");
+  });
+
+  it("resolves the series by id without searching by name", async () => {
+    const provider = makeProvider({ seriesId: "series-1", seriesName: "Series 1" });
+
+    const data = await getReaderData(provider, "book-1");
+
+    expect(provider.getSeriesById).toHaveBeenCalledWith("series-1");
+    expect(provider.getSeries).not.toHaveBeenCalled();
+    expect(data.readerInfo?.seriesTitle).toBe("Series 1");
+  });
+
+  it("falls back to the name when the provider omits the series id", async () => {
+    const provider = makeProvider({ seriesId: null, seriesName: "Series 1" });
+
+    const data = await getReaderData(provider, "book-1");
+
+    expect(provider.getSeriesById).not.toHaveBeenCalled();
+    expect(provider.getSeries).toHaveBeenCalledWith(
+      "lib-1",
+      undefined,
+      20,
+      false,
+      "Series 1"
+    );
+    expect(data.readerInfo?.seriesTitle).toBe("Series 1");
   });
 });

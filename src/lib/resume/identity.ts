@@ -1,4 +1,8 @@
-import type { NormalizedSeries } from "@/lib/providers/types";
+import type {
+  NormalizedBook,
+  NormalizedSeries,
+  SeriesRef,
+} from "@/lib/providers/types";
 import { normalizeSeriesSearch } from "@/lib/services/read-series.service";
 
 export interface SeriesIndex {
@@ -28,25 +32,42 @@ export function indexSeries(series: readonly NormalizedSeries[]): SeriesIndex {
 }
 
 /**
+ * Référence de série portée par un tome.
+ *
+ * Les deux champs restent séparés : `id` ne contient jamais un titre, même
+ * quand l'API ne fournit que le nom. Les appelants qui n'ont que des champs de
+ * tome passent par ce helper plutôt que de reconstruire la paire à la main.
+ */
+export function bookSeriesRef(
+  book: Pick<NormalizedBook, "seriesId" | "seriesName">
+): SeriesRef {
+  return { id: book.seriesId, name: book.seriesName };
+}
+
+/**
  * Règle unique de correspondance tome → série.
  *
- * `seriesId` peut être un identifiant ou, pour Stripstream, le nom de la série
- * quand la liste de tomes ne fournit pas `series_id`. La bibliothèque départage
- * les homonymes : un candidat sans bibliothèque reste préférable à un homonyme
- * connu d'une autre bibliothèque, puis on retombe sur le premier candidat.
+ * L'identifiant provider est autoritaire : quand il est présent, on le cherche
+ * d'abord. Le titre normalisé ne sert que de repli pour les endpoints qui
+ * omettent l'id. La bibliothèque départage les homonymes : un candidat sans
+ * bibliothèque reste préférable à un homonyme connu d'une autre bibliothèque,
+ * puis on retombe sur le premier candidat.
  */
 export function matchSeries(
-  target: string | null | undefined,
+  ref: SeriesRef | null | undefined,
   libraryId: string | null | undefined,
   index: SeriesIndex
 ): NormalizedSeries | null {
-  const value = target?.trim();
-  if (!value) return null;
+  const id = ref?.id?.trim();
+  if (id) {
+    const byId = index.byId.get(id);
+    if (byId) return byId;
+  }
 
-  const byId = index.byId.get(value);
-  if (byId) return byId;
+  const name = ref?.name?.trim();
+  if (!name) return null;
 
-  const candidates = index.byName.get(seriesKey(value));
+  const candidates = index.byName.get(seriesKey(name));
   if (!candidates || candidates.length === 0) return null;
   if (candidates.length === 1) return candidates[0];
 

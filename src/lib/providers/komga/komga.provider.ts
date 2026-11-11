@@ -252,10 +252,10 @@ export class KomgaProvider implements IMediaProvider {
     const limit = filter.limit ?? 24;
     let condition: KomgaCondition;
 
-    if (filter.seriesName && filter.unreadOnly) {
+    if (filter.seriesId && filter.unreadOnly) {
       condition = {
         allOf: [
-          { seriesId: { operator: "is", value: filter.seriesName } },
+          { seriesId: { operator: "is", value: filter.seriesId } },
           {
             anyOf: [
               { readStatus: { operator: "is", value: "UNREAD" } },
@@ -264,8 +264,8 @@ export class KomgaProvider implements IMediaProvider {
           },
         ],
       };
-    } else if (filter.seriesName) {
-      condition = { seriesId: { operator: "is", value: filter.seriesName } };
+    } else if (filter.seriesId) {
+      condition = { seriesId: { operator: "is", value: filter.seriesId } };
     } else if (filter.libraryId) {
       condition = { libraryId: { operator: "is", value: filter.libraryId } };
     } else {
@@ -273,7 +273,7 @@ export class KomgaProvider implements IMediaProvider {
     }
 
     const granularTags: string[] = [SERIES_BOOKS_CACHE_TAG];
-    if (filter.seriesName) granularTags.push(cacheTags.seriesBooks(filter.seriesName));
+    if (filter.seriesId) granularTags.push(cacheTags.seriesBooks(filter.seriesId));
     if (filter.libraryId) granularTags.push(cacheTags.libraryBooks(filter.libraryId));
 
     const response = await this.fetch<LibraryResponse<KomgaBook>>(
@@ -445,7 +445,6 @@ export class KomgaProvider implements IMediaProvider {
           id: b.id,
           title: b.metadata?.title ?? b.name,
           seriesTitle: b.seriesTitle,
-          seriesId: b.seriesId,
           href: `/books/${b.id}`,
           coverUrl: `/api/komga/images/books/${b.id}/thumbnail`,
           type: "book" as const,

@@ -1,43 +1,47 @@
 import type { IMediaProvider } from "@/lib/providers/provider.interface";
-import type { NormalizedBook, NormalizedSeries } from "@/lib/providers/types";
-import { indexSeries, matchSeries, seriesKey, type SeriesIndex } from "./identity";
-
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+import type {
+  NormalizedBook,
+  NormalizedSeries,
+  SeriesRef,
+} from "@/lib/providers/types";
+import {
+  bookSeriesRef,
+  indexSeries,
+  matchSeries,
+  seriesKey,
+  type SeriesIndex,
+} from "./identity";
 
 /**
- * Retrouve une série par l'identifiant porté par le tome, ou par son nom.
+ * Retrouve la série d'un tome.
  *
- * Stripstream n'expose que le nom de la série dans les listes de tomes : on
- * passe alors par la recherche de la bibliothèque du tome. Les identifiants
- * UUID (Komga, premier tome Stripstream) sont résolus directement.
+ * L'id provider est autoritaire : quand il est présent, on ne consulte jamais
+ * le nom. Le nom ne sert qu'aux endpoints qui omettent `series_id` : on cherche
+ * alors dans la bibliothèque du tome et on applique la même règle d'identité.
+ *
+ * Les erreurs provider remontent : les appelants décident s'ils peuvent
+ * continuer sans la série (le pool de reprise, lui, ignore l'échec).
  */
-async function resolveSeries(
+export async function resolveBookSeries(
   provider: IMediaProvider,
-  book: NormalizedBook,
-  target: string
+  book: Pick<NormalizedBook, "seriesId" | "seriesName" | "libraryId">
 ): Promise<NormalizedSeries | null> {
-  if (UUID_RE.test(target)) {
-    return provider.getSeriesById(target).catch(() => null);
+  const id = book.seriesId?.trim();
+  if (id) {
+    return provider.getSeriesById(id);
   }
 
-  if (book.libraryId) {
-    try {
-      const page = await provider.getSeries(
-        book.libraryId,
-        undefined,
-        20,
-        false,
-        target
-      );
-      const match = matchSeries(target, book.libraryId, indexSeries(page.items));
-      if (match) return match;
-    } catch {
-      // Repli sur la résolution par identifiant ci-dessous.
-    }
-  }
+  const name = book.seriesName?.trim();
+  if (!name || !book.libraryId) return null;
 
-  return provider.getSeriesById(target).catch(() => null);
+  const page = await provider.getSeries(
+    book.libraryId,
+    undefined,
+    20,
+    false,
+    name
+  );
+  return matchSeries({ id: null, name }, book.libraryId, indexSeries(page.items));
 }
 
 /**
@@ -45,31 +49,37 @@ async function resolveSeries(
  * différentes sont deux séries distinctes ; un identifiant reste unique quelle
  * que soit la casse.
  */
-function missingKey(target: string, libraryId: string): string {
-  if (UUID_RE.test(target)) return `id:${seriesKey(target)}`;
-  return `name:${seriesKey(target)}@${libraryId}`;
+function missingKey(ref: SeriesRef, libraryId: string): string | null {
+  const id = ref.id?.trim();
+  if (id) return `id:${seriesKey(id)}`;
+
+  const name = ref.name?.trim();
+  if (!name) return null;
+  return `name:${seriesKey(name)}@${libraryId}`;
 }
 
 /**
  * Vrai si le pool contient déjà la série du tome.
  *
- * Un homonyme d'une autre bibliothèque ne suffit pas : on tentera de résoudre
- * la série de la bibliothèque du tome, puis on retombera sur cet homonyme si
- * la résolution échoue (comportement de `matchSeries`).
+ * Un id présent mais absent du pool force une résolution par id : un homonyme
+ * du pool n'est pas une preuve suffisante. Pour une référence sans id, on
+ * applique la règle de `matchSeries` puis on refuse un homonyme d'une autre
+ * bibliothèque, afin de tenter la résolution dans la bibliothèque du tome.
  */
 function isCoveredByPool(
   pool: readonly NormalizedSeries[],
   index: SeriesIndex,
-  target: string,
+  ref: SeriesRef,
   libraryId: string
 ): boolean {
-  if (UUID_RE.test(target)) {
+  const id = ref.id?.trim();
+  if (id) {
     return pool.some(
-      (series) => series.id.toLowerCase() === target.toLowerCase()
+      (series) => series.id.toLowerCase() === id.toLowerCase()
     );
   }
 
-  const matched = matchSeries(target, libraryId, index);
+  const matched = matchSeries(ref, libraryId, index);
   if (!matched) return false;
   if (matched.libraryId && matched.libraryId !== libraryId) return false;
   return true;
@@ -78,11 +88,11 @@ function isCoveredByPool(
 /**
  * Complète un pool de séries avec celles référencées par `books`.
  *
- * Le hero « Reprendre la lecture » ne reçoit que `seriesId` avec chaque tome :
- * le nom de la série, le résumé, les genres et les auteurs viennent du pool.
- * Les listes bornées (`getHomeOngoingSeries`) ne couvrent pas forcément les
- * tomes chargés par « Voir plus » ; on résout donc uniquement les séries
- * manquantes, en réutilisant celles déjà connues.
+ * Le hero « Reprendre la lecture » ne reçoit que la référence de série avec
+ * chaque tome : le nom de la série, le résumé, les genres et les auteurs
+ * viennent du pool. Les listes bornées (`getHomeOngoingSeries`) ne couvrent pas
+ * forcément les tomes chargés par « Voir plus » ; on résout donc uniquement les
+ * séries manquantes, en réutilisant celles déjà connues.
  */
 export async function resolveSeriesPool(
   provider: IMediaProvider,
@@ -92,24 +102,27 @@ export async function resolveSeriesPool(
   const pool = [...known];
   const seen = new Set(pool.map((series) => series.id));
   const index = indexSeries(pool);
-  const missing = new Map<string, { target: string; book: NormalizedBook }>();
+  const missing = new Map<string, NormalizedBook>();
 
   for (const book of books) {
-    const target = book.seriesId?.trim();
-    if (!target) continue;
+    const ref = bookSeriesRef(book);
+    const key = missingKey(ref, book.libraryId);
+    if (!key) continue;
 
-    const key = missingKey(target, book.libraryId);
-    if (isCoveredByPool(pool, index, target, book.libraryId) || missing.has(key)) {
+    if (
+      isCoveredByPool(pool, index, ref, book.libraryId) ||
+      missing.has(key)
+    ) {
       continue;
     }
-    missing.set(key, { target, book });
+    missing.set(key, book);
   }
 
   if (missing.size === 0) return pool;
 
   const resolved = await Promise.all(
-    Array.from(missing.values(), ({ target, book }) =>
-      resolveSeries(provider, book, target)
+    Array.from(missing.values(), (book) =>
+      resolveBookSeries(provider, book).catch(() => null)
     )
   );
 

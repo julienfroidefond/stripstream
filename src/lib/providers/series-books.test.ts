@@ -11,6 +11,7 @@ function makeBook(id: string): NormalizedBook {
     title: id,
     number: null,
     seriesId: "series-1",
+    seriesName: null,
     volume: null,
     pageCount: 10,
     thumbnailUrl: "",
@@ -52,7 +53,7 @@ describe("getAllSeriesBooks", () => {
 
     expect(books.map((b) => b.id)).toEqual(["1", "2", "3"]);
     expect(calls).toHaveLength(2);
-    expect(calls[0]).toMatchObject({ seriesName: "series-1", cursor: "1", unreadOnly: false });
+    expect(calls[0]).toMatchObject({ seriesId: "series-1", cursor: "1", unreadOnly: false });
     expect(calls[1]).toMatchObject({ cursor: "2" });
   });
 

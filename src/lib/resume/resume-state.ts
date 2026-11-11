@@ -1,5 +1,5 @@
 import type { NormalizedBook, NormalizedSeries } from "@/lib/providers/types";
-import { indexSeries, matchSeries } from "./identity";
+import { bookSeriesRef, indexSeries, matchSeries } from "./identity";
 
 /** Flux bruts qui alimentent la reprise de lecture. */
 export interface ResumeSource {
@@ -68,7 +68,7 @@ export function buildResumeEntries(
   const index = indexSeries(seriesPool);
   return books.map((book) => ({
     book,
-    series: matchSeries(book.seriesId, book.libraryId, index),
+    series: matchSeries(bookSeriesRef(book), book.libraryId, index),
     progressPercent: getBookProgressPercent(book),
   }));
 }

@@ -65,7 +65,8 @@ export class StripstreamAdapter {
       libraryId: book.library_id,
       title: book.title,
       number: book.volume !== null && book.volume !== undefined ? String(book.volume) : null,
-      seriesId: book.series_id ?? book.series ?? null,
+      seriesId: book.series_id ?? null,
+      seriesName: book.series ?? null,
       volume: book.volume ?? null,
       pageCount: book.page_count ?? 0,
       thumbnailUrl: `/api/stripstream/images/books/${book.id}/thumbnail`,
@@ -89,9 +90,11 @@ export class StripstreamAdapter {
       libraryId: book.library_id,
       title: book.title,
       number: book.volume !== null && book.volume !== undefined ? String(book.volume) : null,
-      // Prefer the UUID when the details payload provides it (BookDetails has
-      // series_id, BookItem does not). Falls back to the series name otherwise.
-      seriesId: book.series_id ?? book.series ?? null,
+      // BookDetails has `series_id`; BookItem often only has the series name.
+      // Keep the two apart: the id never carries a title, and the name is only
+      // a fallback for endpoints that omit the id.
+      seriesId: book.series_id ?? null,
+      seriesName: book.series ?? null,
       volume: book.volume ?? null,
       pageCount: book.page_count ?? 0,
       thumbnailUrl: `/api/stripstream/images/books/${book.id}/thumbnail`,

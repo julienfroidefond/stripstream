@@ -31,6 +31,7 @@ function makeBook(overrides: Partial<NormalizedBook> = {}): NormalizedBook {
     title: "Book 1",
     number: "1",
     seriesId: "series-1",
+    seriesName: null,
     volume: 1,
     pageCount: 5,
     thumbnailUrl: "/api/komga/images/books/book-1/thumbnail",

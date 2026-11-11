@@ -23,6 +23,7 @@ export class KomgaAdapter {
       title: book.metadata?.title || book.name,
       number: book.metadata?.number ?? null,
       seriesId: book.seriesId ?? null,
+      seriesName: book.seriesTitle ?? null,
       volume: typeof book.number === "number" ? book.number : null,
       pageCount: book.media?.pagesCount ?? 0,
       thumbnailUrl: `/api/komga/images/books/${book.id}/thumbnail`,

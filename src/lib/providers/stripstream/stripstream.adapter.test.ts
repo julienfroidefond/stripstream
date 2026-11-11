@@ -134,6 +134,7 @@ describe("StripstreamAdapter.toNormalizedBook", () => {
       title: "Book Title",
       number: null,
       seriesId: null,
+      seriesName: null,
       volume: null,
       pageCount: 0,
       thumbnailUrl: "/api/stripstream/images/books/book-1/thumbnail",
@@ -148,15 +149,22 @@ describe("StripstreamAdapter.toNormalizedBook", () => {
     expect(StripstreamAdapter.toNormalizedBook(makeBookItem({ volume: 0 })).number).toBe("0");
   });
 
-  it("prefers series_id over the series name and falls back", () => {
-    expect(
-      StripstreamAdapter.toNormalizedBook(makeBookItem({ series_id: "uuid-1", series: "Name" }))
-        .seriesId
-    ).toBe("uuid-1");
-    expect(
-      StripstreamAdapter.toNormalizedBook(makeBookItem({ series: "Name" })).seriesId
-    ).toBe("Name");
-    expect(StripstreamAdapter.toNormalizedBook(makeBookItem()).seriesId).toBeNull();
+  it("keeps the series id and the series name separate", () => {
+    const withId = StripstreamAdapter.toNormalizedBook(
+      makeBookItem({ series_id: "uuid-1", series: "Name" })
+    );
+    expect(withId.seriesId).toBe("uuid-1");
+    expect(withId.seriesName).toBe("Name");
+
+    const nameOnly = StripstreamAdapter.toNormalizedBook(
+      makeBookItem({ series: "Name" })
+    );
+    expect(nameOnly.seriesId).toBeNull();
+    expect(nameOnly.seriesName).toBe("Name");
+
+    const absent = StripstreamAdapter.toNormalizedBook(makeBookItem());
+    expect(absent.seriesId).toBeNull();
+    expect(absent.seriesName).toBeNull();
   });
 
   it("returns null progress for an unread book with no page", () => {
@@ -193,7 +201,17 @@ describe("StripstreamAdapter.toNormalizedBook", () => {
 describe("StripstreamAdapter.toNormalizedBookDetails", () => {
   it("prefers series_id over the series name", () => {
     const details = makeBookDetails({ series_id: "uuid-1", series: "Name" });
-    expect(StripstreamAdapter.toNormalizedBookDetails(details).seriesId).toBe("uuid-1");
+    const normalized = StripstreamAdapter.toNormalizedBookDetails(details);
+    expect(normalized.seriesId).toBe("uuid-1");
+    expect(normalized.seriesName).toBe("Name");
+  });
+
+  it("keeps a name-only payload out of seriesId", () => {
+    const normalized = StripstreamAdapter.toNormalizedBookDetails(
+      makeBookDetails({ series: "Name" })
+    );
+    expect(normalized.seriesId).toBeNull();
+    expect(normalized.seriesName).toBe("Name");
   });
 
   it("trims the summary and nulls out whitespace-only summaries", () => {

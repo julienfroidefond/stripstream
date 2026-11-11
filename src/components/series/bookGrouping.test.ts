@@ -10,6 +10,7 @@ function makeBook(id: string, volumeType: string | null): NormalizedBook {
     title: id,
     number: null,
     seriesId: null,
+    seriesName: null,
     volume: null,
     pageCount: 0,
     thumbnailUrl: "",
