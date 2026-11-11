@@ -14,6 +14,8 @@ interface SliderControlProps {
   unit?: string;
   description?: string;
   onChange: (value: number) => void;
+  /** Appelé quand l'utilisateur relâche le curseur ou utilise +/-. */
+  onCommit?: () => void;
   formatValue?: (value: number) => string;
 }
 
@@ -26,11 +28,13 @@ export function SliderControl({
   unit = "",
   description,
   onChange,
+  onCommit,
   formatValue,
 }: SliderControlProps) {
   const adjust = (delta: number) => {
     const newValue = Math.max(min, Math.min(max, value + delta));
     onChange(newValue);
+    onCommit?.();
   };
 
   const displayValue = formatValue ? formatValue(value) : `${value}${unit}`;
@@ -54,6 +58,7 @@ export function SliderControl({
         <Slider
           value={[value]}
           onValueChange={(values) => onChange(values[0])}
+          onValueCommit={() => onCommit?.()}
           min={min}
           max={max}
           step={step}

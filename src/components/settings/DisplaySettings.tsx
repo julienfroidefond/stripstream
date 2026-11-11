@@ -3,11 +3,10 @@ import { useTranslate } from "@/hooks/useTranslate";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/components/ui/use-toast";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Image as ImageIcon, Filter, Grid, ArrowUpDown, Eye, EyeOff } from "lucide-react";
-import logger from "@/lib/logger";
+import type { PreferencesPatch } from "@/lib/preferences/preferences-writer";
 
 type SortOrder = "title" | "latest" | "community_score";
 
@@ -19,93 +18,14 @@ const SORT_ORDERS: { value: SortOrder; labelKey: string }[] = [
 
 export function DisplaySettings() {
   const { t } = useTranslate();
-  const { toast } = useToast();
   const { preferences, updatePreferences } = usePreferences();
 
-  const handleToggleThumbnails = useCallback(async (checked: boolean) => {
-    try {
-      await updatePreferences({ showThumbnails: checked });
-      toast({
-        title: t("settings.title"),
-        description: t("settings.komga.messages.configSaved"),
-      });
-    } catch (error) {
-      logger.error({ err: error }, "Erreur détaillée:");
-      toast({
-        variant: "destructive",
-        title: t("settings.error.title"),
-        description: t("settings.error.message"),
-      });
-    }
-  }, [updatePreferences, toast, t]);
-
-  const handleToggleUnreadFilter = useCallback(async (checked: boolean) => {
-    try {
-      await updatePreferences({ showOnlyUnread: checked });
-      toast({
-        title: t("settings.title"),
-        description: t("settings.komga.messages.configSaved"),
-      });
-    } catch (error) {
-      logger.error({ err: error }, "Erreur détaillée:");
-      toast({
-        variant: "destructive",
-        title: t("settings.error.title"),
-        description: t("settings.error.message"),
-      });
-    }
-  }, [updatePreferences, toast, t]);
-
-  const handleSortOrderChange = useCallback(async (value: SortOrder) => {
-    try {
-      await updatePreferences({ defaultSortOrder: value });
-      toast({
-        title: t("settings.title"),
-        description: t("settings.komga.messages.configSaved"),
-      });
-    } catch (error) {
-      logger.error({ err: error }, "Erreur:");
-      toast({
-        variant: "destructive",
-        title: t("settings.error.title"),
-        description: t("settings.error.message"),
-      });
-    }
-  }, [updatePreferences, toast, t]);
-
-  const handleShowMissingBooksChange = useCallback(async (checked: boolean) => {
-    try {
-      await updatePreferences({ showMissingBooks: checked });
-      toast({
-        title: t("settings.title"),
-        description: t("settings.komga.messages.configSaved"),
-      });
-    } catch (error) {
-      logger.error({ err: error }, "Erreur:");
-      toast({
-        variant: "destructive",
-        title: t("settings.error.title"),
-        description: t("settings.error.message"),
-      });
-    }
-  }, [updatePreferences, toast, t]);
-
-  const handleHideMissingBooksChange = useCallback(async (checked: boolean) => {
-    try {
-      await updatePreferences({ hideMissingBooks: checked });
-      toast({
-        title: t("settings.title"),
-        description: t("settings.komga.messages.configSaved"),
-      });
-    } catch (error) {
-      logger.error({ err: error }, "Erreur:");
-      toast({
-        variant: "destructive",
-        title: t("settings.error.title"),
-        description: t("settings.error.message"),
-      });
-    }
-  }, [updatePreferences, toast, t]);
+  const save = useCallback(
+    (patch: PreferencesPatch) => {
+      void updatePreferences(patch, { feedback: "all" });
+    },
+    [updatePreferences]
+  );
 
   return (
     <div className="space-y-6">
@@ -133,7 +53,7 @@ export function DisplaySettings() {
             <Switch
               id="thumbnails"
               checked={preferences.showThumbnails}
-              onCheckedChange={handleToggleThumbnails}
+              onCheckedChange={(checked) => save({ showThumbnails: checked })}
             />
           </div>
 
@@ -151,7 +71,7 @@ export function DisplaySettings() {
             <Switch
               id="unread-filter"
               checked={preferences.showOnlyUnread}
-              onCheckedChange={handleToggleUnreadFilter}
+              onCheckedChange={(checked) => save({ showOnlyUnread: checked })}
             />
           </div>
 
@@ -163,7 +83,7 @@ export function DisplaySettings() {
             </div>
             <Select
               value={preferences.defaultSortOrder}
-              onValueChange={(value) => handleSortOrderChange(value as SortOrder)}
+              onValueChange={(value) => save({ defaultSortOrder: value as SortOrder })}
             >
               <SelectTrigger id="default-sort-order" className="w-full max-w-xs">
                 <SelectValue placeholder={t("settings.reader.sortOrder.placeholder")} />
@@ -195,7 +115,7 @@ export function DisplaySettings() {
             <Switch
               id="show-missing-books"
               checked={preferences.showMissingBooks}
-              onCheckedChange={handleShowMissingBooksChange}
+              onCheckedChange={(checked) => save({ showMissingBooks: checked })}
             />
           </div>
 
@@ -213,7 +133,7 @@ export function DisplaySettings() {
             <Switch
               id="hide-missing-books"
               checked={preferences.hideMissingBooks}
-              onCheckedChange={handleHideMissingBooksChange}
+              onCheckedChange={(checked) => save({ hideMissingBooks: checked })}
             />
           </div>
         </CardContent>

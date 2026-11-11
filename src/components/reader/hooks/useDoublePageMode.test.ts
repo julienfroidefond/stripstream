@@ -11,8 +11,10 @@ vi.mock("./useOrientation", () => ({
   useOrientation: () => hoisted.isLandscape.value,
 }));
 
-vi.mock("@/app/actions/preferences", () => ({
-  updatePreferences: hoisted.updatePreferencesMock,
+vi.mock("@/contexts/PreferencesContext", () => ({
+  usePreferences: () => ({
+    updatePreferences: hoisted.updatePreferencesMock,
+  }),
 }));
 
 import { useDoublePageMode } from "./useDoublePageMode";
@@ -29,7 +31,7 @@ describe("useDoublePageMode", () => {
   beforeEach(() => {
     hoisted.isLandscape.value = false;
     hoisted.updatePreferencesMock.mockReset();
-    hoisted.updatePreferencesMock.mockResolvedValue({ success: true, message: "" });
+    hoisted.updatePreferencesMock.mockResolvedValue(true);
     setInnerHeight(800);
   });
 

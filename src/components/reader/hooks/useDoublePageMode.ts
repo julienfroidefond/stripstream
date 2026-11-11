@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { useOrientation } from "./useOrientation";
-import { updatePreferences } from "@/app/actions/preferences";
+import { usePreferences } from "@/contexts/PreferencesContext";
 
 export function useDoublePageMode(initial = false) {
   const isLandscape = useOrientation();
+  const { updatePreferences } = usePreferences();
   const [isDoublePage, setIsDoublePage] = useState(initial);
 
   // Auto double page en paysage
@@ -23,12 +24,10 @@ export function useDoublePageMode(initial = false) {
   );
 
   const toggleDoublePage = useCallback(() => {
-    // La server action reste hors de l'updater : React l'exécute pendant le
-    // rendu, et l'action met à jour le routeur.
     const next = !isDoublePage;
     setIsDoublePage(next);
-    updatePreferences({ readerDoublePageMode: next }).catch((_err: unknown) => undefined);
-  }, [isDoublePage]);
+    void updatePreferences({ readerDoublePageMode: next });
+  }, [isDoublePage, updatePreferences]);
 
   return {
     isDoublePage,

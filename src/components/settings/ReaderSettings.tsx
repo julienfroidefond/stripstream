@@ -3,13 +3,12 @@
 import { useCallback } from "react";
 import { useTranslate } from "@/hooks/useTranslate";
 import { usePreferences } from "@/contexts/PreferencesContext";
-import { useToast } from "@/components/ui/use-toast";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Palette, BookOpen, ArrowLeftRight, Columns2, BookOpenText } from "lucide-react";
-import logger from "@/lib/logger";
+import type { PreferencesPatch } from "@/lib/preferences/preferences-writer";
 
 type ReaderBackground = "default" | "black" | "white" | "cream";
 type ReadingDirection = "ltr" | "rtl";
@@ -28,76 +27,14 @@ const READING_DIRECTIONS: { value: ReadingDirection; labelKey: string }[] = [
 
 export function ReaderSettings() {
   const { t } = useTranslate();
-  const { toast } = useToast();
   const { preferences, updatePreferences } = usePreferences();
 
-  const handleReadingDirectionChange = useCallback(async (value: ReadingDirection) => {
-    try {
-      await updatePreferences({ readingDirection: value });
-      toast({
-        title: t("settings.title"),
-        description: t("settings.komga.messages.configSaved"),
-      });
-    } catch (error) {
-      logger.error({ err: error }, "Erreur:");
-      toast({
-        variant: "destructive",
-        title: t("settings.error.title"),
-        description: t("settings.error.message"),
-      });
-    }
-  }, [updatePreferences, toast, t]);
-
-  const handleReaderBackgroundChange = useCallback(async (value: ReaderBackground) => {
-    try {
-      await updatePreferences({ readerBackground: value });
-      toast({
-        title: t("settings.title"),
-        description: t("settings.komga.messages.configSaved"),
-      });
-    } catch (error) {
-      logger.error({ err: error }, "Erreur:");
-      toast({
-        variant: "destructive",
-        title: t("settings.error.title"),
-        description: t("settings.error.message"),
-      });
-    }
-  }, [updatePreferences, toast, t]);
-
-  const handlePageTurnChange = useCallback(async (checked: boolean) => {
-    try {
-      await updatePreferences({ readerPageTurn: checked });
-      toast({
-        title: t("settings.title"),
-        description: t("settings.komga.messages.configSaved"),
-      });
-    } catch (error) {
-      logger.error({ err: error }, "Erreur:");
-      toast({
-        variant: "destructive",
-        title: t("settings.error.title"),
-        description: t("settings.error.message"),
-      });
-    }
-  }, [updatePreferences, toast, t]);
-
-  const handleDoublePageChange = useCallback(async (checked: boolean) => {
-    try {
-      await updatePreferences({ readerDoublePageMode: checked });
-      toast({
-        title: t("settings.title"),
-        description: t("settings.komga.messages.configSaved"),
-      });
-    } catch (error) {
-      logger.error({ err: error }, "Erreur:");
-      toast({
-        variant: "destructive",
-        title: t("settings.error.title"),
-        description: t("settings.error.message"),
-      });
-    }
-  }, [updatePreferences, toast, t]);
+  const save = useCallback(
+    (patch: PreferencesPatch) => {
+      void updatePreferences(patch, { feedback: "all" });
+    },
+    [updatePreferences]
+  );
 
   return (
     <Card>
@@ -117,7 +54,9 @@ export function ReaderSettings() {
           </div>
           <RadioGroup
             value={preferences.readingDirection}
-            onValueChange={(value) => handleReadingDirectionChange(value as ReadingDirection)}
+            onValueChange={(value) =>
+              save({ readingDirection: value as ReadingDirection })
+            }
             className="flex items-center gap-6"
           >
             {READING_DIRECTIONS.map((dir) => (
@@ -142,7 +81,9 @@ export function ReaderSettings() {
           </div>
           <RadioGroup
             value={preferences.readerBackground}
-            onValueChange={(value) => handleReaderBackgroundChange(value as ReaderBackground)}
+            onValueChange={(value) =>
+              save({ readerBackground: value as ReaderBackground })
+            }
             className="grid grid-cols-2 sm:grid-cols-4 gap-3"
           >
             {READER_BACKGROUNDS.map((bg) => (
@@ -186,7 +127,7 @@ export function ReaderSettings() {
           <Switch
             id="double-page-mode"
             checked={preferences.readerDoublePageMode}
-            onCheckedChange={handleDoublePageChange}
+            onCheckedChange={(checked) => save({ readerDoublePageMode: checked })}
           />
         </div>
 
@@ -204,7 +145,7 @@ export function ReaderSettings() {
           <Switch
             id="page-turn"
             checked={preferences.readerPageTurn}
-            onCheckedChange={handlePageTurnChange}
+            onCheckedChange={(checked) => save({ readerPageTurn: checked })}
           />
         </div>
       </CardContent>
