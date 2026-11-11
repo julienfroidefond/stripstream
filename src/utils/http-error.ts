@@ -1,6 +1,6 @@
 import type { ErrorCode } from "@/constants/errorCodes";
 
-interface ProviderHttpCodes {
+export interface ProviderHttpCodes {
   UNAUTHORIZED: ErrorCode;
   FORBIDDEN: ErrorCode;
   NOT_FOUND: ErrorCode;

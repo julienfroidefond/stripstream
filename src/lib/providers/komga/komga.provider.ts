@@ -17,22 +17,19 @@ import type {
 } from "../types";
 import type { HomePrimaryData } from "@/types/home";
 import { KomgaAdapter } from "./komga.adapter";
+import { createKomgaTransportPolicy } from "./komga.transport-policy";
+import {
+  ProviderTransport,
+  type ProviderQueryParams,
+  type ProviderRequestOptions,
+} from "../provider-transport";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
-import { codeForHttpStatus } from "@/utils/http-error";
 import { normalizeServerUrl } from "@/utils/server-url";
 
-const KOMGA_HTTP_CODES = {
-  UNAUTHORIZED: ERROR_CODES.KOMGA.UNAUTHORIZED,
-  FORBIDDEN: ERROR_CODES.KOMGA.FORBIDDEN,
-  NOT_FOUND: ERROR_CODES.KOMGA.NOT_FOUND,
-  SERVER_ERROR: ERROR_CODES.KOMGA.SERVER_ERROR,
-  HTTP_ERROR: ERROR_CODES.KOMGA.HTTP_ERROR,
-};
 import type { KomgaBook, KomgaSeries, KomgaLibrary } from "@/types/komga";
 import type { LibraryResponse } from "@/types/library";
 import type { AuthConfig } from "@/types/auth";
-import logger from "@/lib/logger";
 import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, SERIES_BOOKS_CACHE_TAG, STATS_CACHE_TAG, cacheTags } from "@/constants/cacheConstants";
 import { unstable_cache } from "next/cache";
 
@@ -41,156 +38,26 @@ type KomgaCondition = Record<string, unknown>;
 const CACHE_TTL_LONG = 300;
 const CACHE_TTL_MED = 120;
 const CACHE_TTL_SHORT = 30;
-const TIMEOUT_MS = 15000;
 
 export class KomgaProvider implements IMediaProvider {
   readonly supportsReadingLists = false;
 
   private config: AuthConfig;
+  private transport: ProviderTransport;
 
   constructor(url: string, authHeader: string) {
     this.config = { serverUrl: normalizeServerUrl(url), authHeader };
+    this.transport = new ProviderTransport(
+      createKomgaTransportPolicy(this.config.serverUrl, authHeader)
+    );
   }
 
-  private buildUrl(path: string, params?: Record<string, string | string[]>): string {
-    const url = new URL(`${this.config.serverUrl}/api/v1/${path}`);
-    if (params) {
-      Object.entries(params).forEach(([k, v]) => {
-        if (Array.isArray(v)) {
-          v.forEach((val) => url.searchParams.append(k, val));
-        } else {
-          url.searchParams.append(k, v);
-        }
-      });
-    }
-    return url.toString();
-  }
-
-  private getHeaders(extra: Record<string, string> = {}): Headers {
-    return new Headers({
-      Authorization: `Basic ${this.config.authHeader}`,
-      Accept: "application/json",
-      ...extra,
-    });
-  }
-
-  private async fetch<T>(
+  private fetch<T>(
     path: string,
-    params?: Record<string, string | string[]>,
-    options: RequestInit & { revalidate?: number; tags?: string[] } = {}
+    params?: ProviderQueryParams,
+    options: ProviderRequestOptions = {}
   ): Promise<T> {
-    const url = this.buildUrl(path, params);
-    const headers = this.getHeaders(options.body ? { "Content-Type": "application/json" } : {});
-
-    const isDebug = process.env.KOMGA_DEBUG === "true";
-    const isCacheDebug = process.env.CACHE_DEBUG === "true";
-
-    if (isDebug) {
-      logger.info(
-        { url, method: options.method || "GET", params, revalidate: options.revalidate },
-        "Komga Request"
-      );
-    }
-    if (isCacheDebug) {
-      if (options.tags) {
-        logger.info({ url, cache: "tags", tags: options.tags }, "Cache tags");
-      } else if (options.revalidate !== undefined) {
-        logger.info({ url, cache: "revalidate", ttl: options.revalidate }, "Cache revalidate");
-      } else {
-        logger.info({ url, cache: "none" }, "Cache none");
-      }
-    }
-
-    const nextOptions = options.tags
-      ? { tags: options.tags }
-      : options.revalidate !== undefined
-        ? { revalidate: options.revalidate }
-        : undefined;
-
-    const fetchOptions = {
-      headers,
-      ...options,
-      next: nextOptions,
-    };
-
-    // Next.js does not cache POST fetch requests — use unstable_cache to cache results instead
-    if (options.method === "POST" && nextOptions) {
-      const cacheKey = ["komga", this.config.authHeader, url, String(options.body ?? "")];
-      return unstable_cache(() => this.executeRequest<T>(url, fetchOptions), cacheKey, nextOptions)();
-    }
-
-    return this.executeRequest<T>(url, fetchOptions);
-  }
-
-  private async executeRequest<T>(url: string, fetchOptions: RequestInit): Promise<T> {
-    const isDebug = process.env.KOMGA_DEBUG === "true";
-    const startTime = isDebug ? Date.now() : 0;
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
-
-    interface FetchErrorLike {
-      code?: string;
-      cause?: { code?: string };
-    }
-
-    const doFetch = async () => {
-      try {
-        return await fetch(url, { ...fetchOptions, signal: controller.signal });
-      } catch (err: unknown) {
-        const e = err as FetchErrorLike;
-        if (e.cause?.code === "EAI_AGAIN" || e.code === "EAI_AGAIN") {
-          logger.error(`DNS resolution failed for ${url}, retrying...`);
-          return fetch(url, { ...fetchOptions, signal: controller.signal });
-        }
-        if (e.cause?.code === "UND_ERR_CONNECT_TIMEOUT") {
-          logger.info(`⏱️ Connection timeout for ${url}, retrying (cold start)...`);
-          return fetch(url, { ...fetchOptions, signal: controller.signal });
-        }
-        throw err;
-      }
-    };
-
-    try {
-      const response = await doFetch();
-      clearTimeout(timeoutId);
-
-      if (isDebug) {
-        const duration = Date.now() - startTime;
-        logger.info(
-          { url, status: response.status, duration: `${duration}ms`, ok: response.ok },
-          "Komga Response"
-        );
-      }
-
-      if (!response.ok) {
-        if (isDebug) {
-          logger.error(
-            { url, status: response.status, statusText: response.statusText },
-            "Komga Error Response"
-          );
-        }
-        throw new AppError(codeForHttpStatus(response.status, KOMGA_HTTP_CODES), {
-          status: response.status,
-          statusText: response.statusText,
-        });
-      }
-      return response.json();
-    } catch (error) {
-      if (isDebug) {
-        logger.error(
-          {
-            url,
-            error: error instanceof Error ? error.message : String(error),
-            duration: `${Date.now() - startTime}ms`,
-          },
-          "Komga Request Failed"
-        );
-      }
-      throw error;
-    } finally {
-      clearTimeout(timeoutId);
-    }
+    return this.transport.request<T>(path, params, options);
   }
 
   async getLibraries(): Promise<NormalizedLibrary[]> {
@@ -317,7 +184,7 @@ export class KomgaProvider implements IMediaProvider {
     } catch (error) {
       // L'interface promet `null` pour une série absente. Seul le 404 est une
       // absence confirmée ; une panne doit continuer de remonter.
-      if (error instanceof AppError && error.code === KOMGA_HTTP_CODES.NOT_FOUND) {
+      if (error instanceof AppError && error.code === ERROR_CODES.KOMGA.NOT_FOUND) {
         return null;
       }
       throw error;
@@ -371,14 +238,12 @@ export class KomgaProvider implements IMediaProvider {
   }
 
   async saveReadProgress(bookId: string, page: number | null, completed: boolean): Promise<void> {
-    const url = this.buildUrl(`books/${bookId}/read-progress`);
-    const headers = this.getHeaders({ "Content-Type": "application/json" });
-    const response = await fetch(url, {
-      method: "PATCH",
-      headers,
-      body: JSON.stringify({ page: page ?? 0, completed }),
-    });
-    if (!response.ok) {
+    try {
+      await this.fetch<void>(`books/${bookId}/read-progress`, undefined, {
+        method: "PATCH",
+        body: JSON.stringify({ page: page ?? 0, completed }),
+      });
+    } catch {
       throw new AppError(ERROR_CODES.BOOK.PROGRESS_UPDATE_ERROR);
     }
   }
@@ -582,25 +447,19 @@ export class KomgaProvider implements IMediaProvider {
   }
 
   async resetReadProgress(bookId: string): Promise<void> {
-    const url = this.buildUrl(`books/${bookId}/read-progress`);
-    const headers = this.getHeaders();
-    const response = await fetch(url, { method: "DELETE", headers });
-    if (!response.ok) {
+    try {
+      await this.fetch<void>(`books/${bookId}/read-progress`, undefined, {
+        method: "DELETE",
+      });
+    } catch {
       throw new AppError(ERROR_CODES.BOOK.PROGRESS_DELETE_ERROR);
     }
   }
 
   async scanLibrary(libraryId: string): Promise<ScanStartResult> {
-    const url = this.buildUrl(`libraries/${libraryId}/scan`);
-    const headers = this.getHeaders();
-    const response = await fetch(url, { method: "POST", headers });
-
-    if (!response.ok) {
-      throw new AppError(codeForHttpStatus(response.status, KOMGA_HTTP_CODES), {
-        status: response.status,
-        statusText: response.statusText,
-      });
-    }
+    await this.fetch<unknown>(`libraries/${libraryId}/scan`, undefined, {
+      method: "POST",
+    });
 
     // Komga 1.24.1 exposes no task-status endpoint: `TaskController` only clears
     // the queue (`DELETE /tasks`, admin) and the SSE task events are admin-only
