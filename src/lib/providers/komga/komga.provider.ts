@@ -306,10 +306,19 @@ export class KomgaProvider implements IMediaProvider {
   }
 
   async getSeriesById(seriesId: string): Promise<NormalizedSeries | null> {
-    const series = await this.fetch<KomgaSeries>(`series/${seriesId}`, undefined, {
-      revalidate: CACHE_TTL_MED,
-    });
-    return KomgaAdapter.toNormalizedSeries(series);
+    try {
+      const series = await this.fetch<KomgaSeries>(`series/${seriesId}`, undefined, {
+        revalidate: CACHE_TTL_MED,
+      });
+      return KomgaAdapter.toNormalizedSeries(series);
+    } catch (error) {
+      // L'interface promet `null` pour une série absente. Seul le 404 est une
+      // absence confirmée ; une panne doit continuer de remonter.
+      if (error instanceof AppError && error.code === KOMGA_HTTP_CODES.NOT_FOUND) {
+        return null;
+      }
+      throw error;
+    }
   }
 
   /**

@@ -39,7 +39,9 @@ import type {
   StripstreamSeriesRatingsResponse,
   StripstreamIndexJob,
 } from "@/types/stripstream";
-import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, SERIES_BOOKS_CACHE_TAG, SERIES_RATING_CACHE_TAG, SERIES_SHELF_CACHE_TAG, RATINGS_LIST_CACHE_TAG, STATS_CACHE_TAG } from "@/constants/cacheConstants";
+import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, SERIES_BOOKS_CACHE_TAG, SERIES_RATING_CACHE_TAG, SERIES_SHELF_CACHE_TAG, RATINGS_LIST_CACHE_TAG, STATS_CACHE_TAG, FAVORITES_CACHE_TAG } from "@/constants/cacheConstants";
+import { ERROR_CODES } from "@/constants/errorCodes";
+import { AppError } from "@/utils/errors";
 
 const CACHE_TTL_LONG = 300;
 const CACHE_TTL_MED = 120;
@@ -177,8 +179,12 @@ export class StripstreamProvider implements IMediaProvider {
         return this.enrichSeriesWithMetadata(normalized, resolved.series_id);
       }
       return null;
-    } catch {
-      return null;
+    } catch (error) {
+      // Même contrat que `fetchSeriesById` : absence confirmée uniquement.
+      if (error instanceof AppError && error.code === ERROR_CODES.STRIPSTREAM.NOT_FOUND) {
+        return null;
+      }
+      throw error;
     }
   }
 
@@ -189,8 +195,11 @@ export class StripstreamProvider implements IMediaProvider {
         undefined,
         { revalidate: CACHE_TTL_MED }
       );
-    } catch {
-      return null;
+    } catch (error) {
+      if (error instanceof AppError && error.code === ERROR_CODES.STRIPSTREAM.NOT_FOUND) {
+        return null;
+      }
+      throw error;
     }
   }
 
@@ -691,7 +700,7 @@ export class StripstreamProvider implements IMediaProvider {
   async getFavorites(): Promise<NormalizedSeries[]> {
     const favorites = await this.client.fetch<StripstreamSeriesItem[]>("favorites", undefined, {
       revalidate: CACHE_TTL_MED,
-      tags: ["favorites"],
+      tags: [FAVORITES_CACHE_TAG],
     });
     return favorites.map(StripstreamAdapter.toNormalizedSeries);
   }
@@ -699,7 +708,7 @@ export class StripstreamProvider implements IMediaProvider {
   async isFavorite(seriesId: string): Promise<boolean> {
     return this.client.fetch<boolean>(`series/${seriesId}/favorite`, undefined, {
       revalidate: CACHE_TTL_MED,
-      tags: ["favorites"],
+      tags: [FAVORITES_CACHE_TAG],
     });
   }
 
