@@ -90,6 +90,17 @@ read/unread/download actions and the one post-mutation refresh
 `src/components/series/book-card-view.ts` (pure labels and reading state);
 reading badge derivation: `src/lib/books/reading-status.ts`.
 
+## Series mutation
+
+The single client-side protocol for toggling a favorite or putting a series
+aside. It owns the optimistic value paired with the server baseline, the
+per-series pending lock, rollback, the toast (including the shelf undo), the
+`favoritesChanged` notification and the one `router.refresh()` per success.
+Surfaces call `useSeriesMutations`; the sidebar only subscribes through
+`src/lib/series/favorite-events.ts`. Owners:
+`src/contexts/SeriesMutationsContext.tsx` and
+`src/lib/series/favorite-events.ts`.
+
 ## Action result
 
 The discriminated result returned by server actions that use the action

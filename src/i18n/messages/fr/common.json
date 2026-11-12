@@ -448,6 +448,19 @@
       "error": "Impossible de désactiver le mode anonyme"
     }
   },
+  "seriesMutations": {
+    "favorite": {
+      "added": "Ajouté aux favoris",
+      "removed": "Retiré des favoris",
+      "error": "Impossible de modifier les favoris"
+    },
+    "shelf": {
+      "shelved": "Série mise de côté",
+      "resumed": "Série reprise",
+      "undo": "Annuler",
+      "error": "Impossible de modifier la mise de côté"
+    }
+  },
   "series": {
     "related": "Séries similaires",
     "matchReasons": {
