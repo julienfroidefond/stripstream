@@ -1,7 +1,6 @@
 import type { IMediaProvider } from "@/lib/providers/provider.interface";
 import type { NormalizedBook, NormalizedSeriesRating } from "@/lib/providers/types";
 import type { ReaderInfo } from "@/lib/reader/types";
-import { getActiveProviderType } from "@/lib/providers/provider.factory";
 import { resolveBookSeries } from "@/lib/resume/series-pool";
 import logger from "@/lib/logger";
 
@@ -86,15 +85,13 @@ async function getReaderSeriesRating(
   provider: IMediaProvider,
   seriesId: string | null
 ): Promise<NormalizedSeriesRating | null> {
-  // La notation n'est disponible que sur le provider Stripstream ; Komga
-  // renvoie toujours null (voir IMediaProvider#getSeriesRating).
   if (!seriesId) return null;
 
-  const providerType = await getActiveProviderType();
-  if (providerType !== "stripstream") return null;
+  const ratings = provider.capabilities.ratings;
+  if (!ratings) return null;
 
   try {
-    return await provider.getSeriesRating(seriesId);
+    return await ratings.getSeriesRating(seriesId);
   } catch (error) {
     logger.warn({ err: error, seriesId }, "Failed to fetch reader series rating");
     return null;

@@ -1,4 +1,9 @@
-import type { IMediaProvider, BookListFilter } from "../provider.interface";
+import {
+  createProviderCapabilities,
+  type IMediaProvider,
+  type BookListFilter,
+  type ProviderCapabilities,
+} from "../provider.interface";
 import logger from "@/lib/logger";
 import type {
   NormalizedLibrary,
@@ -51,12 +56,21 @@ const CACHE_TTL_MED = 120;
 const CACHE_TTL_SHORT = 30;
 
 export class StripstreamProvider implements IMediaProvider {
-  readonly supportsReadingLists = true;
+  readonly capabilities: ProviderCapabilities;
 
   private client: StripstreamClient;
 
   constructor(url: string, token: string) {
     this.client = createStripstreamClient(url, token);
+    this.capabilities = createProviderCapabilities({
+      readingLists: this,
+      search: this,
+      ratings: this,
+      shelf: this,
+      missingBooks: this,
+      discovery: this,
+      favorites: this,
+    });
   }
 
   async getLibraries(): Promise<NormalizedLibrary[]> {

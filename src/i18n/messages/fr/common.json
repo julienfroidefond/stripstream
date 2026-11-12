@@ -688,6 +688,7 @@
   "errors": {
     "PROVIDER_NOT_CONFIGURED": "Aucun fournisseur multimédia n'est configuré",
     "PROVIDER_UNAVAILABLE": "Cette page n'est pas disponible avec la connexion active.",
+    "PROVIDER_CAPABILITY_NOT_SUPPORTED": "Cette fonctionnalité n'est pas disponible avec ce fournisseur.",
     "MONGODB_MISSING_URI": "URI MongoDB manquante",
     "MONGODB_CONNECTION_FAILED": "Erreur lors de la connexion à MongoDB",
     "AUTH_UNAUTHENTICATED": "Non authentifié",

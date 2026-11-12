@@ -48,10 +48,10 @@ the `updateReadProgress` adapter).
 
 A curated, ordered set of series exposed by Stripstream Librarian only. The
 provider contract normalizes it to `NormalizedReadingList` (summary) and
-`NormalizedReadingListDetail` (series items); `supportsReadingLists` gates the
-dedicated page and Komga returns an empty collection. Preview covers are
-resolved to displayable URLs at the provider boundary. Status and totals owner:
-`src/lib/services/reading-lists.service.ts` (`getReadingListStatus`,
+`NormalizedReadingListDetail` (series items); the `readingLists` capability
+gates the dedicated page and Komga declares it absent (`null`). Preview covers
+are resolved to displayable URLs at the provider boundary. Status and totals
+owner: `src/lib/services/reading-lists.service.ts` (`getReadingListStatus`,
 `getReadingListTotals`).
 
 ## Preference write
@@ -69,12 +69,23 @@ commits the last slider value.
 The home hero built from the two feeds above. "Continue reading" is the
 surface; "resume state" is the data policy behind it.
 
+## Provider capability
+
+An optional backend feature declared by `IMediaProvider.capabilities`:
+`readingLists`, `search`, `ratings`, `shelf`, `missingBooks`, `discovery` or
+`favorites`. Each key holds the capability contract or `null`; callers read the
+declaration instead of inferring support from the connection type. An absent
+capability hides the surface (`loadSurface` reason `unsupported-capability`) or
+fails the action with its dedicated error code. Owner:
+`src/lib/providers/provider.interface.ts` (`MediaProviderCore`,
+`ProviderCapabilities`, `createProviderCapabilities`).
+
 ## Page surface
 
 A page's data-backed view plus the context it needs to render (active provider,
-provider type, preferences, anonymous mode). `loadSurface` resolves that
-context once and returns one of four terminal states: `ready`,
-`anonymous-empty`, `unavailable` or `error`. Owners:
+preferences, anonymous mode). `loadSurface` resolves that context once, checks
+the optional `requireCapability`, and returns one of four terminal states:
+`ready`, `anonymous-empty`, `unavailable` or `error`. Owners:
 `src/lib/surfaces/load-surface.ts` (Next wiring),
 `src/lib/surfaces/surface-loader.ts` (pure state machine) and
 `src/components/ui/SurfaceBoundary.tsx` (single terminal; pages render only

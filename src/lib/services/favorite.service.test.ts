@@ -26,7 +26,11 @@ import logger from "@/lib/logger";
 import { FavoriteService } from "./favorite.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
-import type { IMediaProvider } from "@/lib/providers/provider.interface";
+import {
+  createProviderCapabilities,
+  type IMediaProvider,
+  type ProviderCapabilities,
+} from "@/lib/providers/provider.interface";
 import type { NormalizedSeries } from "@/lib/providers/types";
 
 const db = prisma.favorite as unknown as {
@@ -40,13 +44,13 @@ function series(id: string): NormalizedSeries {
   return { id, name: `Série ${id}` } as NormalizedSeries;
 }
 
-function fakeProvider(overrides: Partial<IMediaProvider> = {}): IMediaProvider {
+function fakeProvider(
+  overrides: Partial<IMediaProvider> = {},
+  capabilities: Partial<ProviderCapabilities> = {}
+): IMediaProvider {
   return {
     getSeriesById: vi.fn(async (id: string) => series(id)),
-    getFavorites: vi.fn(async () => []),
-    isFavorite: vi.fn(async () => false),
-    addToFavorites: vi.fn(async () => undefined),
-    removeFromFavorites: vi.fn(async () => undefined),
+    capabilities: createProviderCapabilities(capabilities),
     ...overrides,
   } as unknown as IMediaProvider;
 }
@@ -130,11 +134,22 @@ describe("FavoriteService — store selection", () => {
     expect(db.create).toHaveBeenCalledWith({
       data: { userId: 1, seriesId: "x", provider: "komga", komgaConfigId: 7 },
     });
-    expect(provider.addToFavorites).not.toHaveBeenCalled();
+    expect(provider.capabilities.favorites).toBeNull();
   });
 
-  it("delegates Stripstream favorites to the backend and never touches SQLite", async () => {
-    const provider = fakeProvider();
+  it("delegates favorites to a provider that declares the capability", async () => {
+    const addToFavorites = vi.fn(async () => undefined);
+    const provider = fakeProvider(
+      {},
+      {
+        favorites: {
+          getFavorites: vi.fn(async () => []),
+          isFavorite: vi.fn(async () => false),
+          addToFavorites,
+          removeFromFavorites: vi.fn(async () => undefined),
+        },
+      }
+    );
     vi.mocked(getActiveConnection).mockResolvedValue({
       provider: "stripstream",
       configId: 9,
@@ -143,7 +158,7 @@ describe("FavoriteService — store selection", () => {
 
     await FavoriteService.addToFavorites("x");
 
-    expect(provider.addToFavorites).toHaveBeenCalledWith("x");
+    expect(addToFavorites).toHaveBeenCalledWith("x");
     expect(db.create).not.toHaveBeenCalled();
   });
 

@@ -53,7 +53,7 @@ export default async function RatingsPage({ searchParams }: RatingsPageProps) {
   const surface = await loadSurface({
     name: "ratings",
     fallbackCode: ERROR_CODES.SERIES.FETCH_ERROR,
-    requireProviderType: "stripstream",
+    requireCapability: "ratings",
     load: async ({ provider }) => {
       const allSeries = await getReadSeries(provider);
       const counts = countReadSeries(allSeries);

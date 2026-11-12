@@ -1,5 +1,5 @@
 import { redirect, unstable_rethrow } from "next/navigation";
-import { getActiveProviderType, getProvider } from "@/lib/providers/provider.factory";
+import { getProvider } from "@/lib/providers/provider.factory";
 import { PreferencesService } from "@/lib/services/preferences.service";
 import {
   loadSurfaceWithDependencies,
@@ -10,7 +10,6 @@ import {
 
 const dependencies: SurfaceLoaderDependencies = {
   getProvider,
-  getActiveProviderType,
   getPreferences: () => PreferencesService.getPreferences(),
   redirect: (url) => redirect(url),
   rethrow: (error) => unstable_rethrow(error),

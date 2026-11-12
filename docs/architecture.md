@@ -11,27 +11,36 @@ Stripstream is a comic-reader front end; it does **not** own the library. Each u
 
 ### The interface
 
-`IMediaProvider` is defined at `src/lib/providers/provider.interface.ts:27-105`. It covers:
+`IMediaProvider` (`src/lib/providers/provider.interface.ts`) is the composition of two contracts:
 
-- collections — `getLibraries`, `getLibraryById`, `getSeries`, `getSeriesById`, `getBooks`, `getBook`, `getNextBook`, `getMissingBooks`;
-- home feeds — the individual section methods (`getHomeContinueReadingData`, `getHomeOngoingSeries`, `getHomeLatestSeries`, `getHomeRecentlyRead`); `src/lib/home/feed-registry.ts` owns each row feed's loader and page rule, and both the page and `loadHomeFeed` consume it;
-- reading lists — `supportsReadingLists`, `getReadingLists`, `getReadingListDetail`; Stripstream-only, while Komga returns `false`, an empty list and `null`. The shared `NormalizedReadingList` / `NormalizedReadingListDetail` models carry displayable preview-cover URLs, so client components never import a provider adapter;
-- read progress — `getReadProgress`, `saveReadProgress`, `resetReadProgress`;
-- series ratings — Stripstream-only; Komga returns `null` / not-supported (`provider.interface.ts:68-71`);
-- series shelf — `isShelved`, `shelveSeries`, `unshelveSeries`; Stripstream-only, Komga returns `false` / not-supported;
-- admin/utility — `scanLibrary` (returns a `{ jobId, progressSupported }` handle), `getScanStatus` (follows that job, or `unavailable` when the backend cannot report it), `getRandomBook`;
-- related/recommended series — `getRelatedSeries`, `getRecommendations`;
-- favorites — `getFavorites`, `isFavorite`, `addToFavorites`, `removeFromFavorites`;
-- search — `search`;
-- connection test — `testConnection`;
-- URL builder that returns a local proxy URL — `getBookThumbnailUrl` (`provider.interface.ts:103-104`).
+- `MediaProviderCore` — what every backend must provide:
+  - collections — `getLibraries`, `getLibraryById`, `getSeries`, `getSeriesById`, `getBooks`, `getBook`, `getReadSeries`, `getNextBook`;
+  - home feeds — the individual section methods (`getHomeContinueReadingData`, `getHomeOngoingSeries`, `getHomeLatestSeries`, `getHomeRecentlyRead`); `src/lib/home/feed-registry.ts` owns each row feed's loader and page rule, and both the page and `loadHomeFeed` consume it;
+  - read progress — `getReadProgress`, `saveReadProgress`, `resetReadProgress`;
+  - admin/utility — `scanLibrary` (returns a `{ jobId, progressSupported }` handle), `getScanStatus` (follows that job, or `unavailable` when the backend cannot report it), `getRandomBook`;
+  - reading statistics — `getReadingStats`;
+  - connection test — `testConnection`;
+  - URL builder that returns a local proxy URL — `getBookThumbnailUrl`.
+- `ProviderCapabilities` — the optional features a backend declares explicitly. Each key holds the capability contract or `null`; it is never inferred from the connection type. `createProviderCapabilities(overrides)` builds the all-null baseline, and a provider implements a capability on itself (`capabilities = createProviderCapabilities({ search: this })`).
+
+| Capability | Contract | Komga | Stripstream |
+| --- | --- | --- | --- |
+| `readingLists` | `getReadingLists`, `getReadingListDetail` | `null` | yes |
+| `search` | `search` | yes | yes |
+| `ratings` | `getSeriesRating`, `setSeriesRating`, `deleteSeriesRating` | `null` | yes |
+| `shelf` | `getShelvedSeries`, `isShelved`, `shelveSeries`, `unshelveSeries` | `null` | yes |
+| `missingBooks` | `getMissingBooks` | `null` | yes |
+| `discovery` | `getRelatedSeries`, `getRecommendations` | `null` | yes |
+| `favorites` | `getFavorites`, `isFavorite`, `addToFavorites`, `removeFromFavorites` | `null` (local SQLite store) | yes |
+
+An absent capability is a first-class state, not a silently empty result: pages and feeds hide the feature or return the empty collection, server actions fail with their dedicated code (`SERIES_RATING_NOT_SUPPORTED`, `SERIES_SHELF_NOT_SUPPORTED`) and capability-gated API routes return `PROVIDER_CAPABILITY_NOT_SUPPORTED`. The shared `NormalizedReadingList` / `NormalizedReadingListDetail` models carry displayable preview-cover URLs, so client components never import a provider adapter.
 
 Concrete implementations:
 
-| Backend | Provider | Adapter / client |
-| --- | --- | --- |
-| Komga | `src/lib/providers/komga/komga.provider.ts` (`class KomgaProvider implements IMediaProvider`) | `src/lib/providers/komga/komga.adapter.ts` |
-| Stripstream | `src/lib/providers/stripstream/stripstream.provider.ts` | `src/lib/providers/stripstream/stripstream.adapter.ts`, `src/lib/providers/stripstream/stripstream.client.ts` |
+| Backend | Provider | Capabilities | Adapter / client |
+| --- | --- | --- | --- |
+| Komga | `src/lib/providers/komga/komga.provider.ts` (`class KomgaProvider implements IMediaProvider`) | `search` | `src/lib/providers/komga/komga.adapter.ts` |
+| Stripstream | `src/lib/providers/stripstream/stripstream.provider.ts` | all seven | `src/lib/providers/stripstream/stripstream.adapter.ts`, `src/lib/providers/stripstream/stripstream.client.ts` |
 
 Both backends normalize into shared types in `src/lib/providers/types.ts`; rating helpers live in `src/lib/providers/ratings.ts`.
 
@@ -81,12 +90,12 @@ The fallback is uniform: the requested provider's active config, otherwise its f
 
 ### Favorites scoping
 
-`Favorite` is scoped per `(userId, komgaConfigId | stripstreamConfigId, seriesId)`: the two mutually exclusive unique constraints are declared at `prisma/schema.prisma:110-111`, and `prisma/migrations/20260505000000_dedupe_favorites/migration.sql` deleted orphans, deduped per `(userId, seriesId)` (preferring the active config) and remapped survivors — the migration is explicitly idempotent. `FavoriteService` resolves the active `(provider, configId)` pair once (`src/lib/services/favorite.service.ts:160-172`) and picks an internal `FavoriteStore` (`:26-32`): `createKomgaStore` (`:80`) reads/writes SQLite, `createBackendStore` (`:146`) delegates to the provider API. Reads degrade (`false` / `[]`), writes throw (`ADD_ERROR` / `DELETE_ERROR`), and only a confirmed provider `null` prunes a Komga row (`:130-139`). SQLite favorites are not cached; Stripstream favorite fetches are tagged `FAVORITES_CACHE_TAG` in the provider (`stripstream.provider.ts:703,711`). This is why favorites do not leak across configs.
+`Favorite` is scoped per `(userId, komgaConfigId | stripstreamConfigId, seriesId)`: the two mutually exclusive unique constraints are declared at `prisma/schema.prisma:110-111`, and `prisma/migrations/20260505000000_dedupe_favorites/migration.sql` deleted orphans, deduped per `(userId, seriesId)` (preferring the active config) and remapped survivors — the migration is explicitly idempotent. `FavoriteService` resolves the active `(provider, configId)` pair once (`src/lib/services/favorite.service.ts`) and picks an internal `FavoriteStore`: when `provider.capabilities.favorites` is present, `createBackendStore` delegates to that contract; otherwise Komga keeps `createKomgaStore`, which reads/writes SQLite scoped to `komgaConfigId`. Reads degrade (`false` / `[]`), writes throw (`ADD_ERROR` / `DELETE_ERROR`), and only a confirmed provider `null` prunes a Komga row. SQLite favorites are not cached; Stripstream favorite fetches are tagged `FAVORITES_CACHE_TAG` in the provider. This is why favorites do not leak across configs.
 
 ## 2. Server-first data flow
 
 - Pages and layouts under `src/app/**/page.tsx` are React Server Components. The home page (`src/app/page.tsx`) resolves the provider server-side and fans out feed promises; other examples: `src/app/libraries/[libraryId]/page.tsx`, `src/app/series/[seriesId]/page.tsx`, `src/app/books/[bookId]/page.tsx`, `src/app/reading-lists/[id]/page.tsx`, `src/app/ratings/page.tsx` (read series → rating cards, Stripstream only, with search/filter/sort/pagination driven by URL search params and resolved server-side).
-- **Page gateway.** `loadSurface` (`src/lib/surfaces/load-surface.ts`) is the single entry resolver for data-backed pages: it resolves the active provider, provider type and preferences once, then returns `ready`, `anonymous-empty`, `unavailable` or `error`. The pure core is `loadSurfaceWithDependencies` (`src/lib/surfaces/surface-loader.ts`); `load-surface.ts` only wires the real Next dependencies and `unstable_rethrow`. `SurfaceBoundary` (`src/components/ui/SurfaceBoundary.tsx`) owns the terminal for all four states: each page supplies its `ready` renderer and only the terminal overrides it actually needs (`unavailable`, `anonymousEmpty`, `error`). The default error terminal uses the code resolved by the loader, so pages no longer repeat their `fallbackCode` branch. Options encode the page policy: `missingProvider: "unavailable"` renders the home welcome instead of redirecting, `anonymous: "empty"` skips the in-progress fetch, `requireProviderType: "stripstream"` gates ratings, and the reading-list detail maps unavailable to `notFound()`. Next control-flow errors (redirects, not-found, dynamic bailout) are rethrown before the loader maps a business error.
+- **Page gateway.** `loadSurface` (`src/lib/surfaces/load-surface.ts`) is the single entry resolver for data-backed pages: it resolves the active provider and preferences once, then returns `ready`, `anonymous-empty`, `unavailable` or `error`. The pure core is `loadSurfaceWithDependencies` (`src/lib/surfaces/surface-loader.ts`); `load-surface.ts` only wires the real Next dependencies and `unstable_rethrow`. `SurfaceBoundary` (`src/components/ui/SurfaceBoundary.tsx`) owns the terminal for all four states: each page supplies its `ready` renderer and only the terminal overrides it actually needs (`unavailable`, `anonymousEmpty`, `error`). The default error terminal uses the code resolved by the loader, so pages no longer repeat their `fallbackCode` branch. Options encode the page policy: `missingProvider: "unavailable"` renders the home welcome instead of redirecting, `anonymous: "empty"` skips the in-progress fetch, `requireCapability: "ratings"` gates ratings with the `unsupported-capability` reason, and the reading-list detail maps unavailable to `notFound()`. Next control-flow errors (redirects, not-found, dynamic bailout) are rethrown before the loader maps a business error.
 - Mutations are Next.js server actions in `src/app/actions/` — 14 files: `admin.ts`, `auth.ts`, `books.ts`, `config.ts`, `favorites.ts`, `home.ts`, `library.ts`, `password.ts`, `preferences.ts`, `ratings.ts`, `read-progress.ts`, `refresh.ts`, `series-shelf.ts`, `stripstream-config.ts`.
 - **Action runner.** `runAction` / `runProviderAction` (`src/lib/actions/action-runner.ts`) is the single wrapper for server actions that return an `ActionResult`: session/rate-limit gates, optional anonymous short-circuit, provider resolution, one invalidation after success, and error mapping. `ActionError` carries a stable `ErrorCode`, an optional user message and partial data (for example `updated`/`total` after a partial series update). Successes return `code: "OK"`; failures return `success: false` plus the error code. The provider mutations and both config action files use the runner; `getScanStatus` deliberately stays outside it because it degrades to `unavailable` instead of failing.
 - Client components (`"use client"`) are reserved for browser-only concerns: event handlers, refs, effects, DOM APIs. Do not add client-side `fetch` to internal APIs where a server action exists.

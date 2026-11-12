@@ -31,7 +31,7 @@ export default async function LibraryPage({ params, searchParams }: PageProps) {
   const surface = await loadSurface({
     name: "library",
     fallbackCode: ERROR_CODES.SERIES.FETCH_ERROR,
-    load: async ({ provider, providerType, preferences }) => {
+    load: async ({ provider, preferences }) => {
       const isCompact = preferences.displayMode?.compact ?? false;
 
       // Utiliser le paramètre d'URL s'il existe, sinon utiliser la préférence utilisateur
@@ -48,7 +48,7 @@ export default async function LibraryPage({ params, searchParams }: PageProps) {
             ? false
             : undefined;
 
-      const canSortByRating = providerType === "stripstream";
+      const canSortByRating = provider.capabilities.ratings !== null;
       // Si l'utilisateur a sauvegardé "community_score" puis basculé sur Komga
       // (qui ne supporte pas ce tri), on retombe sur le tri par titre.
       const safeSort =

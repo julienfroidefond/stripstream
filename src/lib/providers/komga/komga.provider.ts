@@ -1,4 +1,9 @@
-import type { IMediaProvider, BookListFilter } from "../provider.interface";
+import {
+  createProviderCapabilities,
+  type IMediaProvider,
+  type BookListFilter,
+  type ProviderCapabilities,
+} from "../provider.interface";
 import type {
   NormalizedLibrary,
   NormalizedSeries,
@@ -7,11 +12,7 @@ import type {
   NormalizedSearchResult,
   NormalizedSeriesPage,
   NormalizedBooksPage,
-  NormalizedMissingBook,
-  NormalizedSeriesRating,
   NormalizedReadingStats,
-  NormalizedReadingList,
-  NormalizedReadingListDetail,
   ScanStartResult,
   ScanStatus,
 } from "../types";
@@ -40,7 +41,7 @@ const CACHE_TTL_MED = 120;
 const CACHE_TTL_SHORT = 30;
 
 export class KomgaProvider implements IMediaProvider {
-  readonly supportsReadingLists = false;
+  readonly capabilities: ProviderCapabilities;
 
   private config: AuthConfig;
   private transport: ProviderTransport;
@@ -50,6 +51,7 @@ export class KomgaProvider implements IMediaProvider {
     this.transport = new ProviderTransport(
       createKomgaTransportPolicy(this.config.serverUrl, authHeader)
     );
+    this.capabilities = createProviderCapabilities({ search: this });
   }
 
   private fetch<T>(
@@ -225,11 +227,6 @@ export class KomgaProvider implements IMediaProvider {
     };
   }
 
-  // Komga ne gère pas les shelves : la pause de lecture n'existe pas.
-  async getShelvedSeries(_limit = 200): Promise<NormalizedSeries[]> {
-    return [];
-  }
-
   async getReadProgress(bookId: string): Promise<NormalizedReadProgress | null> {
     const book = await this.fetch<KomgaBook>(`books/${bookId}`, undefined, {
       revalidate: CACHE_TTL_SHORT,
@@ -246,36 +243,6 @@ export class KomgaProvider implements IMediaProvider {
     } catch {
       throw new AppError(ERROR_CODES.BOOK.PROGRESS_UPDATE_ERROR);
     }
-  }
-
-  // Komga ne gère pas la notation de séries — l'UI est masquée côté page
-  // (getActiveProviderType() === "stripstream"). Ces méthodes ne devraient
-  // jamais être appelées en pratique.
-  async getSeriesRating(_seriesId: string): Promise<NormalizedSeriesRating | null> {
-    return null;
-  }
-
-  async setSeriesRating(_seriesId: string, _rating: number): Promise<void> {
-    throw new AppError(ERROR_CODES.SERIES.RATING_NOT_SUPPORTED);
-  }
-
-  async deleteSeriesRating(_seriesId: string): Promise<void> {
-    throw new AppError(ERROR_CODES.SERIES.RATING_NOT_SUPPORTED);
-  }
-
-  // Komga ne gère pas la mise de côté des séries — l'UI est masquée côté page
-  // (getActiveProviderType() === "stripstream"). Ces méthodes ne devraient
-  // jamais être appelées en pratique.
-  async isShelved(_seriesId: string): Promise<boolean> {
-    return false;
-  }
-
-  async shelveSeries(_seriesId: string): Promise<void> {
-    throw new AppError(ERROR_CODES.SERIES.SHELF_NOT_SUPPORTED);
-  }
-
-  async unshelveSeries(_seriesId: string): Promise<void> {
-    throw new AppError(ERROR_CODES.SERIES.SHELF_NOT_SUPPORTED);
   }
 
   async search(query: string, limit = 6): Promise<NormalizedSearchResult[]> {
@@ -339,10 +306,6 @@ export class KomgaProvider implements IMediaProvider {
       }
       return null;
     }
-  }
-
-  async getMissingBooks(): Promise<NormalizedMissingBook[]> {
-    return [];
   }
 
   async getHomeContinueReadingData(limit = 10): Promise<Pick<HomePrimaryData, "ongoingBooks" | "onDeck">> {
@@ -438,14 +401,6 @@ export class KomgaProvider implements IMediaProvider {
     )();
   }
 
-  async getReadingLists(): Promise<NormalizedReadingList[]> {
-    return [];
-  }
-
-  async getReadingListDetail(): Promise<NormalizedReadingListDetail | null> {
-    return null;
-  }
-
   async resetReadProgress(bookId: string): Promise<void> {
     try {
       await this.fetch<void>(`books/${bookId}/read-progress`, undefined, {
@@ -537,30 +492,6 @@ export class KomgaProvider implements IMediaProvider {
       { method: "POST", body: JSON.stringify({ condition }), tags: [STATS_CACHE_TAG] }
     );
     return response.totalElements;
-  }
-
-  async getRelatedSeries(_seriesId: string, _limit?: number): Promise<NormalizedSeries[]> {
-    return [];
-  }
-
-  async getRecommendations(_limit?: number): Promise<NormalizedSeries[]> {
-    return [];
-  }
-
-  async getFavorites(): Promise<NormalizedSeries[]> {
-    return [];
-  }
-
-  async isFavorite(_seriesId: string): Promise<boolean> {
-    return false;
-  }
-
-  async addToFavorites(_seriesId: string): Promise<void> {
-    throw new Error("Favorites are managed locally for Komga");
-  }
-
-  async removeFromFavorites(_seriesId: string): Promise<void> {
-    throw new Error("Favorites are managed locally for Komga");
   }
 
   async testConnection(): Promise<{ ok: boolean; error?: string; libraryCount?: number }> {

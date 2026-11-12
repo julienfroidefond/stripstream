@@ -3,6 +3,7 @@
 import { invalidateSeriesShelf } from "@/lib/cache/invalidation";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import {
+  ActionError,
   runProviderAction,
   type ActionResult,
 } from "@/lib/actions/action-runner";
@@ -20,10 +21,12 @@ async function updateShelf(
     logContext: { seriesId, shelved, libraryId },
     invalidate: () => invalidateSeriesShelf(seriesId, libraryId),
     execute: async ({ provider }) => {
+      const shelf = provider.capabilities.shelf;
+      if (!shelf) throw new ActionError(ERROR_CODES.SERIES.SHELF_NOT_SUPPORTED);
       if (shelved) {
-        await provider.shelveSeries(seriesId);
+        await shelf.shelveSeries(seriesId);
       } else {
-        await provider.unshelveSeries(seriesId);
+        await shelf.unshelveSeries(seriesId);
       }
       return { message: shelved ? "Série mise de côté" : "Série reprise" };
     },

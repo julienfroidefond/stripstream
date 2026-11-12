@@ -8,9 +8,9 @@ export default async function ReadingListsPage() {
     name: "reading-lists",
     fallbackCode: ERROR_CODES.STRIPSTREAM.CONNECTION_ERROR,
     load: async ({ provider }) => {
-      const available = provider.supportsReadingLists;
-      const lists = available ? await provider.getReadingLists() : [];
-      return { lists, available };
+      const readingLists = provider.capabilities.readingLists;
+      const lists = readingLists ? await readingLists.getReadingLists() : [];
+      return { lists, available: readingLists !== null };
     },
   });
 

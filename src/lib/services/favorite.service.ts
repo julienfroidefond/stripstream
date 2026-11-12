@@ -5,7 +5,10 @@ import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
 import { isConnectionError } from "../../utils/http-error";
 import { getProvider } from "@/lib/providers/provider.factory";
-import type { IMediaProvider } from "@/lib/providers/provider.interface";
+import type {
+  FavoritesCapability,
+  IMediaProvider,
+} from "@/lib/providers/provider.interface";
 import type { NormalizedSeries } from "@/lib/providers/types";
 import type { Prisma } from "@/generated/prisma/client";
 import logger from "@/lib/logger";
@@ -143,16 +146,16 @@ function createKomgaStore(
   };
 }
 
-function createBackendStore(provider: IMediaProvider): FavoriteStore {
+function createBackendStore(favorites: FavoritesCapability): FavoriteStore {
   return {
     async listIds() {
-      const favorites = await provider.getFavorites();
-      return favorites.map((series) => series.id);
+      const series = await favorites.getFavorites();
+      return series.map((item) => item.id);
     },
-    isFavorite: (seriesId) => provider.isFavorite(seriesId),
-    add: (seriesId) => provider.addToFavorites(seriesId),
-    remove: (seriesId) => provider.removeFromFavorites(seriesId),
-    list: () => provider.getFavorites(),
+    isFavorite: (seriesId) => favorites.isFavorite(seriesId),
+    add: (seriesId) => favorites.addToFavorites(seriesId),
+    remove: (seriesId) => favorites.removeFromFavorites(seriesId),
+    list: () => favorites.getFavorites(),
   };
 }
 
@@ -178,11 +181,16 @@ export class FavoriteService {
    */
   private static async resolveStore(ctx: ActiveContext): Promise<FavoriteStore | null> {
     const provider = await getProvider();
-    if (ctx.provider === "stripstream") {
-      return provider ? createBackendStore(provider) : null;
+    const favorites = provider?.capabilities.favorites ?? null;
+    if (favorites) return createBackendStore(favorites);
+
+    // Komga ne déclare pas de favoris backend : ils restent dans la table
+    // locale, scoped à la config. Un autre provider sans capacité n'a pas de
+    // repli local.
+    if (ctx.provider === "komga" && ctx.configId !== null) {
+      return createKomgaStore(ctx.userId, ctx.configId, provider);
     }
-    if (ctx.configId === null) return null;
-    return createKomgaStore(ctx.userId, ctx.configId, provider);
+    return null;
   }
 
   static async isFavorite(seriesId: string): Promise<boolean> {

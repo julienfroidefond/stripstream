@@ -23,7 +23,9 @@ export async function setSeriesRating(
     },
     invalidate: () => invalidateSeriesRating(seriesId),
     execute: async ({ provider }) => {
-      await provider.setSeriesRating(seriesId, rating);
+      const ratings = provider.capabilities.ratings;
+      if (!ratings) throw new ActionError(ERROR_CODES.SERIES.RATING_NOT_SUPPORTED);
+      await ratings.setSeriesRating(seriesId, rating);
       return { message: "Note enregistrée" };
     },
   });
@@ -36,7 +38,9 @@ export async function deleteSeriesRating(seriesId: string): Promise<ActionResult
     logContext: { seriesId },
     invalidate: () => invalidateSeriesRating(seriesId),
     execute: async ({ provider }) => {
-      await provider.deleteSeriesRating(seriesId);
+      const ratings = provider.capabilities.ratings;
+      if (!ratings) throw new ActionError(ERROR_CODES.SERIES.RATING_NOT_SUPPORTED);
+      await ratings.deleteSeriesRating(seriesId);
       return { message: "Note supprimée" };
     },
   });

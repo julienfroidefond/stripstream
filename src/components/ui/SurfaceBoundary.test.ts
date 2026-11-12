@@ -17,7 +17,6 @@ import {
 
 const context: SurfaceContext = {
   provider: { id: "provider" } as unknown as IMediaProvider,
-  providerType: "komga",
   preferences: defaultPreferences,
   isAnonymous: false,
 };
@@ -31,10 +30,10 @@ describe("SurfaceBoundary", () => {
     const markup = renderBoundary({
       surface: { status: "ready", data: { value: 42 }, context },
       ready: (data, surfaceContext) =>
-        createElement("p", null, `${data.value}:${surfaceContext.providerType}`),
+        createElement("p", null, `${data.value}:${surfaceContext.isAnonymous}`),
     });
 
-    expect(markup).toBe("<p>42:komga</p>");
+    expect(markup).toBe("<p>42:false</p>");
   });
 
   it("renders the default error terminal with the gateway code", () => {
@@ -64,7 +63,7 @@ describe("SurfaceBoundary", () => {
       ready: () => "ready",
     });
     const unsupported = renderBoundary<never>({
-      surface: { status: "unavailable", reason: "unsupported-provider" },
+      surface: { status: "unavailable", reason: "unsupported-capability" },
       ready: () => "ready",
     });
 
@@ -105,7 +104,7 @@ describe("SurfaceBoundary", () => {
   it("never calls ready for a terminal surface", () => {
     const ready = vi.fn(() => "ready");
     const surfaces: SurfaceResult<never>[] = [
-      { status: "unavailable", reason: "unsupported-provider" },
+      { status: "unavailable", reason: "unsupported-capability" },
       { status: "anonymous-empty", context },
       { status: "error", code: ERROR_CODES.SERIES.FETCH_ERROR },
     ];
