@@ -1,6 +1,6 @@
 import { LibraryClientWrapper } from "./LibraryClientWrapper";
 import { LibraryContent } from "./LibraryContent";
-import { ErrorMessage } from "@/components/ui/ErrorMessage";
+import { SurfaceBoundary } from "@/components/ui/SurfaceBoundary";
 import { AppError } from "@/utils/errors";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { normalizeGridPageSize } from "@/lib/pageSize";
@@ -82,31 +82,24 @@ export default async function LibraryPage({ params, searchParams }: PageProps) {
     },
   });
 
-  if (surface.status !== "ready") {
-    return (
-      <main className="container mx-auto px-4 py-8">
-        <ErrorMessage
-          errorCode={surface.status === "error" ? surface.code : ERROR_CODES.SERIES.FETCH_ERROR}
-        />
-      </main>
-    );
-  }
-
-  const data = surface.data;
-
   return (
-    <LibraryClientWrapper libraryId={libraryId}>
-      <LibraryContent
-        library={data.library}
-        series={data.seriesPage}
-        currentPage={currentPage}
-        preferences={data.preferences}
-        unreadOnly={data.unreadOnly}
-        pageSize={data.effectivePageSize}
-        sort={data.safeSort}
-        hasMissing={data.hasMissing}
-        canSortByRating={data.canSortByRating}
-      />
-    </LibraryClientWrapper>
+    <SurfaceBoundary
+      surface={surface}
+      ready={(data) => (
+        <LibraryClientWrapper libraryId={libraryId}>
+          <LibraryContent
+            library={data.library}
+            series={data.seriesPage}
+            currentPage={currentPage}
+            preferences={data.preferences}
+            unreadOnly={data.unreadOnly}
+            pageSize={data.effectivePageSize}
+            sort={data.safeSort}
+            hasMissing={data.hasMissing}
+            canSortByRating={data.canSortByRating}
+          />
+        </LibraryClientWrapper>
+      )}
+    />
   );
 }

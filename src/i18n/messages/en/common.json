@@ -671,6 +671,7 @@
   },
   "errors": {
     "PROVIDER_NOT_CONFIGURED": "No media provider is configured",
+    "PROVIDER_UNAVAILABLE": "This page is not available with the active connection.",
     "MONGODB_MISSING_URI": "MongoDB URI missing",
     "MONGODB_CONNECTION_FAILED": "MongoDB connection failed",
     "AUTH_UNAUTHENTICATED": "Unauthenticated",

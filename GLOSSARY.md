@@ -75,8 +75,10 @@ A page's data-backed view plus the context it needs to render (active provider,
 provider type, preferences, anonymous mode). `loadSurface` resolves that
 context once and returns one of four terminal states: `ready`,
 `anonymous-empty`, `unavailable` or `error`. Owners:
-`src/lib/surfaces/load-surface.ts` (Next wiring) and
-`src/lib/surfaces/surface-loader.ts` (pure state machine).
+`src/lib/surfaces/load-surface.ts` (Next wiring),
+`src/lib/surfaces/surface-loader.ts` (pure state machine) and
+`src/components/ui/SurfaceBoundary.tsx` (single terminal; pages render only
+`ready` and override the terminal they need).
 
 ## Action result
 

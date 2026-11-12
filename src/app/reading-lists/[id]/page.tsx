@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { ERROR_CODES } from "@/constants/errorCodes";
+import { SurfaceBoundary } from "@/components/ui/SurfaceBoundary";
 import { loadSurface } from "@/lib/surfaces/load-surface";
 import { ReadingListContent } from "./ReadingListContent";
 
@@ -17,7 +18,15 @@ export default async function ReadingListPage({ params }: PageProps) {
     load: ({ provider }) => provider.getReadingListDetail(id),
   });
 
-  if (surface.status !== "ready" || !surface.data) notFound();
-
-  return <ReadingListContent detail={surface.data} />;
+  return (
+    <SurfaceBoundary
+      surface={surface}
+      unavailable={() => notFound()}
+      error={() => notFound()}
+      ready={(detail) => {
+        if (!detail) notFound();
+        return <ReadingListContent detail={detail} />;
+      }}
+    />
+  );
 }
