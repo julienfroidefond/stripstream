@@ -9,7 +9,6 @@ export interface BackgroundPreferences {
   komgaLibraries?: string[]; // IDs des bibliothèques Komga sélectionnées
 }
 
-export type FitMode = "fit" | "width" | "height" | "original";
 export type ReadingDirection = "ltr" | "rtl";
 export type ReaderBackground = "default" | "black" | "white" | "cream";
 export type SortOrder = "title" | "latest" | "community_score";
@@ -30,7 +29,6 @@ export interface UserPreferences {
   readerPrefetchCount: number;
   readingDirection: ReadingDirection;
   readerBackground: ReaderBackground;
-  readerFitMode: FitMode;
   readerDoublePageMode: boolean;
   /** Animation de tourné de page dans le lecteur. */
   readerPageTurn: boolean;
@@ -57,7 +55,6 @@ export const defaultPreferences: UserPreferences = {
   readerPrefetchCount: 5,
   readingDirection: "ltr",
   readerBackground: "default",
-  readerFitMode: "fit",
   readerDoublePageMode: false,
   readerPageTurn: true,
   defaultSortOrder: "title",

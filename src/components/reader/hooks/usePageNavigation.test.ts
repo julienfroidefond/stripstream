@@ -94,6 +94,16 @@ describe("usePageNavigation", () => {
       expect(result.current.currentPage).toBe(1);
     });
 
+    it("clamps saved progress to the last page", () => {
+      const book = makeBook({
+        readProgress: { page: 99, completed: false, lastReadAt: null },
+      });
+
+      const { result } = renderNav({ book });
+
+      expect(result.current.currentPage).toBe(5);
+    });
+
     it("ignores saved progress in anonymous mode", () => {
       hoisted.anonymous.value = true;
       const book = makeBook({

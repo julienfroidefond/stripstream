@@ -44,6 +44,15 @@ the final flush. Navigation emits `track(page)` intents. Owners:
 `src/components/reader/hooks/useReadProgressSession.ts` (React lifecycle and
 the `updateReadProgress` adapter).
 
+## Page navigation
+
+The reader's movement policy: the initial page, the landing page of a
+previous/next gesture (single or double page), the start-of-book bump, the
+end-of-book fallback to the next book or the end message, and guarded page
+jumps. Owner: `src/lib/reader/page-navigation.ts` (pure policy);
+`src/components/reader/hooks/usePageNavigation.ts` is the React/router adapter.
+The reader always fits the page; the legacy `readerFitMode` column is not read.
+
 ## Reading list
 
 A curated, ordered set of series exposed by Stripstream Librarian only. The

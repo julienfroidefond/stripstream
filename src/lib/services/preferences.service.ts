@@ -46,7 +46,6 @@ export class PreferencesService {
         readerPrefetchCount: preferences.readerPrefetchCount,
         readingDirection: (preferences.readingDirection as UserPreferences["readingDirection"]) ?? defaultPreferences.readingDirection,
         readerBackground: (preferences.readerBackground as UserPreferences["readerBackground"]) ?? defaultPreferences.readerBackground,
-        readerFitMode: (preferences.readerFitMode as UserPreferences["readerFitMode"]) ?? defaultPreferences.readerFitMode,
         readerDoublePageMode: preferences.readerDoublePageMode,
         readerPageTurn: preferences.readerPageTurn,
         defaultSortOrder: (preferences.defaultSortOrder as UserPreferences["defaultSortOrder"]) ?? defaultPreferences.defaultSortOrder,
@@ -88,8 +87,6 @@ export class PreferencesService {
         updateData.readingDirection = preferences.readingDirection;
       if (preferences.readerBackground !== undefined)
         updateData.readerBackground = preferences.readerBackground;
-      if (preferences.readerFitMode !== undefined)
-        updateData.readerFitMode = preferences.readerFitMode;
       if (preferences.readerDoublePageMode !== undefined)
         updateData.readerDoublePageMode = preferences.readerDoublePageMode;
       if (preferences.readerPageTurn !== undefined)
@@ -115,7 +112,6 @@ export class PreferencesService {
           readerPrefetchCount: preferences.readerPrefetchCount ?? 5,
           readingDirection: preferences.readingDirection ?? defaultPreferences.readingDirection,
           readerBackground: preferences.readerBackground ?? defaultPreferences.readerBackground,
-          readerFitMode: preferences.readerFitMode ?? defaultPreferences.readerFitMode,
           readerDoublePageMode: preferences.readerDoublePageMode ?? defaultPreferences.readerDoublePageMode,
           readerPageTurn: preferences.readerPageTurn ?? defaultPreferences.readerPageTurn,
           defaultSortOrder: preferences.defaultSortOrder ?? defaultPreferences.defaultSortOrder,
@@ -138,7 +134,6 @@ export class PreferencesService {
         readerPrefetchCount: updatedPreferences.readerPrefetchCount,
         readingDirection: (updatedPreferences.readingDirection as UserPreferences["readingDirection"]) ?? defaultPreferences.readingDirection,
         readerBackground: (updatedPreferences.readerBackground as UserPreferences["readerBackground"]) ?? defaultPreferences.readerBackground,
-        readerFitMode: (updatedPreferences.readerFitMode as UserPreferences["readerFitMode"]) ?? defaultPreferences.readerFitMode,
         readerDoublePageMode: updatedPreferences.readerDoublePageMode,
         readerPageTurn: updatedPreferences.readerPageTurn,
         defaultSortOrder: (updatedPreferences.defaultSortOrder as UserPreferences["defaultSortOrder"]) ?? defaultPreferences.defaultSortOrder,

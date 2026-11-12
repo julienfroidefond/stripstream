@@ -803,13 +803,6 @@
         "white": "White",
         "cream": "Cream"
       },
-      "fitMode": {
-        "current": "Fit mode: {{mode}}",
-        "fit": "fit page",
-        "width": "fit width",
-        "height": "fit height",
-        "original": "original size"
-      },
       "info": "Book information",
       "close": "Close",
       "previousPage": "Previous page",
