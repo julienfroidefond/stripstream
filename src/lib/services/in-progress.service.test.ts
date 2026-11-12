@@ -244,6 +244,7 @@ function makeProvider(options: {
     ongoingBooks: NormalizedBook[];
     onDeck: NormalizedBook[];
   }>;
+  shelf?: boolean;
 } = {}) {
   const getShelvedSeries = vi.fn(options.shelved ?? (async () => []));
   const provider = {
@@ -252,12 +253,15 @@ function makeProvider(options: {
       options.continueReading ?? (async () => ({ ongoingBooks: [], onDeck: [] }))
     ),
     capabilities: createProviderCapabilities({
-      shelf: {
-        getShelvedSeries,
-        isShelved: vi.fn(async () => false),
-        shelveSeries: vi.fn(async () => undefined),
-        unshelveSeries: vi.fn(async () => undefined),
-      },
+      shelf:
+        options.shelf === false
+          ? null
+          : {
+              getShelvedSeries,
+              isShelved: vi.fn(async () => false),
+              shelveSeries: vi.fn(async () => undefined),
+              unshelveSeries: vi.fn(async () => undefined),
+            },
     }),
   } as unknown as IMediaProvider;
 
@@ -329,6 +333,18 @@ describe("getInProgressItems", () => {
     const items = await getInProgressItems(provider);
 
     expect(items.map((item) => item.series.id)).toEqual(["s1"]);
+  });
+
+  it("ignores the shelved feed when the provider has no shelf capability", async () => {
+    const { provider, getShelvedSeries } = makeProvider({
+      ongoing: async () => [series("s1")],
+      shelf: false,
+    });
+
+    const items = await getInProgressItems(provider);
+
+    expect(items.map((item) => item.series.id)).toEqual(["s1"]);
+    expect(getShelvedSeries).not.toHaveBeenCalled();
   });
 
   it("surfaces a failure of the ongoing series feed", async () => {
