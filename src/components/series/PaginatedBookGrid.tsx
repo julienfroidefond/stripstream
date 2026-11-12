@@ -26,7 +26,6 @@ interface PaginatedBookGridProps {
   pageSize: number;
   initialCompact: boolean;
   initialViewMode: "grid" | "list";
-  onRefresh?: () => void;
   missingBooks?: NormalizedMissingBook[];
 }
 
@@ -40,7 +39,6 @@ export function PaginatedBookGrid({
   pageSize,
   initialCompact,
   initialViewMode,
-  onRefresh,
   missingBooks = [],
 }: PaginatedBookGridProps) {
   const router = useRouter();
@@ -133,14 +131,12 @@ export function PaginatedBookGrid({
             books={specialBooks}
             onBookClick={handleBookClick}
             isCompact={isCompact}
-            onRefresh={onRefresh}
           />
         ) : (
           <BookList
             books={specialBooks}
             onBookClick={handleBookClick}
             isCompact={isCompact}
-            onRefresh={onRefresh}
           />
         )}
       </div>
@@ -182,14 +178,12 @@ export function PaginatedBookGrid({
           books={displayBooks}
           onBookClick={handleBookClick}
           isCompact={isCompact}
-          onRefresh={onRefresh}
         />
       ) : (
         <BookList
           books={displayBooks}
           onBookClick={handleBookClick}
           isCompact={isCompact}
-          onRefresh={onRefresh}
         />
       )}
     </CollectionShell>

@@ -6,46 +6,9 @@ import { MarkAsReadButton } from "./mark-as-read-button";
 import { MarkAsUnreadButton } from "./mark-as-unread-button";
 import { useTranslate } from "@/hooks/useTranslate";
 import { useCoverLoaded } from "@/hooks/useCoverLoaded";
-import { cn, formatDate } from "@/lib/utils";
+import { getBookReadingStatusInfo } from "@/lib/books/reading-status";
+import { cn } from "@/lib/utils";
 import { useAnonymous } from "@/contexts/AnonymousContext";
-
-// Fonction utilitaire pour obtenir les informations de statut de lecture
-export const getBookReadingStatusInfo = (
-  book: BookCoverProps["book"],
-  t: (key: string, options?: { [key: string]: string | number }) => string
-) => {
-  if (!book.readProgress) {
-    return {
-      label: t("books.status.unread"),
-      className: "bg-amber-400/90 text-amber-950",
-    };
-  }
-
-  if (book.readProgress.completed) {
-    const readDate = book.readProgress.lastReadAt ? formatDate(book.readProgress.lastReadAt) : null;
-    return {
-      label: readDate ? t("books.status.readDate", { date: readDate }) : t("books.status.read"),
-      className: "bg-emerald-400/90 text-emerald-950",
-    };
-  }
-
-  const currentPage = book.readProgress?.page ?? 0;
-
-  if (currentPage > 0) {
-    return {
-      label: t("books.status.progress", {
-        current: currentPage,
-        total: book.pageCount,
-      }),
-      className: "bg-teal-400/90 text-teal-950",
-    };
-  }
-
-  return {
-    label: t("books.status.unread"),
-    className: "bg-amber-400/90 text-amber-950",
-  };
-};
 
 export function BookCover(props: BookCoverProps) {
   return <BookCoverContent {...props} />;
