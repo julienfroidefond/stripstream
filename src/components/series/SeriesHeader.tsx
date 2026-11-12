@@ -9,7 +9,6 @@ import { useToast } from "@/components/ui/use-toast";
 import { RefreshButton } from "@/components/library/RefreshButton";
 import { AppError } from "@/utils/errors";
 import { ERROR_CODES } from "@/constants/errorCodes";
-import { getErrorMessage } from "@/utils/errors";
 import { useTranslate } from "@/hooks/useTranslate";
 import { SeriesCover } from "@/components/ui/series-cover";
 import { getSeriesReadingStatusLabel } from "@/components/ui/series-reading-status";
@@ -30,10 +29,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import logger from "@/lib/logger";
-import { addToFavorites, removeFromFavorites } from "@/app/actions/favorites";
-import { shelveSeries, unshelveSeries } from "@/app/actions/series-shelf";
 import { updateSeriesReadStatus } from "@/app/actions/read-progress";
 import { useAnonymous } from "@/contexts/AnonymousContext";
+import { useSeriesMutations } from "@/contexts/SeriesMutationsContext";
 import { SeriesRatingControl } from "./SeriesRatingControl";
 import type { NormalizedProviderRating } from "@/lib/providers/types";
 import { ProjectionBackdrop } from "@/components/ui/projection-backdrop";
@@ -66,9 +64,11 @@ export const SeriesHeader = ({
   const router = useRouter();
   const { toast } = useToast();
   const { isAnonymous } = useAnonymous();
-  const [isFavorite, setIsFavorite] = useState(initialIsFavorite);
-  const [isShelved, setIsShelved] = useState(initialIsShelved);
-  const [isShelfPending, setIsShelfPending] = useState(false);
+  const mutations = useSeriesMutations();
+  const isFavorite = mutations.isFavorite(series.id, initialIsFavorite);
+  const isShelved = mutations.isShelved(series.id, initialIsShelved);
+  const isFavoritePending = mutations.isFavoritePending(series.id);
+  const isShelfPending = mutations.isShelfPending(series.id);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [bulkAction, setBulkAction] = useState<null | "read" | "unread">(null);
   const [isConfirmUnreadOpen, setIsConfirmUnreadOpen] = useState(false);
@@ -80,91 +80,28 @@ export const SeriesHeader = ({
   const fly = reduce ? {} : { "data-hero-fly": "" };
   const item = reduce ? {} : { "data-hero-item": "" };
 
-  const handleToggleFavorite = async (event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleToggleFavorite = async (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
     // Capturé tout de suite : `currentTarget` n'existe plus après l'`await`.
     const button = event.currentTarget;
-    try {
-      const action = isFavorite ? removeFromFavorites : addToFavorites;
-      const result = await action(series.id);
+    const added = await mutations.toggleFavorite(series, isFavorite);
+    if (added === null) return;
 
-      if (result.success) {
-        setIsFavorite(!isFavorite);
-        // L'icône change de composant au rendu suivant : on l'anime après.
-        const adding = !isFavorite;
-        requestAnimationFrame(() => {
-          const icon = button.querySelector("svg");
-          if (adding) {
-            pop(icon, 1.5);
-            burst(button, { color: "rgb(250 204 21)", count: 12 });
-          } else {
-            nudge(icon);
-          }
-        });
-        // Dispatcher l'événement avec le seriesId pour mise à jour optimiste de la sidebar
-        const event = new CustomEvent("favoritesChanged", {
-          detail: {
-            seriesId: series.id,
-            action: isFavorite ? "remove" : "add",
-            series: isFavorite ? undefined : series,
-          },
-        });
-        window.dispatchEvent(event);
-        // Force le client à re-fetch le layout (avec cache invalidé par revalidateTag).
-        // Sans ça, initialFavorites côté Sidebar reste stale et écrase l'optimistic update.
-        router.refresh();
-        toast({
-          title: t(isFavorite ? "series.header.favorite.remove" : "series.header.favorite.add"),
-          description: series.name,
-        });
+    // L'icône change de composant au rendu suivant : on l'anime après.
+    requestAnimationFrame(() => {
+      const icon = button.querySelector("svg");
+      if (added) {
+        pop(icon, 1.5);
+        burst(button, { color: "rgb(250 204 21)", count: 12 });
       } else {
-        throw new AppError(
-          isFavorite ? ERROR_CODES.FAVORITE.DELETE_ERROR : ERROR_CODES.FAVORITE.ADD_ERROR
-        );
+        nudge(icon);
       }
-    } catch (error) {
-      logger.error({ err: error }, "Erreur lors de la modification des favoris:");
-      toast({
-        title: "Erreur",
-        description:
-          error instanceof AppError
-            ? error.message
-            : getErrorMessage(ERROR_CODES.FAVORITE.NETWORK_ERROR),
-        variant: "destructive",
-      });
-    }
+    });
   };
 
   const handleToggleShelf = async () => {
-    setIsShelfPending(true);
-    try {
-      const action = isShelved ? unshelveSeries : shelveSeries;
-      const result = await action(series.id, series.libraryId);
-
-      if (!result.success) {
-        throw new AppError(ERROR_CODES.SERIES.SHELF_ERROR);
-      }
-
-      setIsShelved(!isShelved);
-      router.refresh();
-      toast({
-        title: t(
-          isShelved ? "series.header.shelf.resumed" : "series.header.shelf.shelved"
-        ),
-        description: series.name,
-      });
-    } catch (error) {
-      logger.error({ err: error }, "Erreur lors de la modification de la mise de côté:");
-      toast({
-        title: "Erreur",
-        description:
-          error instanceof AppError
-            ? error.message
-            : getErrorMessage(ERROR_CODES.SERIES.SHELF_ERROR),
-        variant: "destructive",
-      });
-    } finally {
-      setIsShelfPending(false);
-    }
+    await mutations.setShelf(series, !isShelved);
   };
 
   const handleBulkReadStatus = async (read: boolean) => {
@@ -375,6 +312,7 @@ export const SeriesHeader = ({
                 size="icon"
                 icon={isFavorite ? Star : StarOff}
                 onClick={handleToggleFavorite}
+                disabled={isFavoritePending}
                 tooltip={t(
                   isFavorite ? "series.header.favorite.remove" : "series.header.favorite.add"
                 )}

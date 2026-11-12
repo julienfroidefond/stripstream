@@ -21,8 +21,6 @@ import {
   Shuffle,
   TrendingUp,
 } from "lucide-react";
-import { addToFavorites, removeFromFavorites } from "@/app/actions/favorites";
-import { shelveSeries, unshelveSeries } from "@/app/actions/series-shelf";
 import { CollectionToolbar } from "@/components/common/CollectionToolbar";
 import { FilterChips } from "@/components/common/FilterChips";
 import { PageHeader } from "@/components/common/PageHeader";
@@ -31,12 +29,14 @@ import { SortMenu, type SortMenuOption } from "@/components/common/SortMenu";
 import { StaggerGroup, StaggerItem } from "@/components/motion";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
-import { ToastAction } from "@/components/ui/toast";
 import { useToast } from "@/components/ui/use-toast";
 import { useAnonymous } from "@/contexts/AnonymousContext";
+import {
+  useFavoriteSet,
+  useSeriesMutations,
+} from "@/contexts/SeriesMutationsContext";
 import { useTranslate } from "@/hooks/useTranslate";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
-import logger from "@/lib/logger";
 import {
   DEFAULT_IN_PROGRESS_SORT,
   filterInProgressItems,
@@ -71,12 +71,6 @@ const FILTERS: Array<{
   { value: "paused", icon: PauseCircle, labelKey: "inProgress.filters.paused" },
 ];
 
-interface FavoriteOverridesState {
-  /** Signature de la liste serveur sur laquelle portent les overrides. */
-  base: string;
-  values: Map<string, boolean>;
-}
-
 export function InProgressContent({
   items,
   favoriteIds,
@@ -86,18 +80,12 @@ export function InProgressContent({
   const { toast } = useToast();
   const { t } = useTranslate();
   const { isAnonymous, toggleAnonymous } = useAnonymous();
+  const mutations = useSeriesMutations();
+  const favoriteSet = useFavoriteSet(favoriteIds);
   const reduceMotion = usePrefersReducedMotion();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<InProgressFilter>("all");
   const [sort, setSort] = useState<InProgressSort>(DEFAULT_IN_PROGRESS_SORT);
-  const favoriteIdsKey = useMemo(
-    () => [...favoriteIds].sort().join("|"),
-    [favoriteIds]
-  );
-  const [favoriteOverrides, setFavoriteOverrides] = useState<FavoriteOverridesState>(
-    () => ({ base: favoriteIdsKey, values: new Map() })
-  );
-  const [shelvingIds, setShelvingIds] = useState<Set<string>>(() => new Set());
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [isDisablingAnonymous, startAnonymousTransition] = useTransition();
   const scrollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -109,33 +97,6 @@ export function InProgressContent({
       if (highlightTimer.current) clearTimeout(highlightTimer.current);
     };
   }, []);
-
-  // Les overrides ne valent que pour la liste serveur qui les a vus naître :
-  // après un router.refresh, la nouvelle liste reprend naturellement la main.
-  const favoriteSet = useMemo(() => {
-    const set = new Set(favoriteIds);
-    if (favoriteOverrides.base !== favoriteIdsKey) return set;
-    for (const [seriesId, value] of favoriteOverrides.values) {
-      if (value) set.add(seriesId);
-      else set.delete(seriesId);
-    }
-    return set;
-  }, [favoriteIds, favoriteIdsKey, favoriteOverrides]);
-
-  const setFavoriteOverride = useCallback(
-    (seriesId: string, value: boolean | null) => {
-      setFavoriteOverrides((current) => {
-        const values =
-          current.base === favoriteIdsKey
-            ? new Map(current.values)
-            : new Map<string, boolean>();
-        if (value === null) values.delete(seriesId);
-        else values.set(seriesId, value);
-        return { base: favoriteIdsKey, values };
-      });
-    },
-    [favoriteIdsKey]
-  );
 
   const handleQueryChange = useCallback((value: string) => {
     setQuery(value);
@@ -196,155 +157,28 @@ export function InProgressContent({
   );
 
   const handleToggleFavorite = useCallback(
-    async (item: InProgressItem) => {
+    (item: InProgressItem) => {
       if (isAnonymous) return;
-
-      const nextValue = !favoriteSet.has(item.series.id);
-      setFavoriteOverride(item.series.id, nextValue);
-
-      try {
-        const result = nextValue
-          ? await addToFavorites(item.series.id)
-          : await removeFromFavorites(item.series.id);
-
-        if (!result.success) {
-          setFavoriteOverride(item.series.id, null);
-          toast({
-            title: t("inProgress.favorite.error"),
-            description: result.message,
-            variant: "destructive",
-          });
-          return;
-        }
-
-        window.dispatchEvent(
-          new CustomEvent("favoritesChanged", {
-            detail: {
-              seriesId: item.series.id,
-              action: nextValue ? "add" : "remove",
-              series: nextValue ? item.series : undefined,
-            },
-          })
-        );
-        toast({
-          title: t(
-            nextValue ? "inProgress.favorite.added" : "inProgress.favorite.removed"
-          ),
-          description: item.series.name,
-        });
-        router.refresh();
-      } catch (error) {
-        logger.error({ err: error }, "Erreur lors de la modification des favoris:");
-        setFavoriteOverride(item.series.id, null);
-        toast({
-          title: t("inProgress.favorite.error"),
-          description: item.series.name,
-          variant: "destructive",
-        });
-      }
+      void mutations.toggleFavorite(
+        item.series,
+        favoriteSet.has(item.series.id)
+      );
     },
-    [favoriteSet, isAnonymous, router, setFavoriteOverride, t, toast]
-  );
-
-  const handleUnshelve = useCallback(
-    async (item: InProgressItem) => {
-      if (isAnonymous || !canShelve || shelvingIds.has(item.series.id)) return;
-
-      setShelvingIds((current) => new Set(current).add(item.series.id));
-      try {
-        const result = await unshelveSeries(item.series.id, item.series.libraryId);
-        if (!result.success) {
-          toast({
-            title: t("inProgress.shelf.error"),
-            description: result.message,
-            variant: "destructive",
-          });
-          return;
-        }
-
-        toast({
-          title: t("inProgress.shelf.resumed"),
-          description: item.series.name,
-        });
-        router.refresh();
-      } catch (error) {
-        logger.error({ err: error }, "Erreur lors de la reprise de la série:");
-        toast({
-          title: t("inProgress.shelf.error"),
-          description: item.series.name,
-          variant: "destructive",
-        });
-      } finally {
-        setShelvingIds((current) => {
-          const next = new Set(current);
-          next.delete(item.series.id);
-          return next;
-        });
-      }
-    },
-    [canShelve, isAnonymous, router, shelvingIds, t, toast]
-  );
-
-  const handleShelve = useCallback(
-    async (item: InProgressItem) => {
-      if (isAnonymous || !canShelve || shelvingIds.has(item.series.id)) return;
-
-      setShelvingIds((current) => new Set(current).add(item.series.id));
-      try {
-        const result = await shelveSeries(item.series.id, item.series.libraryId);
-        if (!result.success) {
-          toast({
-            title: t("inProgress.shelf.error"),
-            description: result.message,
-            variant: "destructive",
-          });
-          return;
-        }
-
-        toast({
-          title: t("inProgress.shelf.shelved"),
-          description: item.series.name,
-          action: (
-            <ToastAction
-              altText={t("inProgress.shelf.undo")}
-              onClick={() => void handleUnshelve(item)}
-            >
-              {t("inProgress.shelf.undo")}
-            </ToastAction>
-          ),
-        });
-        router.refresh();
-      } catch (error) {
-        logger.error({ err: error }, "Erreur lors de la mise de côté de la série:");
-        toast({
-          title: t("inProgress.shelf.error"),
-          description: item.series.name,
-          variant: "destructive",
-        });
-      } finally {
-        setShelvingIds((current) => {
-          const next = new Set(current);
-          next.delete(item.series.id);
-          return next;
-        });
-      }
-    },
-    [
-      canShelve,
-      handleUnshelve,
-      isAnonymous,
-      router,
-      shelvingIds,
-      t,
-      toast,
-    ]
+    [favoriteSet, isAnonymous, mutations]
   );
 
   const handleToggleShelf = useCallback(
     (item: InProgressItem) => {
-      void (item.series.shelvedAt ? handleUnshelve(item) : handleShelve(item));
+      if (isAnonymous || !canShelve) return;
+      const currentlyShelved = mutations.isShelved(
+        item.series.id,
+        item.series.shelvedAt != null
+      );
+      void mutations.setShelf(item.series, !currentlyShelved, {
+        undo: !currentlyShelved,
+      });
     },
-    [handleShelve, handleUnshelve]
+    [canShelve, isAnonymous, mutations]
   );
 
   const handleDisableAnonymous = useCallback(() => {
@@ -512,8 +346,11 @@ export function InProgressContent({
                     onToggleFavorite={() => void handleToggleFavorite(item)}
                     highlighted={highlightedId === item.series.id}
                     canShelve={canShelve}
-                    isShelved={item.series.shelvedAt != null}
-                    isShelving={shelvingIds.has(item.series.id)}
+                    isShelved={mutations.isShelved(
+                      item.series.id,
+                      item.series.shelvedAt != null
+                    )}
+                    isShelving={mutations.isShelfPending(item.series.id)}
                     onToggleShelf={() => handleToggleShelf(item)}
                   />
                 </StaggerItem>

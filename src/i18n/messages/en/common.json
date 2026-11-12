@@ -443,6 +443,19 @@
       "error": "Could not turn off anonymous mode"
     }
   },
+  "seriesMutations": {
+    "favorite": {
+      "added": "Added to favorites",
+      "removed": "Removed from favorites",
+      "error": "Could not update favorites"
+    },
+    "shelf": {
+      "shelved": "Series set aside",
+      "resumed": "Series resumed",
+      "undo": "Undo",
+      "error": "Could not update the series shelf"
+    }
+  },
   "series": {
     "related": "Similar series",
     "matchReasons": {

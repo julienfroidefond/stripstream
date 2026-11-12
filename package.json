@@ -1,6 +1,6 @@
 {
   "name": "stripstream",
-  "version": "1.66.24",
+  "version": "1.66.25",
   "private": true,
   "scripts": {
     "dev": "next dev",
