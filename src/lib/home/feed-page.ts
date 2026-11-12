@@ -1,7 +1,45 @@
+import type {
+  NormalizedBook,
+  NormalizedReadingList,
+  NormalizedSeries,
+} from "@/lib/providers/types";
+
+/** Les flux de l'accueil qui alimentent une rangée paginée. */
+export type HomeFeed =
+  | "ongoing"
+  | "favorites"
+  | "reading-lists"
+  | "latest-series"
+  | "recently-read"
+  | "recommendations";
+
+/** Type d'élément rendu par chaque flux. */
+export interface HomeFeedItems {
+  ongoing: NormalizedSeries;
+  favorites: NormalizedSeries;
+  "reading-lists": NormalizedReadingList;
+  "latest-series": NormalizedSeries;
+  "recently-read": NormalizedBook;
+  recommendations: NormalizedSeries;
+}
+
+/** Type d'élément rendu par un flux, ou union de tous les flux par défaut. */
+export type HomeFeedItem<F extends HomeFeed = HomeFeed> = HomeFeedItems[F];
+
 /** Une page d'un flux de l'accueil. */
 export interface FeedPage<T> {
   items: T[];
   hasMore: boolean;
+}
+
+/** Une page typée par le flux qui l'a produite. */
+export type HomeFeedPage<F extends HomeFeed = HomeFeed> = FeedPage<
+  HomeFeedItems[F]
+>;
+
+/** Page vide, utilisée quand aucun provider n'est disponible. */
+export function emptyFeedPage<T>(): FeedPage<T> {
+  return { items: [], hasMore: false };
 }
 
 /**

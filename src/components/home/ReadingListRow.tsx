@@ -17,9 +17,10 @@ import { CountUp, Magnetic, ProgressFill } from "@/components/motion";
 
 interface ReadingListRowProps {
   lists: NormalizedReadingList[];
+  initialHasMore?: boolean;
 }
 
-export function ReadingListRow({ lists }: ReadingListRowProps) {
+export function ReadingListRow({ lists, initialHasMore }: ReadingListRowProps) {
   const router = useRouter();
 
   const handleOpenList = useCallback(
@@ -34,6 +35,7 @@ export function ReadingListRow({ lists }: ReadingListRowProps) {
       titleKey="home.sections.reading_lists"
       icon={Bookmark}
       initialItems={lists}
+      initialHasMore={initialHasMore}
       feed="reading-lists"
       testId="home-reading-lists"
       viewModeKey="home-reading-lists-view-mode"

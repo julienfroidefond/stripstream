@@ -12,16 +12,22 @@ import { SeriesSpotlightSlide } from "@/components/ui/series-spotlight-slide";
 import { BookSpotlightSlide } from "@/components/ui/book-spotlight-slide";
 import { useAnonymous } from "@/contexts/AnonymousContext";
 import { FeedRow } from "@/components/home/FeedRow";
-import type { HomeFeed } from "@/app/actions/home";
+import type { HomeFeed, HomeFeedItem } from "@/lib/home/feed-page";
 import { GlowLayer, usePointerGlow } from "@/components/motion";
+
+type MediaFeed = Extract<
+  HomeFeed,
+  "ongoing" | "favorites" | "latest-series" | "recently-read"
+>;
 
 interface MediaRowProps {
   titleKey: string;
-  items: (NormalizedSeries | NormalizedBook)[];
+  items: HomeFeedItem<MediaFeed>[];
+  initialHasMore?: boolean;
   iconName?: string;
   featuredHeader?: boolean;
   testId?: string;
-  feed: HomeFeed;
+  feed: MediaFeed;
 }
 
 const iconMap = {
@@ -37,7 +43,7 @@ function isSeries(item: NormalizedSeries | NormalizedBook): item is NormalizedSe
   return "bookCount" in item;
 }
 
-export function MediaRow({ titleKey, items, iconName, featuredHeader = false, testId, feed }: MediaRowProps) {
+export function MediaRow({ titleKey, items, initialHasMore, iconName, featuredHeader = false, testId, feed }: MediaRowProps) {
   const router = useRouter();
   const { t } = useTranslate();
   const icon = iconName ? iconMap[iconName as keyof typeof iconMap] : undefined;
@@ -54,6 +60,7 @@ export function MediaRow({ titleKey, items, iconName, featuredHeader = false, te
       titleKey={titleKey}
       icon={icon}
       initialItems={items}
+      initialHasMore={initialHasMore}
       feed={feed}
       testId={testId}
       featuredHeader={featuredHeader}

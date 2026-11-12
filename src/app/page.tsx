@@ -19,7 +19,8 @@ import { ReadingListRow } from "@/components/home/ReadingListRow";
 import { DeferredRecommendations } from "@/components/home/DeferredRecommendations";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { ERROR_CODES } from "@/constants/errorCodes";
-import { FavoriteService } from "@/lib/services/favorite.service";
+import { emptyFeedPage, type HomeFeedPage } from "@/lib/home/feed-page";
+import { loadHomeFeedPage } from "@/lib/home/feed-registry";
 import { loadSurface } from "@/lib/surfaces/load-surface";
 import { Bookmark, Heart, History, LibraryBig, Sparkles } from "lucide-react";
 import type { IMediaProvider } from "@/lib/providers/provider.interface";
@@ -65,18 +66,25 @@ async function HomeStreamingContent() {
         null
       );
       const ongoingPromise = settleHomeFeed(
-        provider.getHomeOngoingSeries(HOMEPAGE_INITIAL_QUERY_LIMIT),
-        []
+        loadHomeFeedPage(provider, "ongoing", 0),
+        emptyFeedPage<NormalizedSeries>()
       );
-      const favoritesPromise = FavoriteService.listFavorites().catch(() => []);
-      const readingListsPromise = settleHomeFeed(provider.getReadingLists(), []);
+      const favoritesPromise = loadHomeFeedPage(
+        provider,
+        "favorites",
+        0
+      ).catch(() => emptyFeedPage<NormalizedSeries>());
+      const readingListsPromise = settleHomeFeed(
+        loadHomeFeedPage(provider, "reading-lists", 0),
+        emptyFeedPage<NormalizedReadingList>()
+      );
       const latestSeriesPromise = settleHomeFeed(
-        provider.getHomeLatestSeries(HOMEPAGE_INITIAL_QUERY_LIMIT),
-        []
+        loadHomeFeedPage(provider, "latest-series", 0),
+        emptyFeedPage<NormalizedSeries>()
       );
       const recentlyReadPromise = settleHomeFeed(
-        provider.getHomeRecentlyRead(HOMEPAGE_INITIAL_QUERY_LIMIT),
-        []
+        loadHomeFeedPage(provider, "recently-read", 0),
+        emptyFeedPage<NormalizedBook>()
       );
 
       return {
@@ -167,7 +175,7 @@ interface ContinueReadingSectionProps {
   continueReadingPromise: Promise<
     HomeFeedState<Pick<HomePrimaryData, "ongoingBooks" | "onDeck"> | null>
   >;
-  ongoingPromise: Promise<HomeFeedState<NormalizedSeries[]>>;
+  ongoingPromise: Promise<HomeFeedState<HomeFeedPage<"ongoing">>>;
   isAnonymous: boolean;
 }
 
@@ -184,7 +192,7 @@ async function ContinueReadingSection({
     ongoingPromise,
   ]);
   const continueReadingData = continueReadingState.data;
-  const ongoing = ongoingState.data;
+  const ongoing = ongoingState.data.items;
 
   if (!continueReadingData) return null;
 
@@ -206,7 +214,7 @@ async function ContinueReadingSection({
 }
 
 interface OngoingSectionProps {
-  ongoingPromise: Promise<HomeFeedState<NormalizedSeries[]>>;
+  ongoingPromise: Promise<HomeFeedState<HomeFeedPage<"ongoing">>>;
   isAnonymous: boolean;
 }
 
@@ -214,26 +222,32 @@ async function OngoingSection({ ongoingPromise, isAnonymous }: OngoingSectionPro
   if (isAnonymous) return null;
 
   const ongoing = (await ongoingPromise).data;
-  if (ongoing.length === 0) return null;
+  if (ongoing.items.length === 0) return null;
 
   return (
     <MediaRow
       titleKey="home.sections.continue_series"
-      items={ongoing}
+      items={ongoing.items}
+      initialHasMore={ongoing.hasMore}
       iconName="LibraryBig"
       feed="ongoing"
     />
   );
 }
 
-async function FavoritesSection({ favoritesPromise }: { favoritesPromise: Promise<NormalizedSeries[]> }) {
+async function FavoritesSection({
+  favoritesPromise,
+}: {
+  favoritesPromise: Promise<HomeFeedPage<"favorites">>;
+}) {
   const favorites = await favoritesPromise;
-  if (favorites.length === 0) return null;
+  if (favorites.items.length === 0) return null;
 
   return (
     <MediaRow
       titleKey="home.sections.favorites"
-      items={favorites}
+      items={favorites.items}
+      initialHasMore={favorites.hasMore}
       iconName="Heart"
       feed="favorites"
     />
@@ -243,26 +257,32 @@ async function FavoritesSection({ favoritesPromise }: { favoritesPromise: Promis
 async function ReadingListsSection({
   readingListsPromise,
 }: {
-  readingListsPromise: Promise<HomeFeedState<NormalizedReadingList[]>>;
+  readingListsPromise: Promise<HomeFeedState<HomeFeedPage<"reading-lists">>>;
 }) {
   const readingLists = (await readingListsPromise).data;
-  if (readingLists.length === 0) return null;
+  if (readingLists.items.length === 0) return null;
 
-  return <ReadingListRow lists={readingLists} />;
+  return (
+    <ReadingListRow
+      lists={readingLists.items}
+      initialHasMore={readingLists.hasMore}
+    />
+  );
 }
 
 async function LatestSeriesSection({
   latestSeriesPromise,
 }: {
-  latestSeriesPromise: Promise<HomeFeedState<NormalizedSeries[]>>;
+  latestSeriesPromise: Promise<HomeFeedState<HomeFeedPage<"latest-series">>>;
 }) {
   const latestSeries = (await latestSeriesPromise).data;
-  if (latestSeries.length === 0) return null;
+  if (latestSeries.items.length === 0) return null;
 
   return (
     <MediaRow
       titleKey="home.sections.latest_series"
-      items={latestSeries}
+      items={latestSeries.items}
+      initialHasMore={latestSeries.hasMore}
       iconName="Sparkles"
       feed="latest-series"
     />
@@ -272,15 +292,16 @@ async function LatestSeriesSection({
 async function RecentlyReadSection({
   recentlyReadPromise,
 }: {
-  recentlyReadPromise: Promise<HomeFeedState<NormalizedBook[]>>;
+  recentlyReadPromise: Promise<HomeFeedState<HomeFeedPage<"recently-read">>>;
 }) {
   const recentlyRead = (await recentlyReadPromise).data;
-  if (recentlyRead.length === 0) return null;
+  if (recentlyRead.items.length === 0) return null;
 
   return (
     <MediaRow
       titleKey="home.sections.recently_added"
-      items={recentlyRead}
+      items={recentlyRead.items}
+      initialHasMore={recentlyRead.hasMore}
       iconName="History"
       feed="recently-read"
     />
