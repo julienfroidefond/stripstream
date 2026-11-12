@@ -4,10 +4,11 @@ import { useEffect, useState, useTransition } from "react";
 import { loadHomeFeed } from "@/app/actions/home";
 import { HomeRecommendationSkeleton } from "@/components/home/HomeContent";
 import { RecommendationsRow } from "@/components/home/RecommendationsRow";
+import type { FeedPage } from "@/lib/home/feed-page";
 import type { NormalizedSeries } from "@/lib/providers/types";
 
 export function DeferredRecommendations({ isAnonymous }: { isAnonymous: boolean }) {
-  const [feed, setFeed] = useState<{ items: NormalizedSeries[]; hasMore: boolean } | null>(null);
+  const [feed, setFeed] = useState<FeedPage<NormalizedSeries> | null>(null);
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -15,7 +16,7 @@ export function DeferredRecommendations({ isAnonymous }: { isAnonymous: boolean 
 
     startTransition(async () => {
       const result = await loadHomeFeed("recommendations", 0).catch(() => ({ items: [], hasMore: false }));
-      setFeed({ items: result.items as NormalizedSeries[], hasMore: result.hasMore });
+      setFeed(result);
     });
   }, [isAnonymous]);
 

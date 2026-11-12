@@ -2,7 +2,8 @@
 
 import { useCallback, type ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
-import { loadHomeFeed, type HomeFeed } from "@/app/actions/home";
+import { loadHomeFeed } from "@/app/actions/home";
+import type { HomeFeed, HomeFeedItem } from "@/lib/home/feed-page";
 import { useFeedPagination } from "@/hooks/useFeedPagination";
 import {
   useCarouselViewMode,
@@ -24,18 +25,18 @@ export interface FeedRowSlide {
   content: ReactNode;
 }
 
-interface FeedRowProps<T> {
+interface FeedRowProps<F extends HomeFeed> {
   titleKey: string;
   icon?: LucideIcon;
-  initialItems: readonly T[];
+  initialItems: readonly HomeFeedItem<F>[];
   /** Force `hasMore` quand la première page vient d'un chargement client. */
   initialHasMore?: boolean;
-  feed: HomeFeed;
+  feed: F;
   viewModeKey: string;
   defaultViewMode?: CarouselViewMode;
-  getKey: (item: T) => string;
-  renderSlide: (item: T) => FeedRowSlide;
-  renderCard: (item: T) => ReactNode;
+  getKey: (item: HomeFeedItem<F>) => string;
+  renderSlide: (item: HomeFeedItem<F>) => FeedRowSlide;
+  renderCard: (item: HomeFeedItem<F>) => ReactNode;
   testId?: string;
   featuredHeader?: boolean;
 }
@@ -47,7 +48,7 @@ interface FeedRowProps<T> {
  * rail/spotlight et le pied « Voir plus ». Chaque rangée ne fournit que son
  * flux, ses clés et les rendus d'une carte et d'une diapositive.
  */
-export function FeedRow<T>({
+export function FeedRow<F extends HomeFeed>({
   titleKey,
   icon,
   initialItems,
@@ -60,23 +61,20 @@ export function FeedRow<T>({
   renderCard,
   testId,
   featuredHeader = false,
-}: FeedRowProps<T>) {
+}: FeedRowProps<F>) {
   const { t } = useTranslate();
   const { viewMode, toggleViewMode } = useCarouselViewMode(viewModeKey, {
     defaultMode: defaultViewMode,
   });
 
   const loadPage = useCallback(
-    async (offset: number) => {
-      const page = await loadHomeFeed(feed, offset);
-      // Le flux fixe le type d'élément à l'exécution ; la rangée le précise
-      // par son renderer.
-      return { items: page.items as T[], hasMore: page.hasMore };
-    },
+    (offset: number) => loadHomeFeed(feed, offset),
     [feed]
   );
 
-  const { items, hasMore, isPending, loadMore } = useFeedPagination<T>({
+  const { items, hasMore, isPending, loadMore } = useFeedPagination<
+    HomeFeedItem<F>
+  >({
     initialItems,
     initialHasMore,
     pageSize: HOME_FEED_PAGE_SIZE,
