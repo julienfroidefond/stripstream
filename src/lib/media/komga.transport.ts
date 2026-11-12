@@ -1,116 +1,162 @@
-import { KomgaBookService } from "@/lib/services/komga/book.service";
-import { KomgaImageService } from "@/lib/services/komga/image.service";
-import { KomgaSeriesService } from "@/lib/services/komga/series.service";
+import { ERROR_CODES } from "@/constants/errorCodes";
+import { requireConnectionForProvider, type KomgaConnection } from "@/lib/connections";
+import { createKomgaTransportPolicy } from "@/lib/providers/komga/komga.transport-policy";
+import { ProviderTransport } from "@/lib/providers/provider-transport";
+import { imageRequestLimiter } from "@/lib/services/image-request-limiter";
+import { PreferencesService } from "@/lib/services/preferences.service";
 import { requestDeduplicationService } from "@/lib/services/request-deduplication.service";
+import { AppError } from "@/utils/errors";
 
 import { komgaPagePath, komgaPageThumbnailPath } from "./komga-paths";
+import {
+  bufferMediaResponse,
+  FILE_ACCEPT,
+  FILE_TIMEOUT_MS,
+  IMAGE_ACCEPT,
+  IMAGE_TIMEOUT_MS,
+  rebuildMediaResponse,
+  THUMBNAIL_TIMEOUT_MS,
+  validatorFingerprint,
+} from "./media-fetch";
 import type { MediaRef, MediaTransport, MediaTransportContext } from "./types";
 
-interface PagePayload {
-  status: number;
-  buffer: ArrayBuffer | null;
-  contentType: string | null;
-  etag: string | null;
-  lastModified: string | null;
+function createTransport(config: KomgaConnection): ProviderTransport {
+  return new ProviderTransport(
+    createKomgaTransportPolicy(config.url, config.authHeader)
+  );
 }
 
-function readCookie(cookieHeader: string | null, name: string): string | null {
-  if (!cookieHeader) return null;
-  for (const entry of cookieHeader.split(";")) {
-    const [key, ...rest] = entry.trim().split("=");
-    if (key === name) return rest.join("=") || null;
-  }
-  return null;
-}
-
-function conditionalKey(headers: Headers): string {
-  return (
-    headers.get("if-none-match") ??
-    headers.get("if-modified-since") ??
-    "none"
+function streamImage(
+  transport: ProviderTransport,
+  path: string,
+  context: MediaTransportContext,
+  timeoutMs: number
+): Promise<Response> {
+  return imageRequestLimiter.run(() =>
+    transport.response(path, undefined, {
+      accept: IMAGE_ACCEPT,
+      conditionalHeaders: context.headers,
+      timeoutMs,
+      allowNotModified: true,
+      errorCode: ERROR_CODES.IMAGE.FETCH_ERROR,
+    })
   );
 }
 
 async function fetchPagePayload(
+  transport: ProviderTransport,
+  config: KomgaConnection,
   ref: Extract<MediaRef, { kind: "book-page" }>,
   context: MediaTransportContext
-): Promise<PagePayload> {
-  const activeConfig =
-    readCookie(context.headers.get("cookie"), "stripstream-active-komga-config") ??
-    "default";
+) {
   const key = [
     "komga-book-page",
-    activeConfig,
+    String(config.configId ?? config.url),
     ref.bookId,
     ref.pageNumber,
-    conditionalKey(context.headers),
+    validatorFingerprint(context.headers),
   ].join(":");
 
   return requestDeduplicationService.deduplicate(key, async () => {
-    const response = await KomgaImageService.streamImage(
+    const response = await streamImage(
+      transport,
       komgaPagePath(ref.bookId, ref.pageNumber),
-      undefined,
-      context.headers
+      context,
+      IMAGE_TIMEOUT_MS
     );
-
-    if (response.status === 304) {
-      return {
-        status: 304,
-        buffer: null,
-        contentType: null,
-        etag: response.headers.get("etag"),
-        lastModified: response.headers.get("last-modified"),
-      };
-    }
-
-    return {
-      status: response.status,
-      buffer: await response.arrayBuffer(),
-      contentType: response.headers.get("content-type"),
-      etag: response.headers.get("etag"),
-      lastModified: response.headers.get("last-modified"),
-    };
+    return bufferMediaResponse(response);
   });
 }
 
-function pageResponse(payload: PagePayload): Response {
-  const headers = new Headers();
-  if (payload.contentType) headers.set("Content-Type", payload.contentType);
-  if (payload.etag) headers.set("ETag", payload.etag);
-  if (payload.lastModified) headers.set("Last-Modified", payload.lastModified);
-
-  if (payload.status === 304) {
-    return new Response(null, { status: 304, headers });
+async function fetchBookCover(
+  transport: ProviderTransport,
+  bookId: string,
+  context: MediaTransportContext
+): Promise<Response> {
+  try {
+    const preferences = await PreferencesService.getPreferences();
+    const path = preferences.showThumbnails
+      ? `books/${bookId}/thumbnail`
+      : `books/${bookId}/pages/0?zero_based=true`;
+    return await streamImage(
+      transport,
+      path,
+      context,
+      THUMBNAIL_TIMEOUT_MS
+    );
+  } catch (error) {
+    throw new AppError(ERROR_CODES.BOOK.PAGES_FETCH_ERROR, {}, error);
   }
+}
 
-  return new Response(payload.buffer, {
-    status: payload.status,
-    headers,
-  });
+async function fetchSeriesCover(
+  transport: ProviderTransport,
+  seriesId: string,
+  context: MediaTransportContext
+): Promise<Response> {
+  try {
+    const preferences = await PreferencesService.getPreferences();
+    if (preferences.showThumbnails) {
+      return await streamImage(
+        transport,
+        `series/${seriesId}/thumbnail`,
+        context,
+        THUMBNAIL_TIMEOUT_MS
+      );
+    }
+
+    const data = await transport.request<{
+      content?: Array<{ id: string }>;
+    }>(`series/${seriesId}/books`, { page: "0", size: "1" });
+    const firstBookId = data.content?.[0]?.id;
+    if (!firstBookId) {
+      throw new AppError(ERROR_CODES.SERIES.NO_BOOKS_FOUND);
+    }
+
+    return await streamImage(
+      transport,
+      `books/${firstBookId}/pages/0?zero_based=true`,
+      context,
+      THUMBNAIL_TIMEOUT_MS
+    );
+  } catch (error) {
+    throw new AppError(ERROR_CODES.SERIES.FETCH_ERROR, {}, error);
+  }
 }
 
 /**
- * Transport Komga. Il traduit les références média en appels amont ; les
- * services Komga gardent l'authentification et le mapping HTTP, tandis que la
- * route ne voit plus que la réponse normalisée.
+ * Transport Komga. Il résout la connexion active une seule fois, construit le
+ * `ProviderTransport` à partir de sa politique, puis traduit chaque `MediaRef`
+ * en chemin Komga. La déduplication porte sur la connexion résolue, plus sur le
+ * cookie brut ; la route applique ensuite sa politique de cache et d'erreurs.
  */
 export const komgaMediaTransport: MediaTransport = {
   async fetch(ref, context) {
+    const config = await requireConnectionForProvider("komga");
+    const transport = createTransport(config);
+
     switch (ref.kind) {
       case "book-file":
-        return KomgaBookService.streamFile(ref.bookId);
+        return transport.response(`books/${ref.bookId}/file`, undefined, {
+          accept: FILE_ACCEPT,
+          cache: "no-store",
+          timeoutMs: FILE_TIMEOUT_MS,
+        });
       case "book-page":
-        return pageResponse(await fetchPagePayload(ref, context));
+        return rebuildMediaResponse(
+          await fetchPagePayload(transport, config, ref, context)
+        );
       case "book-page-thumbnail":
-        return KomgaImageService.streamImage(
+        return streamImage(
+          transport,
           komgaPageThumbnailPath(ref.bookId, ref.pageNumber),
-          undefined,
-          context.headers
+          context,
+          THUMBNAIL_TIMEOUT_MS
         );
       case "book-cover":
-        return KomgaBookService.getCover(ref.bookId, context.headers);
+        return fetchBookCover(transport, ref.bookId, context);
       case "series-cover":
-        return KomgaSeriesService.getCover(ref.seriesId, context.headers);
+        return fetchSeriesCover(transport, ref.seriesId, context);
     }
   },
 };

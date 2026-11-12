@@ -26,7 +26,7 @@ Stripstream expose deux surfaces côté serveur, et rien d'autre :
 
 ### GET /api/komga/books/[bookId]/file
 
-- **Description** : téléchargement du fichier source d'un livre Komga (`/api/v1/books/{id}/file`), relayé en streaming par `KomgaBookService.streamFile()`. Le `Content-Type` et le `Content-Disposition` amont sont recopiés ; `Content-Length` est volontairement omis (Safari est strict sur un `Content-Length` posé au-dessus d'une réponse chunked). `404` si le fichier est absent, `401`/`403` si Komga refuse l'accès.
+- **Description** : téléchargement du fichier source d'un livre Komga (`/api/v1/books/{id}/file`), relayé en streaming par le transport média Komga via `ProviderTransport.response()`. Le `Content-Type` et le `Content-Disposition` amont sont recopiés ; `Content-Length` est volontairement omis (Safari est strict sur un `Content-Length` posé au-dessus d'une réponse chunked). `404` si le fichier est absent, `401`/`403` si Komga refuse l'accès.
 - **Authentification** : session NextAuth requise ; configuration Komga active.
 - **Cache** : `Cache-Control: private, no-store`.
 
@@ -50,13 +50,13 @@ Stripstream expose deux surfaces côté serveur, et rien d'autre :
 
 ### GET /api/komga/images/books/[bookId]/thumbnail
 
-- **Description** : couverture d'un livre Komga. `KomgaBookService.getCover()` renvoie la miniature du livre ou la première page selon la préférence `showThumbnails`.
+- **Description** : couverture d'un livre Komga. Le transport média Komga renvoie la miniature du livre ou la première page selon la préférence `showThumbnails`.
 - **Authentification** : session NextAuth requise ; configuration Komga active.
 - **Cache** : `public, max-age=2592000, immutable` (30 jours).
 
 ### GET /api/komga/images/series/[seriesId]/first-page
 
-- **Description** : couverture d'une série Komga en streaming. `KomgaSeriesService.getCover()` sert la première page du premier livre, ou la miniature de la série quand la préférence `showThumbnails` est active.
+- **Description** : couverture d'une série Komga en streaming. Le transport média Komga sert la première page du premier livre (résolu via `ProviderTransport.request()`), ou la miniature de la série quand la préférence `showThumbnails` est active.
 - **Authentification** : session NextAuth requise ; configuration Komga active.
 - **Cache** : `public, max-age=2592000, immutable` (30 jours).
 
@@ -74,19 +74,19 @@ Stripstream expose deux surfaces côté serveur, et rien d'autre :
 
 ### GET /api/stripstream/books/[bookId]/file
 
-- **Description** : téléchargement du fichier source d'un tome Stripstream (`books/{id}/file` côté Librarian), relayé en streaming par `StripstreamClient.fetchFile()`. Le `Content-Type` et le `Content-Disposition` (nom de fichier réel, RFC 6266) amont sont recopiés ; `Content-Length` est volontairement omis (Safari). `404` si le fichier est introuvable.
+- **Description** : téléchargement du fichier source d'un tome Stripstream (`books/{id}/file` côté Librarian), relayé en streaming par le transport média Stripstream via `ProviderTransport.response()`. Le `Content-Type` et le `Content-Disposition` (nom de fichier réel, RFC 6266) amont sont recopiés ; `Content-Length` est volontairement omis (Safari). `404` si le fichier est introuvable.
 - **Authentification** : session NextAuth requise **et** contrôle explicite `getCurrentUser()` (`401` sinon) ; config Stripstream résolue pour l'utilisateur.
 - **Cache** : `Cache-Control: private, no-store`.
 
 ### GET /api/stripstream/images/books/[bookId]/pages/[pageNumber]
 
-- **Description** : proxy de streaming de la page d'un livre servie par le client Stripstream (`StripstreamClient.fetchImage`). La query string reçue est transmise telle quelle au backend ; les validateurs conditionnels sont relayés et une réponse `304` est renvoyée sans corps.
+- **Description** : proxy de streaming de la page d'un livre servie par le transport média Stripstream. La query string reçue est transmise telle quelle au backend ; les validateurs conditionnels sont relayés et une réponse `304` est renvoyée sans corps.
 - **Authentification** : session NextAuth requise **et** contrôle explicite `getCurrentUser()` (`401` sinon) ; config Stripstream résolue pour l'utilisateur.
 - **Cache** : `public, max-age=86400` (1 jour), défini par `MEDIA_POLICIES.stripstreamPage`.
 
 ### GET /api/stripstream/images/books/[bookId]/thumbnail
 
-- **Description** : miniature d'un livre Stripstream. Les appels concurrents sont dédupliqués par une clé dérivée de l'URL, du token et du validateur conditionnel (`sha256`). Réponse `404` vide en cas d'échec de récupération, `304` quand le cache est validé.
+- **Description** : miniature d'un livre Stripstream. Les appels concurrents sont dédupliqués par une clé dérivée de l'identifiant de configuration résolu et de l'empreinte du validateur conditionnel (`sha256`). Réponse `404` vide en cas d'échec de récupération, `304` quand le cache est validé.
 - **Authentification** : session NextAuth requise **et** contrôle explicite `getCurrentUser()` (`401` sinon).
 - **Cache** : `public, max-age=2592000, immutable` (30 jours), défini par `MEDIA_POLICIES.stripstreamThumbnail`.
 
