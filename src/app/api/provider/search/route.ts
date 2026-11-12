@@ -26,7 +26,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json([], { headers: { "Cache-Control": "no-store" } });
     }
 
-    const results = await provider.search(query, limit);
+    const search = provider.capabilities.search;
+    if (!search) throw new AppError(ERROR_CODES.PROVIDER.CAPABILITY_NOT_SUPPORTED);
+    const results = await search.search(query, limit);
 
     return NextResponse.json(results, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {

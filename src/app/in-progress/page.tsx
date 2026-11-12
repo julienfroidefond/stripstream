@@ -24,18 +24,18 @@ export default async function InProgressPage() {
     name: "in-progress",
     fallbackCode: ERROR_CODES.SERIES.FETCH_ERROR,
     anonymous: "empty",
-    load: async ({ provider, providerType }) => {
+    load: async ({ provider }) => {
       const [items, favoriteIds] = await Promise.all([
         getInProgressItems(provider),
         FavoriteService.getAllFavoriteIds().catch(() => []),
       ]);
 
-      // La mise de côté est une fonctionnalité Stripstream : Komga n'expose pas
-      // d'équivalent et le bouton doit rester absent de son interface.
+      // Le bouton « mettre de côté » ne s'affiche que si le provider déclare
+      // la capacité, jamais d'après son type de connexion.
       return {
         items,
         favoriteIds,
-        canShelve: providerType === "stripstream",
+        canShelve: provider.capabilities.shelf !== null,
       };
     },
   });

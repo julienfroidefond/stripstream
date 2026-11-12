@@ -39,7 +39,9 @@ const feeds = {
   },
   "reading-lists": {
     pageRule: "slice",
-    load: (provider) => provider.getReadingLists(),
+    load: (provider) => provider.capabilities.readingLists
+      ? provider.capabilities.readingLists.getReadingLists()
+      : Promise.resolve([]),
   },
   "latest-series": {
     pageRule: "probe",
@@ -51,7 +53,9 @@ const feeds = {
   },
   recommendations: {
     pageRule: "probe",
-    load: (provider, limit) => provider.getRecommendations(limit),
+    load: (provider, limit) => provider.capabilities.discovery
+      ? provider.capabilities.discovery.getRecommendations(limit)
+      : Promise.resolve([]),
   },
 } satisfies { [F in HomeFeed]: FeedDefinition<HomeFeedItems[F]> };
 

@@ -1,5 +1,7 @@
-import type { IMediaProvider } from "@/lib/providers/provider.interface";
-import type { ProviderType } from "@/lib/providers/types";
+import type {
+  IMediaProvider,
+  ProviderCapabilityKey,
+} from "@/lib/providers/provider.interface";
 import { ERROR_CODES, type ErrorCode } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 import logger from "@/lib/logger";
@@ -7,12 +9,11 @@ import { defaultPreferences, type UserPreferences } from "@/types/preferences";
 
 export interface SurfaceContext {
   provider: IMediaProvider;
-  providerType: ProviderType | null;
   preferences: UserPreferences;
   isAnonymous: boolean;
 }
 
-export type SurfaceUnavailableReason = "no-provider" | "unsupported-provider";
+export type SurfaceUnavailableReason = "no-provider" | "unsupported-capability";
 
 export type SurfaceResult<T> =
   | { status: "ready"; data: T; context: SurfaceContext }
@@ -22,7 +23,6 @@ export type SurfaceResult<T> =
 
 export interface SurfaceLoaderDependencies {
   getProvider: () => Promise<IMediaProvider | null>;
-  getActiveProviderType: () => Promise<ProviderType | null>;
   getPreferences: () => Promise<UserPreferences>;
   redirect: (url: string) => never;
   /** Laisse passer les erreurs de contrôle de Next (redirect, notFound, bailout dynamique). */
@@ -43,8 +43,8 @@ export interface LoadSurfaceOptions<T> {
   missingProvider?: "redirect" | "unavailable";
   /** `empty` court-circuite le chargement en mode anonyme (page en cours). */
   anonymous?: "load" | "empty";
-  /** Réserve la surface à un provider (page notes : Stripstream uniquement). */
-  requireProviderType?: ProviderType;
+  /** Réserve la surface à un provider qui déclare cette capacité. */
+  requireCapability?: ProviderCapabilityKey;
 }
 
 function isMissingConfig(error: unknown): boolean {
@@ -71,12 +71,8 @@ async function resolveSurfaceContext<T>(
   dependencies: SurfaceLoaderDependencies
 ): Promise<Resolution> {
   try {
-    const [provider, providerType, preferences] = await Promise.all([
+    const [provider, preferences] = await Promise.all([
       dependencies.getProvider(),
-      dependencies.getActiveProviderType().catch((error: unknown) => {
-        dependencies.rethrow(error);
-        return null;
-      }),
       dependencies.getPreferences().catch((error: unknown) => {
         dependencies.rethrow(error);
         // Une préférence illisible ne doit pas masquer une page entière : on
@@ -92,13 +88,12 @@ async function resolveSurfaceContext<T>(
         : { status: "redirect" };
     }
 
-    if (options.requireProviderType && providerType !== options.requireProviderType) {
-      return { status: "unavailable", reason: "unsupported-provider" };
+    if (options.requireCapability && !provider.capabilities[options.requireCapability]) {
+      return { status: "unavailable", reason: "unsupported-capability" };
     }
 
     const context: SurfaceContext = {
       provider,
-      providerType,
       preferences,
       isAnonymous: preferences.anonymousMode,
     };
@@ -116,9 +111,9 @@ async function resolveSurfaceContext<T>(
 }
 
 /**
- * Cœur testable du gateway de page : résout le provider, le type de connexion
- * et les préférences, applique la politique anonyme, redirige vers /settings
- * sans configuration et mappe les erreurs en un état terminal.
+ * Cœur testable du gateway de page : résout le provider et les préférences,
+ * applique la politique anonyme, vérifie la capacité requise, redirige vers
+ * /settings sans configuration et mappe les erreurs en un état terminal.
  */
 export async function loadSurfaceWithDependencies<T>(
   options: LoadSurfaceOptions<T>,

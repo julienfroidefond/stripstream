@@ -152,9 +152,10 @@ export function buildInProgressItems(
 export async function getInProgressItems(
   provider: IMediaProvider
 ): Promise<InProgressItem[]> {
+  const shelf = provider.capabilities.shelf;
   const [series, shelvedSeries, continueReading] = await Promise.all([
     provider.getHomeOngoingSeries(IN_PROGRESS_LIMIT),
-    provider.getShelvedSeries(IN_PROGRESS_LIMIT).catch(() => []),
+    shelf ? shelf.getShelvedSeries(IN_PROGRESS_LIMIT).catch(() => []) : Promise.resolve([]),
     provider
       .getHomeContinueReadingData(IN_PROGRESS_LIMIT)
       .catch(() => null),

@@ -21,7 +21,7 @@ export default async function SeriesPage({ params, searchParams }: PageProps) {
   const surface = await loadSurface({
     name: "series",
     fallbackCode: ERROR_CODES.BOOK.PAGES_FETCH_ERROR,
-    load: async ({ provider, providerType, preferences }) => {
+    load: async ({ provider, preferences }) => {
       const isCompact = preferences.displayMode?.compact ?? false;
       const unreadOnly = unread !== undefined ? unread === "true" : preferences.showOnlyUnread;
       const effectivePageSize = normalizeGridPageSize(
@@ -29,10 +29,11 @@ export default async function SeriesPage({ params, searchParams }: PageProps) {
         isCompact
       );
 
-      const canRate = providerType === "stripstream";
-      const canShelve = providerType === "stripstream";
+      const { ratings, shelf, missingBooks, discovery } = provider.capabilities;
+      const canRate = ratings !== null;
+      const canShelve = shelf !== null;
 
-      const [booksPage, series, isFavorite, missingBooks, relatedSeries, rating] = await Promise.all([
+      const [booksPage, series, isFavorite, missing, relatedSeries, rating] = await Promise.all([
         provider.getBooks({
           seriesId,
           cursor: String(currentPage),
@@ -41,9 +42,9 @@ export default async function SeriesPage({ params, searchParams }: PageProps) {
         }),
         provider.getSeriesById(seriesId),
         FavoriteService.isFavorite(seriesId),
-        provider.getMissingBooks(seriesId),
-        provider.getRelatedSeries(seriesId).catch(() => []),
-        canRate ? provider.getSeriesRating(seriesId).catch(() => null) : Promise.resolve(null),
+        missingBooks ? missingBooks.getMissingBooks(seriesId) : Promise.resolve([]),
+        discovery ? discovery.getRelatedSeries(seriesId).catch(() => []) : Promise.resolve([]),
+        ratings ? ratings.getSeriesRating(seriesId).catch(() => null) : Promise.resolve(null),
       ]);
 
       if (!series) throw new AppError(ERROR_CODES.SERIES.FETCH_ERROR);
@@ -55,7 +56,7 @@ export default async function SeriesPage({ params, searchParams }: PageProps) {
         unreadOnly,
         effectivePageSize,
         isFavorite,
-        missingBooks,
+        missingBooks: missing,
         relatedSeries,
         canRate,
         rating,

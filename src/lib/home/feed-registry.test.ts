@@ -5,7 +5,11 @@ vi.mock("@/lib/services/favorite.service", () => ({
 }));
 
 import { FavoriteService } from "@/lib/services/favorite.service";
-import type { IMediaProvider } from "@/lib/providers/provider.interface";
+import {
+  createProviderCapabilities,
+  type IMediaProvider,
+  type ProviderCapabilities,
+} from "@/lib/providers/provider.interface";
 import type {
   NormalizedBook,
   NormalizedReadingList,
@@ -68,13 +72,15 @@ function listList(count: number): NormalizedReadingList[] {
   return Array.from({ length: count }, (_, index) => readingList(String(index)));
 }
 
-function makeProvider(overrides: Partial<IMediaProvider> = {}): IMediaProvider {
+function makeProvider(
+  overrides: Partial<IMediaProvider> = {},
+  capabilities: Partial<ProviderCapabilities> = {}
+): IMediaProvider {
   return {
     getHomeOngoingSeries: vi.fn(async () => []),
     getHomeLatestSeries: vi.fn(async () => []),
     getHomeRecentlyRead: vi.fn(async () => []),
-    getRecommendations: vi.fn(async () => []),
-    getReadingLists: vi.fn(async () => []),
+    capabilities: createProviderCapabilities(capabilities),
     ...overrides,
   } as unknown as IMediaProvider;
 }
@@ -151,12 +157,20 @@ describe("loadHomeFeedPage — offset feeds", () => {
   });
 
   it("routes each offset feed to its own provider loader", async () => {
-    const provider = makeProvider({
-      getHomeOngoingSeries: vi.fn(async () => seriesList(9)),
-      getHomeLatestSeries: vi.fn(async () => seriesList(9)),
-      getHomeRecentlyRead: vi.fn(async () => bookList(9)),
-      getRecommendations: vi.fn(async () => seriesList(9)),
-    });
+    const recommendations = vi.fn(async () => seriesList(9));
+    const provider = makeProvider(
+      {
+        getHomeOngoingSeries: vi.fn(async () => seriesList(9)),
+        getHomeLatestSeries: vi.fn(async () => seriesList(9)),
+        getHomeRecentlyRead: vi.fn(async () => bookList(9)),
+      },
+      {
+        discovery: {
+          getRelatedSeries: vi.fn(async () => []),
+          getRecommendations: recommendations,
+        },
+      }
+    );
 
     await loadHomeFeedPage(provider, "ongoing", 0);
     await loadHomeFeedPage(provider, "latest-series", 0);
@@ -166,7 +180,7 @@ describe("loadHomeFeedPage — offset feeds", () => {
     expect(provider.getHomeOngoingSeries).toHaveBeenCalledWith(9);
     expect(provider.getHomeLatestSeries).toHaveBeenCalledWith(9);
     expect(provider.getHomeRecentlyRead).toHaveBeenCalledWith(9);
-    expect(provider.getRecommendations).toHaveBeenCalledWith(9);
+    expect(recommendations).toHaveBeenCalledWith(9);
   });
 });
 
@@ -192,13 +206,20 @@ describe("loadHomeFeedPage — bounded collection feeds", () => {
   });
 
   it("bounds reading lists without asking the provider for a limit", async () => {
-    const provider = makeProvider({
-      getReadingLists: vi.fn(async () => listList(10)),
-    });
+    const getReadingLists = vi.fn(async () => listList(10));
+    const provider = makeProvider(
+      {},
+      {
+        readingLists: {
+          getReadingLists,
+          getReadingListDetail: vi.fn(async () => null),
+        },
+      }
+    );
 
     const page = await loadHomeFeedPage(provider, "reading-lists", 0);
 
-    expect(provider.getReadingLists).toHaveBeenCalledWith();
+    expect(getReadingLists).toHaveBeenCalledWith();
     expect(page.items).toHaveLength(8);
     expect(page.hasMore).toBe(true);
   });

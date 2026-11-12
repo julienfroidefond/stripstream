@@ -2,21 +2,26 @@ import { describe, expect, it, vi } from "vitest";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 import { defaultPreferences, type UserPreferences } from "@/types/preferences";
-import type { IMediaProvider } from "@/lib/providers/provider.interface";
+import {
+  createProviderCapabilities,
+  type IMediaProvider,
+} from "@/lib/providers/provider.interface";
 import {
   loadSurfaceWithDependencies,
   type LoadSurfaceOptions,
   type SurfaceLoaderDependencies,
 } from "./surface-loader";
 
-const provider = { id: "provider" } as unknown as IMediaProvider;
+const provider = {
+  id: "provider",
+  capabilities: createProviderCapabilities(),
+} as unknown as IMediaProvider;
 
 function dependencies(
   overrides: Partial<SurfaceLoaderDependencies> = {}
 ): SurfaceLoaderDependencies {
   return {
     getProvider: vi.fn(async () => provider),
-    getActiveProviderType: vi.fn(async () => "komga" as const),
     getPreferences: vi.fn(async () => ({ ...defaultPreferences })),
     redirect: vi.fn((url: string): never => {
       throw new Error(`redirect:${url}`);
@@ -39,7 +44,7 @@ function options<T>(
 }
 
 describe("loadSurface", () => {
-  it("resolves provider, type and preferences once, then loads data", async () => {
+  it("resolves provider and preferences once, then loads data", async () => {
     const deps = dependencies();
     const load = vi.fn(async () => ({ value: 42 }));
 
@@ -48,7 +53,7 @@ describe("loadSurface", () => {
     expect(result).toMatchObject({
       status: "ready",
       data: { value: 42 },
-      context: { provider, providerType: "komga" },
+      context: { provider },
     });
     expect(load).toHaveBeenCalledTimes(1);
   });
@@ -96,15 +101,35 @@ describe("loadSurface", () => {
     expect(load).toHaveBeenCalledTimes(1);
   });
 
-  it("returns unavailable when the active provider type does not match", async () => {
-    const deps = dependencies({ getActiveProviderType: vi.fn(async () => "komga" as const) });
-
+  it("returns unavailable when the provider lacks the required capability", async () => {
     const result = await loadSurfaceWithDependencies(
-      options(async () => null, { requireProviderType: "stripstream" }),
-      deps
+      options(async () => null, { requireCapability: "ratings" }),
+      dependencies()
     );
 
-    expect(result).toEqual({ status: "unavailable", reason: "unsupported-provider" });
+    expect(result).toEqual({ status: "unavailable", reason: "unsupported-capability" });
+  });
+
+  it("loads when the provider declares the required capability", async () => {
+    const withRatings = {
+      id: "provider",
+      capabilities: createProviderCapabilities({
+        ratings: {
+          getSeriesRating: vi.fn(async () => null),
+          setSeriesRating: vi.fn(async () => undefined),
+          deleteSeriesRating: vi.fn(async () => undefined),
+        },
+      }),
+    } as unknown as IMediaProvider;
+    const load = vi.fn(async () => "ok");
+
+    const result = await loadSurfaceWithDependencies(
+      options(load, { requireCapability: "ratings" }),
+      dependencies({ getProvider: vi.fn(async () => withRatings) })
+    );
+
+    expect(result.status).toBe("ready");
+    expect(load).toHaveBeenCalledTimes(1);
   });
 
   it("falls back to default preferences without failing the page", async () => {

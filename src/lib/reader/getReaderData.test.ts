@@ -1,13 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-
-const getActiveProviderTypeMock = vi.fn<() => Promise<string | null>>();
-
-vi.mock("@/lib/providers/provider.factory", () => ({
-  getActiveProviderType: () => getActiveProviderTypeMock(),
-}));
+import { describe, expect, it, vi } from "vitest";
 
 import { getReaderData } from "./getReaderData";
-import type { IMediaProvider } from "@/lib/providers/provider.interface";
+import {
+  createProviderCapabilities,
+  type IMediaProvider,
+} from "@/lib/providers/provider.interface";
 import type {
   NormalizedBook,
   NormalizedBooksPage,
@@ -51,6 +48,8 @@ interface StubOptions {
   seriesName?: string | null;
   rating?: NormalizedSeriesRating | null;
   ratingThrows?: boolean;
+  /** `false` simule un provider sans capacité de notation (Komga). */
+  ratings?: boolean;
 }
 
 function makeProvider(options: StubOptions = {}) {
@@ -64,23 +63,27 @@ function makeProvider(options: StubOptions = {}) {
       })
     : vi.fn(async (): Promise<NormalizedSeriesRating | null> => options.rating ?? null);
 
+  const ratings = options.ratings === false
+    ? null
+    : {
+        getSeriesRating,
+        setSeriesRating: vi.fn(async () => undefined),
+        deleteSeriesRating: vi.fn(async () => undefined),
+      };
+
   return {
     getBook: vi.fn(async () => book),
     getNextBook: vi.fn(async () => null),
     getSeriesById: vi.fn(async () => makeSeries()),
     getSeries: vi.fn(async () => ({ items: [makeSeries()], nextCursor: null })),
     getBooks: vi.fn(async () => makeBooksPage()),
+    capabilities: createProviderCapabilities({ ratings }),
     getSeriesRating,
   } as unknown as IMediaProvider & { getSeriesRating: ReturnType<typeof vi.fn> };
 }
 
 describe("getReaderData — series rating", () => {
-  beforeEach(() => {
-    getActiveProviderTypeMock.mockReset();
-  });
-
-  it("exposes the rating when the provider is Stripstream", async () => {
-    getActiveProviderTypeMock.mockResolvedValue("stripstream");
+  it("exposes the rating when the provider declares the capability", async () => {
     const provider = makeProvider({
       rating: {
         userRating: 7,
@@ -100,9 +103,8 @@ describe("getReaderData — series rating", () => {
     });
   });
 
-  it("returns null and skips the fetch on Komga", async () => {
-    getActiveProviderTypeMock.mockResolvedValue("komga");
-    const provider = makeProvider();
+  it("returns null and skips the fetch without the capability", async () => {
+    const provider = makeProvider({ ratings: false });
 
     const data = await getReaderData(provider, "book-1");
 
@@ -111,7 +113,6 @@ describe("getReaderData — series rating", () => {
   });
 
   it("returns null when the book has no series", async () => {
-    getActiveProviderTypeMock.mockResolvedValue("stripstream");
     const provider = makeProvider({ seriesId: null });
 
     const data = await getReaderData(provider, "book-1");
@@ -121,7 +122,6 @@ describe("getReaderData — series rating", () => {
   });
 
   it("swallows rating fetch errors", async () => {
-    getActiveProviderTypeMock.mockResolvedValue("stripstream");
     const provider = makeProvider({ ratingThrows: true });
 
     const data = await getReaderData(provider, "book-1");
@@ -131,11 +131,6 @@ describe("getReaderData — series rating", () => {
 });
 
 describe("getReaderData — series resolution", () => {
-  beforeEach(() => {
-    getActiveProviderTypeMock.mockReset();
-    getActiveProviderTypeMock.mockResolvedValue("stripstream");
-  });
-
   it("resolves the series by id without searching by name", async () => {
     const provider = makeProvider({ seriesId: "series-1", seriesName: "Series 1" });
 

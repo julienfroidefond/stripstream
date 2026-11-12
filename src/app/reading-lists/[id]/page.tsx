@@ -15,7 +15,11 @@ export default async function ReadingListPage({ params }: PageProps) {
     name: "reading-list-detail",
     fallbackCode: ERROR_CODES.STRIPSTREAM.NOT_FOUND,
     missingProvider: "unavailable",
-    load: ({ provider }) => provider.getReadingListDetail(id),
+    requireCapability: "readingLists",
+    load: ({ provider }) => {
+      const readingLists = provider.capabilities.readingLists;
+      return readingLists ? readingLists.getReadingListDetail(id) : Promise.resolve(null);
+    },
   });
 
   return (
