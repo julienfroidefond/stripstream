@@ -806,13 +806,6 @@
         "white": "Blanc",
         "cream": "Crème"
       },
-      "fitMode": {
-        "current": "Affichage : {{mode}}",
-        "fit": "page entière",
-        "width": "largeur",
-        "height": "hauteur",
-        "original": "taille originale"
-      },
       "info": "Informations du tome",
       "close": "Fermer",
       "previousPage": "Page précédente",

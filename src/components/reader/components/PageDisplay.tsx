@@ -4,7 +4,6 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { RotateCw } from "lucide-react";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { cn } from "@/lib/utils";
-import type { FitMode } from "../hooks/useFitMode";
 import type { PageImage } from "../hooks/useImageLoader";
 import { planTurn, type PageRect, type ReaderSnapshot, type TurnPlan } from "../hooks/pageTurn";
 import { PageTurnOverlay } from "./PageTurnOverlay";
@@ -26,7 +25,6 @@ interface PageDisplayProps {
   getPageImage: (pageNum: number) => PageImage;
   onRetryImage: (pageNum: number) => void;
   isRTL: boolean;
-  fitMode: FitMode;
   /** Préférence utilisateur : animer le tourné de page. */
   pageTurn: boolean;
   /** Compteur de tentatives de reculer depuis la première page. */
@@ -68,14 +66,11 @@ function ErrorPlaceholder({ onRetry }: { onRetry: () => void }) {
   );
 }
 
-function imageClassNameFor(fitMode: FitMode, isLoading: boolean) {
+function imageClassNameFor(isLoading: boolean) {
   return cn(
     // Chaque page montée se pose : invisible sous un tourné, lisible après un saut.
     "cursor-pointer transition-opacity motion-safe:animate-page-in",
-    fitMode === "fit" && "max-h-full max-w-full object-contain",
-    fitMode === "width" && "w-full h-auto max-w-full",
-    fitMode === "height" && "h-[calc(100dvh-2.5rem)] w-auto max-h-[calc(100dvh-2.5rem)]",
-    fitMode === "original" && "block",
+    "max-h-full max-w-full object-contain",
     isLoading ? "opacity-0" : "opacity-100"
   );
 }
@@ -87,7 +82,6 @@ export function PageDisplay({
   getPageImage,
   onRetryImage,
   isRTL,
-  fitMode,
   pageTurn,
   startBump,
 }: PageDisplayProps) {
@@ -176,36 +170,15 @@ export function PageDisplay({
     );
   }, [startBump, isRTL, reduceMotion]);
 
-  const outerOverflow =
-    fitMode === "fit"
-      ? "overflow-hidden"
-      : fitMode === "width"
-        ? "overflow-y-auto overflow-x-hidden"
-        : fitMode === "height"
-          ? "overflow-x-auto overflow-y-hidden"
-          : "overflow-auto";
+  // Le lecteur est un overlay fixe : le spread doit se centrer par rapport au
+  // viewport, jamais à un parent flex qui peut se réduire à son contenu.
+  const innerSizing =
+    "relative flex w-screen min-w-screen max-w-none px-2 sm:px-4 h-[calc(100dvh-2.5rem)] items-center justify-center";
 
-  const innerSizing = cn(
-    // Le lecteur est un overlay fixe : le spread doit se centrer par rapport au
-    // viewport, jamais à un parent flex qui peut se réduire à son contenu.
-    "relative flex w-screen min-w-screen max-w-none px-2 sm:px-4",
-    fitMode === "fit" && "h-[calc(100dvh-2.5rem)] items-center justify-center",
-    fitMode === "width" && "min-h-[calc(100dvh-2.5rem)] items-start justify-center",
-    fitMode === "height" && "h-[calc(100dvh-2.5rem)] items-center min-w-full",
-    fitMode === "original" && "min-h-[calc(100dvh-2.5rem)] items-start"
-  );
-
-  // En modes non-"fit", contenir l'image dans un wrapper auto-sizé pour ne pas
-  // forcer la mise en colonne 50/50 hostile au scroll natif.
   const pageWrapperClass = (isPage1: boolean) =>
     cn(
-      "relative flex items-center",
-      fitMode === "fit" ? "h-full" : "h-auto",
-      showSecondPage
-        ? fitMode === "fit"
-          ? "w-1/2"
-          : "shrink-0"
-        : "w-full justify-center",
+      "relative flex h-full items-center",
+      showSecondPage ? "w-1/2" : "w-full justify-center",
       showSecondPage && {
         [isPage1 ? "order-2 justify-start" : "order-1 justify-end"]: isRTL,
         [isPage1 ? "order-1 justify-end" : "order-2 justify-start"]: !isRTL,
@@ -214,10 +187,7 @@ export function PageDisplay({
 
   return (
     <div
-      className={cn(
-        "relative flex w-screen max-w-none flex-1 self-stretch items-center justify-center",
-        outerOverflow
-      )}
+      className="relative flex w-screen max-w-none flex-1 self-stretch items-center justify-center overflow-hidden"
     >
       {/* La première page se pose à l'ouverture du livre (une seule fois : ce
           conteneur ne se remonte pas au fil des pages). */}
@@ -252,7 +222,7 @@ export function PageDisplay({
                 src={currentBlobUrl}
                 onLoad={refreshSnapshot}
                 alt={`Page ${currentPage}`}
-                className={imageClassNameFor(fitMode, isLoading)}
+                className={imageClassNameFor(isLoading)}
                 loading="eager"
               />
             </>
@@ -284,7 +254,7 @@ export function PageDisplay({
                   src={nextBlobUrl}
                   onLoad={refreshSnapshot}
                   alt={`Page ${currentPage + 1}`}
-                  className={imageClassNameFor(fitMode, secondPageLoading)}
+                  className={imageClassNameFor(secondPageLoading)}
                   loading="eager"
                 />
               </>
