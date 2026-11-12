@@ -1,31 +1,39 @@
 "use client";
 
 import { createContext, useContext, type ReactNode } from "react";
+import type { RefreshScope } from "@/lib/cache/invalidation";
 
-interface RefreshContextType {
-  refreshLibrary?: (libraryId: string) => Promise<{ success: boolean; error?: string }>;
-  refreshSeries?: (seriesId: string) => Promise<{ success: boolean; error?: string }>;
+export interface RefreshResult {
+  success: boolean;
+  error?: string;
 }
 
-const RefreshContext = createContext<RefreshContextType>({});
+export interface RefreshSurfaceValue {
+  /** La surface revalidée, avec son identifiant de données. */
+  scope: RefreshScope;
+  id: string;
+  /** Vrai pendant tout le cycle : invalidation, refresh et animation. */
+  isRefreshing: boolean;
+  /** Le seul point d'entrée : les appels concurrents partagent le même cycle. */
+  refresh: () => Promise<RefreshResult>;
+}
+
+const RefreshContext = createContext<RefreshSurfaceValue | null>(null);
 
 export function RefreshProvider({
+  value,
   children,
-  refreshLibrary,
-  refreshSeries,
 }: {
+  value: RefreshSurfaceValue;
   children: ReactNode;
-  refreshLibrary?: (libraryId: string) => Promise<{ success: boolean; error?: string }>;
-  refreshSeries?: (seriesId: string) => Promise<{ success: boolean; error?: string }>;
 }) {
-  return (
-    <RefreshContext.Provider value={{ refreshLibrary, refreshSeries }}>
-      {children}
-    </RefreshContext.Provider>
-  );
+  return <RefreshContext.Provider value={value}>{children}</RefreshContext.Provider>;
 }
 
-export function useRefresh() {
-  return useContext(RefreshContext);
+export function useRefreshSurface(): RefreshSurfaceValue {
+  const value = useContext(RefreshContext);
+  if (!value) {
+    throw new Error("useRefreshSurface must be used within a RefreshSurface");
+  }
+  return value;
 }
-

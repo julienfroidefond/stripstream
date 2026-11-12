@@ -1,5 +1,5 @@
-import { LibraryClientWrapper } from "./LibraryClientWrapper";
 import { LibraryContent } from "./LibraryContent";
+import { RefreshSurface } from "@/components/common/RefreshSurface";
 import { SurfaceBoundary } from "@/components/ui/SurfaceBoundary";
 import { AppError } from "@/utils/errors";
 import { ERROR_CODES } from "@/constants/errorCodes";
@@ -86,7 +86,7 @@ export default async function LibraryPage({ params, searchParams }: PageProps) {
     <SurfaceBoundary
       surface={surface}
       ready={(data) => (
-        <LibraryClientWrapper libraryId={libraryId}>
+        <RefreshSurface scope="library" id={libraryId}>
           <LibraryContent
             library={data.library}
             series={data.seriesPage}
@@ -98,7 +98,7 @@ export default async function LibraryPage({ params, searchParams }: PageProps) {
             hasMissing={data.hasMissing}
             canSortByRating={data.canSortByRating}
           />
-        </LibraryClientWrapper>
+        </RefreshSurface>
       )}
     />
   );

@@ -6,7 +6,7 @@ import type { NormalizedSeries } from "@/lib/providers/types";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
-import { RefreshButton } from "@/components/library/RefreshButton";
+import { RefreshButton } from "@/components/common/RefreshButton";
 import { AppError } from "@/utils/errors";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { useTranslate } from "@/hooks/useTranslate";
@@ -41,7 +41,6 @@ import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
 interface SeriesHeaderProps {
   series: NormalizedSeries;
-  refreshSeries: (seriesId: string) => Promise<{ success: boolean; error?: string }>;
   initialIsFavorite: boolean;
   canRate?: boolean;
   initialRating?: number | null;
@@ -53,7 +52,6 @@ interface SeriesHeaderProps {
 
 export const SeriesHeader = ({
   series,
-  refreshSeries,
   initialIsFavorite,
   canRate = false,
   initialRating = null,
@@ -387,10 +385,7 @@ export const SeriesHeader = ({
                   </AlertDialog>
                 </>
               )}
-              <RefreshButton
-                libraryId={series.id}
-                refreshLibrary={refreshSeries}
-              />
+              <RefreshButton />
             </div>
           </div>
         </div>

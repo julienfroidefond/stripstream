@@ -1,10 +1,7 @@
-"use client";
-
 import { PaginatedBookGrid } from "@/components/series/PaginatedBookGrid";
 import { SeriesHeader } from "@/components/series/SeriesHeader";
 import { Container } from "@/components/ui/container";
 import { RelatedSeriesRow } from "@/components/series/RelatedSeriesRow";
-import { useRefresh } from "@/contexts/RefreshContext";
 import type { NormalizedBooksPage, NormalizedMissingBook, NormalizedSeries, NormalizedProviderRating } from "@/lib/providers/types";
 import type { UserPreferences } from "@/types/preferences";
 
@@ -41,13 +38,10 @@ export function SeriesContent({
   canShelve = false,
   initialIsShelved = false,
 }: SeriesContentProps) {
-  const { refreshSeries } = useRefresh();
-
   return (
     <>
       <SeriesHeader
         series={series}
-        refreshSeries={refreshSeries || (async () => ({ success: false }))}
         initialIsFavorite={initialIsFavorite}
         canRate={canRate}
         initialRating={initialRating}

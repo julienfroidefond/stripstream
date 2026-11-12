@@ -3,7 +3,7 @@
 import { Library } from "lucide-react";
 import { useRef } from "react";
 import type { NormalizedLibrary, NormalizedSeries } from "@/lib/providers/types";
-import { RefreshButton } from "./RefreshButton";
+import { RefreshButton } from "@/components/common/RefreshButton";
 import { ScanButton } from "./ScanButton";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { SeriesCover } from "@/components/ui/series-cover";
@@ -111,7 +111,7 @@ export function LibraryHeader({
                 {seriesLabel}
               </StatusBadge>
 
-              <RefreshButton libraryId={library.id} />
+              <RefreshButton />
               <ScanButton libraryId={library.id} />
             </div>
           </div>

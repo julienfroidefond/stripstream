@@ -280,6 +280,17 @@
       "confirmDelete": "Supprimer la connexion \"{{name}}\" ?"
     }
   },
+  "refresh": {
+    "button": "Rafraîchir la page",
+    "success": {
+      "title": "Page actualisée",
+      "description": "Les données ont été actualisées avec succès"
+    },
+    "error": {
+      "title": "Échec du rafraîchissement",
+      "description": "Impossible d'actualiser les données"
+    }
+  },
   "library": {
     "empty": "Aucune bibliothèque disponible",
     "coverAlt": "Couverture de {name}",
@@ -288,17 +299,6 @@
       "unavailable": "Non disponible"
     },
     "lastUpdated": "Dernière mise à jour : {date}",
-    "refresh": {
-      "button": "Rafraîchir la bibliothèque",
-      "success": {
-        "title": "Bibliothèque rafraîchie",
-        "description": "La bibliothèque a été rafraîchie avec succès"
-      },
-      "error": {
-        "title": "Erreur",
-        "description": "Une erreur est survenue"
-      }
-    },
     "scan": {
       "button": "Analyser la bibliothèque",
       "buttonLabel": "Analyser",
