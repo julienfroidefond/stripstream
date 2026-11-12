@@ -80,6 +80,16 @@ context once and returns one of four terminal states: `ready`,
 `src/components/ui/SurfaceBoundary.tsx` (single terminal; pages render only
 `ready` and override the terminal they need).
 
+## Book card
+
+The single series book surface used by both the grid and the list. It owns the
+cover link, the missing-volume placeholder, the derived reading status, the
+read/unread/download actions and the one post-mutation refresh
+(`router.refresh()`). `BookGrid` and `BookList` only choose the layout. Owners:
+`src/components/series/BookCard.tsx` (component, actions, layouts) and
+`src/components/series/book-card-view.ts` (pure labels and reading state);
+reading badge derivation: `src/lib/books/reading-status.ts`.
+
 ## Action result
 
 The discriminated result returned by server actions that use the action
