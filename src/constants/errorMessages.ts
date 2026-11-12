@@ -3,6 +3,8 @@ import { ERROR_CODES } from "./errorCodes";
 export const ERROR_MESSAGES: Record<string, string> = {
   // Providers
   [ERROR_CODES.PROVIDER.NOT_CONFIGURED]: "No media provider is configured",
+  [ERROR_CODES.PROVIDER.UNAVAILABLE]:
+    "This surface is not available with the active connection",
 
   // Middleware
   [ERROR_CODES.MIDDLEWARE.UNAUTHORIZED]: "Unauthorized access",

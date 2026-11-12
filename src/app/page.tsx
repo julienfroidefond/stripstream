@@ -17,6 +17,7 @@ import { HomeWelcome } from "@/components/home/HomeWelcome";
 import { MediaRow } from "@/components/home/MediaRow";
 import { ReadingListRow } from "@/components/home/ReadingListRow";
 import { DeferredRecommendations } from "@/components/home/DeferredRecommendations";
+import { SurfaceBoundary } from "@/components/ui/SurfaceBoundary";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { emptyFeedPage, type HomeFeedPage } from "@/lib/home/feed-page";
@@ -99,74 +100,70 @@ async function HomeStreamingContent() {
     },
   });
 
-  if (surface.status === "unavailable") return <HomeWelcome />;
-
-  if (surface.status !== "ready") {
-    return (
-      <main className="container mx-auto px-4 py-8">
-        <ErrorMessage
-          errorCode={surface.status === "error" ? surface.code : ERROR_CODES.HOME.FETCH_ERROR}
-        />
-      </main>
-    );
-  }
-
-  const {
-    isAnonymous,
-    continueReadingPromise,
-    ongoingPromise,
-    favoritesPromise,
-    readingListsPromise,
-    latestSeriesPromise,
-    recentlyReadPromise,
-  } = surface.data;
-
   return (
-    <div className="space-y-10 pb-2">
-      <Suspense fallback={null}>
-        <HomeProviderErrorState
-          feedPromises={[
-            continueReadingPromise,
-            ongoingPromise,
-            readingListsPromise,
-            latestSeriesPromise,
-            recentlyReadPromise,
-          ]}
-        />
-      </Suspense>
-      <Suspense fallback={<HomeHeroSkeleton />}>
-        <ContinueReadingSection
-          provider={surface.context.provider}
-          continueReadingPromise={continueReadingPromise}
-          ongoingPromise={ongoingPromise}
-          isAnonymous={isAnonymous}
-        />
-      </Suspense>
+    <SurfaceBoundary
+      surface={surface}
+      unavailable={() => <HomeWelcome />}
+      ready={(data, context) => {
+        const {
+          isAnonymous,
+          continueReadingPromise,
+          ongoingPromise,
+          favoritesPromise,
+          readingListsPromise,
+          latestSeriesPromise,
+          recentlyReadPromise,
+        } = data;
 
-      <Suspense fallback={<HomeCarouselSkeleton icon={LibraryBig} />}>
-        <OngoingSection ongoingPromise={ongoingPromise} isAnonymous={isAnonymous} />
-      </Suspense>
+        return (
+          <div className="space-y-10 pb-2">
+            <Suspense fallback={null}>
+              <HomeProviderErrorState
+                feedPromises={[
+                  continueReadingPromise,
+                  ongoingPromise,
+                  readingListsPromise,
+                  latestSeriesPromise,
+                  recentlyReadPromise,
+                ]}
+              />
+            </Suspense>
+            <Suspense fallback={<HomeHeroSkeleton />}>
+              <ContinueReadingSection
+                provider={context.provider}
+                continueReadingPromise={continueReadingPromise}
+                ongoingPromise={ongoingPromise}
+                isAnonymous={isAnonymous}
+              />
+            </Suspense>
 
-      <Suspense fallback={<HomeCarouselSkeleton icon={Heart} />}>
-        <FavoritesSection favoritesPromise={favoritesPromise} />
-      </Suspense>
+            <Suspense fallback={<HomeCarouselSkeleton icon={LibraryBig} />}>
+              <OngoingSection ongoingPromise={ongoingPromise} isAnonymous={isAnonymous} />
+            </Suspense>
 
-      <Suspense fallback={<HomeRecommendationSkeleton />}>
-        <DeferredRecommendations isAnonymous={isAnonymous} />
-      </Suspense>
+            <Suspense fallback={<HomeCarouselSkeleton icon={Heart} />}>
+              <FavoritesSection favoritesPromise={favoritesPromise} />
+            </Suspense>
 
-      <Suspense fallback={<HomeReadingListSkeleton icon={Bookmark} />}>
-        <ReadingListsSection readingListsPromise={readingListsPromise} />
-      </Suspense>
+            <Suspense fallback={<HomeRecommendationSkeleton />}>
+              <DeferredRecommendations isAnonymous={isAnonymous} />
+            </Suspense>
 
-      <Suspense fallback={<HomeCarouselSkeleton icon={Sparkles} />}>
-        <LatestSeriesSection latestSeriesPromise={latestSeriesPromise} />
-      </Suspense>
+            <Suspense fallback={<HomeReadingListSkeleton icon={Bookmark} />}>
+              <ReadingListsSection readingListsPromise={readingListsPromise} />
+            </Suspense>
 
-      <Suspense fallback={<HomeCarouselSkeleton icon={History} />}>
-        <RecentlyReadSection recentlyReadPromise={recentlyReadPromise} />
-      </Suspense>
-    </div>
+            <Suspense fallback={<HomeCarouselSkeleton icon={Sparkles} />}>
+              <LatestSeriesSection latestSeriesPromise={latestSeriesPromise} />
+            </Suspense>
+
+            <Suspense fallback={<HomeCarouselSkeleton icon={History} />}>
+              <RecentlyReadSection recentlyReadPromise={recentlyReadPromise} />
+            </Suspense>
+          </div>
+        );
+      }}
+    />
   );
 }
 

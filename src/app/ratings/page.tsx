@@ -11,7 +11,7 @@ import {
   type ReadSeriesFilter,
 } from "@/lib/services/read-series.service";
 import { loadSurface } from "@/lib/surfaces/load-surface";
-import { ErrorMessage } from "@/components/ui/ErrorMessage";
+import { SurfaceBoundary } from "@/components/ui/SurfaceBoundary";
 import frMessages from "@/i18n/messages/fr/common.json";
 import enMessages from "@/i18n/messages/en/common.json";
 import { RatingsContent } from "./RatingsContent";
@@ -69,29 +69,21 @@ export default async function RatingsPage({ searchParams }: RatingsPageProps) {
     },
   });
 
-  if (surface.status === "unavailable") {
-    return <RatingsUnavailable />;
-  }
-
-  if (surface.status !== "ready") {
-    return (
-      <main className="container mx-auto px-4 py-8">
-        <ErrorMessage
-          errorCode={surface.status === "error" ? surface.code : ERROR_CODES.SERIES.FETCH_ERROR}
-        />
-      </main>
-    );
-  }
-
   return (
-    <RatingsContent
-      series={surface.data.series}
-      counts={surface.data.counts}
-      query={query}
-      filter={filter}
-      sort={sort}
-      page={surface.data.page}
-      totalPages={surface.data.totalPages}
+    <SurfaceBoundary
+      surface={surface}
+      unavailable={() => <RatingsUnavailable />}
+      ready={(data) => (
+        <RatingsContent
+          series={data.series}
+          counts={data.counts}
+          query={query}
+          filter={filter}
+          sort={sort}
+          page={data.page}
+          totalPages={data.totalPages}
+        />
+      )}
     />
   );
 }

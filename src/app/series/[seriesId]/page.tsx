@@ -1,7 +1,7 @@
 import { FavoriteService } from "@/lib/services/favorite.service";
 import { SeriesClientWrapper } from "./SeriesClientWrapper";
 import { SeriesContent } from "./SeriesContent";
-import { ErrorMessage } from "@/components/ui/ErrorMessage";
+import { SurfaceBoundary } from "@/components/ui/SurfaceBoundary";
 import { AppError } from "@/utils/errors";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { normalizeGridPageSize } from "@/lib/pageSize";
@@ -64,36 +64,29 @@ export default async function SeriesPage({ params, searchParams }: PageProps) {
     },
   });
 
-  if (surface.status !== "ready") {
-    return (
-      <main className="container mx-auto px-4 py-8">
-        <ErrorMessage
-          errorCode={surface.status === "error" ? surface.code : ERROR_CODES.BOOK.PAGES_FETCH_ERROR}
-        />
-      </main>
-    );
-  }
-
-  const data = surface.data;
-
   return (
-    <SeriesClientWrapper seriesId={seriesId}>
-      <SeriesContent
-        series={data.series}
-        books={data.booksPage}
-        currentPage={currentPage}
-        preferences={data.preferences}
-        unreadOnly={data.unreadOnly}
-        pageSize={data.effectivePageSize}
-        initialIsFavorite={data.isFavorite}
-        missingBooks={data.missingBooks}
-        relatedSeries={data.relatedSeries}
-        canRate={data.canRate}
-        initialRating={data.rating?.userRating ?? null}
-        providerRatings={data.rating?.providerRatings ?? []}
-        canShelve={data.canShelve}
-        initialIsShelved={data.series.shelvedAt != null}
-      />
-    </SeriesClientWrapper>
+    <SurfaceBoundary
+      surface={surface}
+      ready={(data) => (
+        <SeriesClientWrapper seriesId={seriesId}>
+          <SeriesContent
+            series={data.series}
+            books={data.booksPage}
+            currentPage={currentPage}
+            preferences={data.preferences}
+            unreadOnly={data.unreadOnly}
+            pageSize={data.effectivePageSize}
+            initialIsFavorite={data.isFavorite}
+            missingBooks={data.missingBooks}
+            relatedSeries={data.relatedSeries}
+            canRate={data.canRate}
+            initialRating={data.rating?.userRating ?? null}
+            providerRatings={data.rating?.providerRatings ?? []}
+            canShelve={data.canShelve}
+            initialIsShelved={data.series.shelvedAt != null}
+          />
+        </SeriesClientWrapper>
+      )}
+    />
   );
 }

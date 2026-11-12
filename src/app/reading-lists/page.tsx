@@ -1,5 +1,5 @@
 import { ReadingListsContent } from "./ReadingListsContent";
-import { ErrorMessage } from "@/components/ui/ErrorMessage";
+import { SurfaceBoundary } from "@/components/ui/SurfaceBoundary";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { loadSurface } from "@/lib/surfaces/load-surface";
 
@@ -14,20 +14,12 @@ export default async function ReadingListsPage() {
     },
   });
 
-  if (surface.status !== "ready") {
-    return (
-      <main className="container mx-auto px-4 py-8">
-        <ErrorMessage
-          errorCode={surface.status === "error" ? surface.code : ERROR_CODES.STRIPSTREAM.CONNECTION_ERROR}
-        />
-      </main>
-    );
-  }
-
   return (
-    <ReadingListsContent
-      lists={surface.data.lists}
-      available={surface.data.available}
+    <SurfaceBoundary
+      surface={surface}
+      ready={(data) => (
+        <ReadingListsContent lists={data.lists} available={data.available} />
+      )}
     />
   );
 }

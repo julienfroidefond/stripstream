@@ -4,7 +4,7 @@ import { ERROR_CODES } from "@/constants/errorCodes";
 import { FavoriteService } from "@/lib/services/favorite.service";
 import { getInProgressItems } from "@/lib/services/in-progress.service";
 import { loadSurface } from "@/lib/surfaces/load-surface";
-import { ErrorMessage } from "@/components/ui/ErrorMessage";
+import { SurfaceBoundary } from "@/components/ui/SurfaceBoundary";
 import frMessages from "@/i18n/messages/fr/common.json";
 import enMessages from "@/i18n/messages/en/common.json";
 import { InProgressContent } from "./InProgressContent";
@@ -40,21 +40,15 @@ export default async function InProgressPage() {
     },
   });
 
-  if (surface.status === "anonymous-empty") {
-    return <InProgressContent items={[]} favoriteIds={[]} canShelve={false} />;
-  }
-
-  if (surface.status !== "ready") {
-    return (
-      <main className="container mx-auto px-4 py-8">
-        <ErrorMessage
-          errorCode={surface.status === "error" ? surface.code : ERROR_CODES.SERIES.FETCH_ERROR}
-        />
-      </main>
-    );
-  }
-
-  const { items, favoriteIds, canShelve } = surface.data;
-
-  return <InProgressContent items={items} favoriteIds={favoriteIds} canShelve={canShelve} />;
+  return (
+    <SurfaceBoundary
+      surface={surface}
+      anonymousEmpty={() => (
+        <InProgressContent items={[]} favoriteIds={[]} canShelve={false} />
+      )}
+      ready={({ items, favoriteIds, canShelve }) => (
+        <InProgressContent items={items} favoriteIds={favoriteIds} canShelve={canShelve} />
+      )}
+    />
+  );
 }

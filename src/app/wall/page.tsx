@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { getWallItems } from "@/lib/services/wall.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
+import { SurfaceBoundary } from "@/components/ui/SurfaceBoundary";
 import { loadSurface } from "@/lib/surfaces/load-surface";
 import { WallExperience } from "@/components/wall/WallExperience";
 import { WallEmpty } from "@/components/wall/WallEmpty";
@@ -26,13 +27,13 @@ export default async function WallPage() {
     load: ({ provider }) => getWallItems(provider),
   });
 
-  if (surface.status === "ready") {
-    return surface.data.length === 0 ? <WallEmpty /> : <WallExperience items={surface.data} />;
-  }
-
   return (
-    <WallError
-      code={surface.status === "error" ? surface.code : ERROR_CODES.WALL.FETCH_ERROR}
+    <SurfaceBoundary
+      surface={surface}
+      error={(code) => <WallError code={code} />}
+      ready={(items) =>
+        items.length === 0 ? <WallEmpty /> : <WallExperience items={items} />
+      }
     />
   );
 }
