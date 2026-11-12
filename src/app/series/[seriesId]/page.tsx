@@ -1,6 +1,6 @@
 import { FavoriteService } from "@/lib/services/favorite.service";
-import { SeriesClientWrapper } from "./SeriesClientWrapper";
 import { SeriesContent } from "./SeriesContent";
+import { RefreshSurface } from "@/components/common/RefreshSurface";
 import { SurfaceBoundary } from "@/components/ui/SurfaceBoundary";
 import { AppError } from "@/utils/errors";
 import { ERROR_CODES } from "@/constants/errorCodes";
@@ -68,7 +68,7 @@ export default async function SeriesPage({ params, searchParams }: PageProps) {
     <SurfaceBoundary
       surface={surface}
       ready={(data) => (
-        <SeriesClientWrapper seriesId={seriesId}>
+        <RefreshSurface scope="series" id={seriesId}>
           <SeriesContent
             series={data.series}
             books={data.booksPage}
@@ -85,7 +85,7 @@ export default async function SeriesPage({ params, searchParams }: PageProps) {
             canShelve={data.canShelve}
             initialIsShelved={data.series.shelvedAt != null}
           />
-        </SeriesClientWrapper>
+        </RefreshSurface>
       )}
     />
   );

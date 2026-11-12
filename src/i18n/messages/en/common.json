@@ -275,6 +275,17 @@
       "confirmDelete": "Delete connection \"{{name}}\"?"
     }
   },
+  "refresh": {
+    "button": "Refresh page",
+    "success": {
+      "title": "Page refreshed",
+      "description": "The data has been refreshed successfully"
+    },
+    "error": {
+      "title": "Refresh failed",
+      "description": "Could not refresh the data"
+    }
+  },
   "library": {
     "empty": "No libraries available",
     "coverAlt": "Cover of {name}",
@@ -283,17 +294,6 @@
       "unavailable": "Unavailable"
     },
     "lastUpdated": "Last updated: {date}",
-    "refresh": {
-      "button": "Refresh library",
-      "success": {
-        "title": "Library refreshed",
-        "description": "The library has been refreshed successfully"
-      },
-      "error": {
-        "title": "Error",
-        "description": "An error occurred"
-      }
-    },
     "scan": {
       "button": "Scan library",
       "buttonLabel": "Scan",

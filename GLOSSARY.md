@@ -101,6 +101,16 @@ Surfaces call `useSeriesMutations`; the sidebar only subscribes through
 `src/contexts/SeriesMutationsContext.tsx` and
 `src/lib/series/favorite-events.ts`.
 
+## Refresh surface
+
+The single client-side lifecycle for a manual page refresh. It is keyed by a
+`RefreshScope` and an id, remounts its cycle when that pair changes, invalidates
+that scope through `revalidateForRefresh(scope, id)`, owns the pending lock and
+pull-to-refresh, and calls `router.refresh()` once per cycle. `RefreshButton`
+only consumes the context. Owners: `src/components/common/RefreshSurface.tsx`,
+`src/components/common/RefreshButton.tsx` and
+`src/contexts/RefreshContext.tsx`.
+
 ## Action result
 
 The discriminated result returned by server actions that use the action
