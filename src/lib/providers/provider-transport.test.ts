@@ -209,6 +209,106 @@ describe("ProviderTransport", () => {
   });
 });
 
+describe("ProviderTransport.response", () => {
+  it("streams with an overridden Accept and relays only validators", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response("image", {
+          status: 200,
+          headers: { "content-type": "image/webp" },
+        })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const transport = new ProviderTransport(testPolicy());
+
+    const response = await transport.response(
+      "books/book-1/pages/0",
+      { zero_based: "true" },
+      {
+        accept: "image/webp",
+        conditionalHeaders: new Headers({
+          "if-none-match": 'W/"etag-1"',
+          "if-modified-since": "Wed, 01 Jan 2026 00:00:00 GMT",
+          "x-ignored": "yes",
+        }),
+      }
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toBe("image/webp");
+    const { url, init } = lastFetchCall();
+    expect(url).toBe(
+      "http://provider.test/api/books/book-1/pages/0?zero_based=true"
+    );
+    const headers = new Headers(init.headers);
+    expect(headers.get("authorization")).toBe("Bearer test");
+    expect(headers.get("accept")).toBe("image/webp");
+    expect(headers.get("if-none-match")).toBe('W/"etag-1"');
+    expect(headers.get("if-modified-since")).toBe(
+      "Wed, 01 Jan 2026 00:00:00 GMT"
+    );
+    expect(headers.get("x-ignored")).toBeNull();
+  });
+
+  it("accepts a 304 only when the caller opts in", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        async () =>
+          new Response(null, {
+            status: 304,
+            headers: { etag: '"v1"' },
+          })
+      )
+    );
+    const transport = new ProviderTransport(testPolicy());
+
+    const response = await transport.response("books/book-1/thumbnail", undefined, {
+      allowNotModified: true,
+    });
+
+    expect(response.status).toBe(304);
+    expect(response.headers.get("etag")).toBe('"v1"');
+  });
+
+  it("maps failures to the caller's error code and keeps the status", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        async () =>
+          new Response("missing", {
+            status: 404,
+            statusText: "Not Found",
+          })
+      )
+    );
+    const transport = new ProviderTransport(testPolicy());
+
+    await expect(
+      transport.response("books/book-1/thumbnail", undefined, {
+        errorCode: ERROR_CODES.IMAGE.FETCH_ERROR,
+      })
+    ).rejects.toMatchObject({
+      name: "AppError",
+      code: ERROR_CODES.IMAGE.FETCH_ERROR,
+      params: { status: 404, statusText: "Not Found" },
+    });
+  });
+
+  it("forwards no-store for source files", async () => {
+    const fetchMock = vi.fn(async () => new Response("file", { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const transport = new ProviderTransport(testPolicy());
+
+    await transport.response("books/book-1/file", undefined, {
+      cache: "no-store",
+    });
+
+    expect(lastFetchCall().init.cache).toBe("no-store");
+  });
+});
+
+
 describe("Komga transport policy", () => {
   it("uses the Komga base path and basic auth", async () => {
     const fetchMock = vi.fn(async () => jsonResponse([]));

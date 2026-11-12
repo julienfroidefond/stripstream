@@ -1,116 +1,104 @@
-import { createHash } from "node:crypto";
-
+import { ERROR_CODES } from "@/constants/errorCodes";
 import { requireConnectionForProvider } from "@/lib/connections";
-import { createStripstreamClient } from "@/lib/providers/stripstream/stripstream.client";
+import { ProviderTransport } from "@/lib/providers/provider-transport";
+import { createStripstreamTransportPolicy } from "@/lib/providers/stripstream/stripstream.transport-policy";
 import { imageRequestLimiter } from "@/lib/services/image-request-limiter";
 import { requestDeduplicationService } from "@/lib/services/request-deduplication.service";
-import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 
+import {
+  bufferMediaResponse,
+  FILE_ACCEPT,
+  FILE_TIMEOUT_MS,
+  PAGE_TIMEOUT_MS,
+  rebuildMediaResponse,
+  STRIPSTREAM_IMAGE_ACCEPT,
+  THUMBNAIL_TIMEOUT_MS,
+  validatorFingerprint,
+} from "./media-fetch";
 import type { MediaRef, MediaTransport, MediaTransportContext } from "./types";
 
-/** Une couverture doit répondre vite : au-delà, la tuile reste noire. */
-const THUMBNAIL_TIMEOUT_MS = 12000;
-
-interface ThumbnailPayload {
-  status: number;
-  buffer: ArrayBuffer | null;
-  contentType: string;
-  etag: string | null;
-  lastModified: string | null;
-}
-
-function validatorKey(headers: Headers): string {
-  const validator =
-    headers.get("if-none-match") ??
-    headers.get("if-modified-since") ??
-    "none";
-  return createHash("sha256").update(validator).digest("hex");
-}
-
 async function fetchThumbnail(
+  transport: ProviderTransport,
+  configId: number | null,
+  url: string,
   ref: Extract<MediaRef, { kind: "book-cover" }>,
   context: MediaTransportContext
 ): Promise<Response> {
-  const config = await requireConnectionForProvider("stripstream");
-  const connectionKey = createHash("sha256")
-    .update(`${config.url}\0${config.token}`)
-    .digest("hex");
-  const key = `stripstream-thumbnail:${connectionKey}:${ref.bookId}:${validatorKey(
-    context.headers
-  )}`;
+  const key = [
+    "stripstream-thumbnail",
+    String(configId ?? url),
+    ref.bookId,
+    validatorFingerprint(context.headers),
+  ].join(":");
 
-  const payload = await requestDeduplicationService.deduplicate<ThumbnailPayload>(
+  const payload = await requestDeduplicationService.deduplicate(
     key,
     () =>
       imageRequestLimiter.run(async () => {
-        const client = createStripstreamClient(config.url, config.token);
-        const response = await client.fetchImage(
+        const response = await transport.response(
           `books/${ref.bookId}/thumbnail`,
-          context.headers,
-          THUMBNAIL_TIMEOUT_MS
+          undefined,
+          {
+            accept: STRIPSTREAM_IMAGE_ACCEPT,
+            conditionalHeaders: context.headers,
+            timeoutMs: THUMBNAIL_TIMEOUT_MS,
+            allowNotModified: true,
+            errorCode: ERROR_CODES.IMAGE.FETCH_ERROR,
+          }
         );
-
-        if (response.status === 304) {
-          return {
-            status: 304,
-            buffer: null,
-            contentType: "image/jpeg",
-            etag: response.headers.get("etag"),
-            lastModified: response.headers.get("last-modified"),
-          };
-        }
-
-        return {
-          status: response.status,
-          buffer: await response.arrayBuffer(),
-          contentType: response.headers.get("content-type") ?? "image/jpeg",
-          etag: response.headers.get("etag"),
-          lastModified: response.headers.get("last-modified"),
-        };
+        return bufferMediaResponse(response);
       })
   );
 
-  const headers = new Headers();
-  if (payload.etag) headers.set("ETag", payload.etag);
-  if (payload.lastModified) headers.set("Last-Modified", payload.lastModified);
-  if (payload.status === 304) {
-    return new Response(null, { status: 304, headers });
-  }
-
-  headers.set("Content-Type", payload.contentType);
-  return new Response(payload.buffer, {
-    status: payload.status,
-    headers,
-  });
+  return rebuildMediaResponse(payload);
 }
 
 /**
- * Transport Stripstream. Le client est construit par la factory média ; les
- * routes ne manipulent ni token, ni URL amont, ni clé de déduplication.
+ * Transport Stripstream. Une seule connexion et un seul `ProviderTransport`
+ * par requête, comme côté Komga ; seuls le chemin et l'Accept changent. Les
+ * références non servies par ce provider échouent sans résoudre de connexion.
  */
 export const stripstreamMediaTransport: MediaTransport = {
   async fetch(ref, context) {
+    if (ref.kind === "book-page-thumbnail" || ref.kind === "series-cover") {
+      throw new AppError(ERROR_CODES.IMAGE.FETCH_ERROR, { status: 404 });
+    }
+
+    const config = await requireConnectionForProvider("stripstream");
+    const transport = new ProviderTransport(
+      createStripstreamTransportPolicy(config.url, config.token)
+    );
+
     switch (ref.kind) {
-      case "book-file": {
-        const config = await requireConnectionForProvider("stripstream");
-        const client = createStripstreamClient(config.url, config.token);
-        return client.fetchFile(`books/${ref.bookId}/file`);
-      }
+      case "book-file":
+        return transport.response(`books/${ref.bookId}/file`, undefined, {
+          accept: FILE_ACCEPT,
+          cache: "no-store",
+          timeoutMs: FILE_TIMEOUT_MS,
+        });
       case "book-page": {
-        const config = await requireConnectionForProvider("stripstream");
-        const client = createStripstreamClient(config.url, config.token);
         const query = ref.query ? `?${ref.query}` : "";
-        return client.fetchImage(
+        return transport.response(
           `books/${ref.bookId}/pages/${ref.pageNumber}${query}`,
-          context.headers
+          undefined,
+          {
+            accept: STRIPSTREAM_IMAGE_ACCEPT,
+            conditionalHeaders: context.headers,
+            timeoutMs: PAGE_TIMEOUT_MS,
+            allowNotModified: true,
+            errorCode: ERROR_CODES.IMAGE.FETCH_ERROR,
+          }
         );
       }
       case "book-cover":
-        return fetchThumbnail(ref, context);
-      case "book-page-thumbnail":
-      case "series-cover":
-        throw new AppError(ERROR_CODES.IMAGE.FETCH_ERROR, { status: 404 });
+        return fetchThumbnail(
+          transport,
+          config.configId,
+          config.url,
+          ref,
+          context
+        );
     }
   },
 };

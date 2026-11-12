@@ -105,22 +105,26 @@ conversion to Komga's zero-based pages. Owners:
 
 ## Media transport
 
-The adapter that turns a `MediaRef` into a provider request and normalizes the
-response. The Komga transport wraps the book/image/series services; the
-Stripstream transport uses the shared client factory, limiter and
-deduplication. The route never sees credentials or provider paths. Owners:
+The adapter that turns a `MediaRef` into a provider path and a raw byte request
+through `ProviderTransport.response()`. It resolves the active connection once
+per request, owns the image deadline, the limiter, the conditional validators
+and the coalescing key (built from the resolved `configId`, not the cookie),
+then rebuilds one `Response` per caller when a buffered payload is shared. The
+route never sees credentials or provider paths. Owners:
 `src/lib/media/komga.transport.ts`, `stripstream.transport.ts`,
-`media-route-core.ts`; cache and error shape: `policies.ts`.
+`media-route-core.ts`, `media-fetch.ts`; cache and error shape: `policies.ts`.
 
 ## Provider transport
 
-The shared JSON request lifecycle for both providers: URL assembly, auth
-headers, Next cache options, one retry, the 15 s timeout, empty-body handling
-and HTTP/network error mapping. A provider only supplies a policy (origin and
-path prefix, headers, HTTP-to-error codes, retry rule, cache key). Owner:
+The shared request lifecycle for both providers: URL assembly, auth headers,
+Next cache options, one retry, the 15 s timeout, JSON parsing / empty-body
+handling and HTTP/network error mapping. `request<T>()` carries JSON API calls
+(reads and mutations); `response()` opens a raw image or source-file stream with
+the same policy plus per-call `Accept`, validators, `304` acceptance and
+`no-store`. A provider only supplies a policy (origin and path prefix, headers,
+HTTP-to-error codes, retry rule, cache key). Owner:
 `src/lib/providers/provider-transport.ts`; policies:
-`komga.transport-policy.ts` and `stripstream.transport-policy.ts`. Unlike the
-media transport, it carries JSON API calls (reads and mutations), not bytes.
+`komga.transport-policy.ts` and `stripstream.transport-policy.ts`.
 
 ## Wall phase
 

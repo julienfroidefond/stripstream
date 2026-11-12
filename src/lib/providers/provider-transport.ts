@@ -15,6 +15,22 @@ export interface ProviderRequestOptions {
   tags?: string[];
 }
 
+export interface ProviderResponseOptions {
+  /** Overrides the policy Accept header (images, files). */
+  accept?: string;
+  /** Relays only `If-None-Match` / `If-Modified-Since`. */
+  conditionalHeaders?: HeadersInit;
+  /** Overrides the policy timeout for this stream. */
+  timeoutMs?: number;
+  cache?: RequestCache;
+  /** 304 is a successful media response, not an error. */
+  allowNotModified?: boolean;
+  /** Maps every HTTP/network failure to this code instead of the policy table. */
+  errorCode?: ErrorCode;
+}
+
+const CONDITIONAL_HEADERS = ["if-none-match", "if-modified-since"] as const;
+
 export interface ProviderRetryPolicy {
   shouldRetry(error: unknown): boolean;
   beforeRetry?(error: unknown, url: string): void;
@@ -139,6 +155,91 @@ export class ProviderTransport {
     }
 
     return this.executeRequest<T>(url, fetchOptions);
+  }
+
+  /**
+   * Ouvre une réponse provider brute (image, fichier) sans la parser en JSON.
+   * Même politique d'URL, d'auth, de timeout et de mapping d'erreurs que
+   * `request()`, mais le corps reste un flux : l'appelant décide de le bufferiser
+   * (déduplication) ou de le relayer tel quel.
+   */
+  async response(
+    path: string,
+    params?: ProviderQueryParams,
+    options: ProviderResponseOptions = {}
+  ): Promise<Response> {
+    const url = this.buildUrl(path, params);
+    const headers = this.buildHeaders({ accept: options.accept });
+    if (options.conditionalHeaders) {
+      const validators = new Headers(options.conditionalHeaders);
+      for (const name of CONDITIONAL_HEADERS) {
+        const value = validators.get(name);
+        if (value) headers.set(name, value);
+      }
+    }
+
+    const isDebug = this.policy.debugRequest?.() ?? false;
+    const startTime = isDebug ? Date.now() : 0;
+    const controller = new AbortController();
+    const timeoutMs = options.timeoutMs ?? this.policy.timeoutMs;
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      // codeql[js/request-forgery]
+      const response = await fetch(url, {
+        headers,
+        cache: options.cache,
+        signal: controller.signal,
+      });
+
+      if (isDebug) {
+        logger.info(
+          {
+            url,
+            status: response.status,
+            duration: `${Date.now() - startTime}ms`,
+            ok: response.ok,
+          },
+          `${this.policy.label} Stream Response`
+        );
+      }
+
+      const notModified = options.allowNotModified && response.status === 304;
+      if (!response.ok && !notModified) {
+        if (isDebug) {
+          logger.error(
+            { url, status: response.status, statusText: response.statusText },
+            `${this.policy.label} Stream Error Response`
+          );
+        }
+        throw new AppError(
+          options.errorCode ?? codeForHttpStatus(response.status, this.policy.httpCodes),
+          { status: response.status, statusText: response.statusText }
+        );
+      }
+
+      return response;
+    } catch (error) {
+      if (isDebug) {
+        logger.error(
+          {
+            url,
+            error: error instanceof Error ? error.message : String(error),
+            duration: `${Date.now() - startTime}ms`,
+          },
+          `${this.policy.label} Stream Failed`
+        );
+      }
+      if (error instanceof AppError) throw error;
+      if (isConnectionError(error)) {
+        logger.warn({ err: error, url }, `${this.policy.label} stream failed`);
+      } else {
+        logger.error({ err: error, url }, `${this.policy.label} stream failed`);
+      }
+      throw new AppError(options.errorCode ?? this.policy.fallbackErrorCode, {}, error);
+    } finally {
+      clearTimeout(timeoutId);
+    }
   }
 
   private async executeRequest<T>(
