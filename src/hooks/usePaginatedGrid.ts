@@ -5,16 +5,13 @@ import { useCallback, useEffect, useRef, useState, useTransition, type RefObject
 import { useGridFlip, useGridFlipPlayback } from "@/components/motion";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { normalizeGridPageSize } from "@/lib/pageSize";
+import { normalizeSortOrder } from "@/lib/collections/query";
 import type { SortOrder, UserPreferences } from "@/types/preferences";
 
 export type GridViewMode = "grid" | "list";
 type ViewModePreference = "viewMode" | "booksViewMode";
 
 const SEARCH_DEBOUNCE_MS = 300;
-
-function normalizeSortOrder(value: string | undefined): SortOrder {
-  return value === "latest" || value === "community_score" ? value : "title";
-}
 
 interface UsePaginatedGridOptions {
   /** Identité du contenu affiché : sa variation rejoue le glissement des cartes. */
