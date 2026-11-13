@@ -6,20 +6,15 @@ Done work is not repeated here — the ADR index is the history of every decisio
 
 ## Backlog
 
-Opened by the architecture audit of 2026-11-13 (state of `main` at `a2e9fd1`). Each line is one chantier; the ADR number is reserved for the record that ships with it.
+Opened by the architecture audit of 2026-11-13 (state of `main` at `a2e9fd1`). Chantiers A–I are delivered (see below); J and the residual items found while delivering them remain.
 
 | # | Chantier | Evidence | ADR |
 | --- | --- | --- | --- |
-| A | **Pagination is one contract.** Komga returns the cursor it received (`komga.provider.ts` `page = cursor - 1` → `nextCursor = page + 1`), so `getAllSeriesBooks` re-reads page 1 up to 500 times on a series of more than 100 books. Providers return `{ items, page, totalPages }` (1-based), one `iteratePages()` walks them, one contract test runs against both providers. | `series-books.ts`, 6 callers | 0021 |
-| B | **Reader side actions are one policy.** The side → action rule is copied in five files and `ControlButtons` hides the "next" arrow on page 1 of an RTL book. `resolveSideAction(side, ctx)` drives buttons, swipe, click zones and the shortcuts dialog; the prefetch plan becomes a pure `planPrefetch`. | `ControlButtons.tsx:250`, `useTouchNavigation.ts`, `PageDisplay.tsx`, `useImageLoader.ts` | 0022 |
-| C | **Every server action goes through the runner.** `admin.ts`, `auth.ts`, `password.ts` bypass `runAction`; `changePassword` runs `bcrypt.compare` with no rate limit; `requireAdmin` throws a raw `Error` matched by `message.includes("Forbidden")` five times. | `actions/password.ts`, `admin.service.ts` | 0023 |
-| D | **Read progress has one mutation seam.** `ui/mark-as-read-button`, `ui/mark-as-unread-button` and `SeriesHeader` each call the action and handle toast/refresh themselves, without optimism or rollback. `BookCover` drops the four props every caller disables; the missing-books merge and filter go through `usePaginatedGrid`; the home hero uses the carousel index machine. | `components/ui`, `PaginatedBookGrid.tsx`, `ContinueReadingHero.tsx` | 0024 |
-| E | **The wall camera speaks intentions.** `WallCameraController` exposes twenty members including raw motion values and callers sequence `stop → markPanning → cancelView → set`; the pointer state machine lives in an effect closure; `WallExperience` keeps focus geometry, random pick and shortcuts untested. | `useWallCamera.ts`, `useWallGestures.ts`, `WallExperience.tsx` | 0025 |
-| F | **Home feed policy lives in the registry.** Failure fallback, anonymous hiding and the "everything failed" rule sit in `app/page.tsx`; anonymous visits still fetch feeds they discard; `loadHomeFeed` bypasses the runner. | `src/app/page.tsx`, `actions/home.ts` | 0026 |
-| G | **Media is addressed and cached by kind.** URL shapes are written by hand in adapters and routes, cache policy is keyed by provider not media kind, `komga.transport.ts` reads the per-user `showThumbnails` preference behind a `public, immutable` 30-day response, three routes are dead. | `media/policies.ts`, `komga.transport.ts` | 0027 |
-| H | **Cache profiles are produced in one place.** TTL constants and `getBooks` tag selection are copied in both providers; `library.ts` and `preferences.ts` call `revalidatePath` outside the recipes. | `komga.provider.ts`, `stripstream.provider.ts` | 0028 |
-| I | **Services receive the caller's identity.** `getCurrentUser() → throw → parseInt` is repeated seven times in services, and `FavoriteService` re-resolves the provider the page already holds. | `user.service.ts`, `favorite.service.ts`, `preferences.service.ts` | 0029 |
 | J | **One provider registry for connections.** `config.ts` / `stripstream-config.ts` duplicate twelve actions; `ConnectionsSettings` and `ProviderSwitcher` duplicate the unified connection list and activate differently (`router.refresh()` vs full reload). | `actions/*config.ts`, `connections/`, `ProviderSwitcher.tsx` | 0030 |
+| K | **Registration is throttled per client, not only per email.** `AuthServerService.registerUser` keeps a per-email budget, so rotating addresses is not slowed and nothing is limited per IP. | `auth-server.service.ts`, ADR 0023 | — |
+| L | **Media transports receive the caller identity.** `komga.transport.ts` (cover preference) and `requireConnectionForProvider` still read the session; thread `userId` through the media transport context. | ADR 0029 *Consequences* | — |
+| M | **Cache profile inconsistencies.** Komga's `getNextBook` is uncached while Stripstream's uses `nextBook()` (30 s); `stats()` declares no TTL. Decide one profile each. | ADR 0028 *Consequences* | — |
+| N | **Admin and account screens are localized.** Static labels of the admin and account screens are still hard-coded French; only their toasts moved to `errors.*` / `admin.*` keys. | `components/admin`, `components/account` | — |
 
 ## Picking the next one
 
@@ -29,6 +24,15 @@ Order by the number of call sites a wrong change would silently break, not by fi
 
 | PR | Change | ADR |
 | --- | --- | --- |
+| `refactor/services-receive-identity` | Services receive the caller's identity instead of reading the session. | [0029](./adr/0029-services-receive-the-caller-identity.md) |
+| `refactor/cache-profiles` | Cache profiles are produced in one place. | [0028](./adr/0028-one-cache-profile-producer.md) |
+| `refactor/media-by-kind` | Media is addressed and cached by kind. | [0027](./adr/0027-media-addressed-and-cached-by-kind.md) |
+| `refactor/home-feed-policy` | The home feed policy is declared by the registry. | [0026](./adr/0026-home-feed-policy-in-registry.md) |
+| `refactor/wall-camera-intentions` | The wall camera speaks in intentions, the pointer machine is pure. | [0025](./adr/0025-wall-camera-speaks-in-intentions.md) |
+| `refactor/read-progress-mutations` | Read progress has one client mutation seam. | [0024](./adr/0024-read-progress-mutation-seam.md) |
+| `refactor/actions-through-runner` | Every server action runs through the runner, admin authorization included. | [0023](./adr/0023-every-action-through-the-runner.md) |
+| `refactor/reader-side-actions` | Reader side actions and the prefetch plan are pure policies. | [0022](./adr/0022-reader-side-actions-policy.md) |
+| `refactor/pagination-contract` | Paginated provider lists share one page-number contract. | [0021](./adr/0021-one-pagination-contract.md) |
 | #170 | Dead schema columns are dropped, not documented. | [0020](./adr/0020-drop-dead-schema-columns.md) |
 | #169 | A required capability owns its data and is handed to the loader. | [0019](./adr/0019-capability-owns-its-data.md) |
 | #167 | Rate-limit counters live in a shared SQLite store behind one seam. | [0018](./adr/0018-durable-rate-limit-store.md) |
