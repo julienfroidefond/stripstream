@@ -17,6 +17,7 @@ import { useCoverInteraction } from "@/hooks/useCoverInteraction";
 import { useFeedPagination } from "@/hooks/useFeedPagination";
 import { useTranslate } from "@/hooks/useTranslate";
 import { HOME_FEED_PAGE_SIZE } from "@/constants/homeConstants";
+import { resolveGoTo, resolveSlidesChange, wrapIndex } from "@/lib/carousel/index-machine";
 import { cn } from "@/lib/utils";
 import { loadContinueReading } from "@/app/actions/home";
 import {
@@ -312,20 +313,22 @@ export function ContinueReadingHero({ initialItems, initialHasMore }: ContinueRe
     initialHasMore,
     pageSize: HOME_FEED_PAGE_SIZE,
     loadPage: loadContinueReading,
-    onPageAppended: (_page, previousItems) => {
+    onPageAppended: (page, previousItems) => {
       const previousTotal = previousItems.length;
-      const previousIndex =
-        previousTotal > 0
-          ? ((index % previousTotal) + previousTotal) % previousTotal
-          : 0;
-      const previousEntry = previousItems[previousIndex];
-
       // La suite se pose sur la première nouveauté : le clic se voit.
+      const change = resolveSlidesChange(
+        wrapIndex(index, previousTotal),
+        previousTotal,
+        previousTotal + page.items.length
+      );
+      if (!change.moved) return;
+      const previousEntry = previousItems[change.fromIndex];
+
       setIntroPlayed(true);
       if (!reduce && previousEntry) {
         setTransition({ from: previousEntry, direction: 1, offset: 0 });
       }
-      setIndex(previousTotal);
+      setIndex(change.index);
     },
   });
   const sectionRef = useRef<HTMLElement | null>(null);
@@ -347,23 +350,22 @@ export function ContinueReadingHero({ initialItems, initialHasMore }: ContinueRe
 
   const total = loadedItems.length;
   const hasMany = total > 1;
-  const safeIndex = total > 0 ? ((index % total) + total) % total : 0;
+  const safeIndex = wrapIndex(index, total);
   const entry = loadedItems[safeIndex];
   const book = entry?.book;
   const staged = Boolean(book) && !introPlayed && !transition && book.id === firstBookId;
 
   const goTo = (target: number, direction: number, offset = 0) => {
-    if (total === 0) return;
-    const next = ((target % total) + total) % total;
-    if (next === safeIndex) return;
+    const next = resolveGoTo(safeIndex, target, total);
+    if (!next.changed) return;
     setIntroPlayed(true);
     if (reduce) {
-      setIndex(next);
+      setIndex(next.index);
       setTransition(null);
       return;
     }
     setTransition({ from: entry, direction, offset });
-    setIndex(next);
+    setIndex(next.index);
   };
 
   const handleResume = (targetBook: NormalizedBook) => {

@@ -170,8 +170,6 @@ const BookMediaCard = memo(function BookMediaCard({ book }: { book: NormalizedBo
             <BookCover
               book={book}
               alt={t("books.coverAlt", { title })}
-              showControls={false}
-              showOverlay={false}
             />
             <GlowLayer />
             <span
