@@ -72,11 +72,8 @@ export function ChangePasswordForm({ username }: ChangePasswordFormProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Changer le mot de passe</CardTitle>
-        <CardDescription>
-          Assurez-vous d&apos;utiliser un mot de passe fort (8 caractères minimum, une majuscule et
-          un chiffre)
-        </CardDescription>
+        <CardTitle>{t("account.changePassword.title")}</CardTitle>
+        <CardDescription>{t("account.changePassword.description")}</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -92,7 +89,7 @@ export function ChangePasswordForm({ username }: ChangePasswordFormProps) {
           />
 
           <div className="space-y-2">
-            <Label htmlFor="currentPassword">Mot de passe actuel</Label>
+            <Label htmlFor="currentPassword">{t("account.changePassword.current")}</Label>
             <div className="relative">
               <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
@@ -110,7 +107,7 @@ export function ChangePasswordForm({ username }: ChangePasswordFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="newPassword">Nouveau mot de passe</Label>
+            <Label htmlFor="newPassword">{t("account.changePassword.new")}</Label>
             <div className="relative">
               <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
@@ -128,7 +125,7 @@ export function ChangePasswordForm({ username }: ChangePasswordFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
+            <Label htmlFor="confirmPassword">{t("account.changePassword.confirm")}</Label>
             <div className="relative">
               <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
@@ -146,7 +143,7 @@ export function ChangePasswordForm({ username }: ChangePasswordFormProps) {
           </div>
 
           <Button type="submit" disabled={isLoading}>
-            {isLoading ? "Modification..." : "Changer le mot de passe"}
+            {isLoading ? t("account.changePassword.submitting") : t("account.changePassword.submit")}
           </Button>
         </form>
       </CardContent>

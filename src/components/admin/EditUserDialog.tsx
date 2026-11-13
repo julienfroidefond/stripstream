@@ -25,10 +25,7 @@ interface EditUserDialogProps {
   onSuccess: () => void;
 }
 
-const AVAILABLE_ROLES = [
-  { value: "ROLE_USER", label: "User" },
-  { value: "ROLE_ADMIN", label: "Admin" },
-];
+const AVAILABLE_ROLES = ["ROLE_USER", "ROLE_ADMIN"] as const;
 
 export function EditUserDialog({ user, open, onOpenChange, onSuccess }: EditUserDialogProps) {
   const [selectedRoles, setSelectedRoles] = useState<string[]>(user.roles);
@@ -82,25 +79,25 @@ export function EditUserDialog({ user, open, onOpenChange, onSuccess }: EditUser
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Modifier l&apos;utilisateur</DialogTitle>
+          <DialogTitle>{t("admin.editUser.title")}</DialogTitle>
           <DialogDescription>
-            Gérer les rôles de <strong>{user.email}</strong>
+            {t("admin.editUser.description")} <strong>{user.email}</strong>
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label>Rôles</Label>
+            <Label>{t("admin.editUser.roles")}</Label>
             {AVAILABLE_ROLES.map((role) => (
-              <div key={role.value} className="flex items-center space-x-2">
+              <div key={role} className="flex items-center space-x-2">
                 <Checkbox
-                  id={role.value}
-                  checked={selectedRoles.includes(role.value)}
-                  onCheckedChange={() => handleRoleToggle(role.value)}
+                  id={role}
+                  checked={selectedRoles.includes(role)}
+                  onCheckedChange={() => handleRoleToggle(role)}
                   disabled={isLoading}
                 />
-                <Label htmlFor={role.value} className="font-normal cursor-pointer">
-                  {role.label}
+                <Label htmlFor={role} className="font-normal cursor-pointer">
+                  {t(`admin.roles.${role}`)}
                 </Label>
               </div>
             ))}
@@ -109,10 +106,10 @@ export function EditUserDialog({ user, open, onOpenChange, onSuccess }: EditUser
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
-            Annuler
+            {t("common.cancel")}
           </Button>
           <Button onClick={handleSubmit} disabled={isLoading}>
-            {isLoading ? "Enregistrement..." : "Enregistrer"}
+            {isLoading ? t("admin.editUser.saving") : t("admin.editUser.save")}
           </Button>
         </DialogFooter>
       </DialogContent>

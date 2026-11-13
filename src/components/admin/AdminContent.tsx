@@ -68,19 +68,19 @@ export function AdminContent({ initialUsers, initialStats }: AdminContentProps) 
       <div className="max-w-7xl mx-auto space-y-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Administration</h1>
-            <p className="text-muted-foreground mt-2">Gérez les utilisateurs de la plateforme</p>
+            <h1 className="text-3xl font-bold">{t("admin.title")}</h1>
+            <p className="text-muted-foreground mt-2">{t("admin.subtitle")}</p>
           </div>
           <Button onClick={refreshData} disabled={isRefreshing}>
             <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
-            Rafraîchir
+            {t("admin.refresh.button")}
           </Button>
         </div>
 
         <StatsCards stats={stats} />
 
         <div>
-          <h2 className="text-2xl font-semibold mb-4">Utilisateurs</h2>
+          <h2 className="text-2xl font-semibold mb-4">{t("admin.users")}</h2>
           <UsersTable users={users} onUserUpdated={refreshData} />
         </div>
       </div>

@@ -64,26 +64,26 @@ export function DeleteUserDialog({ user, open, onOpenChange, onSuccess }: Delete
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Êtes-vous sûr?</AlertDialogTitle>
+          <AlertDialogTitle>{t("admin.deleteUser.title")}</AlertDialogTitle>
           <AlertDialogDescription>
-            Vous allez supprimer l&apos;utilisateur <strong>{user.email}</strong>.
+            {t("admin.deleteUser.intro")} <strong>{user.email}</strong>.
             <br />
-            Cette action est irréversible et supprimera également :
+            {t("admin.deleteUser.irreversible")}
             <ul className="list-disc list-inside mt-2">
-              <li>Sa configuration Komga</li>
-              <li>Ses préférences</li>
-              <li>Ses favoris ({user._count?.favorites || 0})</li>
+              <li>{t("admin.deleteUser.komga")}</li>
+              <li>{t("admin.deleteUser.preferences")}</li>
+              <li>{t("admin.deleteUser.favorites", { count: user._count?.favorites || 0 })}</li>
             </ul>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isLoading}>Annuler</AlertDialogCancel>
+          <AlertDialogCancel disabled={isLoading}>{t("common.cancel")}</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleDelete}
             disabled={isLoading}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            {isLoading ? "Suppression..." : "Supprimer"}
+            {isLoading ? t("admin.deleteUser.deleting") : t("admin.deleteUser.confirm")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

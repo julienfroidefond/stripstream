@@ -17,6 +17,7 @@ import { EditUserDialog } from "./EditUserDialog";
 import { DeleteUserDialog } from "./DeleteUserDialog";
 import { ResetPasswordDialog } from "./ResetPasswordDialog";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { useTranslate } from "@/hooks/useTranslate";
 
 interface UsersTableProps {
   users: AdminUserData[];
@@ -24,6 +25,7 @@ interface UsersTableProps {
 }
 
 export function UsersTable({ users, onUserUpdated }: UsersTableProps) {
+  const { t, currentLanguage } = useTranslate();
   const [editingUser, setEditingUser] = useState<AdminUserData | null>(null);
   const [deletingUser, setDeletingUser] = useState<AdminUserData | null>(null);
   const [resettingPasswordUser, setResettingPasswordUser] = useState<AdminUserData | null>(null);
@@ -34,20 +36,20 @@ export function UsersTable({ users, onUserUpdated }: UsersTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Email</TableHead>
-              <TableHead>Rôles</TableHead>
-              <TableHead>Config Komga</TableHead>
-              <TableHead>Préférences</TableHead>
-              <TableHead>Favoris</TableHead>
-              <TableHead>Créé le</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>{t("admin.table.email")}</TableHead>
+              <TableHead>{t("admin.table.roles")}</TableHead>
+              <TableHead>{t("admin.table.komga")}</TableHead>
+              <TableHead>{t("admin.table.preferences")}</TableHead>
+              <TableHead>{t("admin.table.favorites")}</TableHead>
+              <TableHead>{t("admin.table.createdAt")}</TableHead>
+              <TableHead className="text-right">{t("admin.table.actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {users.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center text-muted-foreground">
-                  Aucun utilisateur
+                  {t("admin.table.empty")}
                 </TableCell>
               </TableRow>
             ) : (
@@ -58,7 +60,7 @@ export function UsersTable({ users, onUserUpdated }: UsersTableProps) {
                     <div className="flex gap-1">
                       {user.roles.map((role) => (
                         <Badge key={role} variant={role === "ROLE_ADMIN" ? "default" : "secondary"}>
-                          {role.replace("ROLE_", "")}
+                          {t(`admin.roles.${role}`)}
                         </Badge>
                       ))}
                     </div>
@@ -66,34 +68,34 @@ export function UsersTable({ users, onUserUpdated }: UsersTableProps) {
                   <TableCell>
                     {user.hasKomgaConfig ? (
                       <StatusBadge status="success" icon={Check}>
-                        Configuré
+                        {t("admin.table.configured")}
                       </StatusBadge>
                     ) : (
                       <StatusBadge status="error" icon={X}>
-                        Non configuré
+                        {t("admin.table.notConfigured")}
                       </StatusBadge>
                     )}
                   </TableCell>
                   <TableCell>
                     {user.hasPreferences ? (
                       <StatusBadge status="success" icon={Check}>
-                        Oui
+                        {t("admin.table.yes")}
                       </StatusBadge>
                     ) : (
                       <StatusBadge status="error" icon={X}>
-                        Non
+                        {t("admin.table.no")}
                       </StatusBadge>
                     )}
                   </TableCell>
                   <TableCell>{user._count?.favorites || 0}</TableCell>
-                  <TableCell>{new Date(user.createdAt).toLocaleDateString("fr-FR")}</TableCell>
+                  <TableCell>{new Date(user.createdAt).toLocaleDateString(currentLanguage)}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => setEditingUser(user)}
-                        title="Modifier les rôles"
+                        title={t("admin.table.editRoles")}
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -101,7 +103,7 @@ export function UsersTable({ users, onUserUpdated }: UsersTableProps) {
                         variant="ghost"
                         size="sm"
                         onClick={() => setResettingPasswordUser(user)}
-                        title="Réinitialiser le mot de passe"
+                        title={t("admin.table.resetPassword")}
                       >
                         <KeyRound className="h-4 w-4 text-blue-500" />
                       </Button>
@@ -109,7 +111,7 @@ export function UsersTable({ users, onUserUpdated }: UsersTableProps) {
                         variant="ghost"
                         size="sm"
                         onClick={() => setDeletingUser(user)}
-                        title="Supprimer l'utilisateur"
+                        title={t("admin.table.delete")}
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>

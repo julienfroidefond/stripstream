@@ -896,29 +896,120 @@
   "common": {
     "retry": "Réessayer",
     "error": "Erreur",
-    "success": "Succès"
+    "success": "Succès",
+    "cancel": "Annuler"
   },
   "admin": {
     "refresh": {
       "success": {
         "title": "Données rafraîchies",
         "description": "Les données ont été mises à jour"
-      }
+      },
+      "button": "Rafraîchir"
     },
     "editUser": {
-      "success": "Les rôles ont été mis à jour"
+      "success": "Les rôles ont été mis à jour",
+      "title": "Modifier l'utilisateur",
+      "description": "Gérer les rôles de",
+      "roles": "Rôles",
+      "save": "Enregistrer",
+      "saving": "Enregistrement..."
     },
     "deleteUser": {
-      "success": "L'utilisateur a été supprimé"
+      "success": "L'utilisateur a été supprimé",
+      "title": "Êtes-vous sûr ?",
+      "intro": "Vous allez supprimer l'utilisateur",
+      "irreversible": "Cette action est irréversible et supprimera également :",
+      "komga": "Sa configuration Komga",
+      "preferences": "Ses préférences",
+      "favorites": "Ses favoris ({{count}})",
+      "confirm": "Supprimer",
+      "deleting": "Suppression..."
     },
     "resetPassword": {
       "success": "Le mot de passe a été réinitialisé",
-      "missingFields": "Veuillez remplir tous les champs"
+      "missingFields": "Veuillez remplir tous les champs",
+      "title": "Réinitialiser le mot de passe",
+      "description": "Définir un nouveau mot de passe pour",
+      "new": "Nouveau mot de passe",
+      "newPlaceholder": "Minimum 8 caractères",
+      "confirm": "Confirmer le mot de passe",
+      "confirmPlaceholder": "Confirmer le nouveau mot de passe",
+      "rules": "Le mot de passe doit contenir au moins 8 caractères, une majuscule et un chiffre.",
+      "submit": "Réinitialiser",
+      "submitting": "Réinitialisation..."
+    },
+    "title": "Administration",
+    "subtitle": "Gérez les utilisateurs de la plateforme",
+    "users": "Utilisateurs",
+    "stats": {
+      "totalUsers": "Utilisateurs totaux",
+      "totalUsersDescription": "Comptes enregistrés",
+      "admins": "Administrateurs",
+      "adminsDescription": "Avec privilèges admin",
+      "komga": "Config Komga",
+      "komgaDescription": "Utilisateurs configurés",
+      "preferences": "Préférences",
+      "preferencesDescription": "Préférences personnalisées"
+    },
+    "table": {
+      "email": "Email",
+      "roles": "Rôles",
+      "komga": "Config Komga",
+      "preferences": "Préférences",
+      "favorites": "Favoris",
+      "createdAt": "Créé le",
+      "actions": "Actions",
+      "empty": "Aucun utilisateur",
+      "configured": "Configuré",
+      "notConfigured": "Non configuré",
+      "yes": "Oui",
+      "no": "Non",
+      "editRoles": "Modifier les rôles",
+      "resetPassword": "Réinitialiser le mot de passe",
+      "delete": "Supprimer l'utilisateur"
+    },
+    "roles": {
+      "ROLE_USER": "Utilisateur",
+      "ROLE_ADMIN": "Admin"
     }
   },
   "account": {
     "changePassword": {
-      "success": "Votre mot de passe a été modifié avec succès"
+      "success": "Votre mot de passe a été modifié avec succès",
+      "title": "Changer le mot de passe",
+      "description": "Assurez-vous d'utiliser un mot de passe fort (8 caractères minimum, une majuscule et un chiffre)",
+      "current": "Mot de passe actuel",
+      "new": "Nouveau mot de passe",
+      "confirm": "Confirmer le mot de passe",
+      "submit": "Changer le mot de passe",
+      "submitting": "Modification..."
+    },
+    "title": "Mon compte",
+    "subtitle": "Gérez vos informations personnelles et votre sécurité",
+    "profile": {
+      "title": "Informations du compte",
+      "description": "Vos informations personnelles",
+      "email": "Email",
+      "roles": "Rôles",
+      "memberSince": "Membre depuis",
+      "favorites": "Favoris",
+      "favoritesCount": "{{count}} séries favorites",
+      "lastUpdate": "Dernière mise à jour : {{date}}"
+    },
+    "readingStats": {
+      "title": "Statistiques de lecture",
+      "description": "Données de la connexion active",
+      "unavailable": "Statistiques indisponibles. Vérifiez votre connexion active dans les réglages.",
+      "series": "Séries",
+      "books": "Livres",
+      "read": "Lus",
+      "inProgress": "En cours",
+      "unread": "Non lus",
+      "progress": "Progression",
+      "distribution": "Répartition des livres",
+      "booksByLibrary": "Livres par bibliothèque",
+      "progressByLibrary": "Progression par bibliothèque"
     }
   }
 }

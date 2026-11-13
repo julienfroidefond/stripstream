@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { NormalizedReadingStats } from "@/lib/providers/types";
 import { CountUp, StaggerGroup, StaggerItem } from "@/components/motion";
+import { useTranslate } from "@/hooks/useTranslate";
 
 const COLORS = {
   read: "hsl(var(--chart-1))",
@@ -30,11 +31,12 @@ function chartHeight(itemCount: number): number {
 }
 
 export function ReadingStatsCard({ stats }: { stats: NormalizedReadingStats | null }) {
+  const { t } = useTranslate();
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Statistiques de lecture</CardTitle>
-        <CardDescription>Données de la connexion active</CardDescription>
+        <CardTitle>{t("account.readingStats.title")}</CardTitle>
+        <CardDescription>{t("account.readingStats.description")}</CardDescription>
       </CardHeader>
       <CardContent>
         {stats ? <ReadingStatsContent stats={stats} /> : <StatsUnavailable />}
@@ -44,37 +46,37 @@ export function ReadingStatsCard({ stats }: { stats: NormalizedReadingStats | nu
 }
 
 function StatsUnavailable() {
+  const { t } = useTranslate();
   return (
-    <p className="text-sm text-muted-foreground">
-      Statistiques indisponibles. Vérifiez votre connexion active dans les réglages.
-    </p>
+    <p className="text-sm text-muted-foreground">{t("account.readingStats.unavailable")}</p>
   );
 }
 
 function ReadingStatsContent({ stats }: { stats: NormalizedReadingStats }) {
+  const { t } = useTranslate();
   const overallProgress = percentage(stats.booksRead, stats.totalBooks);
   const statusData = [
-    { name: "Lus", value: stats.booksRead, color: COLORS.read },
-    { name: "En cours", value: stats.booksInProgress, color: COLORS.reading },
-    { name: "Non lus", value: stats.booksUnread, color: COLORS.unread },
+    { name: t("account.readingStats.read"), value: stats.booksRead, color: COLORS.read },
+    { name: t("account.readingStats.inProgress"), value: stats.booksInProgress, color: COLORS.reading },
+    { name: t("account.readingStats.unread"), value: stats.booksUnread, color: COLORS.unread },
   ];
   const libraryData = stats.libraries.map((library) => ({
     name: library.name,
-    livres: library.bookCount,
-    progression: percentage(library.booksReadCount, library.bookCount),
+    books: library.bookCount,
+    progress: percentage(library.booksReadCount, library.bookCount),
   }));
 
   return (
     <div className="space-y-8">
       <StaggerGroup className="grid grid-cols-2 gap-4 sm:grid-cols-4" effect="settle" stagger={0.06}>
-        <StatTile label="Séries" value={stats.totalSeries} />
-        <StatTile label="Livres" value={stats.totalBooks} />
-        <StatTile label="Lus" value={stats.booksRead} />
-        <StatTile label="Progression" value={overallProgress} suffix="%" />
+        <StatTile label={t("account.readingStats.series")} value={stats.totalSeries} />
+        <StatTile label={t("account.readingStats.books")} value={stats.totalBooks} />
+        <StatTile label={t("account.readingStats.read")} value={stats.booksRead} />
+        <StatTile label={t("account.readingStats.progress")} value={overallProgress} suffix="%" />
       </StaggerGroup>
 
       <div>
-        <h3 className="mb-2 text-sm font-medium">Répartition des livres</h3>
+        <h3 className="mb-2 text-sm font-medium">{t("account.readingStats.distribution")}</h3>
         <div className="h-[240px]">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
@@ -105,16 +107,18 @@ function ReadingStatsContent({ stats }: { stats: NormalizedReadingStats }) {
       {libraryData.length > 0 && (
         <div className="grid gap-8 md:grid-cols-2">
           <LibraryBarChart
-            title="Livres par bibliothèque"
+            title={t("account.readingStats.booksByLibrary")}
+            seriesName={t("account.readingStats.books")}
             data={libraryData}
-            dataKey="livres"
+            dataKey="books"
             color={COLORS.read}
             domainMax={undefined}
           />
           <LibraryBarChart
-            title="Progression par bibliothèque"
+            title={t("account.readingStats.progressByLibrary")}
+            seriesName={t("account.readingStats.progress")}
             data={libraryData}
-            dataKey="progression"
+            dataKey="progress"
             color={COLORS.progress}
             domainMax={100}
             unit="%"
@@ -148,6 +152,7 @@ function StatTile({ label, value, suffix = "" }: { label: string; value: number;
 
 function LibraryBarChart({
   title,
+  seriesName,
   data,
   dataKey,
   color,
@@ -155,8 +160,10 @@ function LibraryBarChart({
   unit,
 }: {
   title: string;
-  data: { name: string; livres: number; progression: number }[];
-  dataKey: "livres" | "progression";
+  /** Libellé de la série dans l'infobulle (sinon recharts affiche la clé). */
+  seriesName: string;
+  data: { name: string; books: number; progress: number }[];
+  dataKey: "books" | "progress";
   color: string;
   domainMax: number | undefined;
   unit?: string;
@@ -171,7 +178,7 @@ function LibraryBarChart({
             <XAxis type="number" domain={[0, domainMax ?? "dataMax"]} tick={AXIS_TICK} unit={unit} />
             <YAxis type="category" dataKey="name" width={110} tick={AXIS_TICK} />
             <Tooltip contentStyle={TOOLTIP_STYLE} cursor={{ fill: "hsl(var(--muted))" }} />
-            <Bar dataKey={dataKey} fill={color} radius={[0, 4, 4, 0]} />
+            <Bar dataKey={dataKey} name={seriesName} fill={color} radius={[0, 4, 4, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>

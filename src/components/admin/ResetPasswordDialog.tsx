@@ -102,15 +102,15 @@ export function ResetPasswordDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Réinitialiser le mot de passe</DialogTitle>
+          <DialogTitle>{t("admin.resetPassword.title")}</DialogTitle>
           <DialogDescription>
-            Définir un nouveau mot de passe pour <strong>{user.email}</strong>
+            {t("admin.resetPassword.description")} <strong>{user.email}</strong>
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="newPassword">Nouveau mot de passe</Label>
+            <Label htmlFor="newPassword">{t("admin.resetPassword.new")}</Label>
             <div className="relative">
               <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
@@ -119,14 +119,14 @@ export function ResetPasswordDialog({
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 className="pl-9"
-                placeholder="Minimum 8 caractères"
+                placeholder={t("admin.resetPassword.newPlaceholder")}
                 disabled={isLoading}
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
+            <Label htmlFor="confirmPassword">{t("admin.resetPassword.confirm")}</Label>
             <div className="relative">
               <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
@@ -135,23 +135,23 @@ export function ResetPasswordDialog({
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className="pl-9"
-                placeholder="Confirmer le nouveau mot de passe"
+                placeholder={t("admin.resetPassword.confirmPlaceholder")}
                 disabled={isLoading}
               />
             </div>
           </div>
 
           <p className="text-sm text-muted-foreground">
-            Le mot de passe doit contenir au moins 8 caractères, une majuscule et un chiffre.
+            {t("admin.resetPassword.rules")}
           </p>
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={isLoading}>
-            Annuler
+            {t("common.cancel")}
           </Button>
           <Button onClick={handleSubmit} disabled={isLoading}>
-            {isLoading ? "Réinitialisation..." : "Réinitialiser"}
+            {isLoading ? t("admin.resetPassword.submitting") : t("admin.resetPassword.submit")}
           </Button>
         </DialogFooter>
       </DialogContent>

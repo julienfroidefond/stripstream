@@ -893,29 +893,120 @@
   "common": {
     "retry": "Retry",
     "error": "Error",
-    "success": "Success"
+    "success": "Success",
+    "cancel": "Cancel"
   },
   "admin": {
     "refresh": {
       "success": {
         "title": "Data refreshed",
         "description": "The data has been updated"
-      }
+      },
+      "button": "Refresh"
     },
     "editUser": {
-      "success": "Roles updated"
+      "success": "Roles updated",
+      "title": "Edit user",
+      "description": "Manage the roles of",
+      "roles": "Roles",
+      "save": "Save",
+      "saving": "Saving..."
     },
     "deleteUser": {
-      "success": "The user has been deleted"
+      "success": "The user has been deleted",
+      "title": "Are you sure?",
+      "intro": "You are about to delete the user",
+      "irreversible": "This cannot be undone and will also delete:",
+      "komga": "Their Komga configuration",
+      "preferences": "Their preferences",
+      "favorites": "Their favorites ({{count}})",
+      "confirm": "Delete",
+      "deleting": "Deleting..."
     },
     "resetPassword": {
       "success": "The password has been reset",
-      "missingFields": "Please fill in every field"
+      "missingFields": "Please fill in every field",
+      "title": "Reset password",
+      "description": "Set a new password for",
+      "new": "New password",
+      "newPlaceholder": "At least 8 characters",
+      "confirm": "Confirm password",
+      "confirmPlaceholder": "Confirm the new password",
+      "rules": "The password must contain at least 8 characters, one uppercase letter and one digit.",
+      "submit": "Reset",
+      "submitting": "Resetting..."
+    },
+    "title": "Administration",
+    "subtitle": "Manage the platform's users",
+    "users": "Users",
+    "stats": {
+      "totalUsers": "Total users",
+      "totalUsersDescription": "Registered accounts",
+      "admins": "Administrators",
+      "adminsDescription": "With admin privileges",
+      "komga": "Komga config",
+      "komgaDescription": "Configured users",
+      "preferences": "Preferences",
+      "preferencesDescription": "Customized preferences"
+    },
+    "table": {
+      "email": "Email",
+      "roles": "Roles",
+      "komga": "Komga config",
+      "preferences": "Preferences",
+      "favorites": "Favorites",
+      "createdAt": "Created",
+      "actions": "Actions",
+      "empty": "No users",
+      "configured": "Configured",
+      "notConfigured": "Not configured",
+      "yes": "Yes",
+      "no": "No",
+      "editRoles": "Edit roles",
+      "resetPassword": "Reset password",
+      "delete": "Delete user"
+    },
+    "roles": {
+      "ROLE_USER": "User",
+      "ROLE_ADMIN": "Admin"
     }
   },
   "account": {
     "changePassword": {
-      "success": "Your password has been changed"
+      "success": "Your password has been changed",
+      "title": "Change password",
+      "description": "Use a strong password (at least 8 characters, one uppercase letter and one digit)",
+      "current": "Current password",
+      "new": "New password",
+      "confirm": "Confirm password",
+      "submit": "Change password",
+      "submitting": "Changing..."
+    },
+    "title": "My account",
+    "subtitle": "Manage your personal information and security",
+    "profile": {
+      "title": "Account information",
+      "description": "Your personal information",
+      "email": "Email",
+      "roles": "Roles",
+      "memberSince": "Member since",
+      "favorites": "Favorites",
+      "favoritesCount": "{{count}} favorite series",
+      "lastUpdate": "Last updated: {{date}}"
+    },
+    "readingStats": {
+      "title": "Reading statistics",
+      "description": "Data from the active connection",
+      "unavailable": "Statistics unavailable. Check your active connection in the settings.",
+      "series": "Series",
+      "books": "Books",
+      "read": "Read",
+      "inProgress": "In progress",
+      "unread": "Unread",
+      "progress": "Progress",
+      "distribution": "Books breakdown",
+      "booksByLibrary": "Books per library",
+      "progressByLibrary": "Progress per library"
     }
   }
 }
