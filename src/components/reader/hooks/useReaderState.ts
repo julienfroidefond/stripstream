@@ -12,6 +12,7 @@ import { useTouchNavigation } from "./useTouchNavigation";
 import { resolveReaderShortcut } from "./keyboardShortcuts";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { resolveBookMediaUrl } from "@/lib/providers/book-media";
+import { lastVisiblePage } from "@/lib/reader/page-navigation";
 import type { ReaderBackground } from "@/types/preferences";
 
 export function useReaderState({ book, pages, onClose, nextBook }: BookReaderProps) {
@@ -200,6 +201,7 @@ export function useReaderState({ book, pages, onClose, nextBook }: BookReaderPro
     pages,
     totalPages,
     currentPage,
+    lastVisiblePage: lastVisiblePage(currentPage, { isDoublePage, shouldShowDoublePage }),
     showEndMessage,
     showControls,
     showThumbnails,

@@ -50,6 +50,7 @@ export const BookReader = memo(function BookReader(props: BookReaderProps) {
         onClose={s.onClose}
         onRefresh={props.onRefresh}
         currentPage={s.currentPage}
+        lastVisiblePage={s.lastVisiblePage}
         totalPages={s.totalPages}
         isDoublePage={s.isDoublePage}
         onToggleDoublePage={s.onToggleDoublePage}

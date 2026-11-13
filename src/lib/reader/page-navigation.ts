@@ -5,6 +5,8 @@
  * It is pure so `usePageNavigation` only applies decisions to React state, the
  * read-progress session and the router. The double-page predicate is injected:
  * the policy asks where a spread begins, it does not know the reader geometry.
+ * Spreads are aligned on even pages (the cover is alone) and a spread that
+ * contains the last page is the end of the book.
  */
 
 export type PageMoveDirection = "previous" | "next";
@@ -37,12 +39,40 @@ export function resolveInitialPage(
   return Math.max(1, Math.min(savedPage, totalPages));
 }
 
-function pageStep(state: PageMoveState, direction: PageMoveDirection): number {
-  if (!state.isDoublePage) return 1;
-  // A spread starts on the page the reader is about to show. Going backward,
-  // ask about the spread two pages earlier so page 2 returns to the cover.
-  const anchor = direction === "previous" ? state.currentPage - 2 : state.currentPage;
-  return state.shouldShowDoublePage(anchor) ? 2 : 1;
+/** What the policy needs to know about spreads, without the reader geometry. */
+export type SpreadState = Pick<PageMoveState, "isDoublePage" | "shouldShowDoublePage">;
+
+/** True when `page` is rendered as the left page of a two-page spread. */
+export function isSpreadAt(page: number, spread: SpreadState): boolean {
+  return spread.isDoublePage && spread.shouldShowDoublePage(page);
+}
+
+/** The last page on screen when the reader shows `page`. */
+export function lastVisiblePage(page: number, spread: SpreadState): number {
+  return isSpreadAt(page, spread) ? page + 1 : page;
+}
+
+/**
+ * The page to record as reading progress for what is on screen: a spread
+ * that contains the last page finishes the book, so it records `totalPages`.
+ */
+export function progressPageFor(
+  page: number,
+  totalPages: number,
+  spread: SpreadState
+): number {
+  return totalPages > 0 && lastVisiblePage(page, spread) >= totalPages ? totalPages : page;
+}
+
+/**
+ * The page a spread containing `page` starts on. Page 1 is alone (the cover),
+ * so spreads are aligned on even pages: 2-3, 4-5… A page that cannot start
+ * a spread (single mode, the last page of an even book) stays where it is.
+ */
+export function spreadStartFor(page: number, spread: SpreadState): number {
+  if (!spread.isDoublePage || page <= 1) return page;
+  const start = page % 2 === 0 ? page : page - 1;
+  return start >= 2 && spread.shouldShowDoublePage(start) ? start : page;
 }
 
 export function planPageMove(
@@ -51,13 +81,17 @@ export function planPageMove(
 ): PageMove {
   if (direction === "previous") {
     if (state.currentPage <= 1) return { kind: "start-bump" };
+    // Land on the spread that ends right before the first visible page, so
+    // going back from the last page (or after a jump) keeps the even pairs.
     return {
       kind: "page",
-      page: Math.max(1, state.currentPage - pageStep(state, direction)),
+      page: Math.max(1, spreadStartFor(state.currentPage - 1, state)),
     };
   }
 
-  if (state.currentPage >= state.totalPages) {
+  // A spread that already shows the last page is the end of the book: there
+  // is nothing left to turn to inside it.
+  if (lastVisiblePage(state.currentPage, state) >= state.totalPages) {
     return state.nextBookId
       ? { kind: "next-book", bookId: state.nextBookId }
       : { kind: "end" };
@@ -65,13 +99,22 @@ export function planPageMove(
 
   return {
     kind: "page",
-    page: Math.min(state.totalPages, state.currentPage + pageStep(state, direction)),
+    page: Math.min(state.totalPages, lastVisiblePage(state.currentPage, state) + 1),
   };
 }
 
-export function planPageJump(targetPage: number, totalPages: number): PageJump {
+/**
+ * Validates a jump. With a spread state, the landing is the start of the
+ * spread that contains the target, so the pairs stay aligned (a jump to the
+ * last page of an odd book shows the final pair, not the page alone).
+ */
+export function planPageJump(
+  targetPage: number,
+  totalPages: number,
+  spread?: SpreadState
+): PageJump {
   if (targetPage < 1 || targetPage > totalPages) {
     return { kind: "out-of-bounds", page: targetPage };
   }
-  return { kind: "page", page: targetPage };
+  return { kind: "page", page: spread ? spreadStartFor(targetPage, spread) : targetPage };
 }

@@ -49,6 +49,8 @@ export interface ControlButtonsProps {
   onClose?: (currentPage: number) => void;
   onRefresh?: () => Promise<void>;
   currentPage: number;
+  /** Last page on screen: `currentPage + 1` when a spread is shown. */
+  lastVisiblePage: number;
   totalPages: number;
   isDoublePage: boolean;
   onToggleDoublePage: () => void;

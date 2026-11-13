@@ -18,6 +18,11 @@ export interface SideActionState {
   direction: ReadingDirection;
   currentPage: number;
   totalPages: number;
+  /**
+   * Last page on screen (`currentPage + 1` on a spread). A spread that shows
+   * the last page has nothing left to turn to. Defaults to `currentPage`.
+   */
+  lastVisiblePage?: number;
 }
 
 export interface SideAction {
@@ -73,9 +78,13 @@ export function sideForAction(action: PageMoveDirection, direction: ReadingDirec
 /** True when the move lands on another page of the current book. */
 export function canTurnPage(
   action: PageMoveDirection,
-  { currentPage, totalPages }: Pick<SideActionState, "currentPage" | "totalPages">
+  {
+    currentPage,
+    totalPages,
+    lastVisiblePage = currentPage,
+  }: Pick<SideActionState, "currentPage" | "totalPages" | "lastVisiblePage">
 ): boolean {
-  return action === "previous" ? currentPage > 1 : currentPage < totalPages;
+  return action === "previous" ? currentPage > 1 : lastVisiblePage < totalPages;
 }
 
 export function resolveSideAction(side: ReaderSide, state: SideActionState): SideAction {

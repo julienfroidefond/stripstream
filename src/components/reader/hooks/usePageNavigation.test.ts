@@ -302,7 +302,7 @@ describe("usePageNavigation", () => {
 
     it("goes back two pages when double page is active", () => {
       const book = makeBook({
-        readProgress: { page: 3, completed: false, lastReadAt: null },
+        readProgress: { page: 4, completed: false, lastReadAt: null },
       });
       const { result } = renderNav({
         book,
@@ -314,7 +314,47 @@ describe("usePageNavigation", () => {
         result.current.handlePreviousPage();
       });
 
-      expect(result.current.currentPage).toBe(1);
+      expect(result.current.currentPage).toBe(2);
+    });
+  });
+
+  describe("double page on an odd book", () => {
+    const pages = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+    const shouldShowDoublePage = (page: number) => page !== 1 && page < pages.length;
+
+    it("completes the book when the final spread is reached", async () => {
+      const book = makeBook({
+        pageCount: 9,
+        readProgress: { page: 6, completed: false, lastReadAt: null },
+      });
+      const { result } = renderNav({ book, pages, isDoublePage: true, shouldShowDoublePage });
+
+      act(() => {
+        result.current.handleNextPage();
+      });
+
+      expect(result.current.currentPage).toBe(8);
+      await waitFor(() =>
+        expect(hoisted.updateReadProgressMock).toHaveBeenCalledWith("book-1", 9, true, "series-1")
+      );
+    });
+
+    it("ends the book on \"next\" from the final spread instead of showing the last page alone", async () => {
+      const book = makeBook({
+        pageCount: 9,
+        readProgress: { page: 8, completed: false, lastReadAt: null },
+      });
+      const { result } = renderNav({ book, pages, isDoublePage: true, shouldShowDoublePage });
+
+      act(() => {
+        result.current.handleNextPage();
+      });
+
+      expect(result.current.currentPage).toBe(8);
+      expect(result.current.showEndMessage).toBe(true);
+      await waitFor(() =>
+        expect(hoisted.updateReadProgressMock).toHaveBeenCalledWith("book-1", 9, true, "series-1")
+      );
     });
   });
 
