@@ -16,6 +16,23 @@ test.describe('Mutations on the isolated E2E account', () => {
   test('persists reader preferences after a reload', async ({ page }) => {
     await openSettingsTab(page, /reading|lecture/i);
 
+    // Les réglages basculent de façon optimiste et l'écriture part en
+    // arrière-plan (sérialisée, éventuellement regroupée) : recharger pendant
+    // qu'une action serveur est en vol l'annulerait. On suit les POST de la page.
+    let inFlight = 0;
+    let settled = 0;
+    const isAction = (method: string, url: string) => method === 'POST' && url.includes('/settings');
+    page.on('request', (request) => {
+      if (isAction(request.method(), request.url())) inFlight += 1;
+    });
+    const done = (request: import('@playwright/test').Request) => {
+      if (!isAction(request.method(), request.url())) return;
+      inFlight -= 1;
+      settled += 1;
+    };
+    page.on('requestfinished', done);
+    page.on('requestfailed', done);
+
     await page.locator('#reading-dir-rtl').click();
     await expect(page.locator('#reading-dir-rtl')).toHaveAttribute('data-state', 'checked');
 
@@ -26,6 +43,8 @@ test.describe('Mutations on the isolated E2E account', () => {
     await page.locator('label[for="double-page-mode"]').click();
     await expect(doublePage).toBeChecked();
 
+    await expect.poll(() => settled, { timeout: 10_000 }).toBeGreaterThan(0);
+    await expect.poll(() => inFlight, { timeout: 10_000 }).toBe(0);
     await page.reload();
     await expect(page.locator('#reading-dir-rtl')).toHaveAttribute('data-state', 'checked');
     await expect(page.locator('#reader-bg-cream')).toHaveAttribute('data-state', 'checked');

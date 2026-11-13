@@ -31,7 +31,9 @@ test.describe('Prefetch budget on dense collections', () => {
     const prefetches = recordSeriesPrefetches(page);
 
     await page.goto('/wall');
-    await expect(page.getByTestId('wall-count')).toBeVisible({ timeout: 15_000 });
+    // Une transition de route peut laisser deux copies du mur pendant une frame.
+    await expect(page.getByTestId('wall-count')).toHaveCount(1, { timeout: 15_000 });
+    await expect(page.getByTestId('wall-count')).toBeVisible();
     await expect(page.locator('.wall-tile').first()).toBeVisible();
     await page.waitForTimeout(1_500);
 
