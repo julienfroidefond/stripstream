@@ -1,5 +1,5 @@
 import type { KomgaBook, KomgaSeries, KomgaLibrary, ReadProgress } from "@/types/komga";
-import { BOOK_PAGE_TOKEN } from "../book-media";
+import { bookPageUrlTemplate, mediaUrl } from "@/lib/media/media-url";
 import type {
   NormalizedBook,
   NormalizedBookMedia,
@@ -11,8 +11,8 @@ import type {
 export class KomgaAdapter {
   private static bookMedia(bookId: string): NormalizedBookMedia {
     return {
-      pageUrlTemplate: `/api/komga/images/books/${bookId}/pages/${BOOK_PAGE_TOKEN}`,
-      thumbnailUrlTemplate: `/api/komga/images/books/${bookId}/pages/${BOOK_PAGE_TOKEN}/thumbnail`,
+      pageUrlTemplate: bookPageUrlTemplate("komga", "book-page", bookId),
+      thumbnailUrlTemplate: bookPageUrlTemplate("komga", "book-page-thumbnail", bookId),
     };
   }
 
@@ -35,9 +35,9 @@ export class KomgaAdapter {
       seriesName: book.seriesTitle ?? null,
       volume: typeof book.number === "number" ? book.number : null,
       pageCount: book.media?.pagesCount ?? 0,
-      thumbnailUrl: `/api/komga/images/books/${book.id}/thumbnail`,
+      thumbnailUrl: mediaUrl("komga", { kind: "book-cover", bookId: book.id }),
       media: KomgaAdapter.bookMedia(book.id),
-      downloadUrl: `/api/komga/books/${book.id}/file`,
+      downloadUrl: mediaUrl("komga", { kind: "book-file", bookId: book.id }),
       readProgress: KomgaAdapter.toNormalizedReadProgress(book.readProgress),
       summary: book.metadata?.summary?.trim() || null,
     };
@@ -49,7 +49,7 @@ export class KomgaAdapter {
       name: series.metadata?.title ?? series.name,
       bookCount: series.booksCount,
       booksReadCount: series.booksReadCount,
-      thumbnailUrl: `/api/komga/images/series/${series.id}/thumbnail`,
+      thumbnailUrl: mediaUrl("komga", { kind: "series-cover", seriesId: series.id }),
       libraryId: series.libraryId,
       summary: series.metadata?.summary ?? null,
       authors: series.booksMetadata?.authors ?? [],

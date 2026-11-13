@@ -25,6 +25,9 @@ export type MediaRef =
   | { kind: "book-cover"; bookId: string }
   | { kind: "series-cover"; seriesId: string };
 
+export type MediaKind = MediaRef["kind"];
+export type MediaRefOf<K extends MediaKind> = Extract<MediaRef, { kind: K }>;
+
 export interface MediaTransportContext {
   /** En-têtes de la requête cliente ; seuls les validateurs conditionnels sont relayés. */
   headers: Headers;
@@ -47,13 +50,19 @@ export interface MediaResponsePolicy {
   defaultContentType?: string;
 }
 
+/**
+ * Code de repli d'une erreur non typée : un code fixe, ou `provider-http-error`
+ * pour le code HTTP générique du provider qui sert la route
+ * (`KOMGA_HTTP_ERROR` / `STRIPSTREAM_HTTP_ERROR`).
+ */
+export type MediaFallbackCode = ErrorCode | "provider-http-error";
+
 export interface MediaErrorPolicy {
-  shape: "json" | "empty";
-  /** `mapped` utilise la table de status du provider ; `always-500` conserve l'ancien contrat. */
+  /** `mapped` utilise la table de status du provider ; `always-500` masque l'origine. */
   status: "mapped" | "always-500";
   /** Réponse dédiée quand l'amont répond 404 (image/cover). */
   notFound?: { code: ErrorCode; message: string; name?: string };
-  fallback: { code: ErrorCode; message: string; name?: string };
+  fallback: { code: MediaFallbackCode; message: string; name?: string };
   log: string;
 }
 
@@ -71,13 +80,13 @@ export interface MediaRequestError {
   };
 }
 
+/**
+ * Une route média est entièrement décrite par son provider et le kind servi :
+ * la forme des paramètres, la politique et la forme d'erreur en découlent.
+ */
 export interface MediaRouteSpec {
   provider: ProviderType;
-  ref: (
-    params: Record<string, string>,
-    request: Request
-  ) => MediaRef | MediaRequestError;
-  policy: MediaPolicy;
+  kind: MediaKind;
 }
 
 export interface MediaRouteDependencies {

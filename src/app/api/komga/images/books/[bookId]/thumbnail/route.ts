@@ -1,8 +1,3 @@
 import { createMediaRoute } from "@/lib/media/media-route";
-import { MEDIA_POLICIES } from "@/lib/media/policies";
 
-export const GET = createMediaRoute({
-  provider: "komga",
-  policy: MEDIA_POLICIES.komgaImage,
-  ref: ({ bookId }) => ({ kind: "book-cover", bookId }),
-});
+export const GET = createMediaRoute("komga", "book-cover");

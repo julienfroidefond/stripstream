@@ -27,7 +27,7 @@ test.describe('Access control', () => {
   }
 
   test('returns a structured 401 for a protected API route', async ({ request }) => {
-    const response = await request.get('/api/stripstream/search?q=batman');
+    const response = await request.get('/api/provider/search?q=batman');
 
     expect(response.status()).toBe(401);
     await expect(response.json()).resolves.toEqual({

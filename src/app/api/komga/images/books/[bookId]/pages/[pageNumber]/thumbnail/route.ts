@@ -1,23 +1,3 @@
-import { ERROR_CODES } from "@/constants/errorCodes";
-import {
-  createMediaRoute,
-  mediaRouteError,
-  parseMediaPageNumber,
-} from "@/lib/media/media-route";
-import { MEDIA_POLICIES } from "@/lib/media/policies";
+import { createMediaRoute } from "@/lib/media/media-route";
 
-export const GET = createMediaRoute({
-  provider: "komga",
-  policy: MEDIA_POLICIES.komgaImage,
-  ref: ({ bookId, pageNumber }) => {
-    const page = parseMediaPageNumber(pageNumber);
-    if (page === null) {
-      return mediaRouteError(
-        400,
-        ERROR_CODES.BOOK.PAGES_FETCH_ERROR,
-        "Image fetch error"
-      );
-    }
-    return { kind: "book-page-thumbnail", bookId, pageNumber: page };
-  },
-});
+export const GET = createMediaRoute("komga", "book-page-thumbnail");

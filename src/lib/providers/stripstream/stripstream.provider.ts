@@ -31,6 +31,7 @@ import {
   resolveSeriesIdFromBookId,
 } from "./series-identity";
 import { StripstreamAdapter } from "./stripstream.adapter";
+import { mediaUrl } from "@/lib/media/media-url";
 import { selectApprovedMetadataLink } from "./metadata-links";
 import { scanStateFromIndexJobStatus } from "../scan-status";
 import type {
@@ -608,7 +609,7 @@ export class StripstreamProvider implements IMediaProvider {
         id,
         title: s.name,
         href: `/series/${id}`,
-        coverUrl: `/api/stripstream/images/books/${s.first_book_id}/thumbnail`,
+        coverUrl: mediaUrl("stripstream", { kind: "book-cover", bookId: s.first_book_id }),
         type: "series" as const,
         bookCount: s.book_count,
       });
@@ -619,7 +620,7 @@ export class StripstreamProvider implements IMediaProvider {
       title: hit.title,
       seriesTitle: hit.series ?? null,
       href: `/books/${hit.id}`,
-      coverUrl: `/api/stripstream/images/books/${hit.id}/thumbnail`,
+      coverUrl: mediaUrl("stripstream", { kind: "book-cover", bookId: hit.id }),
       type: "book" as const,
     }));
 
@@ -700,6 +701,6 @@ export class StripstreamProvider implements IMediaProvider {
   }
 
   getBookThumbnailUrl(bookId: string): string {
-    return `/api/stripstream/images/books/${bookId}/thumbnail`;
+    return mediaUrl("stripstream", { kind: "book-cover", bookId });
   }
 }

@@ -5,8 +5,10 @@ import { findHttpStatus } from "@/utils/image-errors";
 import { isConnectionError } from "@/utils/http-error";
 import logger from "@/lib/logger";
 
+import { mediaPolicy } from "./policies";
 import type {
   MediaErrorPolicy,
+  MediaKind,
   MediaPolicy,
   MediaRef,
   MediaRequestError,
@@ -14,6 +16,11 @@ import type {
   MediaRouteDependencies,
   MediaRouteSpec,
 } from "./types";
+
+const PROVIDER_HTTP_ERROR: Record<ProviderType, ErrorCode> = {
+  komga: ERROR_CODES.KOMGA.HTTP_ERROR,
+  stripstream: ERROR_CODES.STRIPSTREAM.HTTP_ERROR,
+};
 
 const PROVIDER_STATUS: Record<
   ProviderType,
@@ -72,6 +79,46 @@ export function parseMediaPageNumber(value: string): number | null {
   return Number.isNaN(pageNumber) || pageNumber < 0 ? null : pageNumber;
 }
 
+const INVALID_PAGE_ERROR: Record<"book-page" | "book-page-thumbnail", ErrorCode> = {
+  "book-page": ERROR_CODES.IMAGE.FETCH_ERROR,
+  "book-page-thumbnail": ERROR_CODES.BOOK.PAGES_FETCH_ERROR,
+};
+
+/**
+ * Inverse de `mediaUrl` : relit les paramètres d'une route déclarée par
+ * `MEDIA_ROUTE_PATTERNS` (déjà décodés par Next) et la query brute.
+ */
+export function parseMediaRef(
+  kind: MediaKind,
+  params: Record<string, string>,
+  url: URL
+): MediaRef | MediaRequestError {
+  switch (kind) {
+    case "book-file":
+    case "book-cover":
+      return { kind, bookId: params.bookId };
+    case "series-cover":
+      return { kind, seriesId: params.seriesId };
+    case "book-page":
+    case "book-page-thumbnail": {
+      const pageNumber = parseMediaPageNumber(params.pageNumber);
+      if (pageNumber === null) {
+        return mediaRouteError(400, INVALID_PAGE_ERROR[kind], "Image fetch error");
+      }
+      if (kind === "book-page-thumbnail") {
+        return { kind, bookId: params.bookId, pageNumber };
+      }
+      const query = url.search.slice(1);
+      return {
+        kind,
+        bookId: params.bookId,
+        pageNumber,
+        ...(query ? { query } : {}),
+      };
+    }
+  }
+}
+
 function statusForError(
   provider: ProviderType,
   policy: MediaErrorPolicy,
@@ -101,10 +148,6 @@ function buildErrorResponse(
 ): Response {
   logMediaError(provider, policy, error);
 
-  if (policy.shape === "empty") {
-    return new Response(null, { status: 404 });
-  }
-
   const upstreamStatus = findHttpStatus(error);
   if (policy.notFound && upstreamStatus === 404) {
     return jsonError({
@@ -126,7 +169,10 @@ function buildErrorResponse(
 
   return jsonError({
     status: statusForError(provider, policy, error),
-    code: policy.fallback.code,
+    code:
+      policy.fallback.code === "provider-http-error"
+        ? PROVIDER_HTTP_ERROR[provider]
+        : policy.fallback.code,
     message: policy.fallback.message,
     name: policy.fallback.name,
   });
@@ -200,10 +246,16 @@ export function createMediaRouteWith(
     context: { params: Promise<Record<string, string>> }
   ): Promise<Response> {
     const params = await context.params;
-    const ref = spec.ref(params, request);
+    const ref = parseMediaRef(spec.kind, params, new URL(request.url));
     if ("error" in ref) {
       return jsonError(ref.error);
     }
-    return serveMedia(request, spec.provider, ref, spec.policy, dependencies);
+    return serveMedia(
+      request,
+      spec.provider,
+      ref,
+      mediaPolicy(spec.provider, spec.kind),
+      dependencies
+    );
   };
 }
