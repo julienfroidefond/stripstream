@@ -33,15 +33,15 @@ export function LibraryContent({
     <>
       <LibraryHeader
         library={library}
-        seriesCount={series.totalElements ?? series.items.length}
+        seriesCount={series.totalElements}
         series={series.items}
       />
       <Container>
         <PaginatedSeriesGrid
           series={series.items}
           currentPage={currentPage}
-          totalPages={series.totalPages ?? 1}
-          totalElements={series.totalElements ?? series.items.length}
+          totalPages={series.totalPages}
+          totalElements={series.totalElements}
           defaultShowOnlyUnread={preferences.showOnlyUnread}
           showOnlyUnread={unreadOnly}
           pageSize={pageSize}

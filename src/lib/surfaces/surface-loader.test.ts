@@ -119,8 +119,8 @@ describe("loadSurface", () => {
     const ratings = {
       getReadSeries: vi.fn(async () => ({
         items: [],
-        nextCursor: null,
-        totalPages: 0,
+        page: 1,
+        totalPages: 1,
         totalElements: 0,
       })),
       getSeriesRating: vi.fn(async () => null),

@@ -27,6 +27,7 @@ import {
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 import { normalizeServerUrl } from "@/utils/server-url";
+import { normalizePageNumber } from "../pagination";
 
 import type { KomgaBook, KomgaSeries, KomgaLibrary } from "@/types/komga";
 import type { LibraryResponse } from "@/types/library";
@@ -73,8 +74,8 @@ export class KomgaProvider implements IMediaProvider {
     return raw.map(KomgaAdapter.toNormalizedLibrary);
   }
 
-  async getSeries(libraryId: string, cursor?: string, limit = 20, unreadOnly = false, search?: string, _sort?: string, _hasMissing?: boolean): Promise<NormalizedSeriesPage> {
-    const page = cursor ? parseInt(cursor, 10) - 1 : 0;
+  async getSeries(libraryId: string, page?: number, limit = 20, unreadOnly = false, search?: string, _sort?: string, _hasMissing?: boolean): Promise<NormalizedSeriesPage> {
+    const pageNumber = normalizePageNumber(page);
 
     let condition: KomgaCondition;
     if (unreadOnly) {
@@ -98,7 +99,7 @@ export class KomgaProvider implements IMediaProvider {
 
     const response = await this.fetch<LibraryResponse<KomgaSeries>>(
       "series/list",
-      { page: String(page), size: String(limit), sort: "metadata.titleSort,asc" },
+      { page: String(pageNumber - 1), size: String(limit), sort: "metadata.titleSort,asc" },
       {
         method: "POST",
         body: JSON.stringify(searchBody),
@@ -115,16 +116,11 @@ export class KomgaProvider implements IMediaProvider {
       return cmp !== 0 ? cmp : a.id.localeCompare(b.id);
     });
 
-    return {
-      items: sorted.map(KomgaAdapter.toNormalizedSeries),
-      nextCursor: response.last ? null : String(page + 1),
-      totalPages: response.totalPages,
-      totalElements: response.totalElements,
-    };
+    return KomgaAdapter.toPage(response, sorted.map(KomgaAdapter.toNormalizedSeries), pageNumber);
   }
 
   async getBooks(filter: BookListFilter): Promise<NormalizedBooksPage> {
-    const page = filter.cursor ? parseInt(filter.cursor, 10) - 1 : 0;
+    const pageNumber = normalizePageNumber(filter.page);
     const limit = filter.limit ?? 24;
     let condition: KomgaCondition;
 
@@ -154,16 +150,11 @@ export class KomgaProvider implements IMediaProvider {
 
     const response = await this.fetch<LibraryResponse<KomgaBook>>(
       "books/list",
-      { page: String(page), size: String(limit), sort: "metadata.numberSort,asc" },
+      { page: String(pageNumber - 1), size: String(limit), sort: "metadata.numberSort,asc" },
       { method: "POST", body: JSON.stringify({ condition }), revalidate: CACHE_TTL_MED, tags: granularTags }
     );
     const items = response.content.filter((b) => !b.deleted).map(KomgaAdapter.toNormalizedBook);
-    return {
-      items,
-      nextCursor: response.last ? null : String(page + 1),
-      totalPages: response.totalPages,
-      totalElements: response.totalElements,
-    };
+    return KomgaAdapter.toPage(response, items, pageNumber);
   }
 
   async getBook(bookId: string): Promise<NormalizedBook> {

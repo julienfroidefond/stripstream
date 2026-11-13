@@ -1,5 +1,7 @@
 import type { KomgaBook, KomgaSeries, KomgaLibrary, ReadProgress } from "@/types/komga";
+import type { LibraryResponse } from "@/types/library";
 import { BOOK_PAGE_TOKEN } from "../book-media";
+import type { Page } from "../pagination";
 import type {
   NormalizedBook,
   NormalizedBookMedia,
@@ -9,6 +11,20 @@ import type {
 } from "../types";
 
 export class KomgaAdapter {
+  /**
+   * Traduit une page Spring (base 0) vers le contrat 1-based. La requête part
+   * avec `page - 1` ; la page renvoyée porte le numéro 1-based demandé, de
+   * sorte qu'aucun code hors Komga ne voit la base 0.
+   */
+  static toPage<T>(response: LibraryResponse<unknown>, items: T[], page: number): Page<T> {
+    return {
+      items,
+      page,
+      totalPages: Math.max(1, response.totalPages),
+      totalElements: response.totalElements,
+    };
+  }
+
   private static bookMedia(bookId: string): NormalizedBookMedia {
     return {
       pageUrlTemplate: `/api/komga/images/books/${bookId}/pages/${BOOK_PAGE_TOKEN}`,

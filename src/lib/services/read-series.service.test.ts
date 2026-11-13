@@ -31,7 +31,7 @@ function series(id: string, overrides: Partial<NormalizedSeries> = {}): Normaliz
 function page(ids: string[], overrides: Partial<NormalizedSeriesPage> = {}): NormalizedSeriesPage {
   return {
     items: ids.map((id) => series(id)),
-    nextCursor: null,
+    page: 1,
     totalPages: 1,
     totalElements: ids.length,
     ...overrides,
@@ -56,8 +56,8 @@ describe("getReadSeries", () => {
 
   it("follows pagination and keeps the backend order", async () => {
     const ratings = ratingsWith([
-      page(["a", "b"], { nextCursor: "2", totalPages: 2, totalElements: 3 }),
-      page(["c"], { nextCursor: null, totalPages: 2, totalElements: 3 }),
+      page(["a", "b"], { totalPages: 2, totalElements: 3 }),
+      page(["c"], { page: 2, totalPages: 2, totalElements: 3 }),
     ]);
 
     const result = await getReadSeries(ratings);
@@ -69,8 +69,8 @@ describe("getReadSeries", () => {
 
   it("deduplicates series that appear on several pages", async () => {
     const ratings = ratingsWith([
-      page(["a", "b"], { nextCursor: "2", totalPages: 2 }),
-      page(["b", "c"], { totalPages: 2 }),
+      page(["a", "b"], { totalPages: 2 }),
+      page(["b", "c"], { page: 2, totalPages: 2 }),
     ]);
 
     const result = await getReadSeries(ratings);
@@ -81,7 +81,7 @@ describe("getReadSeries", () => {
   it("caps how many pages are fetched", async () => {
     const ratings = ratingsWith(
       Array.from({ length: 8 }, (_, index) =>
-        page([`s${index}`], { nextCursor: String(index + 2), totalPages: 8 })
+        page([`s${index}`], { page: index + 1, totalPages: 8 })
       )
     );
 
@@ -91,7 +91,7 @@ describe("getReadSeries", () => {
     expect(ratings.getReadSeries).toHaveBeenCalledTimes(5);
   });
 
-  it("does not paginate when the backend reports a single page without cursor", async () => {
+  it("does not paginate when the backend reports a single page", async () => {
     const ratings = ratingsWith([page(["a"], { totalPages: 1 })]);
 
     await getReadSeries(ratings);

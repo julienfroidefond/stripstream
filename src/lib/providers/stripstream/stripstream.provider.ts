@@ -33,6 +33,7 @@ import {
 import { StripstreamAdapter } from "./stripstream.adapter";
 import { selectApprovedMetadataLink } from "./metadata-links";
 import { scanStateFromIndexJobStatus } from "../scan-status";
+import { normalizePageNumber } from "../pagination";
 import type {
   StripstreamLibraryResponse,
   StripstreamBooksPage,
@@ -96,8 +97,8 @@ export class StripstreamProvider implements IMediaProvider {
   }
 
   // Stripstream series endpoint: GET /libraries/{library_id}/series
-  async getSeries(libraryId: string, page?: string, limit = 20, unreadOnly = false, search?: string, sort?: string, hasMissing?: boolean): Promise<NormalizedSeriesPage> {
-    const pageNumber = page ? parseInt(page) : 1;
+  async getSeries(libraryId: string, page?: number, limit = 20, unreadOnly = false, search?: string, sort?: string, hasMissing?: boolean): Promise<NormalizedSeriesPage> {
+    const pageNumber = normalizePageNumber(page);
     const params: Record<string, string | undefined> = { limit: String(limit), page: String(pageNumber), has_books: "true", library_id: libraryId };
     if (unreadOnly) params.reading_status = "unread,reading";
     if (search?.trim()) params.q = search.trim();
@@ -113,13 +114,7 @@ export class StripstreamProvider implements IMediaProvider {
       }
     );
 
-    const totalPages = Math.ceil(response.total / limit);
-    return {
-      items: response.items.map(StripstreamAdapter.toNormalizedSeries),
-      nextCursor: null,
-      totalElements: response.total,
-      totalPages,
-    };
+    return StripstreamAdapter.toPage(response, StripstreamAdapter.toNormalizedSeries, pageNumber, limit);
   }
 
   /**
@@ -127,25 +122,20 @@ export class StripstreamProvider implements IMediaProvider {
    * `reading_status=read` côté Librarian signifie « tous les tomes lus ».
    */
   async getReadSeries(page = 1, limit = 200): Promise<NormalizedSeriesPage> {
+    const pageNumber = normalizePageNumber(page);
     const response = await this.client.fetch<StripstreamSeriesPage>(
       "series",
       {
         reading_status: "read",
         has_books: "true",
-        page: String(page),
+        page: String(pageNumber),
         limit: String(limit),
         sort: "title",
       },
       { revalidate: CACHE_TTL_MED, tags: [RATINGS_LIST_CACHE_TAG] }
     );
 
-    const totalPages = Math.ceil(response.total / limit);
-    return {
-      items: response.items.map(StripstreamAdapter.toNormalizedSeries),
-      nextCursor: response.page < totalPages ? String(response.page + 1) : null,
-      totalElements: response.total,
-      totalPages,
-    };
+    return StripstreamAdapter.toPage(response, StripstreamAdapter.toNormalizedSeries, pageNumber, limit);
   }
 
   /**
@@ -268,7 +258,7 @@ export class StripstreamProvider implements IMediaProvider {
     }
 
     if (filter.unreadOnly) params.reading_status = "unread,reading";
-    const pageNumber = filter.cursor ? parseInt(filter.cursor) : 1;
+    const pageNumber = normalizePageNumber(filter.page);
     params.page = String(pageNumber);
 
     const granularTags: string[] = [SERIES_BOOKS_CACHE_TAG];
@@ -280,14 +270,7 @@ export class StripstreamProvider implements IMediaProvider {
       tags: granularTags,
     });
 
-    const pageSize = filter.limit ?? 24;
-    const totalPages = Math.ceil(response.total / pageSize);
-    return {
-      items: response.items.map(StripstreamAdapter.toNormalizedBook),
-      nextCursor: null,
-      totalElements: response.total,
-      totalPages,
-    };
+    return StripstreamAdapter.toPage(response, StripstreamAdapter.toNormalizedBook, pageNumber, limit);
   }
 
   async getBook(bookId: string): Promise<NormalizedBook> {

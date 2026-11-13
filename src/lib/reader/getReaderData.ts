@@ -59,7 +59,7 @@ async function getReaderInfo(
         positionInSeries = bookIndex + 1;
       }
 
-      if (seriesBooks.totalElements && seriesBooks.totalElements > 0) {
+      if (seriesBooks.totalElements > 0) {
         totalInSeries = seriesBooks.totalElements;
       } else if (orderedBooks.length > 0) {
         totalInSeries = orderedBooks.length;

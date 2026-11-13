@@ -40,7 +40,7 @@ function makeSeries(): NormalizedSeries {
 }
 
 function makeBooksPage(): NormalizedBooksPage {
-  return { items: [makeBook()], nextCursor: null, totalElements: 20 };
+  return { items: [makeBook()], page: 1, totalPages: 1, totalElements: 20 };
 }
 
 interface StubOptions {
@@ -68,8 +68,8 @@ function makeProvider(options: StubOptions = {}) {
     : {
         getReadSeries: vi.fn(async () => ({
           items: [],
-          nextCursor: null,
-          totalPages: 0,
+          page: 1,
+          totalPages: 1,
           totalElements: 0,
         })),
         getSeriesRating,
@@ -81,7 +81,7 @@ function makeProvider(options: StubOptions = {}) {
     getBook: vi.fn(async () => book),
     getNextBook: vi.fn(async () => null),
     getSeriesById: vi.fn(async () => makeSeries()),
-    getSeries: vi.fn(async () => ({ items: [makeSeries()], nextCursor: null })),
+    getSeries: vi.fn(async () => ({ items: [makeSeries()], page: 1, totalPages: 1, totalElements: 1 })),
     getBooks: vi.fn(async () => makeBooksPage()),
     capabilities: createProviderCapabilities({ ratings }),
     getSeriesRating,
