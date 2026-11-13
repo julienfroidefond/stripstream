@@ -219,3 +219,31 @@ describe("FavoriteService — injected identity", () => {
     expect(db.findMany).not.toHaveBeenCalled();
   });
 });
+
+describe("FavoriteService — idempotent Komga writes", () => {
+  it("treats a concurrent duplicate add (P2002) as success", async () => {
+    // Double clic : les deux soumissions ont vu « absent », la seconde
+    // insertion heurte la contrainte unique alors que le favori existe.
+    db.create.mockRejectedValueOnce(
+      Object.assign(new Error("Unique constraint failed"), { code: "P2002" })
+    );
+
+    await expect(FavoriteService.addToFavorites(as(fakeProvider()), "x")).resolves.toBeUndefined();
+  });
+
+  it("still fails an add on any other database error", async () => {
+    db.create.mockRejectedValueOnce(new Error("database is locked"));
+
+    await expect(FavoriteService.addToFavorites(as(fakeProvider()), "x")).rejects.toMatchObject({
+      code: ERROR_CODES.FAVORITE.ADD_ERROR,
+    });
+  });
+
+  it("removes an absent favorite without failing", async () => {
+    db.deleteMany.mockResolvedValueOnce({ count: 0 });
+
+    await expect(
+      FavoriteService.removeFromFavorites(as(fakeProvider()), "x")
+    ).resolves.toBeUndefined();
+  });
+});

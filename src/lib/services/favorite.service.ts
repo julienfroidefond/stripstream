@@ -53,6 +53,15 @@ function komgaScope(
     : { userId, komgaConfigId: configId, seriesId };
 }
 
+/** Violation de contrainte unique Prisma (`P2002`). */
+function isUniqueConstraintError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    (error as { code?: unknown }).code === "P2002"
+  );
+}
+
 function logReadFailure(
   error: unknown,
   meta: Record<string, unknown>,
@@ -104,17 +113,20 @@ function createKomgaStore(
       return row !== null;
     },
     async add(seriesId) {
-      // upsert manuel : la contrainte unique dépend de la colonne config concernée
-      const row = await prisma.favorite.findFirst({
-        where: komgaScope(userId, configId, seriesId),
-        select: { id: true },
-      });
-      if (row) return;
-      await prisma.favorite.create({
-        data: { userId, seriesId, provider: "komga", komgaConfigId: configId },
-      });
+      // Idempotent : la contrainte unique `(userId, komgaConfigId, seriesId)`
+      // tranche la course d'un double clic. Une violation signifie « déjà
+      // favori », donc un succès — un `findFirst` préalable ne fermait pas la
+      // fenêtre entre la lecture et l'insertion.
+      try {
+        await prisma.favorite.create({
+          data: { userId, seriesId, provider: "komga", komgaConfigId: configId },
+        });
+      } catch (error) {
+        if (!isUniqueConstraintError(error)) throw error;
+      }
     },
     async remove(seriesId) {
+      // Idempotent aussi : retirer un favori absent supprime zéro ligne.
       await prisma.favorite.deleteMany({
         where: komgaScope(userId, configId, seriesId),
       });
