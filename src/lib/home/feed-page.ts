@@ -43,6 +43,35 @@ export function emptyFeedPage<T>(): FeedPage<T> {
 }
 
 /**
+ * Plafond de l'`offset` de « Voir plus ».
+ *
+ * Les rangées de l'accueil sont des carrousels de 8 éléments : 1 000 éléments
+ * déjà affichés représentent 125 clics, bien au-delà d'un usage réel. Le
+ * plafond borne la limite envoyée au provider (`offset + pageSize + 1`), qu'un
+ * appel direct de l'action pouvait porter à un milliard.
+ */
+export const MAX_HOME_FEED_OFFSET = 1000;
+
+/** `offset` acceptable : entier ≥ 0 et ≤ `MAX_HOME_FEED_OFFSET` (rejette `NaN`, `1.5`, `-1`). */
+export function isValidHomeFeedOffset(offset: unknown): offset is number {
+  return (
+    typeof offset === "number" &&
+    Number.isInteger(offset) &&
+    offset >= 0 &&
+    offset <= MAX_HOME_FEED_OFFSET
+  );
+}
+
+/**
+ * Garde-fou interne : un offset invalide qui atteint la pagination est ramené
+ * dans `[0, MAX_HOME_FEED_OFFSET]` (`NaN` → 0). Les actions rejettent avant.
+ */
+function clampFeedOffset(offset: number): number {
+  if (!Number.isFinite(offset)) return 0;
+  return Math.min(MAX_HOME_FEED_OFFSET, Math.max(0, Math.floor(offset)));
+}
+
+/**
  * Limite de requête d'une page qui sonde le reste de la collection.
  *
  * Les flux bornés par le provider demandent `offset + pageSize + 1` éléments :
@@ -50,7 +79,7 @@ export function emptyFeedPage<T>(): FeedPage<T> {
  * comptage. C'est la règle partagée par le registre et le hero de reprise.
  */
 export function probeLimit(offset: number, pageSize: number): number {
-  return Math.max(0, offset) + pageSize + 1;
+  return clampFeedOffset(offset) + pageSize + 1;
 }
 
 /**
@@ -65,7 +94,7 @@ export function paginateFeed<T>(
   offset: number,
   pageSize: number
 ): FeedPage<T> {
-  const start = Math.max(0, offset);
+  const start = clampFeedOffset(offset);
   const end = start + pageSize;
 
   return {

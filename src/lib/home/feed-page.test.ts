@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { paginateFeed } from "./feed-page";
+import { MAX_HOME_FEED_OFFSET, paginateFeed, probeLimit } from "./feed-page";
 
 const ITEMS = ["a", "b", "c", "d", "e"] as const;
 
@@ -38,5 +38,17 @@ describe("paginateFeed", () => {
       items: ["a", "b"],
       hasMore: true,
     });
+  });
+});
+
+describe("probeLimit", () => {
+  it("asks for offset + pageSize + 1 items", () => {
+    expect(probeLimit(8, 8)).toBe(17);
+  });
+
+  it("never sends an unbounded or NaN limit to the provider", () => {
+    expect(probeLimit(1e9, 8)).toBe(MAX_HOME_FEED_OFFSET + 9);
+    expect(probeLimit(Number.NaN, 8)).toBe(9);
+    expect(probeLimit(-5, 8)).toBe(9);
   });
 });
