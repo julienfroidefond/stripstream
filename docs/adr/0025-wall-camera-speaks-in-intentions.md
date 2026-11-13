@@ -14,7 +14,7 @@ The camera now exposes intentions: `grab`, `panBy`, `beginPinch` / `pinchTo`, `r
 - Keep the raw `MotionNumber`s public and document the call order: rejected — the order was exactly what leaked into three files and broke silently when an effect moved.
 - A reducer with a dispatch inside the camera hook: rejected, for the same reason as ADR 0017 — the inputs are continuous pointer samples, and a pure transition returning explicit effects tests the sequence without React, GSAP or a DOM.
 - Keep the click guard as a shared mutable object: rejected — three owners mutated it with different durations; the guard is part of the pointer sequence and now lives in its state.
-- Move `isEditableTarget` to a neutral module: deferred. The reader is being reworked in parallel, so `wall-shortcuts.ts` imports the reader's pure helper as is; moving it is a one-line import change on each side once both land.
+- Keep a wall-specific input guard: rejected. `isEditableTarget` / `isActivableTarget` now live in the neutral `src/lib/keyboard-targets.ts`, shared by `resolveReaderShortcut` and `resolveWallShortcut`, so both surfaces agree on what swallows a shortcut.
 
 ## Consequences
 

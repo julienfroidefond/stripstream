@@ -7,6 +7,7 @@ import { PreferencesService } from "@/lib/services/preferences.service";
 import { PreferencesProvider } from "@/contexts/PreferencesContext";
 import { AnonymousProvider } from "@/contexts/AnonymousContext";
 import { SeriesMutationsProvider } from "@/contexts/SeriesMutationsContext";
+import { ReadProgressMutationsProvider } from "@/contexts/ReadProgressMutationsContext";
 import { UserScopeProvider } from "@/contexts/UserScopeContext";
 import { I18nProvider } from "@/components/providers/I18nProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
@@ -124,17 +125,19 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <PreferencesProvider initialPreferences={preferences}>
                 <AnonymousProvider>
                   <SeriesMutationsProvider>
-                    <ClientLayout
-                      userIsAdmin={userIsAdmin}
-                      sidebarFavorites={<SidebarFavorites />}
-                      sidebarLibraries={<SidebarLibraries />}
-                      sidebarConnections={<SidebarConnections />}
-                      sidebarFavoritesSkeleton={<SidebarSectionSkeleton />}
-                      sidebarLibrariesSkeleton={<SidebarSectionSkeleton />}
-                      sidebarConnectionsSkeleton={<SidebarSectionSkeleton />}
-                    >
-                      {children}
-                    </ClientLayout>
+                    <ReadProgressMutationsProvider>
+                      <ClientLayout
+                        userIsAdmin={userIsAdmin}
+                        sidebarFavorites={<SidebarFavorites />}
+                        sidebarLibraries={<SidebarLibraries />}
+                        sidebarConnections={<SidebarConnections />}
+                        sidebarFavoritesSkeleton={<SidebarSectionSkeleton />}
+                        sidebarLibrariesSkeleton={<SidebarSectionSkeleton />}
+                        sidebarConnectionsSkeleton={<SidebarSectionSkeleton />}
+                      >
+                        {children}
+                      </ClientLayout>
+                    </ReadProgressMutationsProvider>
                   </SeriesMutationsProvider>
                 </AnonymousProvider>
               </PreferencesProvider>

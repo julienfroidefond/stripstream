@@ -1,9 +1,8 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
 
+import { isActivableTarget, isEditableTarget } from "@/lib/keyboard-targets";
 import {
-  isActivableTarget,
-  isEditableTarget,
   resolveReaderShortcut,
   type ReaderKeyEvent,
   type ReaderShortcutAction,

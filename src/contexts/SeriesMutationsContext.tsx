@@ -20,7 +20,6 @@ import { useTranslate } from "@/hooks/useTranslate";
 import logger from "@/lib/logger";
 import type { NormalizedSeries } from "@/lib/providers/types";
 import { emitFavoriteChange } from "@/lib/series/favorite-events";
-import { ReadProgressMutationsProvider } from "./ReadProgressMutationsContext";
 
 export interface ShelfMutationOptions {
   /** Affiche l'action « Annuler » après une mise de côté réussie. */
@@ -325,11 +324,7 @@ export function SeriesMutationsProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <SeriesMutationsContext.Provider value={contextValue}>
-      {/* La progression de lecture a son propre seam ; il est monté ici pour
-          que toute surface sous la racine des mutations client y ait accès. */}
-      <ReadProgressMutationsProvider>{children}</ReadProgressMutationsProvider>
-    </SeriesMutationsContext.Provider>
+    <SeriesMutationsContext.Provider value={contextValue}>{children}</SeriesMutationsContext.Provider>
   );
 }
 

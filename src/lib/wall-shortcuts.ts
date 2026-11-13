@@ -2,10 +2,10 @@
  * Raccourcis clavier du Wall — table pure.
  *
  * `WallExperience` n'écoute plus que `keydown` et exécute l'action retournée.
- * La garde de saisie est celle du lecteur (`isEditableTarget`) : un champ,
+ * La garde de saisie est partagée avec le lecteur (`isEditableTarget`, `@/lib/keyboard-targets`) : un champ,
  * une zone éditable ou un `select` gardent leurs touches.
  */
-import { isEditableTarget } from "@/components/reader/hooks/keyboardShortcuts";
+import { isEditableTarget } from "@/lib/keyboard-targets";
 
 export type WallShortcutAction =
   /** `Entrée` / `Espace` : activation explicite, la garde de clic se lève. */

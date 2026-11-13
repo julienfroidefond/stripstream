@@ -17,7 +17,7 @@ Marking a book read or unread lived in two `components/ui` buttons that each imp
 
 - Marking a book is optimistic: the card shows it read/unread immediately, the action targets the book's series tag (`invalidateReadProgress(seriesId)` instead of the global series-books tag), a failure removes the override and toasts, a success toasts and issues one `router.refresh()`. A second mark on the same id while one is in flight is ignored.
 - Marking a series shows the optimistic count in the header (status badge, cover dimming) and keeps the previous refresh rule: refresh as soon as the action answers, including on partial failure, and roll the count back on failure. A thrown action does not refresh, as before.
-- `ReadProgressMutationsProvider` is mounted inside `SeriesMutationsProvider`, the client mutation root of `app/layout.tsx`; tests mount it directly.
+- `ReadProgressMutationsProvider` is mounted in `app/layout.tsx` next to `SeriesMutationsProvider` (the two mutation roots are siblings, neither knows the other); tests mount it directly.
 - The reader is untouched: its continuous progress session (`useReadProgressSession`) writes silently and is not a user "mark" action.
 - The read celebration (`burst`) fires on click, since the optimistic render removes the button; the unread nudge on a button that disappears is dropped.
 - Cleanups landed with the seam because they sat on the same cards:
