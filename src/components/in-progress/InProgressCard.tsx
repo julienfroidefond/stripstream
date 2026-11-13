@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { IntentLink } from "@/components/common/IntentLink";
 import { Flame, PauseCircle, Play } from "lucide-react";
 import { BookCoverScene } from "@/components/ui/book-cover-scene";
 import { SeriesCover } from "@/components/ui/series-cover";
@@ -91,7 +91,7 @@ export function InProgressCard({
           resumeHref &&
           resumeLabel && (
             <div className="pointer-events-none absolute inset-x-2 bottom-2 z-10 flex justify-center">
-              <Link
+              <IntentLink
                 href={resumeHref}
                 data-testid={`in-progress-resume-${series.id}`}
                 aria-label={`${resumeLabel} — ${series.name}`}
@@ -109,19 +109,19 @@ export function InProgressCard({
               >
                 <Play className="h-3.5 w-3.5 shrink-0 fill-current" aria-hidden />
                 <span className="truncate">{resumeLabel}</span>
-              </Link>
+              </IntentLink>
             </div>
           )
         }
       />
 
       <div className="space-y-0.5 px-0.5">
-        <Link
+        <IntentLink
           href={`/series/${series.id}`}
           className="line-clamp-1 font-medium leading-tight transition-colors hover:text-primary"
         >
           {series.name}
-        </Link>
+        </IntentLink>
         <div className="flex items-center justify-between gap-2">
           <p
             className="min-w-0 truncate text-xs text-muted-foreground"

@@ -194,6 +194,10 @@ function WallTileComponent({
     <Link
       ref={linkRef}
       href={`/series/${item.id}`}
+      // Le mur affiche jusqu'à 420 tuiles d'un coup : aucun préchargement
+      // automatique ni au survol (un clic ouvre la plaque, dont le lien vers
+      // la série précharge, lui, normalement).
+      prefetch={false}
       aria-label={item.name}
       aria-haspopup="dialog"
       aria-expanded={active || undefined}

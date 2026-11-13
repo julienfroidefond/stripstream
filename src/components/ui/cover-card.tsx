@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { IntentLink } from "@/components/common/IntentLink";
 import { useRef } from "react";
 import type { MouseEvent as ReactMouseEvent, ReactNode } from "react";
 import { BookCoverScene } from "@/components/ui/book-cover-scene";
@@ -69,7 +69,7 @@ export function CoverCard({
         className
       )}
     >
-      <Link
+      <IntentLink
         href={href}
         aria-label={ariaLabel}
         onClick={onNavigate}
@@ -96,7 +96,7 @@ export function CoverCard({
         <div className={cn("min-w-0 space-y-1 px-0.5", captionClassName)}>
           {children}
         </div>
-      </Link>
+      </IntentLink>
 
       <GlowLayer />
       {overlay}

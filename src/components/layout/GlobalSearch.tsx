@@ -2,7 +2,7 @@
 
 import { Input } from "@/components/ui/input";
 import { Search, BookOpen, Library } from "lucide-react";
-import Link from "next/link";
+import { IntentLink } from "@/components/common/IntentLink";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useTranslate } from "@/hooks/useTranslate";
@@ -237,7 +237,7 @@ export function GlobalSearch() {
                   {t("header.search.series")}
                 </div>
                 {seriesResults.map((item) => (
-                  <Link
+                  <IntentLink
                     key={item.id}
                     href={item.href}
                     onClick={() => setIsOpen(false)}
@@ -260,7 +260,7 @@ export function GlobalSearch() {
                         {item.bookCount !== undefined && t("series.books", { count: item.bookCount })}
                       </p>
                     </div>
-                  </Link>
+                  </IntentLink>
                 ))}
               </div>
             )}
@@ -271,7 +271,7 @@ export function GlobalSearch() {
                   {t("header.search.books")}
                 </div>
                 {bookResults.map((item) => (
-                  <Link
+                  <IntentLink
                     key={item.id}
                     href={item.href}
                     onClick={() => setIsOpen(false)}
@@ -294,7 +294,7 @@ export function GlobalSearch() {
                         <span className="truncate">{item.seriesTitle}</span>
                       </p>
                     </div>
-                  </Link>
+                  </IntentLink>
                 ))}
               </div>
             )}

@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { IntentLink } from "@/components/common/IntentLink";
 import { useState } from "react";
 import type { FocusEvent, PointerEvent as ReactPointerEvent } from "react";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -51,7 +51,7 @@ export function ReadingListCard({ list, status, testId }: ReadingListCardProps) 
   const handleBlur = () => setFocused(false);
 
   return (
-    <Link
+    <IntentLink
       href={`/reading-lists/${list.id}`}
       data-testid={testId ?? `reading-list-card-${list.id}`}
       title={list.name}
@@ -100,6 +100,6 @@ export function ReadingListCard({ list, status, testId }: ReadingListCardProps) 
         aria-hidden
         className="pointer-events-none absolute inset-0 z-40 rounded-xl opacity-0 ring-2 ring-ring group-focus-visible:opacity-100"
       />
-    </Link>
+    </IntentLink>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { memo, useRef } from "react";
-import Link from "next/link";
+import { IntentLink } from "@/components/common/IntentLink";
 import { useRouter } from "next/navigation";
 import { Wand2, Sparkles } from "lucide-react";
 import { BookCoverScene } from "@/components/ui/book-cover-scene";
@@ -63,7 +63,7 @@ const RecommendationCard = memo(function RecommendationCard({ series: s }: { ser
   const handleGlow = usePointerGlow(glowRef);
 
   return (
-    <Link
+    <IntentLink
       href={`/series/${s.id}`}
       ref={glowRef}
       aria-label={t("home.coverLinkSeries", { title: s.name })}
@@ -107,6 +107,6 @@ const RecommendationCard = memo(function RecommendationCard({ series: s }: { ser
           <span className="font-medium text-foreground/70">{s.becauseOf.join(", ")}</span>
         </p>
       )}
-    </Link>
+    </IntentLink>
   );
 });
