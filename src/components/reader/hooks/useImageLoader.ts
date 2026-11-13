@@ -2,6 +2,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { BlobUrlRegistry, type ImageKey } from "./blobUrlRegistry";
 import { computeEvictionKeys } from "./imageEviction";
+import { abortTrackedFetches } from "./abortTrackedFetches";
 
 interface ImageDimensions {
   width: number;
@@ -22,6 +23,17 @@ const EVICTION_BEHIND = 10;
 const EVICTION_AHEAD = 20;
 
 const PREFETCH_CONCURRENCY = 4;
+
+/** Abandonne chaque fetch suivi sans laisser un `abort()` en échec interrompre le nettoyage. */
+function releaseTrackedFetches(controllers: Iterable<AbortController>): void {
+  const failures = abortTrackedFetches(controllers);
+  if (failures.length > 0) {
+    console.warn(
+      `[reader/image] ${failures.length} abort(s) threw during cleanup`,
+      failures
+    );
+  }
+}
 
 function sleep(ms: number, signal: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -89,7 +101,7 @@ export function useImageLoader({
 
     return () => {
       isMountedRef.current = false;
-      abortControllers.forEach((controller) => controller.abort());
+      releaseTrackedFetches(abortControllers.values());
       abortControllers.clear();
       pendingFetches.clear();
       loadingPromises.clear();
@@ -99,7 +111,7 @@ export function useImageLoader({
   const cancelAllPrefetches = useCallback(() => {
     const count = abortControllersRef.current.size;
     console.debug(`[reader/image] cancelAllPrefetches: aborting ${count} in-flight fetches`);
-    abortControllersRef.current.forEach((controller) => controller.abort());
+    releaseTrackedFetches(abortControllersRef.current.values());
     abortControllersRef.current.clear();
     pendingFetchesRef.current.clear();
     loadingPromisesRef.current.clear();

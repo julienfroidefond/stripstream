@@ -33,12 +33,16 @@ import type { LibraryResponse } from "@/types/library";
 import type { AuthConfig } from "@/types/auth";
 import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, SERIES_BOOKS_CACHE_TAG, STATS_CACHE_TAG, cacheTags } from "@/constants/cacheConstants";
 import { unstable_cache } from "next/cache";
+import logger from "@/lib/logger";
 
 type KomgaCondition = Record<string, unknown>;
 
 const CACHE_TTL_LONG = 300;
 const CACHE_TTL_MED = 120;
 const CACHE_TTL_SHORT = 30;
+
+/** Ordre des deux requêtes `getHomeContinueReadingData`, pour nommer les rejets. */
+const CONTINUE_READING_FEEDS = ["ongoing", "onDeck"] as const;
 
 export class KomgaProvider implements IMediaProvider {
   readonly capabilities: ProviderCapabilities;
@@ -335,6 +339,17 @@ export class KomgaProvider implements IMediaProvider {
           if (firstAppError) throw firstAppError;
           throw new AppError(ERROR_CODES.HOME.FETCH_ERROR, {}, reasons[0]);
         }
+
+        // Une seule des deux sources peut échouer : la source saine continue
+        // d'alimenter le hero, mais la raison du rejet ne doit pas disparaître.
+        results.forEach((result, index) => {
+          if (result.status === "rejected") {
+            logger.warn(
+              { err: result.reason, feed: CONTINUE_READING_FEEDS[index] },
+              "Komga : flux « reprendre la lecture » partiellement indisponible"
+            );
+          }
+        });
 
         const [ongoingBooks, onDeck] = results.map((r) =>
           r.status === "fulfilled" ? r.value : { content: [] }

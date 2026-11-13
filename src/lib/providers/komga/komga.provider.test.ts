@@ -1,4 +1,19 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+
+const { loggerMock } = vi.hoisted(() => ({
+  loggerMock: {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
+  },
+}));
+
+vi.mock("@/lib/logger", () => ({ default: loggerMock }));
+vi.mock("next/cache", () => ({
+  unstable_cache: (fn: () => unknown) => fn,
+}));
+
 import { KomgaProvider } from "./komga.provider";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
@@ -40,6 +55,47 @@ describe("KomgaProvider.getSeriesById", () => {
     const provider = new KomgaProvider("http://komga.test", "auth");
 
     await expect(provider.getSeriesById("boom")).rejects.toBeInstanceOf(AppError);
+  });
+});
+
+describe("KomgaProvider.getHomeContinueReadingData", () => {
+  function jsonResponse(body: unknown): Response {
+    return new Response(JSON.stringify(body), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  }
+
+  it("keeps the healthy feed and logs the rejected one", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) =>
+        url.includes("books/ondeck")
+          ? response(500)
+          : jsonResponse({ content: [] })
+      )
+    );
+    const provider = new KomgaProvider("http://komga.test", "auth");
+
+    await expect(provider.getHomeContinueReadingData(2)).resolves.toEqual({
+      ongoingBooks: [],
+      onDeck: [],
+    });
+    expect(loggerMock.warn).toHaveBeenCalledTimes(1);
+    expect(loggerMock.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ feed: "onDeck" }),
+      expect.stringContaining("partiellement indisponible")
+    );
+  });
+
+  it("fails the whole feed when both sources reject", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => response(500)));
+    const provider = new KomgaProvider("http://komga.test", "auth");
+
+    await expect(provider.getHomeContinueReadingData(2)).rejects.toBeInstanceOf(
+      AppError
+    );
+    expect(loggerMock.warn).not.toHaveBeenCalled();
   });
 });
 

@@ -249,10 +249,12 @@ Vitest runs the unit suite (`pnpm test:unit`; config `vitest.config.ts`; tests c
 
 ### (d) Minor open backlog (last codebase audit)
 
+All findings are resolved; the section stays as the audit record.
+
 - **Reader page bounds** — resolved by the pure page-move policy (`src/lib/reader/page-navigation.ts`): initial page clamping, empty page lists and double-page steps at both ends are unit-tested; `usePageNavigation` only applies the decisions.
-- **Unstable list keys in skeletons** — `src/components/skeletons/RouteSkeletons.tsx:7,107` still renders `key={index}`; replace with stable keys.
-- **Unlogged `Promise.allSettled` rejections** — `src/app/settings/page.tsx:22-30` silently ignores rejected branches, and `KomgaProvider.getHomeContinueReadingData` degrades partial failures to empty arrays without logging the reasons (`src/lib/providers/komga/komga.provider.ts:489-499`). Add `logger.warn` on rejected results.
-- **`AbortController` cleanup** — `useImageLoader` relies on the trailing `.finally()` to delete controllers/promises (`src/components/reader/hooks/useImageLoader.ts:266-270`); there is no defensive `try/catch` inside the cleanup, so a catastrophic throw before it would leak entries in the tracking maps.
+- **Unstable list keys in skeletons** — resolved: `src/components/skeletons/RouteSkeletons.tsx` renders placeholders from the module-level `PLACEHOLDER_KEYS` table (`slice(0, count)`) instead of deriving keys from the map index.
+- **Unlogged `Promise.allSettled` rejections** — resolved: `src/app/settings/page.tsx` logs each rejected branch with its `source` and still degrades it to an empty value, and `KomgaProvider.getHomeContinueReadingData` logs the rejected feed (`ongoing` / `onDeck`) while the healthy one still feeds the hero; the all-failed case keeps throwing the provider error (`src/lib/providers/komga/komga.provider.test.ts`).
+- **`AbortController` cleanup** — resolved: `abortTrackedFetches` (`src/components/reader/hooks/abortTrackedFetches.ts`, unit-tested) aborts each controller in isolation and returns the failures, so `useImageLoader` always clears its tracking maps through `releaseTrackedFetches` even if one `abort()` throws.
 
 ### (e) Library scan progress depends on the backend
 
