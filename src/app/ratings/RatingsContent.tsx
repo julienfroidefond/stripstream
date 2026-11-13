@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { IntentLink } from "@/components/common/IntentLink";
 import Form from "next/form";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
@@ -206,12 +207,12 @@ export function RatingsContent({
                 />
 
                 <div className="space-y-0.5 px-0.5">
-                  <Link
+                  <IntentLink
                     href={`/series/${item.id}`}
                     className="line-clamp-1 font-medium leading-tight transition-colors hover:text-primary"
                   >
                     {item.name}
-                  </Link>
+                  </IntentLink>
                   <p className="text-xs text-muted-foreground">
                     {item.bookCount === 1
                       ? t("series.header.books", { count: item.bookCount })

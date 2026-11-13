@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { IntentLink } from "@/components/common/IntentLink";
 import { useCallback, useEffect, useRef } from "react";
 import type { FocusEvent, PointerEvent as ReactPointerEvent, ReactNode } from "react";
 import { gsap, prefersReducedMotion, useGsapEffect } from "@/lib/gsap";
@@ -297,14 +297,14 @@ export function BookCoverScene({
   return (
     <div className={cn("cover-scene group/card relative", className)} {...handlers}>
       {href ? (
-        <Link
+        <IntentLink
           href={href}
           aria-label={ariaLabel}
           className={sceneClassName}
           {...pressHandlers}
         >
           {scene}
-        </Link>
+        </IntentLink>
       ) : (
         <div className={sceneClassName} {...pressHandlers}>
           {scene}

@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { IntentLink } from "@/components/common/IntentLink";
 import { memo, useCallback } from "react";
 import type { MouseEvent as ReactMouseEvent } from "react";
 import { BookX, FileText } from "lucide-react";
@@ -226,7 +226,7 @@ function ListBookCover({
   className: string;
 }) {
   return (
-    <Link
+    <IntentLink
       href={`/books/${book.id}`}
       aria-label={view.coverAriaLabel}
       onClick={onNavigate}
@@ -250,7 +250,7 @@ function ListBookCover({
           </>
         }
       />
-    </Link>
+    </IntentLink>
   );
 }
 
@@ -267,13 +267,13 @@ function ListBookTitle({
 }) {
   return (
     <h3 className={className} title={title}>
-      <Link
+      <IntentLink
         href={`/books/${book.id}`}
         onClick={onNavigate}
         className="rounded-sm transition-colors hover:text-primary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         {title}
-      </Link>
+      </IntentLink>
     </h3>
   );
 }

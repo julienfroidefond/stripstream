@@ -19,7 +19,13 @@ test.describe('Favorites and reading lists', () => {
       await expect(add).toBeVisible({ timeout: 15_000 });
     }
     await expect(add).toBeVisible({ timeout: 15_000 });
+    // Le bouton bascule de façon optimiste : recharger avant la réponse de
+    // l'action serveur l'annulerait. On attend donc l'aller-retour.
+    const saved = page.waitForResponse(
+      (response) => response.request().method() === 'POST' && response.url().includes('/series/')
+    );
     await add.click();
+    await saved;
 
     await expect(remove).toBeVisible();
     await page.reload();
