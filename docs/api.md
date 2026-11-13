@@ -8,8 +8,8 @@ Stripstream expose deux surfaces côté serveur, et rien d'autre :
 ## 🔐 Authentification
 
 - Toutes les routes d'API hors famille d'authentification traversent le middleware `src/proxy.ts` et exigent une session NextAuth valide. Une requête non authentifiée reçoit une réponse `401` JSON.
-- Seule la famille d'authentification NextAuth est publique (exclue du matcher du middleware).
-- Les huit routes média (Komga et Stripstream) sont des déclarations d'une ligne `createMediaRoute(provider, kind)` (`src/lib/media/media-route.ts`) : l'adaptateur vérifie la session, choisit le transport du provider, applique la politique de cache et d'en-têtes, relaie les `304` et mappe les erreurs. La route résout l'utilisateur une fois et transmet `userId` au transport (`MediaTransportContext`, ADR 0029) ; les transports résolvent la connexion via `requireConnectionForProvider(provider, userId)` (`@/lib/connections`), qui applique la config active du provider, puis sa première config, et le fallback aux variables d'environnement uniquement pour Stripstream. Le module déchiffre les credentials ; les routes ne lisent jamais les colonnes `authHeader`/`token` directement.
+- Seules la famille d'authentification NextAuth (exclue du matcher du middleware) et la sonde `GET /api/health` (exemptée par le proxy sur ce chemin exact) sont publiques.
+- Les huit routes média (Komga et Stripstream) sont des déclarations d'une ligne `createMediaRoute(provider, kind)` (`src/lib/media/media-route.ts`) : l'adaptateur vérifie la session, choisit le transport du provider, applique la politique de cache et d'en-têtes, relaie les `304` et mappe les erreurs. La route résout l'utilisateur une fois et transmet `userId` au transport (`MediaTransportContext`, ADR 0029) ; les transports résolvent la connexion via `requireConnectionForProvider(provider, userId)` (`@/lib/connections`), qui applique la config active du provider, puis la première config de ce provider appartenant à l'utilisateur ; il n'y a aucun repli sur des variables d'environnement (ADR 0032). Le module déchiffre les credentials ; les routes ne lisent jamais les colonnes `authHeader`/`token` directement.
 - Les Server Actions vérifient l'utilisateur par les gates du runner (`requireUser`, `requireRole`, `rateLimit`), qui transmettent `userId` aux services ; les services ne lisent pas la session (ADR 0029). L'action `testConnection` est en plus limitée par le `rateLimit` du runner, sur la clé `connectionTestRateLimitKey` (`src/lib/connections/probe.ts`, 5 tentatives par 30 secondes et par utilisateur et par provider).
 
 ## 🌐 Route Handlers
@@ -23,6 +23,11 @@ Stripstream expose deux surfaces côté serveur, et rien d'autre :
 
 - **Description** : même handler NextAuth v5 ; porte les soumissions de connexion/déconnexion et les callbacks.
 - **Authentification** : publique.
+
+### GET /api/health
+
+- **Description** : sonde de santé du conteneur (`HEALTHCHECK` du Dockerfile, healthcheck compose). Exécute `SELECT 1` via Prisma : `200 {"status":"ok"}` si la base répond, `503 {"status":"unavailable"}` sinon. `Cache-Control: no-store`, aucune information sensible (ni version ni message d'erreur).
+- **Authentification** : publique, sur ce chemin exact uniquement (`/api/healthz` ou `/api/health/x` restent protégés).
 
 ### Routes média
 
@@ -64,7 +69,7 @@ Toutes ces actions déclarent `requireRole: "admin"` : sans session elles échou
 | Action | Rôle |
 | --- | --- |
 | `getAdminDashboardData` | Charge la liste des utilisateurs et les statistiques du tableau de bord admin. |
-| `updateUserRoles` | Met à jour les rôles d'un utilisateur : liste non vide de rôles parmi `ROLE_USER` / `ROLE_ADMIN`, sinon `ADMIN_INVALID_ROLES`. |
+| `updateUserRoles` | Met à jour les rôles d'un utilisateur : liste non vide de rôles parmi `ROLE_USER` / `ROLE_ADMIN`, sinon `ADMIN_INVALID_ROLES`. Refuse qu'un admin retire son propre `ROLE_ADMIN` (`ADMIN_CANNOT_REMOVE_OWN_ADMIN`) et la rétrogradation du dernier admin (`ADMIN_LAST_ADMIN`). |
 | `deleteUser` | Supprime un utilisateur (`ADMIN_CANNOT_DELETE_SELF` pour son propre compte). |
 | `resetUserPassword` | Réinitialise le mot de passe d'un utilisateur (force minimale vérifiée : 8 caractères, une majuscule, un chiffre, sinon `AUTH_PASSWORD_NOT_STRONG` ; `ADMIN_CANNOT_RESET_OWN_PASSWORD` pour soi-même). Limitée à 10 / 15 min par administrateur (`AUTH_RATE_LIMITED`). |
 
@@ -72,7 +77,7 @@ Toutes ces actions déclarent `requireRole: "admin"` : sans session elles échou
 
 | Action | Rôle |
 | --- | --- |
-| `registerUser` | Inscrit un nouvel utilisateur (email + mot de passe). Action anonyme ; la force du mot de passe et le budget par email (5 / min) sont vérifiés par `AuthServerService.registerUser`. |
+| `registerUser` | Inscrit un nouvel utilisateur (email + mot de passe). Fermée sauf `REGISTRATION_ENABLED=true` (`AUTH_REGISTRATION_DISABLED`, ADR 0032). Action anonyme ; la force du mot de passe, le budget par IP (10 / h, premier élément de `X-Forwarded-For`) et par email (5 / min) sont vérifiés par `AuthServerService.registerUser`. |
 
 ### src/app/actions/books.ts
 
@@ -103,8 +108,8 @@ Actions de connexion génériques (ADR 0030) : une action par opération, discri
 
 | Action | Rôle |
 | --- | --- |
-| `loadContinueReading` | Charge la page suivante du hero « Reprendre la lecture ». `offset` est le nombre de tomes déjà affichés ; l'action délègue à `loadContinueReadingPage` (`src/lib/home/continue-reading-feed.ts`), le même module que le rendu initial, et renvoie uniquement la nouvelle page, déjà résolue en entrées de reprise (`book`, `series`, `progressPercent`). Le hero ajoute la page à sa liste et n'a plus à fusionner ni à matcher côté client. |
-| `loadHomeFeed` | Charge une page d'une section de la home : `ongoing`, `favorites`, `reading-lists`, `latest-series`, `recently-read` ou `recommendations`. `offset` est le nombre d'éléments déjà affichés ; l'action renvoie `{ items, hasMore }` pour la seule nouvelle page. Elle délègue au registre `src/lib/home/feed-registry.ts`, partagé avec le rendu initial de la page. |
+| `loadContinueReading` | Charge la page suivante du hero « Reprendre la lecture ». `offset` est le nombre de tomes déjà affichés, borné comme pour `loadHomeFeed` ; l'action délègue à `loadContinueReadingPage` (`src/lib/home/continue-reading-feed.ts`), le même module que le rendu initial, et renvoie uniquement la nouvelle page, déjà résolue en entrées de reprise (`book`, `series`, `progressPercent`). Le hero ajoute la page à sa liste et n'a plus à fusionner ni à matcher côté client. |
+| `loadHomeFeed` | Charge une page d'une section de la home : `ongoing`, `favorites`, `reading-lists`, `latest-series`, `recently-read` ou `recommendations`. `offset` est le nombre d'éléments déjà affichés, entier de 0 à `MAX_HOME_FEED_OFFSET` (1 000, `src/lib/home/feed-page.ts`) — sinon échec `HOME_INVALID_OFFSET` sans requête provider ; l'action renvoie `{ items, hasMore }` pour la seule nouvelle page. Elle délègue au registre `src/lib/home/feed-registry.ts`, partagé avec le rendu initial de la page. |
 
 ### src/app/actions/library.ts
 
@@ -152,6 +157,6 @@ Actions de connexion génériques (ADR 0030) : une action par opération, discri
 
 | Action | Rôle |
 | --- | --- |
-| `revalidateForRefresh` | Invalide caches et chemins selon le `scope` (`home`, `library`, `series`, `book`) avant un `router.refresh()` côté client. |
+| `revalidateForRefresh` | Invalide caches et chemins selon le `scope` (`home`, `library`, `series`, `book`) avant un `router.refresh()` côté client. Passe par le runner : session requise, budget `refresh:<userId>` (30 / min), scope et identifiant validés (`REFRESH_INVALID_TARGET`) ; renvoie un `ActionResult`. |
 
 > **Chiffrement au repos** : l'`authHeader` Komga et le `token` Stripstream sont stockés sous enveloppe AES-256-GCM (`src/lib/credentials.ts`, clé `CREDENTIALS_ENCRYPTION_KEY`). L'action `saveConnection` passe par `src/lib/connections/manage.ts`, où la définition du provider chiffre à l'écriture (mot de passe/token vide en mise à jour : la valeur chiffrée existante est conservée) ; `src/lib/connections/resolve.ts` déchiffre à la lecture avant de construire un provider ou une sonde. Les lignes legacy en clair restent lisibles ; `pnpm encrypt-credentials` les migre de façon idempotente (`ENV.md`).

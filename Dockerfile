@@ -84,6 +84,10 @@ COPY --from=builder /app/src/lib/credentials.ts /app/src/lib/credentials-migrati
 COPY --from=builder /app/src/utils/errors.ts ./src/utils/
 COPY --from=builder /app/src/constants/errorCodes.ts /app/src/constants/errorMessages.ts ./src/constants/
 
+# Dependency-free decision module imported by scripts/init-db.ts, run on every
+# boot by docker-entrypoint.sh (admin bootstrap, no default password).
+COPY --from=builder /app/src/lib/admin-bootstrap.ts ./src/lib/
+
 # Copy entrypoint script
 COPY docker-entrypoint.sh ./
 RUN chmod +x docker-entrypoint.sh

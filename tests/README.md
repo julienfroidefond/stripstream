@@ -75,6 +75,11 @@ system temp directory (`E2E_DATABASE_URL` may override it with another local
 file when debugging; never point it at a shared development or production
 database).
 
+The local web server always runs with `REGISTRATION_ENABLED=true`
+(`playwright.config.ts`): sign-up is closed by default (ADR 0032), and
+`tests/public/` exercises the sign-up tab and its throttling. A server started
+elsewhere (`E2E_BASE_URL`) must set it too for those specs.
+
 ## Authentication state
 
 `setup` writes `tests/.auth/stream.json` and `tests/.auth/reader.json`.

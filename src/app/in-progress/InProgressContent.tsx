@@ -8,7 +8,6 @@ import {
   useState,
   useTransition,
 } from "react";
-import { useRouter } from "next/navigation";
 import {
   ArrowDownAZ,
   BookOpenCheck,
@@ -57,6 +56,8 @@ import {
 interface InProgressContentProps {
   items: InProgressItem[];
   favoriteIds: string[];
+  /** Les favoris n'ont pas pu être chargés : étoiles et filtre ne sont pas fiables. */
+  favoritesUnavailable?: boolean;
   canShelve?: boolean;
 }
 
@@ -74,9 +75,9 @@ const FILTERS: Array<{
 export function InProgressContent({
   items,
   favoriteIds,
+  favoritesUnavailable = false,
   canShelve = false,
 }: InProgressContentProps) {
-  const router = useRouter();
   const { toast } = useToast();
   const { t } = useTranslate();
   const { isAnonymous, toggleAnonymous } = useAnonymous();
@@ -184,8 +185,8 @@ export function InProgressContent({
   const handleDisableAnonymous = useCallback(() => {
     startAnonymousTransition(async () => {
       try {
+        // `toggleAnonymous` rafraîchit la route une fois l'écriture confirmée.
         await toggleAnonymous();
-        router.refresh();
       } catch {
         toast({
           title: t("inProgress.anonymous.error"),
@@ -193,7 +194,7 @@ export function InProgressContent({
         });
       }
     });
-  }, [router, t, toast, toggleAnonymous]);
+  }, [t, toast, toggleAnonymous]);
 
   const handleRandomPick = useCallback(() => {
     const pool = randomPool;
@@ -261,6 +262,16 @@ export function InProgressContent({
           ) : undefined
         }
       />
+
+      {favoritesUnavailable && !isAnonymous && (
+        <p
+          role="status"
+          className="rounded-lg border border-border bg-secondary/50 px-4 py-2 text-sm text-muted-foreground"
+          data-testid="in-progress-favorites-unavailable"
+        >
+          {t("inProgress.favoritesUnavailable")}
+        </p>
+      )}
 
       {isAnonymous ? (
         <InProgressAnonymousState

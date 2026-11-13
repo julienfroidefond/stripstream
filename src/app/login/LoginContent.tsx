@@ -25,6 +25,8 @@ interface LoginContentProps {
     from?: string;
     tab?: string;
   };
+  /** `REGISTRATION_ENABLED=true` côté serveur ; sinon seul le formulaire de connexion s'affiche. */
+  registrationEnabled: boolean;
 }
 
 /**
@@ -35,9 +37,9 @@ interface LoginContentProps {
  * L'entrée reprend le relief GSAP de l'accueil, états de départ en CSS
  * (`[data-login]`) pour éviter tout saut avant hydratation.
  */
-export function LoginContent({ searchParams }: LoginContentProps) {
+export function LoginContent({ searchParams, registrationEnabled }: LoginContentProps) {
   const { t } = useTranslate();
-  const defaultTab = searchParams.tab === "register" ? "register" : "login";
+  const defaultTab = registrationEnabled && searchParams.tab === "register" ? "register" : "login";
   const rootRef = useRef<HTMLDivElement>(null);
 
   useGsapEffect(() => {
@@ -162,28 +164,37 @@ export function LoginContent({ searchParams }: LoginContentProps) {
           >
             <div className="rounded-2xl bg-surface-1 p-5 ring-1 ring-border/70 sm:p-7">
               <p className="mb-5 text-sm leading-relaxed text-muted-foreground">
-                {t("login.subtitle")}
+                {t(registrationEnabled ? "login.subtitle" : "login.subtitleSignInOnly")}
               </p>
 
-              <Tabs defaultValue={defaultTab} className="w-full">
-                <TabsList className="grid h-11 w-full grid-cols-2 rounded-xl bg-surface-2 p-1">
-                  <TabsTrigger value="login" className="gap-2 rounded-lg py-2">
-                    <LogIn aria-hidden className="h-4 w-4" />
-                    {t("login.tabs.login")}
-                  </TabsTrigger>
-                  <TabsTrigger value="register" className="gap-2 rounded-lg py-2">
-                    <UserPlus aria-hidden className="h-4 w-4" />
-                    {t("login.tabs.register")}
-                  </TabsTrigger>
-                </TabsList>
+              {registrationEnabled ? (
+                <Tabs defaultValue={defaultTab} className="w-full">
+                  <TabsList className="grid h-11 w-full grid-cols-2 rounded-xl bg-surface-2 p-1">
+                    <TabsTrigger value="login" className="gap-2 rounded-lg py-2">
+                      <LogIn aria-hidden className="h-4 w-4" />
+                      {t("login.tabs.login")}
+                    </TabsTrigger>
+                    <TabsTrigger value="register" className="gap-2 rounded-lg py-2">
+                      <UserPlus aria-hidden className="h-4 w-4" />
+                      {t("login.tabs.register")}
+                    </TabsTrigger>
+                  </TabsList>
 
-                <TabsContent value="login" className="mt-5">
+                  <TabsContent value="login" className="mt-5">
+                    <LoginForm from={searchParams.from} />
+                  </TabsContent>
+                  <TabsContent value="register" className="mt-5">
+                    <RegisterForm from={searchParams.from} />
+                  </TabsContent>
+                </Tabs>
+              ) : (
+                <>
                   <LoginForm from={searchParams.from} />
-                </TabsContent>
-                <TabsContent value="register" className="mt-5">
-                  <RegisterForm from={searchParams.from} />
-                </TabsContent>
-              </Tabs>
+                  <p className="mt-5 text-xs leading-relaxed text-muted-foreground">
+                    {t("login.registrationClosed")}
+                  </p>
+                </>
+              )}
             </div>
           </div>
         </div>

@@ -27,14 +27,17 @@ export default async function InProgressPage() {
     load: async ({ userId, provider }) => {
       const [items, favoriteIds] = await Promise.all([
         getInProgressItems(provider),
-        FavoriteService.getAllFavoriteIds({ userId, provider }).catch(() => []),
+        // Les favoris décorent la liste : leur panne ne masque pas les
+        // séries en cours, mais elle est signalée (ADR 0008).
+        FavoriteService.getAllFavoriteIds({ userId, provider }).catch(() => null),
       ]);
 
       // Le bouton « mettre de côté » ne s'affiche que si le provider déclare
       // la capacité, jamais d'après son type de connexion.
       return {
         items,
-        favoriteIds,
+        favoriteIds: favoriteIds ?? [],
+        favoritesUnavailable: favoriteIds === null,
         canShelve: provider.capabilities.shelf !== null,
       };
     },
@@ -46,8 +49,13 @@ export default async function InProgressPage() {
       anonymousEmpty={() => (
         <InProgressContent items={[]} favoriteIds={[]} canShelve={false} />
       )}
-      ready={({ items, favoriteIds, canShelve }) => (
-        <InProgressContent items={items} favoriteIds={favoriteIds} canShelve={canShelve} />
+      ready={({ items, favoriteIds, favoritesUnavailable, canShelve }) => (
+        <InProgressContent
+          items={items}
+          favoriteIds={favoriteIds}
+          favoritesUnavailable={favoritesUnavailable}
+          canShelve={canShelve}
+        />
       )}
     />
   );

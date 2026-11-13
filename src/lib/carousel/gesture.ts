@@ -170,3 +170,42 @@ export function snapDuration(distance: number): number {
 export function shouldSuppressClick(offsetX: number): boolean {
   return Math.abs(offsetX) > AXIS_SLOP;
 }
+
+export interface PressInput {
+  /** Position courante de la piste (px), `NaN` si inconnue. */
+  trackX: number;
+  /** Largeur d'une diapositive (px). */
+  width: number;
+  /** Un tween de fin de balayage tourne : son changement n'est pas appliqué. */
+  pendingSwipe: boolean;
+}
+
+export interface PressPlan {
+  /**
+   * Terminer le tween de fin avant d'ouvrir le nouveau geste : son
+   * `onSwipe` doit partir, sinon le premier balayage est perdu.
+   */
+  commitSwipe: boolean;
+  /** Position de départ du nouveau geste. */
+  baseX: number;
+}
+
+/**
+ * Appui pendant un tween. Pendant le retour au centre, le doigt reprend la
+ * piste là où elle est. Pendant la fin d'un balayage, le changement est
+ * appliqué d'abord et la piste repart du centre de la nouvelle diapositive,
+ * jamais d'une position intermédiaire.
+ */
+export function planPress(input: PressInput): PressPlan {
+  const center = -input.width;
+  if (input.pendingSwipe) return { commitSwipe: true, baseX: center };
+  return {
+    commitSwipe: false,
+    baseX: Number.isFinite(input.trackX) && input.trackX !== 0 ? input.trackX : center,
+  };
+}
+
+/** Seul le doigt qui a ouvert le geste le fait avancer ou le termine. */
+export function ownsDrag(drag: DragState | null, pointerId: number): drag is DragState {
+  return drag !== null && drag.pointerId === pointerId;
+}

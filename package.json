@@ -1,6 +1,6 @@
 {
   "name": "stripstream",
-  "version": "1.67.1",
+  "version": "1.67.8",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -99,7 +99,7 @@
       "brace-expansion@1": ">=1.1.18 <2",
       "brace-expansion@4": ">=5.0.9 <6",
       "minimatch@3": ">=3.1.4 <4",
-      "minimatch@10": ">=10.2.3 <11",
+      "minimatch@10": ">=11.0.1 <12",
       "flatted@3": ">=3.4.2 <4",
       "effect@3": ">=3.20.0 <4",
       "picomatch@2": ">=2.3.2 <3",

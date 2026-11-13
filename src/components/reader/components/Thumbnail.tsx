@@ -60,15 +60,26 @@ export const Thumbnail = memo(forwardRef<HTMLButtonElement, ThumbnailProps>(
       };
     }, [isVisible]);
 
+    // La carte des miniatures chargées change à chaque miniature qui arrive :
+    // la lire par ref évite de relancer l'effet de chargement de toutes les
+    // autres (et donc de refaire la requête d'une miniature en erreur).
+    const loadedRef = useRef(loadedThumbnails);
+    useEffect(() => {
+      loadedRef.current = loadedThumbnails;
+    }, [loadedThumbnails]);
+    /** URL dont le chargement a échoué : elle n'est pas redemandée. */
+    const failedUrlRef = useRef<string | null>(null);
+
     // Charger l'image uniquement quand la thumbnail est dans le viewport
     useEffect(() => {
       if (!isInViewport) return;
 
       try {
         const url = getThumbnailUrl(pageNumber);
+        if (failedUrlRef.current === url) return;
         setImageUrl(url);
         // On réinitialise le loading uniquement si la miniature n'est pas déjà chargée
-        if (!loadedThumbnails[pageNumber]) {
+        if (!loadedRef.current[pageNumber]) {
           resetLoadingState();
         } else {
           setIsLoading(false);
@@ -78,15 +89,15 @@ export const Thumbnail = memo(forwardRef<HTMLButtonElement, ThumbnailProps>(
         setHasError(true);
         setIsLoading(false);
       }
-    }, [pageNumber, getThumbnailUrl, loadedThumbnails, resetLoadingState, isVisible, isInViewport]);
+    }, [pageNumber, getThumbnailUrl, resetLoadingState, isInViewport]);
 
     const handleImageLoad = useCallback(() => {
       setIsLoading(false);
       setHasError(false);
-      if (!loadedThumbnails[pageNumber]) {
+      if (!loadedRef.current[pageNumber]) {
         onThumbnailLoad(pageNumber);
       }
-    }, [loadedThumbnails, pageNumber, onThumbnailLoad]);
+    }, [pageNumber, onThumbnailLoad]);
 
     const handleImageError = useCallback(() => {
       loadAttempts.current += 1;
@@ -107,10 +118,11 @@ export const Thumbnail = memo(forwardRef<HTMLButtonElement, ThumbnailProps>(
         logger.error(
           `Échec du chargement de l'image pour la page ${pageNumber} après ${maxAttempts} tentatives`
         );
+        failedUrlRef.current = getThumbnailUrl(pageNumber);
         setHasError(true);
         setIsLoading(false);
       }
-    }, [pageNumber]);
+    }, [getThumbnailUrl, pageNumber]);
 
     return (
       <button

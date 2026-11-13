@@ -49,6 +49,7 @@ export const ControlButtons = memo(function ControlButtons({
   onClose,
   onRefresh,
   currentPage,
+  lastVisiblePage,
   totalPages,
   isDoublePage,
   onToggleDoublePage,
@@ -66,7 +67,7 @@ export const ControlButtons = memo(function ControlButtons({
   const { t } = useTranslation();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const sideActions = SIDES.map((side) =>
-    resolveSideAction(side, { direction, currentPage, totalPages })
+    resolveSideAction(side, { direction, currentPage, totalPages, lastVisiblePage })
   );
 
   const handleRefresh = async (e: React.MouseEvent) => {

@@ -1,7 +1,11 @@
 import { useState, useEffect } from "react";
 
-export const useOrientation = () => {
-  const [isLandscape, setIsLandscape] = useState(false);
+/**
+ * Whether the viewport is landscape. `null` until the first measurement after
+ * mount, so callers can tell the initial reading from a real rotation.
+ */
+export const useOrientation = (): boolean | null => {
+  const [isLandscape, setIsLandscape] = useState<boolean | null>(null);
 
   useEffect(() => {
     const checkOrientation = () => {

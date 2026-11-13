@@ -5,10 +5,11 @@ import { Badge } from "@/components/ui/badge";
 import { Mail, Calendar, Shield, Heart } from "lucide-react";
 import type { UserProfile } from "@/lib/services/user.service";
 import { useTranslate } from "@/hooks/useTranslate";
+import { formatLocaleDate } from "@/lib/utils";
 
 interface UserProfileCardProps {
   profile: UserProfile & {
-    stats: { favoritesCount: number; hasPreferences: boolean; hasKomgaConfig: boolean };
+    stats: { favoritesCount: number; hasPreferences: boolean; hasConnection: boolean };
   };
 }
 
@@ -48,7 +49,7 @@ export function UserProfileCard({ profile }: UserProfileCardProps) {
           <div>
             <p className="text-sm font-medium">{t("account.profile.memberSince")}</p>
             <p className="text-sm text-muted-foreground">
-              {new Date(profile.createdAt).toLocaleDateString(currentLanguage, {
+              {formatLocaleDate(profile.createdAt, currentLanguage, {
                 year: "numeric",
                 month: "long",
                 day: "numeric",
@@ -70,7 +71,7 @@ export function UserProfileCard({ profile }: UserProfileCardProps) {
         <div className="pt-4">
           <p className="text-xs text-muted-foreground">
             {t("account.profile.lastUpdate", {
-              date: new Date(profile.updatedAt).toLocaleDateString(currentLanguage),
+              date: formatLocaleDate(profile.updatedAt, currentLanguage),
             })}
           </p>
         </div>

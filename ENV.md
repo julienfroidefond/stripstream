@@ -29,7 +29,8 @@ NEXTAUTH_URL=https://ton-domaine.com
 # Librarian) : AES-256-GCM, 32 octets en base64 ou 64 caractères hexadécimaux.
 # Générer avec : openssl rand -base64 32
 # Sans cette clé, les identifiants sont stockés en clair et un avertissement est
-# journalisé à chaque écriture.
+# journalisé à chaque écriture. OBLIGATOIRE avec docker-compose.yml, qui refuse
+# de démarrer sans elle (`${CREDENTIALS_ENCRYPTION_KEY:?}`).
 # CREDENTIALS_ENCRYPTION_KEY=
 ```
 
@@ -39,25 +40,51 @@ NEXTAUTH_URL=https://ton-domaine.com
 # "development" | "production" | "test" (défaut : development).
 # NODE_ENV=production
 
-# Mot de passe du compte admin créé par scripts/init-db.ts
-# (également utilisé au build par docker-compose).
-# ADMIN_DEFAULT_PASSWORD=Admin@2025
+# Mot de passe du compte admin créé par scripts/init-db.ts au premier démarrage.
+# Aucune valeur par défaut : si le compte admin n'existe pas et que la variable
+# est vide (ou fait moins de 8 caractères), il n'est PAS créé ; le script le
+# signale et sort en code 3, que docker-entrypoint.sh tolère (l'app démarre
+# quand même). Un compte existant n'est jamais modifié (ni mot de passe ni
+# rôle) : on peut retirer la variable une fois l'admin créé. Variable
+# d'exécution uniquement, jamais un argument de build.
+# ADMIN_DEFAULT_PASSWORD=
+
+# Inscription en libre-service. Fermée par défaut : seule la valeur "true"
+# l'ouvre. Changement de comportement : avant cette variable, l'inscription
+# était toujours ouverte. Fermée, la page de connexion n'affiche plus l'onglet
+# d'inscription et l'action renvoie AUTH_REGISTRATION_DISABLED.
+# REGISTRATION_ENABLED=false
 
 # Journaux de debug (1/true pour activer).
 # CACHE_DEBUG=false
 # KOMGA_DEBUG=false
 # STRIPSTREAM_DEBUG=false
 
-# Fallback du Librarian Stripstream, utilisé quand l'utilisateur n'a pas
-# enregistré d'URL/token en base.
-# STRIPSTREAM_URL=https://librarian.example.com
-# STRIPSTREAM_TOKEN=stl_xxxx_xxxxxxxx
-
 # Store des compteurs de quota (rate limiting) : "sqlite" (défaut) persiste les
 # fenêtres dans la table rate_limit_buckets, "memory" garde les compteurs dans
 # le process (remis à zéro au redémarrage, non partagés entre instances).
 # RATE_LIMIT_STORE=sqlite
+
+# Répertoire de build Next.js (défaut : .next). La suite E2E construit dans
+# .next-e2e pour ne pas écraser le build de dev (voir playwright.config.ts).
+# NEXT_DIST_DIR=.next
 ```
+
+### Variables retirées
+
+`STRIPSTREAM_URL` et `STRIPSTREAM_TOKEN` ne sont plus lues : il n'y a plus de
+connexion Stripstream de repli issue de l'environnement (ADR 0032). Chaque
+utilisateur enregistre ses propres connexions dans les réglages ; un
+utilisateur sans connexion n'emprunte plus jamais le token de l'instance.
+
+### Reverse proxy et rate limiting
+
+Les budgets de connexion et d'inscription par IP lisent le premier élément de
+`X-Forwarded-For` (à défaut `X-Real-IP`). L'hypothèse est un déploiement
+derrière un reverse proxy qui réécrit cet en-tête ; sans proxy, l'en-tête est
+fourni par le client et le budget par IP devient contournable (le budget des
+échecs par compte reste actif). Sans adresse exploitable, le budget par IP est
+ignoré.
 
 ## Docker / Compose uniquement
 

@@ -86,8 +86,9 @@ docker compose up -d
 2. Dans Stripstream, ajouter une connexion **Stripstream** (réglages) : URL de
    base du Librarian + token. Chaque utilisateur peut garder plusieurs
    connexions, une seule active à la fois (voir `docs/architecture.md` §1).
-3. À défaut de connexion enregistrée, Stripstream retombe sur les variables
-   `STRIPSTREAM_URL` et `STRIPSTREAM_TOKEN` (voir `ENV.md`).
+3. Il n'y a pas de connexion de repli issue de l'environnement : un
+   utilisateur sans connexion enregistrée n'accède à aucun Librarian
+   (ADR [0032](./adr/0032-closed-by-default-auth-and-per-user-connections.md)).
 
 ## Pour aller plus loin
 

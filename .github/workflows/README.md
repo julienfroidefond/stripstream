@@ -12,10 +12,10 @@ retired).
 | Workflow | Trigger | Role |
 |----------|---------|------|
 | `ci.yml` | pull requests, `workflow_dispatch` | Quality gate: `pnpm install --frozen-lockfile`, `pnpm lint`, `pnpm typecheck`, `pnpm test:unit`, `pnpm build` |
-| `deploy.yml` | push to `main`, `workflow_dispatch` | Version detection, Docker image build/push to Docker Hub, then deploy on the self-hosted `mac-mini` runner |
+| `deploy.yml` | push to `main`, `workflow_dispatch` (both jobs refuse any ref but `main`) | Version detection, Docker image build/push to Docker Hub, then deploy on the self-hosted `mac-mini` runner |
 | `security.yml` | weekly cron, `workflow_dispatch` | Trivy scan of the published image — fixable CRITICAL/HIGH only |
 | `dependabot-auto-merge.yml` | `pull_request_target` | Queues a squash auto-merge for Dependabot minor/patch updates once the required check passes |
-| `opencode.yml` | `ai` label, `/oc` or `/opencode` mentions, PR review comments | OpenCode agent (two jobs: `issue` and `comment`) |
+| `opencode.yml` | `ai` label, `/oc` or `/opencode` mentions, PR review comments — author must be `OWNER`, `MEMBER` or `COLLABORATOR` | OpenCode agent (two jobs: `issue` and `comment`), action pinned by commit SHA |
 
 ## Required status check
 
@@ -119,8 +119,9 @@ job's `permissions:`. The `ci.yml` run
 `node-cache-Linux-x64-pnpm-…` while holding `contents: read` only. `actions: write` would instead
 let an agent job cancel or re-run workflows and delete artifacts — broad power for no caching gain.
 
-Trade-off: `opencode.yml` runs an agent over visitor-supplied issue and comment text, so a
-compromised run could write a cache entry. The jobs keep `persist-credentials: false` and only
+Trade-off: `opencode.yml` runs an agent over issue and comment text. Both jobs only start when the
+issue or comment author is `OWNER`, `MEMBER` or `COLLABORATOR` (`author_association`), and the
+action is pinned to a commit SHA rather than `@latest`; a compromised run could write a cache entry. The jobs keep `persist-credentials: false` and only
 restore their own caches; keep the write grant limited to these jobs, and prefer the
 docs-recommended alternative (a trusted `push`/`schedule` workflow warming the cache, low-trust jobs
 staying read-only) if this workflow ever starts handling untrusted code.

@@ -8,8 +8,12 @@ export async function SidebarFavorites() {
     .catch(() => null);
   if (userId === null) return null;
 
+  // Une panne des favoris ne doit pas casser la barre latérale, mais elle ne
+  // doit pas non plus se faire passer pour « Aucun favori » (ADR 0008).
   const favorites = await getProvider()
     .then((provider) => FavoriteService.listFavorites({ userId, provider }))
-    .catch(() => []);
-  return <SidebarFavoritesView favorites={favorites} />;
+    .catch(() => null);
+  return (
+    <SidebarFavoritesView favorites={favorites ?? []} unavailable={favorites === null} />
+  );
 }

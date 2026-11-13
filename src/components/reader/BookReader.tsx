@@ -33,8 +33,7 @@ export const BookReader = memo(function BookReader(props: BookReaderProps) {
 
       <EndOfSeriesModal
         show={s.showEndMessage}
-        onClose={s.onClose}
-        currentPage={s.currentPage}
+        onBackToSeries={s.onBackToSeries}
         seriesId={props.book.seriesId ?? null}
         seriesRating={props.seriesRating ?? null}
       />
@@ -50,6 +49,7 @@ export const BookReader = memo(function BookReader(props: BookReaderProps) {
         onClose={s.onClose}
         onRefresh={props.onRefresh}
         currentPage={s.currentPage}
+        lastVisiblePage={s.lastVisiblePage}
         totalPages={s.totalPages}
         isDoublePage={s.isDoublePage}
         onToggleDoublePage={s.onToggleDoublePage}

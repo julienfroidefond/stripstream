@@ -3,7 +3,12 @@ import { describe, expect, it, vi } from "vitest";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 
-import { createMediaRouteWith, parseMediaRef, serveMedia } from "./media-route-core";
+import {
+  createMediaRouteWith,
+  parseMediaPageNumber,
+  parseMediaRef,
+  serveMedia,
+} from "./media-route-core";
 import { MEDIA_POLICIES, mediaPolicy } from "./policies";
 import type { MediaKind, MediaRouteDependencies, MediaTransport } from "./types";
 
@@ -96,6 +101,23 @@ describe("parseMediaRef", () => {
     ).toMatchObject({
       error: { status: 400, code: ERROR_CODES.BOOK.PAGES_FETCH_ERROR },
     });
+  });
+
+  it.each(["0", "00", "3abc", "1.5", " 2", "+2", "1e3", "99999999999999999999"])(
+    "rejects the non 1-based page number %j with a 400",
+    (pageNumber) => {
+      expect(
+        parseMediaRef("book-page", { bookId: "b", pageNumber }, url)
+      ).toMatchObject({ error: { status: 400, code: ERROR_CODES.IMAGE.FETCH_ERROR } });
+      expect(
+        parseMediaRef("book-page-thumbnail", { bookId: "b", pageNumber }, url)
+      ).toMatchObject({ error: { status: 400, code: ERROR_CODES.BOOK.PAGES_FETCH_ERROR } });
+    }
+  );
+
+  it("accepts the first page and leading zeros of a valid page", () => {
+    expect(parseMediaPageNumber("1")).toBe(1);
+    expect(parseMediaPageNumber("012")).toBe(12);
   });
 });
 

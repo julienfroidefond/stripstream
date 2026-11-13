@@ -180,7 +180,8 @@ describe("SeriesMutationsContext", () => {
   it("annule l'état optimiste et n'ouvre pas de refresh quand l'action échoue", async () => {
     mocks.addToFavorites.mockResolvedValueOnce({
       success: false,
-      message: "Refusé",
+      code: "FAVORITE_ADD_ERROR",
+      message: "Technical failure",
     });
     const { result } = renderMutations();
 
@@ -195,7 +196,8 @@ describe("SeriesMutationsContext", () => {
       expect.objectContaining({
         variant: "destructive",
         title: "seriesMutations.favorite.error",
-        description: "Refusé",
+        // Le code est traduit ; le message technique de l'action reste aux logs.
+        description: "errors.FAVORITE_ADD_ERROR",
       })
     );
   });

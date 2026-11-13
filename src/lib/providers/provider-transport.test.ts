@@ -111,6 +111,26 @@ describe("ProviderTransport", () => {
     expect(headers.get("content-type")).toBe("application/json");
   });
 
+  it("never follows a redirect, for JSON reads and byte streams", async () => {
+    const redirect = () =>
+      new Response(null, {
+        status: 302,
+        headers: { location: "http://169.254.169.254/latest/meta-data/" },
+      });
+    vi.stubGlobal("fetch", vi.fn(async () => redirect()));
+    const transport = new ProviderTransport(testPolicy());
+
+    await expect(transport.request("books")).rejects.toMatchObject({
+      code: ERROR_CODES.KOMGA.HTTP_ERROR,
+    });
+    expect(lastFetchCall().init.redirect).toBe("manual");
+
+    await expect(transport.response("books/b1/file")).rejects.toMatchObject({
+      code: ERROR_CODES.KOMGA.HTTP_ERROR,
+    });
+    expect(lastFetchCall().init.redirect).toBe("manual");
+  });
+
   it("treats an empty success body as null", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => new Response(null, { status: 204 })));
     const transport = new ProviderTransport(testPolicy());

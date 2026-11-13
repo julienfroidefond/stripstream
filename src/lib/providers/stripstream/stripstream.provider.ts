@@ -36,7 +36,7 @@ import { StripstreamAdapter } from "./stripstream.adapter";
 import { mediaUrl } from "@/lib/media/media-url";
 import { selectApprovedMetadataLink } from "./metadata-links";
 import { scanStateFromIndexJobStatus } from "../scan-status";
-import { normalizePageNumber } from "../pagination";
+import { iteratePages, normalizePageNumber } from "../pagination";
 import type {
   StripstreamLibraryResponse,
   StripstreamBooksPage,
@@ -57,6 +57,11 @@ import type {
   StripstreamIndexJob,
 } from "@/types/stripstream";
 import { cacheProfile } from "@/constants/cacheProfiles";
+
+/** Taille de page maximale acceptée par `GET /books` du Librarian. */
+const NEXT_BOOK_PAGE_SIZE = 200;
+/** Garde-fou du parcours de `getNextBook` (50 × 200 = 10 000 tomes). */
+const NEXT_BOOK_MAX_PAGES = 50;
 
 export class StripstreamProvider implements IMediaProvider {
   readonly capabilities: ProviderCapabilities;
@@ -280,15 +285,23 @@ export class StripstreamProvider implements IMediaProvider {
       );
       if (!seriesId) return null;
 
-      // Charge une page bornée (50) triée par volume pour repérer le tome suivant :
-      // pas besoin de charger toute la série.
-      const response = await this.transport.request<StripstreamBooksPage>("books", {
-        series: seriesId,
-        limit: "50",
-        sort: "volume",
-      }, cacheProfile.nextBook());
+      // Le Librarian n'expose ni `books/{id}/next` ni filtre « volume > n » :
+      // on parcourt la série par pages de 200 (son maximum ; tri par volume
+      // par défaut côté backend) pour trouver le tome suivant au-delà de la
+      // première page. Le garde-fou borne le parcours à 10 000 tomes.
+      const items = await iteratePages(
+        async (page) => {
+          const response = await this.transport.request<StripstreamBooksPage>(
+            "books",
+            { series: seriesId, limit: String(NEXT_BOOK_PAGE_SIZE), page: String(page) },
+            cacheProfile.nextBook()
+          );
+          return StripstreamAdapter.toPage(response, (item) => item, page, NEXT_BOOK_PAGE_SIZE);
+        },
+        { max: NEXT_BOOK_MAX_PAGES, concurrency: 2 }
+      );
 
-      const sorted = response.items
+      const sorted = items
         .filter((b) => b.volume != null)
         .sort((a, b) => (a.volume ?? 0) - (b.volume ?? 0));
 

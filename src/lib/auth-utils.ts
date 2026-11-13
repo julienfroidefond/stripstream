@@ -50,6 +50,10 @@ export const ADMIN_ROLE = "ROLE_ADMIN";
  * Utilisateur courant s'il est administrateur. Lève `AUTH_UNAUTHENTICATED`
  * sans session et `AUTH_FORBIDDEN` sans `ROLE_ADMIN` : le runner d'actions et
  * les pages les reçoivent comme n'importe quelle `AppError`.
+ *
+ * Les rôles viennent de la base, pas d'un JWT figé : le callback `jwt` de
+ * `@/lib/auth` relit le compte à chaque `auth()` et ferme la session d'un
+ * compte supprimé ou dont le mot de passe a changé (ADR 0032).
  */
 export async function requireAdmin(): Promise<UserData> {
   const user = await getCurrentUser();

@@ -9,12 +9,27 @@
       "title": "Loading error",
       "libraries": "Unable to load libraries. Check your connection or try again later.",
       "favorites": "Unable to load favorites."
+    },
+    "closeNavigation": "Close navigation",
+    "offline": "Offline",
+    "installPwa": {
+      "title": "Install StripStream",
+      "description": "Install StripStream for quick access and a better experience",
+      "descriptionIos": "Add StripStream to your home screen for a better experience",
+      "iosTap": "Tap",
+      "iosShare": "Share",
+      "iosThen": "then",
+      "iosAddToHome": "Add to Home Screen",
+      "install": "Install the app",
+      "dismiss": "Close"
     }
   },
   "login": {
     "eyebrow": "Library access",
     "title": "Welcome to StripStream",
     "subtitle": "Sign in or create an account to get started",
+    "subtitleSignInOnly": "Sign in to get started",
+    "registrationClosed": "Sign-ups are closed on this instance. Ask the administrator for an account.",
     "tabs": {
       "login": "Sign in",
       "register": "Sign up"
@@ -136,7 +151,8 @@
     "favorites": {
       "title": "Favorites",
       "empty": "No favorites",
-      "loading": "Loading..."
+      "loading": "Loading...",
+      "unavailable": "Favorites unavailable"
     },
     "libraries": {
       "title": "Libraries",
@@ -186,6 +202,9 @@
         "label": "Image URL",
         "description": "Enter an image URL (HTTPS recommended)",
         "save": "Save"
+      },
+      "libraries": {
+        "label": "Libraries"
       }
     },
     "advanced": {
@@ -237,8 +256,8 @@
         "description": "Order of series display in libraries."
       },
       "showMissing": {
-        "label": "Show missing books",
-        "description": "Show missing books in series."
+        "label": "Show complete series",
+        "description": "When off, libraries open with the “Missing” filter: only series with missing volumes."
       },
       "hideMissing": {
         "label": "Hide missing books",
@@ -445,7 +464,8 @@
       "description": "Your in-progress series are hidden. Turn off anonymous mode to resume reading.",
       "action": "Turn off anonymous mode",
       "error": "Could not turn off anonymous mode"
-    }
+    },
+    "favoritesUnavailable": "Favorites could not be loaded: stars and the “Favorites” filter may be incomplete."
   },
   "seriesMutations": {
     "favorite": {
@@ -558,8 +578,6 @@
       "showMore": "Show more",
       "showLess": "Show less",
       "missing": "{{count}} missing",
-      "toggleSidebar": "Toggle sidebar",
-      "toggleTheme": "Toggle theme",
       "seriesStatus": {
         "ongoing": "Ongoing",
         "ended": "Completed",
@@ -572,7 +590,9 @@
         "deleted": "Rating removed",
         "error": "Could not save rating",
         "clear": "Remove my rating",
-        "empty": "Not rated"
+        "empty": "Not rated",
+        "clearLabel": "Remove rating",
+        "valueText": "{{value}} out of {{max}}"
       }
     }
   },
@@ -707,6 +727,7 @@
     "AUTH_FETCH_ERROR": "Unable to reach the server",
     "AUTH_FORBIDDEN": "Access denied",
     "AUTH_RATE_LIMITED": "Too many attempts. Please try again later.",
+    "AUTH_REGISTRATION_DISABLED": "Sign-ups are closed on this instance. Ask the administrator for an account.",
     "ADMIN_FETCH_USERS_ERROR": "Error fetching users",
     "ADMIN_UPDATE_USER_ERROR": "Error updating user",
     "ADMIN_DELETE_USER_ERROR": "Error deleting user",
@@ -715,6 +736,10 @@
     "ADMIN_RESET_PASSWORD_ERROR": "Error resetting password",
     "ADMIN_CANNOT_RESET_OWN_PASSWORD": "You cannot reset your own password here",
     "ADMIN_INVALID_ROLES": "Pick at least one valid role",
+    "ADMIN_CANNOT_REMOVE_OWN_ADMIN": "You cannot remove your own administrator role",
+    "ADMIN_LAST_ADMIN": "The last administrator cannot be demoted",
+    "REFRESH_INVALID_TARGET": "This page cannot be refreshed",
+    "REFRESH_ERROR": "Error while refreshing",
     "KOMGA_MISSING_CONFIG": "Komga configuration missing",
     "KOMGA_MISSING_CREDENTIALS": "Komga credentials missing",
     "KOMGA_CONNECTION_ERROR": "Error connecting to Komga server",
@@ -772,6 +797,7 @@
     "UI_TABS_CONTENT_ERROR": "Error loading tabs content",
     "IMAGE_FETCH_ERROR": "Error fetching image",
     "HOME_FETCH_ERROR": "Error fetching home page",
+    "HOME_INVALID_OFFSET": "Unable to load more items for this row",
     "MIDDLEWARE_UNAUTHORIZED": "Unauthorized",
     "MIDDLEWARE_INVALID_TOKEN": "Invalid authentication token",
     "MIDDLEWARE_INVALID_SESSION": "Invalid session",
@@ -888,6 +914,14 @@
     "carousel": {
       "oneByOne": "Show one item at a time",
       "rail": "Show as a carousel"
+    },
+    "pagination": {
+      "label": "Pagination",
+      "previous": "Previous page",
+      "previousShort": "Previous",
+      "next": "Next page",
+      "nextShort": "Next",
+      "page": "Page {{page}}"
     }
   },
   "common": {
@@ -944,15 +978,15 @@
       "totalUsersDescription": "Registered accounts",
       "admins": "Administrators",
       "adminsDescription": "With admin privileges",
-      "komga": "Komga config",
-      "komgaDescription": "Configured users",
+      "connections": "Connections",
+      "connectionsDescription": "Users with at least one connection",
       "preferences": "Preferences",
       "preferencesDescription": "Customized preferences"
     },
     "table": {
       "email": "Email",
       "roles": "Roles",
-      "komga": "Komga config",
+      "connections": "Connection",
       "preferences": "Preferences",
       "favorites": "Favorites",
       "createdAt": "Created",
@@ -973,7 +1007,7 @@
   },
   "account": {
     "changePassword": {
-      "success": "Your password has been changed",
+      "success": "Password changed. All your sessions have been signed out: sign in again with the new password.",
       "title": "Change password",
       "description": "Use a strong password (at least 8 characters, one uppercase letter and one digit)",
       "current": "Current password",

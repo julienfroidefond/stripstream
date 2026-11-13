@@ -3,6 +3,8 @@
 import { useRef, useState } from "react";
 import { burst } from "@/lib/celebrate";
 import { gsap, prefersReducedMotion } from "@/lib/gsap";
+import { useTranslate } from "@/hooks/useTranslate";
+import { nextRatingForKey } from "./rating-keys";
 
 interface RatingStarsProps {
   /** Rating on the 1-10 half-star scale, or null when unrated. */
@@ -66,6 +68,7 @@ export function RatingStars({
   onClear,
   size = "md",
 }: RatingStarsProps) {
+  const { t } = useTranslate();
   const stars = max / 2;
   const px = SIZE_PX[size] ?? 17;
   const [hovered, setHovered] = useState<number | null>(null);
@@ -106,23 +109,50 @@ export function RatingStars({
     gsap.delayedCall(lit.length * 0.05, () => burst(chosen, { count: 8, distance: 22 }));
   }
 
+  /**
+   * Le clavier prévisualise la note comme le survol (la note confirmée par le
+   * serveur n'arrive qu'après l'action) et la propose aussitôt, comme un clic.
+   */
+  function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    if (readOnly || !onChange) return;
+    const next = nextRatingForKey(e.key, display || null, max);
+    if (next === null) return;
+    e.preventDefault();
+    if (next === display) return;
+    setHovered(next);
+    onChange(next);
+  }
+
   const isActive = hovered !== null ? true : !!value;
+  const valueText = display
+    ? t("series.header.rating.valueText", { value: display / 2, max: stars })
+    : t("series.header.rating.empty");
 
   return (
     <div className="flex items-center gap-1">
       <div
         ref={starsRef}
         className={[
-          "flex gap-0.5 transition-colors",
+          "flex gap-0.5 rounded-sm transition-colors",
           isActive ? "text-primary" : "text-muted-foreground/60",
-          !readOnly ? "cursor-pointer" : "",
+          !readOnly
+            ? "cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            : "",
         ].join(" ")}
         onMouseLeave={() => !readOnly && setHovered(null)}
-        role={readOnly ? "img" : "slider"}
-        aria-label={value ? `${value / 2} sur ${stars}` : "Non noté"}
-        aria-valuenow={value ?? 0}
-        aria-valuemin={0}
-        aria-valuemax={max}
+        onBlur={() => !readOnly && setHovered(null)}
+        onKeyDown={readOnly ? undefined : handleKeyDown}
+        {...(readOnly
+          ? { role: "img", "aria-label": valueText }
+          : {
+              role: "slider",
+              tabIndex: 0,
+              "aria-label": t("series.header.rating.label"),
+              "aria-valuetext": valueText,
+              "aria-valuenow": display,
+              "aria-valuemin": 0,
+              "aria-valuemax": max,
+            })}
       >
         {Array.from({ length: stars }, (_, i) => i + 1).map((idx) => (
           <span
@@ -140,9 +170,9 @@ export function RatingStars({
           onClick={onClear}
           data-testid="series-rating-clear"
           className="ml-0.5 text-muted-foreground hover:text-foreground transition-colors"
-          title="Supprimer ma note"
+          title={t("series.header.rating.clear")}
           type="button"
-          aria-label="Supprimer la note"
+          aria-label={t("series.header.rating.clearLabel")}
         >
           <svg
             width={11}

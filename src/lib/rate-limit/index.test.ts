@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { checkRateLimit, createMemoryRateLimitStore, createRateLimiter } from "./index";
+import {
+  checkRateLimit,
+  createMemoryRateLimitStore,
+  createRateLimiter,
+  peekRateLimit,
+} from "./index";
 
 // Le limiter partagé survit à la durée du module : chaque test prend ses clés.
 let keyCounter = 0;
@@ -107,5 +112,38 @@ describe("checkRateLimit", () => {
 
     expect((await checkRateLimit(key, options)).allowed).toBe(true);
     expect((await checkRateLimit(key, options)).allowed).toBe(false);
+  });
+});
+
+describe("peekRateLimit", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("reports the next decision without consuming the budget", async () => {
+    const options = { limit: 2, windowMs: 1000 };
+    const key = nextKey();
+
+    expect(await peekRateLimit(key, options)).toMatchObject({ allowed: true, remaining: 2 });
+    expect(await peekRateLimit(key, options)).toMatchObject({ allowed: true, remaining: 2 });
+
+    await checkRateLimit(key, options);
+    expect(await peekRateLimit(key, options)).toMatchObject({ allowed: true, remaining: 1 });
+
+    await checkRateLimit(key, options);
+    expect(await peekRateLimit(key, options)).toMatchObject({ allowed: false, remaining: 0 });
+  });
+
+  it("reopens once the window has elapsed", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
+    const options = { limit: 1, windowMs: 1000 };
+    const key = nextKey();
+
+    await checkRateLimit(key, options);
+    expect((await peekRateLimit(key, options)).allowed).toBe(false);
+
+    vi.setSystemTime(new Date("2026-01-01T00:00:01.000Z"));
+    expect((await peekRateLimit(key, options)).allowed).toBe(true);
   });
 });

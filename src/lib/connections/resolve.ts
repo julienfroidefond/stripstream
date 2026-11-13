@@ -6,9 +6,9 @@ import type { ConnectionDraft, ConnectionOf, ResolvedConnection } from "./types"
 
 /**
  * Règle de fallback unique : la config demandée si elle appartient au user,
- * sinon la première config de ce provider, puis la connexion d'environnement
- * que la définition déclare (Stripstream : `STRIPSTREAM_URL`/`STRIPSTREAM_TOKEN`,
- * Komga : aucune).
+ * sinon la première config de ce provider appartenant au même user, sinon
+ * `null`. Il n'y a pas de connexion d'environnement (ADR 0032) : un user sans
+ * config n'emprunte jamais des identifiants qu'il n'a pas saisis.
  */
 async function resolveForProvider<P extends ProviderType>(
   provider: P,
@@ -20,7 +20,7 @@ async function resolveForProvider<P extends ProviderType>(
     (preferredId !== null ? await definition.store.findOwned(userId, preferredId) : null) ??
     (await definition.store.findFirst(userId));
 
-  return row ? definition.toConnection(row) : definition.environmentConnection();
+  return row ? definition.toConnection(row) : null;
 }
 
 /** Connexion sélectionnée par le navigateur, avec la même règle de fallback. */
@@ -46,7 +46,7 @@ export async function resolveConnectionForProvider<P extends ProviderType>(
 }
 
 /**
- * Connexion enregistrée précise, sans fallback ni variables d'environnement.
+ * Connexion enregistrée précise, sans fallback.
  * Sert aux actions « tester cette config » : on ne veut pas tester une autre
  * connexion à la place de celle demandée.
  */

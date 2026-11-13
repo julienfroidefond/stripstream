@@ -20,6 +20,18 @@ const securityHeaders = [
     key: "X-DNS-Prefetch-Control",
     value: "on",
   },
+  {
+    // Les navigateurs ignorent l'en-tête servi en HTTP clair (dev, LAN) : il
+    // ne s'applique qu'une fois l'app servie en HTTPS derrière le proxy.
+    key: "Strict-Transport-Security",
+    value: "max-age=63072000; includeSubDomains",
+  },
+  {
+    // CSP volontairement prudente : seules des directives qui ne touchent ni
+    // aux scripts ni aux styles de Next (pas de `script-src` strict sans nonce).
+    key: "Content-Security-Policy",
+    value: "frame-ancestors 'none'; object-src 'none'; base-uri 'self'",
+  },
 ];
 
 const nextConfig = {

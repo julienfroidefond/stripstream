@@ -102,6 +102,11 @@ export class ReadProgressSession {
   /** Records a page reached by the reader and schedules its write. */
   track(page: number): void {
     if (this.anonymous) return;
+    // The book is already recorded as finished on this page: a second
+    // "completed" write (e.g. "next" on the final spread) would be redundant.
+    if (this.cursor === page && this.pending === null && this.isImmediateCompletion(page)) {
+      return;
+    }
 
     this.cursor = page;
     this.lastFlushed = null;

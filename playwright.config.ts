@@ -109,6 +109,9 @@ export default defineConfig({
             NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET ?? 'stripstream-e2e-local-secret',
             NEXTAUTH_URL: baseURL,
             PORT: e2ePort,
+            // L'inscription est fermée par défaut (ADR 0032) ; la suite couvre
+            // le formulaire d'inscription et son rate-limit, donc l'ouvre.
+            REGISTRATION_ENABLED: 'true',
             // DB e2e dédiée si fournie, sinon DB par défaut
             ...(e2eDbUrl ? { DATABASE_URL: e2eDbUrl } : {}),
           },

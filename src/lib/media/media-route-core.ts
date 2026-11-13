@@ -73,10 +73,15 @@ export function mediaRouteError(
   };
 }
 
-/** Valide un numéro de page de route en conservant le contrat historique. */
+/**
+ * Valide un numéro de page de route : contrat 1-based (`{page}` des gabarits
+ * média), chiffres seulement. `0` ne désigne aucune page (Komga en ferait
+ * `-1`) et `"3abc"` n'est pas `3` : les deux répondent 400.
+ */
 export function parseMediaPageNumber(value: string): number | null {
-  const pageNumber = Number.parseInt(value, 10);
-  return Number.isNaN(pageNumber) || pageNumber < 0 ? null : pageNumber;
+  if (!/^\d+$/.test(value)) return null;
+  const pageNumber = Number(value);
+  return Number.isSafeInteger(pageNumber) && pageNumber >= 1 ? pageNumber : null;
 }
 
 const INVALID_PAGE_ERROR: Record<"book-page" | "book-page-thumbnail", ErrorCode> = {

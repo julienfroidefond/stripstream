@@ -1,9 +1,11 @@
 "use client";
 
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
+import { useTranslate } from "@/hooks/useTranslate";
 import { WifiOff } from "lucide-react";
 
 export function NetworkStatus() {
+  const { t } = useTranslate();
   const isOnline = useNetworkStatus();
 
   if (isOnline) return null;
@@ -11,7 +13,7 @@ export function NetworkStatus() {
   return (
     <div className="fixed right-4 top-[calc(4.5rem+env(safe-area-inset-top,0px))] z-110 flex items-center gap-2 rounded-full border border-destructive/40 bg-destructive px-3 py-1.5 text-xs font-semibold text-destructive-foreground shadow-lg motion-safe:animate-pop-in">{/* taste-skill-ignore: indicateur flottant (overlay) */}
       <WifiOff className="h-4 w-4" />
-      <span>Hors ligne</span>
+      <span>{t("layout.offline")}</span>
     </div>
   );
 }

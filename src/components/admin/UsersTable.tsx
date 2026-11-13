@@ -18,6 +18,7 @@ import { DeleteUserDialog } from "./DeleteUserDialog";
 import { ResetPasswordDialog } from "./ResetPasswordDialog";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useTranslate } from "@/hooks/useTranslate";
+import { formatLocaleDate } from "@/lib/utils";
 
 interface UsersTableProps {
   users: AdminUserData[];
@@ -38,7 +39,7 @@ export function UsersTable({ users, onUserUpdated }: UsersTableProps) {
             <TableRow>
               <TableHead>{t("admin.table.email")}</TableHead>
               <TableHead>{t("admin.table.roles")}</TableHead>
-              <TableHead>{t("admin.table.komga")}</TableHead>
+              <TableHead>{t("admin.table.connections")}</TableHead>
               <TableHead>{t("admin.table.preferences")}</TableHead>
               <TableHead>{t("admin.table.favorites")}</TableHead>
               <TableHead>{t("admin.table.createdAt")}</TableHead>
@@ -66,7 +67,7 @@ export function UsersTable({ users, onUserUpdated }: UsersTableProps) {
                     </div>
                   </TableCell>
                   <TableCell>
-                    {user.hasKomgaConfig ? (
+                    {user.hasConnection ? (
                       <StatusBadge status="success" icon={Check}>
                         {t("admin.table.configured")}
                       </StatusBadge>
@@ -88,7 +89,7 @@ export function UsersTable({ users, onUserUpdated }: UsersTableProps) {
                     )}
                   </TableCell>
                   <TableCell>{user._count?.favorites || 0}</TableCell>
-                  <TableCell>{new Date(user.createdAt).toLocaleDateString(currentLanguage)}</TableCell>
+                  <TableCell>{formatLocaleDate(user.createdAt, currentLanguage)}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Button

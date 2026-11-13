@@ -61,8 +61,6 @@ export interface ProviderDefinition<P extends ProviderType = ProviderType> {
   readonly store: ConnectionStore<P>;
   /** Ligne enregistrée → connexion résolue (déchiffre le secret). */
   toConnection(row: StoredConnectionRow): ConnectionOf<P>;
-  /** Connexion de dernier recours issue de l'environnement, ou `null`. */
-  environmentConnection(): ConnectionOf<P> | null;
   /** Credentials saisis mais pas enregistrés → connexion ad hoc à tester. */
   draftConnection(draft: ConnectionDraftOf<P>): ConnectionOf<P>;
   /**
@@ -147,9 +145,6 @@ const komgaDefinition: ProviderDefinition<"komga"> = {
       authHeader: decryptSecret(row.secret),
     };
   },
-  environmentConnection() {
-    return null;
-  },
   draftConnection(draft) {
     return {
       provider: "komga",
@@ -229,13 +224,6 @@ const stripstreamDefinition: ProviderDefinition<"stripstream"> = {
       token: decryptSecret(row.secret),
       source: "db",
     };
-  },
-  environmentConnection() {
-    const url = process.env.STRIPSTREAM_URL?.trim();
-    const token = process.env.STRIPSTREAM_TOKEN?.trim();
-    return url && token
-      ? { provider: "stripstream", configId: null, url, token, source: "env" }
-      : null;
   },
   draftConnection(draft) {
     return {

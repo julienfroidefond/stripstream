@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useMemo, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { AppError } from "@/utils/errors";
 import { ERROR_CODES } from "@/constants/errorCodes";
@@ -13,15 +14,25 @@ interface AnonymousContextType {
 const AnonymousContext = createContext<AnonymousContextType | undefined>(undefined);
 
 export function AnonymousProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const { preferences, updatePreferences } = usePreferences();
   const isAnonymous = preferences.anonymousMode;
 
+  /**
+   * Seul point de bascule du mode anonyme. L'action ne revalide pas le cache
+   * pour ce changement (elle réinjecterait pendant la transition les
+   * préférences d'avant et ferait clignoter le bouton) ; le rendu serveur
+   * dépend pourtant du mode (hero, « Séries en cours », `/in-progress`). On
+   * rafraîchit donc la route ici, une fois l'écriture confirmée : le serveur
+   * relit alors la nouvelle valeur et rien ne clignote.
+   */
   const toggleAnonymous = useCallback(async () => {
     const saved = await updatePreferences({ anonymousMode: !preferences.anonymousMode });
     if (!saved) {
       throw new AppError(ERROR_CODES.PREFERENCES.UPDATE_ERROR);
     }
-  }, [preferences.anonymousMode, updatePreferences]);
+    router.refresh();
+  }, [preferences.anonymousMode, router, updatePreferences]);
 
   const contextValue = useMemo(
     () => ({ isAnonymous, toggleAnonymous }),

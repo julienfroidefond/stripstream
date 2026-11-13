@@ -77,6 +77,32 @@ describe("loadHomeFeed", () => {
   });
 });
 
+describe("home offset validation", () => {
+  it.each([1e9, Number.NaN, -1, 1.5, 1001, Number.POSITIVE_INFINITY])(
+    "rejects the offset %s without querying the provider",
+    async (offset) => {
+      vi.mocked(getProvider).mockResolvedValue(provider);
+
+      const [feed, hero] = await Promise.all([
+        loadHomeFeed("latest-series", offset),
+        loadContinueReading(offset),
+      ]);
+
+      for (const result of [feed, hero]) {
+        expect(result).toMatchObject({ success: false, code: ERROR_CODES.HOME.INVALID_OFFSET });
+      }
+      expect(loadNextHomeFeedPage).not.toHaveBeenCalled();
+    }
+  );
+
+  it("accepts the documented ceiling", async () => {
+    vi.mocked(getProvider).mockResolvedValue(provider);
+    vi.mocked(loadNextHomeFeedPage).mockResolvedValue({ items: [], hasMore: false });
+
+    await expect(loadHomeFeed("latest-series", 1000)).resolves.toMatchObject({ success: true });
+  });
+});
+
 describe("loadContinueReading", () => {
   it("routes the hero through the same policy", async () => {
     vi.mocked(getProvider).mockResolvedValue(provider);

@@ -314,6 +314,10 @@ class Machine {
     }
     this.effects.push({ type: "dragEnd" });
     this.resetSequence();
+    // Les écouteurs se débranchent : le `pointerup` d'un doigt resté sur un
+    // contrôle ne nous parviendra plus. L'oublier, sinon il bloquerait tout
+    // geste suivant (`ignored.length > 0`).
+    this.s.ignored = [];
     this.detach();
   }
 

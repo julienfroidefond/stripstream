@@ -41,6 +41,27 @@ export interface ReaderShortcutContext {
   isFullscreenAvailable?: boolean;
 }
 
+/**
+ * Calques qui possèdent le clavier tant qu'ils ont le focus : menus Radix
+ * (fond du lecteur), listes, popovers et dialogues. `Échap` doit les fermer et
+ * les lettres ou `Home`/`End` y naviguer, sans piloter le lecteur dessous.
+ */
+const OVERLAY_SELECTOR = [
+  '[role="menu"]',
+  '[role="menubar"]',
+  '[role="listbox"]',
+  '[role="dialog"]',
+  '[role="alertdialog"]',
+  "[data-radix-popper-content-wrapper]",
+].join(",");
+
+/** Vrai quand la touche part d'un menu, d'une liste ou d'un dialogue ouvert. */
+export function isOverlayTarget(target: EventTarget | null): boolean {
+  const element = target as Element | null;
+  if (!element || typeof element.closest !== "function") return false;
+  return element.closest(OVERLAY_SELECTOR) !== null;
+}
+
 export function resolveReaderShortcut(
   event: ReaderKeyEvent,
   context: ReaderShortcutContext = {}
@@ -50,6 +71,9 @@ export function resolveReaderShortcut(
 
   // Ne jamais piloter le lecteur pendant la saisie d'un numéro de page.
   if (isEditableTarget(event.target)) return null;
+
+  // Un menu ou un dialogue focalisé garde ses touches (Échap le ferme).
+  if (isOverlayTarget(event.target)) return null;
 
   const side = sideForArrowKey(event.key);
   if (side) {

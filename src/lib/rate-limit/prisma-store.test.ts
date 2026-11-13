@@ -98,4 +98,17 @@ describe("createPrismaRateLimitStore", () => {
 
     expect(rows.map((row) => row.key)).toEqual(["fresh"]);
   });
+
+  it("peeks at the open window without consuming it", async () => {
+    const store = createPrismaRateLimitStore(prisma, { pruneIntervalMs: 0 });
+
+    expect(await store.peek("peeked", 1000, WINDOW_MS)).toBeNull();
+    await store.hit("peeked", 1000, WINDOW_MS);
+    await store.hit("peeked", 1100, WINDOW_MS);
+
+    expect(await store.peek("peeked", 1200, WINDOW_MS)).toEqual({ count: 2, windowStart: 1000 });
+    expect(await store.peek("peeked", 1300, WINDOW_MS)).toEqual({ count: 2, windowStart: 1000 });
+    // Fenêtre échue : le prochain hit en rouvrirait une, le peek n'en voit aucune.
+    expect(await store.peek("peeked", 2000, WINDOW_MS)).toBeNull();
+  });
 });

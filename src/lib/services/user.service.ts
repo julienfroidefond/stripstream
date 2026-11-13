@@ -75,10 +75,11 @@ export class UserService {
       // Hasher le nouveau mot de passe
       const hashedPassword = await bcrypt.hash(newPassword, this.SALT_ROUNDS);
 
-      // Mettre à jour le mot de passe
+      // Mettre à jour le mot de passe ; la nouvelle version de session ferme
+      // toutes les sessions ouvertes, y compris celle-ci (ADR 0032).
       await prisma.user.update({
         where: { id: userId },
-        data: { password: hashedPassword },
+        data: { password: hashedPassword, sessionVersion: { increment: 1 } },
       });
     } catch (error) {
       if (error instanceof AppError) {
@@ -90,22 +91,21 @@ export class UserService {
 
   static async getUserStats(userId: number) {
     try {
-      const [favoritesCount, preferences, komgaConfig] = await Promise.all([
+      const [favoritesCount, preferences, komgaConfigs, stripstreamConfigs] = await Promise.all([
         prisma.favorite.count({
           where: { userId },
         }),
         prisma.preferences.findUnique({
           where: { userId },
         }),
-        prisma.komgaConfig.findFirst({
-          where: { userId },
-        }),
+        prisma.komgaConfig.count({ where: { userId } }),
+        prisma.stripstreamConfig.count({ where: { userId } }),
       ]);
 
       return {
         favoritesCount,
         hasPreferences: !!preferences,
-        hasKomgaConfig: !!komgaConfig,
+        hasConnection: komgaConfigs + stripstreamConfigs > 0,
       };
     } catch (error) {
       if (error instanceof AppError) {

@@ -1,5 +1,6 @@
 import logger from "@/lib/logger";
 import {
+  toPeekResult,
   toRateLimitResult,
   type RateLimitOptions,
   type RateLimitResult,
@@ -16,7 +17,7 @@ export type RateLimiter = (
 ) => Promise<RateLimitResult>;
 
 /** Applique la décision d'un store : une seule horloge pour le hit et le résultat. */
-export function createRateLimiter(store: RateLimitStore): RateLimiter {
+export function createRateLimiter(store: Pick<RateLimitStore, "hit">): RateLimiter {
   return async (key, options) => {
     const now = Date.now();
     const window = await store.hit(key, now, options.windowMs);
@@ -24,7 +25,18 @@ export function createRateLimiter(store: RateLimitStore): RateLimiter {
   };
 }
 
-const memoryLimiter = createRateLimiter(createMemoryRateLimitStore());
+/** Décision du prochain appel pour `key`, sans le consommer. */
+export function createRateLimitPeeker(store: Pick<RateLimitStore, "peek">): RateLimiter {
+  return async (key, options) => {
+    const now = Date.now();
+    const window = await store.peek(key, now, options.windowMs);
+    return toPeekResult(window, now, options);
+  };
+}
+
+const memoryStore = createMemoryRateLimitStore();
+const memoryLimiter = createRateLimiter(memoryStore);
+const memoryPeeker = createRateLimitPeeker(memoryStore);
 
 /** `memory` force le store local au process ; `NODE_ENV=test` l'impose aux tests. */
 function usesMemoryStore(): boolean {
@@ -34,24 +46,24 @@ function usesMemoryStore(): boolean {
   );
 }
 
-let durableLimiter: Promise<RateLimiter> | null = null;
+let durableStore: Promise<RateLimitStore> | null = null;
 
-async function loadDurableLimiter(): Promise<RateLimiter> {
+async function loadDurableStore(): Promise<RateLimitStore> {
   const [{ createPrismaRateLimitStore }, { default: prisma }] =
     await Promise.all([import("./prisma-store"), import("@/lib/prisma")]);
 
-  return createRateLimiter(createPrismaRateLimitStore(prisma));
+  return createPrismaRateLimitStore(prisma);
 }
 
-async function resolveLimiter(): Promise<RateLimiter> {
-  durableLimiter ??= loadDurableLimiter();
+async function resolveStore(): Promise<RateLimitStore> {
+  durableStore ??= loadDurableStore();
 
   try {
-    return await durableLimiter;
+    return await durableStore;
   } catch (error) {
     // Ne pas figer un chargement raté : la prochaine tentative recréera la
     // promesse, sinon chaque appel paierait un rejet mémorisé.
-    durableLimiter = null;
+    durableStore = null;
     throw error;
   }
 }
@@ -71,13 +83,35 @@ export async function checkRateLimit(
   if (usesMemoryStore()) return memoryLimiter(key, options);
 
   try {
-    const limiter = await resolveLimiter();
-    return await limiter(key, options);
+    return await createRateLimiter(await resolveStore())(key, options);
   } catch (error) {
     logger.warn(
       { err: error },
       "Rate-limit store unavailable, falling back to the in-memory limiter"
     );
     return memoryLimiter(key, options);
+  }
+}
+
+/**
+ * Indique si le prochain appel pour `key` serait autorisé, sans le compter.
+ * Pour un budget qui ne compte que certains appels (les échecs de mot de
+ * passe) : on vérifie avant de traiter, et `checkRateLimit` n'est appelé
+ * qu'après un échec. Même repli mémoire que `checkRateLimit`.
+ */
+export async function peekRateLimit(
+  key: string,
+  options: RateLimitOptions
+): Promise<RateLimitResult> {
+  if (usesMemoryStore()) return memoryPeeker(key, options);
+
+  try {
+    return await createRateLimitPeeker(await resolveStore())(key, options);
+  } catch (error) {
+    logger.warn(
+      { err: error },
+      "Rate-limit store unavailable, falling back to the in-memory limiter"
+    );
+    return memoryPeeker(key, options);
   }
 }
