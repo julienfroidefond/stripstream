@@ -9,8 +9,8 @@ import type { NormalizedSeriesRating } from "@/lib/providers/types";
 
 interface EndOfSeriesModalProps {
   show: boolean;
-  onClose: (currentPage: number) => void;
-  currentPage: number;
+  /** Leaves the reader for the book's series. */
+  onBackToSeries: () => void;
   /** Série notée à la fin de la lecture, si le provider la supporte. */
   seriesId?: string | null;
   seriesRating?: NormalizedSeriesRating | null;
@@ -18,8 +18,7 @@ interface EndOfSeriesModalProps {
 
 export function EndOfSeriesModal({
   show,
-  onClose,
-  currentPage,
+  onBackToSeries,
   seriesId,
   seriesRating,
 }: EndOfSeriesModalProps) {
@@ -87,7 +86,7 @@ export function EndOfSeriesModal({
           </div>
         )}
         <button
-          onClick={() => onClose(currentPage)}
+          onClick={onBackToSeries}
           className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
         >
           {t("reader.backToSeries")}

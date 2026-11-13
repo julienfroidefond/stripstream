@@ -15,7 +15,7 @@ import { resolveBookMediaUrl } from "@/lib/providers/book-media";
 import { lastVisiblePage } from "@/lib/reader/page-navigation";
 import type { ReaderBackground } from "@/types/preferences";
 
-export function useReaderState({ book, pages, onClose, nextBook }: BookReaderProps) {
+export function useReaderState({ book, pages, onClose, onBackToSeries, nextBook }: BookReaderProps) {
   const { preferences, updatePreferences } = usePreferences();
   const [showControls, setShowControls] = useState(false);
   const [showThumbnails, setShowThumbnails] = useState(false);
@@ -109,6 +109,15 @@ export function useReaderState({ book, pages, onClose, nextBook }: BookReaderPro
     },
     [book.id, cancelAllPrefetches, onClose]
   );
+
+  const handleBackToSeries = useCallback(() => {
+    if (!onBackToSeries) {
+      handleCloseReader(currentPage);
+      return;
+    }
+    cancelAllPrefetches();
+    onBackToSeries();
+  }, [cancelAllPrefetches, currentPage, handleCloseReader, onBackToSeries]);
 
   // Navigation clavier
   useEffect(() => {
@@ -221,6 +230,7 @@ export function useReaderState({ book, pages, onClose, nextBook }: BookReaderPro
     onNextPage: handleNextPage,
     onPageChange: navigateToPage,
     onClose: handleCloseReader,
+    onBackToSeries: handleBackToSeries,
     onToggleControls,
     onToggleThumbnails,
     onToggleInfo,

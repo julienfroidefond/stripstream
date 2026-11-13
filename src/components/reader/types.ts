@@ -14,6 +14,8 @@ export interface BookReaderProps {
   pages: number[];
   readerInfo?: ReaderInfo | null;
   onClose?: (currentPage: number) => void;
+  /** End-of-book "back to series": leaves the reader for the book's series. */
+  onBackToSeries?: () => void;
   onRefresh?: () => Promise<void>;
   nextBook?: NormalizedBook | null;
   seriesRating?: NormalizedSeriesRating | null;
