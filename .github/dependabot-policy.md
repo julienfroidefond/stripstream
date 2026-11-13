@@ -46,6 +46,23 @@ runs code from the pull request.
 
 ## Known exceptions
 
+### Overrides stay in `package.json` (`pnpm.overrides`)
+
+The project pins `packageManager: pnpm@9.0.0` (also used by CI through `pnpm/action-setup` and by
+the Dockerfile). pnpm 9 reads overrides from `package.json` only: moving them to
+`pnpm-workspace.yaml` makes `pnpm install --frozen-lockfile` fail with
+`ERR_PNPM_LOCKFILE_CONFIG_MISMATCH` (and pnpm 9 requires a `packages:` field there). The
+`"pnpm" field … no longer read` warning comes from a newer global pnpm that delegates to 9.0.0 and
+is harmless. Move the overrides together with a pnpm major upgrade (packageManager, Dockerfile and
+`onlyBuiltDependencies` for the native modules), not before.
+
+### `minimatch` 10 consumers run on 11 (dev-only)
+
+`eslint`, `@eslint/config-array` and `@typescript-eslint/typescript-estree` request `minimatch@^10`
+and import the named `minimatch` export, which 11 keeps. The `minimatch@10` override is
+`>=11.0.1 <12`, the patched range of the globparts DoS advisory (Dependabot alert #12); `pnpm lint`
+passes with it.
+
 ### `minimatch` 3.1.5 (dev-only, alert dismissed)
 
 `eslint-config-next` still pulls `eslint-plugin-import`, `eslint-plugin-jsx-a11y` and
