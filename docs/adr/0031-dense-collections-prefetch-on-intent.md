@@ -18,6 +18,6 @@ Collections now link through `IntentLink` (`src/components/common/IntentLink.tsx
 ## Consequences
 
 - `src/components/common/IntentLink.architecture.test.ts` fails if a dense surface (`cover-card`, `book-cover-scene`, `RecommendationsRow`, `InProgressCard`, `BookCard`, `ReadingListCard`, `GlobalSearch`, the ratings grid) imports `next/link` again, or if the wall tile loses `prefetch={false}`.
-- `tests/integrations/prefetch-budget.spec.ts` (production build) asserts zero `/series/…?_rsc=` requests after rendering the wall and a library grid, and a single route prefetch for the card the user hovers.
+- `tests/integrations/prefetch-budget.spec.ts` (production build) asserts zero `/series/…?_rsc=` requests after rendering the wall and a library grid, zero while flinging the wall around (12 fast drags + wheel; `main` fired 19 for 6 newly revealed covers), and a single route prefetch for the card the user hovers.
 - A new collection component links through `IntentLink`; the default `<Link>` is for links that appear a bounded number of times per page.
 - The first navigation from a card the user clicks without hovering (touch, or a fast click) starts its RSC request on press instead of ahead of time; the route's `loading.tsx` covers that wait.

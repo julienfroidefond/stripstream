@@ -41,6 +41,31 @@ test.describe('Prefetch budget on dense collections', () => {
     expect(prefetches).toEqual([]);
   });
 
+  test('flinging the wall around never prefetches the tiles it reveals', async ({ page }) => {
+    await selectConnection(page, 'Stub A');
+    const prefetches = recordSeriesPrefetches(page);
+
+    await page.goto('/wall');
+    await expect(page.getByTestId('wall-count')).toHaveCount(1, { timeout: 15_000 });
+    const stage = await page.locator('.wall-stage').first().boundingBox();
+    expect(stage).not.toBeNull();
+    const cx = stage!.x + stage!.width / 2;
+    const cy = stage!.y + stage!.height / 2;
+
+    // Glissés rapides dans tous les sens + molette : chaque geste fait entrer
+    // de nouvelles tuiles dans le viewport (sur `main` : 19 préchargements).
+    for (let i = 0; i < 12; i += 1) {
+      await page.mouse.move(cx, cy);
+      await page.mouse.down();
+      await page.mouse.move(cx + (i % 2 ? 600 : -600), cy + (i % 3 ? 300 : -300), { steps: 4 });
+      await page.mouse.up();
+      await page.mouse.wheel(i % 2 ? 900 : -900, 600);
+    }
+    await page.waitForTimeout(2_000);
+
+    expect(prefetches).toEqual([]);
+  });
+
   test('a library grid prefetches only the card the user rests on', async ({ page }) => {
     await selectConnection(page, 'Stub A');
     const prefetches = recordSeriesPrefetches(page);
