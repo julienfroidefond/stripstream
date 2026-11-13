@@ -48,7 +48,7 @@ describe("mediaPolicy", () => {
   it("revalidates the Komga covers that depend on the thumbnail preference", () => {
     for (const kind of ["book-cover", "series-cover"] as const) {
       const policy = mediaPolicy("komga", kind);
-      expect(policy.response.cacheControl).toBe("private, no-cache");
+      expect(policy.response.cacheControl).toBe("private, max-age=3600");
       expect(policy.response.copyHeaders).toContain("etag");
       expect(policy.errors).toEqual(MEDIA_POLICIES[kind].errors);
     }
@@ -160,7 +160,7 @@ describe("serveMedia", () => {
     );
 
     expect(response.status).toBe(304);
-    expect(response.headers.get("cache-control")).toBe("private, no-cache");
+    expect(response.headers.get("cache-control")).toBe("private, max-age=3600");
     expect(response.headers.get("etag")).toBe('"cover-v1"');
   });
 

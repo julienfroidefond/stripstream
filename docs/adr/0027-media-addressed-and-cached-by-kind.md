@@ -7,13 +7,13 @@ date: 2026-11-13
 
 ADR 0003 made `MediaRef` provider-neutral, but the edges around it stayed provider-shaped. `MEDIA_POLICIES` had six ad hoc entries keyed by provider, so the same `book-page` ref was `public, max-age=2592000, immutable` from Komga and `public, max-age=86400` from Stripstream, and a failed Stripstream cover answered an empty `404` where a Komga cover answered JSON. Some fifteen `/api/komga/...` and `/api/stripstream/...` literals in the adapters and providers rebuilt the route shapes by hand, and ten route handlers re-parsed them with their own page validation. Three routes were dead (`komga/books/[bookId]/pages/[pageNumber]`, a clone of the image page route with its own one-year policy; `komga/images/series/[seriesId]/first-page`, identical to the series thumbnail route; `stripstream/search`, a clone of `provider/search`). Worse, the Komga transport read the user's `showThumbnails` preference to pick the thumbnail or the first page, and served the result `public, immutable` for 30 days at a URL that does not carry the choice: changing the setting had no visible effect for a month, and a shared cache could hand one user's choice — or one user's server's bytes — to another.
 
-`src/lib/media/media-url.ts` is now the single source of the route shape. `MEDIA_ROUTE_PATTERNS` maps each kind to its path under `/api/<provider>/` (the dynamic segments are the `src/app/api` folders), `SERVED_MEDIA_KINDS` lists what each provider serves, `mediaUrl(provider, ref)` and `bookPageUrlTemplate(provider, kind, bookId)` build every URL the adapters and providers emit, and `parseMediaRef(kind, params, url)` is the inverse the routes apply. A route file is one line, `createMediaRoute(provider, kind)`; `media-url.test.ts` fails when a served pair has no file at its pattern, when an undeclared media route exists, or when a URL does not round-trip to its ref. `MEDIA_POLICIES` holds one policy per kind, resolved by `mediaPolicy(provider, kind)`; every response is `private`, images share one JSON error shape, and the only remaining provider override is the Komga cover pair, which is `private, no-cache` because its bytes depend on the preference.
+`src/lib/media/media-url.ts` is now the single source of the route shape. `MEDIA_ROUTE_PATTERNS` maps each kind to its path under `/api/<provider>/` (the dynamic segments are the `src/app/api` folders), `SERVED_MEDIA_KINDS` lists what each provider serves, `mediaUrl(provider, ref)` and `bookPageUrlTemplate(provider, kind, bookId)` build every URL the adapters and providers emit, and `parseMediaRef(kind, params, url)` is the inverse the routes apply. A route file is one line, `createMediaRoute(provider, kind)`; `media-url.test.ts` fails when a served pair has no file at its pattern, when an undeclared media route exists, or when a URL does not round-trip to its ref. `MEDIA_POLICIES` holds one policy per kind, resolved by `mediaPolicy(provider, kind)`; every response is `private`, images share one JSON error shape, and the only remaining provider override is the Komga cover pair, which is `private, max-age=3600` (no `immutable`) because its bytes depend on the preference.
 
 | Kind | `Cache-Control` | Errors |
 | --- | --- | --- |
 | `book-file` | `private, no-store` | JSON, mapped status, provider HTTP error fallback |
 | `book-page`, `book-page-thumbnail` | `private, max-age=2592000, immutable` | JSON, `404` not found, else `500` |
-| `book-cover`, `series-cover` | same; Komga override `private, no-cache` | same |
+| `book-cover`, `series-cover` | same; Komga override `private, max-age=3600` | same |
 
 ## Considered options
 
@@ -33,3 +33,7 @@ ADR 0003 made `MediaRef` provider-neutral, but the edges around it stayed provid
 - `stripstream.client.ts` still wraps `ProviderTransport` for the Stripstream provider. Removing it touches about forty-five call sites in `stripstream.provider.ts`, which is being reworked in parallel, so it is left for a follow-up rather than folded into this change.
 
 Refs: ADR 0001, ADR 0003, ADR 0007, ADR 0015.
+
+## Amendment — Komga cover freshness
+
+The first version served Komga covers `private, no-cache`. That made every page reload revalidate each cover with Komga (a `304` still costs a request per image), which broke the home's "reload reuses the HTTP cache" E2E guarantee that holds on `main`. The override is now `private, max-age=3600`: a reload is served from the browser cache, the response stays per-user (`private`), and a `showThumbnails` toggle reaches already-seen covers within one hour instead of thirty days, after which the relayed ETag revalidates. Encoding the source in the URL remains the target if the hour of staleness matters.

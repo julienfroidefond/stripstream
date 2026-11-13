@@ -77,7 +77,7 @@ export const MEDIA_POLICIES = {
  */
 const PREFERENCE_DEPENDENT_COVER: MediaResponsePolicy = {
   ...IMMUTABLE_IMAGE,
-  cacheControl: "private, no-cache",
+  cacheControl: "private, max-age=3600",
 };
 
 const PROVIDER_OVERRIDES: Partial<

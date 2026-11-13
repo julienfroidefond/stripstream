@@ -30,6 +30,7 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   [ERROR_CODES.AUTH.INVALID_CREDENTIALS]: "Invalid credentials",
   [ERROR_CODES.AUTH.RATE_LIMITED]: "Too many attempts. Please try again later.",
   [ERROR_CODES.AUTH.PASSWORD_NOT_STRONG]: "Password is not strong enough",
+  [ERROR_CODES.AUTH.PASSWORD_TOO_SHORT]: "Password must be at least 8 characters",
   [ERROR_CODES.AUTH.PASSWORD_MISMATCH]: "Passwords do not match",
   [ERROR_CODES.AUTH.EMAIL_EXISTS]: "This email is already in use",
   [ERROR_CODES.AUTH.INVALID_USER_DATA]: "Invalid user data",

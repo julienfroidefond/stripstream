@@ -35,13 +35,13 @@ La politique de réponse est choisie par kind (`MEDIA_POLICIES`, `src/lib/media/
 | `book-file` | `books/[bookId]/file` | Komga, Stripstream | `private, no-store` | JSON, status mappé (`401`/`403`/`404`), repli `KOMGA_HTTP_ERROR` / `STRIPSTREAM_HTTP_ERROR` |
 | `book-page` | `images/books/[bookId]/pages/[pageNumber]` | Komga, Stripstream | `private, max-age=2592000, immutable` | JSON, `404` « Image not found », sinon `500` `IMAGE_FETCH_ERROR` |
 | `book-page-thumbnail` | `images/books/[bookId]/pages/[pageNumber]/thumbnail` | Komga | `private, max-age=2592000, immutable` | idem |
-| `book-cover` | `images/books/[bookId]/thumbnail` | Komga, Stripstream | Stripstream : `private, max-age=2592000, immutable` ; Komga : `private, no-cache` | idem |
-| `series-cover` | `images/series/[seriesId]/thumbnail` | Komga | `private, no-cache` | idem |
+| `book-cover` | `images/books/[bookId]/thumbnail` | Komga, Stripstream | Stripstream : `private, max-age=2592000, immutable` ; Komga : `private, max-age=3600` | idem |
+| `series-cover` | `images/series/[seriesId]/thumbnail` | Komga | `private, max-age=3600` | idem |
 
 - **Authentification** : session NextAuth requise ; le cœur (`media-route-core.ts`) renvoie `401` JSON avant tout appel au transport. Les transports résolvent la connexion active du provider.
 - **Pages** : `pageNumber` est 1-based côté client (`400` s'il n'est pas un entier positif ou nul) ; seul le transport Komga le convertit en 0-based. La query string d'une page est conservée dans la référence et transmise telle quelle au backend Stripstream (format, largeur…) ; elle fait partie de l'URL, donc de la clé de cache.
 - **Validateurs** : `If-None-Match` / `If-Modified-Since` sont relayés à l'amont, une réponse `304` est renvoyée sans corps ni `Content-Type` implicite. Les pages Komga et les couvertures Stripstream identiques en vol sont dédupliquées par connexion résolue et empreinte du validateur.
-- **Couvertures Komga** : le transport sert la miniature Komga ou la première page selon la préférence utilisateur `showThumbnails`, lue à chaque requête (premier livre de la série résolu via `ProviderTransport.request()` pour `series-cover`). Les octets d'une même URL dépendent donc de la préférence : la réponse est `private, no-cache` et se revalide par ETag (304 tant que la source ne change pas), au lieu d'être figée trente jours.
+- **Couvertures Komga** : le transport sert la miniature Komga ou la première page selon la préférence utilisateur `showThumbnails`, lue à chaque requête (premier livre de la série résolu via `ProviderTransport.request()` pour `series-cover`). Les octets d'une même URL dépendent donc de la préférence : la réponse est `private, max-age=3600` : un rechargement est servi par le cache du navigateur, un changement de préférence s'applique en une heure au plus (au lieu de trente jours), puis la réponse se revalide par ETag.
 - **Fichiers** : `Content-Type` et `Content-Disposition` amont recopiés ; `Content-Length` volontairement omis (Safari est strict sur un `Content-Length` posé au-dessus d'une réponse chunked).
 - **Toutes les réponses sont `private`** : la même URL est résolue contre la connexion désignée par le cookie de session, un cache partagé ne doit jamais la servir à un autre utilisateur.
 

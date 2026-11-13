@@ -61,7 +61,7 @@ export function ResetPasswordDialog({
     }
 
     if (newPassword.length < 8) {
-      showError(ERROR_CODES.AUTH.PASSWORD_NOT_STRONG);
+      showError(ERROR_CODES.AUTH.PASSWORD_TOO_SHORT);
       return;
     }
 

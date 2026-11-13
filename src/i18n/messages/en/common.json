@@ -695,6 +695,7 @@
     "AUTH_UNAUTHENTICATED": "Unauthenticated",
     "AUTH_INVALID_CREDENTIALS": "Invalid credentials",
     "AUTH_PASSWORD_NOT_STRONG": "Password is not strong enough",
+    "AUTH_PASSWORD_TOO_SHORT": "Password must be at least 8 characters",
     "AUTH_PASSWORD_MISMATCH": "Passwords do not match",
     "AUTH_EMAIL_EXISTS": "Email already exists",
     "AUTH_INVALID_USER_DATA": "Invalid user data",

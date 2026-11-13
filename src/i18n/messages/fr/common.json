@@ -698,6 +698,7 @@
     "AUTH_UNAUTHENTICATED": "Non authentifié",
     "AUTH_INVALID_CREDENTIALS": "Identifiants invalides",
     "AUTH_PASSWORD_NOT_STRONG": "Le mot de passe n'est pas assez fort",
+    "AUTH_PASSWORD_TOO_SHORT": "Le mot de passe doit contenir au moins 8 caractères",
     "AUTH_PASSWORD_MISMATCH": "Les mots de passe ne correspondent pas",
     "AUTH_EMAIL_EXISTS": "Cette adresse email existe déjà",
     "AUTH_INVALID_USER_DATA": "Données utilisateur invalides",
