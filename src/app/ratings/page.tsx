@@ -50,8 +50,8 @@ export default async function RatingsPage({ searchParams }: RatingsPageProps) {
     name: "ratings",
     fallbackCode: ERROR_CODES.SERIES.FETCH_ERROR,
     requireCapability: "ratings",
-    load: async ({ provider }) => {
-      const allSeries = await getReadSeries(provider);
+    load: async ({ capability }) => {
+      const allSeries = await getReadSeries(capability);
       const counts = countReadSeries(allSeries);
       const matchingSeries = sortReadSeries(filterReadSeries(allSeries, query, filter), sort);
       const slice = paginateReadSeries(matchingSeries, parsePage(rawPage), PAGE_SIZE);

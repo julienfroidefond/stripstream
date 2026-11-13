@@ -1,4 +1,4 @@
-import type { IMediaProvider } from "@/lib/providers/provider.interface";
+import type { RatingsCapability } from "@/lib/providers/provider.interface";
 import type { NormalizedSeries } from "@/lib/providers/types";
 
 /**
@@ -13,18 +13,19 @@ const MAX_PAGES = 5;
 /**
  * Récupère toutes les séries lues de la connexion active.
  *
- * Le provider renvoie une page ; on enchaîne les suivantes pour que la page
- * puisse afficher l'ensemble des séries notables et non seulement les 200
- * premières.
+ * La source est la capacité `ratings` : la liste appartient à la notation, pas
+ * au contrat commun. Le provider renvoie une page ; on enchaîne les suivantes
+ * pour que la page puisse afficher l'ensemble des séries notables et non
+ * seulement les 200 premières.
  */
-export async function getReadSeries(provider: IMediaProvider): Promise<NormalizedSeries[]> {
-  const firstPage = await provider.getReadSeries(1, PAGE_SIZE);
+export async function getReadSeries(ratings: RatingsCapability): Promise<NormalizedSeries[]> {
+  const firstPage = await ratings.getReadSeries(1, PAGE_SIZE);
   if (!firstPage.nextCursor) return firstPage.items;
 
   const totalPages = Math.min(firstPage.totalPages ?? 1, MAX_PAGES);
   const remainingPages = await Promise.all(
     Array.from({ length: Math.max(0, totalPages - 1) }, (_, index) =>
-      provider.getReadSeries(index + 2, PAGE_SIZE)
+      ratings.getReadSeries(index + 2, PAGE_SIZE)
     )
   );
 

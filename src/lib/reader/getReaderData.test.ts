@@ -66,6 +66,12 @@ function makeProvider(options: StubOptions = {}) {
   const ratings = options.ratings === false
     ? null
     : {
+        getReadSeries: vi.fn(async () => ({
+          items: [],
+          nextCursor: null,
+          totalPages: 0,
+          totalElements: 0,
+        })),
         getSeriesRating,
         setSeriesRating: vi.fn(async () => undefined),
         deleteSeriesRating: vi.fn(async () => undefined),

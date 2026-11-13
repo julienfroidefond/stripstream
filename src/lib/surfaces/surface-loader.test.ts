@@ -5,10 +5,12 @@ import { defaultPreferences, type UserPreferences } from "@/types/preferences";
 import {
   createProviderCapabilities,
   type IMediaProvider,
+  type ProviderCapabilityKey,
 } from "@/lib/providers/provider.interface";
 import {
   loadSurfaceWithDependencies,
   type LoadSurfaceOptions,
+  type SurfaceContext,
   type SurfaceLoaderDependencies,
 } from "./surface-loader";
 
@@ -31,10 +33,13 @@ function dependencies(
   };
 }
 
-function options<T>(
-  load: LoadSurfaceOptions<T>["load"],
-  overrides: Partial<LoadSurfaceOptions<T>> = {}
-): LoadSurfaceOptions<T> {
+function options<
+  T,
+  C extends ProviderCapabilityKey | undefined = undefined,
+>(
+  load: LoadSurfaceOptions<T, C>["load"],
+  overrides: Partial<LoadSurfaceOptions<T, C>> = {}
+): LoadSurfaceOptions<T, C> {
   return {
     name: "test",
     fallbackCode: ERROR_CODES.SERIES.FETCH_ERROR,
@@ -110,18 +115,23 @@ describe("loadSurface", () => {
     expect(result).toEqual({ status: "unavailable", reason: "unsupported-capability" });
   });
 
-  it("loads when the provider declares the required capability", async () => {
+  it("hands the capability it required to the loader", async () => {
+    const ratings = {
+      getReadSeries: vi.fn(async () => ({
+        items: [],
+        nextCursor: null,
+        totalPages: 0,
+        totalElements: 0,
+      })),
+      getSeriesRating: vi.fn(async () => null),
+      setSeriesRating: vi.fn(async () => undefined),
+      deleteSeriesRating: vi.fn(async () => undefined),
+    };
     const withRatings = {
       id: "provider",
-      capabilities: createProviderCapabilities({
-        ratings: {
-          getSeriesRating: vi.fn(async () => null),
-          setSeriesRating: vi.fn(async () => undefined),
-          deleteSeriesRating: vi.fn(async () => undefined),
-        },
-      }),
+      capabilities: createProviderCapabilities({ ratings }),
     } as unknown as IMediaProvider;
-    const load = vi.fn(async () => "ok");
+    const load = vi.fn(async (context: SurfaceContext<"ratings">) => context.capability);
 
     const result = await loadSurfaceWithDependencies(
       options(load, { requireCapability: "ratings" }),
@@ -129,7 +139,7 @@ describe("loadSurface", () => {
     );
 
     expect(result.status).toBe("ready");
-    expect(load).toHaveBeenCalledTimes(1);
+    expect(load).toHaveBeenCalledWith(expect.objectContaining({ capability: ratings }));
   });
 
   it("falls back to default preferences without failing the page", async () => {
