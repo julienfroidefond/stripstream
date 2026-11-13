@@ -2,11 +2,14 @@
  * Raccourcis clavier du lecteur.
  *
  * Module pur : la table de décodage vit ici (donc testable sans navigateur) et
- * `useReaderState` ne fait qu'exécuter l'action retournée. Les flèches suivent
- * le sens de lecture (inversées en RTL) comme les boutons à l'écran ; les
+ * `useReaderState` ne fait qu'exécuter l'action retournée. Les flèches sont
+ * spatiales : leur action vient de la politique de côtés partagée avec les
+ * boutons, le swipe et l'aide (`@/lib/reader/side-actions`) ; les
  * touches non spatiales (`PageUp` / `PageDown` / `Espace` / `Home` / `End`)
  * gardent un sens logique — « suivant » reste la page suivante.
  */
+
+import { actionForSide, sideForArrowKey } from "@/lib/reader/side-actions";
 
 export type ReaderShortcutAction =
   | "previous-page"
@@ -89,11 +92,13 @@ export function resolveReaderShortcut(
   // Ne jamais piloter le lecteur pendant la saisie d'un numéro de page.
   if (isEditableTarget(event.target)) return null;
 
+  const side = sideForArrowKey(event.key);
+  if (side) {
+    const action = actionForSide(side, context.isRTL ? "rtl" : "ltr");
+    return action === "previous" ? "previous-page" : "next-page";
+  }
+
   switch (event.key) {
-    case "ArrowLeft":
-      return context.isRTL ? "next-page" : "previous-page";
-    case "ArrowRight":
-      return context.isRTL ? "previous-page" : "next-page";
     case "PageUp":
       return "previous-page";
     case "PageDown":

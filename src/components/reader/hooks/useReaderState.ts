@@ -60,7 +60,6 @@ export function useReaderState({ book, pages, onClose, nextBook }: BookReaderPro
       pages,
       isDoublePage,
       shouldShowDoublePage,
-      onClose,
       nextBook,
     });
 

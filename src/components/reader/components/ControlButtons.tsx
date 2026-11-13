@@ -28,6 +28,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { ReaderBackground } from "@/types/preferences";
+import { resolveSideAction, type ReaderSide } from "@/lib/reader/side-actions";
+
+const SIDES: readonly ReaderSide[] = ["left", "right"];
 
 const readerBackgroundOptions: { value: ReaderBackground; className: string }[] = [
   { value: "default", className: "bg-background ring-1 ring-border" },
@@ -62,6 +65,9 @@ export const ControlButtons = memo(function ControlButtons({
 }: ControlButtonsProps) {
   const { t } = useTranslation();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const sideActions = SIDES.map((side) =>
+    resolveSideAction(side, { direction, currentPage, totalPages })
+  );
 
   const handleRefresh = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -246,54 +252,35 @@ export const ControlButtons = memo(function ControlButtons({
         )}
       </div>
 
-      {/* Bouton précédent */}
-      {currentPage > 1 && (
-        <IconButton
-          data-testid="reader-previous-page"
-          variant="ghost"
-          size="icon"
-          icon={ChevronLeft}
-          onClick={(e) => {
-            e.stopPropagation();
-            if (direction === "rtl") onNextPage();
-            else onPreviousPage();
-          }}
-          tooltip={t("reader.controls.previousPage")}
-          iconClassName="h-8 w-8"
-          className={cn(
-            // La flèche entre par le bord gauche.
-            "absolute top-1/2 z-20 -translate-y-1/2 rounded-full border border-border bg-surface-2 transition-[opacity,translate,background-color] duration-500 ease-projection hover:bg-surface-3 motion-reduce:transition-opacity",
-            "left-4",
-            showControls
-              ? "translate-x-0 opacity-100"
-              : "-translate-x-[calc(100%+1.5rem)] opacity-0 pointer-events-none"
-          )}
-        />
-      )}
-
-      {/* Bouton suivant */}
-      {currentPage < totalPages && (
-        <IconButton
-          data-testid="reader-next-page"
-          variant="ghost"
-          size="icon"
-          icon={ChevronRight}
-          onClick={(e) => {
-            e.stopPropagation();
-            if (direction === "rtl") onPreviousPage();
-            else onNextPage();
-          }}
-          tooltip={t("reader.controls.nextPage")}
-          iconClassName="h-8 w-8"
-          className={cn(
-            // La flèche entre par le bord droit.
-            "absolute top-1/2 z-20 -translate-y-1/2 rounded-full border border-border bg-surface-2 transition-[opacity,translate,background-color] duration-500 ease-projection hover:bg-surface-3 motion-reduce:transition-opacity",
-            "right-4",
-            showControls
-              ? "translate-x-0 opacity-100"
-              : "translate-x-[calc(100%+1.5rem)] opacity-0 pointer-events-none"
-          )}
-        />
+      {/* Flèches latérales : chaque côté reçoit son action de la politique de
+          côtés (en RTL, la flèche gauche avance). */}
+      {sideActions.map(({ side, action, visible, labelKey }) =>
+        visible ? (
+          <IconButton
+            key={side}
+            data-testid={`reader-${action}-page`}
+            variant="ghost"
+            size="icon"
+            icon={side === "left" ? ChevronLeft : ChevronRight}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (action === "previous") onPreviousPage();
+              else onNextPage();
+            }}
+            tooltip={t(labelKey)}
+            iconClassName="h-8 w-8"
+            className={cn(
+              // La flèche entre par son bord d'écran.
+              "absolute top-1/2 z-20 -translate-y-1/2 rounded-full border border-border bg-surface-2 transition-[opacity,translate,background-color] duration-500 ease-projection hover:bg-surface-3 motion-reduce:transition-opacity",
+              side === "left" ? "left-4" : "right-4",
+              showControls
+                ? "translate-x-0 opacity-100"
+                : side === "left"
+                  ? "-translate-x-[calc(100%+1.5rem)] opacity-0 pointer-events-none"
+                  : "translate-x-[calc(100%+1.5rem)] opacity-0 pointer-events-none"
+            )}
+          />
+        ) : null
       )}
     </>
   );
