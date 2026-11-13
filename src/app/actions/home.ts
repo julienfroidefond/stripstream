@@ -1,32 +1,26 @@
 "use server";
 
 import { getProvider } from "@/lib/providers/provider.factory";
-import { HOME_FEED_PAGE_SIZE } from "@/constants/homeConstants";
 import {
   emptyFeedPage,
-  paginateFeed,
-  type FeedPage,
   type HomeFeed,
   type HomeFeedItem,
   type HomeFeedPage,
 } from "@/lib/home/feed-page";
 import { loadHomeFeedPage } from "@/lib/home/feed-registry";
 import {
-  buildResumeEntries,
-  mergeResumeBooks,
-  type ResumeEntry,
-} from "@/lib/resume/resume-state";
-import { resolveSeriesPool } from "@/lib/resume/series-pool";
+  loadContinueReadingPage,
+  type ContinueReadingPage,
+} from "@/lib/home/continue-reading-feed";
 
-/** Une page du hero : seuls les nouveaux tomes sont renvoyés. */
-export type ContinueReadingPage = FeedPage<ResumeEntry>;
+export type { ContinueReadingPage } from "@/lib/home/continue-reading-feed";
 
 /**
  * Charge la page suivante du hero « Reprendre la lecture ».
  *
- * `offset` est le nombre de tomes déjà affichés. La réponse ne contient que la
- * nouvelle page, avec la série et la progression déjà résolues : le hero
- * n'a plus à fusionner ni à matcher côté client.
+ * `offset` est le nombre de tomes déjà affichés. La page, la série et la
+ * progression sont résolues par `loadContinueReadingPage`, le même module que
+ * le rendu initial : le hero n'a plus à fusionner ni à matcher côté client.
  */
 export async function loadContinueReading(
   offset: number
@@ -34,18 +28,7 @@ export async function loadContinueReading(
   const provider = await getProvider();
   if (!provider) return emptyFeedPage();
 
-  const start = Math.max(0, offset);
-  const pageEnd = start + HOME_FEED_PAGE_SIZE;
-  const books = mergeResumeBooks(
-    await provider.getHomeContinueReadingData(pageEnd + 1)
-  );
-  const page = paginateFeed(books, start, HOME_FEED_PAGE_SIZE);
-  const series = await resolveSeriesPool(provider, page.items);
-
-  return {
-    items: buildResumeEntries(page.items, series),
-    hasMore: page.hasMore,
-  };
+  return loadContinueReadingPage(provider, offset);
 }
 
 /**
