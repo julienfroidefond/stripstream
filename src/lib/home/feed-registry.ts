@@ -3,6 +3,7 @@ import { FavoriteService } from "@/lib/services/favorite.service";
 import type { IMediaProvider } from "@/lib/providers/provider.interface";
 import {
   paginateFeed,
+  probeLimit,
   type FeedPage,
   type HomeFeed,
   type HomeFeedItems,
@@ -73,11 +74,10 @@ export async function loadHomeFeedPage<F extends HomeFeed>(
   pageSize = HOME_FEED_PAGE_SIZE
 ): Promise<FeedPage<HomeFeedItems[F]>> {
   const definition = feeds[feed] as unknown as FeedDefinition<HomeFeedItems[F]>;
-  const start = Math.max(0, offset);
   const items =
     definition.pageRule === "probe"
-      ? await definition.load(provider, start + pageSize + 1)
+      ? await definition.load(provider, probeLimit(offset, pageSize))
       : await definition.load(provider);
 
-  return paginateFeed(items, start, pageSize);
+  return paginateFeed(items, offset, pageSize);
 }

@@ -1,10 +1,4 @@
 import { Suspense } from "react";
-import { resolveSeriesPool } from "@/lib/resume/series-pool";
-import {
-  buildResumeEntries,
-  mergeResumeBooks,
-} from "@/lib/resume/resume-state";
-import { HOME_FEED_PAGE_SIZE } from "@/constants/homeConstants";
 import {
   HomeCarouselSkeleton,
   HomeHeroSkeleton,
@@ -22,17 +16,17 @@ import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { emptyFeedPage, type HomeFeedPage } from "@/lib/home/feed-page";
 import { loadHomeFeedPage } from "@/lib/home/feed-registry";
+import {
+  loadContinueReadingPage,
+  type ContinueReadingPage,
+} from "@/lib/home/continue-reading-feed";
 import { loadSurface } from "@/lib/surfaces/load-surface";
 import { Bookmark, Heart, History, LibraryBig, Sparkles } from "lucide-react";
-import type { IMediaProvider } from "@/lib/providers/provider.interface";
 import type {
   NormalizedBook,
   NormalizedReadingList,
   NormalizedSeries,
 } from "@/lib/providers/types";
-import type { HomePrimaryData } from "@/types/home";
-
-const HOMEPAGE_INITIAL_QUERY_LIMIT = HOME_FEED_PAGE_SIZE + 1;
 
 interface HomeFeedState<T> {
   data: T;
@@ -62,13 +56,18 @@ async function HomeStreamingContent() {
     fallbackCode: ERROR_CODES.HOME.FETCH_ERROR,
     missingProvider: "unavailable",
     load: async ({ provider, isAnonymous }) => {
-      const continueReadingPromise = settleHomeFeed(
-        provider.getHomeContinueReadingData(HOMEPAGE_INITIAL_QUERY_LIMIT),
-        null
-      );
       const ongoingPromise = settleHomeFeed(
         loadHomeFeedPage(provider, "ongoing", 0),
         emptyFeedPage<NormalizedSeries>()
+      );
+      // Le pool « ongoing » est déjà en vol : le hero le reçoit sous forme de
+      // promesse pour lancer sa propre requête en parallèle, puis réutilise les
+      // séries connues au lieu de les re-résoudre.
+      const continueReadingPromise = settleHomeFeed(
+        loadContinueReadingPage(provider, 0, {
+          knownSeries: ongoingPromise.then((state) => state.data.items),
+        }),
+        null
       );
       const favoritesPromise = loadHomeFeedPage(
         provider,
@@ -104,7 +103,7 @@ async function HomeStreamingContent() {
     <SurfaceBoundary
       surface={surface}
       unavailable={() => <HomeWelcome />}
-      ready={(data, context) => {
+      ready={(data) => {
         const {
           isAnonymous,
           continueReadingPromise,
@@ -130,9 +129,7 @@ async function HomeStreamingContent() {
             </Suspense>
             <Suspense fallback={<HomeHeroSkeleton />}>
               <ContinueReadingSection
-                provider={context.provider}
                 continueReadingPromise={continueReadingPromise}
-                ongoingPromise={ongoingPromise}
                 isAnonymous={isAnonymous}
               />
             </Suspense>
@@ -168,44 +165,23 @@ async function HomeStreamingContent() {
 }
 
 interface ContinueReadingSectionProps {
-  provider: IMediaProvider;
-  continueReadingPromise: Promise<
-    HomeFeedState<Pick<HomePrimaryData, "ongoingBooks" | "onDeck"> | null>
-  >;
-  ongoingPromise: Promise<HomeFeedState<HomeFeedPage<"ongoing">>>;
+  continueReadingPromise: Promise<HomeFeedState<ContinueReadingPage | null>>;
   isAnonymous: boolean;
 }
 
 async function ContinueReadingSection({
-  provider,
   continueReadingPromise,
-  ongoingPromise,
   isAnonymous,
 }: ContinueReadingSectionProps) {
   if (isAnonymous) return null;
 
-  const [continueReadingState, ongoingState] = await Promise.all([
-    continueReadingPromise,
-    ongoingPromise,
-  ]);
-  const continueReadingData = continueReadingState.data;
-  const ongoing = ongoingState.data.items;
-
-  if (!continueReadingData) return null;
-
-  const continueReading = mergeResumeBooks(continueReadingData);
-  if (continueReading.length === 0) return null;
-
-  // Le pool « ongoing » est borné : on résout en plus les séries des tomes
-  // affichés par le hero, sinon un tome sans série connue n'affiche que son
-  // numéro (nom/résumé/genres/auteurs manquants).
-  const books = continueReading.slice(0, HOME_FEED_PAGE_SIZE);
-  const heroSeries = await resolveSeriesPool(provider, books, ongoing);
+  const page = (await continueReadingPromise).data;
+  if (!page || page.items.length === 0) return null;
 
   return (
     <ContinueReadingHero
-      initialItems={buildResumeEntries(books, heroSeries)}
-      initialHasMore={continueReading.length > HOME_FEED_PAGE_SIZE}
+      initialItems={page.items}
+      initialHasMore={page.hasMore}
     />
   );
 }

@@ -43,6 +43,17 @@ export function emptyFeedPage<T>(): FeedPage<T> {
 }
 
 /**
+ * Limite de requête d'une page qui sonde le reste de la collection.
+ *
+ * Les flux bornés par le provider demandent `offset + pageSize + 1` éléments :
+ * l'élément supplémentaire prouve qu'il reste une page, sans requête de
+ * comptage. C'est la règle partagée par le registre et le hero de reprise.
+ */
+export function probeLimit(offset: number, pageSize: number): number {
+  return Math.max(0, offset) + pageSize + 1;
+}
+
+/**
  * Extrait la page qui commence à `offset`.
  *
  * Les flux de l'accueil sont chargés avec un élément de sonde
