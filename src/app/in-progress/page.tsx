@@ -24,10 +24,10 @@ export default async function InProgressPage() {
     name: "in-progress",
     fallbackCode: ERROR_CODES.SERIES.FETCH_ERROR,
     anonymous: "empty",
-    load: async ({ provider }) => {
+    load: async ({ userId, provider }) => {
       const [items, favoriteIds] = await Promise.all([
         getInProgressItems(provider),
-        FavoriteService.getAllFavoriteIds().catch(() => []),
+        FavoriteService.getAllFavoriteIds({ userId, provider }).catch(() => []),
       ]);
 
       // Le bouton « mettre de côté » ne s'affiche que si le provider déclare

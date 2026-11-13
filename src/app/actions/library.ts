@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { invalidateLibraryScan } from "@/lib/cache/invalidation";
 import { getProvider } from "@/lib/providers/provider.factory";
 import type { ScanStatus } from "@/lib/providers/types";
 import { ERROR_CODES } from "@/constants/errorCodes";
@@ -43,10 +43,7 @@ export async function scanLibrary(libraryId: string): Promise<ScanActionResult> 
     fallbackMessage: "Erreur lors du scan",
     logContext: { libraryId },
     failureData: scanFailureData,
-    invalidate: () => {
-      revalidatePath(`/libraries/${libraryId}`);
-      revalidatePath("/libraries");
-    },
+    invalidate: () => invalidateLibraryScan(libraryId),
     execute: async ({ provider }) => {
       const result = await provider.scanLibrary(libraryId);
       return { message: "Scan lancé", ...result };

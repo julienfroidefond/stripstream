@@ -3,6 +3,11 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { BlobUrlRegistry, type ImageKey } from "./blobUrlRegistry";
 import { computeEvictionKeys } from "./imageEviction";
 import { abortTrackedFetches } from "./abortTrackedFetches";
+import {
+  PREFETCH_CONCURRENCY,
+  planPrefetch,
+  type PrefetchStatus,
+} from "@/lib/reader/prefetch-plan";
 
 interface ImageDimensions {
   width: number;
@@ -21,8 +26,6 @@ const RETRY_BACKOFFS_MS = [800, 1600] as const;
 // On lit majoritairement vers l'avant, donc plus de buffer en aval.
 const EVICTION_BEHIND = 10;
 const EVICTION_AHEAD = 20;
-
-const PREFETCH_CONCURRENCY = 4;
 
 /** Abandonne chaque fetch suivi sans laisser un `abort()` en échec interrompre le nettoyage. */
 function releaseTrackedFetches(controllers: Iterable<AbortController>): void {
@@ -309,93 +312,49 @@ export function useImageLoader({
     [prefetchImage]
   );
 
-  // Prefetch multiple pages starting from a given page
-  const prefetchPages = useCallback(
-    async (
-      startPage: number,
-      count: number = prefetchCount,
-      excludePages: number[] = [],
-      concurrency?: number
-    ) => {
-      const pagesToPrefetch: number[] = [];
-      const excludeSet = new Set(excludePages);
-
-      for (let i = 0; i < count; i++) {
-        const pageNum = startPage + i;
-        if (pageNum <= _pages.length && !excludeSet.has(pageNum)) {
-          const hasDimensions = loadedImagesRef.current[pageNum];
-          const hasBlobUrl = blobUrls.has(pageNum);
-          const isPending = pendingFetchesRef.current.has(pageNum);
-          const hasError = imageErrorsRef.current[pageNum];
-
-          if ((!hasDimensions || !hasBlobUrl) && !isPending && !hasError) {
-            pagesToPrefetch.push(pageNum);
-          }
-        }
-      }
-
-      if (pagesToPrefetch.length > 0) {
-        runWithConcurrency(pagesToPrefetch, prefetchImage, concurrency ?? PREFETCH_CONCURRENCY).catch(
-          () => {
-            // Silently fail - prefetch is non-critical
-          }
-        );
-      }
+  // Ce que le loader sait d'une clé, lu par le plan de préchargement.
+  const statusOf = useCallback(
+    (key: ImageKey): PrefetchStatus => {
+      if (loadedImagesRef.current[key] && blobUrls.has(key)) return "loaded";
+      if (pendingFetchesRef.current.has(key)) return "pending";
+      if (imageErrorsRef.current[key]) return "failed";
+      return "idle";
     },
-    [blobUrls, prefetchImage, prefetchCount, _pages.length, runWithConcurrency]
-  );
-
-  // Prefetch pages from next book (clés préfixées "next-N" pour éviter les conflits)
-  const prefetchNextBook = useCallback(
-    async (count: number = prefetchCount) => {
-      if (!nextBook) return;
-
-      const items: { key: string; url: string }[] = [];
-
-      for (let i = 0; i < count; i++) {
-        const pageNum = i + 1; // Pages du livre suivant commencent à 1
-        const key = `next-${pageNum}`;
-        const hasDimensions = loadedImagesRef.current[key];
-        const hasBlobUrl = blobUrls.has(key);
-        const isPending = pendingFetchesRef.current.has(key);
-
-        if ((!hasDimensions || !hasBlobUrl) && !isPending) {
-          items.push({ key, url: nextBook.getPageUrl(pageNum) });
-        }
-      }
-
-      if (items.length > 0) {
-        runWithConcurrency(items, ({ key, url }) => prefetchKey(key, url) as Promise<void>).catch(
-          () => {
-            // Silently fail - prefetch is non-critical
-          }
-        );
-      }
-    },
-    [blobUrls, nextBook, prefetchCount, runWithConcurrency, prefetchKey]
+    [blobUrls]
   );
 
   // Le loader possède la politique de mémoire : prefetch et éviction suivent
-  // la position du reader sans que `useReaderState` ait à l'orchestrer.
+  // la position du reader sans que `useReaderState` ait à l'orchestrer. Le
+  // choix des pages vient du plan pur ; le loader n'en garde que l'exécution.
   useEffect(() => {
-    const spread = shouldShowDoublePage(currentPage);
-    const visiblePages = spread ? [currentPage, currentPage + 1] : [currentPage];
+    const plan = planPrefetch({
+      currentPage,
+      totalPages: _pages.length,
+      isSpread: shouldShowDoublePage(currentPage),
+      prefetchCount,
+      hasNextBook: Boolean(nextBook),
+      statusOf,
+    });
 
-    console.debug(`[reader/image] page=${currentPage} visible=[${visiblePages.join(",")}] doublePage=${spread}`);
-    Promise.all(visiblePages.map((page) => prefetchImage(page))).catch((err) => {
+    console.debug(`[reader/image] page=${currentPage} visible=[${plan.visible.join(",")}] ahead=[${plan.ahead.join(",")}] next=${plan.nextBook.length}`);
+    Promise.all(plan.visible.map((page) => prefetchImage(page))).catch((err) => {
       console.warn(`[reader/image] prefetch failed page=${currentPage}`, err);
     });
 
-    const concurrency = spread ? 2 : 4;
-    prefetchPages(currentPage, prefetchCount, visiblePages, concurrency);
-
-    if (spread && currentPage + prefetchCount < _pages.length) {
-      prefetchPages(currentPage + prefetchCount, 1, visiblePages, concurrency);
+    if (plan.ahead.length > 0) {
+      runWithConcurrency(plan.ahead, prefetchImage, plan.aheadConcurrency).catch(() => {
+        // Silently fail - prefetch is non-critical
+      });
     }
 
-    const pagesFromEnd = _pages.length - currentPage;
-    if (pagesFromEnd <= prefetchCount && nextBook) {
-      prefetchNextBook(prefetchCount);
+    if (nextBook && plan.nextBook.length > 0) {
+      runWithConcurrency(
+        plan.nextBook,
+        ({ key, page }) => prefetchKey(key, nextBook.getPageUrl(page)) as Promise<void>,
+        plan.nextBookConcurrency
+      ).catch(() => {
+        // Silently fail - prefetch is non-critical
+      });
     }
 
     evictOutsideWindow(currentPage);
@@ -403,8 +362,9 @@ export function useImageLoader({
     currentPage,
     shouldShowDoublePage,
     prefetchImage,
-    prefetchPages,
-    prefetchNextBook,
+    prefetchKey,
+    runWithConcurrency,
+    statusOf,
     evictOutsideWindow,
     prefetchCount,
     _pages.length,

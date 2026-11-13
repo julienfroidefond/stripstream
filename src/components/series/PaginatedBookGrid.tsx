@@ -4,7 +4,7 @@ import { BookGrid } from "./BookGrid";
 import { BookList } from "./BookList";
 import { CollectionShell } from "@/components/common/CollectionShell";
 import { useRouter } from "next/navigation";
-import { useState, useCallback, useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import type { NormalizedBook, NormalizedMissingBook } from "@/lib/providers/types";
 import { useTranslate } from "@/hooks/useTranslate";
 import { usePaginatedGrid } from "@/hooks/usePaginatedGrid";
@@ -14,7 +14,9 @@ import { CompactModeButton } from "@/components/common/CompactModeButton";
 import { ViewModeButton } from "@/components/common/ViewModeButton";
 import { UnreadFilterButton } from "@/components/common/UnreadFilterButton";
 import { MissingFilterButton } from "@/components/common/MissingFilterButton";
-import { splitBooksByVolumeType } from "./bookGrouping";
+import { mergeMissingBooks, splitBooksByVolumeType, toDisplayBooks } from "./bookGrouping";
+
+const NO_MISSING_BOOKS: NormalizedMissingBook[] = [];
 
 interface PaginatedBookGridProps {
   books: NormalizedBook[];
@@ -39,62 +41,42 @@ export function PaginatedBookGrid({
   pageSize,
   initialCompact,
   initialViewMode,
-  missingBooks = [],
+  missingBooks = NO_MISSING_BOOKS,
 }: PaginatedBookGridProps) {
   const router = useRouter();
   const { preferences } = usePreferences();
   const { t } = useTranslate();
-  const [hideMissing, setHideMissing] = useState(preferences.hideMissingBooks);
 
   const { regularBooks, specialBooks } = useMemo(() => splitBooksByVolumeType(books), [books]);
+  const specialItems = useMemo(() => toDisplayBooks(specialBooks), [specialBooks]);
 
-  // Merge missing books into regular books as placeholders, sorted by volume number
-  const displayBooks = useMemo(() => {
-    if (hideMissing || missingBooks.length === 0) return regularBooks;
-
-    // Convert missing books to placeholder NormalizedBook entries
-    const missingAsBooks: NormalizedBook[] = missingBooks.map((mb) => ({
-      id: `missing-${mb.volumeNumber}`,
-      libraryId: "",
-      title: mb.title,
-      number: String(mb.volumeNumber),
-      seriesId: null,
-      seriesName: null,
-      volume: mb.volumeNumber,
-      pageCount: 0,
-      thumbnailUrl: mb.coverUrl ?? "",
-      media: { pageUrlTemplate: "", thumbnailUrlTemplate: "" },
-      readProgress: null,
-      volumeType: "_missing",
-    }));
-
-    // Merge and sort by volume number
-    const merged = [...regularBooks, ...missingAsBooks];
-    merged.sort((a, b) => {
-      const va = a.volume ?? Infinity;
-      const vb = b.volume ?? Infinity;
-      return va - vb;
-    });
-    return merged;
-  }, [regularBooks, missingBooks, hideMissing]);
-
-  /** Identifie le contenu affiché : sa variation déclenche le glissement. */
-  const contentKey = useMemo(() => displayBooks.map((book) => book.id).join(","), [displayBooks]);
+  /**
+   * Identifie le contenu serveur : sa variation déclenche le glissement. Le
+   * masquage local des manquants est ajouté à la clé par le contrôleur.
+   */
+  const contentKey = useMemo(
+    () =>
+      [
+        ...books.map((book) => book.id),
+        ...missingBooks.map((missing) => `missing-${missing.volumeNumber}`),
+      ].join(","),
+    [books, missingBooks]
+  );
 
   const {
     effectivePageSize,
     isCompact,
     viewMode,
     showOnlyUnread,
+    hideMissingBooks,
     isNavigating,
     gridRef,
-    captureLayout,
-    persistPreferences,
     handlePageChange,
     handlePageSizeChange,
     handleCompactModeToggle,
     handleViewModeToggle,
     handleUnreadFilter,
+    handleHideMissingToggle,
   } = usePaginatedGrid({
     contentKey,
     showOnlyUnread: initialShowOnlyUnread,
@@ -103,7 +85,13 @@ export function PaginatedBookGrid({
     initialCompact,
     initialViewMode,
     viewModePreference: "booksViewMode",
+    initialHideMissingBooks: preferences.hideMissingBooks,
   });
+
+  const displayBooks = useMemo(
+    () => mergeMissingBooks(regularBooks, hideMissingBooks ? [] : missingBooks),
+    [regularBooks, missingBooks, hideMissingBooks]
+  );
 
   const handleBookClick = useCallback(
     (book: NormalizedBook) => {
@@ -112,29 +100,19 @@ export function PaginatedBookGrid({
     [router]
   );
 
-  const toggleHideMissing = useCallback(() => {
-    captureLayout();
-    const next = !hideMissing;
-    setHideMissing(next);
-    // Hors de l'updater de `setHideMissing` : React l'exécute pendant le rendu,
-    // et la server action met à jour le routeur (« Cannot update a component
-    // while rendering a different component »).
-    void persistPreferences({ hideMissingBooks: next });
-  }, [captureLayout, hideMissing, persistPreferences]);
-
   const specialBooksSection =
     specialBooks.length > 0 ? (
       <div className="space-y-4">
         <h3 className="text-lg font-semibold text-muted-foreground">{t("books.special")}</h3>
         {viewMode === "grid" ? (
           <BookGrid
-            books={specialBooks}
+            books={specialItems}
             onBookClick={handleBookClick}
             isCompact={isCompact}
           />
         ) : (
           <BookList
-            books={specialBooks}
+            books={specialItems}
             onBookClick={handleBookClick}
             isCompact={isCompact}
           />
@@ -168,7 +146,7 @@ export function PaginatedBookGrid({
           <CompactModeButton isCompact={isCompact} onToggle={handleCompactModeToggle} />
           <UnreadFilterButton showOnlyUnread={showOnlyUnread} onToggle={handleUnreadFilter} />
           {missingBooks.length > 0 && (
-            <MissingFilterButton active={hideMissing} onToggle={toggleHideMissing} />
+            <MissingFilterButton active={hideMissingBooks} onToggle={handleHideMissingToggle} />
           )}
         </>
       }

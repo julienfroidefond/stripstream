@@ -165,8 +165,6 @@ export function ReaderInfoDialog({
                 <BookCover
                   book={book}
                   alt={book.title}
-                  showControls={false}
-                  showOverlay={false}
                   showProgressUi={false}
                   className="rounded-none"
                 />

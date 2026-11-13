@@ -1,6 +1,11 @@
 import { HOME_FEED_PAGE_SIZE } from "@/constants/homeConstants";
 import { loadHomeFeedPage } from "@/lib/home/feed-registry";
-import { paginateFeed, probeLimit, type FeedPage } from "@/lib/home/feed-page";
+import {
+  paginateFeed,
+  probeLimit,
+  type FeedPage,
+  type HomeFeedViewer,
+} from "@/lib/home/feed-page";
 import type { IMediaProvider } from "@/lib/providers/provider.interface";
 import type { NormalizedSeries } from "@/lib/providers/types";
 import {
@@ -45,6 +50,7 @@ export interface ContinueReadingPageOptions {
 export async function loadContinueReadingPage(
   provider: IMediaProvider,
   offset: number,
+  viewer: HomeFeedViewer,
   {
     knownSeries,
     pageSize = HOME_FEED_PAGE_SIZE,
@@ -55,7 +61,7 @@ export async function loadContinueReadingPage(
     provider.getHomeContinueReadingData(probeLimit(offset, pageSize)),
     knownSeries
       ? Promise.resolve(knownSeries)
-      : seedSeriesPool(provider),
+      : seedSeriesPool(provider, viewer),
   ]);
 
   const books = mergeResumeBooks(source);
@@ -70,8 +76,9 @@ export async function loadContinueReadingPage(
 
 /** Pool de repli : la première page « ongoing », celle du rendu initial. */
 async function seedSeriesPool(
-  provider: IMediaProvider
+  provider: IMediaProvider,
+  viewer: HomeFeedViewer
 ): Promise<readonly NormalizedSeries[]> {
-  const page = await loadHomeFeedPage(provider, "ongoing", 0);
+  const page = await loadHomeFeedPage(provider, "ongoing", 0, viewer);
   return page.items;
 }

@@ -25,6 +25,14 @@ vi.mock("@/app/actions/series-shelf", () => ({
   unshelveSeries: mocks.unshelveSeries,
 }));
 
+// Le provider monte le seam de progression de lecture : ses actions serveur
+// ne doivent pas être chargées par ce test.
+vi.mock("@/app/actions/read-progress", () => ({
+  updateReadProgress: vi.fn(),
+  deleteReadProgress: vi.fn(),
+  updateSeriesReadStatus: vi.fn(),
+}));
+
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: mocks.refresh }),
 }));

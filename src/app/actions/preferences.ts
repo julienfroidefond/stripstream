@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { invalidatePreferences } from "@/lib/cache/invalidation";
 import { PreferencesService } from "@/lib/services/preferences.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { runAction, type ActionResult } from "@/lib/actions/action-runner";
@@ -20,20 +20,15 @@ export async function updatePreferences(
     fallbackCode: ERROR_CODES.PREFERENCES.UPDATE_ERROR,
     fallbackMessage: "Erreur lors de la mise à jour des préférences",
     logContext: { keys: Object.keys(newPreferences) },
+    requireUser: true,
     // Le mode anonyme est piloté immédiatement par le contexte client. Une
     // revalidation ici pourrait réinjecter pendant la transition les
     // préférences initiales de la page et faire clignoter le bouton à l'état
     // précédent.
-    invalidate: anonymousOnly
-      ? undefined
-      : () => {
-          revalidatePath("/");
-          revalidatePath("/libraries");
-          revalidatePath("/series");
-        },
-    execute: async () => ({
+    invalidate: anonymousOnly ? undefined : invalidatePreferences,
+    execute: async ({ userId }) => ({
       message: "Préférences mises à jour",
-      data: await PreferencesService.updatePreferences(newPreferences),
+      data: await PreferencesService.updatePreferences(userId, newPreferences),
     }),
   });
 }

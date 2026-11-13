@@ -145,7 +145,7 @@ describe("fetchSeriesCollectionPage", () => {
   it("sends the normalised query to the provider", async () => {
     const page: NormalizedSeriesPage = {
       items: [],
-      nextCursor: null,
+      page: 3,
       totalPages: 1,
       totalElements: 0,
     };
@@ -158,7 +158,7 @@ describe("fetchSeriesCollectionPage", () => {
     await expect(fetchSeriesCollectionPage({ getSeries }, "lib-1", query)).resolves.toBe(
       page
     );
-    expect(getSeries).toHaveBeenCalledWith("lib-1", "3", 90, true, "akira", "latest", true);
+    expect(getSeries).toHaveBeenCalledWith("lib-1", 3, 90, true, "akira", "latest", true);
   });
 });
 
@@ -168,7 +168,7 @@ describe("bookCollectionFilter", () => {
       bookCollectionFilter("serie-1", { page: 2, pageSize: 48, unreadOnly: true })
     ).toEqual({
       seriesId: "serie-1",
-      cursor: "2",
+      page: 2,
       limit: 48,
       unreadOnly: true,
     });

@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { memo, useCallback } from "react";
 import type { MouseEvent as ReactMouseEvent } from "react";
 import { BookX, FileText } from "lucide-react";
@@ -10,20 +9,21 @@ import { BookCover } from "@/components/ui/book-cover";
 import { BookCoverScene } from "@/components/ui/book-cover-scene";
 import { CoverCard, CoverEdge } from "@/components/ui/cover-card";
 import { DownloadBookButton } from "@/components/ui/download-book-button";
-import { MarkAsReadButton } from "@/components/ui/mark-as-read-button";
-import { MarkAsUnreadButton } from "@/components/ui/mark-as-unread-button";
 import { Progress } from "@/components/ui/progress";
 import { useAnonymous } from "@/contexts/AnonymousContext";
+import { useReadProgressMutations } from "@/contexts/ReadProgressMutationsContext";
 import { useCoverInteraction } from "@/hooks/useCoverInteraction";
 import { useTranslate } from "@/hooks/useTranslate";
 import type { NormalizedBook } from "@/lib/providers/types";
 import { cn } from "@/lib/utils";
 import { buildBookCardView, type BookCardView } from "./book-card-view";
+import { MarkAsReadButton, MarkAsUnreadButton } from "./BookReadButtons";
+import type { DisplayBook } from "./bookGrouping";
 
 export type BookCardLayout = "grid" | "list";
 
 export interface BookCardProps {
-  book: NormalizedBook;
+  item: DisplayBook;
   onBookClick: (book: NormalizedBook) => void;
   layout: BookCardLayout;
   isCompact?: boolean;
@@ -34,7 +34,8 @@ interface BookLayoutProps {
   view: BookCardView;
   isAnonymous: boolean;
   onNavigate: (event: ReactMouseEvent<HTMLAnchorElement>) => void;
-  onActionSuccess: () => void;
+  onMarkRead: (read: boolean) => void;
+  readPending: boolean;
 }
 
 interface ListBookCardProps extends BookLayoutProps {
@@ -42,9 +43,9 @@ interface ListBookCardProps extends BookLayoutProps {
 }
 
 interface BookReadActionsProps {
-  book: NormalizedBook;
   view: BookCardView;
-  onSuccess: () => void;
+  onMarkRead: (read: boolean) => void;
+  pending: boolean;
   className?: string;
 }
 
@@ -53,30 +54,29 @@ interface BookCardActionsProps {
   view: BookCardView;
   isAnonymous: boolean;
   placement: BookCardLayout | "compact";
-  onSuccess: () => void;
+  onMarkRead: (read: boolean) => void;
+  readPending: boolean;
 }
 
 function BookReadActions({
-  book,
   view,
-  onSuccess,
+  onMarkRead,
+  pending,
   className,
 }: BookReadActionsProps) {
   return (
     <>
       {!view.isRead && (
         <MarkAsReadButton
-          bookId={book.id}
-          pagesCount={book.pageCount}
-          isRead={view.isRead}
-          onSuccess={onSuccess}
+          onClick={() => onMarkRead(true)}
+          pending={pending}
           className={className}
         />
       )}
       {view.hasReadProgress && (
         <MarkAsUnreadButton
-          bookId={book.id}
-          onSuccess={onSuccess}
+          onClick={() => onMarkRead(false)}
+          pending={pending}
           className={className}
         />
       )}
@@ -88,15 +88,16 @@ function BookReadActions({
  * L'unique surface d'actions d'une carte de livre.
  *
  * Grille, liste et liste compacte placent les mêmes actions différemment ; la
- * visibilité et le callback post-mutation restent ici pour qu'un layout ne
- * puisse pas oublier le refresh.
+ * visibilité des actions reste ici ; le marquage lui-même (optimisme, toast,
+ * rollback, refresh) appartient à `useReadProgressMutations`.
  */
 function BookCardActions({
   book,
   view,
   isAnonymous,
   placement,
-  onSuccess,
+  onMarkRead,
+  readPending,
 }: BookCardActionsProps) {
   if (placement === "grid") {
     if (isAnonymous) return null;
@@ -115,9 +116,9 @@ function BookCardActions({
         {(!view.isRead || view.hasReadProgress) && (
           <div className="absolute right-2 top-2 z-30 flex gap-1">
             <BookReadActions
-              book={book}
               view={view}
-              onSuccess={onSuccess}
+              onMarkRead={onMarkRead}
+              pending={readPending}
               className="bg-white/90 text-black hover:bg-white"
             />
           </div>
@@ -142,9 +143,9 @@ function BookCardActions({
     <div className="flex items-center gap-2 mt-auto pt-2">
       {!isAnonymous && (
         <BookReadActions
-          book={book}
           view={view}
-          onSuccess={onSuccess}
+          onMarkRead={onMarkRead}
+          pending={readPending}
           className="text-xs"
         />
       )}
@@ -164,7 +165,8 @@ function GridBookCard({
   view,
   isAnonymous,
   onNavigate,
-  onActionSuccess,
+  onMarkRead,
+  readPending,
 }: BookLayoutProps) {
   return (
     <CoverCard
@@ -176,8 +178,6 @@ function GridBookCard({
           <BookCover
             book={book}
             alt={view.coverAlt}
-            showControls={false}
-            showOverlay={false}
             className="rounded-none"
           />
           <CoverEdge />
@@ -189,7 +189,8 @@ function GridBookCard({
           view={view}
           isAnonymous={isAnonymous}
           placement="grid"
-          onSuccess={onActionSuccess}
+          onMarkRead={onMarkRead}
+          readPending={readPending}
         />
       }
     >
@@ -243,8 +244,6 @@ function ListBookCover({
             <BookCover
               book={book}
               alt={view.coverAlt}
-              showControls={false}
-              showOverlay={false}
               className="rounded-none"
             />
             <CoverEdge />
@@ -285,7 +284,8 @@ function ListBookCard({
   isAnonymous,
   isCompact,
   onNavigate,
-  onActionSuccess,
+  onMarkRead,
+  readPending,
 }: ListBookCardProps) {
   const { active, handlers } = useCoverInteraction<HTMLDivElement>();
 
@@ -334,7 +334,8 @@ function ListBookCard({
               view={view}
               isAnonymous={isAnonymous}
               placement="compact"
-              onSuccess={onActionSuccess}
+              onMarkRead={onMarkRead}
+          readPending={readPending}
             />
           </div>
         </div>
@@ -411,18 +412,21 @@ function ListBookCard({
           view={view}
           isAnonymous={isAnonymous}
           placement="list"
-          onSuccess={onActionSuccess}
+          onMarkRead={onMarkRead}
+          readPending={readPending}
         />
       </div>
     </div>
   );
 }
 
+type MissingBook = Extract<DisplayBook, { kind: "missing" }>;
+
 function MissingBookCard({
   book,
   layout,
 }: {
-  book: NormalizedBook;
+  book: MissingBook;
   layout: BookCardLayout;
 }) {
   const { t } = useTranslate();
@@ -431,9 +435,9 @@ function MissingBookCard({
     return (
       <div className="flex h-full flex-col gap-2">
         <div className="relative aspect-2/3 overflow-hidden rounded-lg border border-dashed border-orange-500/40 bg-muted/50">
-          {book.thumbnailUrl ? (
+          {book.coverUrl ? (
             <img
-              src={book.thumbnailUrl}
+              src={book.coverUrl}
               alt={book.title}
               loading="lazy"
               className="absolute inset-0 h-full w-full rounded-lg object-cover opacity-50"
@@ -462,9 +466,9 @@ function MissingBookCard({
   return (
     <div className="group relative flex gap-3 rounded-lg border border-dashed border-orange-500/40 bg-muted/30 p-2 opacity-60">
       <div className="relative w-12 h-16 sm:w-14 sm:h-20 shrink-0 rounded overflow-hidden bg-muted/50">
-        {book.thumbnailUrl ? (
+        {book.coverUrl ? (
           <img
-            src={book.thumbnailUrl}
+            src={book.coverUrl}
             alt={book.title}
             loading="lazy"
             className="w-full h-full object-cover rounded opacity-50"
@@ -487,16 +491,25 @@ function MissingBookCard({
   );
 }
 
+interface AvailableBookCardProps {
+  book: NormalizedBook;
+  onBookClick: (book: NormalizedBook) => void;
+  layout: BookCardLayout;
+  isCompact: boolean;
+}
+
 function AvailableBookCard({
-  book,
+  book: serverBook,
   onBookClick,
   layout,
-  isCompact = false,
-}: BookCardProps) {
+  isCompact,
+}: AvailableBookCardProps) {
   const { t } = useTranslate();
   const { isAnonymous } = useAnonymous();
-  const router = useRouter();
+  const { resolveBook, markBook, pendingBook } = useReadProgressMutations();
+  const book = resolveBook(serverBook);
   const view = buildBookCardView(book, t, isAnonymous);
+  const readPending = pendingBook(serverBook.id) !== null;
 
   const handleNavigate = useCallback(
     (event: ReactMouseEvent<HTMLAnchorElement>) => {
@@ -509,14 +522,19 @@ function AvailableBookCard({
         return;
       }
       event.preventDefault();
-      onBookClick(book);
+      onBookClick(serverBook);
     },
-    [book, onBookClick]
+    [serverBook, onBookClick]
   );
 
-  const handleActionSuccess = useCallback(() => {
-    router.refresh();
-  }, [router]);
+  // Le seam compare l'état serveur observé : on lui passe le livre serveur,
+  // jamais sa version optimiste.
+  const handleMarkRead = useCallback(
+    (read: boolean) => {
+      void markBook(serverBook, read);
+    },
+    [markBook, serverBook]
+  );
 
   if (layout === "grid") {
     return (
@@ -525,7 +543,8 @@ function AvailableBookCard({
         view={view}
         isAnonymous={isAnonymous}
         onNavigate={handleNavigate}
-        onActionSuccess={handleActionSuccess}
+        onMarkRead={handleMarkRead}
+        readPending={readPending}
       />
     );
   }
@@ -537,7 +556,8 @@ function AvailableBookCard({
       isAnonymous={isAnonymous}
       isCompact={isCompact}
       onNavigate={handleNavigate}
-      onActionSuccess={handleActionSuccess}
+      onMarkRead={handleMarkRead}
+      readPending={readPending}
     />
   );
 }
@@ -545,14 +565,28 @@ function AvailableBookCard({
 /**
  * Une seule carte de livre, deux layouts.
  *
- * La carte possède le placeholder manquant, l'état de lecture, les actions et
- * l'unique politique de refresh après un marquage lu/non lu. La grille et la
- * liste ne choisissent que la disposition.
+ * La carte rend soit un livre, soit l'emplacement d'un tome manquant ; le
+ * discriminant `DisplayBook` décide, et un emplacement n'a ni action ni lien.
+ * L'état de lecture affiché et les marquages passent par
+ * `useReadProgressMutations`. La grille et la liste ne choisissent que la
+ * disposition.
  */
-export const BookCard = memo(function BookCard(props: BookCardProps) {
-  if (props.book.volumeType === "_missing") {
-    return <MissingBookCard book={props.book} layout={props.layout} />;
+export const BookCard = memo(function BookCard({
+  item,
+  onBookClick,
+  layout,
+  isCompact = false,
+}: BookCardProps) {
+  if (item.kind === "missing") {
+    return <MissingBookCard book={item} layout={layout} />;
   }
 
-  return <AvailableBookCard {...props} />;
+  return (
+    <AvailableBookCard
+      book={item.book}
+      onBookClick={onBookClick}
+      layout={layout}
+      isCompact={isCompact}
+    />
+  );
 });

@@ -14,31 +14,10 @@ import { DeferredRecommendations } from "@/components/home/DeferredRecommendatio
 import { SurfaceBoundary } from "@/components/ui/SurfaceBoundary";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { ERROR_CODES } from "@/constants/errorCodes";
-import { emptyFeedPage, type HomeFeedPage } from "@/lib/home/feed-page";
-import { loadHomeFeedPage } from "@/lib/home/feed-registry";
-import {
-  loadContinueReadingPage,
-  type ContinueReadingPage,
-} from "@/lib/home/continue-reading-feed";
+import type { HomeFeedItem, HomeFeedState } from "@/lib/home/feed-page";
+import { loadHomeFeeds, type HomeFeedStates } from "@/lib/home/home-feeds";
 import { loadSurface } from "@/lib/surfaces/load-surface";
 import { Bookmark, Heart, History, LibraryBig, Sparkles } from "lucide-react";
-import type {
-  NormalizedBook,
-  NormalizedReadingList,
-  NormalizedSeries,
-} from "@/lib/providers/types";
-
-interface HomeFeedState<T> {
-  data: T;
-  failed: boolean;
-}
-
-function settleHomeFeed<T>(promise: Promise<T>, fallback: T): Promise<HomeFeedState<T>> {
-  return promise.then(
-    (data) => ({ data, failed: false }),
-    () => ({ data: fallback, failed: true })
-  );
-}
 
 export default function HomePage() {
   return (
@@ -50,133 +29,89 @@ export default function HomePage() {
   );
 }
 
+/**
+ * Rendu de l'accueil. La politique (masquage anonyme, repli vide, règle
+ * « tout a échoué ») vit dans `loadHomeFeeds` : la page ne fait que rendre
+ * les états déjà réglés.
+ */
 async function HomeStreamingContent() {
   const surface = await loadSurface({
     name: "home",
     fallbackCode: ERROR_CODES.HOME.FETCH_ERROR,
     missingProvider: "unavailable",
-    load: async ({ provider, isAnonymous }) => {
-      const ongoingPromise = settleHomeFeed(
-        loadHomeFeedPage(provider, "ongoing", 0),
-        emptyFeedPage<NormalizedSeries>()
-      );
-      // Le pool « ongoing » est déjà en vol : le hero le reçoit sous forme de
-      // promesse pour lancer sa propre requête en parallèle, puis réutilise les
-      // séries connues au lieu de les re-résoudre.
-      const continueReadingPromise = settleHomeFeed(
-        loadContinueReadingPage(provider, 0, {
-          knownSeries: ongoingPromise.then((state) => state.data.items),
-        }),
-        null
-      );
-      const favoritesPromise = loadHomeFeedPage(
-        provider,
-        "favorites",
-        0
-      ).catch(() => emptyFeedPage<NormalizedSeries>());
-      const readingListsPromise = settleHomeFeed(
-        loadHomeFeedPage(provider, "reading-lists", 0),
-        emptyFeedPage<NormalizedReadingList>()
-      );
-      const latestSeriesPromise = settleHomeFeed(
-        loadHomeFeedPage(provider, "latest-series", 0),
-        emptyFeedPage<NormalizedSeries>()
-      );
-      const recentlyReadPromise = settleHomeFeed(
-        loadHomeFeedPage(provider, "recently-read", 0),
-        emptyFeedPage<NormalizedBook>()
-      );
-
-      return {
-        isAnonymous,
-        continueReadingPromise,
-        ongoingPromise,
-        favoritesPromise,
-        readingListsPromise,
-        latestSeriesPromise,
-        recentlyReadPromise,
-      };
-    },
+    load: async ({ provider, isAnonymous, userId }) =>
+      loadHomeFeeds(provider, { isAnonymous, userId }),
   });
 
   return (
     <SurfaceBoundary
       surface={surface}
       unavailable={() => <HomeWelcome />}
-      ready={(data) => {
-        const {
-          isAnonymous,
-          continueReadingPromise,
-          ongoingPromise,
-          favoritesPromise,
-          readingListsPromise,
-          latestSeriesPromise,
-          recentlyReadPromise,
-        } = data;
+      ready={({ feeds, outage }) => (
+        <div className="space-y-10 pb-2">
+          <Suspense fallback={null}>
+            <HomeOutage outage={outage} />
+          </Suspense>
+          <Suspense fallback={<HomeHeroSkeleton />}>
+            <ContinueReadingSection state={feeds["continue-reading"]} />
+          </Suspense>
 
-        return (
-          <div className="space-y-10 pb-2">
-            <Suspense fallback={null}>
-              <HomeProviderErrorState
-                feedPromises={[
-                  continueReadingPromise,
-                  ongoingPromise,
-                  readingListsPromise,
-                  latestSeriesPromise,
-                  recentlyReadPromise,
-                ]}
-              />
-            </Suspense>
-            <Suspense fallback={<HomeHeroSkeleton />}>
-              <ContinueReadingSection
-                continueReadingPromise={continueReadingPromise}
-                isAnonymous={isAnonymous}
-              />
-            </Suspense>
+          <Suspense fallback={<HomeCarouselSkeleton icon={LibraryBig} />}>
+            <MediaSection
+              feed="ongoing"
+              state={feeds.ongoing}
+              titleKey="home.sections.continue_series"
+              iconName="LibraryBig"
+            />
+          </Suspense>
 
-            <Suspense fallback={<HomeCarouselSkeleton icon={LibraryBig} />}>
-              <OngoingSection ongoingPromise={ongoingPromise} isAnonymous={isAnonymous} />
-            </Suspense>
+          <Suspense fallback={<HomeCarouselSkeleton icon={Heart} />}>
+            <MediaSection
+              feed="favorites"
+              state={feeds.favorites}
+              titleKey="home.sections.favorites"
+              iconName="Heart"
+            />
+          </Suspense>
 
-            <Suspense fallback={<HomeCarouselSkeleton icon={Heart} />}>
-              <FavoritesSection favoritesPromise={favoritesPromise} />
-            </Suspense>
+          <Suspense fallback={<HomeRecommendationSkeleton />}>
+            <RecommendationsSection state={feeds.recommendations} />
+          </Suspense>
 
-            <Suspense fallback={<HomeRecommendationSkeleton />}>
-              <DeferredRecommendations isAnonymous={isAnonymous} />
-            </Suspense>
+          <Suspense fallback={<HomeReadingListSkeleton icon={Bookmark} />}>
+            <ReadingListsSection state={feeds["reading-lists"]} />
+          </Suspense>
 
-            <Suspense fallback={<HomeReadingListSkeleton icon={Bookmark} />}>
-              <ReadingListsSection readingListsPromise={readingListsPromise} />
-            </Suspense>
+          <Suspense fallback={<HomeCarouselSkeleton icon={Sparkles} />}>
+            <MediaSection
+              feed="latest-series"
+              state={feeds["latest-series"]}
+              titleKey="home.sections.latest_series"
+              iconName="Sparkles"
+            />
+          </Suspense>
 
-            <Suspense fallback={<HomeCarouselSkeleton icon={Sparkles} />}>
-              <LatestSeriesSection latestSeriesPromise={latestSeriesPromise} />
-            </Suspense>
-
-            <Suspense fallback={<HomeCarouselSkeleton icon={History} />}>
-              <RecentlyReadSection recentlyReadPromise={recentlyReadPromise} />
-            </Suspense>
-          </div>
-        );
-      }}
+          <Suspense fallback={<HomeCarouselSkeleton icon={History} />}>
+            <MediaSection
+              feed="recently-read"
+              state={feeds["recently-read"]}
+              titleKey="home.sections.recently_added"
+              iconName="History"
+            />
+          </Suspense>
+        </div>
+      )}
     />
   );
 }
 
-interface ContinueReadingSectionProps {
-  continueReadingPromise: Promise<HomeFeedState<ContinueReadingPage | null>>;
-  isAnonymous: boolean;
-}
-
 async function ContinueReadingSection({
-  continueReadingPromise,
-  isAnonymous,
-}: ContinueReadingSectionProps) {
-  if (isAnonymous) return null;
-
-  const page = (await continueReadingPromise).data;
-  if (!page || page.items.length === 0) return null;
+  state,
+}: {
+  state: HomeFeedStates["continue-reading"];
+}) {
+  const { page } = await state;
+  if (page.items.length === 0) return null;
 
   return (
     <ContinueReadingHero
@@ -186,108 +121,55 @@ async function ContinueReadingSection({
   );
 }
 
-interface OngoingSectionProps {
-  ongoingPromise: Promise<HomeFeedState<HomeFeedPage<"ongoing">>>;
-  isAnonymous: boolean;
-}
+type MediaFeed = "ongoing" | "favorites" | "latest-series" | "recently-read";
 
-async function OngoingSection({ ongoingPromise, isAnonymous }: OngoingSectionProps) {
-  if (isAnonymous) return null;
-
-  const ongoing = (await ongoingPromise).data;
-  if (ongoing.items.length === 0) return null;
-
-  return (
-    <MediaRow
-      titleKey="home.sections.continue_series"
-      items={ongoing.items}
-      initialHasMore={ongoing.hasMore}
-      iconName="LibraryBig"
-      feed="ongoing"
-    />
-  );
-}
-
-async function FavoritesSection({
-  favoritesPromise,
+async function MediaSection({
+  feed,
+  state,
+  titleKey,
+  iconName,
 }: {
-  favoritesPromise: Promise<HomeFeedPage<"favorites">>;
+  feed: MediaFeed;
+  state: Promise<HomeFeedState<HomeFeedItem<MediaFeed>>>;
+  titleKey: string;
+  iconName: string;
 }) {
-  const favorites = await favoritesPromise;
-  if (favorites.items.length === 0) return null;
+  const { page } = await state;
+  if (page.items.length === 0) return null;
 
   return (
     <MediaRow
-      titleKey="home.sections.favorites"
-      items={favorites.items}
-      initialHasMore={favorites.hasMore}
-      iconName="Heart"
-      feed="favorites"
+      titleKey={titleKey}
+      items={page.items}
+      initialHasMore={page.hasMore}
+      iconName={iconName}
+      feed={feed}
     />
   );
+}
+
+async function RecommendationsSection({
+  state,
+}: {
+  state: HomeFeedStates["recommendations"];
+}) {
+  const { status } = await state;
+  return status === "deferred" ? <DeferredRecommendations /> : null;
 }
 
 async function ReadingListsSection({
-  readingListsPromise,
+  state,
 }: {
-  readingListsPromise: Promise<HomeFeedState<HomeFeedPage<"reading-lists">>>;
+  state: HomeFeedStates["reading-lists"];
 }) {
-  const readingLists = (await readingListsPromise).data;
-  if (readingLists.items.length === 0) return null;
+  const { page } = await state;
+  if (page.items.length === 0) return null;
 
-  return (
-    <ReadingListRow
-      lists={readingLists.items}
-      initialHasMore={readingLists.hasMore}
-    />
-  );
+  return <ReadingListRow lists={page.items} initialHasMore={page.hasMore} />;
 }
 
-async function LatestSeriesSection({
-  latestSeriesPromise,
-}: {
-  latestSeriesPromise: Promise<HomeFeedState<HomeFeedPage<"latest-series">>>;
-}) {
-  const latestSeries = (await latestSeriesPromise).data;
-  if (latestSeries.items.length === 0) return null;
-
-  return (
-    <MediaRow
-      titleKey="home.sections.latest_series"
-      items={latestSeries.items}
-      initialHasMore={latestSeries.hasMore}
-      iconName="Sparkles"
-      feed="latest-series"
-    />
-  );
-}
-
-async function RecentlyReadSection({
-  recentlyReadPromise,
-}: {
-  recentlyReadPromise: Promise<HomeFeedState<HomeFeedPage<"recently-read">>>;
-}) {
-  const recentlyRead = (await recentlyReadPromise).data;
-  if (recentlyRead.items.length === 0) return null;
-
-  return (
-    <MediaRow
-      titleKey="home.sections.recently_added"
-      items={recentlyRead.items}
-      initialHasMore={recentlyRead.hasMore}
-      iconName="History"
-      feed="recently-read"
-    />
-  );
-}
-
-async function HomeProviderErrorState({
-  feedPromises,
-}: {
-  feedPromises: Promise<HomeFeedState<unknown>>[];
-}) {
-  const states = await Promise.all(feedPromises);
-  if (!states.every((state) => state.failed)) return null;
+async function HomeOutage({ outage }: { outage: Promise<boolean> }) {
+  if (!(await outage)) return null;
 
   return (
     <main className="container mx-auto px-4 pt-8">

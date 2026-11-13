@@ -1,5 +1,4 @@
 import prisma from "@/lib/prisma";
-import { getCurrentUser } from "../auth-utils";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
 import bcrypt from "bcryptjs";
@@ -12,17 +11,16 @@ export interface UserProfile {
   updatedAt: Date;
 }
 
+/**
+ * Profil, statistiques et mot de passe d'un utilisateur identifié par
+ * l'appelant. Le service ne lit pas la session : le runner (`requireUser`) ou
+ * la page qui a vérifié la session lui passe `userId` (ADR 0029).
+ */
 export class UserService {
   private static readonly SALT_ROUNDS = 10;
 
-  static async getUserProfile(): Promise<UserProfile> {
+  static async getUserProfile(userId: number): Promise<UserProfile> {
     try {
-      const currentUser = await getCurrentUser();
-      if (!currentUser) {
-        throw new AppError(ERROR_CODES.AUTH.UNAUTHENTICATED);
-      }
-      const userId = parseInt(currentUser.id, 10);
-
       const user = await prisma.user.findUnique({
         where: { id: userId },
         select: {
@@ -53,14 +51,12 @@ export class UserService {
     }
   }
 
-  static async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  static async changePassword(
+    userId: number,
+    currentPassword: string,
+    newPassword: string
+  ): Promise<void> {
     try {
-      const currentUser = await getCurrentUser();
-      if (!currentUser) {
-        throw new AppError(ERROR_CODES.AUTH.UNAUTHENTICATED);
-      }
-      const userId = parseInt(currentUser.id, 10);
-
       // Récupérer l'utilisateur avec son mot de passe
       const user = await prisma.user.findUnique({
         where: { id: userId },
@@ -92,14 +88,8 @@ export class UserService {
     }
   }
 
-  static async getUserStats() {
+  static async getUserStats(userId: number) {
     try {
-      const currentUser = await getCurrentUser();
-      if (!currentUser) {
-        throw new AppError(ERROR_CODES.AUTH.UNAUTHENTICATED);
-      }
-      const userId = parseInt(currentUser.id, 10);
-
       const [favoritesCount, preferences, komgaConfig] = await Promise.all([
         prisma.favorite.count({
           where: { userId },

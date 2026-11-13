@@ -1,3 +1,4 @@
+import type { ErrorCode } from "@/constants/errorCodes";
 import type {
   NormalizedLibrary,
   NormalizedSeries,
@@ -19,7 +20,8 @@ import type { HomePrimaryData } from "@/types/home";
 export interface BookListFilter {
   libraryId?: string;
   seriesId?: string;
-  cursor?: string;
+  /** Numéro de page, à partir de 1 (défaut 1). */
+  page?: number;
   limit?: number;
   unreadOnly?: boolean;
 }
@@ -35,7 +37,8 @@ export interface MediaProviderCore {
   getLibraries(): Promise<NormalizedLibrary[]>;
   getLibraryById(libraryId: string): Promise<NormalizedLibrary | null>;
 
-  getSeries(libraryId: string, cursor?: string, limit?: number, unreadOnly?: boolean, search?: string, sort?: string, hasMissing?: boolean): Promise<NormalizedSeriesPage>;
+  /** `page` est 1-based (défaut 1). */
+  getSeries(libraryId: string, page?: number, limit?: number, unreadOnly?: boolean, search?: string, sort?: string, hasMissing?: boolean): Promise<NormalizedSeriesPage>;
   getSeriesById(seriesId: string): Promise<NormalizedSeries | null>;
 
   getBooks(filter: BookListFilter): Promise<NormalizedBooksPage>;
@@ -63,7 +66,11 @@ export interface MediaProviderCore {
   getReadingStats(): Promise<NormalizedReadingStats>;
 
   // ── Connection ───────────────────────────────────────────────────────────
-  testConnection(): Promise<{ ok: boolean; error?: string; libraryCount?: number }>;
+  /**
+   * Sonde la connexion. Un échec porte le code du catalogue de l'erreur
+   * provider (`KOMGA_UNAUTHORIZED`, `STRIPSTREAM_NOT_FOUND`…) quand il existe.
+   */
+  testConnection(): Promise<{ ok: boolean; error?: string; code?: ErrorCode; libraryCount?: number }>;
 
   // ── URL builder (returns a local proxy URL) ───────────────────────────────
   getBookThumbnailUrl(bookId: string): string;
@@ -84,8 +91,8 @@ export interface SearchCapability {
 export interface RatingsCapability {
   /**
    * Séries entièrement lues par l'utilisateur, toutes bibliothèques confondues.
-   * Fournit la matière de la page « Mes notes » ; la pagination est celle du
-   * provider, le service borne le nombre de pages parcourues.
+   * Fournit la matière de la page « Mes notes ». Même contrat de page que le
+   * cœur (`page` 1-based) ; le service borne le nombre de pages parcourues.
    */
   getReadSeries(page?: number, limit?: number): Promise<NormalizedSeriesPage>;
   getSeriesRating(seriesId: string): Promise<NormalizedSeriesRating | null>;

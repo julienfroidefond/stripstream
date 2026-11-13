@@ -10,7 +10,8 @@ import type {
   StripstreamRelatedSeriesItem,
   StripstreamRecommendedSeriesItem,
 } from "@/types/stripstream";
-import { BOOK_PAGE_TOKEN } from "../book-media";
+import { pageCount, type Page } from "../pagination";
+import { bookPageUrlTemplate, mediaUrl } from "@/lib/media/media-url";
 import type {
   NormalizedBook,
   NormalizedBookMedia,
@@ -25,12 +26,30 @@ const SENTINEL_BOOK_ID = "00000000-0000-0000-0000-000000000000";
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export class StripstreamAdapter {
+  /**
+   * Traduit une page Librarian (`{ items, total, page, limit }`, déjà 1-based)
+   * vers le contrat commun. `totalPages` se déduit de la taille demandée.
+   */
+  static toPage<Raw, T>(
+    response: { items: Raw[]; total: number },
+    toItem: (raw: Raw) => T,
+    page: number,
+    limit: number
+  ): Page<T> {
+    return {
+      items: response.items.map(toItem),
+      page,
+      totalPages: pageCount(response.total, limit),
+      totalElements: response.total,
+    };
+  }
+
   private static bookThumbnail(bookId: string): string {
-    return `/api/stripstream/images/books/${bookId}/thumbnail`;
+    return mediaUrl("stripstream", { kind: "book-cover", bookId });
   }
 
   private static bookMedia(bookId: string): NormalizedBookMedia {
-    const pageUrlTemplate = `/api/stripstream/images/books/${bookId}/pages/${BOOK_PAGE_TOKEN}`;
+    const pageUrlTemplate = bookPageUrlTemplate("stripstream", "book-page", bookId);
     return {
       pageUrlTemplate,
       // The backend has no separate page-thumbnail endpoint; the page proxy is
@@ -120,7 +139,7 @@ export class StripstreamAdapter {
       pageCount: book.page_count ?? 0,
       thumbnailUrl: StripstreamAdapter.bookThumbnail(book.id),
       media: StripstreamAdapter.bookMedia(book.id),
-      downloadUrl: `/api/stripstream/books/${book.id}/file`,
+      downloadUrl: mediaUrl("stripstream", { kind: "book-file", bookId: book.id }),
       readProgress:
         book.reading_status === "unread" && !book.reading_current_page
           ? null
@@ -149,7 +168,7 @@ export class StripstreamAdapter {
       pageCount: book.page_count ?? 0,
       thumbnailUrl: StripstreamAdapter.bookThumbnail(book.id),
       media: StripstreamAdapter.bookMedia(book.id),
-      downloadUrl: `/api/stripstream/books/${book.id}/file`,
+      downloadUrl: mediaUrl("stripstream", { kind: "book-file", bookId: book.id }),
       readProgress:
         book.reading_status === "unread" && !book.reading_current_page
           ? null

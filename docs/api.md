@@ -9,8 +9,8 @@ Stripstream expose deux surfaces côté serveur, et rien d'autre :
 
 - Toutes les routes d'API hors famille d'authentification traversent le middleware `src/proxy.ts` et exigent une session NextAuth valide. Une requête non authentifiée reçoit une réponse `401` JSON.
 - Seule la famille d'authentification NextAuth est publique (exclue du matcher du middleware).
-- Les dix routes média (Komga et Stripstream) sont de fines déclarations sur `createMediaRoute` (`src/lib/media/media-route.ts`) : l'adaptateur vérifie la session, choisit le transport du provider, applique la politique de cache et d'en-têtes, relaie les `304` et mappe les erreurs. Les transports résolvent la connexion via `requireConnectionForProvider` (`@/lib/connections`), qui applique la config active du provider, puis sa première config, et le fallback aux variables d'environnement uniquement pour Stripstream. Le module déchiffre les credentials ; les routes ne lisent jamais les colonnes `authHeader`/`token` directement.
-- Les Server Actions vérifient l'utilisateur via `getCurrentUser()` ou `requireUserId()`. Les actions de test de connexion sont en plus limitées par `checkConnectionTestRateLimit` (`src/lib/connections/probe.ts`, 5 tentatives par 30 secondes et par utilisateur et par provider).
+- Les huit routes média (Komga et Stripstream) sont des déclarations d'une ligne `createMediaRoute(provider, kind)` (`src/lib/media/media-route.ts`) : l'adaptateur vérifie la session, choisit le transport du provider, applique la politique de cache et d'en-têtes, relaie les `304` et mappe les erreurs. Les transports résolvent la connexion via `requireConnectionForProvider` (`@/lib/connections`), qui applique la config active du provider, puis sa première config, et le fallback aux variables d'environnement uniquement pour Stripstream. Le module déchiffre les credentials ; les routes ne lisent jamais les colonnes `authHeader`/`token` directement.
+- Les Server Actions vérifient l'utilisateur par les gates du runner (`requireUser`, `requireRole`, `rateLimit`), qui transmettent `userId` aux services ; les services ne lisent pas la session (ADR 0029). L'action `testConnection` est en plus limitée par le `rateLimit` du runner, sur la clé `connectionTestRateLimitKey` (`src/lib/connections/probe.ts`, 5 tentatives par 30 secondes et par utilisateur et par provider).
 
 ## 🌐 Route Handlers
 
@@ -24,75 +24,30 @@ Stripstream expose deux surfaces côté serveur, et rien d'autre :
 - **Description** : même handler NextAuth v5 ; porte les soumissions de connexion/déconnexion et les callbacks.
 - **Authentification** : publique.
 
-### GET /api/komga/books/[bookId]/file
+### Routes média
 
-- **Description** : téléchargement du fichier source d'un livre Komga (`/api/v1/books/{id}/file`), relayé en streaming par le transport média Komga via `ProviderTransport.response()`. Le `Content-Type` et le `Content-Disposition` amont sont recopiés ; `Content-Length` est volontairement omis (Safari est strict sur un `Content-Length` posé au-dessus d'une réponse chunked). `404` si le fichier est absent, `401`/`403` si Komga refuse l'accès.
-- **Authentification** : session NextAuth requise ; configuration Komga active.
-- **Cache** : `Cache-Control: private, no-store`.
+Les huit routes média sont dérivées d'une seule table (`src/lib/media/media-url.ts`, ADR 0027) : `MEDIA_ROUTE_PATTERNS` donne la forme de route d'un `MediaRef.kind`, préfixée par `/api/<provider>/`, et `SERVED_MEDIA_KINDS` liste les kinds servis par chaque provider. Chaque `route.ts` se réduit à `createMediaRoute(provider, kind)` ; adapters et providers construisent leurs URL avec `mediaUrl(provider, ref)` (ou `bookPageUrlTemplate` pour les gabarits `{page}`), et `media-url.test.ts` vérifie qu'un fichier existe pour chaque couple servi, qu'aucun autre n'existe et que chaque URL redonne la même référence.
 
-### GET /api/komga/books/[bookId]/pages/[pageNumber]
+La politique de réponse est choisie par kind (`MEDIA_POLICIES`, `src/lib/media/policies.ts`), identique pour les deux providers sauf l'écart documenté des couvertures Komga :
 
-- **Description** : flux binaire d'une page de livre servie par la `KomgaConfig` active. `pageNumber` est 1-based côté client et converti en 0-based pour Komga. Les requêtes concurrentes vers la même page sont dédupliquées par `requestDeduplicationService` ; le transport relaie `If-None-Match` / `If-Modified-Since` et renvoie `304` sans corps quand Komga valide le cache.
-- **Authentification** : session NextAuth requise ; utilise la configuration Komga active de l'utilisateur.
-- **Cache** : `Cache-Control: public, max-age=31536000`, défini par `MEDIA_POLICIES.komgaReaderPage`.
+| Kind | Route (sous `/api/<provider>/`) | Providers | `Cache-Control` | Erreurs |
+| --- | --- | --- | --- | --- |
+| `book-file` | `books/[bookId]/file` | Komga, Stripstream | `private, no-store` | JSON, status mappé (`401`/`403`/`404`), repli `KOMGA_HTTP_ERROR` / `STRIPSTREAM_HTTP_ERROR` |
+| `book-page` | `images/books/[bookId]/pages/[pageNumber]` | Komga, Stripstream | `private, max-age=2592000, immutable` | JSON, `404` « Image not found », sinon `500` `IMAGE_FETCH_ERROR` |
+| `book-page-thumbnail` | `images/books/[bookId]/pages/[pageNumber]/thumbnail` | Komga | `private, max-age=2592000, immutable` | idem |
+| `book-cover` | `images/books/[bookId]/thumbnail` | Komga, Stripstream | Stripstream : `private, max-age=2592000, immutable` ; Komga : `private, max-age=3600` | idem |
+| `series-cover` | `images/series/[seriesId]/thumbnail` | Komga | `private, max-age=3600` | idem |
 
-### GET /api/komga/images/books/[bookId]/pages/[pageNumber]
-
-- **Description** : proxy de streaming de la page d'un livre Komga. Réponse `404` explicite quand Komga ne trouve pas l'image, `304` quand le validateur conditionnel correspond. Cette route et la route lecteur partagent le même transport média (déduplication et validateurs).
-- **Authentification** : session NextAuth requise ; configuration Komga active.
-- **Cache** : `public, max-age=2592000, immutable` (30 jours), défini par `MEDIA_POLICIES.komgaImage`.
-
-### GET /api/komga/images/books/[bookId]/pages/[pageNumber]/thumbnail
-
-- **Description** : miniature d'une page de livre Komga. `400` si `pageNumber` est invalide, `404` si Komga ne trouve pas la miniature.
-- **Authentification** : session NextAuth requise ; configuration Komga active.
-- **Cache** : `public, max-age=2592000, immutable` (30 jours).
-
-### GET /api/komga/images/books/[bookId]/thumbnail
-
-- **Description** : couverture d'un livre Komga. Le transport média Komga renvoie la miniature du livre ou la première page selon la préférence `showThumbnails`.
-- **Authentification** : session NextAuth requise ; configuration Komga active.
-- **Cache** : `public, max-age=2592000, immutable` (30 jours).
-
-### GET /api/komga/images/series/[seriesId]/first-page
-
-- **Description** : couverture d'une série Komga en streaming. Le transport média Komga sert la première page du premier livre (résolu via `ProviderTransport.request()`), ou la miniature de la série quand la préférence `showThumbnails` est active.
-- **Authentification** : session NextAuth requise ; configuration Komga active.
-- **Cache** : `public, max-age=2592000, immutable` (30 jours).
-
-### GET /api/komga/images/series/[seriesId]/thumbnail
-
-- **Description** : miniature d'une série Komga. `404` si Komga ne trouve pas l'image.
-- **Authentification** : session NextAuth requise ; configuration Komga active.
-- **Cache** : `public, max-age=2592000, immutable` (30 jours).
+- **Authentification** : session NextAuth requise ; le cœur (`media-route-core.ts`) renvoie `401` JSON avant tout appel au transport. Les transports résolvent la connexion active du provider.
+- **Pages** : `pageNumber` est 1-based côté client (`400` s'il n'est pas un entier positif ou nul) ; seul le transport Komga le convertit en 0-based. La query string d'une page est conservée dans la référence et transmise telle quelle au backend Stripstream (format, largeur…) ; elle fait partie de l'URL, donc de la clé de cache.
+- **Validateurs** : `If-None-Match` / `If-Modified-Since` sont relayés à l'amont, une réponse `304` est renvoyée sans corps ni `Content-Type` implicite. Les pages Komga et les couvertures Stripstream identiques en vol sont dédupliquées par connexion résolue et empreinte du validateur.
+- **Couvertures Komga** : le transport sert la miniature Komga ou la première page selon la préférence utilisateur `showThumbnails`, lue à chaque requête (premier livre de la série résolu via `ProviderTransport.request()` pour `series-cover`). Les octets d'une même URL dépendent donc de la préférence : la réponse est `private, max-age=3600` : un rechargement est servi par le cache du navigateur, un changement de préférence s'applique en une heure au plus (au lieu de trente jours), puis la réponse se revalide par ETag.
+- **Fichiers** : `Content-Type` et `Content-Disposition` amont recopiés ; `Content-Length` volontairement omis (Safari est strict sur un `Content-Length` posé au-dessus d'une réponse chunked).
+- **Toutes les réponses sont `private`** : la même URL est résolue contre la connexion désignée par le cookie de session, un cache partagé ne doit jamais la servir à un autre utilisateur.
 
 ### GET /api/provider/search
 
-- **Description** : recherche via le provider actif (`getProvider()` → `provider.search(query, limit)`). Query `q` (minimum 2 caractères), `limit` optionnel (défaut 6, borné entre 1 et 10). Renvoie un tableau de résultats normalisés, ou `[]` si `q` est trop court ou si aucun provider n'est configuré.
-- **Authentification** : session NextAuth requise.
-- **Cache** : `Cache-Control: no-store`.
-
-### GET /api/stripstream/books/[bookId]/file
-
-- **Description** : téléchargement du fichier source d'un tome Stripstream (`books/{id}/file` côté Librarian), relayé en streaming par le transport média Stripstream via `ProviderTransport.response()`. Le `Content-Type` et le `Content-Disposition` (nom de fichier réel, RFC 6266) amont sont recopiés ; `Content-Length` est volontairement omis (Safari). `404` si le fichier est introuvable.
-- **Authentification** : session NextAuth requise **et** contrôle explicite `getCurrentUser()` (`401` sinon) ; config Stripstream résolue pour l'utilisateur.
-- **Cache** : `Cache-Control: private, no-store`.
-
-### GET /api/stripstream/images/books/[bookId]/pages/[pageNumber]
-
-- **Description** : proxy de streaming de la page d'un livre servie par le transport média Stripstream. La query string reçue est transmise telle quelle au backend ; les validateurs conditionnels sont relayés et une réponse `304` est renvoyée sans corps.
-- **Authentification** : session NextAuth requise **et** contrôle explicite `getCurrentUser()` (`401` sinon) ; config Stripstream résolue pour l'utilisateur.
-- **Cache** : `public, max-age=86400` (1 jour), défini par `MEDIA_POLICIES.stripstreamPage`.
-
-### GET /api/stripstream/images/books/[bookId]/thumbnail
-
-- **Description** : miniature d'un livre Stripstream. Les appels concurrents sont dédupliqués par une clé dérivée de l'identifiant de configuration résolu et de l'empreinte du validateur conditionnel (`sha256`). Réponse `404` vide en cas d'échec de récupération, `304` quand le cache est validé.
-- **Authentification** : session NextAuth requise **et** contrôle explicite `getCurrentUser()` (`401` sinon).
-- **Cache** : `public, max-age=2592000, immutable` (30 jours), défini par `MEDIA_POLICIES.stripstreamThumbnail`.
-
-### GET /api/stripstream/search
-
-- **Description** : recherche via le provider actif, même contrat que `/api/provider/search` (`q` minimum 2 caractères, `limit` défaut 6 / max 10). Différence : lève une erreur de configuration manquante (`500`) si aucun provider n'est actif, au lieu de renvoyer `[]`.
+- **Description** : recherche via le provider actif (`getProvider()` → `provider.search(query, limit)`). Query `q` (minimum 2 caractères), `limit` optionnel (défaut 6, borné entre 1 et 10). Renvoie un tableau de résultats normalisés, ou `[]` si `q` est trop court ou si aucun provider n'est configuré. C'est la seule route de recherche : l'ancien clone `/api/stripstream/search` a été supprimé.
 - **Authentification** : session NextAuth requise.
 - **Cache** : `Cache-Control: no-store`.
 
@@ -100,22 +55,24 @@ Stripstream expose deux surfaces côté serveur, et rien d'autre :
 
 ## ⚡ Server Actions
 
-Tous les fichiers de `src/app/actions/` commencent par `"use server"`. Les actions sont appelées directement par les composants clients et renvoient en général un objet `{ success, message }` (ou des données). Sauf mention contraire, elles exigent une session utilisateur valide.
+Tous les fichiers de `src/app/actions/` commencent par `"use server"`. Les actions sont appelées directement par les composants clients et, sauf exception documentée, passent par le runner (`runAction` / `runProviderAction`, `src/lib/actions/action-runner.ts`) : elles renvoient un `ActionResult` — `{ success: true, code: "OK", message, ...données }` ou `{ success: false, code: ErrorCode, message }`. Le client traduit `errors.${code}` ; `message` reste un libellé technique. Sauf mention contraire, elles exigent une session utilisateur valide.
 
 ### src/app/actions/admin.ts
+
+Toutes ces actions déclarent `requireRole: "admin"` : sans session elles échouent en `AUTH_UNAUTHENTICATED`, sans `ROLE_ADMIN` en `AUTH_FORBIDDEN`, avant toute écriture.
 
 | Action | Rôle |
 | --- | --- |
 | `getAdminDashboardData` | Charge la liste des utilisateurs et les statistiques du tableau de bord admin. |
-| `updateUserRoles` | Met à jour les rôles d'un utilisateur (au moins un rôle requis). |
-| `deleteUser` | Supprime un utilisateur. |
-| `resetUserPassword` | Réinitialise le mot de passe d'un utilisateur (force minimale vérifiée : 8 caractères, une majuscule, un chiffre). |
+| `updateUserRoles` | Met à jour les rôles d'un utilisateur : liste non vide de rôles parmi `ROLE_USER` / `ROLE_ADMIN`, sinon `ADMIN_INVALID_ROLES`. |
+| `deleteUser` | Supprime un utilisateur (`ADMIN_CANNOT_DELETE_SELF` pour son propre compte). |
+| `resetUserPassword` | Réinitialise le mot de passe d'un utilisateur (force minimale vérifiée : 8 caractères, une majuscule, un chiffre, sinon `AUTH_PASSWORD_NOT_STRONG` ; `ADMIN_CANNOT_RESET_OWN_PASSWORD` pour soi-même). Limitée à 10 / 15 min par administrateur (`AUTH_RATE_LIMITED`). |
 
 ### src/app/actions/auth.ts
 
 | Action | Rôle |
 | --- | --- |
-| `registerUser` | Inscrit un nouvel utilisateur (email + mot de passe). |
+| `registerUser` | Inscrit un nouvel utilisateur (email + mot de passe). Action anonyme ; la force du mot de passe et le budget par email (5 / min) sont vérifiés par `AuthServerService.registerUser`. |
 
 ### src/app/actions/books.ts
 
@@ -123,16 +80,17 @@ Tous les fichiers de `src/app/actions/` commencent par `"use server"`. Les actio
 | --- | --- |
 | `getBookData` | Charge les données du lecteur pour un livre via `getProvider()` et `getReaderData()`. |
 
-### src/app/actions/config.ts
+### src/app/actions/connections.ts
+
+Actions de connexion génériques (ADR 0030) : une action par opération, discriminée par `provider`. Les champs propres à un provider (`username`/`password` Komga, `token` Stripstream) et leur validation viennent de son descripteur (`src/lib/connections/descriptors.ts`) ; table, secret, provider et transport viennent de sa définition (`src/lib/connections/registry.ts`). Toutes passent par `runAction` avec `requireUser`, renvoient un `ActionResult` et échouent avec un code du catalogue (`CONFIG_INVALID_INPUT`, `CONFIG_NOT_FOUND`, `CONFIG_DUPLICATE_NAME`, `CONFIG_*_ERROR`…) ; le client traduit `errors.${code}`.
 
 | Action | Rôle |
 | --- | --- |
-| `testKomgaConnection` | Teste des identifiants Komga fournis à la volée via `testConnection()` et la factory. Limitée par `checkConnectionTestRateLimit` (5 / 30 s). |
-| `listKomgaConfigs` | Liste les configurations Komga de l'utilisateur avec l'état actif. |
-| `saveKomgaConfig` | Crée ou met à jour une configuration Komga. Mot de passe requis à la création, conservé s'il est vide en mise à jour ; la première configuration devient active. |
-| `deleteKomgaConfig` | Supprime une configuration Komga de l'utilisateur. |
-| `testKomgaConfigById` | Teste une configuration Komga existante avec les credentials stockés (`testStoredConnection`). Limitée par `checkConnectionTestRateLimit` (5 / 30 s). |
-| `setActiveKomgaConfig` | Active une configuration Komga et invalide les caches provider (`home`, listes de bibliothèques, livres, favoris). |
+| `listConnections()` | Configs de l'utilisateur, une liste par provider (`{ lists: ConnectionLists }`), avec l'état actif du navigateur. Un échec renvoie `CONFIG_FETCH_ERROR` au lieu d'une liste vide. |
+| `saveConnection(input: ConnectionInput)` | Crée (sans `id`) ou met à jour (avec `id`) une config. Secrets requis à la création, conservés s'ils sont vides en mise à jour. Renvoie `{ id, created }`. |
+| `deleteConnection({ provider, id })` | Supprime une config de l'utilisateur. |
+| `activateConnection({ provider, id })` | Sélectionne une config pour ce navigateur (cookies) et invalide les caches provider. Le client recharge ensuite toute la page (`useActivateConnection`). Renvoie `{ name }`. |
+| `testConnection({ stored } \| { draft })` | Teste une config enregistrée (credentials stockés, `testStoredConnection`) ou des credentials saisis (connexion ad hoc construite par la définition). Limitée par le runner (`rateLimit`, 5 / 30 s par utilisateur et par provider, `AUTH_RATE_LIMITED`). Un échec porte le code de l'erreur provider (`KOMGA_UNAUTHORIZED`…) ou `CONFIG_TEST_ERROR`. Renvoie `{ libraryCount }`. |
 
 ### src/app/actions/favorites.ts
 
@@ -160,7 +118,7 @@ Tous les fichiers de `src/app/actions/` commencent par `"use server"`. Les actio
 
 | Action | Rôle |
 | --- | --- |
-| `changePassword` | Change le mot de passe de l'utilisateur (vérifie l'ancien mot de passe et la force du nouveau). |
+| `changePassword` | Change le mot de passe de l'utilisateur (vérifie l'ancien mot de passe et la force du nouveau). Limitée à 5 tentatives / 15 min par utilisateur (`AUTH_RATE_LIMITED`), car chaque appel compare l'ancien mot de passe avec bcrypt. |
 
 ### src/app/actions/preferences.ts
 
@@ -196,15 +154,4 @@ Tous les fichiers de `src/app/actions/` commencent par `"use server"`. Les actio
 | --- | --- |
 | `revalidateForRefresh` | Invalide caches et chemins selon le `scope` (`home`, `library`, `series`, `book`) avant un `router.refresh()` côté client. |
 
-### src/app/actions/stripstream-config.ts
-
-| Action | Rôle |
-| --- | --- |
-| `testStripstreamConnection` | Teste une URL et un token Stripstream fournis à la volée via `testConnection()` et la factory. Limitée par `checkConnectionTestRateLimit` (5 / 30 s). |
-| `listStripstreamConfigs` | Liste les configurations Stripstream de l'utilisateur avec l'état actif. |
-| `saveStripstreamConfig` | Crée ou met à jour une configuration Stripstream. Token requis à la création, conservé s'il est vide en mise à jour ; la première configuration devient active. |
-| `deleteStripstreamConfig` | Supprime une configuration Stripstream de l'utilisateur. |
-| `testStripstreamConfigById` | Teste une configuration Stripstream existante avec le token stocké (`testStoredConnection`). Limitée par `checkConnectionTestRateLimit` (5 / 30 s). |
-| `setActiveStripstreamConfig` | Active une configuration Stripstream et invalide les caches provider. |
-
-> **Chiffrement au repos** : l'`authHeader` Komga et le `token` Stripstream sont stockés sous enveloppe AES-256-GCM (`src/lib/credentials.ts`, clé `CREDENTIALS_ENCRYPTION_KEY`). Les actions `save*Config` passent par `src/lib/connections/manage.ts`, qui chiffre à l'écriture (mot de passe/token vide en mise à jour : la valeur chiffrée existante est conservée) ; `src/lib/connections/resolve.ts` déchiffre à la lecture avant de construire un provider ou une sonde. Les lignes legacy en clair restent lisibles ; `pnpm encrypt-credentials` les migre de façon idempotente (`ENV.md`).
+> **Chiffrement au repos** : l'`authHeader` Komga et le `token` Stripstream sont stockés sous enveloppe AES-256-GCM (`src/lib/credentials.ts`, clé `CREDENTIALS_ENCRYPTION_KEY`). L'action `saveConnection` passe par `src/lib/connections/manage.ts`, où la définition du provider chiffre à l'écriture (mot de passe/token vide en mise à jour : la valeur chiffrée existante est conservée) ; `src/lib/connections/resolve.ts` déchiffre à la lecture avant de construire un provider ou une sonde. Les lignes legacy en clair restent lisibles ; `pnpm encrypt-credentials` les migre de façon idempotente (`ENV.md`).

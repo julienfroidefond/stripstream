@@ -120,7 +120,7 @@ export class ProviderTransport {
     }
     if (isCacheDebug) {
       if (tags) {
-        logger.info({ url, cache: "tags", tags }, "Cache tags");
+        logger.info({ url, cache: "tags", tags, ttl: revalidate }, "Cache tags");
       } else if (revalidate !== undefined) {
         logger.info({ url, cache: "revalidate", ttl: revalidate }, "Cache revalidate");
       } else {
@@ -128,10 +128,15 @@ export class ProviderTransport {
       }
     }
 
-    const nextOptions = tags
-      ? { tags }
-      : revalidate !== undefined
-        ? { revalidate }
+    // Le TTL et les tags se cumulent : les tags permettent l'invalidation
+    // ciblée après une mutation, le TTL borne la fraîcheur des lectures
+    // qu'aucune mutation locale n'invalide (changements faits côté backend).
+    const nextOptions =
+      tags || revalidate !== undefined
+        ? {
+            ...(revalidate !== undefined ? { revalidate } : {}),
+            ...(tags ? { tags } : {}),
+          }
         : undefined;
     const fetchOptions: ProviderFetchInit = {
       ...requestInit,

@@ -277,7 +277,11 @@
       "test": "Tester",
       "testing": "Test...",
       "cancel": "Annuler",
-      "confirmDelete": "Supprimer la connexion \"{{name}}\" ?"
+      "confirmDelete": "Supprimer la connexion \"{{name}}\" ?",
+      "created": "Connexion créée",
+      "updated": "Connexion mise à jour",
+      "deleted": "Connexion supprimée",
+      "testSuccess": "Connexion réussie. Bibliothèques trouvées : {{count}}"
     }
   },
   "refresh": {
@@ -694,6 +698,7 @@
     "AUTH_UNAUTHENTICATED": "Non authentifié",
     "AUTH_INVALID_CREDENTIALS": "Identifiants invalides",
     "AUTH_PASSWORD_NOT_STRONG": "Le mot de passe n'est pas assez fort",
+    "AUTH_PASSWORD_TOO_SHORT": "Le mot de passe doit contenir au moins 8 caractères",
     "AUTH_PASSWORD_MISMATCH": "Les mots de passe ne correspondent pas",
     "AUTH_EMAIL_EXISTS": "Cette adresse email existe déjà",
     "AUTH_INVALID_USER_DATA": "Données utilisateur invalides",
@@ -712,6 +717,7 @@
     "ADMIN_CANNOT_DELETE_SELF": "Impossible de supprimer ton propre compte",
     "ADMIN_RESET_PASSWORD_ERROR": "Erreur lors de la réinitialisation du mot de passe",
     "ADMIN_CANNOT_RESET_OWN_PASSWORD": "Impossible de réinitialiser ton propre mot de passe ici",
+    "ADMIN_INVALID_ROLES": "Choisis au moins un rôle valide",
     "KOMGA_MISSING_CONFIG": "Configuration Komga manquante",
     "KOMGA_MISSING_CREDENTIALS": "Identifiants Komga manquants",
     "KOMGA_CONNECTION_ERROR": "Erreur de connexion au serveur Komga",
@@ -776,7 +782,9 @@
     "CLIENT_NETWORK_ERROR": "Erreur réseau",
     "CLIENT_REQUEST_FAILED": "La requête a échoué",
     "GENERIC_ERROR": "Une erreur est survenue",
-    "WALL_FETCH_ERROR": "Impossible de rassembler les œuvres du mur. Vérifiez votre connexion puis réessayez."
+    "WALL_FETCH_ERROR": "Impossible de rassembler les œuvres du mur. Vérifiez votre connexion puis réessayez.",
+    "CONFIG_INVALID_INPUT": "Champs de connexion manquants ou invalides",
+    "CONFIG_DUPLICATE_NAME": "Ce nom est déjà utilisé pour une autre connexion"
   },
   "reader": {
     "controls": {
@@ -887,6 +895,30 @@
   },
   "common": {
     "retry": "Réessayer",
-    "error": "Erreur"
+    "error": "Erreur",
+    "success": "Succès"
+  },
+  "admin": {
+    "refresh": {
+      "success": {
+        "title": "Données rafraîchies",
+        "description": "Les données ont été mises à jour"
+      }
+    },
+    "editUser": {
+      "success": "Les rôles ont été mis à jour"
+    },
+    "deleteUser": {
+      "success": "L'utilisateur a été supprimé"
+    },
+    "resetPassword": {
+      "success": "Le mot de passe a été réinitialisé",
+      "missingFields": "Veuillez remplir tous les champs"
+    }
+  },
+  "account": {
+    "changePassword": {
+      "success": "Votre mot de passe a été modifié avec succès"
+    }
   }
 }

@@ -1,4 +1,5 @@
 import { useRef, useEffect } from "react";
+import { actionForSide, isViewportZoomed, sideForSwipe } from "@/lib/reader/side-actions";
 
 interface UseTouchNavigationProps {
   onPreviousPage: () => void;
@@ -22,9 +23,6 @@ export function useTouchNavigation({
     let touchStartX: number | null = null;
     let touchStartY: number | null = null;
     let isPinching = false;
-
-    // Seuil à 1.15 pour tolérer les imprécisions après un depinch
-    const isZoomed = () => (window.visualViewport?.scale ?? 1) > 1.15;
 
     const handleTouchStart = (e: TouchEvent) => {
       if (e.touches.length > 1) {
@@ -55,7 +53,7 @@ export function useTouchNavigation({
         return;
       }
       if (touchStartX === null || touchStartY === null) return;
-      if (isZoomed()) return;
+      if (isViewportZoomed(window.visualViewport?.scale)) return;
 
       const touchEndX = e.changedTouches[0].clientX;
       const touchEndY = e.changedTouches[0].clientY;
@@ -65,17 +63,12 @@ export function useTouchNavigation({
       touchStartX = null;
       touchStartY = null;
 
-      if (Math.abs(deltaY) > Math.abs(deltaX)) return;
-      if (Math.abs(deltaX) <= 50) return;
+      const side = sideForSwipe(deltaX, deltaY);
+      if (!side) return;
 
       const { onPreviousPage, onNextPage, isRTL } = propsRef.current;
-      if (deltaX > 0) {
-        if (isRTL) onNextPage();
-        else onPreviousPage();
-      } else {
-        if (isRTL) onPreviousPage();
-        else onNextPage();
-      }
+      if (actionForSide(side, isRTL ? "rtl" : "ltr") === "previous") onPreviousPage();
+      else onNextPage();
     };
 
     window.addEventListener("touchstart", handleTouchStart, { passive: true });

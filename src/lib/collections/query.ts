@@ -125,7 +125,7 @@ export async function fetchSeriesCollectionPage(
 ): Promise<NormalizedSeriesPage> {
   return provider.getSeries(
     libraryId,
-    String(query.page),
+    query.page,
     query.pageSize,
     query.unreadOnly,
     query.search,
@@ -141,7 +141,7 @@ export function bookCollectionFilter(
 ): BookListFilter {
   return {
     seriesId,
-    cursor: String(query.page),
+    page: query.page,
     limit: query.pageSize,
     unreadOnly: query.unreadOnly,
   };

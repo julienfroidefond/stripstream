@@ -9,6 +9,8 @@ vi.mock("@/lib/connections", () => ({
   requireConnectionForProvider: requireConnectionMock,
 }));
 
+vi.mock("@/lib/auth-utils", () => ({ requireUserId: vi.fn(async () => 1) }));
+
 vi.mock("@/lib/services/preferences.service", () => ({
   PreferencesService: { getPreferences: getPreferencesMock },
 }));

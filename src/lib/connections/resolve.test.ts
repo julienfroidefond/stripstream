@@ -4,12 +4,12 @@ const {
   komgaFindFirst,
   stripstreamFindFirst,
   getActiveConnectionMock,
-  getCurrentUserMock,
+  requireUserIdMock,
 } = vi.hoisted(() => ({
   komgaFindFirst: vi.fn(),
   stripstreamFindFirst: vi.fn(),
   getActiveConnectionMock: vi.fn(),
-  getCurrentUserMock: vi.fn(),
+  requireUserIdMock: vi.fn(),
 }));
 
 vi.mock("@/lib/prisma", () => ({
@@ -20,11 +20,10 @@ vi.mock("@/lib/prisma", () => ({
 }));
 
 vi.mock("./active", () => ({ getActiveConnection: getActiveConnectionMock }));
-vi.mock("@/lib/auth-utils", () => ({ getCurrentUser: getCurrentUserMock }));
+vi.mock("@/lib/auth-utils", () => ({ requireUserId: requireUserIdMock }));
 
 import {
-  connectionFromKomgaCredentials,
-  connectionFromStripstreamToken,
+  connectionFromDraft,
   getStoredConnection,
   requireConnectionForProvider,
   resolveActiveConnection,
@@ -59,7 +58,7 @@ const STRIPSTREAM_FALLBACK_QUERY = {
 beforeEach(() => {
   vi.clearAllMocks();
   getActiveConnectionMock.mockResolvedValue({ provider: "komga", configId: 42 });
-  getCurrentUserMock.mockResolvedValue({ id: "7", email: "test@example.com", roles: [] });
+  requireUserIdMock.mockResolvedValue(7);
 });
 
 afterEach(() => {
@@ -178,7 +177,7 @@ describe("getStoredConnection", () => {
 
 describe("requireConnectionForProvider", () => {
   it("throws AUTH_UNAUTHENTICATED when there is no session", async () => {
-    getCurrentUserMock.mockResolvedValue(null);
+    requireUserIdMock.mockRejectedValue(new AppError(ERROR_CODES.AUTH.UNAUTHENTICATED));
 
     await expect(requireConnectionForProvider("komga")).rejects.toMatchObject({
       code: ERROR_CODES.AUTH.UNAUTHENTICATED,
@@ -200,7 +199,12 @@ describe("requireConnectionForProvider", () => {
 
 describe("ad-hoc connections", () => {
   it("normalizes the Komga URL and builds the Basic auth value", () => {
-    expect(connectionFromKomgaCredentials(" http://komga.local/// ", "alice", "secret")).toEqual({
+    expect(connectionFromDraft({
+        provider: "komga",
+        url: " http://komga.local/// ",
+        username: "alice",
+        password: "secret",
+      })).toEqual({
       provider: "komga",
       configId: null,
       url: "http://komga.local",
@@ -209,7 +213,11 @@ describe("ad-hoc connections", () => {
   });
 
   it("normalizes the Stripstream URL and trims the token", () => {
-    expect(connectionFromStripstreamToken(" http://stream.local/ ", "  token  ")).toEqual({
+    expect(connectionFromDraft({
+        provider: "stripstream",
+        url: " http://stream.local/ ",
+        token: "  token  ",
+      })).toEqual({
       provider: "stripstream",
       configId: null,
       url: "http://stream.local",

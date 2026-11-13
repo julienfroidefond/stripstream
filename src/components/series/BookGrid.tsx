@@ -5,9 +5,10 @@ import { StaggerGroup, StaggerItem } from "@/components/motion";
 import { useTranslate } from "@/hooks/useTranslate";
 import { cn } from "@/lib/utils";
 import { BookCard } from "./BookCard";
+import type { DisplayBook } from "./bookGrouping";
 
 interface BookGridProps {
-  books: NormalizedBook[];
+  books: DisplayBook[];
   onBookClick: (book: NormalizedBook) => void;
   isCompact?: boolean;
 }
@@ -35,9 +36,9 @@ export function BookGrid({ books, onBookClick, isCompact = false }: BookGridProp
       effect="settle"
       stagger={0.09}
     >
-      {books.map((book) => (
-        <StaggerItem key={book.id} className="relative h-full">
-          <BookCard book={book} layout="grid" onBookClick={onBookClick} />
+      {books.map((item) => (
+        <StaggerItem key={item.key} className="relative h-full">
+          <BookCard item={item} layout="grid" onBookClick={onBookClick} />
         </StaggerItem>
       ))}
     </StaggerGroup>

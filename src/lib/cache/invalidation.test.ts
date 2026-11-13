@@ -15,6 +15,8 @@ import {
   invalidateConnectionChange,
   invalidateFavorites,
   invalidateForRefresh,
+  invalidateLibraryScan,
+  invalidatePreferences,
   invalidateReadProgress,
   invalidateSeriesRating,
   invalidateSeriesShelf,
@@ -111,6 +113,24 @@ describe("invalidateConnectionChange", () => {
       cacheTags.favorites,
     ]);
     expect(revalidatedPaths()).toEqual(["/settings", "/"]);
+  });
+});
+
+describe("invalidateLibraryScan", () => {
+  it("revalidates the library routes without expiring any tag", () => {
+    invalidateLibraryScan("lib1");
+
+    expect(updateTag).not.toHaveBeenCalled();
+    expect(revalidatedPaths()).toEqual(["/libraries/lib1", "/libraries"]);
+  });
+});
+
+describe("invalidatePreferences", () => {
+  it("revalidates the routes that render preferences on the server", () => {
+    invalidatePreferences();
+
+    expect(updateTag).not.toHaveBeenCalled();
+    expect(revalidatedPaths()).toEqual(["/", "/libraries", "/series"]);
   });
 });
 

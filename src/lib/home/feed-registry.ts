@@ -7,10 +7,12 @@ import {
   type FeedPage,
   type HomeFeed,
   type HomeFeedItems,
+  type HomeFeedPolicy,
+  type HomeFeedViewer,
 } from "./feed-page";
 
 /**
- * Règle de chargement d'un flux.
+ * Entrée du registre : la politique de la rangée et sa règle de chargement.
  *
  * `probe` : le provider accepte une limite ; on demande `offset + pageSize + 1`
  * pour savoir s'il reste une page sans requête de comptage.
@@ -18,66 +20,108 @@ import {
  * découpant, sans exposer la collection complète au rendu.
  */
 interface ProbeFeed<T> {
+  policy: HomeFeedPolicy;
   pageRule: "probe";
-  load: (provider: IMediaProvider, limit: number) => Promise<readonly T[]>;
+  load: (provider: IMediaProvider, viewer: HomeFeedViewer, limit: number) => Promise<readonly T[]>;
 }
 
 interface SliceFeed<T> {
+  policy: HomeFeedPolicy;
   pageRule: "slice";
-  load: (provider: IMediaProvider) => Promise<readonly T[]>;
+  load: (provider: IMediaProvider, viewer: HomeFeedViewer) => Promise<readonly T[]>;
 }
 
 type FeedDefinition<T> = ProbeFeed<T> | SliceFeed<T>;
 
+/** Rangée personnelle : masquée en anonyme, comptée dans la règle d'échec. */
+export const PERSONAL_FEED_POLICY: HomeFeedPolicy = {
+  anonymous: "hide",
+  initial: "eager",
+  onFailure: "empty",
+  countsTowardOutage: true,
+};
+
+/** Rangée de catalogue : visible en anonyme, comptée dans la règle d'échec. */
+const CATALOG_FEED_POLICY: HomeFeedPolicy = {
+  anonymous: "load",
+  initial: "eager",
+  onFailure: "empty",
+  countsTowardOutage: true,
+};
+
 const feeds = {
   ongoing: {
+    policy: PERSONAL_FEED_POLICY,
     pageRule: "probe",
-    load: (provider, limit) => provider.getHomeOngoingSeries(limit),
+    load: (provider, _viewer, limit) => provider.getHomeOngoingSeries(limit),
   },
   favorites: {
+    // Les favoris restent visibles en anonyme et ne prouvent pas que le
+    // provider répond : ils ne comptent pas dans la règle « tout a échoué ».
+    policy: { ...CATALOG_FEED_POLICY, countsTowardOutage: false },
     pageRule: "slice",
-    load: () => FavoriteService.listFavorites(),
+    // L'identité vient de l'appelant (gateway ou runner, ADR 0029).
+    load: (provider, { userId }) => FavoriteService.listFavorites({ userId, provider }),
   },
   "reading-lists": {
+    policy: CATALOG_FEED_POLICY,
     pageRule: "slice",
     load: (provider) => provider.capabilities.readingLists
       ? provider.capabilities.readingLists.getReadingLists()
       : Promise.resolve([]),
   },
   "latest-series": {
+    policy: CATALOG_FEED_POLICY,
     pageRule: "probe",
-    load: (provider, limit) => provider.getHomeLatestSeries(limit),
+    load: (provider, _viewer, limit) => provider.getHomeLatestSeries(limit),
   },
   "recently-read": {
+    policy: CATALOG_FEED_POLICY,
     pageRule: "probe",
-    load: (provider, limit) => provider.getHomeRecentlyRead(limit),
+    load: (provider, _viewer, limit) => provider.getHomeRecentlyRead(limit),
   },
   recommendations: {
+    // Chargées par le client après le premier rendu : hors règle d'échec.
+    policy: {
+      ...PERSONAL_FEED_POLICY,
+      initial: "deferred",
+      countsTowardOutage: false,
+    },
     pageRule: "probe",
-    load: (provider, limit) => provider.capabilities.discovery
+    load: (provider, _viewer, limit) => provider.capabilities.discovery
       ? provider.capabilities.discovery.getRecommendations(limit)
       : Promise.resolve([]),
   },
 } satisfies { [F in HomeFeed]: FeedDefinition<HomeFeedItems[F]> };
 
+/** Flux de rangée, dans l'ordre de déclaration du registre. */
+export const HOME_FEEDS = Object.keys(feeds) as HomeFeed[];
+
+/** Politique déclarée par l'entrée de registre d'un flux. */
+export function homeFeedPolicy(feed: HomeFeed): HomeFeedPolicy {
+  return feeds[feed].policy;
+}
+
 /**
- * Charge une page d'un flux de l'accueil.
+ * Charge une page d'un flux de l'accueil, sans appliquer la politique.
  *
- * Le registre possède la seule politique de pagination : le rendu initial et
- * les actions « Voir plus » passent tous par ici, et chaque flux ne déclare
- * que son loader et sa règle de page.
+ * Le registre possède la seule règle de pagination : le rendu initial et
+ * les actions « Voir plus » passent tous par ici (via `home-feeds.ts`), et
+ * chaque flux ne déclare que sa politique, son loader et sa règle de page.
+ * Les erreurs provider remontent ; `home-feeds.ts` applique `onFailure`.
  */
 export async function loadHomeFeedPage<F extends HomeFeed>(
   provider: IMediaProvider,
   feed: F,
   offset: number,
+  viewer: HomeFeedViewer,
   pageSize = HOME_FEED_PAGE_SIZE
 ): Promise<FeedPage<HomeFeedItems[F]>> {
   const definition = feeds[feed] as unknown as FeedDefinition<HomeFeedItems[F]>;
   const items =
     definition.pageRule === "probe"
-      ? await definition.load(provider, probeLimit(offset, pageSize))
-      : await definition.load(provider);
+      ? await definition.load(provider, viewer, probeLimit(offset, pageSize))
+      : await definition.load(provider, viewer);
 
   return paginateFeed(items, offset, pageSize);
 }

@@ -5,9 +5,10 @@ import { StaggerGroup, StaggerItem } from "@/components/motion";
 import { useTranslate } from "@/hooks/useTranslate";
 import { cn } from "@/lib/utils";
 import { BookCard } from "./BookCard";
+import type { DisplayBook } from "./bookGrouping";
 
 interface BookListProps {
-  books: NormalizedBook[];
+  books: DisplayBook[];
   onBookClick: (book: NormalizedBook) => void;
   isCompact?: boolean;
 }
@@ -25,10 +26,10 @@ export function BookList({ books, onBookClick, isCompact = false }: BookListProp
 
   return (
     <StaggerGroup className={cn("space-y-2", isCompact && "space-y-1")} reveal="scroll">
-      {books.map((book) => (
-        <StaggerItem key={book.id}>
+      {books.map((item) => (
+        <StaggerItem key={item.key}>
           <BookCard
-            book={book}
+            item={item}
             layout="list"
             onBookClick={onBookClick}
             isCompact={isCompact}

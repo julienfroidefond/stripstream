@@ -11,6 +11,8 @@ import type { NormalizedBook, NormalizedSeries } from "@/lib/providers/types";
 import type { HomePrimaryData } from "@/types/home";
 import { loadContinueReadingPage } from "./continue-reading-feed";
 
+const VIEWER = { userId: 7 };
+
 type ContinueReadingData = Pick<HomePrimaryData, "ongoingBooks" | "onDeck">;
 
 function series(
@@ -84,7 +86,7 @@ describe("loadContinueReadingPage — pagination policy", () => {
   it("probes one item past the first page", async () => {
     const provider = makeProvider(source([], books(20)));
 
-    const page = await loadContinueReadingPage(provider, 0, {
+    const page = await loadContinueReadingPage(provider, 0, VIEWER, {
       knownSeries: [],
     });
 
@@ -96,7 +98,7 @@ describe("loadContinueReadingPage — pagination policy", () => {
   it("probes from the requested offset", async () => {
     const provider = makeProvider(source([], books(30)));
 
-    const page = await loadContinueReadingPage(provider, 8, {
+    const page = await loadContinueReadingPage(provider, 8, VIEWER, {
       knownSeries: [],
     });
 
@@ -117,7 +119,7 @@ describe("loadContinueReadingPage — pagination policy", () => {
   it("reports the last page when the probe finds no extra item", async () => {
     const provider = makeProvider(source([], books(16)));
 
-    const page = await loadContinueReadingPage(provider, 8, {
+    const page = await loadContinueReadingPage(provider, 8, VIEWER, {
       knownSeries: [],
     });
 
@@ -130,7 +132,7 @@ describe("loadContinueReadingPage — pagination policy", () => {
       source([book("a"), book("b")], [book("b"), book("c")])
     );
 
-    const page = await loadContinueReadingPage(provider, 0, {
+    const page = await loadContinueReadingPage(provider, 0, VIEWER, {
       knownSeries: [series("s1")],
     });
 
@@ -140,7 +142,7 @@ describe("loadContinueReadingPage — pagination policy", () => {
   it("accepts a smaller page size", async () => {
     const provider = makeProvider(source([], books(10)));
 
-    const page = await loadContinueReadingPage(provider, 0, {
+    const page = await loadContinueReadingPage(provider, 0, VIEWER, {
       knownSeries: [series("s1")],
       pageSize: 2,
     });
@@ -153,7 +155,7 @@ describe("loadContinueReadingPage — pagination policy", () => {
   it("returns an empty page without resolving any series", async () => {
     const provider = makeProvider(source());
 
-    const page = await loadContinueReadingPage(provider, 0, {
+    const page = await loadContinueReadingPage(provider, 0, VIEWER, {
       knownSeries: [],
     });
 
@@ -168,7 +170,7 @@ describe("loadContinueReadingPage — series pool", () => {
       source([book("a", { seriesId: "s1" })], [])
     );
 
-    const page = await loadContinueReadingPage(provider, 0, {
+    const page = await loadContinueReadingPage(provider, 0, VIEWER, {
       knownSeries: [series("s1")],
     });
 
@@ -182,7 +184,7 @@ describe("loadContinueReadingPage — series pool", () => {
       source([book("a", { seriesId: "s2" })], [])
     );
 
-    const page = await loadContinueReadingPage(provider, 0, {
+    const page = await loadContinueReadingPage(provider, 0, VIEWER, {
       knownSeries: [series("s1")],
     });
 
@@ -197,7 +199,7 @@ describe("loadContinueReadingPage — series pool", () => {
       }),
     });
 
-    const page = await loadContinueReadingPage(provider, 0, {
+    const page = await loadContinueReadingPage(provider, 0, VIEWER, {
       knownSeries: [series("s1")],
     });
 
@@ -211,7 +213,7 @@ describe("loadContinueReadingPage — series pool", () => {
       source([book("a", { seriesId: "s1" })], [])
     );
 
-    const page = await loadContinueReadingPage(provider, 0, {
+    const page = await loadContinueReadingPage(provider, 0, VIEWER, {
       knownSeries: Promise.resolve([series("s1")]),
     });
 
@@ -224,7 +226,7 @@ describe("loadContinueReadingPage — series pool", () => {
       getHomeOngoingSeries: vi.fn(async () => [series("s1")]),
     });
 
-    const page = await loadContinueReadingPage(provider, 0);
+    const page = await loadContinueReadingPage(provider, 0, VIEWER);
 
     expect(provider.getHomeOngoingSeries).toHaveBeenCalledWith(9);
     expect(provider.getSeriesById).not.toHaveBeenCalled();
@@ -246,7 +248,7 @@ describe("loadContinueReadingPage — progress", () => {
       )
     );
 
-    const page = await loadContinueReadingPage(provider, 0, {
+    const page = await loadContinueReadingPage(provider, 0, VIEWER, {
       knownSeries: [series("s1")],
     });
 

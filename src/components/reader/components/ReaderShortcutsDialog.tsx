@@ -8,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { arrowGlyphForAction } from "@/lib/reader/side-actions";
 
 interface ReaderShortcutsDialogProps {
   open: boolean;
@@ -69,9 +70,10 @@ export function ReaderShortcutsDialog({
 }: ReaderShortcutsDialogProps) {
   const { t } = useTranslation();
 
-  // Les flèches restent spatiales : en RTL, « précédent » est à droite.
-  const previousArrow = isRTL ? "→" : "←";
-  const nextArrow = isRTL ? "←" : "→";
+  // Les flèches restent spatiales : la politique de côtés place « précédent ».
+  const direction = isRTL ? "rtl" : "ltr";
+  const previousArrow = arrowGlyphForAction("previous", direction);
+  const nextArrow = arrowGlyphForAction("next", direction);
 
   const groups: ShortcutGroup[] = [
     {

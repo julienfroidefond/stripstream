@@ -14,10 +14,6 @@ export interface BaseCoverProps {
 
 export interface BookCoverProps extends BaseCoverProps {
   book: NormalizedBook;
-  onSuccess?: (book: NormalizedBook, action: "read" | "unread") => void;
-  showControls?: boolean;
-  showOverlay?: boolean;
-  overlayVariant?: "default" | "home";
 }
 
 export interface SeriesCoverProps extends BaseCoverProps {

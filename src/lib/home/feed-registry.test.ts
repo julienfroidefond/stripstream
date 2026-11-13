@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("@/lib/services/favorite.service", () => ({
   FavoriteService: { listFavorites: vi.fn() },
 }));
+vi.mock("@/lib/logger", () => ({ default: { warn: vi.fn(), error: vi.fn() } }));
+
 
 import { FavoriteService } from "@/lib/services/favorite.service";
 import {
@@ -15,7 +17,10 @@ import type {
   NormalizedReadingList,
   NormalizedSeries,
 } from "@/lib/providers/types";
-import { loadHomeFeedPage } from "./feed-registry";
+import { HOME_FEEDS, homeFeedPolicy, loadHomeFeedPage } from "./feed-registry";
+import { loadHomeFeeds, loadNextHomeFeedPage } from "./home-feeds";
+
+const VIEWER = { userId: 7 };
 
 function series(id: string): NormalizedSeries {
   return {
@@ -80,6 +85,8 @@ function makeProvider(
     getHomeOngoingSeries: vi.fn(async () => []),
     getHomeLatestSeries: vi.fn(async () => []),
     getHomeRecentlyRead: vi.fn(async () => []),
+    getHomeContinueReadingData: vi.fn(async () => ({ onDeck: [], ongoingBooks: [] })),
+    getSeriesById: vi.fn(async (id: string) => series(id)),
     capabilities: createProviderCapabilities(capabilities),
     ...overrides,
   } as unknown as IMediaProvider;
@@ -96,7 +103,7 @@ describe("loadHomeFeedPage — offset feeds", () => {
       getHomeOngoingSeries: vi.fn(async () => seriesList(9)),
     });
 
-    const page = await loadHomeFeedPage(provider, "ongoing", 0);
+    const page = await loadHomeFeedPage(provider, "ongoing", 0, VIEWER);
 
     expect(provider.getHomeOngoingSeries).toHaveBeenCalledWith(9);
     expect(page.items.map((item) => item.id)).toEqual([
@@ -117,7 +124,7 @@ describe("loadHomeFeedPage — offset feeds", () => {
       getHomeLatestSeries: vi.fn(async () => seriesList(17)),
     });
 
-    const page = await loadHomeFeedPage(provider, "latest-series", 8);
+    const page = await loadHomeFeedPage(provider, "latest-series", 8, VIEWER);
 
     expect(provider.getHomeLatestSeries).toHaveBeenCalledWith(17);
     expect(page.items.map((item) => item.id)).toEqual([
@@ -138,7 +145,7 @@ describe("loadHomeFeedPage — offset feeds", () => {
       getHomeRecentlyRead: vi.fn(async () => bookList(9)),
     });
 
-    const page = await loadHomeFeedPage(provider, "recently-read", 8);
+    const page = await loadHomeFeedPage(provider, "recently-read", 8, VIEWER);
 
     expect(provider.getHomeRecentlyRead).toHaveBeenCalledWith(17);
     expect(page.items.map((item) => item.id)).toEqual(["8"]);
@@ -150,7 +157,7 @@ describe("loadHomeFeedPage — offset feeds", () => {
       getHomeOngoingSeries: vi.fn(async () => seriesList(9)),
     });
 
-    const page = await loadHomeFeedPage(provider, "ongoing", -3);
+    const page = await loadHomeFeedPage(provider, "ongoing", -3, VIEWER);
 
     expect(provider.getHomeOngoingSeries).toHaveBeenCalledWith(9);
     expect(page.items[0]?.id).toBe("0");
@@ -172,10 +179,10 @@ describe("loadHomeFeedPage — offset feeds", () => {
       }
     );
 
-    await loadHomeFeedPage(provider, "ongoing", 0);
-    await loadHomeFeedPage(provider, "latest-series", 0);
-    await loadHomeFeedPage(provider, "recently-read", 0);
-    await loadHomeFeedPage(provider, "recommendations", 0);
+    await loadHomeFeedPage(provider, "ongoing", 0, VIEWER);
+    await loadHomeFeedPage(provider, "latest-series", 0, VIEWER);
+    await loadHomeFeedPage(provider, "recently-read", 0, VIEWER);
+    await loadHomeFeedPage(provider, "recommendations", 0, VIEWER);
 
     expect(provider.getHomeOngoingSeries).toHaveBeenCalledWith(9);
     expect(provider.getHomeLatestSeries).toHaveBeenCalledWith(9);
@@ -189,9 +196,9 @@ describe("loadHomeFeedPage — bounded collection feeds", () => {
     vi.mocked(FavoriteService.listFavorites).mockResolvedValue(seriesList(10));
     const provider = makeProvider();
 
-    const page = await loadHomeFeedPage(provider, "favorites", 0);
+    const page = await loadHomeFeedPage(provider, "favorites", 0, VIEWER);
 
-    expect(FavoriteService.listFavorites).toHaveBeenCalledWith();
+    expect(FavoriteService.listFavorites).toHaveBeenCalledWith({ userId: 7, provider });
     expect(page.items).toHaveLength(8);
     expect(page.hasMore).toBe(true);
   });
@@ -199,7 +206,7 @@ describe("loadHomeFeedPage — bounded collection feeds", () => {
   it("returns the next favorites page", async () => {
     vi.mocked(FavoriteService.listFavorites).mockResolvedValue(seriesList(10));
 
-    const page = await loadHomeFeedPage(makeProvider(), "favorites", 8);
+    const page = await loadHomeFeedPage(makeProvider(), "favorites", 8, VIEWER);
 
     expect(page.items.map((item) => item.id)).toEqual(["8", "9"]);
     expect(page.hasMore).toBe(false);
@@ -217,10 +224,168 @@ describe("loadHomeFeedPage — bounded collection feeds", () => {
       }
     );
 
-    const page = await loadHomeFeedPage(provider, "reading-lists", 0);
+    const page = await loadHomeFeedPage(provider, "reading-lists", 0, VIEWER);
 
     expect(getReadingLists).toHaveBeenCalledWith();
     expect(page.items).toHaveLength(8);
     expect(page.hasMore).toBe(true);
+  });
+});
+
+describe("registry policy", () => {
+  it("declares a policy for every row feed", () => {
+    for (const feed of HOME_FEEDS) {
+      expect(homeFeedPolicy(feed).onFailure).toBe("empty");
+    }
+    expect(homeFeedPolicy("ongoing").anonymous).toBe("hide");
+    expect(homeFeedPolicy("favorites")).toMatchObject({
+      anonymous: "load",
+      countsTowardOutage: false,
+    });
+    expect(homeFeedPolicy("recommendations").initial).toBe("deferred");
+  });
+});
+
+function failing(): () => Promise<never> {
+  return vi.fn(async () => {
+    throw new Error("provider down");
+  });
+}
+
+describe("loadHomeFeeds — anonymous mode", () => {
+  it("does not query hidden feeds and settles them as hidden", async () => {
+    const provider = makeProvider({
+      getHomeLatestSeries: vi.fn(async () => seriesList(2)),
+    });
+
+    const { feeds, outage } = loadHomeFeeds(provider, { isAnonymous: true, userId: 7 });
+
+    expect(provider.getHomeOngoingSeries).not.toHaveBeenCalled();
+    expect(provider.getHomeContinueReadingData).not.toHaveBeenCalled();
+    await expect(feeds.ongoing).resolves.toEqual({
+      status: "hidden",
+      page: { items: [], hasMore: false },
+    });
+    await expect(feeds["continue-reading"]).resolves.toMatchObject({
+      status: "hidden",
+    });
+    await expect(feeds.recommendations).resolves.toMatchObject({
+      status: "hidden",
+    });
+    await expect(feeds["latest-series"]).resolves.toMatchObject({
+      status: "loaded",
+      page: { items: seriesList(2), hasMore: false },
+    });
+    await expect(outage).resolves.toBe(false);
+  });
+
+  it("returns an empty next page for a hidden feed without a request", async () => {
+    const provider = makeProvider();
+
+    await expect(
+      loadNextHomeFeedPage(provider, "continue-reading", 8, { isAnonymous: true, userId: 7 })
+    ).resolves.toEqual({ items: [], hasMore: false });
+    expect(provider.getHomeContinueReadingData).not.toHaveBeenCalled();
+  });
+
+  it("loads the next page of a visible feed", async () => {
+    const provider = makeProvider({
+      getHomeLatestSeries: vi.fn(async () => seriesList(10)),
+    });
+
+    const page = await loadNextHomeFeedPage(provider, "latest-series", 8, {
+      isAnonymous: true,
+      userId: 7,
+    });
+
+    expect(page.items.map((item) => item.id)).toEqual(["8", "9"]);
+  });
+});
+
+describe("loadHomeFeeds — failures", () => {
+  it("renders a failing feed empty and keeps the others", async () => {
+    const provider = makeProvider({
+      getHomeOngoingSeries: vi.fn(async () => [series("s1")]),
+      getHomeLatestSeries: failing(),
+      getHomeContinueReadingData: vi.fn(async () => ({
+        onDeck: [{ ...book("b1"), seriesId: "s1" }],
+        ongoingBooks: [],
+      })),
+    });
+
+    const { feeds, outage } = loadHomeFeeds(provider, { isAnonymous: false, userId: 7 });
+
+    await expect(feeds["latest-series"]).resolves.toEqual({
+      status: "failed",
+      page: { items: [], hasMore: false },
+    });
+    const hero = await feeds["continue-reading"];
+    expect(hero.status).toBe("loaded");
+    expect(hero.page.items[0]?.series?.id).toBe("s1");
+    // Le hero réutilise le pool « ongoing » déjà chargé.
+    expect(provider.getHomeOngoingSeries).toHaveBeenCalledTimes(1);
+    await expect(feeds.recommendations).resolves.toMatchObject({
+      status: "deferred",
+    });
+    await expect(outage).resolves.toBe(false);
+  });
+
+  it("reports an outage when every counted feed failed", async () => {
+    vi.mocked(FavoriteService.listFavorites).mockResolvedValue(seriesList(2));
+    const provider = makeProvider({
+      getHomeOngoingSeries: failing(),
+      getHomeLatestSeries: failing(),
+      getHomeRecentlyRead: failing(),
+      getHomeContinueReadingData: failing(),
+    }, {
+      readingLists: {
+        getReadingLists: failing(),
+        getReadingListDetail: vi.fn(async () => null),
+      },
+    });
+
+    const { feeds, outage } = loadHomeFeeds(provider, { isAnonymous: false, userId: 7 });
+
+    await expect(outage).resolves.toBe(true);
+    // Les favoris ne masquent pas la panne du provider, mais restent rendus.
+    await expect(feeds.favorites).resolves.toMatchObject({
+      status: "loaded",
+      page: { items: seriesList(2) },
+    });
+  });
+
+  it("does not report an outage when only favorites failed", async () => {
+    vi.mocked(FavoriteService.listFavorites).mockRejectedValue(new Error("db"));
+    const provider = makeProvider();
+
+    const { feeds, outage } = loadHomeFeeds(provider, { isAnonymous: false, userId: 7 });
+
+    await expect(feeds.favorites).resolves.toMatchObject({ status: "failed" });
+    await expect(outage).resolves.toBe(false);
+  });
+
+  it("counts only visible feeds in anonymous mode", async () => {
+    const provider = makeProvider({
+      getHomeLatestSeries: failing(),
+      getHomeRecentlyRead: failing(),
+    });
+
+    const { outage } = loadHomeFeeds(provider, { isAnonymous: true, userId: 7 });
+
+    // Sans capacité de listes, la rangée se charge vide : pas de panne totale.
+    await expect(outage).resolves.toBe(false);
+
+    const allDown = makeProvider(
+      { getHomeLatestSeries: failing(), getHomeRecentlyRead: failing() },
+      {
+        readingLists: {
+          getReadingLists: failing(),
+          getReadingListDetail: vi.fn(async () => null),
+        },
+      }
+    );
+    await expect(
+      loadHomeFeeds(allDown, { isAnonymous: true, userId: 7 }).outage
+    ).resolves.toBe(true);
   });
 });

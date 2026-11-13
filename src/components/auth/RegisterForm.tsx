@@ -64,7 +64,7 @@ export function RegisterForm({ from }: RegisterFormProps) {
 
       if (!result.success) {
         setError({
-          code: "AUTH_REGISTRATION_FAILED",
+          code: result.code,
           name: "Registration failed",
           message: result.message,
         });

@@ -24,5 +24,15 @@ Decisions that shaped the current architecture and would be expensive or surpris
 | [0018](./0018-durable-rate-limit-store.md) | Rate-limit counters live in a shared store behind one seam. |
 | [0019](./0019-capability-owns-its-data.md) | A required capability owns its data and is handed to the loader. |
 | [0020](./0020-drop-dead-schema-columns.md) | Dead schema columns are dropped, not documented. |
+| [0021](./0021-one-pagination-contract.md) | Paginated provider lists share one page-number contract. |
+| [0022](./0022-reader-side-actions-policy.md) | Reader side actions and the prefetch plan are pure policies. |
+| [0023](./0023-every-action-through-the-runner.md) | Every server action runs through the runner, admin authorization included. |
+| [0024](./0024-read-progress-mutation-seam.md) | Read progress has one client mutation seam. |
+| [0025](./0025-wall-camera-speaks-in-intentions.md) | The wall camera speaks in intentions, the pointer machine is pure. |
+| [0026](./0026-home-feed-policy-in-registry.md) | The home feed policy is declared by the registry. |
+| [0027](./0027-media-addressed-and-cached-by-kind.md) | Media is addressed and cached by kind. |
+| [0028](./0028-one-cache-profile-producer.md) | Cache profiles are produced in one place. |
+| [0029](./0029-services-receive-the-caller-identity.md) | Services receive the caller's identity instead of reading the session. |
+| [0030](./0030-provider-registry-for-connections.md) | A provider registry owns what differs between connection types. |
 
 New records use the next number and the same shape: a short title, one paragraph of context/decision/why, and optional `Considered options` / `Consequences` sections.

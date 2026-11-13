@@ -1,155 +1,89 @@
-import prisma from "@/lib/prisma";
-import { buildKomgaAuthHeader, encryptSecret } from "@/lib/credentials";
 import { invalidateConnectionChange } from "@/lib/cache/invalidation";
 import { ERROR_CODES } from "@/constants/errorCodes";
+import type { ProviderType } from "@/lib/providers/types";
 import { AppError } from "@/utils/errors";
 import { normalizeServerUrl } from "@/utils/server-url";
 import { getActiveConnection, setActiveConnection } from "./active";
-import type {
-  ConnectionLists,
-  SaveConnectionInput,
-} from "./types";
+import { validateConnectionInput } from "./descriptors";
+import { definitionFor, getProviderDefinition, providerDefinitions } from "./registry";
+import type { ConnectionInput, ConnectionLists } from "./types";
 
 /**
- * Lecture des deux listes en un appel. L'état actif vient de la sélection
+ * Lecture de toutes les listes en un appel. L'état actif vient de la sélection
  * navigateur ; aucune colonne serveur ne porte plus cette information.
  */
 export async function listConnections(userId: number): Promise<ConnectionLists> {
-  const [komgaConfigs, stripstreamConfigs, activeConnection] = await Promise.all([
-    prisma.komgaConfig.findMany({
-      where: { userId },
-      orderBy: { createdAt: "asc" },
-      select: { id: true, name: true, url: true, username: true },
-    }),
-    prisma.stripstreamConfig.findMany({
-      where: { userId },
-      orderBy: { createdAt: "asc" },
-      select: { id: true, name: true, url: true },
-    }),
+  const definitions = providerDefinitions();
+  const [activeConnection, ...rows] = await Promise.all([
     getActiveConnection(userId),
-  ]);
+    ...definitions.map((definition) => definition.store.list(userId)),
+  ] as const);
 
-  return {
-    komga: komgaConfigs.map((config) => ({
+  const entries = definitions.map((definition, index) => [
+    definition.provider,
+    rows[index].map((config) => ({
       ...config,
       isActive:
-        activeConnection.provider === "komga" && activeConnection.configId === config.id,
-    })),
-    stripstream: stripstreamConfigs.map((config) => ({
-      ...config,
-      isActive:
-        activeConnection.provider === "stripstream" &&
+        activeConnection.provider === definition.provider &&
         activeConnection.configId === config.id,
     })),
-  };
+  ]);
+  // Une entrée par définition, dans l'ordre du registre exhaustif : l'objet a
+  // la forme de `ConnectionLists`, ce que `Object.fromEntries` ne sait pas typer.
+  return Object.fromEntries(entries) as ConnectionLists;
 }
 
 /**
- * Crée ou met à jour une config. Le secret est toujours chiffré ici : aucun
- * appelant ne manipule la colonne `authHeader` / `token` en clair.
+ * Crée ou met à jour une config. Le secret est toujours chiffré par la
+ * définition du provider : aucun appelant ne manipule la colonne en clair.
  *
  * - Sans `id` : création. Une config absente de cookie reste utilisable via le
  *   fallback « première config » de `resolve`.
  * - Avec `id` : mise à jour. Un secret vide conserve la valeur existante.
  *
- * Retourne `null` si la config à mettre à jour n'appartient pas au user.
+ * La saisie est validée et normalisée par le descripteur du provider
+ * (`CONFIG_INVALID_INPUT`), puis l'URL par `normalizeServerUrl`
+ * (`CONFIG_INVALID_URL`). Retourne `null` si la config
+ * à mettre à jour n'appartient pas au user.
  */
 export async function saveConnection(
-  input: SaveConnectionInput,
+  input: ConnectionInput,
   userId: number
 ): Promise<{ id: number } | null> {
-  const name = input.name.trim();
-  const url = normalizeServerUrl(input.url.trim());
-  if (!name) throw new AppError(ERROR_CODES.CONFIG.SAVE_ERROR);
+  const validation = validateConnectionInput(input);
+  if (!validation.ok) throw new AppError(validation.code);
+  const normalized = { ...validation.value, url: normalizeServerUrl(validation.value.url) };
+  const definition = definitionFor(normalized);
 
-  if (input.provider === "komga") {
-    const username = input.username.trim();
-    if (!username) throw new AppError(ERROR_CODES.CONFIG.SAVE_ERROR);
-
-    if (input.id) {
-      const existing = await prisma.komgaConfig.findFirst({
-        where: { id: input.id, userId },
-        select: { authHeader: true },
-      });
-      if (!existing) return null;
-
-      const authHeader = input.password
-        ? encryptSecret(buildKomgaAuthHeader(username, input.password))
-        : existing.authHeader;
-
-      await prisma.komgaConfig.update({
-        where: { id: input.id },
-        data: { name, url, username, authHeader },
-      });
-      invalidateConnectionChange();
-      return { id: input.id };
-    }
-
-    if (!input.password) throw new AppError(ERROR_CODES.CONFIG.SAVE_ERROR);
-
-    const created = await prisma.komgaConfig.create({
-      data: {
-        userId,
-        name,
-        url,
-        username,
-        authHeader: encryptSecret(buildKomgaAuthHeader(username, input.password)),
-      },
-    });
-    invalidateConnectionChange();
-    return { id: created.id };
-  }
-
-  if (input.id) {
-    const existing = await prisma.stripstreamConfig.findFirst({
-      where: { id: input.id, userId },
-      select: { token: true },
-    });
+  if (normalized.id) {
+    const existing = await definition.store.findOwned(userId, normalized.id);
     if (!existing) return null;
 
-    const tokenInput = input.token?.trim();
-    const token = tokenInput ? encryptSecret(tokenInput) : existing.token;
-
-    await prisma.stripstreamConfig.update({
-      where: { id: input.id },
-      data: { name, url, token },
-    });
+    const secret = definition.encodeSecret(normalized, existing.secret);
+    if (!secret) throw new AppError(ERROR_CODES.CONFIG.INVALID_INPUT);
+    await definition.store.update(normalized.id, normalized, secret);
     invalidateConnectionChange();
-    return { id: input.id };
+    return { id: normalized.id };
   }
 
-  const tokenInput = input.token?.trim();
-  if (!tokenInput) throw new AppError(ERROR_CODES.CONFIG.SAVE_ERROR);
-
-  const created = await prisma.stripstreamConfig.create({
-    data: { userId, name, url, token: encryptSecret(tokenInput) },
-  });
+  const secret = definition.encodeSecret(normalized, null);
+  if (!secret) throw new AppError(ERROR_CODES.CONFIG.INVALID_INPUT);
+  const created = await definition.store.create(userId, normalized, secret);
   invalidateConnectionChange();
   return { id: created.id };
 }
 
 /** Supprime une config possédée par le user. Retourne `false` si elle n'existe pas. */
 export async function deleteConnection(
-  provider: "komga" | "stripstream",
+  provider: ProviderType,
   id: number,
   userId: number
 ): Promise<boolean> {
-  if (provider === "komga") {
-    const config = await prisma.komgaConfig.findFirst({
-      where: { id, userId },
-      select: { id: true },
-    });
-    if (!config) return false;
-    await prisma.komgaConfig.delete({ where: { id } });
-  } else {
-    const config = await prisma.stripstreamConfig.findFirst({
-      where: { id, userId },
-      select: { id: true },
-    });
-    if (!config) return false;
-    await prisma.stripstreamConfig.delete({ where: { id } });
-  }
+  const { store } = getProviderDefinition(provider);
+  const config = await store.findLabel(userId, id);
+  if (!config) return false;
 
+  await store.remove(id);
   invalidateConnectionChange();
   return true;
 }
@@ -159,21 +93,11 @@ export async function deleteConnection(
  * cookies restent la source de sélection ; la DB ne fournit que les détails.
  */
 export async function activateConnection(
-  provider: "komga" | "stripstream",
+  provider: ProviderType,
   id: number,
   userId: number
 ): Promise<{ id: number; name: string } | null> {
-  const config =
-    provider === "komga"
-      ? await prisma.komgaConfig.findFirst({
-          where: { id, userId },
-          select: { id: true, name: true },
-        })
-      : await prisma.stripstreamConfig.findFirst({
-          where: { id, userId },
-          select: { id: true, name: true },
-        });
-
+  const config = await getProviderDefinition(provider).store.findLabel(userId, id);
   if (!config) return null;
 
   await setActiveConnection(provider, id);

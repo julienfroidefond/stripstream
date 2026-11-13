@@ -324,9 +324,7 @@ export function SeriesMutationsProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <SeriesMutationsContext.Provider value={contextValue}>
-      {children}
-    </SeriesMutationsContext.Provider>
+    <SeriesMutationsContext.Provider value={contextValue}>{children}</SeriesMutationsContext.Provider>
   );
 }
 

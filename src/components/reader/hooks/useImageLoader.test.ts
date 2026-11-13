@@ -215,6 +215,36 @@ describe("useImageLoader", () => {
     });
   });
 
+  it("does not retry a failed next-book page on every page change", async () => {
+    vi.useFakeTimers();
+    fetchMock.mockImplementation(async (url: string) =>
+      url === "/next/1" ? { ok: false, status: 500 } : makeResponse()
+    );
+    const nextBook = { getPageUrl: (pageNum: number) => `/next/${pageNum}`, pages: [] };
+    const props = makeProps({ currentPage: 3, pages: [1, 2, 3, 4], prefetchCount: 1, nextBook });
+    const { rerender } = renderHook((p: LoaderProps) => useImageLoader(p), { initialProps: props });
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(800);
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1600);
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    const nextCalls = () => fetchMock.mock.calls.filter(([url]) => url === "/next/1").length;
+    expect(nextCalls()).toBe(3);
+
+    rerender({ ...props, currentPage: 4 });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3000);
+    });
+
+    expect(nextCalls()).toBe(3);
+  });
+
   it("exposes a decode error and clears it on retry", async () => {
     vi.useFakeTimers();
     fetchMock

@@ -19,6 +19,12 @@ type CapabilityField<C extends ProviderCapabilityKey | undefined> =
     : { capability?: undefined };
 
 export type SurfaceContext<C extends ProviderCapabilityKey | undefined = undefined> = {
+  /**
+   * Utilisateur résolu par la gateway : une surface `ready` a toujours une
+   * session. Le loader le passe aux services au lieu qu'ils relisent la
+   * session (ADR 0029).
+   */
+  userId: number;
   provider: IMediaProvider;
   preferences: UserPreferences;
   isAnonymous: boolean;
@@ -36,8 +42,10 @@ export type SurfaceResult<
   | { status: "error"; code: ErrorCode };
 
 export interface SurfaceLoaderDependencies {
+  /** Seule lecture de la session par la gateway ; `null` sans session. */
+  getCurrentUserId: () => Promise<number | null>;
   getProvider: () => Promise<IMediaProvider | null>;
-  getPreferences: () => Promise<UserPreferences>;
+  getPreferences: (userId: number) => Promise<UserPreferences>;
   redirect: (url: string) => never;
   /** Laisse passer les erreurs de contrôle de Next (redirect, notFound, bailout dynamique). */
   rethrow: (error: unknown) => void;
@@ -91,9 +99,18 @@ async function resolveSurfaceContext<
   dependencies: SurfaceLoaderDependencies
 ): Promise<Resolution<C>> {
   try {
+    const userId = await dependencies.getCurrentUserId();
+    // Sans session, la fabrique ne construit aucun provider : même terminal
+    // que « aucune configuration », sans lire de préférences.
+    if (userId === null) {
+      return options.missingProvider === "unavailable"
+        ? { status: "unavailable", reason: "no-provider" }
+        : { status: "redirect" };
+    }
+
     const [provider, preferences] = await Promise.all([
       dependencies.getProvider(),
-      dependencies.getPreferences().catch((error: unknown) => {
+      dependencies.getPreferences(userId).catch((error: unknown) => {
         dependencies.rethrow(error);
         // Une préférence illisible ne doit pas masquer une page entière : on
         // rend avec les valeurs par défaut, comme le faisait l'accueil.
@@ -113,6 +130,7 @@ async function resolveSurfaceContext<
     }
 
     const context = {
+      userId,
       provider,
       preferences,
       isAnonymous: preferences.anonymousMode,

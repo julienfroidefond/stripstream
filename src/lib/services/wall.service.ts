@@ -97,7 +97,7 @@ export async function getWallItems(provider: IMediaProvider): Promise<WallItem[]
 
   const settled = await Promise.allSettled(
     libraries.map(async (library) => {
-      const page = await provider.getSeries(library.id, "1", PER_LIBRARY_LIMIT);
+      const page = await provider.getSeries(library.id, 1, PER_LIBRARY_LIMIT);
       return { library, series: page.items };
     })
   );

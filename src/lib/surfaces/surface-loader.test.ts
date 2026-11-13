@@ -23,6 +23,7 @@ function dependencies(
   overrides: Partial<SurfaceLoaderDependencies> = {}
 ): SurfaceLoaderDependencies {
   return {
+    getCurrentUserId: vi.fn(async (): Promise<number | null> => 42),
     getProvider: vi.fn(async () => provider),
     getPreferences: vi.fn(async () => ({ ...defaultPreferences })),
     redirect: vi.fn((url: string): never => {
@@ -61,6 +62,31 @@ describe("loadSurface", () => {
       context: { provider },
     });
     expect(load).toHaveBeenCalledTimes(1);
+  });
+
+  it("hands the session user to the loader and to the preferences read", async () => {
+    const deps = dependencies();
+    const load = vi.fn(async ({ userId }: SurfaceContext) => userId);
+
+    const result = await loadSurfaceWithDependencies(options(load), deps);
+
+    expect(result).toMatchObject({ status: "ready", data: 42, context: { userId: 42 } });
+    expect(deps.getPreferences).toHaveBeenCalledWith(42);
+  });
+
+  it("treats a missing session as a missing provider without reading preferences", async () => {
+    const deps = dependencies({ getCurrentUserId: vi.fn(async () => null) });
+    const load = vi.fn();
+
+    const result = await loadSurfaceWithDependencies(
+      options(load, { missingProvider: "unavailable" }),
+      deps
+    );
+
+    expect(result).toEqual({ status: "unavailable", reason: "no-provider" });
+    expect(deps.getProvider).not.toHaveBeenCalled();
+    expect(deps.getPreferences).not.toHaveBeenCalled();
+    expect(load).not.toHaveBeenCalled();
   });
 
   it("redirects to settings when no provider is configured", async () => {
@@ -119,8 +145,8 @@ describe("loadSurface", () => {
     const ratings = {
       getReadSeries: vi.fn(async () => ({
         items: [],
-        nextCursor: null,
-        totalPages: 0,
+        page: 1,
+        totalPages: 1,
         totalElements: 0,
       })),
       getSeriesRating: vi.fn(async () => null),

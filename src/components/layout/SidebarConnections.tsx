@@ -1,5 +1,4 @@
-import { listKomgaConfigs } from "@/app/actions/config";
-import { listStripstreamConfigs } from "@/app/actions/stripstream-config";
+import { listConnections } from "@/app/actions/connections";
 import { ProviderSwitcher } from "@/components/layout/ProviderSwitcher";
 
 export async function SidebarConnections() {
@@ -8,14 +7,10 @@ export async function SidebarConnections() {
     .catch(() => null);
   if (!user) return null;
 
-  const [komgaConfigs, stripstreamConfigs] = await Promise.all([
-    listKomgaConfigs().catch(() => []),
-    listStripstreamConfigs().catch(() => []),
-  ]);
-  return (
-    <ProviderSwitcher
-      komgaConfigs={komgaConfigs}
-      stripstreamConfigs={stripstreamConfigs}
-    />
-  );
+  // L'échec est déjà journalisé par le runner. On masque le sélecteur plutôt
+  // que d'afficher « aucune connexion » à tort.
+  const result = await listConnections();
+  if (!result.success) return null;
+
+  return <ProviderSwitcher lists={result.lists} />;
 }

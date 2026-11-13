@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
+import { useTranslate } from "@/hooks/useTranslate";
+import { ERROR_CODES } from "@/constants/errorCodes";
 import { Lock } from "lucide-react";
 import type { AdminUserData } from "@/lib/services/admin.service";
 import { resetUserPassword } from "@/app/actions/admin";
@@ -34,32 +36,32 @@ export function ResetPasswordDialog({
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { t } = useTranslate();
+
+  const showError = (code: string) =>
+    toast({
+      variant: "destructive",
+      title: t("common.error"),
+      description: t(`errors.${code}`),
+    });
 
   const handleSubmit = async () => {
     if (!newPassword || !confirmPassword) {
       toast({
         variant: "destructive",
-        title: "Erreur",
-        description: "Veuillez remplir tous les champs",
+        title: t("common.error"),
+        description: t("admin.resetPassword.missingFields"),
       });
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Les mots de passe ne correspondent pas",
-      });
+      showError(ERROR_CODES.AUTH.PASSWORD_MISMATCH);
       return;
     }
 
     if (newPassword.length < 8) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Le mot de passe doit contenir au moins 8 caractères",
-      });
+      showError(ERROR_CODES.AUTH.PASSWORD_TOO_SHORT);
       return;
     }
 
@@ -69,23 +71,20 @@ export function ResetPasswordDialog({
       const result = await resetUserPassword(user.id, newPassword);
 
       if (!result.success) {
-        throw new Error(result.message);
+        showError(result.code);
+        return;
       }
 
       toast({
-        title: "Succès",
-        description: "Le mot de passe a été réinitialisé",
+        title: t("common.success"),
+        description: t("admin.resetPassword.success"),
       });
 
       setNewPassword("");
       setConfirmPassword("");
       onSuccess();
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: error instanceof Error ? error.message : "Une erreur est survenue",
-      });
+    } catch {
+      showError(ERROR_CODES.ADMIN.RESET_PASSWORD_ERROR);
     } finally {
       setIsLoading(false);
     }

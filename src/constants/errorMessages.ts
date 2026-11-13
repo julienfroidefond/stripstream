@@ -30,6 +30,7 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   [ERROR_CODES.AUTH.INVALID_CREDENTIALS]: "Invalid credentials",
   [ERROR_CODES.AUTH.RATE_LIMITED]: "Too many attempts. Please try again later.",
   [ERROR_CODES.AUTH.PASSWORD_NOT_STRONG]: "Password is not strong enough",
+  [ERROR_CODES.AUTH.PASSWORD_TOO_SHORT]: "Password must be at least 8 characters",
   [ERROR_CODES.AUTH.PASSWORD_MISMATCH]: "Passwords do not match",
   [ERROR_CODES.AUTH.EMAIL_EXISTS]: "This email is already in use",
   [ERROR_CODES.AUTH.INVALID_USER_DATA]: "Invalid user data",
@@ -128,6 +129,7 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   [ERROR_CODES.ADMIN.CANNOT_DELETE_SELF]: "You cannot delete your own account",
   [ERROR_CODES.ADMIN.RESET_PASSWORD_ERROR]: "Error resetting password",
   [ERROR_CODES.ADMIN.CANNOT_RESET_OWN_PASSWORD]: "You cannot reset your own password here",
+  [ERROR_CODES.ADMIN.INVALID_ROLES]: "Roles must be a non-empty list of known roles",
 
   // Config
   [ERROR_CODES.CONFIG.INVALID_URL]:
@@ -138,6 +140,8 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   [ERROR_CODES.CONFIG.TEST_ERROR]: "Error testing configuration",
   [ERROR_CODES.CONFIG.DELETE_ERROR]: "Error deleting configuration",
   [ERROR_CODES.CONFIG.ACTIVATE_ERROR]: "Error activating configuration",
+  [ERROR_CODES.CONFIG.INVALID_INPUT]: "Invalid connection input: missing or malformed fields",
+  [ERROR_CODES.CONFIG.DUPLICATE_NAME]: "A connection with this name already exists",
   [ERROR_CODES.CONFIG.TTL_SAVE_ERROR]: "Error saving TTL configuration",
   [ERROR_CODES.CONFIG.TTL_FETCH_ERROR]: "Error fetching TTL configuration",
 
