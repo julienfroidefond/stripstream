@@ -87,7 +87,7 @@ export function PreferencesProvider({
       if (event.feedback === "all") {
         toast({
           title: t("settings.title"),
-          description: t("settings.komga.messages.configSaved"),
+          description: t("settings.messages.configSaved"),
         });
       }
     });
