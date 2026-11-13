@@ -75,6 +75,19 @@ describe("planPrefetch", () => {
     ]);
   });
 
+  it("never asks for a page past the end of a short next book", () => {
+    const plan = planPrefetch(
+      input({ currentPage: 18, prefetchCount: 5, hasNextBook: true, nextBookPageCount: 2 })
+    );
+    expect(plan.nextBook).toEqual([
+      { key: "next-1", page: 1 },
+      { key: "next-2", page: 2 },
+    ]);
+    expect(
+      planPrefetch(input({ currentPage: 18, hasNextBook: true, nextBookPageCount: 0 })).nextBook
+    ).toEqual([]);
+  });
+
   it("ignores the next book when there is none", () => {
     expect(planPrefetch(input({ currentPage: 20 })).nextBook).toEqual([]);
   });

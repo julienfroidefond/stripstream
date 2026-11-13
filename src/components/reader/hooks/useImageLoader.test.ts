@@ -198,7 +198,7 @@ describe("useImageLoader", () => {
   it("prefetches the next book when the current book nears its end", async () => {
     const nextBook = {
       getPageUrl: (pageNum: number) => `/next/${pageNum}`,
-      pages: [],
+      pageCount: 10,
     };
     renderLoader({
       currentPage: 3,
@@ -220,7 +220,7 @@ describe("useImageLoader", () => {
     fetchMock.mockImplementation(async (url: string) =>
       url === "/next/1" ? { ok: false, status: 500 } : makeResponse()
     );
-    const nextBook = { getPageUrl: (pageNum: number) => `/next/${pageNum}`, pages: [] };
+    const nextBook = { getPageUrl: (pageNum: number) => `/next/${pageNum}`, pageCount: 10 };
     const props = makeProps({ currentPage: 3, pages: [1, 2, 3, 4], prefetchCount: 1, nextBook });
     const { rerender } = renderHook((p: LoaderProps) => useImageLoader(p), { initialProps: props });
 

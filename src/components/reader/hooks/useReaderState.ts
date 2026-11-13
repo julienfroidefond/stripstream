@@ -51,7 +51,7 @@ export function useReaderState({ book, pages, onClose, onBackToSeries, nextBook 
   );
 
   const nextBookForLoader = useMemo(
-    () => nextBook ? { getPageUrl: nextBookPageUrlBuilder, pages: [] as number[] } : null,
+    () => nextBook ? { getPageUrl: nextBookPageUrlBuilder, pageCount: nextBook.pageCount } : null,
     [nextBook, nextBookPageUrlBuilder]
   );
 
