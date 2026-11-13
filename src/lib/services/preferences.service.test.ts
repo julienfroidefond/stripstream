@@ -35,7 +35,6 @@ function row(overrides: Partial<PreferencesRow> = {}): PreferencesRow {
     readerPrefetchCount: 5,
     readingDirection: "ltr",
     readerBackground: "default",
-    readerFitMode: "fit",
     readerDoublePageMode: false,
     readerPageTurn: true,
     defaultSortOrder: "title",

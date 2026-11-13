@@ -12,7 +12,7 @@ import type {
 
 /**
  * Lecture des deux listes en un appel. L'état actif vient de la sélection
- * navigateur, jamais des colonnes legacy `User.activeProvider*`.
+ * navigateur ; aucune colonne serveur ne porte plus cette information.
  */
 export async function listConnections(userId: number): Promise<ConnectionLists> {
   const [komgaConfigs, stripstreamConfigs, activeConnection] = await Promise.all([
