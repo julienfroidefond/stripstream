@@ -233,6 +233,35 @@ describe("stepWallPointer", () => {
     expect(state.pointers).toEqual([]);
   });
 
+  it("forgets a control pointer when the last wall finger ends the sequence", () => {
+    // Finger 1 pans the wall, finger 2 rests on a control. Lifting finger 1
+    // detaches the window listeners, so finger 2's pointerup never arrives:
+    // it must not stay ignored and block every later gesture.
+    const first = run([
+      [down(1, 100, 100), 0],
+      [down(2, 300, 300, { onUi: true }), 5],
+      [up(1, 100, 100), 10],
+    ]);
+    expect(first.state.ignored).toEqual([]);
+    expect(first.state.attached).toBe(false);
+    expect(types(first.effects)).toContain("detach");
+
+    const next = run(
+      [
+        [down(3, 50, 50), 1000],
+        [move(3, 120, 50), 1010],
+      ],
+      first.state
+    );
+    expect(types(next.effects)).toEqual(["attach", "grab", "panStart", "panBy", "dragStart"]);
+    expect(next.state.mode).toBe("pan");
+
+    // The stale control pointer lifting later changes nothing.
+    const late = stepWallPointer(next.state, up(2, 300, 300), 1020);
+    expect(late.effects).toEqual([]);
+    expect(late.state.mode).toBe("pan");
+  });
+
   it("ignores secondary mouse buttons", () => {
     const { effects } = run([
       [down(1, 100, 100, { pointerType: "mouse", button: 2 }), 0],
