@@ -52,6 +52,11 @@ NEXTAUTH_URL=https://ton-domaine.com
 # enregistré d'URL/token en base.
 # STRIPSTREAM_URL=https://librarian.example.com
 # STRIPSTREAM_TOKEN=stl_xxxx_xxxxxxxx
+
+# Store des compteurs de quota (rate limiting) : "sqlite" (défaut) persiste les
+# fenêtres dans la table rate_limit_buckets, "memory" garde les compteurs dans
+# le process (remis à zéro au redémarrage, non partagés entre instances).
+# RATE_LIMIT_STORE=sqlite
 ```
 
 ## Docker / Compose uniquement

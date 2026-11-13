@@ -115,3 +115,15 @@ model Favorite {
   @@index([userId])
   @@map("favorites")
 }
+
+/// Compteur de quota partagé (rate limiting) : une ligne par clé, fenêtre fixe.
+/// Le store (`src/lib/rate-limit/prisma-store.ts`) écrit en un seul upsert
+/// atomique et balaie les fenêtres périmées.
+model RateLimitBucket {
+  key         String @id
+  count       Int
+  windowStart BigInt
+
+  @@index([windowStart])
+  @@map("rate_limit_buckets")
+}

@@ -1,4 +1,4 @@
-import { checkRateLimit } from "@/utils/rate-limit";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { createProvider } from "@/lib/providers/provider.factory";
 import type { ProviderType } from "@/lib/providers/types";
 import { getStoredConnection } from "./resolve";
@@ -22,11 +22,11 @@ export function connectionTestRateLimitKey(provider: ProviderType, userId: numbe
  * Budget partagé par les deux providers : la clé inclut le provider pour que
  * tester Komga ne consomme pas les essais Stripstream (et inversement).
  */
-export function checkConnectionTestRateLimit(
+export async function checkConnectionTestRateLimit(
   provider: ProviderType,
   userId: number
-): ConnectionTestRateLimit {
-  const result = checkRateLimit(connectionTestRateLimitKey(provider, userId), {
+): Promise<ConnectionTestRateLimit> {
+  const result = await checkRateLimit(connectionTestRateLimitKey(provider, userId), {
     limit: CONNECTION_TEST_RATE_LIMIT.limit,
     windowMs: CONNECTION_TEST_RATE_LIMIT.windowMs,
   });
