@@ -17,9 +17,11 @@ export const SERIES_RELATED_CACHE_TAG = "series-related";
 export const SERIES_RECOMMENDATIONS_CACHE_TAG = "series-recommendations";
 
 /**
- * Vocabulaire des tags portant sur une entité. Les producteurs (providers) et
- * les recettes d'invalidation passent par ici : un tag per-id n'est jamais
- * reconstruit à la main, donc un renommage casse à la compilation.
+ * Vocabulaire des tags portant sur une entité. Les profils de lecture
+ * (`cacheProfile`, `./cacheProfiles.ts`) et les recettes d'invalidation passent
+ * par ici : un tag per-id n'est jamais reconstruit à la main, donc un renommage
+ * casse à la compilation. Les providers ne lisent ni ces constantes ni
+ * `cacheTags` : ils reçoivent un profil complet.
  */
 export const cacheTags = {
   home: HOME_CACHE_TAG,
@@ -28,6 +30,8 @@ export const cacheTags = {
   ratingsList: RATINGS_LIST_CACHE_TAG,
   allLibrarySeries: LIBRARY_SERIES_CACHE_TAG,
   allSeriesBooks: SERIES_BOOKS_CACHE_TAG,
+  allSeriesRatings: SERIES_RATING_CACHE_TAG,
+  allSeriesShelves: SERIES_SHELF_CACHE_TAG,
   librarySeries: (libraryId: string) => `${LIBRARY_SERIES_CACHE_TAG}:${libraryId}`,
   libraryBooks: (libraryId: string) => `library-books:${libraryId}`,
   seriesBooks: (seriesId: string) => `${SERIES_BOOKS_CACHE_TAG}:${seriesId}`,

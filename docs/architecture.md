@@ -120,7 +120,7 @@ Provider selection lives only in the `stripstream-active-provider*` cookies. The
 
 Provider reads use Next.js caching. Komga uses `unstable_cache(...)` at five sites: the four home feeds in `src/lib/providers/komga/komga.provider.ts` and the shared cached-POST wrapper in `src/lib/providers/provider-transport.ts`. `FavoriteService` no longer caches: SQLite reads are direct, Stripstream reads go through the provider. The **Stripstream provider does not use `unstable_cache`** — it passes `next: { revalidate, tags }` through the same transport, which forwards the options to fetch.
 
-Tags and per-id tag builders live in `src/constants/cacheConstants.ts`. Providers ask the `cacheTags` vocabulary for an entity (`cacheTags.seriesBooks(id)`, `cacheTags.librarySeries(id)`, …), so renaming a tag breaks at compile time instead of silently orphaning entries:
+Tags and per-id tag builders live in `src/constants/cacheConstants.ts`. Read profiles live next to them in `src/constants/cacheProfiles.ts` (ADR 0028): `cacheProfile.<read>(…)` returns a fresh `{ revalidate?, tags? }` (or `{ cache: "no-store" }` for the reader's book) built from the `cacheTags` vocabulary, and both providers pass it unchanged to `unstable_cache` or `ProviderTransport.request`. Providers never choose a TTL or assemble tags, so renaming a tag breaks at compile time and a read cannot be tagged differently on the two backends (`src/lib/providers/cache-profile.contract.test.ts`):
 
 | Tag constant | Tag value | Scope |
 | --- | --- | --- |
@@ -135,18 +135,31 @@ Tags and per-id tag builders live in `src/constants/cacheConstants.ts`. Provider
 | `SERIES_RELATED_CACHE_TAG` | `series-related` | related series (TTL only) |
 | `SERIES_RECOMMENDATIONS_CACHE_TAG` | `series-recommendations` | recommendations (TTL only) |
 
-Per-id tags narrow invalidation: `cacheTags.librarySeries(id)`, `cacheTags.libraryBooks(id)`, `cacheTags.seriesBooks(id)`, `cacheTags.seriesRating(id)`, `cacheTags.seriesShelf(id)`, `cacheTags.seriesRelated(id)`. Prefer the narrow per-id tag when touching data: the global tag invalidates the whole scope and degrades the hit rate. The `series-related` and `series-recommendations` entries are TTL-only — no mutation invalidates them deliberately. A tag without a producing read is dead weight: do not invalidate one.
+`cacheTags.allSeriesRatings` / `cacheTags.allSeriesShelves` name the global rating and shelf tags. Per-id tags narrow invalidation: `cacheTags.librarySeries(id)`, `cacheTags.libraryBooks(id)`, `cacheTags.seriesBooks(id)`, `cacheTags.seriesRating(id)`, `cacheTags.seriesShelf(id)`, `cacheTags.seriesRelated(id)`. Prefer the narrow per-id tag when touching data: the global tag invalidates the whole scope and degrades the hit rate. The `series-related` and `series-recommendations` entries are TTL-only — no mutation invalidates them deliberately. A tag without a producing read is dead weight: do not invalidate one.
 
 ### TTLs
 
-The constants are per provider: `CACHE_TTL_LONG = 300`, `CACHE_TTL_MED = 120`, `CACHE_TTL_SHORT = 30` seconds (`src/lib/providers/komga/komga.provider.ts`; the identical trio is at `src/lib/providers/stripstream/stripstream.provider.ts`).
+`CACHE_TTL` (`src/constants/cacheProfiles.ts`) is the only source: `long = 300`, `medium = 120`, `short = 30` seconds. Each profile picks one:
 
-| Read | TTL | Anchor |
-| --- | --- | --- |
-| `getLibraries()` | 300 s (5 min) | `komga.provider.ts:193-195` |
-| `getSeries()` (library series listing) | 120 s (2 min), tags `library-series` + `library-series:${libraryId}` | `komga.provider.ts:229-230` |
-| Home feeds (continue reading, ongoing, latest, recently read) | 120 s (2 min), tag `HOME_CACHE_TAG` | the `getHome*` methods in `komga.provider.ts` and `stripstream.provider.ts` |
-| `getBook()` / `getSeriesById()` | 30 s / 120 s | `komga.provider.ts:301,311` |
+| Profile (`cacheProfile.*`) | TTL | Tags | Reads |
+| --- | --- | --- | --- |
+| `libraries()` | 300 s | — | `getLibraries`, Stripstream `getLibraryById` |
+| `librarySeries(libraryId)` | 120 s | `library-series`, `library-series:${libraryId}` | `getSeries` |
+| `books({ seriesId, libraryId })` | 120 s | `series-books`, + `series-books:${seriesId}`, + `library-books:${libraryId}` when set | `getBooks` |
+| `readerBook()` | `no-store` | — | the book opened by the reader (`getBook`) |
+| `bookPages()` / `readProgress()` / `nextBook()` / `search()` | 30 s | — | Komga page list, read progress, Stripstream next book, search |
+| `series()` | 120 s | — | series details/metadata, Stripstream identity lookups, metadata links, missing books |
+| `home()` / `readingLists()` | 120 s | `home-data` | home feeds (Komga via `unstable_cache`), reading lists |
+| `readingListDetail()` | 120 s | — | reading-list detail |
+| `shelvedSeries()` | 120 s | `home-data`, `library-series` | shelved series |
+| `seriesShelf(id)` | 30 s | `series-shelf`, `series-shelf:${id}` | `isShelved` |
+| `readSeries()` | 120 s | `ratings-list` | `ratings.getReadSeries` |
+| `seriesRating(id)` | 30 s | `series-rating`, `series-rating:${id}` | `getSeriesRating` |
+| `favorites()` | 120 s | `favorites` | `getFavorites`, `isFavorite` |
+| `recommendations()` / `relatedSeries(id)` | 120 s | `series-recommendations` / `series-related:${id}` | discovery |
+| `stats()` | none declared | `reading-stats` | reading statistics counters |
+
+Known caveats, kept as-is by ADR 0028: Komga's `getNextBook` is uncached while Stripstream's uses `nextBook()`, and `ProviderTransport.request` forwards only `tags` when a profile has both `tags` and `revalidate`, so the TTL of a tagged read is not applied by the transport today.
 
 ### Invalidation
 
@@ -159,6 +172,8 @@ Server actions do not assemble tag lists themselves: they call a recipe from `sr
 | `invalidateSeriesShelf(seriesId, libraryId?)` | `actions/series-shelf.ts` | home, `series-shelf:${id}`, the library's series list, and the matching routes |
 | `invalidateFavorites()` | `actions/favorites.ts` | favorites, home |
 | `invalidateConnectionChange()` | `actions/config.ts`, `actions/stripstream-config.ts` | home, library series, series books, favorites; `/settings` and `/` |
+| `invalidateLibraryScan(libraryId)` | `actions/library.ts` (`scanLibrary`) | routes `/libraries/${id}` and `/libraries` (no tag: the scan runs after the response) |
+| `invalidatePreferences()` | `actions/preferences.ts` (skipped for an anonymous-mode-only change) | routes `/`, `/libraries`, `/series` |
 | `invalidateForRefresh(scope, id)` | `actions/refresh.ts` (thin wrapper) | only the requested scope; `series` also targets `series-books:${id}` so a list first cached from another route is refreshed |
 
 Recipes call `updateTag(...)`, plus `revalidatePath(...)` where a route payload is affected. `updateTag` immediately expires the tagged entries so the action's own re-render sees fresh data (Next.js 16 read-your-writes semantics). The module imports `next/cache` and must only be imported from Server Actions / Route Handlers, never during render.
