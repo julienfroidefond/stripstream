@@ -144,8 +144,9 @@ export const cacheProfile = {
   }),
 
   /**
-   * Compteurs des statistiques de lecture. Aucun TTL déclaré (comportement
-   * historique) : seule `invalidateReadProgress` expire le tag.
+   * Compteurs des statistiques de lecture. Le tag expire avec
+   * `invalidateReadProgress` ; le TTL borne la fraîcheur pour la lecture faite
+   * directement dans le backend, qu'aucune mutation locale n'invalide.
    */
-  stats: (): CachedProfile => ({ tags: [cacheTags.stats] }),
+  stats: (): CachedProfile => ({ revalidate: CACHE_TTL.medium, tags: [cacheTags.stats] }),
 } as const;

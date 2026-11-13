@@ -11,7 +11,6 @@ Opened by the architecture audit of 2026-11-13 (state of `main` at `a2e9fd1`). C
 | # | Chantier | Evidence | ADR |
 | --- | --- | --- | --- |
 | K | **Registration is throttled per client, not only per email.** `AuthServerService.registerUser` keeps a per-email budget, so rotating addresses is not slowed and nothing is limited per IP. | `auth-server.service.ts`, ADR 0023 | — |
-| M | **Cache profile inconsistencies.** Komga's `getNextBook` is uncached while Stripstream's uses `nextBook()` (30 s); `stats()` declares no TTL. Decide one profile each. | ADR 0028 *Consequences* | — |
 | N | **Admin and account screens are localized.** Static labels of the admin and account screens are still hard-coded French; only their toasts moved to `errors.*` / `admin.*` keys. | `components/admin`, `components/account` | — |
 
 ## Picking the next one
@@ -22,6 +21,7 @@ Order by the number of call sites a wrong change would silently break, not by fi
 
 | PR | Change | ADR |
 | --- | --- | --- |
+| `refactor/cache-profile-consistency` | Komga's next book is cached like Stripstream's; reading stats declare a TTL. | [0028 amendment](./adr/0028-one-cache-profile-producer.md) |
 | `refactor/media-transport-identity` | Media transports receive the caller identity from the route. | [0029 amendment](./adr/0029-services-receive-the-caller-identity.md) |
 | `refactor/provider-registry` | A provider registry owns what differs between connection types. | [0030](./adr/0030-provider-registry-for-connections.md) |
 | `refactor/services-receive-identity` | Services receive the caller's identity instead of reading the session. | [0029](./adr/0029-services-receive-the-caller-identity.md) |

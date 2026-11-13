@@ -90,7 +90,7 @@ describe("cacheProfile — per-read profiles", () => {
       cacheProfile.relatedSeries("s1"),
       { revalidate: 120, tags: ["series-related:s1"] },
     ],
-    ["stats", cacheProfile.stats(), { tags: ["reading-stats"] }],
+    ["stats", cacheProfile.stats(), { revalidate: 120, tags: ["reading-stats"] }],
   ])("%s", (_name, profile, expected) => {
     expect(profile).toEqual(expected);
   });

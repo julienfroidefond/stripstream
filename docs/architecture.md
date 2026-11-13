@@ -154,7 +154,7 @@ Tags and per-id tag builders live in `src/constants/cacheConstants.ts`. Read pro
 | `librarySeries(libraryId)` | 120 s | `library-series`, `library-series:${libraryId}` | `getSeries` |
 | `books({ seriesId, libraryId })` | 120 s | `series-books`, + `series-books:${seriesId}`, + `library-books:${libraryId}` when set | `getBooks` |
 | `readerBook()` | `no-store` | — | the book opened by the reader (`getBook`) |
-| `bookPages()` / `readProgress()` / `nextBook()` / `search()` | 30 s | — | Komga page list, read progress, Stripstream next book, search |
+| `bookPages()` / `readProgress()` / `nextBook()` / `search()` | 30 s | — | Komga page list, read progress, next book (both providers), search |
 | `series()` | 120 s | — | series details/metadata, Stripstream identity lookups, metadata links, missing books |
 | `home()` / `readingLists()` | 120 s | `home-data` | home feeds (Komga via `unstable_cache`), reading lists |
 | `readingListDetail()` | 120 s | — | reading-list detail |
@@ -164,9 +164,9 @@ Tags and per-id tag builders live in `src/constants/cacheConstants.ts`. Read pro
 | `seriesRating(id)` | 30 s | `series-rating`, `series-rating:${id}` | `getSeriesRating` |
 | `favorites()` | 120 s | `favorites` | `getFavorites`, `isFavorite` |
 | `recommendations()` / `relatedSeries(id)` | 120 s | `series-recommendations` / `series-related:${id}` | discovery |
-| `stats()` | none declared | `reading-stats` | reading statistics counters |
+| `stats()` | 120 s | `reading-stats` | reading statistics counters |
 
-`ProviderTransport.request` forwards a profile's TTL and tags together (`next: { revalidate, tags }`, same options to `unstable_cache` for cached POSTs): the tag gives targeted invalidation after a local mutation, the TTL bounds staleness for changes made directly on the backend. Known caveat, kept as-is by ADR 0028: Komga's `getNextBook` is uncached while Stripstream's uses `nextBook()`.
+`ProviderTransport.request` forwards a profile's TTL and tags together (`next: { revalidate, tags }`, same options to `unstable_cache` for cached POSTs): the tag gives targeted invalidation after a local mutation, the TTL bounds staleness for changes made directly on the backend.
 
 ### Invalidation
 
