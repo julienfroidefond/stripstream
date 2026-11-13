@@ -570,7 +570,9 @@
         "deleted": "Rating removed",
         "error": "Could not save rating",
         "clear": "Remove my rating",
-        "empty": "Not rated"
+        "empty": "Not rated",
+        "clearLabel": "Remove rating",
+        "valueText": "{{value}} out of {{max}}"
       }
     }
   },

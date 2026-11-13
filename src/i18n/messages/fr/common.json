@@ -570,7 +570,9 @@
         "deleted": "Note supprimée",
         "error": "Erreur lors de la notation",
         "clear": "Supprimer ma note",
-        "empty": "Non noté"
+        "empty": "Non noté",
+        "clearLabel": "Supprimer la note",
+        "valueText": "{{value}} sur {{max}}"
       }
     }
   },
