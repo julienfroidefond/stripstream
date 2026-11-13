@@ -11,6 +11,7 @@ This index is the entry point to the Stripstream documentation set. Start here, 
 | [`CLAUDE.md`](../CLAUDE.md) | Claude Code users | Short pointer that defers to `AGENTS.md` so guidance never drifts. |
 | [`ENV.md`](../ENV.md) | Operators and developers | Environment variables, grouped by required, optional app flags, and compose-only keys. |
 | [`architecture.md`](./architecture.md) | Developers and reviewers | Consolidated system reference: provider abstraction, caching, errors, reader, and known limitations. |
+| [`architecture-backlog.md`](./architecture-backlog.md) | Developers and reviewers | Open architecture chantiers and the shape each one is meant to reach. |
 | [`adr/`](./adr/README.md) | Developers and reviewers | Architecture decision records: why the provider, media, page and client seams look the way they do. |
 | [`ecosystem.md`](./ecosystem.md) | Developers and maintainers | The two-repo layout: this reader plus the Stripstream Librarian backend, the sibling-clone convention, and the read-scoped Client API contract. |
 | [`api.md`](./api.md) | Developers integrating with the app | Current API surface: route handlers and the server actions that replaced the old REST routes. |
