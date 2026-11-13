@@ -31,6 +31,11 @@ export type MediaRefOf<K extends MediaKind> = Extract<MediaRef, { kind: K }>;
 export interface MediaTransportContext {
   /** En-têtes de la requête cliente ; seuls les validateurs conditionnels sont relayés. */
   headers: Headers;
+  /**
+   * Utilisateur authentifié par la route média (ADR 0029) : le transport en
+   * déduit la connexion et les préférences sans relire la session.
+   */
+  userId: number;
 }
 
 export interface MediaTransport {
@@ -90,6 +95,6 @@ export interface MediaRouteSpec {
 }
 
 export interface MediaRouteDependencies {
-  getCurrentUser: () => Promise<{ id: string } | null>;
+  getCurrentUserId: () => Promise<number | null>;
   getTransport: (provider: ProviderType) => MediaTransport;
 }

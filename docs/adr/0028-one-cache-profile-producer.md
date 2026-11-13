@@ -22,7 +22,11 @@ ADR 0007 made tags a vocabulary and invalidation a recipe, but the read side sta
 - A new read picks or adds a profile; a new tag goes into `cacheTags` first, then into the profile that produces it and the recipe that expires it.
 - `cacheTags` gained `allSeriesRatings` and `allSeriesShelves`, the global tags the rating and shelf reads already produced.
 - `src/app/actions/` has no direct `revalidatePath`/`updateTag` call left; every action invalidates through a recipe.
-- Inherited inconsistencies are kept, not fixed here: Komga's `getNextBook` has no profile (uncached) while Stripstream's uses `nextBook()` (30 s); the stats profile declares no TTL. Changing either alters cache behaviour and deserves its own decision.
+- Two inherited inconsistencies were resolved in a follow-up (amendment below): Komga's `getNextBook` now uses `nextBook()` like Stripstream, and `stats()` declares a TTL.
 - `ProviderTransport.request` used to forward only `tags` when a profile carried both `tags` and `revalidate`, so a tagged read stayed cached until a local mutation expired its tag and never saw changes made directly on the backend. The transport now forwards both (`next: { revalidate, tags }`, and the same object to `unstable_cache` for POST reads): the profile's TTL is the freshness bound and the tag the targeted invalidation. Tagged reads therefore refresh at most every `CACHE_TTL` seconds where they previously did not.
 
 Refs: ADR 0007.
+
+## Amendment — next book and reading stats
+
+Komga's `getNextBook` was uncached while Stripstream's used `nextBook()` (30 s), so the reader's next-book lookup cost a Komga round-trip on every opening for one backend only. Both now hand over `nextBook()`; `cache-profile.contract.test.ts` pins it. The `stats()` profile carried only the `reading-stats` tag: once the transport applied both TTL and tags, a tag-only read stayed cached until `invalidateReadProgress` ran, so reading done directly in Komga or Stripstream never reached the account counters. `stats()` now declares `CACHE_TTL.medium` (120 s) next to its tag; local progress still expires it immediately.
