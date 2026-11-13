@@ -6,11 +6,10 @@ Done work is not repeated here — the ADR index is the history of every decisio
 
 ## Backlog
 
-Opened by the architecture audit of 2026-11-13 (state of `main` at `a2e9fd1`). Chantiers A–I are delivered (see below); J and the residual items found while delivering them remain.
+Opened by the architecture audit of 2026-11-13 (state of `main` at `a2e9fd1`). Chantiers A–J are delivered (see below); what remains are the residual items found while delivering them.
 
 | # | Chantier | Evidence | ADR |
 | --- | --- | --- | --- |
-| J | **One provider registry for connections.** `config.ts` / `stripstream-config.ts` duplicate twelve actions; `ConnectionsSettings` and `ProviderSwitcher` duplicate the unified connection list and activate differently (`router.refresh()` vs full reload). | `actions/*config.ts`, `connections/`, `ProviderSwitcher.tsx` | 0030 |
 | K | **Registration is throttled per client, not only per email.** `AuthServerService.registerUser` keeps a per-email budget, so rotating addresses is not slowed and nothing is limited per IP. | `auth-server.service.ts`, ADR 0023 | — |
 | L | **Media transports receive the caller identity.** `komga.transport.ts` (cover preference) and `requireConnectionForProvider` still read the session; thread `userId` through the media transport context. | ADR 0029 *Consequences* | — |
 | M | **Cache profile inconsistencies.** Komga's `getNextBook` is uncached while Stripstream's uses `nextBook()` (30 s); `stats()` declares no TTL. Decide one profile each. | ADR 0028 *Consequences* | — |
@@ -24,6 +23,7 @@ Order by the number of call sites a wrong change would silently break, not by fi
 
 | PR | Change | ADR |
 | --- | --- | --- |
+| `refactor/provider-registry` | A provider registry owns what differs between connection types. | [0030](./adr/0030-provider-registry-for-connections.md) |
 | `refactor/services-receive-identity` | Services receive the caller's identity instead of reading the session. | [0029](./adr/0029-services-receive-the-caller-identity.md) |
 | `refactor/cache-profiles` | Cache profiles are produced in one place. | [0028](./adr/0028-one-cache-profile-producer.md) |
 | `refactor/media-by-kind` | Media is addressed and cached by kind. | [0027](./adr/0027-media-addressed-and-cached-by-kind.md) |
