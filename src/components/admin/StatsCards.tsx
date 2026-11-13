@@ -9,7 +9,7 @@ interface StatsCardsProps {
   stats: {
     totalUsers: number;
     totalAdmins: number;
-    usersWithKomga: number;
+    usersWithConnection: number;
     usersWithPreferences: number;
   };
 }
@@ -32,11 +32,11 @@ export function StatsCards({ stats }: StatsCardsProps) {
       description: t("admin.stats.adminsDescription"),
     },
     {
-      key: "komga",
-      title: t("admin.stats.komga"),
-      value: stats.usersWithKomga,
+      key: "connections",
+      title: t("admin.stats.connections"),
+      value: stats.usersWithConnection,
       icon: Bookmark,
-      description: t("admin.stats.komgaDescription"),
+      description: t("admin.stats.connectionsDescription"),
     },
     {
       key: "preferences",

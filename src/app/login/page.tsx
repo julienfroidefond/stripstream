@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { isRegistrationEnabled } from "@/lib/registration";
 import { LoginContent } from "./LoginContent";
 
 interface PageProps {
@@ -13,5 +14,10 @@ export const metadata: Metadata = {
 };
 
 export default async function LoginPage({ searchParams }: PageProps) {
-  return <LoginContent searchParams={await searchParams} />;
+  return (
+    <LoginContent
+      searchParams={await searchParams}
+      registrationEnabled={isRegistrationEnabled()}
+    />
+  );
 }

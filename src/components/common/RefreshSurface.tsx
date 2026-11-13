@@ -63,7 +63,13 @@ function RefreshSurfaceRuntime({
     const run = (async (): Promise<RefreshResult> => {
       setIsRefreshing(true);
       try {
-        await revalidateForRefresh(scope, id);
+        const result = await revalidateForRefresh(scope, id);
+        if (!result.success) {
+          // Session expirée, budget épuisé ou cible refusée : pas de
+          // router.refresh() sur un cache qui n'a pas été invalidé.
+          logger.error({ code: result.code, scope, id }, "Refresh failed");
+          return { success: false };
+        }
         router.refresh();
         await new Promise((resolve) => setTimeout(resolve, REFRESH_ANIMATION_MS));
         return { success: true };

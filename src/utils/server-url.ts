@@ -25,10 +25,19 @@ const BLOCKED_HOSTNAMES = new Set([
 /** IPv4 de métadonnées hors plage link-local. */
 const BLOCKED_IPV4 = new Set(["100.100.100.200"]);
 
-function isBlockedHostname(rawHostname: string): boolean {
+/**
+ * Nom d'hôte ou adresse IP interdits (métadonnées cloud). Sert à la fois au
+ * nom saisi (`normalizeServerUrl`) et aux adresses résolues par le DNS
+ * (`assertServerUrlResolvesSafely`, `server-url-dns.ts`).
+ */
+export function isBlockedHostname(rawHostname: string): boolean {
   const hostname = rawHostname.toLowerCase().replace(/^\[|\]$/g, "").replace(/\.$/, "");
 
   if (BLOCKED_HOSTNAMES.has(hostname) || BLOCKED_IPV4.has(hostname)) return true;
+
+  // IPv4-mapped IPv6 en notation pointée (forme renvoyée par `dns.lookup`).
+  const mapped = /^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/.exec(hostname);
+  if (mapped) return isBlockedHostname(mapped[1]);
 
   // 169.254.0.0/16 : link-local, dont l'endpoint de métadonnées 169.254.169.254.
   if (/^169\.254\.\d{1,3}\.\d{1,3}$/.test(hostname)) return true;

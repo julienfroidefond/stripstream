@@ -28,6 +28,8 @@
     "eyebrow": "Library access",
     "title": "Welcome to StripStream",
     "subtitle": "Sign in or create an account to get started",
+    "subtitleSignInOnly": "Sign in to get started",
+    "registrationClosed": "Sign-ups are closed on this instance. Ask the administrator for an account.",
     "tabs": {
       "login": "Sign in",
       "register": "Sign up"
@@ -725,6 +727,7 @@
     "AUTH_FETCH_ERROR": "Unable to reach the server",
     "AUTH_FORBIDDEN": "Access denied",
     "AUTH_RATE_LIMITED": "Too many attempts. Please try again later.",
+    "AUTH_REGISTRATION_DISABLED": "Sign-ups are closed on this instance. Ask the administrator for an account.",
     "ADMIN_FETCH_USERS_ERROR": "Error fetching users",
     "ADMIN_UPDATE_USER_ERROR": "Error updating user",
     "ADMIN_DELETE_USER_ERROR": "Error deleting user",
@@ -733,6 +736,10 @@
     "ADMIN_RESET_PASSWORD_ERROR": "Error resetting password",
     "ADMIN_CANNOT_RESET_OWN_PASSWORD": "You cannot reset your own password here",
     "ADMIN_INVALID_ROLES": "Pick at least one valid role",
+    "ADMIN_CANNOT_REMOVE_OWN_ADMIN": "You cannot remove your own administrator role",
+    "ADMIN_LAST_ADMIN": "The last administrator cannot be demoted",
+    "REFRESH_INVALID_TARGET": "This page cannot be refreshed",
+    "REFRESH_ERROR": "Error while refreshing",
     "KOMGA_MISSING_CONFIG": "Komga configuration missing",
     "KOMGA_MISSING_CREDENTIALS": "Komga credentials missing",
     "KOMGA_CONNECTION_ERROR": "Error connecting to Komga server",
@@ -971,15 +978,15 @@
       "totalUsersDescription": "Registered accounts",
       "admins": "Administrators",
       "adminsDescription": "With admin privileges",
-      "komga": "Komga config",
-      "komgaDescription": "Configured users",
+      "connections": "Connections",
+      "connectionsDescription": "Users with at least one connection",
       "preferences": "Preferences",
       "preferencesDescription": "Customized preferences"
     },
     "table": {
       "email": "Email",
       "roles": "Roles",
-      "komga": "Komga config",
+      "connections": "Connection",
       "preferences": "Preferences",
       "favorites": "Favorites",
       "createdAt": "Created",
@@ -1000,7 +1007,7 @@
   },
   "account": {
     "changePassword": {
-      "success": "Your password has been changed",
+      "success": "Password changed. All your sessions have been signed out: sign in again with the new password.",
       "title": "Change password",
       "description": "Use a strong password (at least 8 characters, one uppercase letter and one digit)",
       "current": "Current password",

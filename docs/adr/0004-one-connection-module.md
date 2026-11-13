@@ -19,3 +19,7 @@ Config loading, decryption and fallback were spread across a config DB service, 
 - Connection tests share one budget and one factory path.
 
 Refs: #135.
+
+## Amendment (2026-11-13)
+
+The environment fallback is removed (ADR [0032](./0032-closed-by-default-auth-and-per-user-connections.md)): `resolveActiveConnection` falls back to the user's first config of the provider, then to `null`. `STRIPSTREAM_URL` / `STRIPSTREAM_TOKEN` are no longer read, so a user without a connection never borrows the instance's Librarian token.

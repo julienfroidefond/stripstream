@@ -13,14 +13,16 @@ export interface AdminUserData {
   _count?: {
     favorites: number;
   };
-  hasKomgaConfig: boolean;
+  /** Au moins une connexion enregistrée, tous providers confondus. */
+  hasConnection: boolean;
   hasPreferences: boolean;
 }
 
 export interface AdminStatsData {
   totalUsers: number;
   totalAdmins: number;
-  usersWithKomga: number;
+  /** Utilisateurs distincts ayant au moins une connexion (Komga ou Stripstream). */
+  usersWithConnection: number;
   usersWithPreferences: number;
 }
 
@@ -49,6 +51,20 @@ async function assertUserExists(id: number): Promise<void> {
   if (!user) {
     throw new AppError(ERROR_CODES.AUTH.USER_NOT_FOUND);
   }
+}
+
+function hasAdminRole(roles: unknown): boolean {
+  return Array.isArray(roles) && roles.includes(ADMIN_ROLE);
+}
+
+/** Identifiants distincts des utilisateurs ayant au moins une connexion. */
+async function usersWithConnection(userIds?: number[]): Promise<Set<number>> {
+  const where = userIds ? { userId: { in: userIds } } : {};
+  const [komga, stripstream] = await Promise.all([
+    prisma.komgaConfig.findMany({ where, select: { userId: true }, distinct: ["userId"] }),
+    prisma.stripstreamConfig.findMany({ where, select: { userId: true }, distinct: ["userId"] }),
+  ]);
+  return new Set([...komga, ...stripstream].map((config) => config.userId));
 }
 
 /**
@@ -80,25 +96,21 @@ export class AdminService {
 
       // Vérifier les configs en 2 requêtes groupées (au lieu de 2N requêtes)
       const userIds = users.map((u) => u.id);
-      const [komgaConfigs, preferences] = await Promise.all([
-        prisma.komgaConfig.findMany({
-          where: { userId: { in: userIds } },
-          select: { userId: true, id: true },
-        }),
+      const [connectedUsers, preferences] = await Promise.all([
+        usersWithConnection(userIds),
         prisma.preferences.findMany({
           where: { userId: { in: userIds } },
           select: { userId: true, id: true },
         }),
       ]);
 
-      const komgaByUser = new Set(komgaConfigs.map((c) => c.userId));
       const prefsByUser = new Set(preferences.map((p) => p.userId));
 
       return users.map((user) => ({
         ...user,
         id: user.id.toString(),
         roles: user.roles as string[],
-        hasKomgaConfig: komgaByUser.has(user.id),
+        hasConnection: connectedUsers.has(user.id),
         hasPreferences: prefsByUser.has(user.id),
       }));
     } catch (error) {
@@ -106,10 +118,31 @@ export class AdminService {
     }
   }
 
-  static async updateUserRoles(userId: string, roles: string[]): Promise<void> {
+  /**
+   * Remplace les rôles d'un utilisateur. Un admin ne peut pas retirer son
+   * propre `ROLE_ADMIN` (il perdrait l'accès en cours de geste), et le dernier
+   * administrateur ne peut pas être rétrogradé : l'instance resterait sans
+   * administrateur, sans autre recours que la base.
+   */
+  static async updateUserRoles(actorId: number, userId: string, roles: string[]): Promise<void> {
     try {
       const id = parseTargetId(userId);
-      await assertUserExists(id);
+      const target = await prisma.user.findUnique({ where: { id }, select: { roles: true } });
+      if (!target) {
+        throw new AppError(ERROR_CODES.AUTH.USER_NOT_FOUND);
+      }
+
+      const demotesAdmin = hasAdminRole(target.roles) && !roles.includes(ADMIN_ROLE);
+      if (demotesAdmin) {
+        if (id === actorId) {
+          throw new AppError(ERROR_CODES.ADMIN.CANNOT_REMOVE_OWN_ADMIN);
+        }
+        const allUsers = await prisma.user.findMany({ select: { roles: true } });
+        if (allUsers.filter((user) => hasAdminRole(user.roles)).length <= 1) {
+          throw new AppError(ERROR_CODES.ADMIN.LAST_ADMIN);
+        }
+      }
+
       await prisma.user.update({
         where: { id },
         data: { roles },
@@ -142,9 +175,10 @@ export class AdminService {
       }
       await assertUserExists(id);
       const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+      // La nouvelle version de session ferme les sessions ouvertes du compte (ADR 0032).
       await prisma.user.update({
         where: { id },
-        data: { password: hashedPassword },
+        data: { password: hashedPassword, sessionVersion: { increment: 1 } },
       });
     } catch (error) {
       wrap(error, ERROR_CODES.ADMIN.RESET_PASSWORD_ERROR);
@@ -153,21 +187,19 @@ export class AdminService {
 
   static async getUserStats(): Promise<AdminStatsData> {
     try {
-      const [totalUsers, usersWithKomga, usersWithPreferences, allUsers] = await Promise.all([
+      const [totalUsers, connectedUsers, usersWithPreferences, allUsers] = await Promise.all([
         prisma.user.count(),
-        prisma.komgaConfig.count(),
+        usersWithConnection(),
         prisma.preferences.count(),
         prisma.user.findMany({ select: { roles: true } }),
       ]);
 
-      const totalAdmins = allUsers.filter(
-        (user) => Array.isArray(user.roles) && user.roles.includes(ADMIN_ROLE)
-      ).length;
+      const totalAdmins = allUsers.filter((user) => hasAdminRole(user.roles)).length;
 
       return {
         totalUsers,
         totalAdmins,
-        usersWithKomga,
+        usersWithConnection: connectedUsers.size,
         usersWithPreferences,
       };
     } catch (error) {

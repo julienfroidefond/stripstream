@@ -118,26 +118,11 @@ describe("resolveActiveConnection", () => {
     expect(stripstreamFindFirst).toHaveBeenCalledWith(STRIPSTREAM_ACTIVE_QUERY);
   });
 
-  it("falls back to the environment for Stripstream", async () => {
+  it("never falls back to the environment for Stripstream (ADR 0032)", async () => {
     getActiveConnectionMock.mockResolvedValue({ provider: "stripstream", configId: 42 });
     stripstreamFindFirst.mockResolvedValue(null);
-    vi.stubEnv("STRIPSTREAM_URL", "  http://env  ");
-    vi.stubEnv("STRIPSTREAM_TOKEN", "  env-token  ");
-
-    expect(await resolveActiveConnection(7)).toEqual({
-      provider: "stripstream",
-      configId: null,
-      url: "http://env",
-      token: "env-token",
-      source: "env",
-    });
-  });
-
-  it("returns null when neither a config nor a complete environment exists", async () => {
-    getActiveConnectionMock.mockResolvedValue({ provider: "stripstream", configId: null });
-    stripstreamFindFirst.mockResolvedValue(null);
     vi.stubEnv("STRIPSTREAM_URL", "http://env");
-    vi.stubEnv("STRIPSTREAM_TOKEN", "");
+    vi.stubEnv("STRIPSTREAM_TOKEN", "env-token");
 
     expect(await resolveActiveConnection(7)).toBeNull();
   });
@@ -176,6 +161,19 @@ describe("getStoredConnection", () => {
 });
 
 describe("requireConnectionForProvider", () => {
+  it("only reads configs owned by the caller and never the environment", async () => {
+    stripstreamFindFirst.mockResolvedValue(null);
+    vi.stubEnv("STRIPSTREAM_URL", "http://env");
+    vi.stubEnv("STRIPSTREAM_TOKEN", "env-token");
+
+    await expect(requireConnectionForProvider("stripstream", 7)).rejects.toMatchObject({
+      code: ERROR_CODES.STRIPSTREAM.MISSING_CONFIG,
+    });
+    for (const [query] of stripstreamFindFirst.mock.calls) {
+      expect(query.where.userId).toBe(7);
+    }
+  });
+
   it("throws the provider-specific missing-config error", async () => {
     komgaFindFirst.mockResolvedValue(null);
 

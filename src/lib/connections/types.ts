@@ -17,11 +17,11 @@ export interface KomgaConnection {
 
 export interface StripstreamConnection {
   provider: "stripstream";
-  /** `null` pour une config d'environnement ou un test ad hoc. */
+  /** `null` pour un test ad hoc. */
   configId: number | null;
   url: string;
   token: string;
-  source: "db" | "env" | "provided";
+  source: "db" | "provided";
 }
 
 export type ResolvedConnection = KomgaConnection | StripstreamConnection;

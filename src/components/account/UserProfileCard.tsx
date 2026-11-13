@@ -9,7 +9,7 @@ import { formatLocaleDate } from "@/lib/utils";
 
 interface UserProfileCardProps {
   profile: UserProfile & {
-    stats: { favoritesCount: number; hasPreferences: boolean; hasKomgaConfig: boolean };
+    stats: { favoritesCount: number; hasPreferences: boolean; hasConnection: boolean };
   };
 }
 

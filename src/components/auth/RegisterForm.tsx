@@ -7,6 +7,7 @@ import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { shake } from "@/lib/celebrate";
 import { useGsapEffect } from "@/lib/gsap";
 import { useTranslate } from "@/hooks/useTranslate";
+import { safeRedirectPath } from "@/lib/safe-redirect";
 import type { AppErrorType } from "@/types/global";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,14 +30,6 @@ export function RegisterForm({ from }: RegisterFormProps) {
     { dependencies: [error] }
   );
   const { t } = useTranslate();
-
-  const getSafeRedirectPath = (path?: string) => {
-    if (!path || !path.startsWith("/") || path.startsWith("//")) {
-      return "/";
-    }
-
-    return path;
-  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -85,7 +78,7 @@ export function RegisterForm({ from }: RegisterFormProps) {
           message: "Inscription réussie mais erreur lors de la connexion automatique",
         });
       } else {
-        const redirectPath = getSafeRedirectPath(from);
+        const redirectPath = safeRedirectPath(from, window.location.origin);
         window.location.href = redirectPath;
       }
     } catch {

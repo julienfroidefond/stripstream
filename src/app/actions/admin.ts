@@ -47,8 +47,8 @@ export async function updateUserRoles(userId: string, roles: string[]): Promise<
         throw new ActionError(ERROR_CODES.ADMIN.INVALID_ROLES);
       }
     },
-    execute: async () => {
-      await AdminService.updateUserRoles(userId, roles);
+    execute: async ({ userId: actorId }) => {
+      await AdminService.updateUserRoles(actorId, userId, roles);
       return { message: "Rôles mis à jour" };
     },
   });

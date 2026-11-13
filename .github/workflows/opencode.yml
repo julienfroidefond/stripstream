@@ -42,7 +42,8 @@ jobs:
     if: |
       github.event_name == 'issues' &&
       github.event.label.name == 'ai' &&
-      github.event.sender.type != 'Bot'
+      github.event.sender.type != 'Bot' &&
+      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association)
     runs-on: ubuntu-latest
     # install + lint + typecheck + unit tests + build on a warm cache takes
     # ~10–15 min; the E2E suite adds a production build of its own, and the agent
@@ -87,7 +88,10 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Run OpenCode
-        uses: anomalyco/opencode/github@latest
+        # Pinned to a commit (release v1.19.5), never a movable ref: this action
+        # runs with the job's token and the repository checked out. Bump it on
+        # purpose: `gh api repos/anomalyco/opencode/releases/latest` then the tag's SHA.
+        uses: anomalyco/opencode/github@810c0eba1a7348036f8bdf61e6632d0c36c6876c # v1.19.5
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
         with:
@@ -173,6 +177,7 @@ jobs:
     if: |
       github.event_name != 'issues' &&
       github.event.sender.type != 'Bot' &&
+      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association) &&
       (contains(github.event.comment.body, '/oc') || contains(github.event.comment.body, '/opencode'))
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -206,7 +211,10 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Run OpenCode
-        uses: anomalyco/opencode/github@latest
+        # Pinned to a commit (release v1.19.5), never a movable ref: this action
+        # runs with the job's token and the repository checked out. Bump it on
+        # purpose: `gh api repos/anomalyco/opencode/releases/latest` then the tag's SHA.
+        uses: anomalyco/opencode/github@810c0eba1a7348036f8bdf61e6632d0c36c6876c # v1.19.5
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
         with:
