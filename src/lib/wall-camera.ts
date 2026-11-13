@@ -29,6 +29,68 @@ export interface WallCameraState {
 
 export type WallFocusMode = "anchor" | "sheet";
 
+/** Bornes du zoom du mur (le plancher réel dépend aussi du cadre). */
+export const MIN_WALL_ZOOM = 0.28;
+export const MAX_WALL_ZOOM = 2.4;
+
+export function clampWallZoom(value: number, minScale: number): number {
+  return Math.min(MAX_WALL_ZOOM, Math.max(minScale, value));
+}
+
+/** Sensibilité du zoom à la molette (Ctrl/⌘ ou pinch du trackpad). */
+export const WALL_WHEEL_ZOOM = 0.0022;
+/** Pixels par ligne quand le navigateur compte la molette en lignes. */
+export const WALL_WHEEL_LINE = 18;
+
+export interface WallWheelInput {
+  deltaX: number;
+  deltaY: number;
+  /** `WheelEvent.deltaMode` : 1 = lignes. */
+  deltaMode: number;
+  /** Ctrl/⌘ ou pinch du trackpad : la molette zoome au lieu de glisser. */
+  zoom: boolean;
+}
+
+export type WallWheelIntent =
+  | { kind: "zoom"; factor: number }
+  | { kind: "pan"; dx: number; dy: number };
+
+/** Traduit un cran de molette en zoom multiplicatif ou en glissement. */
+export function wallWheelIntent(input: WallWheelInput): WallWheelIntent {
+  if (input.zoom) {
+    return { kind: "zoom", factor: Math.exp(-input.deltaY * WALL_WHEEL_ZOOM) };
+  }
+  const multiplier = input.deltaMode === 1 ? WALL_WHEEL_LINE : 1;
+  return {
+    kind: "pan",
+    dx: -input.deltaX * multiplier,
+    dy: -input.deltaY * multiplier,
+  };
+}
+
+/** Rectangle du mur réellement à l'écran, dans le repère du mur. */
+export interface WallViewRect {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+}
+
+export function wallViewRect(
+  camera: WallCameraState,
+  viewport: WallViewport
+): WallViewRect {
+  const scale = camera.scale > 0 ? camera.scale : 1;
+  const left = -camera.x / scale;
+  const top = -camera.y / scale;
+  return {
+    left,
+    top,
+    right: left + viewport.width / scale,
+    bottom: top + viewport.height / scale,
+  };
+}
+
 /** Durée du vol de la tuile vers son plein cadre. */
 export const WALL_FOCUS_DURATION = 0.72;
 

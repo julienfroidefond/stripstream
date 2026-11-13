@@ -18,21 +18,21 @@ import {
 } from "react";
 import { preload } from "react-dom";
 
-import { useMotionNumberEvent } from "@/lib/motion-value";
 import { usePresence } from "@/components/motion";
 import { gsap } from "@/lib/gsap";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { useTranslate } from "@/hooks/useTranslate";
 import { useUserScope } from "@/contexts/UserScopeContext";
 import { cn } from "@/lib/utils";
+import { WALL_FOCUS_DURATION } from "@/lib/wall-camera";
 import {
-  WALL_FOCUS_DURATION,
-  sheetMaxHeightFor,
-  wallFocusCamera,
-  wallFocusRect,
-  type WallFocusMode,
-} from "@/lib/wall-camera";
+  WALL_ENTRANCE_MS,
+  WALL_RANDOM_FLASH_MS,
+  pickRandomWallTile,
+  wallDimRect,
+} from "@/lib/wall-composition";
 import { wallPreloadUrls } from "@/lib/wall-cover";
+import { planWallFocus } from "@/lib/wall-focus";
 import { isWallUiTarget } from "@/lib/wall-gesture";
 import {
   buildWallLayout,
@@ -40,18 +40,12 @@ import {
   visibleWallTiles,
 } from "@/lib/wall-layout";
 import {
-  type WallClickGuardState,
-  clearWallClickGuard,
-  createWallClickGuardState,
-  isWallClickGuarded,
-} from "@/lib/wall-pinch";
-import type { WallItem, WallRect, WallRenderTile } from "@/types/wall";
+  resolveWallShortcut,
+  wallShortcutPreventsDefault,
+} from "@/lib/wall-shortcuts";
+import type { WallItem, WallRenderTile } from "@/types/wall";
 import { WallFrame } from "./WallFrame";
-import {
-  WallPlaque,
-  type WallPlaqueAnchor,
-  type WallPlaquePlacement,
-} from "./WallPlaque";
+import { WallPlaque, type WallPlaquePlacement } from "./WallPlaque";
 import { WallTile } from "./WallTile";
 import { useWallCamera } from "./useWallCamera";
 import { useWallFilters } from "./useWallFilters";
@@ -62,10 +56,6 @@ interface WallExperienceProps {
   items: WallItem[];
 }
 
-const SHEET_BREAKPOINT = 900;
-const PANEL_MIN_WIDTH = 300;
-const PANEL_MAX_WIDTH = 376;
-const PANEL_GAP = 26;
 /**
  * Le fond noir n'arrive qu'après une courte pause sur une affiche. En enchaînant
  * les survols, la salle reste donc éclairée : la lumière ne tombe que lorsqu'on
@@ -170,10 +160,6 @@ export function WallExperience({ items }: WallExperienceProps) {
   const { active, phase, tiltAllowed, focus, close, beginPan, endPan } =
     wallPhase;
   const closePlaque = close;
-  // Init paresseuse : `useRef(createWallClickGuardState())` recréerait l'objet
-  // à chaque rendu pour ne conserver que le premier.
-  const clickGuardRef = useRef<WallClickGuardState | null>(null);
-  const clickGuard = (clickGuardRef.current ??= createWallClickGuardState());
 
   const [flashKey, setFlashKey] = useState<string | null>(null);
   const [enterTiles, setEnterTiles] = useState(true);
@@ -287,7 +273,7 @@ export function WallExperience({ items }: WallExperienceProps) {
     entranceTimerRef.current = window.setTimeout(() => {
       entranceTimerRef.current = null;
       setEnterTiles(false);
-    }, 1500);
+    }, WALL_ENTRANCE_MS);
   }, [reduce]);
 
   const handleCameraMoved = useCallback(() => {
@@ -320,25 +306,21 @@ export function WallExperience({ items }: WallExperienceProps) {
     onSelectionChange: handleSelectionChange,
   });
   const {
-    x,
-    y,
-    scale,
     camera,
     viewport,
     canvasRef,
     overview,
-    setOverview,
     panning,
-    animateView,
+    zoom,
     zoomBy,
-    clampZoom,
-    resetToInitial,
-    fitView,
+    reset,
+    fit,
+    focusOn,
+    viewRect,
   } = wallCamera;
 
-  const { dragging } = useWallGestures({
+  const { dragging, isClickGuarded, releaseClickGuard } = useWallGestures({
     stageRef,
-    clickGuard,
     camera: wallCamera,
     onPanStart: beginPan,
     onPanEnd: endPan,
@@ -366,46 +348,19 @@ export function WallExperience({ items }: WallExperienceProps) {
     ]
   );
 
-  /**
-   * Le voile de focus doit couvrir toutes les copies rendues, pas seulement la
-   * plaque d'origine : sinon il disparaît dès qu'on s'éloigne du centre du
-   * motif, et le mur redevient uniformément lumineux au scroll.
-   */
-  const dimRect = useMemo<WallRect | null>(() => {
-    if (visibleTiles.length === 0) return null;
+  const dimRect = useMemo(() => wallDimRect(visibleTiles), [visibleTiles]);
 
-    let left = Infinity;
-    let top = Infinity;
-    let right = -Infinity;
-    let bottom = -Infinity;
-    for (const tile of visibleTiles) {
-      left = Math.min(left, tile.x);
-      top = Math.min(top, tile.y);
-      right = Math.max(right, tile.x + tile.width);
-      bottom = Math.max(bottom, tile.y + tile.height);
-    }
-    return {
-      left,
-      top,
-      width: right - left,
-      height: bottom - top,
-    };
-  }, [visibleTiles]);
-
-  const updateZoomLabel = useCallback((value: number) => {
-    if (zoomLabelRef.current) {
-      zoomLabelRef.current.textContent = `${Math.round(value * 100)}%`;
-    }
-  }, []);
-
-  useMotionNumberEvent(scale, updateZoomLabel);
-
-  // Le cadrage initial est posé dans un effet interne à `useWallCamera`, avant
-  // que cet abonnement (déclaré après) n'existe. Sans cette amorce, le libellé
-  // resterait vide en mouvement réduit, où aucune animation ne vient le réveiller.
-  useEffect(() => {
-    updateZoomLabel(scale.get());
-  }, [scale, updateZoomLabel, viewport.height, viewport.width]);
+  // Le libellé suit le zoom à chaque frame, hors de React. `subscribe` livre
+  // tout de suite la valeur courante : aucun ordre d'effets à connaître.
+  useEffect(
+    () =>
+      zoom.subscribe((value) => {
+        if (zoomLabelRef.current) {
+          zoomLabelRef.current.textContent = `${Math.round(value * 100)}%`;
+        }
+      }),
+    [zoom]
+  );
 
   /**
    * Ouvre une œuvre en la faisant venir au centre : c'est la tuile cliquée
@@ -419,56 +374,13 @@ export function WallExperience({ items }: WallExperienceProps) {
       if (!stage) return;
 
       const stageRect = stage.getBoundingClientRect();
-      const fine = hoverIsFine();
-      const mode: WallFocusMode =
-        fine && stageRect.width >= SHEET_BREAKPOINT && stageRect.height >= 460
-          ? "anchor"
-          : "sheet";
-      const sheetMaxHeight =
-        mode === "sheet" ? sheetMaxHeightFor(stageRect) : undefined;
-      const target = wallFocusRect(
+      const plan = planWallFocus(
         { width: stageRect.width, height: stageRect.height },
-        mode,
-        sheetMaxHeight
+        hoverIsFine()
       );
-      if (!target) return;
+      if (!plan) return;
 
-      const next = wallFocusCamera(tile, target, clampZoom);
-      animateView(next.scale, next.x, next.y, duration, "focus");
-      setOverview(false);
-
-      let anchor: WallPlaqueAnchor | null = null;
-      if (mode === "anchor") {
-        const coverLeft = target.left;
-        const coverTop = target.top;
-        const coverRight = coverLeft + target.width;
-        const panelWidth = Math.min(
-          PANEL_MAX_WIDTH,
-          Math.max(PANEL_MIN_WIDTH, stageRect.width * 0.3)
-        );
-        const roomRight = stageRect.width - coverRight;
-        const roomLeft = coverLeft;
-        const side: WallPlaqueAnchor["side"] =
-          roomRight >= roomLeft ? "right" : "left";
-        const desiredLeft =
-          side === "right"
-            ? coverRight + PANEL_GAP
-            : coverLeft - panelWidth - PANEL_GAP;
-        const left = Math.max(
-          16,
-          Math.min(stageRect.width - panelWidth - 16, desiredLeft)
-        );
-        const half = Math.min(230, Math.max(90, stageRect.height / 2 - 18));
-        const minTop = half + 14;
-        const maxTop = stageRect.height - half - 14;
-        const centerY = coverTop + target.height / 2;
-        const top =
-          maxTop <= minTop
-            ? stageRect.height / 2
-            : Math.max(minTop, Math.min(maxTop, centerY));
-
-        anchor = { left, top, width: panelWidth, side };
-      }
+      focusOn(tile, plan.target, duration);
 
       // La salle reste éteinte pendant tout le vol : le voile ne se rallume
       // pas quand la caméra part, il attend la plaque (`data-plaque`).
@@ -476,16 +388,16 @@ export function WallExperience({ items }: WallExperienceProps) {
         {
           key: tile.key,
           index: tile.itemIndex,
-          mode,
-          anchor,
-          sheetMaxHeight,
+          mode: plan.mode,
+          anchor: plan.anchor,
+          sheetMaxHeight: plan.sheetMaxHeight,
         },
         duration
       );
       // L'affiche visée passe devant le voile pendant le vol et répond au clic.
       settleFocusRef.current = pressFocusedTile(stage, tile, reduce);
     },
-    [animateView, clampZoom, focus, reduce, setOverview]
+    [focus, focusOn, reduce]
   );
 
   const toggleFilters = useCallback(() => {
@@ -519,13 +431,13 @@ export function WallExperience({ items }: WallExperienceProps) {
   const resetView = useCallback(() => {
     if (!viewport.width || !viewport.height) return;
     clearFlash();
-    resetToInitial(0.9);
-  }, [clearFlash, resetToInitial, viewport]);
+    reset(0.9);
+  }, [clearFlash, reset, viewport]);
 
   const toggleOverview = useCallback(() => {
     if (overview) resetView();
-    else fitView();
-  }, [fitView, overview, resetView]);
+    else fit();
+  }, [fit, overview, resetView]);
 
   const goToRandom = useCallback(() => {
     if (!viewport.width || !viewport.height || visibleTiles.length === 0) {
@@ -533,21 +445,12 @@ export function WallExperience({ items }: WallExperienceProps) {
     }
 
     closePlaque();
-    const currentScale = scale.get();
-    const left = -x.get() / currentScale;
-    const top = -y.get() / currentScale;
-    const right = left + viewport.width / currentScale;
-    const bottom = top + viewport.height / currentScale;
-    const onScreen = visibleTiles.filter(
-      (candidate) =>
-        candidate.key !== active?.key &&
-        candidate.x + candidate.width > left &&
-        candidate.x < right &&
-        candidate.y + candidate.height > top &&
-        candidate.y < bottom
+    const tile = pickRandomWallTile(
+      visibleTiles,
+      viewRect(),
+      active?.key,
+      Math.random
     );
-    const pool = onScreen.length > 0 ? onScreen : visibleTiles;
-    const tile = pool[Math.floor(Math.random() * pool.length)];
     if (!tile) return;
 
     clearFlash();
@@ -555,89 +458,53 @@ export function WallExperience({ items }: WallExperienceProps) {
     flashTimerRef.current = window.setTimeout(() => {
       flashTimerRef.current = null;
       setFlashKey(null);
-    }, 1600);
+    }, WALL_RANDOM_FLASH_MS);
 
     // Le hasard fait le même geste qu'un clic, en plus ample : la tuile tirée
     // traverse le mur puis vient au centre.
     showFor(tile, 1.05);
-  }, [
-    active,
-    clearFlash,
-    closePlaque,
-    scale,
-    showFor,
-    viewport,
-    visibleTiles,
-    x,
-    y,
-  ]);
+  }, [active, clearFlash, closePlaque, showFor, viewRect, viewport, visibleTiles]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (
-        event.defaultPrevented ||
-        event.metaKey ||
-        event.ctrlKey ||
-        event.altKey
-      ) {
-        return;
-      }
-      const target = event.target as HTMLElement | null;
-      if (
-        target &&
-        (target.isContentEditable ||
-          ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))
-      ) {
-        return;
-      }
+      const action = resolveWallShortcut(event, { panelOpen });
+      if (!action) return;
+      if (wallShortcutPreventsDefault(action)) event.preventDefault();
 
-      // Une activation clavier ne doit pas être avalée par la garde laissée
-      // par le pinch ou le drag précédent.
-      if (event.key === "Enter" || event.key === " ") {
-        clearWallClickGuard(clickGuard);
-      }
-
-      if (event.key === "Escape") {
-        closePlaque();
-        closePanel();
-        return;
-      }
-      if (panelOpen) return;
-
-      if (event.key === "+" || event.key === "=") {
-        event.preventDefault();
-        zoomBy(ZOOM_STEP);
-        return;
-      }
-      if (event.key === "-" || event.key === "_") {
-        event.preventDefault();
-        zoomBy(1 / ZOOM_STEP);
-        return;
-      }
-      if (event.key === "0") {
-        event.preventDefault();
-        resetView();
-        return;
-      }
-      if (event.key === "f" || event.key === "F") {
-        event.preventDefault();
-        toggleOverview();
-        return;
-      }
-      if (event.key === "r" || event.key === "R") {
-        event.preventDefault();
-        goToRandom();
+      switch (action) {
+        case "activate":
+          releaseClickGuard();
+          return;
+        case "close":
+          closePlaque();
+          closePanel();
+          return;
+        case "zoom-in":
+          zoomBy(ZOOM_STEP);
+          return;
+        case "zoom-out":
+          zoomBy(1 / ZOOM_STEP);
+          return;
+        case "reset":
+          resetView();
+          return;
+        case "overview":
+          toggleOverview();
+          return;
+        case "random":
+          goToRandom();
+          return;
       }
     };
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [
-    clickGuard,
     closePanel,
     closePlaque,
     panelOpen,
     goToRandom,
+    releaseClickGuard,
     resetView,
     toggleOverview,
     zoomBy,
@@ -665,7 +532,7 @@ export function WallExperience({ items }: WallExperienceProps) {
     if (!viewport.width || !viewport.height) return;
     const timer = window.setTimeout(
       () => setEnterTiles(false),
-      reduce ? 0 : 1600
+      reduce ? 0 : WALL_ENTRANCE_MS
     );
     return () => window.clearTimeout(timer);
   }, [reduce, viewport.height, viewport.width]);
@@ -735,7 +602,7 @@ export function WallExperience({ items }: WallExperienceProps) {
   });
 
   const handleClickCapture = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (isWallClickGuarded(clickGuard, performance.now())) {
+    if (isClickGuarded()) {
       event.preventDefault();
       event.stopPropagation();
       return;
@@ -744,7 +611,7 @@ export function WallExperience({ items }: WallExperienceProps) {
   };
 
   const handleDoubleClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (isWallClickGuarded(clickGuard, performance.now())) {
+    if (isClickGuarded()) {
       event.preventDefault();
       event.stopPropagation();
       return;

@@ -10,11 +10,8 @@ import {
   type Mock,
 } from "vitest";
 
-import { MotionNumber } from "@/lib/motion-value";
-import { createWallClickGuardState } from "@/lib/wall-pinch";
-
 import type { WallCameraController } from "./useWallCamera";
-import { useWallGestures } from "./useWallGestures";
+import { useWallGestures, type WallGestureCamera } from "./useWallGestures";
 
 vi.hoisted(() => {
   Object.defineProperty(window, "matchMedia", {
@@ -33,51 +30,20 @@ vi.hoisted(() => {
   });
 });
 
-interface CameraSpies {
-  animateView: Mock<WallCameraController["animateView"]>;
-  stopMomentum: Mock<WallCameraController["stopMomentum"]>;
-  startMomentum: Mock<WallCameraController["startMomentum"]>;
-  markPanning: Mock<WallCameraController["markPanning"]>;
-  zoomAt: Mock<WallCameraController["zoomAt"]>;
-  zoomBy: Mock<WallCameraController["zoomBy"]>;
-  resetToInitial: Mock<WallCameraController["resetToInitial"]>;
-  fitView: Mock<WallCameraController["fitView"]>;
-  cancelView: Mock<WallCameraController["cancelView"]>;
-  beginInteraction: Mock<WallCameraController["beginInteraction"]>;
-}
+type CameraSpies = {
+  [K in keyof WallGestureCamera]: Mock<WallCameraController[K]>;
+};
 
-function makeCamera(): { camera: WallCameraController; spies: CameraSpies } {
-  const x = new MotionNumber(0);
-  const y = new MotionNumber(0);
-  const scale = new MotionNumber(1);
-  const spies: CameraSpies = {
-    animateView: vi.fn<WallCameraController["animateView"]>(),
-    stopMomentum: vi.fn<WallCameraController["stopMomentum"]>(),
-    startMomentum: vi.fn<WallCameraController["startMomentum"]>(),
-    markPanning: vi.fn<WallCameraController["markPanning"]>(),
-    zoomAt: vi.fn<WallCameraController["zoomAt"]>(),
-    zoomBy: vi.fn<WallCameraController["zoomBy"]>(),
-    resetToInitial: vi.fn<WallCameraController["resetToInitial"]>(),
-    fitView: vi.fn<WallCameraController["fitView"]>(),
+function makeCamera(): CameraSpies {
+  return {
+    grab: vi.fn<WallCameraController["grab"]>(),
+    panBy: vi.fn<WallCameraController["panBy"]>(),
+    beginPinch: vi.fn<WallCameraController["beginPinch"]>(),
+    pinchTo: vi.fn<WallCameraController["pinchTo"]>(),
+    release: vi.fn<WallCameraController["release"]>(),
+    wheel: vi.fn<WallCameraController["wheel"]>(),
     cancelView: vi.fn<WallCameraController["cancelView"]>(),
-    beginInteraction: vi.fn<WallCameraController["beginInteraction"]>(),
   };
-
-  const camera: WallCameraController = {
-    x,
-    y,
-    scale,
-    camera: { x: 0, y: 0, scale: 1 },
-    viewport: { width: 1000, height: 700 },
-    canvasRef: { current: null },
-    overview: false,
-    setOverview: vi.fn<(value: boolean) => void>(),
-    panning: false,
-    ...spies,
-    clampZoom: (value) => Math.min(2.4, Math.max(0.28, value)),
-  };
-
-  return { camera, spies };
 }
 
 function makeStage(): {
@@ -132,31 +98,29 @@ function pointerEvent(
   return event;
 }
 
-function setup() {
+function setup(callbacks: { onPanStart?: () => void; onPanEnd?: () => void } = {}) {
   const { stage, stageRef } = makeStage();
-  const { camera, spies } = makeCamera();
-  const clickGuard = createWallClickGuardState();
+  const camera = makeCamera();
   const view = renderHook(() =>
-    useWallGestures({ stageRef, clickGuard, camera })
+    useWallGestures({ stageRef, camera, ...callbacks })
   );
-  return { ...view, stage, camera, spies };
+  return { ...view, stage, camera };
 }
 
 afterEach(cleanup);
 
 describe("useWallGestures", () => {
   it("pans the camera 1:1 from the first pixel and marks the drag", () => {
-    const { stage, camera, spies, result } = setup();
+    const { stage, camera, result } = setup();
 
     act(() => {
       stage.dispatchEvent(pointerEvent("pointerdown", { x: 100, y: 100 }));
       window.dispatchEvent(pointerEvent("pointermove", { x: 120, y: 90 }));
     });
 
-    expect(camera.x.get()).toBe(20);
-    expect(camera.y.get()).toBe(-10);
-    expect(spies.markPanning).toHaveBeenCalled();
-    expect(spies.cancelView).toHaveBeenCalled();
+    expect(camera.grab).toHaveBeenCalledTimes(1);
+    expect(camera.panBy).toHaveBeenCalledWith(20, -10);
+    expect(camera.cancelView).toHaveBeenCalled();
     expect(result.current.dragging).toBe(true);
 
     act(() => {
@@ -168,37 +132,68 @@ describe("useWallGestures", () => {
   });
 
   it("keeps a tap as a click and does not start momentum", () => {
-    const { stage, spies } = setup();
+    const { stage, camera, result } = setup();
 
     act(() => {
       stage.dispatchEvent(pointerEvent("pointerdown", { x: 100, y: 100 }));
       window.dispatchEvent(pointerEvent("pointermove", { x: 103, y: 101 }));
     });
-    expect(spies.startMomentum).not.toHaveBeenCalled();
+    expect(camera.panBy).toHaveBeenCalledWith(3, 1);
+    expect(camera.cancelView).not.toHaveBeenCalled();
 
     act(() => {
       window.dispatchEvent(
         pointerEvent("pointerup", { x: 103, y: 101 }, { buttons: 0 })
       );
     });
-    expect(spies.startMomentum).not.toHaveBeenCalled();
+    expect(camera.release).not.toHaveBeenCalled();
+    expect(result.current.isClickGuarded()).toBe(false);
+  });
+
+  it("guards the click after a drag until a keyboard activation", () => {
+    const { stage, result } = setup();
+
+    act(() => {
+      stage.dispatchEvent(pointerEvent("pointerdown", { x: 100, y: 100 }));
+      window.dispatchEvent(pointerEvent("pointermove", { x: 160, y: 100 }));
+      window.dispatchEvent(
+        pointerEvent("pointerup", { x: 160, y: 100 }, { buttons: 0 })
+      );
+    });
+    expect(result.current.isClickGuarded()).toBe(true);
+
+    act(() => result.current.releaseClickGuard());
+    expect(result.current.isClickGuarded()).toBe(false);
+  });
+
+  it("launches momentum from a quick flick", () => {
+    const { stage, camera } = setup();
+
+    act(() => {
+      stage.dispatchEvent(pointerEvent("pointerdown", { x: 100, y: 100 }));
+      window.dispatchEvent(pointerEvent("pointermove", { x: 140, y: 100 }));
+    });
+    // Le deuxième échantillon doit être daté après le premier.
+    const now = performance.now();
+    const spy = vi.spyOn(performance, "now").mockReturnValue(now + 16);
+    act(() => {
+      window.dispatchEvent(pointerEvent("pointermove", { x: 180, y: 100 }));
+      window.dispatchEvent(
+        pointerEvent("pointerup", { x: 180, y: 100 }, { buttons: 0 })
+      );
+    });
+    spy.mockRestore();
+
+    expect(camera.release).toHaveBeenCalledTimes(1);
+    const [velocityX, velocityY] = camera.release.mock.calls[0];
+    expect(velocityX).toBeGreaterThan(0);
+    expect(velocityY).toBe(0);
   });
 
   it("brackets the gesture with pan start and end callbacks", () => {
-    const { stage, stageRef } = makeStage();
-    const { camera } = makeCamera();
-    const clickGuard = createWallClickGuardState();
     const onPanStart = vi.fn();
     const onPanEnd = vi.fn();
-    renderHook(() =>
-      useWallGestures({
-        stageRef,
-        clickGuard,
-        camera,
-        onPanStart,
-        onPanEnd,
-      })
-    );
+    const { stage } = setup({ onPanStart, onPanEnd });
 
     act(() => {
       stage.dispatchEvent(pointerEvent("pointerdown", { x: 100, y: 100 }));
@@ -224,7 +219,7 @@ describe("useWallGestures", () => {
   });
 
   it("never starts a gesture on a wall control", () => {
-    const { stage, spies } = setup();
+    const { stage, camera } = setup();
     const panel = document.createElement("aside");
     panel.dataset.wallUi = "";
     stage.appendChild(panel);
@@ -236,11 +231,11 @@ describe("useWallGestures", () => {
       );
     });
 
-    expect(spies.beginInteraction).not.toHaveBeenCalled();
+    expect(camera.grab).not.toHaveBeenCalled();
   });
 
-  it("scales around the midpoint of two fingers", () => {
-    const { stage, camera } = setup();
+  it("pinches around the midpoint of two fingers", () => {
+    const { stage, camera, result } = setup();
 
     act(() => {
       stage.dispatchEvent(
@@ -266,11 +261,14 @@ describe("useWallGestures", () => {
       );
     });
 
-    expect(camera.scale.get()).toBeCloseTo(2, 6);
+    expect(camera.beginPinch).toHaveBeenCalledWith({ x: 200, y: 100 });
+    expect(camera.pinchTo).toHaveBeenCalledWith({ x: 300, y: 100 }, 2);
+    expect(result.current.dragging).toBe(true);
+    expect(result.current.isClickGuarded()).toBe(true);
   });
 
-  it("zoom with ctrl/meta and pans with a plain wheel", () => {
-    const { stage, camera, spies } = setup();
+  it("hands every wheel notch to the camera as one intention", () => {
+    const { stage, camera } = setup();
 
     act(() => {
       stage.dispatchEvent(
@@ -284,10 +282,13 @@ describe("useWallGestures", () => {
         })
       );
     });
-    expect(spies.zoomAt).toHaveBeenCalledWith(
-      expect.any(Number),
-      500,
-      350
+    expect(camera.wheel).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        zoom: true,
+        deltaY: -100,
+        clientX: 500,
+        clientY: 350,
+      })
     );
 
     act(() => {
@@ -300,19 +301,19 @@ describe("useWallGestures", () => {
         })
       );
     });
-    expect(camera.x.get()).toBe(-10);
-    expect(camera.y.get()).toBe(-20);
+    expect(camera.wheel).toHaveBeenLastCalledWith(
+      expect.objectContaining({ zoom: false, deltaX: 10, deltaY: 20 })
+    );
   });
 
   it("detaches its global listeners when the wall unmounts", () => {
-    const { stage, camera, spies, unmount } = setup();
+    const { stage, camera, unmount } = setup();
 
     act(() => {
       stage.dispatchEvent(pointerEvent("pointerdown", { x: 100, y: 100 }));
       window.dispatchEvent(pointerEvent("pointermove", { x: 120, y: 90 }));
     });
-    const movedX = camera.x.get();
-    expect(movedX).toBe(20);
+    expect(camera.panBy).toHaveBeenCalledTimes(1);
 
     unmount();
 
@@ -324,7 +325,7 @@ describe("useWallGestures", () => {
       );
     });
 
-    expect(camera.x.get()).toBe(movedX);
-    expect(spies.beginInteraction).toHaveBeenCalledTimes(1);
+    expect(camera.panBy).toHaveBeenCalledTimes(1);
+    expect(camera.grab).toHaveBeenCalledTimes(1);
   });
 });

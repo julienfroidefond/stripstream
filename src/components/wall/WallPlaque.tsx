@@ -9,16 +9,10 @@ import { usePresence } from "@/components/motion";
 import { SplitText } from "@/lib/gsap";
 import { useTranslate } from "@/hooks/useTranslate";
 import { getSeriesReadingState } from "@/lib/series-reading-status";
-import type { WallItem } from "@/types/wall";
+import type { WallItem, WallPlaqueAnchor } from "@/types/wall";
 import { cn } from "@/lib/utils";
 
-export interface WallPlaqueAnchor {
-  left: number;
-  top: number;
-  width: number;
-  /** Côté de la couverture où se pose la plaque : la règle d'accent regarde l'œuvre. */
-  side: "left" | "right";
-}
+export type { WallPlaqueAnchor };
 
 export type WallPlaquePlacement =
   | { mode: "anchor"; anchor: WallPlaqueAnchor }

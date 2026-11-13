@@ -65,3 +65,12 @@ export interface WallRect {
   width: number;
   height: number;
 }
+
+/** Position de la plaque posée à côté de l'affiche, dans le repère du cadre. */
+export interface WallPlaqueAnchor {
+  left: number;
+  top: number;
+  width: number;
+  /** Côté de la couverture où se pose la plaque : la règle d'accent regarde l'œuvre. */
+  side: "left" | "right";
+}
