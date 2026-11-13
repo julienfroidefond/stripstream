@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { cn, debounce, formatDate, runWithConcurrency } from "./utils";
+import { cn, debounce, formatDate, formatLocaleDate, runWithConcurrency } from "./utils";
 
 describe("cn", () => {
   it("merges class names and resolves tailwind conflicts", () => {
@@ -20,6 +20,26 @@ describe("formatDate", () => {
 
   it("accepts a date string", () => {
     expect(formatDate("2026-12-25T12:00:00.000Z")).toMatch(/^\d{2}\/\d{2}\/\d{4}$/);
+  });
+});
+
+describe("formatLocaleDate", () => {
+  it("formats in the display time zone, whatever the runtime zone", () => {
+    // 23:30 UTC le 31 décembre = 1er janvier à Paris : un serveur en UTC et un
+    // navigateur à Paris doivent rendre la même date.
+    const nearMidnight = "2026-12-31T23:30:00.000Z";
+    expect(formatLocaleDate(nearMidnight, "fr-FR")).toBe("01/01/2027");
+    expect(formatLocaleDate(nearMidnight, "en-US")).toBe("1/1/2027");
+  });
+
+  it("keeps the caller's format options", () => {
+    expect(
+      formatLocaleDate("2026-05-04T10:00:00.000Z", "fr-FR", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    ).toBe("4 mai 2026");
   });
 });
 

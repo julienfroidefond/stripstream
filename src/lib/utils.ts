@@ -14,6 +14,26 @@ export function formatDate(date: string | Date): string {
   });
 }
 
+/**
+ * Fuseau d'affichage des dates calendaires. Un composant client est aussi
+ * rendu côté serveur (UTC en production) : sans fuseau explicite, une date
+ * proche de minuit s'affiche d'un jour différent au serveur et au navigateur,
+ * et l'hydratation échoue. Le public de l'application est francophone.
+ */
+export const DISPLAY_TIME_ZONE = "Europe/Paris";
+
+/** Date calendaire localisée, identique au serveur et au navigateur. */
+export function formatLocaleDate(
+  date: string | number | Date,
+  locale: string,
+  options: Omit<Intl.DateTimeFormatOptions, "timeZone"> = {}
+): string {
+  return new Date(date).toLocaleDateString(locale, {
+    ...options,
+    timeZone: DISPLAY_TIME_ZONE,
+  });
+}
+
 export function debounce<TArgs extends unknown[]>(
   func: (...args: TArgs) => void,
   wait: number
