@@ -5,6 +5,8 @@ import {
   SWIPE_THRESHOLD_MIN,
   beginDrag,
   moveDrag,
+  ownsDrag,
+  planPress,
   releaseDrag,
   shouldSuppressClick,
   snapDuration,
@@ -164,6 +166,35 @@ describe("snapDuration", () => {
     expect(snapDuration(440)).toBe(0.22);
     expect(snapDuration(660)).toBe(0.3);
     expect(snapDuration(4000)).toBe(0.42);
+  });
+});
+
+describe("planPress", () => {
+  it("commits a pending swipe and restarts from the new slide's center", () => {
+    expect(planPress({ trackX: -1500, width: 1000, pendingSwipe: true })).toEqual({
+      commitSwipe: true,
+      baseX: -1000,
+    });
+  });
+
+  it("picks up the track where it is while it settles back", () => {
+    expect(planPress({ trackX: -1200, width: 1000, pendingSwipe: false })).toEqual({
+      commitSwipe: false,
+      baseX: -1200,
+    });
+  });
+
+  it("falls back to the center when the position is unknown", () => {
+    expect(planPress({ trackX: Number.NaN, width: 1000, pendingSwipe: false }).baseX).toBe(-1000);
+    expect(planPress({ trackX: 0, width: 1000, pendingSwipe: false }).baseX).toBe(-1000);
+  });
+});
+
+describe("ownsDrag", () => {
+  it("only accepts the pointer that opened the drag", () => {
+    expect(ownsDrag(drag({ pointerId: 1 }), 1)).toBe(true);
+    expect(ownsDrag(drag({ pointerId: 1 }), 2)).toBe(false);
+    expect(ownsDrag(null, 1)).toBe(false);
   });
 });
 

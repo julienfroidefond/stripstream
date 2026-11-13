@@ -5,6 +5,7 @@ import type { NormalizedBook } from "@/lib/providers/types";
 import {
   planPageJump,
   planPageMove,
+  progressPageFor,
   resolveInitialPage,
   type PageMove,
 } from "@/lib/reader/page-navigation";
@@ -47,33 +48,41 @@ export function usePageNavigation({
     initialPage: currentPage,
   });
 
+  const totalPages = pages.length;
+
   const applyPageMove = useCallback(
     (move: PageMove, fromPage: number) => {
+      const spread = { isDoublePage, shouldShowDoublePage };
       switch (move.kind) {
         case "page":
           console.debug(`[reader/nav] navigate ${fromPage} → ${move.page} bookId=${book.id}`);
           setCurrentPage(move.page);
-          readProgress.track(move.page);
+          // A spread that shows the last page records the book as finished.
+          readProgress.track(progressPageFor(move.page, totalPages, spread));
           break;
         case "start-bump":
           setStartBump((count) => count + 1);
           break;
         case "next-book":
           console.debug(`[reader/nav] end of book → next bookId=${move.bookId}`);
+          // The final spread may have been reached without a tracked move
+          // (opened on it, double page switched on): complete the book first.
+          if (totalPages > 0) readProgress.track(totalPages);
           router.replace(`/books/${move.bookId}`);
           break;
         case "end":
           console.debug(`[reader/nav] end of book, no next → end message`);
+          if (totalPages > 0) readProgress.track(totalPages);
           setShowEndMessage(true);
           break;
       }
     },
-    [book.id, readProgress, router]
+    [book.id, isDoublePage, readProgress, router, shouldShowDoublePage, totalPages]
   );
 
   const navigateToPage = useCallback(
     (page: number) => {
-      const jump = planPageJump(page, pages.length);
+      const jump = planPageJump(page, pages.length, { isDoublePage, shouldShowDoublePage });
       if (jump.kind === "out-of-bounds") {
         console.warn(
           `[reader/nav] navigate out of bounds page=${jump.page} total=${pages.length}`
@@ -82,7 +91,7 @@ export function usePageNavigation({
       }
       applyPageMove(jump, currentPage);
     },
-    [applyPageMove, currentPage, pages.length]
+    [applyPageMove, currentPage, isDoublePage, pages.length, shouldShowDoublePage]
   );
 
   const handlePreviousPage = useCallback(() => {

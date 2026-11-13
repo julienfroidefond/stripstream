@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { planPageMove } from "./page-navigation";
+import { lastVisiblePage, planPageMove } from "./page-navigation";
 import {
   actionForSide,
   arrowGlyphForAction,
@@ -96,14 +96,21 @@ describe("resolveSideAction", () => {
     for (const isDoublePage of [false, true]) {
       for (let currentPage = 1; currentPage <= 6; currentPage++) {
         for (const action of ["previous", "next"] as const) {
-          const move = planPageMove(action, {
+          const state = {
             currentPage,
             totalPages: 6,
             isDoublePage,
-            shouldShowDoublePage: (page) => page > 1,
+            shouldShowDoublePage: (page: number) => page > 1,
             nextBookId: "next",
-          });
-          expect(canTurnPage(action, { currentPage, totalPages: 6 })).toBe(move.kind === "page");
+          };
+          const move = planPageMove(action, state);
+          expect(
+            canTurnPage(action, {
+              currentPage,
+              totalPages: 6,
+              lastVisiblePage: lastVisiblePage(currentPage, state),
+            })
+          ).toBe(move.kind === "page");
         }
       }
     }

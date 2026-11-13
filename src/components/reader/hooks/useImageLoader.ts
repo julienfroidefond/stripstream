@@ -59,7 +59,7 @@ interface UseImageLoaderProps {
   currentPage: number;
   shouldShowDoublePage: (pageNum: number) => boolean;
   prefetchCount?: number; // Nombre de pages à précharger (défaut: 5)
-  nextBook?: { getPageUrl: (pageNum: number) => string; pages: number[] } | null; // Livre suivant pour prefetch
+  nextBook?: { getPageUrl: (pageNum: number) => string; pageCount: number } | null; // Livre suivant pour prefetch
 }
 
 export function useImageLoader({
@@ -333,6 +333,7 @@ export function useImageLoader({
       isSpread: shouldShowDoublePage(currentPage),
       prefetchCount,
       hasNextBook: Boolean(nextBook),
+      nextBookPageCount: nextBook?.pageCount,
       statusOf,
     });
 

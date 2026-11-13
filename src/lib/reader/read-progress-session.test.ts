@@ -139,6 +139,32 @@ describe("ReadProgressSession", () => {
     expect(persist).toHaveBeenCalledTimes(1);
   });
 
+  it("does not rewrite the completion when the last page is tracked again", async () => {
+    const { session, persist } = createSession();
+
+    session.track(10);
+    await settle();
+    session.track(10);
+
+    expect(persist).toHaveBeenCalledTimes(1);
+  });
+
+  it("writes the completion again after the reader went back", async () => {
+    const { session, persist, runTimers } = createSession();
+
+    session.track(10);
+    await settle();
+    session.track(4);
+    runTimers();
+    await settle();
+    session.track(10);
+
+    expect(persist).toHaveBeenCalledTimes(3);
+    expect(persist).toHaveBeenLastCalledWith(
+      expect.objectContaining({ page: 10, completed: true })
+    );
+  });
+
   it("does not flush an immediate last-page write still in flight", () => {
     const { session, persist } = createSession();
     const first = deferred<void>();

@@ -14,6 +14,8 @@ export interface BookReaderProps {
   pages: number[];
   readerInfo?: ReaderInfo | null;
   onClose?: (currentPage: number) => void;
+  /** End-of-book "back to series": leaves the reader for the book's series. */
+  onBackToSeries?: () => void;
   onRefresh?: () => Promise<void>;
   nextBook?: NormalizedBook | null;
   seriesRating?: NormalizedSeriesRating | null;
@@ -49,6 +51,8 @@ export interface ControlButtonsProps {
   onClose?: (currentPage: number) => void;
   onRefresh?: () => Promise<void>;
   currentPage: number;
+  /** Last page on screen: `currentPage + 1` when a spread is shown. */
+  lastVisiblePage: number;
   totalPages: number;
   isDoublePage: boolean;
   onToggleDoublePage: () => void;

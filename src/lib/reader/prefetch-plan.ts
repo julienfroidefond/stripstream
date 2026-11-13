@@ -27,6 +27,11 @@ export interface PrefetchPlanInput {
   /** Upcoming pages to keep warm, the user's `readerPrefetchCount`. */
   prefetchCount: number;
   hasNextBook: boolean;
+  /**
+   * Page count of the next book. The next-book window never asks for a page
+   * past it: a short next book would answer those requests with 404s.
+   */
+  nextBookPageCount?: number;
   statusOf: (key: PrefetchKey) => PrefetchStatus;
 }
 
@@ -47,7 +52,8 @@ export function nextBookKey(page: number): string {
 }
 
 export function planPrefetch(input: PrefetchPlanInput): PrefetchPlan {
-  const { currentPage, totalPages, isSpread, prefetchCount, hasNextBook, statusOf } = input;
+  const { currentPage, totalPages, isSpread, prefetchCount, hasNextBook, nextBookPageCount, statusOf } =
+    input;
   const visible = isSpread ? [currentPage, currentPage + 1] : [currentPage];
   const visibleSet = new Set(visible);
 
@@ -63,7 +69,9 @@ export function planPrefetch(input: PrefetchPlanInput): PrefetchPlan {
   const nextBook: PrefetchPlan["nextBook"] = [];
   const pagesFromEnd = totalPages - currentPage;
   if (hasNextBook && pagesFromEnd <= prefetchCount) {
-    for (let page = 1; page <= prefetchCount; page++) {
+    const nextBookEnd =
+      nextBookPageCount === undefined ? prefetchCount : Math.min(prefetchCount, nextBookPageCount);
+    for (let page = 1; page <= nextBookEnd; page++) {
       const key = nextBookKey(page);
       // A failed next-book page stays failed: retrying it on every page turn
       // would hammer a broken endpoint the reader is not even showing.

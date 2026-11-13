@@ -12,9 +12,10 @@ import { useTouchNavigation } from "./useTouchNavigation";
 import { resolveReaderShortcut } from "./keyboardShortcuts";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { resolveBookMediaUrl } from "@/lib/providers/book-media";
+import { lastVisiblePage } from "@/lib/reader/page-navigation";
 import type { ReaderBackground } from "@/types/preferences";
 
-export function useReaderState({ book, pages, onClose, nextBook }: BookReaderProps) {
+export function useReaderState({ book, pages, onClose, onBackToSeries, nextBook }: BookReaderProps) {
   const { preferences, updatePreferences } = usePreferences();
   const [showControls, setShowControls] = useState(false);
   const [showThumbnails, setShowThumbnails] = useState(false);
@@ -50,7 +51,7 @@ export function useReaderState({ book, pages, onClose, nextBook }: BookReaderPro
   );
 
   const nextBookForLoader = useMemo(
-    () => nextBook ? { getPageUrl: nextBookPageUrlBuilder, pages: [] as number[] } : null,
+    () => nextBook ? { getPageUrl: nextBookPageUrlBuilder, pageCount: nextBook.pageCount } : null,
     [nextBook, nextBookPageUrlBuilder]
   );
 
@@ -108,6 +109,15 @@ export function useReaderState({ book, pages, onClose, nextBook }: BookReaderPro
     },
     [book.id, cancelAllPrefetches, onClose]
   );
+
+  const handleBackToSeries = useCallback(() => {
+    if (!onBackToSeries) {
+      handleCloseReader(currentPage);
+      return;
+    }
+    cancelAllPrefetches();
+    onBackToSeries();
+  }, [cancelAllPrefetches, currentPage, handleCloseReader, onBackToSeries]);
 
   // Navigation clavier
   useEffect(() => {
@@ -200,6 +210,7 @@ export function useReaderState({ book, pages, onClose, nextBook }: BookReaderPro
     pages,
     totalPages,
     currentPage,
+    lastVisiblePage: lastVisiblePage(currentPage, { isDoublePage, shouldShowDoublePage }),
     showEndMessage,
     showControls,
     showThumbnails,
@@ -219,6 +230,7 @@ export function useReaderState({ book, pages, onClose, nextBook }: BookReaderPro
     onNextPage: handleNextPage,
     onPageChange: navigateToPage,
     onClose: handleCloseReader,
+    onBackToSeries: handleBackToSeries,
     onToggleControls,
     onToggleThumbnails,
     onToggleInfo,

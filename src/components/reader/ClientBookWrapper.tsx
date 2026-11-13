@@ -5,6 +5,11 @@ import dynamic from "next/dynamic";
 import { Loader2 } from "lucide-react";
 import type { NormalizedBook, NormalizedSeriesRating } from "@/lib/providers/types";
 import { useRouter } from "next/navigation";
+import {
+  planReaderClose,
+  readHistoryProbe,
+  type ReaderCloseIntent,
+} from "@/lib/reader/close-plan";
 
 // Chargement différé du lecteur lourd (uniquement quand on ouvre le reader).
 const BookReader = dynamic(() => import("./BookReader").then((m) => m.BookReader), {
@@ -26,10 +31,15 @@ export function ClientBookWrapper({ book, pages, nextBook, readerInfo, seriesRat
   const router = useRouter();
   const [isClosing, setIsClosing] = useState(false);
 
-  const handleCloseReader = (_currentPage: number) => {
+  const exitReader = (intent: ReaderCloseIntent) => {
+    const plan = planReaderClose(intent, readHistoryProbe(window), book.seriesId);
     setIsClosing(true);
-    router.back();
+    if (plan.kind === "back") router.back();
+    else router.replace(plan.href);
   };
+
+  const handleCloseReader = (_currentPage: number) => exitReader("close");
+  const handleBackToSeries = () => exitReader("series");
 
   if (isClosing) {
     return (
@@ -49,6 +59,7 @@ export function ClientBookWrapper({ book, pages, nextBook, readerInfo, seriesRat
       readerInfo={readerInfo}
       seriesRating={seriesRating}
       onClose={handleCloseReader}
+      onBackToSeries={handleBackToSeries}
       onRefresh={onRefresh}
       nextBook={nextBook}
     />
