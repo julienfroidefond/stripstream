@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import type { PageImage } from "../hooks/useImageLoader";
 import { planTurn, type PageRect, type ReaderSnapshot, type TurnPlan } from "../hooks/pageTurn";
 import { PageTurnOverlay } from "./PageTurnOverlay";
+import { isViewportZoomed, spreadOrder, startBumpMotion } from "@/lib/reader/side-actions";
 
 /** Une page seule se tourne vite ; une double page, plus large, prend son temps. */
 const TURN_DURATION_SINGLE = 650;
@@ -121,7 +122,9 @@ export function PageDisplay({
     const first = { url: currentBlobUrlRef.current, rect: measure(page1Ref.current) };
     if (!showSecondPage) return { currentPage, slots: [first] };
     const second = { url: nextBlobUrlRef.current, rect: measure(page2Ref.current) };
-    return { currentPage, slots: isRTL ? [second, first] : [first, second] };
+    const pair = [first, second];
+    const [leftSlot, rightSlot] = spreadOrder(isRTL ? "rtl" : "ltr");
+    return { currentPage, slots: [pair[leftSlot], pair[rightSlot]] };
   }, [currentPage, showSecondPage, isRTL]);
 
   // Une image décodée après le rendu, ou une fenêtre redimensionnée, change
@@ -135,7 +138,7 @@ export function PageDisplay({
     const next = takeSnapshot();
     snapshotRef.current = next;
     if (!pageTurn || reduceMotion || !previous || previous.currentPage === next.currentPage) return;
-    if ((window.visualViewport?.scale ?? 1) > 1.15) return;
+    if (isViewportZoomed(window.visualViewport?.scale)) return;
     const plan = planTurn(previous, next, isRTL);
     if (!plan) return;
     turnIdRef.current += 1;
@@ -158,11 +161,11 @@ export function PageDisplay({
   const spreadRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (startBump === 0 || reduceMotion) return;
-    const pull = isRTL ? -22 : 22;
+    const { pull, tilt } = startBumpMotion(isRTL ? "rtl" : "ltr");
     spreadRef.current?.animate(
       [
         { transform: "translateX(0)" },
-        { transform: `translateX(${pull}px) rotateY(${isRTL ? 4 : -4}deg)`, offset: 0.35 },
+        { transform: `translateX(${pull}px) rotateY(${tilt}deg)`, offset: 0.35 },
         { transform: `translateX(${-pull * 0.25}px)`, offset: 0.7 },
         { transform: "translateX(0)" },
       ],
@@ -175,14 +178,15 @@ export function PageDisplay({
   const innerSizing =
     "relative flex w-screen min-w-screen max-w-none px-2 sm:px-4 h-[calc(100dvh-2.5rem)] items-center justify-center";
 
+  // Dans un spread, la page placée à gauche se colle à la reliure par la
+  // droite, et inversement ; l'ordre vient de la politique de côtés.
+  const [leftSlot] = spreadOrder(isRTL ? "rtl" : "ltr");
   const pageWrapperClass = (isPage1: boolean) =>
     cn(
       "relative flex h-full items-center",
       showSecondPage ? "w-1/2" : "w-full justify-center",
-      showSecondPage && {
-        [isPage1 ? "order-2 justify-start" : "order-1 justify-end"]: isRTL,
-        [isPage1 ? "order-1 justify-end" : "order-2 justify-start"]: !isRTL,
-      }
+      showSecondPage &&
+        ((isPage1 ? 0 : 1) === leftSlot ? "order-1 justify-end" : "order-2 justify-start")
     );
 
   return (

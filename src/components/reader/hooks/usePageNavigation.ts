@@ -16,7 +16,6 @@ interface UsePageNavigationProps {
   pages: number[];
   isDoublePage: boolean;
   shouldShowDoublePage: (page: number) => boolean;
-  onClose?: (currentPage: number) => void;
   nextBook?: NormalizedBook | null;
 }
 
@@ -25,7 +24,6 @@ export function usePageNavigation({
   pages,
   isDoublePage,
   shouldShowDoublePage,
-  onClose: _onClose,
   nextBook,
 }: UsePageNavigationProps) {
   const router = useRouter();
