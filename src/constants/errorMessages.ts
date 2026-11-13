@@ -1,10 +1,19 @@
-import { ERROR_CODES } from "./errorCodes";
+import { ERROR_CODES, type ErrorCode } from "./errorCodes";
 
-export const ERROR_MESSAGES: Record<string, string> = {
+/**
+ * Messages techniques (anglais) associés aux codes d'erreur.
+ *
+ * Le type `Record<ErrorCode, string>` fait échouer `pnpm typecheck` dès qu'un
+ * code est ajouté sans message. Les libellés affichés à l'utilisateur vivent
+ * dans `errors.${code}` des deux locales ; un test vérifie la parité.
+ */
+export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   // Providers
   [ERROR_CODES.PROVIDER.NOT_CONFIGURED]: "No media provider is configured",
   [ERROR_CODES.PROVIDER.UNAVAILABLE]:
     "This surface is not available with the active connection",
+  [ERROR_CODES.PROVIDER.CAPABILITY_NOT_SUPPORTED]:
+    "This feature is not available with this provider",
 
   // Middleware
   [ERROR_CODES.MIDDLEWARE.UNAUTHORIZED]: "Unauthorized access",
@@ -26,6 +35,11 @@ export const ERROR_MESSAGES: Record<string, string> = {
   [ERROR_CODES.AUTH.INVALID_USER_DATA]: "Invalid user data",
   [ERROR_CODES.AUTH.LOGOUT_ERROR]: "Error during logout",
   [ERROR_CODES.AUTH.REGISTRATION_FAILED]: "Registration failed",
+  [ERROR_CODES.AUTH.USER_NOT_FOUND]: "User not found",
+  [ERROR_CODES.AUTH.INVALID_PASSWORD]: "Invalid password",
+  [ERROR_CODES.AUTH.PASSWORD_CHANGE_ERROR]: "Error changing password",
+  [ERROR_CODES.AUTH.FETCH_ERROR]: "Unable to reach the server",
+  [ERROR_CODES.AUTH.FORBIDDEN]: "Access denied",
 
   // Stripstream
   [ERROR_CODES.STRIPSTREAM.MISSING_CONFIG]: "Stripstream Librarian configuration not found",
@@ -71,6 +85,7 @@ export const ERROR_MESSAGES: Record<string, string> = {
 
   // Book
   [ERROR_CODES.BOOK.NOT_FOUND]: "Book not found",
+  [ERROR_CODES.BOOK.FETCH_ERROR]: "Error fetching book",
   [ERROR_CODES.BOOK.PROGRESS_UPDATE_ERROR]: "Error updating reading progress",
   [ERROR_CODES.BOOK.PROGRESS_DELETE_ERROR]: "Error deleting reading progress",
   [ERROR_CODES.BOOK.PAGES_FETCH_ERROR]: "Error fetching pages",
@@ -101,6 +116,19 @@ export const ERROR_MESSAGES: Record<string, string> = {
   // Home
   [ERROR_CODES.HOME.FETCH_ERROR]: "Error fetching home page data",
 
+  // Wall
+  [ERROR_CODES.WALL.FETCH_ERROR]:
+    "Could not gather the works for the wall. Check your connection and try again.",
+
+  // Admin
+  [ERROR_CODES.ADMIN.FETCH_USERS_ERROR]: "Error fetching users",
+  [ERROR_CODES.ADMIN.UPDATE_USER_ERROR]: "Error updating user",
+  [ERROR_CODES.ADMIN.DELETE_USER_ERROR]: "Error deleting user",
+  [ERROR_CODES.ADMIN.FETCH_STATS_ERROR]: "Error fetching statistics",
+  [ERROR_CODES.ADMIN.CANNOT_DELETE_SELF]: "You cannot delete your own account",
+  [ERROR_CODES.ADMIN.RESET_PASSWORD_ERROR]: "Error resetting password",
+  [ERROR_CODES.ADMIN.CANNOT_RESET_OWN_PASSWORD]: "You cannot reset your own password here",
+
   // Config
   [ERROR_CODES.CONFIG.INVALID_URL]:
     "Invalid server URL. Use an http(s) URL without credentials, query string or metadata endpoint.",
@@ -125,4 +153,4 @@ export const ERROR_MESSAGES: Record<string, string> = {
   [ERROR_CODES.CLIENT.FETCH_ERROR]: "Error during request",
   [ERROR_CODES.CLIENT.NETWORK_ERROR]: "Network connection error",
   [ERROR_CODES.CLIENT.REQUEST_FAILED]: "Request failed",
-} as const;
+};

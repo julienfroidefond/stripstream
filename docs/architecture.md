@@ -165,10 +165,11 @@ Recipes call `updateTag(...)`, plus `revalidatePath(...)` where a route payload 
 
 ## 4. Error model
 
-- All thrown domain errors are `AppError` (`src/utils/errors.ts:4-20`), carrying an `ErrorCode` plus optional message params.
-- Codes are declared in `src/constants/errorCodes.ts:3-112`, grouped per domain: `AUTH`, `KOMGA`, `STRIPSTREAM`, `CONFIG`, `LIBRARY`, `SERIES`, `BOOK`, `FAVORITE`, `PREFERENCES`, `UI`, `IMAGE`, `HOME`, `MIDDLEWARE`, `CLIENT`, `ADMIN`.
+- All thrown domain errors are `AppError` (`src/utils/errors.ts`), carrying an `ErrorCode` plus optional message params. `getErrorMessage` interpolates every `{param}` occurrence, leaves unmatched parameters intact and falls back to the code itself when a message is missing at runtime, so building an error never throws.
+- Technical (English) messages live in `ERROR_MESSAGES` (`src/constants/errorMessages.ts`), typed `Record<ErrorCode, string>`: adding a code without a message fails `pnpm typecheck`.
+- Codes are declared in `src/constants/errorCodes.ts`, grouped per domain: `AUTH`, `KOMGA`, `STRIPSTREAM`, `CONFIG`, `LIBRARY`, `SERIES`, `BOOK`, `FAVORITE`, `PREFERENCES`, `UI`, `IMAGE`, `HOME`, `WALL`, `MIDDLEWARE`, `CLIENT`, `ADMIN`.
 - Provider HTTP errors map to status-aware codes via `codeForHttpStatus(status, codes)` (`src/utils/http-error.ts:16-22`): 401 → `UNAUTHORIZED`, 403 → `FORBIDDEN`, 404 → `NOT_FOUND`, 5xx → `SERVER_ERROR`, otherwise `HTTP_ERROR`. `isConnectionError()` (`http-error.ts:39-47`) detects network failures so they can be logged as warnings.
-- User-facing messages are localized under `errors.${code}` in `src/i18n/messages/en/common.json` (block at `:387`) and `src/i18n/messages/fr/common.json` (`:390`). Add keys to **both** locales.
+- User-facing messages are localized under `errors.${code}` in `src/i18n/messages/en/common.json` and `src/i18n/messages/fr/common.json`. Add keys to **both** locales: `src/constants/errorMessages.test.ts` enforces one entry per code in each locale and identical en/fr key sets, so a new code or a drifted translation fails the suite.
 - Server actions return an `ActionResult` through the action runner: `ActionError` maps to its code and optional partial `actionData`, `AppError` maps to its code, and anything else maps to the action's fallback code/message. A failed action never runs its invalidation callback; a partial mutation that wrote some rows invalidates explicitly before throwing `ActionError`.
 - Home tolerance: the home page fans out each feed as its own promise with an individual `.catch(...)` (`src/app/page.tsx:67-84`), so one failing feed renders empty instead of breaking the page. `KomgaProvider.getHomeContinueReadingData` uses `Promise.allSettled` over its two Komga calls and throws only when *every* call rejects (`src/lib/providers/komga/komga.provider.ts:481-521`); partial results degrade to empty lists.
 - Credential-touching connection tests go through the runner's ordered `requireUser` + `rateLimit` gates (`testKomgaConnection` in `src/app/actions/config.ts`; `testStripstreamConnection` in `src/app/actions/stripstream-config.ts`). Keep that pattern for similar actions.
@@ -279,7 +280,7 @@ All motion runs on **GSAP 3.15**; framer-motion has been removed. One language i
 - Resume state: `src/lib/resume/`
 - Server actions: `src/app/actions/`
 - Data model and migrations: `prisma/schema.prisma`, `prisma/migrations/`
-- Error codes and copy: `src/constants/errorCodes.ts`, `src/i18n/messages/{fr,en}/common.json`
+- Error codes, technical messages and copy: `src/constants/errorCodes.ts`, `src/constants/errorMessages.ts`, `src/i18n/messages/{fr,en}/common.json`
 - Reader: `src/components/reader/`
 - Motion: `src/lib/gsap.ts`, `src/components/motion/index.tsx`, `src/lib/motion-value.ts`, `src/components/ui/directional-slide.tsx`
 - Environment: `ENV.md`; API surface: `docs/api.md`; agent guide: `AGENTS.md`.
