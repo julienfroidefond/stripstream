@@ -241,7 +241,7 @@ export function BackgroundSettings({ initialLibraries }: BackgroundSettingsProps
           {/* Sélection des bibliothèques utilisées pour la cover aléatoire */}
           {preferences.background.type === "komga-random" && (
             <div className="space-y-3">
-              <Label>Bibliothèques</Label>
+              <Label>{t("settings.background.libraries.label")}</Label>
               <div className="space-y-2">
                 {initialLibraries.map((library) => (
                   <div key={library.id} className="flex items-center space-x-2">

@@ -51,7 +51,7 @@ export function SeriesRatingControl({
         setRating(newRating);
         toast({ title: t("series.header.rating.saved") });
       } else {
-        toast({ title: t("series.header.rating.error"), description: result.message, variant: "destructive" });
+        toast({ title: t("series.header.rating.error"), description: t(`errors.${result.code}`), variant: "destructive" });
       }
     } catch (error) {
       logger.error({ err: error, seriesId }, "Erreur notation série");
@@ -73,7 +73,7 @@ export function SeriesRatingControl({
         setRating(null);
         toast({ title: t("series.header.rating.deleted") });
       } else {
-        toast({ title: t("series.header.rating.error"), description: result.message, variant: "destructive" });
+        toast({ title: t("series.header.rating.error"), description: t(`errors.${result.code}`), variant: "destructive" });
       }
     } catch (error) {
       logger.error({ err: error, seriesId }, "Erreur suppression note série");

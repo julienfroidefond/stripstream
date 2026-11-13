@@ -27,7 +27,7 @@ export default async function LibraryPage({ params, searchParams }: PageProps) {
     load: async ({ provider, preferences }) => {
       const canSortByRating = provider.capabilities.ratings !== null;
 
-      const query = parseSeriesCollectionQuery(queryParams, {
+      const requestedQuery = parseSeriesCollectionQuery(queryParams, {
         itemsPerPage: preferences.displayMode.itemsPerPage,
         compact: preferences.displayMode.compact,
         unreadOnly: preferences.showOnlyUnread,
@@ -36,8 +36,8 @@ export default async function LibraryPage({ params, searchParams }: PageProps) {
         canSortByRating,
       });
 
-      const [seriesPage, library] = await Promise.all([
-        fetchSeriesCollectionPage(provider, libraryId, query),
+      const [{ query, seriesPage }, library] = await Promise.all([
+        fetchSeriesCollectionPage(provider, libraryId, requestedQuery),
         provider.getLibraryById(libraryId),
       ]);
 

@@ -18,6 +18,7 @@ import { usePreferences } from "@/contexts/PreferencesContext";
 import { defaultPreferences } from "@/types/preferences";
 import logger from "@/lib/logger";
 import { getRandomBookFromLibraries } from "@/app/actions/library";
+import { useTranslate } from "@/hooks/useTranslate";
 
 // Routes qui ne nécessitent pas d'authentification
 const publicRoutes = ["/login", "/register"];
@@ -44,6 +45,7 @@ export default function ClientLayout({
   sidebarLibrariesSkeleton,
   sidebarConnectionsSkeleton,
 }: ClientLayoutProps) {
+  const { t } = useTranslate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [randomBookThumbnailUrl, setRandomBookThumbnailUrl] = useState<string | null>(null);
   const pathname = usePathname();
@@ -197,7 +199,7 @@ export default function ClientLayout({
         {!isPublicRoute && isSidebarOpen && (
           <button
             type="button"
-            aria-label="Fermer la navigation"
+            aria-label={t("layout.closeNavigation")}
             className="fixed inset-0 top-[calc(4rem+env(safe-area-inset-top,0px))] z-20 bg-black/40 transition-opacity lg:hidden"
             onClick={handleCloseSidebar}
           />

@@ -1,5 +1,6 @@
 import { normalizeGridPageSize } from "@/lib/pageSize";
 import type { IMediaProvider, BookListFilter } from "@/lib/providers/provider.interface";
+import type { Page } from "@/lib/providers/pagination";
 import type { NormalizedSeriesPage } from "@/lib/providers/types";
 import type { SortOrder } from "@/types/preferences";
 
@@ -43,6 +44,12 @@ export interface SeriesCollectionSearchParams extends CollectionSearchParams {
 /** Contexte d'une grille de séries : défauts d'affichage + capacités provider. */
 export interface SeriesCollectionContext extends CollectionQueryDefaults {
   defaultSortOrder: SortOrder;
+  /**
+   * Préférence « Afficher les séries complètes » : `false` ouvre la grille
+   * avec le filtre « Manquants » actif. `usePaginatedGrid` écrit la même
+   * valeur (`showMissingBooks = !filtreActif`) quand l'utilisateur bascule le
+   * filtre ; voir `missingFilterFromPreference` / `preferenceForMissingFilter`.
+   */
   showMissingBooks: boolean;
   canSortByRating: boolean;
 }
@@ -58,6 +65,35 @@ export interface SeriesCollectionQuery extends CollectionQuery {
 export function parsePage(value: string | undefined): number {
   const parsed = Number.parseInt(value ?? "", 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+}
+
+/**
+ * Charge une page de collection en la bornant à la dernière page existante.
+ *
+ * Une URL périmée (`?page=3` alors qu'il n'y a plus que deux pages) servait une
+ * page vide titrée « Page 3 sur 2 » sans pagination pour revenir. Le provider
+ * donne `totalPages` avec la page : au-delà, on recharge la dernière (un seul
+ * aller-retour supplémentaire, uniquement dans ce cas), comme
+ * `paginateReadSeries` le fait pour les notes.
+ */
+export async function loadClampedPage<T extends Pick<Page<unknown>, "totalPages">>(
+  requestedPage: number,
+  load: (page: number) => Promise<T>
+): Promise<{ page: number; result: T }> {
+  const result = await load(requestedPage);
+  const lastPage = Math.max(1, result.totalPages);
+  if (requestedPage <= lastPage) return { page: requestedPage, result };
+  return { page: lastPage, result: await load(lastPage) };
+}
+
+/** Filtre « Manquants » par défaut déduit de la préférence `showMissingBooks`. */
+export function missingFilterFromPreference(showMissingBooks: boolean): boolean {
+  return !showMissingBooks;
+}
+
+/** Valeur de `showMissingBooks` à persister quand le filtre « Manquants » bascule. */
+export function preferenceForMissingFilter(missingFilterActive: boolean): boolean {
+  return !missingFilterActive;
 }
 
 /** Tri connu, sinon le tri par titre (même règle que le contrôleur client). */
@@ -107,7 +143,7 @@ export function parseSeriesCollectionQuery(
   const missing =
     searchParams.missing !== undefined
       ? searchParams.missing === "true"
-      : context.showMissingBooks === false;
+      : missingFilterFromPreference(context.showMissingBooks);
 
   return {
     ...parseCollectionQuery(searchParams, context),
@@ -117,21 +153,42 @@ export function parseSeriesCollectionQuery(
   };
 }
 
-/** Construit et exécute la page provider d'une grille de séries. */
+/**
+ * Construit et exécute la page provider d'une grille de séries, bornée à la
+ * dernière page : `query.page` du résultat est la page réellement servie.
+ */
 export async function fetchSeriesCollectionPage(
   provider: Pick<IMediaProvider, "getSeries">,
   libraryId: string,
   query: SeriesCollectionQuery
-): Promise<NormalizedSeriesPage> {
-  return provider.getSeries(
-    libraryId,
-    query.page,
-    query.pageSize,
-    query.unreadOnly,
-    query.search,
-    query.sort,
-    query.missing
+): Promise<{ query: SeriesCollectionQuery; seriesPage: NormalizedSeriesPage }> {
+  const { page, result } = await loadClampedPage(query.page, (page) =>
+    provider.getSeries(
+      libraryId,
+      page,
+      query.pageSize,
+      query.unreadOnly,
+      query.search,
+      query.sort,
+      query.missing
+    )
   );
+  return { query: { ...query, page }, seriesPage: result };
+}
+
+/**
+ * Charge la page de tomes d'une série, bornée à la dernière page : `query.page`
+ * du résultat est la page réellement servie.
+ */
+export async function fetchBookCollectionPage<T extends Pick<Page<unknown>, "totalPages">>(
+  provider: { getBooks(filter: BookListFilter): Promise<T> },
+  seriesId: string,
+  query: CollectionQuery
+): Promise<{ query: CollectionQuery; booksPage: T }> {
+  const { page, result } = await loadClampedPage(query.page, (page) =>
+    provider.getBooks(bookCollectionFilter(seriesId, { ...query, page }))
+  );
+  return { query: { ...query, page }, booksPage: result };
 }
 
 /** Filtre provider de la grille de tomes d'une série. */

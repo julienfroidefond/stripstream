@@ -2,7 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   bookCollectionFilter,
+  fetchBookCollectionPage,
   fetchSeriesCollectionPage,
+  loadClampedPage,
   normalizeSortOrder,
   parseCollectionQuery,
   parsePage,
@@ -146,7 +148,7 @@ describe("fetchSeriesCollectionPage", () => {
     const page: NormalizedSeriesPage = {
       items: [],
       page: 3,
-      totalPages: 1,
+      totalPages: 4,
       totalElements: 0,
     };
     const getSeries = vi.fn().mockResolvedValue(page);
@@ -155,10 +157,68 @@ describe("fetchSeriesCollectionPage", () => {
       context
     );
 
-    await expect(fetchSeriesCollectionPage({ getSeries }, "lib-1", query)).resolves.toBe(
-      page
-    );
+    const result = await fetchSeriesCollectionPage({ getSeries }, "lib-1", query);
+    expect(result.seriesPage).toBe(page);
+    expect(result.query).toEqual(query);
     expect(getSeries).toHaveBeenCalledWith("lib-1", 3, 90, true, "akira", "latest", true);
+  });
+
+  it("serves the last page when the URL points past it", async () => {
+    const getSeries = vi.fn(async (_lib: string, page: number) => ({
+      items: [],
+      page,
+      totalPages: 2,
+      totalElements: 50,
+    }));
+    const query = parseSeriesCollectionQuery({ page: "3" }, context);
+
+    const result = await fetchSeriesCollectionPage({ getSeries }, "lib-1", query);
+
+    expect(result.query.page).toBe(2);
+    expect(result.seriesPage.page).toBe(2);
+    expect(getSeries).toHaveBeenLastCalledWith("lib-1", 2, 60, false, undefined, "latest", false);
+  });
+});
+
+describe("loadClampedPage", () => {
+  it("does not reload a page inside the range", async () => {
+    const load = vi.fn(async () => ({ totalPages: 5 }));
+    await expect(loadClampedPage(5, load)).resolves.toEqual({
+      page: 5,
+      result: { totalPages: 5 },
+    });
+    expect(load).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps page 1 for an empty collection", async () => {
+    const load = vi.fn(async () => ({ totalPages: 0 }));
+    await expect(loadClampedPage(4, load)).resolves.toMatchObject({ page: 1 });
+    expect(load).toHaveBeenLastCalledWith(1);
+  });
+});
+
+describe("fetchBookCollectionPage", () => {
+  it("clamps the series book grid to its last page", async () => {
+    const getBooks = vi.fn(async (filter: { page: number }) => ({
+      items: [],
+      page: filter.page,
+      totalPages: 2,
+      totalElements: 40,
+    }));
+
+    const result = await fetchBookCollectionPage({ getBooks }, "serie-1", {
+      page: 9,
+      pageSize: 30,
+      unreadOnly: false,
+    });
+
+    expect(result.query.page).toBe(2);
+    expect(getBooks).toHaveBeenLastCalledWith({
+      seriesId: "serie-1",
+      page: 2,
+      limit: 30,
+      unreadOnly: false,
+    });
   });
 });
 

@@ -79,7 +79,7 @@ describe("PreferencesContext", () => {
     expect(mocks.toast).toHaveBeenCalledTimes(1);
     expect(mocks.toast).toHaveBeenCalledWith({
       title: "settings.title",
-      description: "settings.komga.messages.configSaved",
+      description: "settings.messages.configSaved",
     });
   });
 

@@ -188,7 +188,7 @@ export function SeriesMutationsProvider({ children }: { children: ReactNode }) {
           toast({
             variant: "destructive",
             title: t("seriesMutations.favorite.error"),
-            description: result.message,
+            description: t(`errors.${result.code}`),
           });
           return null;
         }
@@ -255,7 +255,7 @@ export function SeriesMutationsProvider({ children }: { children: ReactNode }) {
           toast({
             variant: "destructive",
             title: t("seriesMutations.shelf.error"),
-            description: result.message,
+            description: t(`errors.${result.code}`),
           });
           return null;
         }

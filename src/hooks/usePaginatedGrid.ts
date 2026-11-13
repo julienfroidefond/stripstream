@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState, useTransition, type RefObject
 import { useGridFlip, useGridFlipPlayback } from "@/components/motion";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { normalizeGridPageSize } from "@/lib/pageSize";
-import { normalizeSortOrder } from "@/lib/collections/query";
+import { normalizeSortOrder, preferenceForMissingFilter } from "@/lib/collections/query";
 import type { SortOrder, UserPreferences } from "@/types/preferences";
 
 export type GridViewMode = "grid" | "list";
@@ -105,6 +105,44 @@ export function usePaginatedGrid({
   const [searchTerm, setSearchTerm] = useState(initialSearch);
   const [sort, setSort] = useState<SortOrder>(() => normalizeSortOrder(initialSort));
   const [showMissing, setShowMissing] = useState(initialHasMissing);
+  /** Dernière recherche envoyée dans l'URL par la saisie (voir la resynchro). */
+  const [committedSearch, setCommittedSearch] = useState(initialSearch);
+
+  /**
+   * Next 16 ne remonte pas la grille quand seuls les search params changent
+   * (Précédent/Suivant, lien vers la même page avec d'autres filtres) : les
+   * valeurs résolues par le serveur arrivent en nouvelles props. On les
+   * réapplique à l'état local quand elles changent (ajustement pendant le
+   * rendu, sans effet). Une bascule optimiste n'est pas écrasée : sa prop ne
+   * change qu'à la réponse du serveur, qui porte la même valeur. La recherche
+   * ignore l'écho de sa propre saisie pour ne pas effacer ce qui a été tapé
+   * pendant l'aller-retour.
+   */
+  const serverState = {
+    unread: initialShowOnlyUnread,
+    search: initialSearch,
+    sort: normalizeSortOrder(initialSort),
+    missing: initialHasMissing,
+  };
+  const [syncedServerState, setSyncedServerState] = useState(serverState);
+  if (
+    syncedServerState.unread !== serverState.unread ||
+    syncedServerState.search !== serverState.search ||
+    syncedServerState.sort !== serverState.sort ||
+    syncedServerState.missing !== serverState.missing
+  ) {
+    setSyncedServerState(serverState);
+    if (syncedServerState.unread !== serverState.unread) setShowOnlyUnread(serverState.unread);
+    if (syncedServerState.sort !== serverState.sort) setSort(serverState.sort);
+    if (syncedServerState.missing !== serverState.missing) setShowMissing(serverState.missing);
+    if (
+      syncedServerState.search !== serverState.search &&
+      serverState.search !== committedSearch
+    ) {
+      setSearchTerm(serverState.search);
+      setCommittedSearch(serverState.search);
+    }
+  }
   const [hideMissingBooks, setHideMissingBooks] = useState(initialHideMissingBooks);
   const [isNavigating, startNavigation] = useTransition();
   const [isSearchPending, startSearchTransition] = useTransition();
@@ -203,6 +241,7 @@ export function usePaginatedGrid({
 
   const commitSearch = useCallback(
     (term: string) => {
+      setCommittedSearch(term.trim() ? term : "");
       startSearchTransition(() => {
         void updateUrlParams(
           { page: "1", search: term.trim() ? term : null },
@@ -246,8 +285,10 @@ export function usePaginatedGrid({
     captureLayout();
     const next = !showMissing;
     setShowMissing(next);
-    await updateUrlParams({ page: "1", missing: next ? "true" : null });
-    await persistPreferences({ showMissingBooks: next });
+    // Le paramètre reste explicite dans les deux sens : sans lui, le serveur
+    // retomberait sur la préférence, dont l'écriture suit la navigation.
+    await updateUrlParams({ page: "1", missing: next ? "true" : "false" });
+    await persistPreferences({ showMissingBooks: preferenceForMissingFilter(next) });
   }, [captureLayout, showMissing, updateUrlParams, persistPreferences]);
 
   const handleHideMissingToggle = useCallback(async () => {

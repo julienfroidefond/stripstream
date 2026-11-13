@@ -118,7 +118,7 @@ export function ScanButton({ libraryId, className }: ScanButtonProps) {
           title: t("library.scan.error.title"),
           description: result.forbidden
             ? t("library.scan.error.forbidden")
-            : result.message || t("library.scan.error.description"),
+            : t(`errors.${result.code}`),
         });
         return;
       }
@@ -142,7 +142,7 @@ export function ScanButton({ libraryId, className }: ScanButtonProps) {
       toast({
         variant: "destructive",
         title: t("library.scan.error.title"),
-        description: error instanceof Error ? error.message : t("library.scan.error.description"),
+        description: t("library.scan.error.description"),
       });
     } finally {
       if (mountedRef.current) setIsScanning(false);

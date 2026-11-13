@@ -9,6 +9,19 @@
       "title": "Erreur de chargement",
       "libraries": "Impossible de charger les bibliothèques. Vérifie ta connexion ou réessaie plus tard.",
       "favorites": "Impossible de charger les favoris."
+    },
+    "closeNavigation": "Fermer la navigation",
+    "offline": "Hors ligne",
+    "installPwa": {
+      "title": "Installer StripStream",
+      "description": "Installez StripStream pour un accès rapide et une meilleure expérience",
+      "descriptionIos": "Ajoutez StripStream à votre écran d'accueil pour une meilleure expérience",
+      "iosTap": "Appuyez sur",
+      "iosShare": "Partager",
+      "iosThen": "puis",
+      "iosAddToHome": "Sur l'écran d'accueil",
+      "install": "Installer l'application",
+      "dismiss": "Fermer"
     }
   },
   "login": {
@@ -186,6 +199,9 @@
         "label": "URL de l'image",
         "description": "Entrez l'URL d'une image (HTTPS recommandé)",
         "save": "Enregistrer"
+      },
+      "libraries": {
+        "label": "Bibliothèques"
       }
     },
     "advanced": {
@@ -203,11 +219,6 @@
     },
     "messages": {
       "configSaved": "Préférences enregistrées"
-    },
-    "komga": {
-      "messages": {
-        "configSaved": "Préférences enregistrées"
-      }
     },
     "reader": {
       "title": "Lecteur",
@@ -242,8 +253,8 @@
         "description": "Ordre d'affichage des séries dans les bibliothèques."
       },
       "showMissing": {
-        "label": "Afficher les tomes manquants",
-        "description": "Afficher les tomes manquants dans les séries."
+        "label": "Afficher les séries complètes",
+        "description": "Désactivé : les bibliothèques s'ouvrent avec le filtre « Manquants », limité aux séries auxquelles il manque des tomes."
       },
       "hideMissing": {
         "label": "Masquer les tomes manquants",
@@ -575,7 +586,9 @@
         "deleted": "Note supprimée",
         "error": "Erreur lors de la notation",
         "clear": "Supprimer ma note",
-        "empty": "Non noté"
+        "empty": "Non noté",
+        "clearLabel": "Supprimer la note",
+        "valueText": "{{value}} sur {{max}}"
       }
     }
   },
@@ -892,6 +905,14 @@
     "carousel": {
       "oneByOne": "Afficher un élément à la fois",
       "rail": "Afficher en carrousel"
+    },
+    "pagination": {
+      "label": "Pagination",
+      "previous": "Page précédente",
+      "previousShort": "Précédent",
+      "next": "Page suivante",
+      "nextShort": "Suivant",
+      "page": "Page {{page}}"
     }
   },
   "common": {
