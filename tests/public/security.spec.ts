@@ -18,6 +18,19 @@ test.describe('Security headers', () => {
     expect(headers['x-content-type-options']).toBe('nosniff');
     expect(headers['referrer-policy']).toBe('strict-origin-when-cross-origin');
     expect(headers['permissions-policy']).toContain('camera=()');
+    expect(headers['strict-transport-security']).toContain('max-age=');
+    expect(headers['content-security-policy']).toContain("frame-ancestors 'none'");
+  });
+
+  test('exposes only a bare status on the public health probe', async ({ request }) => {
+    const response = await request.get('/api/health');
+    expect(response.status()).toBe(200);
+    expect(await response.json()).toEqual({ status: 'ok' });
+  });
+
+  test('does not exempt paths that merely start with /api/health', async ({ request }) => {
+    const response = await request.get('/api/healthz', { maxRedirects: 0 });
+    expect(response.status()).toBe(401);
   });
 
   test('sends security headers on a protected route redirect', async ({ request }) => {

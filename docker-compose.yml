@@ -6,9 +6,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      # No secret as a build arg: the Dockerfile declares no ARG for it and a
+      # build arg would end up in the image history. The admin password is a
+      # runtime variable only (see environment below).
       args:
         - NODE_ENV=${NODE_ENV}
-        - ADMIN_DEFAULT_PASSWORD=${ADMIN_DEFAULT_PASSWORD}
     container_name: stripstream-app
     restart: unless-stopped
     ports:
@@ -21,9 +23,14 @@ services:
       - DATABASE_URL=file:/app/prisma/data/stripstream.db
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
       - NEXTAUTH_URL=${NEXTAUTH_URL}
+      # Mandatory: provider credentials are encrypted at rest with this key.
+      - CREDENTIALS_ENCRYPTION_KEY=${CREDENTIALS_ENCRYPTION_KEY:?Set CREDENTIALS_ENCRYPTION_KEY (openssl rand -base64 32)}
+      # Self-service sign-up is closed unless explicitly set to "true".
+      - REGISTRATION_ENABLED=${REGISTRATION_ENABLED:-false}
       - AUTH_TRUST_HOST=true
       - KOMGA_MAX_CONCURRENT_REQUESTS=5
-      - ADMIN_DEFAULT_PASSWORD=${ADMIN_DEFAULT_PASSWORD}
+      # Only used to create the admin account on first boot (no default value).
+      - ADMIN_DEFAULT_PASSWORD=${ADMIN_DEFAULT_PASSWORD:-}
       - PRISMA_DATA_PATH=${PRISMA_DATA_PATH:-./prisma/data}
     networks:
       - stripstream-network

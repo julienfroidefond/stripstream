@@ -22,6 +22,9 @@ permissions:
 
 jobs:
   build-and-push:
+    # A manual dispatch can target any branch: only main may produce the
+    # `latest` image and reach the self-hosted deploy runner.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     outputs:
       deploy: ${{ steps.detect.outputs.deploy }}
@@ -98,12 +101,13 @@ jobs:
   # checkout. The image is public, so no registry login is needed here.
   #
   # Guarded on the repository so a fork can never reach the self-hosted runner,
-  # and only reachable from a push to main / a manual dispatch (the workflow has
-  # no pull_request trigger).
+  # and only reachable from main (push or manual dispatch on main; the workflow
+  # has no pull_request trigger and a dispatch on another branch is refused).
   deploy:
     name: Deploy to Mac mini
     needs: build-and-push
     if: >-
+      github.ref == 'refs/heads/main' &&
       needs.build-and-push.outputs.deploy == 'true' &&
       github.repository == 'julienfroidefond/stripstream'
     runs-on: [self-hosted, mac-mini]
