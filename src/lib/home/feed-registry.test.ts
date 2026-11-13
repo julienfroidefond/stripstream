@@ -4,6 +4,8 @@ vi.mock("@/lib/services/favorite.service", () => ({
   FavoriteService: { listFavorites: vi.fn() },
 }));
 
+vi.mock("@/lib/auth-utils", () => ({ getCurrentUserId: vi.fn(async () => 7) }));
+
 import { FavoriteService } from "@/lib/services/favorite.service";
 import {
   createProviderCapabilities,
@@ -191,7 +193,7 @@ describe("loadHomeFeedPage — bounded collection feeds", () => {
 
     const page = await loadHomeFeedPage(provider, "favorites", 0);
 
-    expect(FavoriteService.listFavorites).toHaveBeenCalledWith();
+    expect(FavoriteService.listFavorites).toHaveBeenCalledWith({ userId: 7, provider });
     expect(page.items).toHaveLength(8);
     expect(page.hasMore).toBe(true);
   });

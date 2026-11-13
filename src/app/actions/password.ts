@@ -31,8 +31,8 @@ export async function changePassword(
         throw new ActionError(ERROR_CODES.AUTH.PASSWORD_NOT_STRONG);
       }
     },
-    execute: async () => {
-      await UserService.changePassword(currentPassword, newPassword);
+    execute: async ({ userId }) => {
+      await UserService.changePassword(userId, currentPassword, newPassword);
       return { message: "Mot de passe modifié avec succès" };
     },
   });

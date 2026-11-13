@@ -39,7 +39,7 @@ describe("changePassword", () => {
     const result = await changePassword("OldPassw0rd", STRONG);
 
     expect(result).toMatchObject({ success: true, code: "OK" });
-    expect(UserService.changePassword).toHaveBeenCalledWith("OldPassw0rd", STRONG);
+    expect(UserService.changePassword).toHaveBeenCalledWith(expect.any(Number), "OldPassw0rd", STRONG);
   });
 
   it("refuses an anonymous caller without touching the password", async () => {

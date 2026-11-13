@@ -19,11 +19,23 @@ export const getCurrentUser = cache(async (): Promise<UserData | null> => {
   };
 });
 
+/**
+ * Identifiant numérique du user courant, ou `null` sans session.
+ *
+ * Seuls les points d'entrée lisent la session (runner d'actions, gateway de
+ * surface, layout, route handlers, fabrique de provider) : les services
+ * reçoivent cet identifiant en paramètre (ADR 0029).
+ */
+export async function getCurrentUserId(): Promise<number | null> {
+  const user = await getCurrentUser();
+  return user ? parseInt(user.id, 10) : null;
+}
+
 /** Identifiant numérique du user courant, ou `AUTH_UNAUTHENTICATED`. */
 export async function requireUserId(): Promise<number> {
-  const user = await getCurrentUser();
-  if (!user) throw new AppError(ERROR_CODES.AUTH.UNAUTHENTICATED);
-  return parseInt(user.id, 10);
+  const userId = await getCurrentUserId();
+  if (userId === null) throw new AppError(ERROR_CODES.AUTH.UNAUTHENTICATED);
+  return userId;
 }
 
 export async function isAdmin(): Promise<boolean> {

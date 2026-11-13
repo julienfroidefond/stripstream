@@ -315,3 +315,57 @@ describe("runAction admin gate", () => {
     expect(key).toHaveBeenCalledWith({ userId: 3 });
   });
 });
+
+describe("runAction identity", () => {
+  beforeEach(() => {
+    vi.mocked(requireUserId).mockReset();
+    vi.mocked(requireAdmin).mockReset();
+  });
+
+  it("hands the gated user id to execute", async () => {
+    vi.mocked(requireUserId).mockResolvedValue(11);
+    const seen: number[] = [];
+
+    const result = await runAction({
+      name: "test",
+      fallbackCode: ERROR_CODES.PREFERENCES.UPDATE_ERROR,
+      requireUser: true,
+      // `userId` est typé `number` : aucune assertion n'est nécessaire.
+      execute: async ({ userId }) => {
+        seen.push(userId);
+        return { message: "ok" };
+      },
+    });
+
+    expect(result.success).toBe(true);
+    expect(seen).toEqual([11]);
+  });
+
+  it("refuses before execute when the gate finds no session", async () => {
+    vi.mocked(requireUserId).mockRejectedValue(new AppError(ERROR_CODES.AUTH.UNAUTHENTICATED));
+    const execute = vi.fn();
+
+    const result = await runAction({
+      name: "test",
+      fallbackCode: ERROR_CODES.FAVORITE.ADD_ERROR,
+      requireUser: true,
+      execute,
+    });
+
+    expect(result).toMatchObject({ success: false, code: ERROR_CODES.AUTH.UNAUTHENTICATED });
+    expect(execute).not.toHaveBeenCalled();
+  });
+
+  it("resolves the user itself to read the anonymous preference", async () => {
+    vi.mocked(requireUserId).mockResolvedValue(5);
+
+    await runProviderAction({
+      name: "test",
+      fallbackCode: ERROR_CODES.BOOK.PROGRESS_UPDATE_ERROR,
+      skipAnonymous: { message: "ignored" },
+      execute: async () => ({ message: "ok" }),
+    });
+
+    expect(PreferencesService.getPreferences).toHaveBeenCalledWith(5);
+  });
+});

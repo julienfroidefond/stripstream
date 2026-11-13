@@ -72,19 +72,20 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const locale = cookieStore.get("NEXT_LOCALE")?.value || "fr";
 
   // Uniquement l'utilisateur (auth DB, rapide) — PAS les données de la connexion.
-  const [currentUser, loadedPreferences] = await Promise.all([
-    import("@/lib/auth-utils")
-      .then((m) => m.getCurrentUser())
-      .catch(() => null),
-    PreferencesService.getPreferences().catch(() => null),
-  ]);
+  // Le layout est un point d'entrée : il lit la session, puis passe l'identité
+  // au service de préférences (ADR 0029). Sans session (pages publiques), on
+  // ne lit aucune préférence et le client reçoit les valeurs par défaut.
+  const currentUser = await import("@/lib/auth-utils")
+    .then((m) => m.getCurrentUser())
+    .catch(() => null);
   const userIsAdmin = currentUser?.roles.includes("ROLE_ADMIN") ?? false;
 
   // Préférences : nécessaires au contexte client (fond, iso), lecture DB locale.
-  let preferences: UserPreferences = defaultPreferences;
-  if (currentUser) {
-    preferences = loadedPreferences ?? defaultPreferences;
-  }
+  const preferences: UserPreferences = currentUser
+    ? ((await PreferencesService.getPreferences(parseInt(currentUser.id, 10)).catch(
+        () => null
+      )) ?? defaultPreferences)
+    : defaultPreferences;
 
   return (
     <html

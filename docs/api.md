@@ -10,7 +10,7 @@ Stripstream expose deux surfaces côté serveur, et rien d'autre :
 - Toutes les routes d'API hors famille d'authentification traversent le middleware `src/proxy.ts` et exigent une session NextAuth valide. Une requête non authentifiée reçoit une réponse `401` JSON.
 - Seule la famille d'authentification NextAuth est publique (exclue du matcher du middleware).
 - Les dix routes média (Komga et Stripstream) sont de fines déclarations sur `createMediaRoute` (`src/lib/media/media-route.ts`) : l'adaptateur vérifie la session, choisit le transport du provider, applique la politique de cache et d'en-têtes, relaie les `304` et mappe les erreurs. Les transports résolvent la connexion via `requireConnectionForProvider` (`@/lib/connections`), qui applique la config active du provider, puis sa première config, et le fallback aux variables d'environnement uniquement pour Stripstream. Le module déchiffre les credentials ; les routes ne lisent jamais les colonnes `authHeader`/`token` directement.
-- Les Server Actions vérifient l'utilisateur via `getCurrentUser()` ou `requireUserId()`. Les actions de test de connexion sont en plus limitées par `checkConnectionTestRateLimit` (`src/lib/connections/probe.ts`, 5 tentatives par 30 secondes et par utilisateur et par provider).
+- Les Server Actions vérifient l'utilisateur par les gates du runner (`requireUser`, `requireRole`, `rateLimit`), qui transmettent `userId` aux services ; les services ne lisent pas la session (ADR 0029). Les actions de test de connexion sont en plus limitées par `checkConnectionTestRateLimit` (`src/lib/connections/probe.ts`, 5 tentatives par 30 secondes et par utilisateur et par provider).
 
 ## 🌐 Route Handlers
 

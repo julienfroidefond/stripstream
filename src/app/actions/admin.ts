@@ -64,7 +64,7 @@ export async function deleteUser(userId: string): Promise<ActionResult> {
     logContext: { userId },
     requireRole: "admin",
     execute: async ({ userId: actorId }) => {
-      await AdminService.deleteUser(actorId as number, userId);
+      await AdminService.deleteUser(actorId, userId);
       return { message: "Utilisateur supprimé" };
     },
   });
@@ -92,7 +92,7 @@ export async function resetUserPassword(
       }
     },
     execute: async ({ userId: actorId }) => {
-      await AdminService.resetUserPassword(actorId as number, userId, newPassword);
+      await AdminService.resetUserPassword(actorId, userId, newPassword);
       return { message: "Mot de passe réinitialisé" };
     },
   });

@@ -5,7 +5,7 @@ import { UserService } from "@/lib/services/user.service";
 import { getReadingStats } from "@/lib/services/reading-stats.service";
 import { redirect } from "next/navigation";
 import logger from "@/lib/logger";
-import { getCurrentUser } from "@/lib/auth-utils";
+import { getCurrentUserId } from "@/lib/auth-utils";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
@@ -16,14 +16,17 @@ export const dynamic = "force-dynamic";
 export default async function AccountPage() {
   // Seule l'absence de session renvoie vers /login ; une panne (base, stats)
   // s'affiche sur place au lieu de déconnecter l'utilisateur.
-  if (!(await getCurrentUser())) {
+  // La page est le point d'entrée : elle lit la session une fois et passe
+  // l'identité aux services (ADR 0029).
+  const userId = await getCurrentUserId();
+  if (userId === null) {
     redirect("/login");
   }
 
   try {
     const [profile, stats, readingStats] = await Promise.all([
-      UserService.getUserProfile(),
-      UserService.getUserStats(),
+      UserService.getUserProfile(userId),
+      UserService.getUserStats(userId),
       getReadingStats(),
     ]);
 

@@ -16,6 +16,7 @@ import {
 } from "./SurfaceBoundary";
 
 const context: SurfaceContext = {
+  userId: 1,
   provider: { id: "provider" } as unknown as IMediaProvider,
   preferences: defaultPreferences,
   isAnonymous: false,

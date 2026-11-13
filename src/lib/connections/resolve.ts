@@ -1,5 +1,5 @@
 import prisma from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth-utils";
+import { requireUserId } from "@/lib/auth-utils";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { buildKomgaAuthHeader, decryptSecret } from "@/lib/credentials";
 import { AppError } from "@/utils/errors";
@@ -177,8 +177,12 @@ export async function getStoredConnection(
 }
 
 /**
- * Variante pour les services qui n'ont pas déjà résolu l'utilisateur. Elle
- * conserve le contrat d'erreur historique des routes image/livre Komga.
+ * Variante liée à la session, réservée aux transports média : la route média
+ * est un point d'entrée (elle a déjà vérifié la session) et le transport n'a
+ * pas d'identité à recevoir. Comme `getProvider`, ce module fabrique la
+ * connexion de la requête courante ; il est l'un des rares lecteurs légitimes
+ * de la session (ADR 0029). Le reste du module prend un `userId` explicite.
+ * Elle conserve le contrat d'erreur historique des routes image/livre Komga.
  */
 export function requireConnectionForProvider(provider: "komga"): Promise<KomgaConnection>;
 export function requireConnectionForProvider(
@@ -187,10 +191,7 @@ export function requireConnectionForProvider(
 export async function requireConnectionForProvider(
   provider: ProviderType
 ): Promise<ResolvedConnection> {
-  const user = await getCurrentUser();
-  if (!user) throw new AppError(ERROR_CODES.AUTH.UNAUTHENTICATED);
-
-  const userId = parseInt(user.id, 10);
+  const userId = await requireUserId();
   const active = await getActiveConnection(userId);
   const connection = await resolveForProvider(
     provider,

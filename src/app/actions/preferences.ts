@@ -20,6 +20,7 @@ export async function updatePreferences(
     fallbackCode: ERROR_CODES.PREFERENCES.UPDATE_ERROR,
     fallbackMessage: "Erreur lors de la mise à jour des préférences",
     logContext: { keys: Object.keys(newPreferences) },
+    requireUser: true,
     // Le mode anonyme est piloté immédiatement par le contexte client. Une
     // revalidation ici pourrait réinjecter pendant la transition les
     // préférences initiales de la page et faire clignoter le bouton à l'état
@@ -31,9 +32,9 @@ export async function updatePreferences(
           revalidatePath("/libraries");
           revalidatePath("/series");
         },
-    execute: async () => ({
+    execute: async ({ userId }) => ({
       message: "Préférences mises à jour",
-      data: await PreferencesService.updatePreferences(newPreferences),
+      data: await PreferencesService.updatePreferences(userId, newPreferences),
     }),
   });
 }

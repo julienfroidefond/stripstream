@@ -4,12 +4,12 @@ const {
   komgaFindFirst,
   stripstreamFindFirst,
   getActiveConnectionMock,
-  getCurrentUserMock,
+  requireUserIdMock,
 } = vi.hoisted(() => ({
   komgaFindFirst: vi.fn(),
   stripstreamFindFirst: vi.fn(),
   getActiveConnectionMock: vi.fn(),
-  getCurrentUserMock: vi.fn(),
+  requireUserIdMock: vi.fn(),
 }));
 
 vi.mock("@/lib/prisma", () => ({
@@ -20,7 +20,7 @@ vi.mock("@/lib/prisma", () => ({
 }));
 
 vi.mock("./active", () => ({ getActiveConnection: getActiveConnectionMock }));
-vi.mock("@/lib/auth-utils", () => ({ getCurrentUser: getCurrentUserMock }));
+vi.mock("@/lib/auth-utils", () => ({ requireUserId: requireUserIdMock }));
 
 import {
   connectionFromKomgaCredentials,
@@ -59,7 +59,7 @@ const STRIPSTREAM_FALLBACK_QUERY = {
 beforeEach(() => {
   vi.clearAllMocks();
   getActiveConnectionMock.mockResolvedValue({ provider: "komga", configId: 42 });
-  getCurrentUserMock.mockResolvedValue({ id: "7", email: "test@example.com", roles: [] });
+  requireUserIdMock.mockResolvedValue(7);
 });
 
 afterEach(() => {
@@ -178,7 +178,7 @@ describe("getStoredConnection", () => {
 
 describe("requireConnectionForProvider", () => {
   it("throws AUTH_UNAUTHENTICATED when there is no session", async () => {
-    getCurrentUserMock.mockResolvedValue(null);
+    requireUserIdMock.mockRejectedValue(new AppError(ERROR_CODES.AUTH.UNAUTHENTICATED));
 
     await expect(requireConnectionForProvider("komga")).rejects.toMatchObject({
       code: ERROR_CODES.AUTH.UNAUTHENTICATED,
