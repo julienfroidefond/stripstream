@@ -17,5 +17,6 @@ Decisions that shaped the current architecture and would be expensive or surpris
 | [0011](./0011-reader-image-lifetime.md) | Reader image lifetime is owned by the loader and a synchronous registry. |
 | [0012](./0012-home-feed-registry.md) | Home feed rows are driven by one registry. |
 | [0013](./0013-continue-reading-single-loader.md) | Continue-reading has one loader for both render paths. |
+| [0014](./0014-error-catalog-completeness.md) | Error codes, technical messages and localized copy cannot drift apart. |
 
 New records use the next number and the same shape: a short title, one paragraph of context/decision/why, and optional `Considered options` / `Consequences` sections.
