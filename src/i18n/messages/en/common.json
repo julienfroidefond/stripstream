@@ -237,8 +237,8 @@
         "description": "Order of series display in libraries."
       },
       "showMissing": {
-        "label": "Show missing books",
-        "description": "Show missing books in series."
+        "label": "Show complete series",
+        "description": "When off, libraries open with the “Missing” filter: only series with missing volumes."
       },
       "hideMissing": {
         "label": "Hide missing books",

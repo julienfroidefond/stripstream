@@ -4,7 +4,7 @@ import { RefreshSurface } from "@/components/common/RefreshSurface";
 import { SurfaceBoundary } from "@/components/ui/SurfaceBoundary";
 import { AppError } from "@/utils/errors";
 import { ERROR_CODES } from "@/constants/errorCodes";
-import { bookCollectionFilter, parseCollectionQuery } from "@/lib/collections/query";
+import { fetchBookCollectionPage, parseCollectionQuery } from "@/lib/collections/query";
 import { loadSurface } from "@/lib/surfaces/load-surface";
 
 interface PageProps {
@@ -19,7 +19,7 @@ export default async function SeriesPage({ params, searchParams }: PageProps) {
     name: "series",
     fallbackCode: ERROR_CODES.BOOK.PAGES_FETCH_ERROR,
     load: async ({ userId, provider, preferences }) => {
-      const query = parseCollectionQuery(queryParams, {
+      const requestedQuery = parseCollectionQuery(queryParams, {
         itemsPerPage: preferences.displayMode.itemsPerPage,
         compact: preferences.displayMode.compact,
         unreadOnly: preferences.showOnlyUnread,
@@ -29,8 +29,8 @@ export default async function SeriesPage({ params, searchParams }: PageProps) {
       const canRate = ratings !== null;
       const canShelve = shelf !== null;
 
-      const [booksPage, series, isFavorite, missing, relatedSeries, rating] = await Promise.all([
-        provider.getBooks(bookCollectionFilter(seriesId, query)),
+      const [{ query, booksPage }, series, isFavorite, missing, relatedSeries, rating] = await Promise.all([
+        fetchBookCollectionPage(provider, seriesId, requestedQuery),
         provider.getSeriesById(seriesId),
         FavoriteService.isFavorite({ userId, provider }, seriesId),
         missingBooks ? missingBooks.getMissingBooks(seriesId) : Promise.resolve([]),

@@ -242,8 +242,8 @@
         "description": "Ordre d'affichage des séries dans les bibliothèques."
       },
       "showMissing": {
-        "label": "Afficher les tomes manquants",
-        "description": "Afficher les tomes manquants dans les séries."
+        "label": "Afficher les séries complètes",
+        "description": "Désactivé : les bibliothèques s'ouvrent avec le filtre « Manquants », limité aux séries auxquelles il manque des tomes."
       },
       "hideMissing": {
         "label": "Masquer les tomes manquants",
