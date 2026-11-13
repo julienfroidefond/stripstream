@@ -695,8 +695,6 @@
     "AUTH_EMAIL_EXISTS": "Email already exists",
     "AUTH_INVALID_USER_DATA": "Invalid user data",
     "AUTH_LOGOUT_ERROR": "Error during logout",
-    "AUTH_LOGIN_ERROR": "Error during login",
-    "AUTH_REGISTER_ERROR": "Error during registration",
     "AUTH_REGISTRATION_FAILED": "Registration failed",
     "AUTH_USER_NOT_FOUND": "User not found",
     "AUTH_INVALID_PASSWORD": "Invalid password",

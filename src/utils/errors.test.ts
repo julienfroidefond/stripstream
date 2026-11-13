@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { ERROR_CODES } from "@/constants/errorCodes";
+import { ERROR_CODES, type ErrorCode } from "@/constants/errorCodes";
 
 import { AppError, getErrorMessage } from "./errors";
 
@@ -32,10 +32,14 @@ describe("getErrorMessage", () => {
       "Library {libraryId} not found"
     );
   });
+
+  it("degrades to the code when no message is registered at runtime", () => {
+    expect(getErrorMessage("UNKNOWN_CODE" as ErrorCode)).toBe("UNKNOWN_CODE");
+  });
 });
 
 describe("AppError", () => {
-  it("builds the localized message and sets the code and name", () => {
+  it("builds the technical message and sets the code and name", () => {
     const error = new AppError(ERROR_CODES.KOMGA.NOT_FOUND);
 
     expect(error).toBeInstanceOf(Error);
@@ -44,6 +48,14 @@ describe("AppError", () => {
     expect(error.message).toBe(
       "Komga resource not found (HTTP 404). The server URL might be wrong."
     );
+  });
+
+  it("builds a message for a code that used to have none", () => {
+    const cause = new Error("boom");
+    const error = new AppError(ERROR_CODES.ADMIN.FETCH_USERS_ERROR, {}, cause);
+
+    expect(error.message).toBe("Error fetching users");
+    expect(error.originalError).toBe(cause);
   });
 
   it("defaults params to an empty object", () => {

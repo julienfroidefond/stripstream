@@ -698,8 +698,6 @@
     "AUTH_EMAIL_EXISTS": "Cette adresse email existe déjà",
     "AUTH_INVALID_USER_DATA": "Données utilisateur invalides",
     "AUTH_LOGOUT_ERROR": "Erreur lors de la déconnexion",
-    "AUTH_LOGIN_ERROR": "Erreur lors de la connexion",
-    "AUTH_REGISTER_ERROR": "Erreur lors de l'inscription",
     "AUTH_REGISTRATION_FAILED": "L'inscription a échoué",
     "AUTH_USER_NOT_FOUND": "Utilisateur introuvable",
     "AUTH_INVALID_PASSWORD": "Mot de passe invalide",
