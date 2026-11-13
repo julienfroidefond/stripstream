@@ -11,8 +11,8 @@ date: 2026-11-13
 
 - `src/lib/actions/action-runner.ts`: the `requireUser` / `requireRole` / `rateLimit` gates, and `skipAnonymous`, which needs the user's preference even when the action declared no gate (same `AUTH_UNAUTHENTICATED` failure as before).
 - `src/lib/surfaces/load-surface.ts`: the page gateway (`getCurrentUserId`); no session ends in the same terminal as "no provider", without reading preferences.
-- `src/lib/providers/provider.factory.ts` (`getProvider`) and `src/lib/connections/resolve.ts` (`requireConnectionForProvider`): they build the provider or the connection of the current request. `requireConnectionForProvider` is reserved for the media transports, whose route has already checked the session and whose transport receives no identity; it now goes through `requireUserId()` instead of re-implementing it.
-- Entry points outside the runner and the gateway: `src/app/layout.tsx` (scope, admin flag, preferences), `src/app/account/page.tsx`, `src/app/admin/page.tsx`, the sidebar server components, the media route core, the `config` list actions, and `src/lib/media/komga.transport.ts` (cover preferences, via `requireUserId()`).
+- `src/lib/providers/provider.factory.ts` (`getProvider`): it builds the provider of the current request.
+- Entry points outside the runner and the gateway: `src/app/layout.tsx` (scope, admin flag, preferences), `src/app/account/page.tsx`, `src/app/admin/page.tsx`, the sidebar server components, the media route core and the `config` list actions.
 - The home feed registry receives the viewer: `HomeFeedContext` carries `userId` (from the surface gateway on first render, from the runner's `requireUser` on "see more"), and every feed loader gets `(provider, viewer, limit)`, so the favorites feed calls `FavoriteService.listFavorites({ userId, provider })` without reading the session.
 
 ## Considered options
@@ -29,4 +29,8 @@ date: 2026-11-13
 - `addToFavorites`, `removeFromFavorites` and `updatePreferences` now declare `requireUser: true`; the unauthenticated outcome is unchanged (`AUTH_UNAUTHENTICATED`). The favorites actions stay on `runAction` and pass `getProvider()` explicitly, so a missing connection still fails with `FAVORITE_ADD_ERROR` / `FAVORITE_DELETE_ERROR`, not `PROVIDER_NOT_CONFIGURED`. Favorites by config (ADR 0008) are unchanged: the Komga store is still scoped to the active `(userId, configId)`.
 - `FavoriteService` reads `getActiveConnection(userId)` only for the Komga fallback, no longer when the provider declares backend favorites.
 - `runAction` / `runProviderAction` gained a typed overload for gated actions. The implementation is unchanged; the overload only expresses to the compiler what the gates already guarantee at runtime.
-- `src/lib/media/komga.transport.ts` and `requireConnectionForProvider` keep a documented session read; removing them means threading `userId` through the media transport context.
+- The media path follows the same rule (amendment below): the route core resolves `getCurrentUserId()` once and hands `userId` to the transport in `MediaTransportContext`; `requireConnectionForProvider(provider, userId)` and the Komga cover preference read it from there.
+
+## Amendment — media transports
+
+The first version left two session reads below the media route: `requireConnectionForProvider` called `requireUserId()` and the Komga transport called it again for the cover preference, so one image request resolved the session up to three times and the transports could not be tested without mocking `@/lib/auth-utils`. The media route core is the entry point: `MediaRouteDependencies.getCurrentUserId` answers once (401 when `null`), `MediaTransportContext` carries `userId`, and `requireConnectionForProvider(provider, userId)` takes it explicitly. Nothing under `src/lib/media` or `src/lib/connections` reads the session any more.

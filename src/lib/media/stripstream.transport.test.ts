@@ -20,8 +20,10 @@ const STRIPSTREAM = {
   source: "db" as const,
 };
 
+const USER_ID = 42;
+
 function context(headers: Record<string, string> = {}) {
-  return { headers: new Headers(headers) };
+  return { headers: new Headers(headers), userId: USER_ID };
 }
 
 function lastFetchCall() {

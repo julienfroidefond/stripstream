@@ -1,4 +1,4 @@
-import { getCurrentUser } from "@/lib/auth-utils";
+import { getCurrentUserId } from "@/lib/auth-utils";
 import { getMediaTransport } from "@/lib/media/media-transport";
 import type { ProviderType } from "@/lib/providers/types";
 
@@ -6,7 +6,7 @@ import type { ServedMediaKind } from "./media-url";
 import { createMediaRouteWith } from "./media-route-core";
 
 const defaultDependencies = {
-  getCurrentUser,
+  getCurrentUserId,
   getTransport: getMediaTransport,
 };
 

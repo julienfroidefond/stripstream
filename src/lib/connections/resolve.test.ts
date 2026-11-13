@@ -176,19 +176,11 @@ describe("getStoredConnection", () => {
 });
 
 describe("requireConnectionForProvider", () => {
-  it("throws AUTH_UNAUTHENTICATED when there is no session", async () => {
-    requireUserIdMock.mockRejectedValue(new AppError(ERROR_CODES.AUTH.UNAUTHENTICATED));
-
-    await expect(requireConnectionForProvider("komga")).rejects.toMatchObject({
-      code: ERROR_CODES.AUTH.UNAUTHENTICATED,
-    });
-  });
-
   it("throws the provider-specific missing-config error", async () => {
     komgaFindFirst.mockResolvedValue(null);
 
     try {
-      await requireConnectionForProvider("komga");
+      await requireConnectionForProvider("komga", 7);
       expect.unreachable("expected requireConnectionForProvider to throw");
     } catch (error) {
       expect(error).toBeInstanceOf(AppError);
