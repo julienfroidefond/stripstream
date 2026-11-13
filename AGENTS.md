@@ -68,6 +68,7 @@ Two automated suites run side by side: **Vitest** for pure/unit logic and **Play
 ## Commit & Pull Request Guidelines
 - Follow the Conventional Commit style seen in history: `fix: ...`, `refactor: ...`, `feat: ...`, `docs: ...`.
 - Keep subjects imperative and specific (e.g. `fix: reduce header/home spacing overlap`).
+- Any architectural change ships with an ADR under `docs/adr/` (next number, same shape as [`docs/adr/README.md`](docs/adr/README.md)) in the same commit as the code it describes.
 - PRs should include:
   - short problem/solution summary,
   - linked issue (if any),
