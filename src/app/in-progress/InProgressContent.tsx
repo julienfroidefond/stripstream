@@ -8,7 +8,6 @@ import {
   useState,
   useTransition,
 } from "react";
-import { useRouter } from "next/navigation";
 import {
   ArrowDownAZ,
   BookOpenCheck,
@@ -76,7 +75,6 @@ export function InProgressContent({
   favoriteIds,
   canShelve = false,
 }: InProgressContentProps) {
-  const router = useRouter();
   const { toast } = useToast();
   const { t } = useTranslate();
   const { isAnonymous, toggleAnonymous } = useAnonymous();
@@ -184,8 +182,8 @@ export function InProgressContent({
   const handleDisableAnonymous = useCallback(() => {
     startAnonymousTransition(async () => {
       try {
+        // `toggleAnonymous` rafraîchit la route une fois l'écriture confirmée.
         await toggleAnonymous();
-        router.refresh();
       } catch {
         toast({
           title: t("inProgress.anonymous.error"),
@@ -193,7 +191,7 @@ export function InProgressContent({
         });
       }
     });
-  }, [router, t, toast, toggleAnonymous]);
+  }, [t, toast, toggleAnonymous]);
 
   const handleRandomPick = useCallback(() => {
     const pool = randomPool;

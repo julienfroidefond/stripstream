@@ -181,7 +181,7 @@ Server actions do not assemble tag lists themselves: they call a recipe from `sr
 | `invalidateFavorites()` | `actions/favorites.ts` | favorites, home |
 | `invalidateConnectionChange()` | `lib/connections/manage.ts` (save, delete, activate — reached from `actions/connections.ts`) | home, library series, series books, favorites; `/settings` and `/` |
 | `invalidateLibraryScan(libraryId)` | `actions/library.ts` (`scanLibrary`) | routes `/libraries/${id}` and `/libraries` (no tag: the scan runs after the response) |
-| `invalidatePreferences()` | `actions/preferences.ts` (skipped for an anonymous-mode-only change) | routes `/`, `/libraries`, `/series` |
+| `invalidatePreferences()` | `actions/preferences.ts` (skipped for an anonymous-mode-only change: `AnonymousContext.toggleAnonymous` calls `router.refresh()` once the write is confirmed) | routes `/`, `/libraries`, `/series` |
 | `invalidateForRefresh(scope, id)` | `actions/refresh.ts` (thin wrapper) | only the requested scope; `series` also targets `series-books:${id}` so a list first cached from another route is refreshed |
 
 Recipes call `updateTag(...)`, plus `revalidatePath(...)` where a route payload is affected. `updateTag` immediately expires the tagged entries so the action's own re-render sees fresh data (Next.js 16 read-your-writes semantics). The module imports `next/cache` and must only be imported from Server Actions / Route Handlers, never during render.
