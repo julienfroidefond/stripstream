@@ -40,11 +40,6 @@ export interface MediaProviderCore {
 
   getBooks(filter: BookListFilter): Promise<NormalizedBooksPage>;
   getBook(bookId: string): Promise<NormalizedBook>;
-  /**
-   * Séries entièrement lues par l'utilisateur, toutes bibliothèques confondues.
-   * Utilisée par la page « Mes notes » pour proposer les séries à noter.
-   */
-  getReadSeries(page?: number, limit?: number): Promise<NormalizedSeriesPage>;
   getNextBook(bookId: string): Promise<NormalizedBook | null>;
 
   // ── Home ─────────────────────────────────────────────────────────────────
@@ -87,6 +82,12 @@ export interface SearchCapability {
 
 /** Notes par série et agrégat du provider. Stripstream uniquement aujourd'hui. */
 export interface RatingsCapability {
+  /**
+   * Séries entièrement lues par l'utilisateur, toutes bibliothèques confondues.
+   * Fournit la matière de la page « Mes notes » ; la pagination est celle du
+   * provider, le service borne le nombre de pages parcourues.
+   */
+  getReadSeries(page?: number, limit?: number): Promise<NormalizedSeriesPage>;
   getSeriesRating(seriesId: string): Promise<NormalizedSeriesRating | null>;
   setSeriesRating(seriesId: string, rating: number): Promise<void>;
   deleteSeriesRating(seriesId: string): Promise<void>;

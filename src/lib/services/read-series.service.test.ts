@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { IMediaProvider } from "@/lib/providers/provider.interface";
+import type { RatingsCapability } from "@/lib/providers/provider.interface";
 import type { NormalizedSeries, NormalizedSeriesPage } from "@/lib/providers/types";
 import {
   countReadSeries,
@@ -38,65 +38,65 @@ function page(ids: string[], overrides: Partial<NormalizedSeriesPage> = {}): Nor
   };
 }
 
-function providerWith(pages: NormalizedSeriesPage[]): IMediaProvider {
+function ratingsWith(pages: NormalizedSeriesPage[]): RatingsCapability {
   const getReadSeriesMock = vi.fn(async (pageNumber = 1) => {
     return pages[pageNumber - 1] ?? page([]);
   });
 
-  return { getReadSeries: getReadSeriesMock } as unknown as IMediaProvider;
+  return { getReadSeries: getReadSeriesMock } as unknown as RatingsCapability;
 }
 
 describe("getReadSeries", () => {
   it("returns the first page without extra requests when it is the only one", async () => {
-    const provider = providerWith([page(["a", "b"])]);
+    const ratings = ratingsWith([page(["a", "b"])]);
 
-    await expect(getReadSeries(provider)).resolves.toEqual([series("a"), series("b")]);
-    expect(provider.getReadSeries).toHaveBeenCalledTimes(1);
+    await expect(getReadSeries(ratings)).resolves.toEqual([series("a"), series("b")]);
+    expect(ratings.getReadSeries).toHaveBeenCalledTimes(1);
   });
 
   it("follows pagination and keeps the backend order", async () => {
-    const provider = providerWith([
+    const ratings = ratingsWith([
       page(["a", "b"], { nextCursor: "2", totalPages: 2, totalElements: 3 }),
       page(["c"], { nextCursor: null, totalPages: 2, totalElements: 3 }),
     ]);
 
-    const result = await getReadSeries(provider);
+    const result = await getReadSeries(ratings);
 
     expect(result.map((item) => item.id)).toEqual(["a", "b", "c"]);
-    expect(provider.getReadSeries).toHaveBeenNthCalledWith(1, 1, 200);
-    expect(provider.getReadSeries).toHaveBeenNthCalledWith(2, 2, 200);
+    expect(ratings.getReadSeries).toHaveBeenNthCalledWith(1, 1, 200);
+    expect(ratings.getReadSeries).toHaveBeenNthCalledWith(2, 2, 200);
   });
 
   it("deduplicates series that appear on several pages", async () => {
-    const provider = providerWith([
+    const ratings = ratingsWith([
       page(["a", "b"], { nextCursor: "2", totalPages: 2 }),
       page(["b", "c"], { totalPages: 2 }),
     ]);
 
-    const result = await getReadSeries(provider);
+    const result = await getReadSeries(ratings);
 
     expect(result.map((item) => item.id)).toEqual(["a", "b", "c"]);
   });
 
   it("caps how many pages are fetched", async () => {
-    const provider = providerWith(
+    const ratings = ratingsWith(
       Array.from({ length: 8 }, (_, index) =>
         page([`s${index}`], { nextCursor: String(index + 2), totalPages: 8 })
       )
     );
 
-    const result = await getReadSeries(provider);
+    const result = await getReadSeries(ratings);
 
     expect(result).toHaveLength(5);
-    expect(provider.getReadSeries).toHaveBeenCalledTimes(5);
+    expect(ratings.getReadSeries).toHaveBeenCalledTimes(5);
   });
 
   it("does not paginate when the backend reports a single page without cursor", async () => {
-    const provider = providerWith([page(["a"], { totalPages: 1 })]);
+    const ratings = ratingsWith([page(["a"], { totalPages: 1 })]);
 
-    await getReadSeries(provider);
+    await getReadSeries(ratings);
 
-    expect(provider.getReadSeries).toHaveBeenCalledTimes(1);
+    expect(ratings.getReadSeries).toHaveBeenCalledTimes(1);
   });
 });
 

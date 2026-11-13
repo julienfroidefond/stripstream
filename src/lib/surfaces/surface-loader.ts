@@ -1,5 +1,6 @@
 import type {
   IMediaProvider,
+  ProviderCapabilities,
   ProviderCapabilityKey,
 } from "@/lib/providers/provider.interface";
 import { ERROR_CODES, type ErrorCode } from "@/constants/errorCodes";
@@ -7,17 +8,30 @@ import { AppError } from "@/utils/errors";
 import logger from "@/lib/logger";
 import { defaultPreferences, type UserPreferences } from "@/types/preferences";
 
-export interface SurfaceContext {
+/**
+ * La capacité est portée par le contexte seulement quand `requireCapability`
+ * l'a exigée : le gateway prouve sa présence une fois, le loader la reçoit
+ * typée et n'a plus à revérifier `provider.capabilities`.
+ */
+type CapabilityField<C extends ProviderCapabilityKey | undefined> =
+  C extends ProviderCapabilityKey
+    ? { capability: NonNullable<ProviderCapabilities[C]> }
+    : { capability?: undefined };
+
+export type SurfaceContext<C extends ProviderCapabilityKey | undefined = undefined> = {
   provider: IMediaProvider;
   preferences: UserPreferences;
   isAnonymous: boolean;
-}
+} & CapabilityField<C>;
 
 export type SurfaceUnavailableReason = "no-provider" | "unsupported-capability";
 
-export type SurfaceResult<T> =
-  | { status: "ready"; data: T; context: SurfaceContext }
-  | { status: "anonymous-empty"; context: SurfaceContext }
+export type SurfaceResult<
+  T,
+  C extends ProviderCapabilityKey | undefined = undefined,
+> =
+  | { status: "ready"; data: T; context: SurfaceContext<C> }
+  | { status: "anonymous-empty"; context: SurfaceContext<C> }
   | { status: "unavailable"; reason: SurfaceUnavailableReason }
   | { status: "error"; code: ErrorCode };
 
@@ -29,13 +43,16 @@ export interface SurfaceLoaderDependencies {
   rethrow: (error: unknown) => void;
 }
 
-export interface LoadSurfaceOptions<T> {
+export interface LoadSurfaceOptions<
+  T,
+  C extends ProviderCapabilityKey | undefined = undefined,
+> {
   /** Code utilisé quand le chargement échoue sans `AppError`. */
   fallbackCode: ErrorCode;
   /** Nom de la surface, pour les logs. */
   name: string;
   /** Charge la donnée de la page à partir du contexte résolu. */
-  load: (context: SurfaceContext) => Promise<T>;
+  load: (context: SurfaceContext<C>) => Promise<T>;
   /**
    * `redirect` (défaut) envoie vers /settings sans configuration ;
    * `unavailable` laisse la page rendre son état vide dédié (accueil).
@@ -44,7 +61,7 @@ export interface LoadSurfaceOptions<T> {
   /** `empty` court-circuite le chargement en mode anonyme (page en cours). */
   anonymous?: "load" | "empty";
   /** Réserve la surface à un provider qui déclare cette capacité. */
-  requireCapability?: ProviderCapabilityKey;
+  requireCapability?: C;
 }
 
 function isMissingConfig(error: unknown): boolean {
@@ -59,17 +76,20 @@ function resolveErrorCode(error: unknown, fallbackCode: ErrorCode): ErrorCode {
   return error instanceof AppError ? error.code : fallbackCode;
 }
 
-type Resolution =
-  | { status: "ready"; context: SurfaceContext }
-  | { status: "anonymous-empty"; context: SurfaceContext }
+type Resolution<C extends ProviderCapabilityKey | undefined> =
+  | { status: "ready"; context: SurfaceContext<C> }
+  | { status: "anonymous-empty"; context: SurfaceContext<C> }
   | { status: "unavailable"; reason: SurfaceUnavailableReason }
   | { status: "redirect" }
   | { status: "error"; code: ErrorCode };
 
-async function resolveSurfaceContext<T>(
-  options: LoadSurfaceOptions<T>,
+async function resolveSurfaceContext<
+  T,
+  C extends ProviderCapabilityKey | undefined,
+>(
+  options: LoadSurfaceOptions<T, C>,
   dependencies: SurfaceLoaderDependencies
-): Promise<Resolution> {
+): Promise<Resolution<C>> {
   try {
     const [provider, preferences] = await Promise.all([
       dependencies.getProvider(),
@@ -92,11 +112,16 @@ async function resolveSurfaceContext<T>(
       return { status: "unavailable", reason: "unsupported-capability" };
     }
 
-    const context: SurfaceContext = {
+    const context = {
       provider,
       preferences,
       isAnonymous: preferences.anonymousMode,
-    };
+      // Le contrôle ci-dessus garantit la capacité ; le cast est la seule
+      // façon d'exprimer le lien conditionnel type <-> champ pour TypeScript.
+      capability: options.requireCapability
+        ? provider.capabilities[options.requireCapability]
+        : undefined,
+    } as unknown as SurfaceContext<C>;
 
     if (options.anonymous === "empty" && context.isAnonymous) {
       return { status: "anonymous-empty", context };
@@ -115,10 +140,13 @@ async function resolveSurfaceContext<T>(
  * applique la politique anonyme, vérifie la capacité requise, redirige vers
  * /settings sans configuration et mappe les erreurs en un état terminal.
  */
-export async function loadSurfaceWithDependencies<T>(
-  options: LoadSurfaceOptions<T>,
+export async function loadSurfaceWithDependencies<
+  T,
+  C extends ProviderCapabilityKey | undefined = undefined,
+>(
+  options: LoadSurfaceOptions<T, C>,
   dependencies: SurfaceLoaderDependencies
-): Promise<SurfaceResult<T>> {
+): Promise<SurfaceResult<T, C>> {
   const resolution = await resolveSurfaceContext(options, dependencies);
 
   switch (resolution.status) {

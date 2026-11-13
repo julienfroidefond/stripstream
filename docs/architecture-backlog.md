@@ -6,7 +6,7 @@ Done work is not repeated here — the ADR index is the history of every decisio
 
 ## Backlog
 
-Nothing open right now. The last four chantiers — preferences descriptor, collection query contract, carousel gesture machine, durable rate-limit store — shipped in #162–#164 and #167, and are recorded in the *Delivered* table below.
+Nothing open right now. The recent chantiers — preferences descriptor, collection query contract, carousel gesture machine, durable rate-limit store and the capability handoff — shipped in #162–#164, #167 and #169, and are recorded in the *Delivered* table below.
 
 ## Picking the next one
 
@@ -16,6 +16,7 @@ Order by the number of call sites a wrong change would silently break, not by fi
 
 | PR | Change | ADR |
 | --- | --- | --- |
+| #169 | A required capability owns its data and is handed to the loader. | [0019](./adr/0019-capability-owns-its-data.md) |
 | #167 | Rate-limit counters live in a shared SQLite store behind one seam. | [0018](./adr/0018-durable-rate-limit-store.md) |
 | #162 | Preferences are described once and the service derives read/update/create from it. | [0015](./adr/0015-preferences-descriptor.md) |
 | #163 | Collection pages parse their query through one contract. | [0016](./adr/0016-collection-query-contract.md) |

@@ -1,20 +1,24 @@
 import type { ReactNode } from "react";
 import { ERROR_CODES, type ErrorCode } from "@/constants/errorCodes";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
+import type { ProviderCapabilityKey } from "@/lib/providers/provider.interface";
 import type {
   SurfaceContext,
   SurfaceResult,
   SurfaceUnavailableReason,
 } from "@/lib/surfaces/surface-loader";
 
-export interface SurfaceBoundaryProps<T> {
-  surface: SurfaceResult<T>;
+export interface SurfaceBoundaryProps<
+  T,
+  C extends ProviderCapabilityKey | undefined = undefined,
+> {
+  surface: SurfaceResult<T, C>;
   /** Rend la page uniquement quand le gateway a résolu la donnée. */
-  ready: (data: T, context: SurfaceContext) => ReactNode;
+  ready: (data: T, context: SurfaceContext<C>) => ReactNode;
   /** Terminal propre à la surface quand aucun provider ne peut la servir. */
   unavailable?: (reason: SurfaceUnavailableReason) => ReactNode;
   /** Terminal propre à la surface en mode anonyme. Par défaut : rien. */
-  anonymousEmpty?: (context: SurfaceContext) => ReactNode;
+  anonymousEmpty?: (context: SurfaceContext<C>) => ReactNode;
   /** Terminal propre à la surface en erreur. Par défaut : `ErrorMessage`. */
   error?: (code: ErrorCode) => ReactNode;
 }
@@ -24,13 +28,16 @@ export interface SurfaceBoundaryProps<T> {
  * quoi rendre hors de l'état `ready` : le gateway a déjà résolu le contexte et
  * le code d'erreur de repli, la frontière choisit le terminal.
  */
-export function SurfaceBoundary<T>({
+export function SurfaceBoundary<
+  T,
+  C extends ProviderCapabilityKey | undefined = undefined,
+>({
   surface,
   ready,
   unavailable,
   anonymousEmpty,
   error,
-}: SurfaceBoundaryProps<T>) {
+}: SurfaceBoundaryProps<T, C>) {
   switch (surface.status) {
     case "ready":
       return ready(surface.data, surface.context);

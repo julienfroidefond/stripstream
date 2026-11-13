@@ -1,5 +1,6 @@
 import { redirect, unstable_rethrow } from "next/navigation";
 import { getProvider } from "@/lib/providers/provider.factory";
+import type { ProviderCapabilityKey } from "@/lib/providers/provider.interface";
 import { PreferencesService } from "@/lib/services/preferences.service";
 import {
   loadSurfaceWithDependencies,
@@ -19,7 +20,10 @@ const dependencies: SurfaceLoaderDependencies = {
  * Point d'entrée des pages serveur. Le cœur (`surface-loader`) reste pur et
  * testable ; ce module branche les dépendances réelles de Next.
  */
-export function loadSurface<T>(options: LoadSurfaceOptions<T>): Promise<SurfaceResult<T>> {
+export function loadSurface<
+  T,
+  C extends ProviderCapabilityKey | undefined = undefined,
+>(options: LoadSurfaceOptions<T, C>): Promise<SurfaceResult<T, C>> {
   return loadSurfaceWithDependencies(options, dependencies);
 }
 
