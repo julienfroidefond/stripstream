@@ -116,6 +116,7 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
 
   // Home
   [ERROR_CODES.HOME.FETCH_ERROR]: "Error fetching home page data",
+  [ERROR_CODES.HOME.INVALID_OFFSET]: "Invalid home feed offset",
 
   // Wall
   [ERROR_CODES.WALL.FETCH_ERROR]:

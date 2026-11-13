@@ -772,6 +772,7 @@
     "UI_TABS_CONTENT_ERROR": "Error loading tabs content",
     "IMAGE_FETCH_ERROR": "Error fetching image",
     "HOME_FETCH_ERROR": "Error fetching home page",
+    "HOME_INVALID_OFFSET": "Unable to load more items for this row",
     "MIDDLEWARE_UNAUTHORIZED": "Unauthorized",
     "MIDDLEWARE_INVALID_TOKEN": "Invalid authentication token",
     "MIDDLEWARE_INVALID_SESSION": "Invalid session",

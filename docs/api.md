@@ -103,8 +103,8 @@ Actions de connexion génériques (ADR 0030) : une action par opération, discri
 
 | Action | Rôle |
 | --- | --- |
-| `loadContinueReading` | Charge la page suivante du hero « Reprendre la lecture ». `offset` est le nombre de tomes déjà affichés ; l'action délègue à `loadContinueReadingPage` (`src/lib/home/continue-reading-feed.ts`), le même module que le rendu initial, et renvoie uniquement la nouvelle page, déjà résolue en entrées de reprise (`book`, `series`, `progressPercent`). Le hero ajoute la page à sa liste et n'a plus à fusionner ni à matcher côté client. |
-| `loadHomeFeed` | Charge une page d'une section de la home : `ongoing`, `favorites`, `reading-lists`, `latest-series`, `recently-read` ou `recommendations`. `offset` est le nombre d'éléments déjà affichés ; l'action renvoie `{ items, hasMore }` pour la seule nouvelle page. Elle délègue au registre `src/lib/home/feed-registry.ts`, partagé avec le rendu initial de la page. |
+| `loadContinueReading` | Charge la page suivante du hero « Reprendre la lecture ». `offset` est le nombre de tomes déjà affichés, borné comme pour `loadHomeFeed` ; l'action délègue à `loadContinueReadingPage` (`src/lib/home/continue-reading-feed.ts`), le même module que le rendu initial, et renvoie uniquement la nouvelle page, déjà résolue en entrées de reprise (`book`, `series`, `progressPercent`). Le hero ajoute la page à sa liste et n'a plus à fusionner ni à matcher côté client. |
+| `loadHomeFeed` | Charge une page d'une section de la home : `ongoing`, `favorites`, `reading-lists`, `latest-series`, `recently-read` ou `recommendations`. `offset` est le nombre d'éléments déjà affichés, entier de 0 à `MAX_HOME_FEED_OFFSET` (1 000, `src/lib/home/feed-page.ts`) — sinon échec `HOME_INVALID_OFFSET` sans requête provider ; l'action renvoie `{ items, hasMore }` pour la seule nouvelle page. Elle délègue au registre `src/lib/home/feed-registry.ts`, partagé avec le rendu initial de la page. |
 
 ### src/app/actions/library.ts
 

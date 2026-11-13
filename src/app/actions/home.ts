@@ -1,9 +1,17 @@
 "use server";
 
 import { ERROR_CODES } from "@/constants/errorCodes";
-import { runProviderAction, type ActionResult } from "@/lib/actions/action-runner";
+import {
+  ActionError,
+  runProviderAction,
+  type ActionResult,
+} from "@/lib/actions/action-runner";
 import { PreferencesService } from "@/lib/services/preferences.service";
-import type { HomeFeed, HomeFeedPage } from "@/lib/home/feed-page";
+import {
+  isValidHomeFeedOffset,
+  type HomeFeed,
+  type HomeFeedPage,
+} from "@/lib/home/feed-page";
 import {
   loadNextHomeFeedPage,
   type HomeSection,
@@ -31,6 +39,11 @@ function loadSectionPage<S extends HomeSection>(
     logContext: { feed: section, offset },
     requireUser: true,
     execute: async ({ provider, userId }) => {
+      // L'action est appelable directement : un offset non entier, négatif ou
+      // démesuré (limite provider d'un milliard) est refusé avant toute lecture.
+      if (!isValidHomeFeedOffset(offset)) {
+        throw new ActionError(ERROR_CODES.HOME.INVALID_OFFSET);
+      }
       const preferences = await PreferencesService.getPreferences(userId);
       const page = await loadNextHomeFeedPage(provider, section, offset, {
         isAnonymous: preferences.anonymousMode,

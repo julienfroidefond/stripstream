@@ -775,6 +775,7 @@
     "UI_TABS_CONTENT_ERROR": "Erreur lors du chargement du contenu des onglets",
     "IMAGE_FETCH_ERROR": "Erreur lors de la récupération de l'image",
     "HOME_FETCH_ERROR": "Erreur lors de la récupération de l'accueil",
+    "HOME_INVALID_OFFSET": "Impossible de charger la suite de cette rangée",
     "MIDDLEWARE_UNAUTHORIZED": "Non autorisé",
     "MIDDLEWARE_INVALID_TOKEN": "Jeton d'authentification invalide",
     "MIDDLEWARE_INVALID_SESSION": "Session invalide",

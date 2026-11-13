@@ -219,3 +219,76 @@ describe("FavoriteService — injected identity", () => {
     expect(db.findMany).not.toHaveBeenCalled();
   });
 });
+
+describe("FavoriteService — a failing store is not an empty one", () => {
+  function backendProvider(failure: Error): IMediaProvider {
+    return fakeProvider(
+      {},
+      {
+        favorites: {
+          getFavorites: vi.fn(async () => {
+            throw failure;
+          }),
+          isFavorite: vi.fn(async () => {
+            throw failure;
+          }),
+          addToFavorites: vi.fn(async () => undefined),
+          removeFromFavorites: vi.fn(async () => undefined),
+        },
+      }
+    );
+  }
+
+  it("propagates a backend outage from the favorites list and ids", async () => {
+    const outage = new AppError(ERROR_CODES.STRIPSTREAM.SERVER_ERROR);
+    const provider = backendProvider(outage);
+
+    // Le registre de l'accueil en fait un état `failed`, pas une rangée vide.
+    await expect(FavoriteService.listFavorites(as(provider))).rejects.toBe(outage);
+    await expect(FavoriteService.getAllFavoriteIds(as(provider))).rejects.toBe(outage);
+  });
+
+  it("propagates a backend outage from the favorite status", async () => {
+    const outage = new AppError(ERROR_CODES.STRIPSTREAM.SERVER_ERROR);
+
+    // Pas d'étoile éteinte mensongère : la surface série échoue explicitement.
+    await expect(FavoriteService.isFavorite(as(backendProvider(outage)), "x")).rejects.toBe(outage);
+  });
+
+  it("propagates a SQLite failure from the Komga store", async () => {
+    const failure = new Error("database is locked");
+    db.findFirst.mockRejectedValueOnce(failure);
+    db.findMany.mockRejectedValueOnce(failure);
+
+    await expect(FavoriteService.isFavorite(as(fakeProvider()), "x")).rejects.toBe(failure);
+    await expect(FavoriteService.listFavorites(as(fakeProvider()))).rejects.toBe(failure);
+  });
+});
+
+describe("FavoriteService — idempotent Komga writes", () => {
+  it("treats a concurrent duplicate add (P2002) as success", async () => {
+    // Double clic : les deux soumissions ont vu « absent », la seconde
+    // insertion heurte la contrainte unique alors que le favori existe.
+    db.create.mockRejectedValueOnce(
+      Object.assign(new Error("Unique constraint failed"), { code: "P2002" })
+    );
+
+    await expect(FavoriteService.addToFavorites(as(fakeProvider()), "x")).resolves.toBeUndefined();
+  });
+
+  it("still fails an add on any other database error", async () => {
+    db.create.mockRejectedValueOnce(new Error("database is locked"));
+
+    await expect(FavoriteService.addToFavorites(as(fakeProvider()), "x")).rejects.toMatchObject({
+      code: ERROR_CODES.FAVORITE.ADD_ERROR,
+    });
+  });
+
+  it("removes an absent favorite without failing", async () => {
+    db.deleteMany.mockResolvedValueOnce({ count: 0 });
+
+    await expect(
+      FavoriteService.removeFromFavorites(as(fakeProvider()), "x")
+    ).resolves.toBeUndefined();
+  });
+});
