@@ -209,6 +209,36 @@ describe("ProviderTransport", () => {
   });
 });
 
+describe("ProviderTransport.request cache options", () => {
+  it("forwards both the TTL and the tags of a tagged read", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => jsonResponse({ ok: true })));
+    const transport = new ProviderTransport(testPolicy());
+
+    await transport.request("series", undefined, { revalidate: 120, tags: ["series"] });
+
+    expect(lastFetchCall().init.next).toEqual({ revalidate: 120, tags: ["series"] });
+  });
+
+  it("wraps a tagged POST in unstable_cache with its TTL", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => jsonResponse({ ok: true })));
+    const transport = new ProviderTransport(
+      testPolicy({ cachePostWithUnstableCache: true, cacheKey: () => ["k"] })
+    );
+
+    await transport.request("books/list", undefined, {
+      method: "POST",
+      body: "{}",
+      revalidate: 120,
+      tags: ["books"],
+    });
+
+    expect(unstableCacheMock).toHaveBeenLastCalledWith(expect.any(Function), ["k"], {
+      revalidate: 120,
+      tags: ["books"],
+    });
+  });
+});
+
 describe("ProviderTransport.response", () => {
   it("streams with an overridden Accept and relays only validators", async () => {
     const fetchMock = vi.fn(

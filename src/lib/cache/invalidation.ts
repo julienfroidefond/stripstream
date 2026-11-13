@@ -59,6 +59,27 @@ export function invalidateConnectionChange(): void {
   revalidatePath("/");
 }
 
+/**
+ * Lancement du scan d'une bibliothèque. Le scan tourne côté backend après la
+ * réponse : aucune donnée taguée n'a encore changé, seules les routes de la
+ * bibliothèque sont revalidées pour refléter l'état « scan lancé ».
+ */
+export function invalidateLibraryScan(libraryId: string): void {
+  revalidatePath(`/libraries/${libraryId}`);
+  revalidatePath("/libraries");
+}
+
+/**
+ * Préférences utilisateur (taille de page, filtres, affichage…). Elles ne
+ * changent aucune lecture provider, donc aucun tag : seules les routes qui
+ * les appliquent au rendu serveur sont revalidées.
+ */
+export function invalidatePreferences(): void {
+  revalidatePath("/");
+  revalidatePath("/libraries");
+  revalidatePath("/series");
+}
+
 export type RefreshScope = "home" | "library" | "series" | "book";
 
 /**

@@ -53,8 +53,8 @@ export function SeriesContent({
         <PaginatedBookGrid
           books={books.items}
           currentPage={currentPage}
-          totalPages={books.totalPages ?? 1}
-          totalElements={books.totalElements ?? books.items.length}
+          totalPages={books.totalPages}
+          totalElements={books.totalElements}
           defaultShowOnlyUnread={preferences.showOnlyUnread}
           showOnlyUnread={unreadOnly}
           pageSize={pageSize}

@@ -1,3 +1,5 @@
+import type { Page } from "./pagination";
+
 export type ProviderType = "komga" | "stripstream";
 
 export interface NormalizedReadProgress {
@@ -177,19 +179,11 @@ export interface NormalizedSearchResult {
   bookCount?: number;
 }
 
-export interface NormalizedSeriesPage {
-  items: NormalizedSeries[];
-  nextCursor: string | null;
-  totalPages?: number;
-  totalElements?: number;
-}
+/** Une page de séries, paginée par numéro (1-based) — voir `pagination.ts`. */
+export type NormalizedSeriesPage = Page<NormalizedSeries>;
 
-export interface NormalizedBooksPage {
-  items: NormalizedBook[];
-  nextCursor: string | null;
-  totalPages?: number;
-  totalElements?: number;
-}
+/** Une page de tomes, paginée par numéro (1-based) — voir `pagination.ts`. */
+export type NormalizedBooksPage = Page<NormalizedBook>;
 
 /**
  * Lifecycle of a library scan as reported by the backend.

@@ -27,19 +27,16 @@ import {
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 import { normalizeServerUrl } from "@/utils/server-url";
+import { normalizePageNumber } from "../pagination";
 
 import type { KomgaBook, KomgaSeries, KomgaLibrary } from "@/types/komga";
 import type { LibraryResponse } from "@/types/library";
 import type { AuthConfig } from "@/types/auth";
-import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, SERIES_BOOKS_CACHE_TAG, STATS_CACHE_TAG, cacheTags } from "@/constants/cacheConstants";
+import { cacheProfile } from "@/constants/cacheProfiles";
 import { unstable_cache } from "next/cache";
 import logger from "@/lib/logger";
 
 type KomgaCondition = Record<string, unknown>;
-
-const CACHE_TTL_LONG = 300;
-const CACHE_TTL_MED = 120;
-const CACHE_TTL_SHORT = 30;
 
 /** Ordre des deux requêtes `getHomeContinueReadingData`, pour nommer les rejets. */
 const CONTINUE_READING_FEEDS = ["ongoing", "onDeck"] as const;
@@ -67,14 +64,12 @@ export class KomgaProvider implements IMediaProvider {
   }
 
   async getLibraries(): Promise<NormalizedLibrary[]> {
-    const raw = await this.fetch<KomgaLibrary[]>("libraries", undefined, {
-      revalidate: CACHE_TTL_LONG,
-    });
+    const raw = await this.fetch<KomgaLibrary[]>("libraries", undefined, cacheProfile.libraries());
     return raw.map(KomgaAdapter.toNormalizedLibrary);
   }
 
-  async getSeries(libraryId: string, cursor?: string, limit = 20, unreadOnly = false, search?: string, _sort?: string, _hasMissing?: boolean): Promise<NormalizedSeriesPage> {
-    const page = cursor ? parseInt(cursor, 10) - 1 : 0;
+  async getSeries(libraryId: string, page?: number, limit = 20, unreadOnly = false, search?: string, _sort?: string, _hasMissing?: boolean): Promise<NormalizedSeriesPage> {
+    const pageNumber = normalizePageNumber(page);
 
     let condition: KomgaCondition;
     if (unreadOnly) {
@@ -98,12 +93,11 @@ export class KomgaProvider implements IMediaProvider {
 
     const response = await this.fetch<LibraryResponse<KomgaSeries>>(
       "series/list",
-      { page: String(page), size: String(limit), sort: "metadata.titleSort,asc" },
+      { page: String(pageNumber - 1), size: String(limit), sort: "metadata.titleSort,asc" },
       {
         method: "POST",
         body: JSON.stringify(searchBody),
-        revalidate: CACHE_TTL_MED,
-        tags: [LIBRARY_SERIES_CACHE_TAG, cacheTags.librarySeries(libraryId)],
+        ...cacheProfile.librarySeries(libraryId),
       }
     );
 
@@ -115,16 +109,11 @@ export class KomgaProvider implements IMediaProvider {
       return cmp !== 0 ? cmp : a.id.localeCompare(b.id);
     });
 
-    return {
-      items: sorted.map(KomgaAdapter.toNormalizedSeries),
-      nextCursor: response.last ? null : String(page + 1),
-      totalPages: response.totalPages,
-      totalElements: response.totalElements,
-    };
+    return KomgaAdapter.toPage(response, sorted.map(KomgaAdapter.toNormalizedSeries), pageNumber);
   }
 
   async getBooks(filter: BookListFilter): Promise<NormalizedBooksPage> {
-    const page = filter.cursor ? parseInt(filter.cursor, 10) - 1 : 0;
+    const pageNumber = normalizePageNumber(filter.page);
     const limit = filter.limit ?? 24;
     let condition: KomgaCondition;
 
@@ -148,22 +137,17 @@ export class KomgaProvider implements IMediaProvider {
       condition = {};
     }
 
-    const granularTags: string[] = [SERIES_BOOKS_CACHE_TAG];
-    if (filter.seriesId) granularTags.push(cacheTags.seriesBooks(filter.seriesId));
-    if (filter.libraryId) granularTags.push(cacheTags.libraryBooks(filter.libraryId));
-
     const response = await this.fetch<LibraryResponse<KomgaBook>>(
       "books/list",
-      { page: String(page), size: String(limit), sort: "metadata.numberSort,asc" },
-      { method: "POST", body: JSON.stringify({ condition }), revalidate: CACHE_TTL_MED, tags: granularTags }
+      { page: String(pageNumber - 1), size: String(limit), sort: "metadata.numberSort,asc" },
+      {
+        method: "POST",
+        body: JSON.stringify({ condition }),
+        ...cacheProfile.books({ seriesId: filter.seriesId, libraryId: filter.libraryId }),
+      }
     );
     const items = response.content.filter((b) => !b.deleted).map(KomgaAdapter.toNormalizedBook);
-    return {
-      items,
-      nextCursor: response.last ? null : String(page + 1),
-      totalPages: response.totalPages,
-      totalElements: response.totalElements,
-    };
+    return KomgaAdapter.toPage(response, items, pageNumber);
   }
 
   async getBook(bookId: string): Promise<NormalizedBook> {
@@ -172,10 +156,8 @@ export class KomgaProvider implements IMediaProvider {
       // visit: the read-progress mutation invalidates app caches, but this
       // provider request has no tag of its own and a TTL can otherwise resume
       // a stale page after a reload.
-      this.fetch<KomgaBook>(`books/${bookId}`, undefined, { cache: "no-store" }),
-      this.fetch<{ number: number }[]>(`books/${bookId}/pages`, undefined, {
-        revalidate: CACHE_TTL_SHORT,
-      }),
+      this.fetch<KomgaBook>(`books/${bookId}`, undefined, cacheProfile.readerBook()),
+      this.fetch<{ number: number }[]>(`books/${bookId}/pages`, undefined, cacheProfile.bookPages()),
     ]);
     const normalized = KomgaAdapter.toNormalizedBook(book);
     return { ...normalized, pageCount: pages.length };
@@ -183,9 +165,7 @@ export class KomgaProvider implements IMediaProvider {
 
   async getSeriesById(seriesId: string): Promise<NormalizedSeries | null> {
     try {
-      const series = await this.fetch<KomgaSeries>(`series/${seriesId}`, undefined, {
-        revalidate: CACHE_TTL_MED,
-      });
+      const series = await this.fetch<KomgaSeries>(`series/${seriesId}`, undefined, cacheProfile.series());
       return KomgaAdapter.toNormalizedSeries(series);
     } catch (error) {
       // L'interface promet `null` pour une série absente. Seul le 404 est une
@@ -206,9 +186,7 @@ export class KomgaProvider implements IMediaProvider {
    */
 
   async getReadProgress(bookId: string): Promise<NormalizedReadProgress | null> {
-    const book = await this.fetch<KomgaBook>(`books/${bookId}`, undefined, {
-      revalidate: CACHE_TTL_SHORT,
-    });
+    const book = await this.fetch<KomgaBook>(`books/${bookId}`, undefined, cacheProfile.readProgress());
     return KomgaAdapter.toNormalizedReadProgress(book.readProgress);
   }
 
@@ -232,12 +210,12 @@ export class KomgaProvider implements IMediaProvider {
       this.fetch<LibraryResponse<KomgaSeries>>(
         "series/list",
         { page: "0", size: String(limit) },
-        { method: "POST", body: JSON.stringify(body), revalidate: CACHE_TTL_SHORT }
+        { method: "POST", body: JSON.stringify(body), ...cacheProfile.search() }
       ),
       this.fetch<LibraryResponse<KomgaBook>>(
         "books/list",
         { page: "0", size: String(limit) },
-        { method: "POST", body: JSON.stringify(body), revalidate: CACHE_TTL_SHORT }
+        { method: "POST", body: JSON.stringify(body), ...cacheProfile.search() }
       ),
     ]);
 
@@ -335,7 +313,7 @@ export class KomgaProvider implements IMediaProvider {
         };
       },
       ["komga-home-continue-reading", this.config.serverUrl, this.config.authHeader, String(limit)],
-      { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] }
+      cacheProfile.home()
     )();
   }
 
@@ -356,7 +334,7 @@ export class KomgaProvider implements IMediaProvider {
         return (ongoing.content || []).map(KomgaAdapter.toNormalizedSeries);
       },
       ["komga-home-ongoing-series", this.config.serverUrl, this.config.authHeader, String(limit)],
-      { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] }
+      cacheProfile.home()
     )();
   }
 
@@ -371,7 +349,7 @@ export class KomgaProvider implements IMediaProvider {
         return (latestSeries.content || []).map(KomgaAdapter.toNormalizedSeries);
       },
       ["komga-home-latest-series", this.config.serverUrl, this.config.authHeader, String(limit)],
-      { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] }
+      cacheProfile.home()
     )();
   }
 
@@ -386,7 +364,7 @@ export class KomgaProvider implements IMediaProvider {
         return (recentlyRead.content || []).map(KomgaAdapter.toNormalizedBook);
       },
       ["komga-home-recently-read", this.config.serverUrl, this.config.authHeader, String(limit)],
-      { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] }
+      cacheProfile.home()
     )();
   }
 
@@ -445,7 +423,7 @@ export class KomgaProvider implements IMediaProvider {
   async getReadingStats(): Promise<NormalizedReadingStats> {
     const [libraries, totalSeries, totalBooks, booksRead, booksInProgress, booksUnread] =
       await Promise.all([
-        this.fetch<KomgaLibrary[]>("libraries", undefined, { tags: [STATS_CACHE_TAG] }),
+        this.fetch<KomgaLibrary[]>("libraries", undefined, cacheProfile.stats()),
         this.countEntries("series/list"),
         this.countEntries("books/list"),
         this.countEntries("books/list", "READ"),
@@ -478,7 +456,7 @@ export class KomgaProvider implements IMediaProvider {
     const response = await this.fetch<LibraryResponse<unknown>>(
       endpoint,
       { page: "0", size: "1" },
-      { method: "POST", body: JSON.stringify({ condition }), tags: [STATS_CACHE_TAG] }
+      { method: "POST", body: JSON.stringify({ condition }), ...cacheProfile.stats() }
     );
     return response.totalElements;
   }

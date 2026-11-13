@@ -33,6 +33,7 @@ import {
 import { StripstreamAdapter } from "./stripstream.adapter";
 import { selectApprovedMetadataLink } from "./metadata-links";
 import { scanStateFromIndexJobStatus } from "../scan-status";
+import { normalizePageNumber } from "../pagination";
 import type {
   StripstreamLibraryResponse,
   StripstreamBooksPage,
@@ -52,11 +53,7 @@ import type {
   StripstreamSeriesRatingsResponse,
   StripstreamIndexJob,
 } from "@/types/stripstream";
-import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, SERIES_BOOKS_CACHE_TAG, SERIES_RATING_CACHE_TAG, SERIES_SHELF_CACHE_TAG, RATINGS_LIST_CACHE_TAG, STATS_CACHE_TAG, FAVORITES_CACHE_TAG, cacheTags } from "@/constants/cacheConstants";
-
-const CACHE_TTL_LONG = 300;
-const CACHE_TTL_MED = 120;
-const CACHE_TTL_SHORT = 30;
+import { cacheProfile } from "@/constants/cacheProfiles";
 
 export class StripstreamProvider implements IMediaProvider {
   readonly capabilities: ProviderCapabilities;
@@ -77,17 +74,13 @@ export class StripstreamProvider implements IMediaProvider {
   }
 
   async getLibraries(): Promise<NormalizedLibrary[]> {
-    const libraries = await this.client.fetch<StripstreamLibraryResponse[]>("libraries", undefined, {
-      revalidate: CACHE_TTL_LONG,
-    });
+    const libraries = await this.client.fetch<StripstreamLibraryResponse[]>("libraries", undefined, cacheProfile.libraries());
     return libraries.map(StripstreamAdapter.toNormalizedLibrary);
   }
 
   async getLibraryById(libraryId: string): Promise<NormalizedLibrary | null> {
     try {
-      const libraries = await this.client.fetch<StripstreamLibraryResponse[]>("libraries", undefined, {
-        revalidate: CACHE_TTL_LONG,
-      });
+      const libraries = await this.client.fetch<StripstreamLibraryResponse[]>("libraries", undefined, cacheProfile.libraries());
       const lib = libraries.find((l) => l.id === libraryId);
       return lib ? StripstreamAdapter.toNormalizedLibrary(lib) : null;
     } catch {
@@ -96,8 +89,8 @@ export class StripstreamProvider implements IMediaProvider {
   }
 
   // Stripstream series endpoint: GET /libraries/{library_id}/series
-  async getSeries(libraryId: string, page?: string, limit = 20, unreadOnly = false, search?: string, sort?: string, hasMissing?: boolean): Promise<NormalizedSeriesPage> {
-    const pageNumber = page ? parseInt(page) : 1;
+  async getSeries(libraryId: string, page?: number, limit = 20, unreadOnly = false, search?: string, sort?: string, hasMissing?: boolean): Promise<NormalizedSeriesPage> {
+    const pageNumber = normalizePageNumber(page);
     const params: Record<string, string | undefined> = { limit: String(limit), page: String(pageNumber), has_books: "true", library_id: libraryId };
     if (unreadOnly) params.reading_status = "unread,reading";
     if (search?.trim()) params.q = search.trim();
@@ -107,19 +100,10 @@ export class StripstreamProvider implements IMediaProvider {
     const response = await this.client.fetch<StripstreamSeriesPage>(
       `series`,
       params,
-      {
-        revalidate: CACHE_TTL_MED,
-        tags: [LIBRARY_SERIES_CACHE_TAG, cacheTags.librarySeries(libraryId)],
-      }
+      cacheProfile.librarySeries(libraryId)
     );
 
-    const totalPages = Math.ceil(response.total / limit);
-    return {
-      items: response.items.map(StripstreamAdapter.toNormalizedSeries),
-      nextCursor: null,
-      totalElements: response.total,
-      totalPages,
-    };
+    return StripstreamAdapter.toPage(response, StripstreamAdapter.toNormalizedSeries, pageNumber, limit);
   }
 
   /**
@@ -127,25 +111,20 @@ export class StripstreamProvider implements IMediaProvider {
    * `reading_status=read` côté Librarian signifie « tous les tomes lus ».
    */
   async getReadSeries(page = 1, limit = 200): Promise<NormalizedSeriesPage> {
+    const pageNumber = normalizePageNumber(page);
     const response = await this.client.fetch<StripstreamSeriesPage>(
       "series",
       {
         reading_status: "read",
         has_books: "true",
-        page: String(page),
+        page: String(pageNumber),
         limit: String(limit),
         sort: "title",
       },
-      { revalidate: CACHE_TTL_MED, tags: [RATINGS_LIST_CACHE_TAG] }
+      cacheProfile.readSeries()
     );
 
-    const totalPages = Math.ceil(response.total / limit);
-    return {
-      items: response.items.map(StripstreamAdapter.toNormalizedSeries),
-      nextCursor: response.page < totalPages ? String(response.page + 1) : null,
-      totalElements: response.total,
-      totalPages,
-    };
+    return StripstreamAdapter.toPage(response, StripstreamAdapter.toNormalizedSeries, pageNumber, limit);
   }
 
   /**
@@ -163,10 +142,7 @@ export class StripstreamProvider implements IMediaProvider {
         limit: String(limit),
         sort: "title",
       },
-      {
-        revalidate: CACHE_TTL_MED,
-        tags: [HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG],
-      }
+      cacheProfile.shelvedSeries()
     );
 
     return response.items
@@ -209,7 +185,7 @@ export class StripstreamProvider implements IMediaProvider {
       const metadata = await this.client.fetch<StripstreamSeriesMetadata>(
         `series/${seriesId}/metadata`,
         undefined,
-        { revalidate: CACHE_TTL_MED }
+        cacheProfile.series()
       );
       return {
         ...series,
@@ -229,7 +205,7 @@ export class StripstreamProvider implements IMediaProvider {
       const links = await this.client.fetch<StripstreamMetadataLink[]>(
         `metadata/links`,
         { series_id: seriesId },
-        { revalidate: CACHE_TTL_MED }
+        cacheProfile.series()
       );
 
       // 2. Find the approved link, preferring Librarian's primary link when
@@ -241,7 +217,7 @@ export class StripstreamProvider implements IMediaProvider {
       const dto = await this.client.fetch<StripstreamMissingBooksDto>(
         `metadata/missing/${approvedLink.id}`,
         undefined,
-        { revalidate: CACHE_TTL_MED }
+        cacheProfile.series()
       );
 
       return dto.missing_books.map((mb) => ({
@@ -268,43 +244,29 @@ export class StripstreamProvider implements IMediaProvider {
     }
 
     if (filter.unreadOnly) params.reading_status = "unread,reading";
-    const pageNumber = filter.cursor ? parseInt(filter.cursor) : 1;
+    const pageNumber = normalizePageNumber(filter.page);
     params.page = String(pageNumber);
 
-    const granularTags: string[] = [SERIES_BOOKS_CACHE_TAG];
-    if (params.series) granularTags.push(cacheTags.seriesBooks(params.series));
-    if (filter.libraryId) granularTags.push(cacheTags.libraryBooks(filter.libraryId));
+    const response = await this.client.fetch<StripstreamBooksPage>(
+      "books",
+      params,
+      cacheProfile.books({ seriesId: params.series, libraryId: filter.libraryId })
+    );
 
-    const response = await this.client.fetch<StripstreamBooksPage>("books", params, {
-      revalidate: CACHE_TTL_MED,
-      tags: granularTags,
-    });
-
-    const pageSize = filter.limit ?? 24;
-    const totalPages = Math.ceil(response.total / pageSize);
-    return {
-      items: response.items.map(StripstreamAdapter.toNormalizedBook),
-      nextCursor: null,
-      totalElements: response.total,
-      totalPages,
-    };
+    return StripstreamAdapter.toPage(response, StripstreamAdapter.toNormalizedBook, pageNumber, limit);
   }
 
   async getBook(bookId: string): Promise<NormalizedBook> {
     // The reader must always resume from the current provider-side position.
     // Keeping this response in Next's data cache could show a stale page after
     // a progress update on another device.
-    const book = await this.client.fetch<StripstreamBookDetails>(`books/${bookId}`, undefined, {
-      cache: "no-store",
-    });
+    const book = await this.client.fetch<StripstreamBookDetails>(`books/${bookId}`, undefined, cacheProfile.readerBook());
     return StripstreamAdapter.toNormalizedBookDetails(book);
   }
 
   async getNextBook(bookId: string): Promise<NormalizedBook | null> {
     try {
-      const book = await this.client.fetch<StripstreamBookDetails>(`books/${bookId}`, undefined, {
-        revalidate: CACHE_TTL_SHORT,
-      });
+      const book = await this.client.fetch<StripstreamBookDetails>(`books/${bookId}`, undefined, cacheProfile.nextBook());
       if (!book.series || book.volume == null) return null;
 
       // Resolve series name to series_id for the books API
@@ -321,7 +283,7 @@ export class StripstreamProvider implements IMediaProvider {
         series: seriesId,
         limit: "50",
         sort: "volume",
-      }, { revalidate: CACHE_TTL_SHORT });
+      }, cacheProfile.nextBook());
 
       const sorted = response.items
         .filter((b) => b.volume != null)
@@ -336,7 +298,7 @@ export class StripstreamProvider implements IMediaProvider {
   }
 
   async getHomeContinueReadingData(limit = 20): Promise<Pick<HomePrimaryData, "ongoingBooks" | "onDeck">> {
-    const homeOpts = { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] };
+    const homeOpts = cacheProfile.home();
     const ongoingBooks = await this.client.fetch<StripstreamBookItem[]>(
       "books/ongoing",
       { limit: String(limit) },
@@ -350,7 +312,7 @@ export class StripstreamProvider implements IMediaProvider {
   }
 
   async getHomeOngoingSeries(limit = 20): Promise<NormalizedSeries[]> {
-    const homeOpts = { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] };
+    const homeOpts = cacheProfile.home();
     const ongoingSeries = await this.client.fetch<StripstreamSeriesItem[]>(
       "series/ongoing",
       { limit: String(limit) },
@@ -361,7 +323,7 @@ export class StripstreamProvider implements IMediaProvider {
   }
 
   async getHomeLatestSeries(limit = 10): Promise<NormalizedSeries[]> {
-    const homeOpts = { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] };
+    const homeOpts = cacheProfile.home();
     const latestSeries = await this.client.fetch<StripstreamSeriesPage>(
       "series",
       { sort: "latest", limit: String(limit), has_books: "true" },
@@ -372,7 +334,7 @@ export class StripstreamProvider implements IMediaProvider {
   }
 
   async getHomeRecentlyRead(limit = 10): Promise<NormalizedBook[]> {
-    const homeOpts = { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] };
+    const homeOpts = cacheProfile.home();
     const booksPage = await this.client.fetch<StripstreamBooksPage>(
       "books",
       { sort: "latest", limit: String(limit) },
@@ -383,11 +345,10 @@ export class StripstreamProvider implements IMediaProvider {
   }
 
   async getReadingLists(): Promise<NormalizedReadingList[]> {
-    const homeOpts = { revalidate: CACHE_TTL_MED, tags: [HOME_CACHE_TAG] };
     const lists = await this.client.fetch<StripstreamReadingList[]>(
       "reading-lists",
       undefined,
-      homeOpts
+      cacheProfile.readingLists()
     );
     return lists.map(StripstreamAdapter.toNormalizedReadingList);
   }
@@ -396,7 +357,7 @@ export class StripstreamProvider implements IMediaProvider {
     const detail = await this.client.fetch<StripstreamReadingListDetail>(
       `reading-lists/${id}`,
       undefined,
-      { revalidate: CACHE_TTL_MED }
+      cacheProfile.readingListDetail()
     );
     return StripstreamAdapter.toNormalizedReadingListDetail(detail);
   }
@@ -405,7 +366,7 @@ export class StripstreamProvider implements IMediaProvider {
     const progress = await this.client.fetch<StripstreamReadingProgressResponse>(
       `books/${bookId}/progress`,
       undefined,
-      { revalidate: CACHE_TTL_SHORT }
+      cacheProfile.readProgress()
     );
     return StripstreamAdapter.toNormalizedReadProgress(progress);
   }
@@ -430,7 +391,7 @@ export class StripstreamProvider implements IMediaProvider {
       const response = await this.client.fetch<StripstreamSeriesRatingsResponse>(
         `series/${seriesId}/ratings`,
         undefined,
-        { revalidate: CACHE_TTL_SHORT, tags: [SERIES_RATING_CACHE_TAG, cacheTags.seriesRating(seriesId)] }
+        cacheProfile.seriesRating(seriesId)
       );
       return {
         userRating: response.user_rating,
@@ -511,9 +472,7 @@ export class StripstreamProvider implements IMediaProvider {
 
   async getReadingStats(): Promise<NormalizedReadingStats> {
     const [libraries, totalSeries, totalBooks, statusCounts] = await Promise.all([
-      this.client.fetch<StripstreamLibraryResponse[]>("libraries", undefined, {
-        tags: [STATS_CACHE_TAG],
-      }),
+      this.client.fetch<StripstreamLibraryResponse[]>("libraries", undefined, cacheProfile.stats()),
       this.countEntries("series"),
       this.countEntries("books"),
       this.countBooksByStatus(),
@@ -557,7 +516,7 @@ export class StripstreamProvider implements IMediaProvider {
     const response = await this.client.fetch<{ total: number }>(
       endpoint,
       { limit: "1", ...params },
-      { tags: [STATS_CACHE_TAG] }
+      cacheProfile.stats()
     );
     return response.total;
   }
@@ -569,7 +528,7 @@ export class StripstreamProvider implements IMediaProvider {
     const response = await this.client.fetch<StripstreamSearchResponse>("search", {
       q: trimmed,
       limit: String(limit),
-    }, { revalidate: CACHE_TTL_SHORT });
+    }, cacheProfile.search());
 
     // Resolve series_id for each hit via by-name lookup.
     // Piscine de concurrence bornée pour ne pas tirer N requêtes réseau d'un coup.
@@ -631,7 +590,7 @@ export class StripstreamProvider implements IMediaProvider {
       const items = await this.client.fetch<StripstreamRecommendedSeriesItem[]>(
         `series/recommendations`,
         { limit: String(limit) },
-        { revalidate: CACHE_TTL_MED, tags: [cacheTags.seriesRecommendations] }
+        cacheProfile.recommendations()
       );
       return items.map(StripstreamAdapter.toNormalizedRecommendedSeries);
     } catch {
@@ -640,18 +599,12 @@ export class StripstreamProvider implements IMediaProvider {
   }
 
   async getFavorites(): Promise<NormalizedSeries[]> {
-    const favorites = await this.client.fetch<StripstreamSeriesItem[]>("favorites", undefined, {
-      revalidate: CACHE_TTL_MED,
-      tags: [FAVORITES_CACHE_TAG],
-    });
+    const favorites = await this.client.fetch<StripstreamSeriesItem[]>("favorites", undefined, cacheProfile.favorites());
     return favorites.map(StripstreamAdapter.toNormalizedSeries);
   }
 
   async isFavorite(seriesId: string): Promise<boolean> {
-    return this.client.fetch<boolean>(`series/${seriesId}/favorite`, undefined, {
-      revalidate: CACHE_TTL_MED,
-      tags: [FAVORITES_CACHE_TAG],
-    });
+    return this.client.fetch<boolean>(`series/${seriesId}/favorite`, undefined, cacheProfile.favorites());
   }
 
   async addToFavorites(seriesId: string): Promise<void> {
@@ -663,10 +616,7 @@ export class StripstreamProvider implements IMediaProvider {
   }
 
   async isShelved(seriesId: string): Promise<boolean> {
-    return this.client.fetch<boolean>(`series/${seriesId}/shelf`, undefined, {
-      revalidate: CACHE_TTL_SHORT,
-      tags: [SERIES_SHELF_CACHE_TAG, cacheTags.seriesShelf(seriesId)],
-    });
+    return this.client.fetch<boolean>(`series/${seriesId}/shelf`, undefined, cacheProfile.seriesShelf(seriesId));
   }
 
   async shelveSeries(seriesId: string): Promise<void> {
@@ -682,7 +632,7 @@ export class StripstreamProvider implements IMediaProvider {
       const items = await this.client.fetch<StripstreamRelatedSeriesItem[]>(
         `series/${seriesId}/related`,
         { limit: String(limit) },
-        { revalidate: CACHE_TTL_MED, tags: [cacheTags.seriesRelated(seriesId)] }
+        cacheProfile.relatedSeries(seriesId)
       );
       return items.map(StripstreamAdapter.toNormalizedRelatedSeries);
     } catch {

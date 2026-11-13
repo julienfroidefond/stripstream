@@ -1,5 +1,6 @@
 import type { RatingsCapability } from "@/lib/providers/provider.interface";
 import type { NormalizedSeries } from "@/lib/providers/types";
+import { iteratePages } from "@/lib/providers/pagination";
 
 /**
  * Taille de page maximale acceptée par l'API (voir `list_all_series`).
@@ -19,24 +20,19 @@ const MAX_PAGES = 5;
  * seulement les 200 premières.
  */
 export async function getReadSeries(ratings: RatingsCapability): Promise<NormalizedSeries[]> {
-  const firstPage = await ratings.getReadSeries(1, PAGE_SIZE);
-  if (!firstPage.nextCursor) return firstPage.items;
+  const items = await iteratePages((page) => ratings.getReadSeries(page, PAGE_SIZE), {
+    max: MAX_PAGES,
+    concurrency: MAX_PAGES,
+  });
 
-  const totalPages = Math.min(firstPage.totalPages ?? 1, MAX_PAGES);
-  const remainingPages = await Promise.all(
-    Array.from({ length: Math.max(0, totalPages - 1) }, (_, index) =>
-      ratings.getReadSeries(index + 2, PAGE_SIZE)
-    )
-  );
-
+  // Une pagination par décalage peut faire glisser une série d'une page à la
+  // suivante si la liste change pendant le parcours.
   const seen = new Set<string>();
-  return [firstPage, ...remainingPages]
-    .flatMap((page) => page.items)
-    .filter((series) => {
-      if (seen.has(series.id)) return false;
-      seen.add(series.id);
-      return true;
-    });
+  return items.filter((series) => {
+    if (seen.has(series.id)) return false;
+    seen.add(series.id);
+    return true;
+  });
 }
 
 export type ReadSeriesFilter = "all" | "unrated" | "rated";

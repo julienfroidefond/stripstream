@@ -11,6 +11,7 @@ import type {
   StripstreamRecommendedSeriesItem,
 } from "@/types/stripstream";
 import { BOOK_PAGE_TOKEN } from "../book-media";
+import { pageCount, type Page } from "../pagination";
 import type {
   NormalizedBook,
   NormalizedBookMedia,
@@ -25,6 +26,24 @@ const SENTINEL_BOOK_ID = "00000000-0000-0000-0000-000000000000";
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export class StripstreamAdapter {
+  /**
+   * Traduit une page Librarian (`{ items, total, page, limit }`, déjà 1-based)
+   * vers le contrat commun. `totalPages` se déduit de la taille demandée.
+   */
+  static toPage<Raw, T>(
+    response: { items: Raw[]; total: number },
+    toItem: (raw: Raw) => T,
+    page: number,
+    limit: number
+  ): Page<T> {
+    return {
+      items: response.items.map(toItem),
+      page,
+      totalPages: pageCount(response.total, limit),
+      totalElements: response.total,
+    };
+  }
+
   private static bookThumbnail(bookId: string): string {
     return `/api/stripstream/images/books/${bookId}/thumbnail`;
   }

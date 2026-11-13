@@ -20,63 +20,42 @@ function makeBook(id: string): NormalizedBook {
   };
 }
 
-function makePage(
-  ids: string[],
-  extra: Partial<NormalizedBooksPage> = {}
-): NormalizedBooksPage {
-  return { items: ids.map(makeBook), nextCursor: null, ...extra };
-}
-
-/** Provider factice qui rejoue une séquence de pages en enregistrant les filtres reçus. */
-function stubProvider(pages: NormalizedBooksPage[]): {
+/**
+ * Provider factice qui sert des pages par numéro (1-based), comme le contrat,
+ * en enregistrant les filtres reçus.
+ */
+function stubProvider(pages: string[][], totalPages = pages.length): {
   provider: Pick<IMediaProvider, "getBooks">;
   calls: BookListFilter[];
 } {
   const calls: BookListFilter[] = [];
-  let index = 0;
+  const totalElements = pages.reduce((sum, ids) => sum + ids.length, 0);
   const getBooks = async (filter: BookListFilter): Promise<NormalizedBooksPage> => {
     calls.push(filter);
-    const page = pages[Math.min(index, pages.length - 1)];
-    index += 1;
-    return page;
+    const page = filter.page ?? 1;
+    return {
+      items: (pages[page - 1] ?? []).map(makeBook),
+      page,
+      totalPages,
+      totalElements,
+    };
   };
   return { provider: { getBooks }, calls };
 }
 
 describe("getAllSeriesBooks", () => {
-  it("follows nextCursor across pages (Komga)", async () => {
-    const { provider, calls } = stubProvider([
-      makePage(["1", "2"], { nextCursor: "2" }),
-      makePage(["3"], { nextCursor: null }),
-    ]);
+  it("requests each page number once, in order", async () => {
+    const { provider, calls } = stubProvider([["1", "2"], ["3", "4"], ["5"]]);
 
     const books = await getAllSeriesBooks(provider, "series-1");
 
-    expect(books.map((b) => b.id)).toEqual(["1", "2", "3"]);
-    expect(calls).toHaveLength(2);
-    expect(calls[0]).toMatchObject({ seriesId: "series-1", cursor: "1", unreadOnly: false });
-    expect(calls[1]).toMatchObject({ cursor: "2" });
-  });
-
-  it("paginates with totalPages when nextCursor is null (Stripstream)", async () => {
-    const { provider, calls } = stubProvider([
-      makePage(["1"], { totalPages: 3 }),
-      makePage(["2"], { totalPages: 3 }),
-      makePage(["3"], { totalPages: 3 }),
-    ]);
-
-    const books = await getAllSeriesBooks(provider, "series-1");
-
-    expect(books.map((b) => b.id)).toEqual(["1", "2", "3"]);
-    expect(calls).toHaveLength(3);
-    expect(calls.map((c) => c.cursor)).toEqual(["1", "2", "3"]);
+    expect(books.map((b) => b.id)).toEqual(["1", "2", "3", "4", "5"]);
+    expect(calls.map((c) => c.page)).toEqual([1, 2, 3]);
+    expect(calls[0]).toMatchObject({ seriesId: "series-1", limit: 100, unreadOnly: false });
   });
 
   it("stops on the first empty page even when more pages are announced", async () => {
-    const { provider, calls } = stubProvider([
-      makePage(["1"], { totalPages: 5 }),
-      makePage([], { totalPages: 5 }),
-    ]);
+    const { provider, calls } = stubProvider([["1"], []], 5);
 
     const books = await getAllSeriesBooks(provider, "series-1");
 
@@ -85,13 +64,14 @@ describe("getAllSeriesBooks", () => {
   });
 
   it("returns an empty array when the series has no books", async () => {
-    const { provider } = stubProvider([makePage([])]);
+    const { provider, calls } = stubProvider([[]], 1);
 
     await expect(getAllSeriesBooks(provider, "series-1")).resolves.toEqual([]);
+    expect(calls).toHaveLength(1);
   });
 
   it("requests unreadOnly: false so read books are included", async () => {
-    const { provider, calls } = stubProvider([makePage(["1"], { totalPages: 1 })]);
+    const { provider, calls } = stubProvider([["1"]]);
 
     await getAllSeriesBooks(provider, "series-1");
 
