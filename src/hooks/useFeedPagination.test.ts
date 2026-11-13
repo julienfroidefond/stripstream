@@ -118,4 +118,42 @@ describe("useFeedPagination", () => {
     expect(result.current.items).toEqual(["a", "b"]);
     expect(result.current.hasMore).toBe(true);
   });
+
+  it("replaces the state when the server delivers a new first page", async () => {
+    const loadPage = vi.fn(async () => ok(["c", "d"], true));
+    const { result, rerender } = renderHook(
+      ({ initialItems }: { initialItems: string[] }) =>
+        useFeedPagination({ initialItems, initialHasMore: true, pageSize: 2, loadPage }),
+      { initialProps: { initialItems: ["a", "b"] } }
+    );
+
+    act(() => result.current.loadMore());
+    await waitFor(() => expect(result.current.items).toEqual(["a", "b", "c", "d"]));
+
+    // router.refresh() : nouvelle première page.
+    rerender({ initialItems: ["x", "y", "z"] });
+
+    expect(result.current.items).toEqual(["x", "y"]);
+    expect(result.current.hasMore).toBe(true);
+  });
+
+  it("drops a page that was in flight when the first page was replaced", async () => {
+    let resolveLoad: (value: ReturnType<typeof ok<string>>) => void = () => undefined;
+    const loadPage = vi.fn(
+      () => new Promise<ReturnType<typeof ok<string>>>((resolve) => (resolveLoad = resolve))
+    );
+    const { result, rerender } = renderHook(
+      ({ initialItems }: { initialItems: string[] }) =>
+        useFeedPagination({ initialItems, initialHasMore: true, pageSize: 2, loadPage }),
+      { initialProps: { initialItems: ["a", "b"] } }
+    );
+
+    act(() => result.current.loadMore());
+    rerender({ initialItems: ["x", "y"] });
+    await act(async () => resolveLoad(ok(["c", "d"], false)));
+    await waitFor(() => expect(result.current.isPending).toBe(false));
+
+    expect(result.current.items).toEqual(["x", "y"]);
+    expect(result.current.hasMore).toBe(true);
+  });
 });
