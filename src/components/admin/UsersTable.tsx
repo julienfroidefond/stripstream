@@ -38,7 +38,7 @@ export function UsersTable({ users, onUserUpdated }: UsersTableProps) {
             <TableRow>
               <TableHead>{t("admin.table.email")}</TableHead>
               <TableHead>{t("admin.table.roles")}</TableHead>
-              <TableHead>{t("admin.table.komga")}</TableHead>
+              <TableHead>{t("admin.table.connections")}</TableHead>
               <TableHead>{t("admin.table.preferences")}</TableHead>
               <TableHead>{t("admin.table.favorites")}</TableHead>
               <TableHead>{t("admin.table.createdAt")}</TableHead>
@@ -66,7 +66,7 @@ export function UsersTable({ users, onUserUpdated }: UsersTableProps) {
                     </div>
                   </TableCell>
                   <TableCell>
-                    {user.hasKomgaConfig ? (
+                    {user.hasConnection ? (
                       <StatusBadge status="success" icon={Check}>
                         {t("admin.table.configured")}
                       </StatusBadge>

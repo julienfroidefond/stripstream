@@ -29,6 +29,7 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   [ERROR_CODES.AUTH.UNAUTHENTICATED]: "User not authenticated",
   [ERROR_CODES.AUTH.INVALID_CREDENTIALS]: "Invalid credentials",
   [ERROR_CODES.AUTH.RATE_LIMITED]: "Too many attempts. Please try again later.",
+  [ERROR_CODES.AUTH.REGISTRATION_DISABLED]: "Registration is disabled on this instance",
   [ERROR_CODES.AUTH.PASSWORD_NOT_STRONG]: "Password is not strong enough",
   [ERROR_CODES.AUTH.PASSWORD_TOO_SHORT]: "Password must be at least 8 characters",
   [ERROR_CODES.AUTH.PASSWORD_MISMATCH]: "Passwords do not match",
@@ -130,6 +131,12 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   [ERROR_CODES.ADMIN.RESET_PASSWORD_ERROR]: "Error resetting password",
   [ERROR_CODES.ADMIN.CANNOT_RESET_OWN_PASSWORD]: "You cannot reset your own password here",
   [ERROR_CODES.ADMIN.INVALID_ROLES]: "Roles must be a non-empty list of known roles",
+  [ERROR_CODES.ADMIN.CANNOT_REMOVE_OWN_ADMIN]: "You cannot remove your own administrator role",
+  [ERROR_CODES.ADMIN.LAST_ADMIN]: "The last administrator cannot be demoted",
+
+  // Refresh
+  [ERROR_CODES.REFRESH.INVALID_TARGET]: "Invalid refresh scope or identifier",
+  [ERROR_CODES.REFRESH.ERROR]: "Error refreshing the page data",
 
   // Config
   [ERROR_CODES.CONFIG.INVALID_URL]:

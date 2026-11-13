@@ -151,11 +151,15 @@ services:
       # Required
       - NEXTAUTH_SECRET=your_secret_here        # openssl rand -base64 32
       - NEXTAUTH_URL=http://localhost:3000
+      - CREDENTIALS_ENCRYPTION_KEY=your_key     # openssl rand -base64 32
+      # First boot only: creates the admin account (no default password;
+      # without it the admin is not created). Remove it afterwards.
+      - ADMIN_DEFAULT_PASSWORD=choose_a_strong_password
 
       # Optional — defaults shown
       # - NODE_ENV=production
       # - DATABASE_URL=file:/app/prisma/data/stripstream.db
-      # - ADMIN_DEFAULT_PASSWORD=Admin@2025
+      # - REGISTRATION_ENABLED=false             # "true" opens self-service sign-up
       # - AUTH_TRUST_HOST=true
       # - KOMGA_MAX_CONCURRENT_REQUESTS=5
     volumes:

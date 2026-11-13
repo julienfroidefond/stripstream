@@ -1,6 +1,6 @@
 import type { PrismaClient } from "@/generated/prisma/client";
 import logger from "@/lib/logger";
-import type { FixedWindow } from "./fixed-window";
+import { activeWindow, type FixedWindow } from "./fixed-window";
 import type { RateLimitStore } from "./store";
 
 /** Fréquence du balayage des fenêtres périmées (une heure). */
@@ -81,6 +81,19 @@ export function createPrismaRateLimitStore(
       await prune(now);
 
       return { count: Number(row.count), windowStart: Number(row.windowStart) };
+    },
+
+    async peek(key: string, now: number, windowMs: number): Promise<FixedWindow | null> {
+      const rows = await prisma.$queryRaw<RateLimitRow[]>`
+        SELECT "count", "windowStart" FROM "rate_limit_buckets" WHERE "key" = ${key}
+      `;
+      const row = rows[0];
+      if (!row) return null;
+      return activeWindow(
+        { count: Number(row.count), windowStart: Number(row.windowStart) },
+        now,
+        windowMs
+      );
     },
   };
 }

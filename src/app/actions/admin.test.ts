@@ -66,6 +66,18 @@ describe("admin actions", () => {
     expect(AdminService.updateUserRoles).not.toHaveBeenCalled();
   });
 
+  it("hands the acting admin id to the role update", async () => {
+    vi.mocked(requireAdmin).mockResolvedValue({
+      id: "7",
+      email: "admin@example.com",
+      roles: ["ROLE_ADMIN"],
+      authenticated: true,
+    });
+
+    await expect(updateUserRoles("12", ["ROLE_USER"])).resolves.toMatchObject({ success: true });
+    expect(AdminService.updateUserRoles).toHaveBeenCalledWith(7, "12", ["ROLE_USER"]);
+  });
+
   it("rejects a weak reset password and rate-limits resets per admin", async () => {
     await expect(resetUserPassword("12", "weak")).resolves.toMatchObject({
       code: ERROR_CODES.AUTH.PASSWORD_NOT_STRONG,

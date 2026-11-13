@@ -3,6 +3,7 @@ import { ERROR_CODES } from "@/constants/errorCodes";
 import type { ProviderType } from "@/lib/providers/types";
 import { AppError } from "@/utils/errors";
 import { normalizeServerUrl } from "@/utils/server-url";
+import { assertServerUrlResolvesSafely } from "@/utils/server-url-dns";
 import { getActiveConnection, setActiveConnection } from "./active";
 import { validateConnectionInput } from "./descriptors";
 import { definitionFor, getProviderDefinition, providerDefinitions } from "./registry";
@@ -42,9 +43,9 @@ export async function listConnections(userId: number): Promise<ConnectionLists> 
  * - Avec `id` : mise à jour. Un secret vide conserve la valeur existante.
  *
  * La saisie est validée et normalisée par le descripteur du provider
- * (`CONFIG_INVALID_INPUT`), puis l'URL par `normalizeServerUrl`
- * (`CONFIG_INVALID_URL`). Retourne `null` si la config
- * à mettre à jour n'appartient pas au user.
+ * (`CONFIG_INVALID_INPUT`), puis l'URL par `normalizeServerUrl` et son
+ * adresse résolue par `assertServerUrlResolvesSafely` (`CONFIG_INVALID_URL`).
+ * Retourne `null` si la config à mettre à jour n'appartient pas au user.
  */
 export async function saveConnection(
   input: ConnectionInput,
@@ -53,6 +54,7 @@ export async function saveConnection(
   const validation = validateConnectionInput(input);
   if (!validation.ok) throw new AppError(validation.code);
   const normalized = { ...validation.value, url: normalizeServerUrl(validation.value.url) };
+  await assertServerUrlResolvesSafely(normalized.url);
   const definition = definitionFor(normalized);
 
   if (normalized.id) {

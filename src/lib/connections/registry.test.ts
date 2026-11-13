@@ -117,17 +117,9 @@ describe("provider registry", () => {
     });
   });
 
-  it("only Stripstream declares an environment fallback", () => {
-    vi.stubEnv("STRIPSTREAM_URL", "http://env");
-    vi.stubEnv("STRIPSTREAM_TOKEN", "env-token");
-
-    expect(getProviderDefinition("komga").environmentConnection()).toBeNull();
-    expect(getProviderDefinition("stripstream").environmentConnection()).toEqual({
-      provider: "stripstream",
-      configId: null,
-      url: "http://env",
-      token: "env-token",
-      source: "env",
-    });
+  it("no definition declares an environment fallback (ADR 0032)", () => {
+    for (const provider of ["komga", "stripstream"] as const) {
+      expect("environmentConnection" in getProviderDefinition(provider)).toBe(false);
+    }
   });
 });

@@ -35,5 +35,6 @@ Decisions that shaped the current architecture and would be expensive or surpris
 | [0029](./0029-services-receive-the-caller-identity.md) | Services receive the caller's identity instead of reading the session. |
 | [0030](./0030-provider-registry-for-connections.md) | A provider registry owns what differs between connection types. |
 | [0031](./0031-dense-collections-prefetch-on-intent.md) | Dense collections prefetch on intent, never on viewport entry. |
+| [0032](./0032-closed-by-default-auth-and-per-user-connections.md) | Accounts are closed by default, connections are per user, sessions are revalidated. |
 
 New records use the next number and the same shape: a short title, one paragraph of context/decision/why, and optional `Considered options` / `Consequences` sections.

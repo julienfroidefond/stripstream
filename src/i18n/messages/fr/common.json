@@ -15,6 +15,8 @@
     "eyebrow": "Accès à la bibliothèque",
     "title": "Bienvenue sur StripStream",
     "subtitle": "Connectez-vous ou créez un compte pour commencer",
+    "subtitleSignInOnly": "Connectez-vous pour commencer",
+    "registrationClosed": "Les inscriptions sont fermées sur cette instance. Demandez un compte à l’administrateur.",
     "tabs": {
       "login": "Connexion",
       "register": "Inscription"
@@ -710,6 +712,7 @@
     "AUTH_FETCH_ERROR": "Impossible de contacter le serveur",
     "AUTH_FORBIDDEN": "Accès refusé",
     "AUTH_RATE_LIMITED": "Trop de tentatives. Réessaie plus tard.",
+    "AUTH_REGISTRATION_DISABLED": "Les inscriptions sont fermées sur cette instance. Demande un compte à l’administrateur.",
     "ADMIN_FETCH_USERS_ERROR": "Erreur lors de la récupération des utilisateurs",
     "ADMIN_UPDATE_USER_ERROR": "Erreur lors de la mise à jour de l'utilisateur",
     "ADMIN_DELETE_USER_ERROR": "Erreur lors de la suppression de l'utilisateur",
@@ -718,6 +721,10 @@
     "ADMIN_RESET_PASSWORD_ERROR": "Erreur lors de la réinitialisation du mot de passe",
     "ADMIN_CANNOT_RESET_OWN_PASSWORD": "Impossible de réinitialiser ton propre mot de passe ici",
     "ADMIN_INVALID_ROLES": "Choisis au moins un rôle valide",
+    "ADMIN_CANNOT_REMOVE_OWN_ADMIN": "Impossible de retirer ton propre rôle administrateur",
+    "ADMIN_LAST_ADMIN": "Le dernier administrateur ne peut pas être rétrogradé",
+    "REFRESH_INVALID_TARGET": "Impossible de rafraîchir cette page",
+    "REFRESH_ERROR": "Erreur lors du rafraîchissement",
     "KOMGA_MISSING_CONFIG": "Configuration Komga manquante",
     "KOMGA_MISSING_CREDENTIALS": "Identifiants Komga manquants",
     "KOMGA_CONNECTION_ERROR": "Erreur de connexion au serveur Komga",
@@ -947,15 +954,15 @@
       "totalUsersDescription": "Comptes enregistrés",
       "admins": "Administrateurs",
       "adminsDescription": "Avec privilèges admin",
-      "komga": "Config Komga",
-      "komgaDescription": "Utilisateurs configurés",
+      "connections": "Connexions",
+      "connectionsDescription": "Utilisateurs avec au moins une connexion",
       "preferences": "Préférences",
       "preferencesDescription": "Préférences personnalisées"
     },
     "table": {
       "email": "Email",
       "roles": "Rôles",
-      "komga": "Config Komga",
+      "connections": "Connexion",
       "preferences": "Préférences",
       "favorites": "Favoris",
       "createdAt": "Créé le",
@@ -976,7 +983,7 @@
   },
   "account": {
     "changePassword": {
-      "success": "Votre mot de passe a été modifié avec succès",
+      "success": "Mot de passe modifié. Toutes vos sessions ont été fermées : reconnectez-vous avec le nouveau mot de passe.",
       "title": "Changer le mot de passe",
       "description": "Assurez-vous d'utiliser un mot de passe fort (8 caractères minimum, une majuscule et un chiffre)",
       "current": "Mot de passe actuel",

@@ -56,3 +56,37 @@ export function toRateLimitResult(
     resetMs: Math.max(0, options.windowMs - (now - window.windowStart)),
   };
 }
+
+/**
+ * Fenêtre encore ouverte pour une clé, sans la consommer : `null` si la clé
+ * n'a jamais été vue ou si sa fenêtre est échue (`advanceWindow` en rouvrirait
+ * une). Sert aux budgets qui ne comptent que certains appels (les échecs de
+ * mot de passe) mais doivent bloquer avant de les traiter.
+ */
+export function activeWindow(
+  current: FixedWindow | null,
+  now: number,
+  windowMs: number
+): FixedWindow | null {
+  if (!current || now - current.windowStart >= windowMs) return null;
+  return current;
+}
+
+/**
+ * Décision qu'aurait le prochain appel, sans le compter : autorisé tant que
+ * le compteur reste sous `limit` (le prochain hit le porterait à `count + 1`).
+ */
+export function toPeekResult(
+  window: FixedWindow | null,
+  now: number,
+  options: RateLimitOptions
+): RateLimitResult {
+  if (!window) {
+    return { allowed: true, remaining: options.limit, resetMs: 0 };
+  }
+  return {
+    allowed: window.count < options.limit,
+    remaining: Math.max(0, options.limit - window.count),
+    resetMs: Math.max(0, options.windowMs - (now - window.windowStart)),
+  };
+}

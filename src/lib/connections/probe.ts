@@ -1,6 +1,7 @@
 import { checkRateLimit } from "@/lib/rate-limit";
 import { createProvider } from "@/lib/providers/provider.factory";
 import type { ProviderType } from "@/lib/providers/types";
+import { assertServerUrlResolvesSafely } from "@/utils/server-url-dns";
 import { getStoredConnection } from "./resolve";
 import type {
   ConnectionTestRateLimit,
@@ -41,10 +42,12 @@ export async function checkConnectionTestRateLimit(
  * Teste une connexion résolue via la factory : le probe ne reconstruit jamais
  * un provider à la main et ne refait pas un fetch Basic/Bearer parallèle. La
  * sonde elle-même est `IMediaProvider.testConnection`, propre à chaque provider.
+ * L'adresse résolue de l'URL est vérifiée avant tout appel (`CONFIG_INVALID_URL`).
  */
 export async function testConnection(
   connection: ResolvedConnection
 ): Promise<ConnectionTestResult> {
+  await assertServerUrlResolvesSafely(connection.url);
   const provider = await createProvider(connection);
   return provider.testConnection();
 }

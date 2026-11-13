@@ -1,12 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { createProviderMock, getStoredConnectionMock } = vi.hoisted(() => ({
-  createProviderMock: vi.fn(),
-  getStoredConnectionMock: vi.fn(),
-}));
+const { createProviderMock, getStoredConnectionMock, assertResolvesSafelyMock } = vi.hoisted(
+  () => ({
+    createProviderMock: vi.fn(),
+    getStoredConnectionMock: vi.fn(),
+    assertResolvesSafelyMock: vi.fn(),
+  })
+);
 
 vi.mock("@/lib/providers/provider.factory", () => ({
   createProvider: createProviderMock,
+}));
+
+vi.mock("@/utils/server-url-dns", () => ({
+  assertServerUrlResolvesSafely: assertResolvesSafelyMock,
 }));
 
 vi.mock("./resolve", () => ({
@@ -68,6 +75,18 @@ describe("checkConnectionTestRateLimit", () => {
 });
 
 describe("testConnection", () => {
+  it("refuses a URL resolving to a forbidden address before building a provider", async () => {
+    const { AppError } = await import("@/utils/errors");
+    const { ERROR_CODES } = await import("@/constants/errorCodes");
+    assertResolvesSafelyMock.mockRejectedValueOnce(new AppError(ERROR_CODES.CONFIG.INVALID_URL));
+
+    await expect(testConnection(KOMGA_CONNECTION)).rejects.toMatchObject({
+      code: ERROR_CODES.CONFIG.INVALID_URL,
+    });
+    expect(assertResolvesSafelyMock).toHaveBeenCalledWith("http://komga.local");
+    expect(createProviderMock).not.toHaveBeenCalled();
+  });
+
   it("delegates to the provider built by the factory", async () => {
     const testConnectionMock = vi.fn().mockResolvedValue({
       ok: true,

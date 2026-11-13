@@ -1,20 +1,28 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { userFindUnique, userUpdate, favoriteCount, preferencesFindUnique, komgaFindFirst } =
-  vi.hoisted(() => ({
-    userFindUnique: vi.fn(),
-    userUpdate: vi.fn(),
-    favoriteCount: vi.fn(),
-    preferencesFindUnique: vi.fn(),
-    komgaFindFirst: vi.fn(),
-  }));
+const {
+  userFindUnique,
+  userUpdate,
+  favoriteCount,
+  preferencesFindUnique,
+  komgaCount,
+  stripstreamCount,
+} = vi.hoisted(() => ({
+  userFindUnique: vi.fn(),
+  userUpdate: vi.fn(),
+  favoriteCount: vi.fn(),
+  preferencesFindUnique: vi.fn(),
+  komgaCount: vi.fn(),
+  stripstreamCount: vi.fn(),
+}));
 
 vi.mock("@/lib/prisma", () => ({
   default: {
     user: { findUnique: userFindUnique, update: userUpdate },
     favorite: { count: favoriteCount },
     preferences: { findUnique: preferencesFindUnique },
-    komgaConfig: { findFirst: komgaFindFirst },
+    komgaConfig: { count: komgaCount },
+    stripstreamConfig: { count: stripstreamCount },
   },
 }));
 
@@ -63,16 +71,27 @@ describe("UserService — injected identity", () => {
   it("scopes the stats to the userId it receives", async () => {
     favoriteCount.mockResolvedValue(3);
     preferencesFindUnique.mockResolvedValue({ id: 1 });
-    komgaFindFirst.mockResolvedValue(null);
+    komgaCount.mockResolvedValue(0);
+    stripstreamCount.mockResolvedValue(0);
 
     await expect(UserService.getUserStats(7)).resolves.toEqual({
       favoritesCount: 3,
       hasPreferences: true,
-      hasKomgaConfig: false,
+      hasConnection: false,
     });
     expect(favoriteCount).toHaveBeenCalledWith({ where: { userId: 7 } });
     expect(preferencesFindUnique).toHaveBeenCalledWith({ where: { userId: 7 } });
-    expect(komgaFindFirst).toHaveBeenCalledWith({ where: { userId: 7 } });
+    expect(komgaCount).toHaveBeenCalledWith({ where: { userId: 7 } });
+    expect(stripstreamCount).toHaveBeenCalledWith({ where: { userId: 7 } });
+  });
+
+  it("counts a Stripstream-only user as connected", async () => {
+    favoriteCount.mockResolvedValue(0);
+    preferencesFindUnique.mockResolvedValue(null);
+    komgaCount.mockResolvedValue(0);
+    stripstreamCount.mockResolvedValue(1);
+
+    await expect(UserService.getUserStats(7)).resolves.toMatchObject({ hasConnection: true });
   });
 
   it("changes the password of the userId it receives", async () => {
@@ -82,7 +101,7 @@ describe("UserService — injected identity", () => {
 
     expect(userUpdate).toHaveBeenCalledWith({
       where: { id: 7 },
-      data: { password: "hash:NewPassw0rd!" },
+      data: { password: "hash:NewPassw0rd!", sessionVersion: { increment: 1 } },
     });
   });
 

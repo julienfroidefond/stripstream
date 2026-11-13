@@ -60,6 +60,14 @@ function deferred<T>(): Deferred<T> {
   return { promise, resolve };
 }
 
+interface RefreshActionResult {
+  success: boolean;
+  code: string;
+  message: string;
+}
+
+const OK: RefreshActionResult = { success: true, code: "OK", message: "" };
+
 function Wrapper({ children }: { children: ReactNode }) {
   return createElement(
     RefreshSurfaceForTest,
@@ -86,7 +94,7 @@ describe("RefreshSurface", () => {
   });
 
   it("invalide la surface puis ne rafraîchit qu'une fois", async () => {
-    const invalidation = deferred<void>();
+    const invalidation = deferred<RefreshActionResult>();
     mocks.revalidateForRefresh.mockReturnValueOnce(invalidation.promise);
     const { result } = renderSurface();
 
@@ -100,7 +108,7 @@ describe("RefreshSurface", () => {
     expect(mocks.refresh).not.toHaveBeenCalled();
 
     await act(async () => {
-      invalidation.resolve();
+      invalidation.resolve(OK);
       await Promise.resolve();
     });
 
@@ -136,8 +144,30 @@ describe("RefreshSurface", () => {
     );
   });
 
+  it("échoue sans router.refresh quand l'action refuse l'invalidation", async () => {
+    mocks.revalidateForRefresh.mockResolvedValueOnce({
+      success: false,
+      code: "AUTH_RATE_LIMITED",
+      message: "",
+    });
+    const { result } = renderSurface();
+
+    let settled: RefreshResult | undefined;
+    await act(async () => {
+      settled = await result.current.refresh();
+    });
+
+    expect(settled).toEqual({ success: false });
+    expect(mocks.refresh).not.toHaveBeenCalled();
+    expect(result.current.isRefreshing).toBe(false);
+    expect(mocks.loggerError).toHaveBeenCalledWith(
+      expect.objectContaining({ code: "AUTH_RATE_LIMITED", scope: "series", id: "series-1" }),
+      "Refresh failed"
+    );
+  });
+
   it("partage le cycle en cours au lieu d'en démarrer un second", async () => {
-    const invalidation = deferred<void>();
+    const invalidation = deferred<RefreshActionResult>();
     mocks.revalidateForRefresh.mockReturnValueOnce(invalidation.promise);
     const { result } = renderSurface();
 
@@ -152,7 +182,7 @@ describe("RefreshSurface", () => {
     expect(mocks.revalidateForRefresh).toHaveBeenCalledTimes(1);
 
     await act(async () => {
-      invalidation.resolve();
+      invalidation.resolve(OK);
       await Promise.resolve();
     });
     await act(async () => {

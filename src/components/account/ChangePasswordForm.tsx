@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Lock } from "lucide-react";
+import { signOut } from "next-auth/react";
 import { changePassword } from "@/app/actions/password";
 import { useTranslate } from "@/hooks/useTranslate";
 import { ERROR_CODES } from "@/constants/errorCodes";
@@ -62,6 +63,9 @@ export function ChangePasswordForm({ username }: ChangePasswordFormProps) {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
+
+      // Le changement a fermé toutes les sessions, celle-ci comprise (ADR 0032).
+      await signOut({ callbackUrl: "/login" });
     } catch {
       showError(ERROR_CODES.AUTH.PASSWORD_CHANGE_ERROR);
     } finally {

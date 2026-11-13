@@ -4,8 +4,10 @@ import { getAuthSession } from "@/lib/middleware-auth";
 // Routes qui ne nécessitent pas d'authentification
 const publicRoutes = ["/login", "/register", "/images"];
 
-// Routes d'API qui ne nécessitent pas d'authentification
-const publicApiRoutes = ["/api/auth/register"];
+// Routes d'API qui ne nécessitent pas d'authentification. Chemins exacts :
+// `/api/health` est la sonde du conteneur, `/api/healthz` ou
+// `/api/health/x` restent protégés.
+const publicApiRoutes = ["/api/auth/register", "/api/health"];
 
 // Langues supportées
 const locales = ["fr", "en"];
@@ -46,7 +48,6 @@ export default async function proxy(request: NextRequest) {
     publicRoutes.includes(pathname) ||
     publicApiRoutes.includes(pathname) ||
     pathname.startsWith("/api/auth/") ||
-    pathname.startsWith("/api/health") ||
     pathname.startsWith("/images/") ||
     pathname.startsWith("/_next/") ||
     pathname.startsWith("/fonts/") ||
@@ -102,7 +103,9 @@ export const config = {
      * 3. /fonts/* (inside public directory)
      * 4. /images/* (inside public directory)
      * 5. Static files (manifest.json, favicon.ico, etc.)
+     * `/api/health` passe par le proxy : l'exemption d'authentification est
+     * faite sur le chemin exact (`publicApiRoutes`), pas sur un préfixe.
      */
-    "/((?!api/auth|api/health|_next/static|_next/image|fonts|images|manifest.json|favicon|sitemap.xml).*)",
+    "/((?!api/auth|_next/static|_next/image|fonts|images|manifest.json|favicon|sitemap.xml).*)",
   ],
 };

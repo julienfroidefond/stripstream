@@ -6,11 +6,7 @@ Done work is not repeated here — the ADR index is the history of every decisio
 
 ## Backlog
 
-Opened by the architecture audit of 2026-11-13 (state of `main` at `a2e9fd1`). Chantiers A–J are delivered (see below); what remains are the residual items found while delivering them.
-
-| # | Chantier | Evidence | ADR |
-| --- | --- | --- | --- |
-| K | **Registration is throttled per client, not only per email.** `AuthServerService.registerUser` keeps a per-email budget, so rotating addresses is not slowed and nothing is limited per IP. | `auth-server.service.ts`, ADR 0023 | — |
+Opened by the architecture audit of 2026-11-13 (state of `main` at `a2e9fd1`). Chantiers A–K are delivered (see below); the backlog is empty.
 
 ## Picking the next one
 
@@ -20,6 +16,8 @@ Order by the number of call sites a wrong change would silently break, not by fi
 
 | PR | Change | ADR |
 | --- | --- | --- |
+| — | K: sign-in and sign-up are throttled per client IP (first `X-Forwarded-For` element, behind the proxy); the per-email sign-in budget only counts failed passwords and is checked without being consumed. | [0032](./adr/0032-closed-by-default-auth-and-per-user-connections.md) |
+| — | Sign-up closed by default, no environment connection, sessions revalidated against the database. | [0032](./adr/0032-closed-by-default-auth-and-per-user-connections.md) |
 | #173 | Admin and account screens read every label from `admin.*` / `account.*` in both locales; dates follow the active language. | — |
 | #172 | Komga's next book is cached like Stripstream's; reading stats declare a TTL. | [0028 amendment](./adr/0028-one-cache-profile-producer.md) |
 | #172 | Media transports receive the caller identity from the route. | [0029 amendment](./adr/0029-services-receive-the-caller-identity.md) |

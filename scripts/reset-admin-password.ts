@@ -24,7 +24,8 @@ const DEFAULT_ADMIN_EMAIL = "julienfroidefond@gmail.com";
 // Récupérer les arguments de la ligne de commande
 const args = process.argv.slice(2);
 let adminEmail = DEFAULT_ADMIN_EMAIL;
-let adminPassword = process.env.ADMIN_DEFAULT_PASSWORD || "Admin@2025";
+// Pas de mot de passe par défaut : argument explicite, sinon ADMIN_DEFAULT_PASSWORD.
+let adminPassword = process.env.ADMIN_DEFAULT_PASSWORD ?? "";
 
 if (args.length === 1) {
   // Un seul argument = nouveau mot de passe pour l'email par défaut
@@ -36,6 +37,13 @@ if (args.length === 1) {
 } else if (args.length > 2) {
   console.error("❌ Usage: pnpm reset-admin-password [email] [nouveau-mot-de-passe]");
   console.error("   Si l'email est omis, utilise l'email par défaut");
+  process.exit(1);
+}
+
+if (adminPassword.length < 8) {
+  console.error(
+    "❌ Provide a new password of at least 8 characters (argument or ADMIN_DEFAULT_PASSWORD)."
+  );
   process.exit(1);
 }
 
@@ -60,7 +68,8 @@ async function resetAdminPassword() {
     // Mettre à jour le mot de passe
     await prisma.user.update({
       where: { email: adminEmail },
-      data: { password: hashedPassword },
+      // Incrémenter la version de session invalide les sessions ouvertes (ADR 0032).
+      data: { password: hashedPassword, sessionVersion: { increment: 1 } },
     });
 
     console.log(`✅ Password reset successfully for ${adminEmail}`);

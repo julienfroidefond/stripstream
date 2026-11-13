@@ -142,6 +142,9 @@ export class ProviderTransport {
       ...requestInit,
       headers,
       next: nextOptions,
+      // Jamais de redirection suivie : l'URL validée (`normalizeServerUrl` +
+      // IP résolue) est la seule cible, un 3xx devient une erreur HTTP.
+      redirect: "manual",
     };
 
     // Next.js ne cache pas les fetch POST — on enveloppe la requête dans
@@ -195,6 +198,9 @@ export class ProviderTransport {
         headers,
         cache: options.cache,
         signal: controller.signal,
+        // Comme `request()` : un 3xx (hors 304 autorisé) est une erreur, pas un
+        // saut vers un hôte que la validation de l'URL n'a jamais vu.
+        redirect: "manual",
       });
 
       if (isDebug) {
