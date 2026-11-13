@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import { isActivableTarget, isEditableTarget } from "@/lib/keyboard-targets";
 import {
+  isOverlayTarget,
   resolveReaderShortcut,
   type ReaderKeyEvent,
   type ReaderShortcutAction,
@@ -131,6 +132,37 @@ describe("resolveReaderShortcut", () => {
       // Les flèches et les lettres restent des raccourcis du lecteur.
       expect(press("ArrowRight", { target: label })).toBe("next-page");
       expect(press("d", { target: label })).toBe("toggle-double-page");
+    });
+
+    it("leaves every key to an open menu (reader background)", () => {
+      const wrapper = document.createElement("div");
+      wrapper.setAttribute("data-radix-popper-content-wrapper", "");
+      const menu = document.createElement("div");
+      menu.setAttribute("role", "menu");
+      const item = document.createElement("div");
+      item.setAttribute("role", "menuitemradio");
+      menu.append(item);
+      wrapper.append(menu);
+      document.body.append(wrapper);
+
+      expect(isOverlayTarget(item)).toBe(true);
+      for (const key of ["Escape", "Home", "End", "d", "r", "t", "ArrowRight", "ArrowDown", " "]) {
+        expect(press(key, { target: item })).toBeNull();
+      }
+    });
+
+    it("leaves keys to a focused dialog or listbox", () => {
+      const dialog = document.createElement("div");
+      dialog.setAttribute("role", "dialog");
+      const button = document.createElement("button");
+      dialog.append(button);
+      const listbox = document.createElement("ul");
+      listbox.setAttribute("role", "listbox");
+      document.body.append(dialog, listbox);
+
+      expect(press("Escape", { target: button })).toBeNull();
+      expect(press("End", { target: listbox })).toBeNull();
+      expect(isOverlayTarget(document.body)).toBe(false);
     });
 
     it("ignores unknown keys and non-elements targets", () => {
