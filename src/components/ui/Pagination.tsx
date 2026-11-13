@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { gsap, prefersReducedMotion, useGsapEffect } from "@/lib/gsap";
+import { useTranslate } from "@/hooks/useTranslate";
 
 interface PaginationProps {
   currentPage: number;
@@ -13,6 +14,7 @@ interface PaginationProps {
 }
 
 export function Pagination({ currentPage, totalPages, onPageChange, className }: PaginationProps) {
+  const { t } = useTranslate();
   const navRef = useRef<HTMLElement>(null);
   const lastPillRect = useRef<DOMRect | null>(null);
 
@@ -79,19 +81,19 @@ export function Pagination({ currentPage, totalPages, onPageChange, className }:
       ref={navRef}
       data-testid="pagination"
       role="navigation"
-      aria-label="Pagination"
+      aria-label={t("navigation.pagination.label")}
       className={cn("flex justify-center items-center gap-1", className)}
     >
       {/* Bouton précédent */}
       <button
-        data-testid="pagination-next"
+        data-testid="pagination-previous"
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
         className="inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 py-2 gap-1 transition-colors hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
-        aria-label="Page précédente"
+        aria-label={t("navigation.pagination.previous")}
       >
         <ChevronLeft className="h-4 w-4" />
-        <span className="sr-only md:not-sr-only">Précédent</span>
+        <span className="sr-only md:not-sr-only">{t("navigation.pagination.previousShort")}</span>
       </button>
 
       {/* Liste des pages */}
@@ -116,7 +118,7 @@ export function Pagination({ currentPage, totalPages, onPageChange, className }:
                   ? "text-primary-foreground"
                   : "hover:bg-accent hover:text-accent-foreground"
               )}
-              aria-label={`Page ${page}`}
+              aria-label={t("navigation.pagination.page", { page })}
               aria-current={page === currentPage ? "page" : undefined}
             >
               {page === currentPage && (
@@ -130,12 +132,13 @@ export function Pagination({ currentPage, totalPages, onPageChange, className }:
 
       {/* Bouton suivant */}
       <button
+        data-testid="pagination-next"
         onClick={() => onPageChange(currentPage + 1)}
-        disabled={currentPage === totalPages}
+        disabled={currentPage >= totalPages}
         className="inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 py-2 gap-1 transition-colors hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
-        aria-label="Page suivante"
+        aria-label={t("navigation.pagination.next")}
       >
-        <span className="sr-only md:not-sr-only">Suivant</span>
+        <span className="sr-only md:not-sr-only">{t("navigation.pagination.nextShort")}</span>
         <ChevronRight className="h-4 w-4" />
       </button>
     </nav>

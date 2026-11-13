@@ -6,6 +6,7 @@ import { Download, X } from "lucide-react";
 import logger from "@/lib/logger";
 import { buildStorageKey } from "@/lib/storage";
 import { useUserScope } from "@/contexts/UserScopeContext";
+import { useTranslate } from "@/hooks/useTranslate";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -21,6 +22,7 @@ const DISMISS_STORAGE_SUFFIX = "pwa-install-dismissed";
 const DISMISS_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 jours en millisecondes
 
 export function InstallPWA() {
+  const { t } = useTranslate();
   const scope = useUserScope();
   const pathname = usePathname();
   // `localStorage` est partagé par tous les comptes du navigateur : la clé doit
@@ -130,30 +132,32 @@ export function InstallPWA() {
         <div className="flex items-start gap-4">
           <Download className="h-6 w-6 shrink-0 text-primary" />
           <div className="flex-1">
-            <h3 className="font-medium mb-1">Installer StripStream</h3>
+            <h3 className="font-medium mb-1">{t("layout.installPwa.title")}</h3>
             <p className="text-sm text-muted-foreground mb-3">
               {isIOS
-                ? "Ajoutez StripStream à votre écran d'accueil pour une meilleure expérience"
-                : "Installez StripStream pour un accès rapide et une meilleure expérience"}
+                ? t("layout.installPwa.descriptionIos")
+                : t("layout.installPwa.description")}
             </p>
             {isIOS ? (
               <div className="text-sm text-muted-foreground">
-                Appuyez sur <span className="font-medium">Partager</span> puis{" "}
-                <span className="font-medium">Sur l'écran d'accueil</span>
+                {t("layout.installPwa.iosTap")}{" "}
+                <span className="font-medium">{t("layout.installPwa.iosShare")}</span>{" "}
+                {t("layout.installPwa.iosThen")}{" "}
+                <span className="font-medium">{t("layout.installPwa.iosAddToHome")}</span>
               </div>
             ) : (
               <button
                 onClick={handleInstallClick}
                 className="w-full bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
               >
-                Installer l'application
+                {t("layout.installPwa.install")}
               </button>
             )}
           </div>
           <button
             onClick={handleDismiss}
             className="p-1 hover:bg-accent hover:text-accent-foreground rounded-md transition-colors"
-            aria-label="Fermer"
+            aria-label={t("layout.installPwa.dismiss")}
             data-testid="pwa-install-dismiss"
           >
             <X className="h-4 w-4" />

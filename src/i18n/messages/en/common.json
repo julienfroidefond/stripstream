@@ -9,6 +9,19 @@
       "title": "Loading error",
       "libraries": "Unable to load libraries. Check your connection or try again later.",
       "favorites": "Unable to load favorites."
+    },
+    "closeNavigation": "Close navigation",
+    "offline": "Offline",
+    "installPwa": {
+      "title": "Install StripStream",
+      "description": "Install StripStream for quick access and a better experience",
+      "descriptionIos": "Add StripStream to your home screen for a better experience",
+      "iosTap": "Tap",
+      "iosShare": "Share",
+      "iosThen": "then",
+      "iosAddToHome": "Add to Home Screen",
+      "install": "Install the app",
+      "dismiss": "Close"
     }
   },
   "login": {
@@ -186,6 +199,9 @@
         "label": "Image URL",
         "description": "Enter an image URL (HTTPS recommended)",
         "save": "Save"
+      },
+      "libraries": {
+        "label": "Libraries"
       }
     },
     "advanced": {
@@ -888,6 +904,14 @@
     "carousel": {
       "oneByOne": "Show one item at a time",
       "rail": "Show as a carousel"
+    },
+    "pagination": {
+      "label": "Pagination",
+      "previous": "Previous page",
+      "previousShort": "Previous",
+      "next": "Next page",
+      "nextShort": "Next",
+      "page": "Page {{page}}"
     }
   },
   "common": {
