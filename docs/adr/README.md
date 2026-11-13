@@ -23,5 +23,6 @@ Decisions that shaped the current architecture and would be expensive or surpris
 | [0017](./0017-carousel-gesture-machine.md) | Carousel gestures and index transitions are pure policies. |
 | [0018](./0018-durable-rate-limit-store.md) | Rate-limit counters live in a shared store behind one seam. |
 | [0019](./0019-capability-owns-its-data.md) | A required capability owns its data and is handed to the loader. |
+| [0020](./0020-drop-dead-schema-columns.md) | Dead schema columns are dropped, not documented. |
 
 New records use the next number and the same shape: a short title, one paragraph of context/decision/why, and optional `Considered options` / `Consequences` sections.

@@ -75,20 +75,11 @@ export default async function globalSetup() {
     data: { userId: user.id, name: 'Stub Partial', url: 'http://127.0.0.1:8446', username: 'user', authHeader: header },
   });
 
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { activeKomgaConfigId: configA.id },
-  });
-
   const readerConfigA = await prisma.komgaConfig.create({
     data: { userId: readerUser.id, name: 'Stub A', url: 'http://127.0.0.1:8444', username: 'user', authHeader: encryptedHeader },
   });
   await prisma.komgaConfig.create({
     data: { userId: readerUser.id, name: 'Stub B', url: 'http://127.0.0.1:8445', username: 'user', authHeader: header },
-  });
-  await prisma.user.update({
-    where: { id: readerUser.id },
-    data: { activeKomgaConfigId: readerConfigA.id },
   });
   await prisma.stripstreamConfig.create({
     data: {
@@ -123,5 +114,5 @@ export default async function globalSetup() {
     console.warn(`[setup] wrote DB hash ${digest} to ${hashFile}`);
   }
 
-  console.warn(`[setup] e2e users seeded (${email}, ${readerEmail}), active Stub A (${configA.id}/${readerConfigA.id}), B=${configB.id}`);
+  console.warn(`[setup] e2e users seeded (${email}, ${readerEmail}), Stub A (${configA.id}/${readerConfigA.id}), B=${configB.id}`);
 }
