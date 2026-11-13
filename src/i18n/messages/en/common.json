@@ -272,7 +272,11 @@
       "test": "Test",
       "testing": "Testing...",
       "cancel": "Cancel",
-      "confirmDelete": "Delete connection \"{{name}}\"?"
+      "confirmDelete": "Delete connection \"{{name}}\"?",
+      "created": "Connection created",
+      "updated": "Connection updated",
+      "deleted": "Connection deleted",
+      "testSuccess": "Connection successful. Libraries found: {{count}}"
     }
   },
   "refresh": {
@@ -774,7 +778,9 @@
     "CLIENT_NETWORK_ERROR": "Network error",
     "CLIENT_REQUEST_FAILED": "Request failed",
     "GENERIC_ERROR": "An error occurred",
-    "WALL_FETCH_ERROR": "Could not gather the works for the wall. Check your connection and try again."
+    "WALL_FETCH_ERROR": "Could not gather the works for the wall. Check your connection and try again.",
+    "CONFIG_INVALID_INPUT": "Missing or invalid connection fields",
+    "CONFIG_DUPLICATE_NAME": "This name is already used by another connection"
   },
   "reader": {
     "controls": {

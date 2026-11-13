@@ -7,7 +7,7 @@ import type {
 } from "@/types/stripstream";
 import { AppError } from "@/utils/errors";
 
-import type { StripstreamClient } from "./stripstream.client";
+import type { ProviderTransport } from "../provider-transport";
 
 /**
  * Propriétaire de l'identité « série » côté Stripstream.
@@ -32,11 +32,11 @@ function rethrowUnlessNotFound(error: unknown): null {
 
 /** Série par id ; `null` seulement si le serveur confirme qu'elle n'existe pas. */
 export async function findSeriesById(
-  client: StripstreamClient,
+  transport: ProviderTransport,
   seriesId: string
 ): Promise<StripstreamSeriesItem | null> {
   try {
-    return await client.fetch<StripstreamSeriesItem>(
+    return await transport.request<StripstreamSeriesItem>(
       `series/${seriesId}/details`,
       undefined,
       cacheProfile.series()
@@ -48,12 +48,12 @@ export async function findSeriesById(
 
 /** Nom de série dans une bibliothèque → id ; `null` sur un 404 confirmé. */
 export async function resolveSeriesIdByName(
-  client: StripstreamClient,
+  transport: ProviderTransport,
   libraryId: string,
   name: string
 ): Promise<string | null> {
   try {
-    const lookup = await client.fetch<StripstreamSeriesLookup>(
+    const lookup = await transport.request<StripstreamSeriesLookup>(
       `libraries/${libraryId}/series/by-name/${encodeURIComponent(name)}`,
       undefined,
       cacheProfile.series()
@@ -71,14 +71,14 @@ export async function resolveSeriesIdByName(
  * ou quand le tome ne déclare pas de nom de série.
  */
 export async function resolveSeriesIdFromBookId(
-  client: StripstreamClient,
+  transport: ProviderTransport,
   bookId: string
 ): Promise<string | null> {
   try {
-    const book = await client.fetch<StripstreamBookDetails>(`books/${bookId}`, undefined, cacheProfile.series());
+    const book = await transport.request<StripstreamBookDetails>(`books/${bookId}`, undefined, cacheProfile.series());
     if (!book.series) return null;
 
-    return await resolveSeriesIdByName(client, book.library_id, book.series);
+    return await resolveSeriesIdByName(transport, book.library_id, book.series);
   } catch (error) {
     return rethrowUnlessNotFound(error);
   }
@@ -89,11 +89,11 @@ export async function resolveSeriesIdFromBookId(
  * `first_book_id`. `null` seulement si les deux lectures confirment l'absence.
  */
 export async function resolveSeriesId(
-  client: StripstreamClient,
+  transport: ProviderTransport,
   seriesIdOrBookId: string
 ): Promise<string | null> {
-  const series = await findSeriesById(client, seriesIdOrBookId);
+  const series = await findSeriesById(transport, seriesIdOrBookId);
   if (series) return series.series_id;
 
-  return resolveSeriesIdFromBookId(client, seriesIdOrBookId);
+  return resolveSeriesIdFromBookId(transport, seriesIdOrBookId);
 }

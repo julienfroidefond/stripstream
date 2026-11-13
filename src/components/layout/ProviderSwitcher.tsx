@@ -9,90 +9,47 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { useToast } from "@/components/ui/use-toast";
+import { ConnectionTypeBadge } from "@/components/connections/ConnectionTypeBadge";
+import { useActivateConnection } from "@/hooks/useActivateConnection";
 import { useTranslate } from "@/hooks/useTranslate";
+import {
+  connectionSlug,
+  findActiveConnection,
+  toUnifiedConnections,
+  type UnifiedConnection,
+} from "@/lib/connections/client";
+import type { ConnectionLists } from "@/lib/connections/types";
 import { cn } from "@/lib/utils";
-import {
-  setActiveKomgaConfig,
-  type KomgaConfigSummary,
-} from "@/app/actions/config";
-import {
-  setActiveStripstreamConfig,
-  type StripstreamConfigSummary,
-} from "@/app/actions/stripstream-config";
-
-type ConnectionType = "komga" | "stripstream";
-
-interface UnifiedConnection {
-  id: number;
-  type: ConnectionType;
-  name: string;
-  isActive: boolean;
-}
 
 interface ProviderSwitcherProps {
-  komgaConfigs: KomgaConfigSummary[];
-  stripstreamConfigs: StripstreamConfigSummary[];
+  lists: ConnectionLists;
 }
 
-export function ProviderSwitcher({ komgaConfigs, stripstreamConfigs }: ProviderSwitcherProps) {
+export function ProviderSwitcher({ lists }: ProviderSwitcherProps) {
   const { toast } = useToast();
   const { t } = useTranslate();
   const [isOpen, setIsOpen] = useState(false);
-  const [busyKey, setBusyKey] = useState<string | null>(null);
+  const { activate, pendingKey } = useActivateConnection();
 
-  const connections = useMemo<UnifiedConnection[]>(
-    () => [
-      ...komgaConfigs.map((c) => ({
-        id: c.id,
-        type: "komga" as const,
-        name: c.name,
-        isActive: c.isActive,
-      })),
-      ...stripstreamConfigs.map((c) => ({
-        id: c.id,
-        type: "stripstream" as const,
-        name: c.name,
-        isActive: c.isActive,
-      })),
-    ],
-    [komgaConfigs, stripstreamConfigs]
-  );
-
-  const active = connections.find((c) => c.isActive);
-  const keyOf = (c: UnifiedConnection) => `${c.type}-${c.id}`;
+  const connections = useMemo(() => toUnifiedConnections(lists), [lists]);
+  const active = findActiveConnection(connections);
 
   const handleActivate = useCallback(
     async (conn: UnifiedConnection) => {
-      if (conn.isActive || busyKey) return;
-      setBusyKey(keyOf(conn));
+      if (conn.isActive || pendingKey) return;
       setIsOpen(false);
-      try {
-        const result =
-          conn.type === "komga"
-            ? await setActiveKomgaConfig(conn.id)
-            : await setActiveStripstreamConfig(conn.id);
+      const result = await activate(conn);
+      // En cas de succès, le hook recharge la page : rien d'autre à faire ici.
+      if (!result.success) {
         toast({
-          variant: result.success ? "default" : "destructive",
+          variant: "destructive",
           title: t("header.providerSwitcher.title"),
-          description: result.message,
+          description: t(`errors.${result.code}`),
         });
-        if (!result.success) {
-          setIsOpen(true);
-        } else {
-          // The active connection is stored in an HTTP-only cookie. A client
-          // router refresh can retain streamed RSC segments generated for the
-          // previous cookie, notably in development. Reload the current route
-          // so every server component is rendered from the newly selected
-          // connection.
-          window.location.reload();
-        }
-      } catch {
         setIsOpen(true);
-      } finally {
-        setBusyKey(null);
       }
     },
-    [busyKey, toast, t]
+    [activate, pendingKey, toast, t]
   );
 
   // Pas de connexion configurée → bouton qui mène vers les paramètres
@@ -126,7 +83,7 @@ export function ProviderSwitcher({ komgaConfigs, stripstreamConfigs }: ProviderS
             {t("header.providerSwitcher.empty")}
           </span>
         )}
-        {active && <TypeBadge type={active.type} />}
+        {active && <ConnectionTypeBadge provider={active.provider} size="compact" />}
         <ChevronDown
           className={cn(
             "h-3.5 w-3.5 shrink-0 opacity-60 transition-transform",
@@ -137,15 +94,14 @@ export function ProviderSwitcher({ komgaConfigs, stripstreamConfigs }: ProviderS
       <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
         <div className="space-y-0.5 pl-2">
           {connections.map((conn) => {
-            const k = keyOf(conn);
-            const isBusy = busyKey === k;
+            const isBusy = pendingKey === conn.key;
             return (
               <button
-                key={k}
+                key={conn.key}
                 type="button"
-                data-testid={`provider-switch-${conn.type}-${conn.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
+                data-testid={`provider-switch-${conn.provider}-${connectionSlug(conn.name)}`}
                 onClick={() => handleActivate(conn)}
-                disabled={busyKey !== null}
+                disabled={pendingKey !== null}
                 className={cn(
                   "flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors",
                   "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
@@ -168,7 +124,7 @@ export function ProviderSwitcher({ komgaConfigs, stripstreamConfigs }: ProviderS
                   />
                 )}
                 <span className="min-w-0 flex-1 truncate text-left">{conn.name}</span>
-                <TypeBadge type={conn.type} />
+                <ConnectionTypeBadge provider={conn.provider} size="compact" />
               </button>
             );
           })}
@@ -182,23 +138,5 @@ export function ProviderSwitcher({ komgaConfigs, stripstreamConfigs }: ProviderS
         </div>
       </CollapsibleContent>
     </Collapsible>
-  );
-}
-
-function TypeBadge({ type }: { type: ConnectionType }) {
-  const label = type === "komga" ? "Komga" : "Stripstream";
-  const className =
-    type === "komga"
-      ? "bg-blue-500/15 text-blue-700 dark:text-blue-300"
-      : "bg-primary/15 text-primary";
-  return (
-    <span
-      className={cn(
-        "inline-flex shrink-0 items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide",
-        className
-      )}
-    >
-      {label}
-    </span>
   );
 }

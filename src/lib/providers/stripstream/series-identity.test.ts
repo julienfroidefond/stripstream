@@ -7,7 +7,8 @@ vi.mock("@/lib/logger", () => ({
   default: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 
-import { StripstreamClient } from "./stripstream.client";
+import { ProviderTransport } from "../provider-transport";
+import { createStripstreamTransportPolicy } from "./stripstream.transport-policy";
 import {
   findSeriesById,
   resolveSeriesId,
@@ -18,8 +19,8 @@ import {
 const SERIES = { series_id: "series-1", name: "Saga" };
 const BOOK = { id: "book-1", library_id: "lib-1", series: "Saga" };
 
-function client(): StripstreamClient {
-  return new StripstreamClient("http://stream.local", "token");
+function client(): ProviderTransport {
+  return new ProviderTransport(createStripstreamTransportPolicy("http://stream.local", "token"));
 }
 
 function jsonResponse(body: unknown, status = 200): Response {

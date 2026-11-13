@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { NormalizedLibrary } from "@/lib/providers/types";
-import type { KomgaConfigSummary } from "@/app/actions/config";
-import type { StripstreamConfigSummary } from "@/app/actions/stripstream-config";
+import type { NormalizedLibrary, ProviderType } from "@/lib/providers/types";
+import type { ErrorCode } from "@/constants/errorCodes";
+import type { ConnectionLists } from "@/lib/connections/types";
 import { useTranslate } from "@/hooks/useTranslate";
 import { DisplaySettings } from "./DisplaySettings";
-import { ConnectionsSettings, type ConnectionType } from "./ConnectionsSettings";
+import { ConnectionsSettings } from "./ConnectionsSettings";
 import { BackgroundSettings } from "./BackgroundSettings";
 import { AdvancedSettings } from "./AdvancedSettings";
 import { ReaderSettings } from "./ReaderSettings";
@@ -14,24 +14,24 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Monitor, Network, BookOpen } from "lucide-react";
 
 export type SettingsTab = "display" | "reader" | "connection";
-export type { ConnectionType };
 
 interface ClientSettingsProps {
   initialLibraries: NormalizedLibrary[];
-  komgaConfigs: KomgaConfigSummary[];
-  stripstreamConfigs: StripstreamConfigSummary[];
+  connectionLists: ConnectionLists;
+  /** Code d'erreur si la liste des connexions n'a pas pu être chargée. */
+  connectionsErrorCode?: ErrorCode;
   /** Onglet ouvert à l'arrivée (deep-link `?tab=`), prime sur le dernier onglet visité. */
   initialTab?: SettingsTab;
   /** Type de connexion à pré-sélectionner dans le formulaire (deep-link `?new=`). */
-  initialNewConnection?: ConnectionType;
+  initialNewConnection?: ProviderType;
 }
 
 const SETTINGS_TAB_STORAGE_KEY = "stripstream:settings-active-tab";
 
 export function ClientSettings({
   initialLibraries,
-  komgaConfigs,
-  stripstreamConfigs,
+  connectionLists,
+  connectionsErrorCode,
   initialTab,
   initialNewConnection,
 }: ClientSettingsProps) {
@@ -91,8 +91,8 @@ export function ClientSettings({
 
           <TabsContent value="connection" className="mt-6 space-y-6">
             <ConnectionsSettings
-              komgaConfigs={komgaConfigs}
-              stripstreamConfigs={stripstreamConfigs}
+              lists={connectionLists}
+              errorCode={connectionsErrorCode}
               autoStartType={initialNewConnection}
             />
             <AdvancedSettings />

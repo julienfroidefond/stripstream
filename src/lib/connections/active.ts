@@ -1,11 +1,18 @@
 import { cookies } from "next/headers";
 import { cache } from "react";
-import prisma from "@/lib/prisma";
 import type { ProviderType } from "@/lib/providers/types";
+import { isConnectionProvider } from "./descriptors";
+import { getProviderDefinition, providerDefinitions } from "./registry";
 
 const ACTIVE_PROVIDER_COOKIE = "stripstream-active-provider";
-const ACTIVE_KOMGA_CONFIG_COOKIE = "stripstream-active-komga-config";
-const ACTIVE_STRIPSTREAM_CONFIG_COOKIE = "stripstream-active-stripstream-config";
+
+/**
+ * Cookie de la config sélectionnée pour un provider
+ * (`stripstream-active-komga-config`, `stripstream-active-stripstream-config`).
+ */
+function activeConfigCookie(provider: ProviderType): string {
+  return `stripstream-active-${provider}-config`;
+}
 
 export interface ActiveConnection {
   provider: ProviderType;
@@ -20,51 +27,30 @@ function parseConfigId(value: string | undefined): number | null {
 
 /**
  * Resolves the connection selected by this browser. The database remains the
- * source of connection details, but not of the active selection.
+ * source of connection details, but not of the active selection. Without a
+ * valid selection, the first config of the first provider (registry order)
+ * wins.
  */
 export const getActiveConnection = cache(async (userId: number): Promise<ActiveConnection> => {
   const cookieStore = await cookies();
-  const provider = cookieStore.get(ACTIVE_PROVIDER_COOKIE)?.value as ProviderType | undefined;
-  const configId = parseConfigId(
-    cookieStore.get(
-      provider === "stripstream"
-        ? ACTIVE_STRIPSTREAM_CONFIG_COOKIE
-        : ACTIVE_KOMGA_CONFIG_COOKIE
-    )?.value
+  const provider = cookieStore.get(ACTIVE_PROVIDER_COOKIE)?.value;
+
+  if (isConnectionProvider(provider)) {
+    const configId = parseConfigId(cookieStore.get(activeConfigCookie(provider))?.value);
+    const config = configId
+      ? await getProviderDefinition(provider).store.findLabel(userId, configId)
+      : null;
+    if (config) return { provider, configId: config.id };
+  }
+
+  const definitions = providerDefinitions();
+  const firstConfigs = await Promise.all(
+    definitions.map((definition) => definition.store.findFirst(userId))
   );
-
-  if (provider === "komga" && configId) {
-    const config = await prisma.komgaConfig.findFirst({
-      where: { id: configId, userId },
-      select: { id: true },
-    });
-    if (config) return { provider, configId: config.id };
+  for (const [index, config] of firstConfigs.entries()) {
+    if (config) return { provider: definitions[index].provider, configId: config.id };
   }
-
-  if (provider === "stripstream" && configId) {
-    const config = await prisma.stripstreamConfig.findFirst({
-      where: { id: configId, userId },
-      select: { id: true },
-    });
-    if (config) return { provider, configId: config.id };
-  }
-
-  const [komgaConfig, stripstreamConfig] = await Promise.all([
-    prisma.komgaConfig.findFirst({
-      where: { userId },
-      orderBy: { createdAt: "asc" },
-      select: { id: true },
-    }),
-    prisma.stripstreamConfig.findFirst({
-      where: { userId },
-      orderBy: { createdAt: "asc" },
-      select: { id: true },
-    }),
-  ]);
-
-  if (komgaConfig) return { provider: "komga", configId: komgaConfig.id };
-  if (stripstreamConfig) return { provider: "stripstream", configId: stripstreamConfig.id };
-  return { provider: "komga", configId: null };
+  return { provider: definitions[0].provider, configId: null };
 });
 
 export async function setActiveConnection(
@@ -81,9 +67,5 @@ export async function setActiveConnection(
   };
 
   cookieStore.set(ACTIVE_PROVIDER_COOKIE, provider, options);
-  cookieStore.set(
-    provider === "komga" ? ACTIVE_KOMGA_CONFIG_COOKIE : ACTIVE_STRIPSTREAM_CONFIG_COOKIE,
-    String(configId),
-    options
-  );
+  cookieStore.set(activeConfigCookie(provider), String(configId), options);
 }
