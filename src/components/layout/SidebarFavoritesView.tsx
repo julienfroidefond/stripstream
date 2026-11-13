@@ -17,8 +17,11 @@ interface FavoriteOverridesState {
 
 export function SidebarFavoritesView({
   favorites,
+  unavailable = false,
 }: {
   favorites: NormalizedSeries[];
+  /** Le chargement a échoué : on le dit au lieu d'afficher « Aucun favori ». */
+  unavailable?: boolean;
 }) {
   const { t } = useTranslate();
   const pathname = usePathname();
@@ -79,7 +82,7 @@ export function SidebarFavoritesView({
         </div>
         {items.length === 0 ? (
           <div className="px-3 py-2 text-sm text-muted-foreground">
-            {t("sidebar.favorites.empty")}
+            {t(unavailable ? "sidebar.favorites.unavailable" : "sidebar.favorites.empty")}
           </div>
         ) : (
           items.map((series) => (

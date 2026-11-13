@@ -56,6 +56,8 @@ import {
 interface InProgressContentProps {
   items: InProgressItem[];
   favoriteIds: string[];
+  /** Les favoris n'ont pas pu être chargés : étoiles et filtre ne sont pas fiables. */
+  favoritesUnavailable?: boolean;
   canShelve?: boolean;
 }
 
@@ -73,6 +75,7 @@ const FILTERS: Array<{
 export function InProgressContent({
   items,
   favoriteIds,
+  favoritesUnavailable = false,
   canShelve = false,
 }: InProgressContentProps) {
   const { toast } = useToast();
@@ -259,6 +262,16 @@ export function InProgressContent({
           ) : undefined
         }
       />
+
+      {favoritesUnavailable && !isAnonymous && (
+        <p
+          role="status"
+          className="rounded-lg border border-border bg-secondary/50 px-4 py-2 text-sm text-muted-foreground"
+          data-testid="in-progress-favorites-unavailable"
+        >
+          {t("inProgress.favoritesUnavailable")}
+        </p>
+      )}
 
       {isAnonymous ? (
         <InProgressAnonymousState

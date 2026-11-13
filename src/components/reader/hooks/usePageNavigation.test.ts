@@ -275,17 +275,34 @@ describe("usePageNavigation", () => {
       expect(result.current.showEndMessage).toBe(false);
     });
 
-    it("jumps two pages when double page is active", () => {
+    it("aligns an odd opening page on its spread in double page mode", () => {
       const { result } = renderNav({
+        book: makeBook({ readProgress: { page: 3, completed: false } } as Partial<NormalizedBook>),
         isDoublePage: true,
-        shouldShowDoublePage: () => true,
+        shouldShowDoublePage: (page) => page < 5,
+      });
+
+      // Reprise sur la page 3 : l'écran montre la paire 2-3, pas 3-4.
+      expect(result.current.currentPage).toBe(2);
+    });
+
+    it("jumps two pages when double page is active", () => {
+      // Prédicat réaliste : la couverture (page 1) est seule, puis 2-3, 4-5.
+      const { result } = renderNav({
+        pages: [1, 2, 3, 4, 5, 6, 7],
+        isDoublePage: true,
+        shouldShowDoublePage: (page) => page > 1 && page < 7,
       });
 
       act(() => {
         result.current.handleNextPage();
       });
+      expect(result.current.currentPage).toBe(2);
 
-      expect(result.current.currentPage).toBe(3);
+      act(() => {
+        result.current.handleNextPage();
+      });
+      expect(result.current.currentPage).toBe(4);
     });
   });
 

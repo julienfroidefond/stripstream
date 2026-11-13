@@ -149,7 +149,8 @@
     "favorites": {
       "title": "Favorites",
       "empty": "No favorites",
-      "loading": "Loading..."
+      "loading": "Loading...",
+      "unavailable": "Favorites unavailable"
     },
     "libraries": {
       "title": "Libraries",
@@ -461,7 +462,8 @@
       "description": "Your in-progress series are hidden. Turn off anonymous mode to resume reading.",
       "action": "Turn off anonymous mode",
       "error": "Could not turn off anonymous mode"
-    }
+    },
+    "favoritesUnavailable": "Favorites could not be loaded: stars and the “Favorites” filter may be incomplete."
   },
   "seriesMutations": {
     "favorite": {

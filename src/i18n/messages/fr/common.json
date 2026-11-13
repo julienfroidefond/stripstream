@@ -149,7 +149,8 @@
     "favorites": {
       "title": "Favoris",
       "empty": "Aucun favori",
-      "loading": "Chargement..."
+      "loading": "Chargement...",
+      "unavailable": "Favoris indisponibles"
     },
     "libraries": {
       "title": "Bibliothèques",
@@ -461,7 +462,8 @@
       "description": "Vos séries en cours sont masquées. Désactivez le mode anonyme pour reprendre votre lecture.",
       "action": "Désactiver le mode anonyme",
       "error": "Impossible de désactiver le mode anonyme"
-    }
+    },
+    "favoritesUnavailable": "Les favoris n'ont pas pu être chargés : les étoiles et le filtre « Favoris » peuvent être incomplets."
   },
   "seriesMutations": {
     "favorite": {

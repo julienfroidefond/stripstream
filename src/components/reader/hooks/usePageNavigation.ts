@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { NormalizedBook } from "@/lib/providers/types";
 import {
@@ -8,6 +8,7 @@ import {
   progressPageFor,
   resolveInitialPage,
   type PageMove,
+  spreadStartFor,
 } from "@/lib/reader/page-navigation";
 import { useAnonymous } from "@/contexts/AnonymousContext";
 import { useReadProgressSession } from "./useReadProgressSession";
@@ -49,6 +50,16 @@ export function usePageNavigation({
   });
 
   const totalPages = pages.length;
+
+  // En double page, l'écran s'aligne sur une paire (couverture seule, puis
+  // 2-3, 4-5…). Une page d'ouverture impaire (reprise sur la page 7) ou un
+  // passage en double page au milieu du livre afficherait sinon 7-8, décalé
+  // d'une page jusqu'au premier retour arrière. La progression enregistrée ne
+  // change pas : seul l'affichage se cale sur le début de la paire.
+  useEffect(() => {
+    const aligned = spreadStartFor(currentPage, { isDoublePage, shouldShowDoublePage });
+    if (aligned !== currentPage) setCurrentPage(aligned);
+  }, [currentPage, isDoublePage, shouldShowDoublePage]);
 
   const applyPageMove = useCallback(
     (move: PageMove, fromPage: number) => {
