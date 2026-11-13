@@ -33,6 +33,12 @@ interface UsePaginatedGridOptions {
   canSortByRating?: boolean;
   /** Filtre « tomes manquants » déjà résolu côté serveur. */
   initialHasMissing?: boolean;
+  /**
+   * Masquage des emplacements de tomes manquants (grille d'une série). Ce
+   * n'est pas un filtre serveur : l'état reste local, ne touche pas l'URL et
+   * persiste la préférence `hideMissingBooks`.
+   */
+  initialHideMissingBooks?: boolean;
 }
 
 export interface PaginatedGridController {
@@ -44,17 +50,9 @@ export interface PaginatedGridController {
   isSearchPending: boolean;
   sort: SortOrder;
   showMissing: boolean;
+  hideMissingBooks: boolean;
   isNavigating: boolean;
   gridRef: RefObject<HTMLDivElement | null>;
-  /** Mémorise la position des cartes avant une action de mise en page. */
-  captureLayout: () => void;
-  updateUrlParams: (
-    updates: Record<string, string | null>,
-    replace?: boolean,
-    options?: { dim?: boolean }
-  ) => Promise<void>;
-  /** Écrit des préférences typées via le contexte, sans interrompre l'action. */
-  persistPreferences: (next: Partial<UserPreferences>) => Promise<void>;
   handlePageChange: (page: number) => Promise<void>;
   handlePageSizeChange: (size: number) => Promise<void>;
   handleCompactModeToggle: (nextCompactMode: boolean) => Promise<void>;
@@ -63,6 +61,7 @@ export interface PaginatedGridController {
   handleSearchChange: (term: string) => void;
   handleSortToggle: () => Promise<void>;
   handleMissingToggle: () => Promise<void>;
+  handleHideMissingToggle: () => Promise<void>;
 }
 
 function viewModePatch(
@@ -93,6 +92,7 @@ export function usePaginatedGrid({
   initialSort,
   canSortByRating = false,
   initialHasMissing = false,
+  initialHideMissingBooks = false,
 }: UsePaginatedGridOptions): PaginatedGridController {
   const router = useRouter();
   const pathname = usePathname();
@@ -105,6 +105,7 @@ export function usePaginatedGrid({
   const [searchTerm, setSearchTerm] = useState(initialSearch);
   const [sort, setSort] = useState<SortOrder>(() => normalizeSortOrder(initialSort));
   const [showMissing, setShowMissing] = useState(initialHasMissing);
+  const [hideMissingBooks, setHideMissingBooks] = useState(initialHideMissingBooks);
   const [isNavigating, startNavigation] = useTransition();
   const [isSearchPending, startSearchTransition] = useTransition();
 
@@ -113,7 +114,12 @@ export function usePaginatedGrid({
   const gridRef = useRef<HTMLDivElement>(null);
   const gridFlip = useGridFlip(gridRef);
   const captureLayout = gridFlip.capture;
-  useGridFlipPlayback(gridFlip, `${isCompact ? "compact" : "full"}:${contentKey}`);
+  // Le masquage local des manquants change le contenu sans changer les données
+  // serveur : il fait donc partie de la clé de glissement.
+  useGridFlipPlayback(
+    gridFlip,
+    `${isCompact ? "compact" : "full"}:${hideMissingBooks ? "hide-missing" : "all"}:${contentKey}`
+  );
 
   /**
    * Le debounce et les actions lisent les paramètres au moment du
@@ -244,6 +250,13 @@ export function usePaginatedGrid({
     await persistPreferences({ showMissingBooks: next });
   }, [captureLayout, showMissing, updateUrlParams, persistPreferences]);
 
+  const handleHideMissingToggle = useCallback(async () => {
+    captureLayout();
+    const next = !hideMissingBooks;
+    setHideMissingBooks(next);
+    await persistPreferences({ hideMissingBooks: next });
+  }, [captureLayout, hideMissingBooks, persistPreferences]);
+
   const handlePageSizeChange = useCallback(
     async (size: number) => {
       captureLayout();
@@ -297,11 +310,9 @@ export function usePaginatedGrid({
     isSearchPending,
     sort,
     showMissing,
+    hideMissingBooks,
     isNavigating,
     gridRef,
-    captureLayout,
-    updateUrlParams,
-    persistPreferences,
     handlePageChange,
     handlePageSizeChange,
     handleCompactModeToggle,
@@ -310,5 +321,6 @@ export function usePaginatedGrid({
     handleSearchChange,
     handleSortToggle,
     handleMissingToggle,
+    handleHideMissingToggle,
   };
 }

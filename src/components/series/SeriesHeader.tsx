@@ -4,11 +4,7 @@ import React from "react";
 import { Book, BookCheck, BookOpen, BookMarked, BookX, ArchiveRestore, Snowflake, Star, StarOff, User, CircleDot, CircleCheck, CirclePause, CircleX, Calendar, Loader2 } from "lucide-react";
 import type { NormalizedSeries } from "@/lib/providers/types";
 import { useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useToast } from "@/components/ui/use-toast";
 import { RefreshButton } from "@/components/common/RefreshButton";
-import { AppError } from "@/utils/errors";
-import { ERROR_CODES } from "@/constants/errorCodes";
 import { useTranslate } from "@/hooks/useTranslate";
 import { SeriesCover } from "@/components/ui/series-cover";
 import { getSeriesReadingStatusLabel } from "@/components/ui/series-reading-status";
@@ -28,9 +24,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
-import logger from "@/lib/logger";
-import { updateSeriesReadStatus } from "@/app/actions/read-progress";
 import { useAnonymous } from "@/contexts/AnonymousContext";
+import { useReadProgressMutations } from "@/contexts/ReadProgressMutationsContext";
 import { useSeriesMutations } from "@/contexts/SeriesMutationsContext";
 import { SeriesRatingControl } from "./SeriesRatingControl";
 import type { NormalizedProviderRating } from "@/lib/providers/types";
@@ -51,7 +46,7 @@ interface SeriesHeaderProps {
 }
 
 export const SeriesHeader = ({
-  series,
+  series: serverSeries,
   initialIsFavorite,
   canRate = false,
   initialRating = null,
@@ -59,16 +54,18 @@ export const SeriesHeader = ({
   canShelve = false,
   initialIsShelved = false,
 }: SeriesHeaderProps) => {
-  const router = useRouter();
-  const { toast } = useToast();
   const { isAnonymous } = useAnonymous();
+  const readProgress = useReadProgressMutations();
+  // Comptes de lecture optimistes pendant un marquage groupé, rollback compris.
+  const series = readProgress.resolveSeries(serverSeries);
+  const pendingRead = readProgress.pendingSeries(serverSeries.id);
+  const bulkAction = pendingRead === null ? null : pendingRead ? "read" : "unread";
   const mutations = useSeriesMutations();
   const isFavorite = mutations.isFavorite(series.id, initialIsFavorite);
   const isShelved = mutations.isShelved(series.id, initialIsShelved);
   const isFavoritePending = mutations.isFavoritePending(series.id);
   const isShelfPending = mutations.isShelfPending(series.id);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
-  const [bulkAction, setBulkAction] = useState<null | "read" | "unread">(null);
   const [isConfirmUnreadOpen, setIsConfirmUnreadOpen] = useState(false);
   const { t } = useTranslate();
   const reduce = usePrefersReducedMotion();
@@ -83,7 +80,7 @@ export const SeriesHeader = ({
   ) => {
     // Capturé tout de suite : `currentTarget` n'existe plus après l'`await`.
     const button = event.currentTarget;
-    const added = await mutations.toggleFavorite(series, isFavorite);
+    const added = await mutations.toggleFavorite(serverSeries, isFavorite);
     if (added === null) return;
 
     // L'icône change de composant au rendu suivant : on l'anime après.
@@ -99,36 +96,11 @@ export const SeriesHeader = ({
   };
 
   const handleToggleShelf = async () => {
-    await mutations.setShelf(series, !isShelved);
+    await mutations.setShelf(serverSeries, !isShelved);
   };
 
-  const handleBulkReadStatus = async (read: boolean) => {
-    setBulkAction(read ? "read" : "unread");
-    const prefix = read ? "series.header.markAllRead" : "series.header.markAllUnread";
-    try {
-      const result = await updateSeriesReadStatus(series.id, read);
-      // Les caches serveur sont invalidés même en cas d'échec partiel : on
-      // rafraîchit dans tous les cas pour refléter ce qui a été enregistré.
-      router.refresh();
-      if (!result.success) {
-        throw new AppError(ERROR_CODES.BOOK.PROGRESS_UPDATE_ERROR);
-      }
-      toast({
-        title: t(`${prefix}.success.title`),
-        description: t(`${prefix}.success.description`, {
-          count: result.updated ?? series.bookCount,
-        }),
-      });
-    } catch (error) {
-      logger.error({ err: error }, "Erreur lors du marquage groupé de la série:");
-      toast({
-        variant: "destructive",
-        title: t(`${prefix}.error.title`),
-        description: t(`${prefix}.error.description`),
-      });
-    } finally {
-      setBulkAction(null);
-    }
+  const handleBulkReadStatus = (read: boolean) => {
+    void readProgress.markSeries(serverSeries, read);
   };
 
   const getReadingStatusInfo = () => {

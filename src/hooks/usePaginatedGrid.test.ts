@@ -156,4 +156,32 @@ describe("usePaginatedGrid", () => {
 
     expect(result.current.viewMode).toBe("list");
   });
+
+  it("hides missing-book placeholders locally without touching the URL", async () => {
+    const { result } = renderGrid({ initialHideMissingBooks: false });
+
+    await act(async () => {
+      await result.current.handleHideMissingToggle();
+    });
+
+    expect(result.current.hideMissingBooks).toBe(true);
+    expect(mocks.capture).toHaveBeenCalledTimes(1);
+    expect(mocks.updatePreferences).toHaveBeenCalledWith({ hideMissingBooks: true });
+    expect(mocks.push).not.toHaveBeenCalled();
+    expect(mocks.replace).not.toHaveBeenCalled();
+  });
+
+  it("filters the series grid on missing books through the URL", async () => {
+    const { result } = renderGrid();
+
+    await act(async () => {
+      await result.current.handleMissingToggle();
+    });
+
+    expect(result.current.showMissing).toBe(true);
+    expect(mocks.updatePreferences).toHaveBeenCalledWith({ showMissingBooks: true });
+    expect(mocks.push).toHaveBeenCalledWith("/libraries/lib-a?page=1&missing=true", {
+      scroll: false,
+    });
+  });
 });

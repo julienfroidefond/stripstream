@@ -70,9 +70,7 @@ export function BookSpotlightSlide({ book, onOpen, eyebrow }: BookSpotlightSlide
                 <BookCover
                   book={book}
                   alt={t("books.coverAlt", { title })}
-                  showControls={false}
                   showProgressUi={false}
-                  showOverlay={false}
                 />
               </>
             }
