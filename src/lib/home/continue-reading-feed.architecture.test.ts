@@ -32,3 +32,32 @@ describe("continue-reading orchestration", () => {
     });
   }
 });
+
+/**
+ * Frontière de la politique de l'accueil (ADR 0026).
+ *
+ * Masquage anonyme, repli vide et règle « tout a échoué » vivent dans
+ * `loadHomeFeeds` / `loadNextHomeFeedPage`. Les appelants ne chargent plus un
+ * flux eux-mêmes et ne choisissent plus de repli.
+ */
+const POLICY_FORBIDDEN = [
+  "loadHomeFeedPage",
+  "loadContinueReadingPage",
+  "emptyFeedPage",
+  "settleHomeFeed",
+  ".catch(",
+  "allSettled",
+  "getProvider",
+];
+
+describe("home feed policy", () => {
+  for (const [surface, url] of Object.entries(CALLERS)) {
+    it(`keeps the ${surface} free of feed policy`, () => {
+      const source = readFileSync(url, "utf8");
+
+      for (const token of POLICY_FORBIDDEN) {
+        expect(source).not.toContain(token);
+      }
+    });
+  }
+});

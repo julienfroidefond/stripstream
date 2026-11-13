@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState, useTransition } from "react";
+import type { ActionResult } from "@/lib/actions/action-runner";
 import type { FeedPage } from "@/lib/home/feed-page";
 
 interface UseFeedPaginationOptions<T> {
@@ -9,8 +10,11 @@ interface UseFeedPaginationOptions<T> {
   /** Force `hasMore` quand le serveur le sait déjà (recommandations différées). */
   initialHasMore?: boolean;
   pageSize: number;
-  /** Charge une page à partir de l'offset courant. */
-  loadPage: (offset: number) => Promise<FeedPage<T>>;
+  /**
+   * Charge une page à partir de l'offset courant : une action serveur qui
+   * renvoie un `ActionResult` portant la page en cas de succès.
+   */
+  loadPage: (offset: number) => Promise<ActionResult<FeedPage<T>>>;
   /** Appelé après l'ajout d'une page non vide, avant le rendu suivant. */
   onPageAppended?: (page: FeedPage<T>, previousItems: T[]) => void;
 }
@@ -47,13 +51,17 @@ export function useFeedPagination<T>({
     const previousItems = items;
 
     startTransition(async () => {
-      let page: FeedPage<T>;
+      let result: ActionResult<FeedPage<T>>;
       try {
-        page = await loadPage(previousItems.length);
+        result = await loadPage(previousItems.length);
       } catch {
         // Le bouton reste disponible : un échec réseau ne doit pas vider la rangée.
         return;
       }
+      // Un échec métier (provider en panne) garde aussi la rangée et le bouton.
+      if (!result.success) return;
+
+      const page: FeedPage<T> = { items: result.items, hasMore: result.hasMore };
 
       if (page.items.length === 0) {
         setHasMore(page.hasMore);
