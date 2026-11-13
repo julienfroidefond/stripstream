@@ -4,7 +4,7 @@ import { RefreshSurface } from "@/components/common/RefreshSurface";
 import { SurfaceBoundary } from "@/components/ui/SurfaceBoundary";
 import { AppError } from "@/utils/errors";
 import { ERROR_CODES } from "@/constants/errorCodes";
-import { normalizeGridPageSize } from "@/lib/pageSize";
+import { bookCollectionFilter, parseCollectionQuery } from "@/lib/collections/query";
 import { loadSurface } from "@/lib/surfaces/load-surface";
 
 interface PageProps {
@@ -12,34 +12,25 @@ interface PageProps {
   searchParams: Promise<{ page?: string; unread?: string; size?: string }>;
 }
 
-const DEFAULT_PAGE_SIZE = 30;
-
 export default async function SeriesPage({ params, searchParams }: PageProps) {
-  const [{ seriesId }, { page, size, unread }] = await Promise.all([params, searchParams]);
-  const currentPage = page ? parseInt(page) : 1;
+  const [{ seriesId }, queryParams] = await Promise.all([params, searchParams]);
 
   const surface = await loadSurface({
     name: "series",
     fallbackCode: ERROR_CODES.BOOK.PAGES_FETCH_ERROR,
     load: async ({ provider, preferences }) => {
-      const isCompact = preferences.displayMode?.compact ?? false;
-      const unreadOnly = unread !== undefined ? unread === "true" : preferences.showOnlyUnread;
-      const effectivePageSize = normalizeGridPageSize(
-        size ? parseInt(size) : preferences.displayMode?.itemsPerPage || DEFAULT_PAGE_SIZE,
-        isCompact
-      );
+      const query = parseCollectionQuery(queryParams, {
+        itemsPerPage: preferences.displayMode.itemsPerPage,
+        compact: preferences.displayMode.compact,
+        unreadOnly: preferences.showOnlyUnread,
+      });
 
       const { ratings, shelf, missingBooks, discovery } = provider.capabilities;
       const canRate = ratings !== null;
       const canShelve = shelf !== null;
 
       const [booksPage, series, isFavorite, missing, relatedSeries, rating] = await Promise.all([
-        provider.getBooks({
-          seriesId,
-          cursor: String(currentPage),
-          limit: effectivePageSize,
-          unreadOnly,
-        }),
+        provider.getBooks(bookCollectionFilter(seriesId, query)),
         provider.getSeriesById(seriesId),
         FavoriteService.isFavorite(seriesId),
         missingBooks ? missingBooks.getMissingBooks(seriesId) : Promise.resolve([]),
@@ -53,8 +44,7 @@ export default async function SeriesPage({ params, searchParams }: PageProps) {
         series,
         booksPage,
         preferences,
-        unreadOnly,
-        effectivePageSize,
+        query,
         isFavorite,
         missingBooks: missing,
         relatedSeries,
@@ -73,10 +63,10 @@ export default async function SeriesPage({ params, searchParams }: PageProps) {
           <SeriesContent
             series={data.series}
             books={data.booksPage}
-            currentPage={currentPage}
+            currentPage={data.query.page}
             preferences={data.preferences}
-            unreadOnly={data.unreadOnly}
-            pageSize={data.effectivePageSize}
+            unreadOnly={data.query.unreadOnly}
+            pageSize={data.query.pageSize}
             initialIsFavorite={data.isFavorite}
             missingBooks={data.missingBooks}
             relatedSeries={data.relatedSeries}

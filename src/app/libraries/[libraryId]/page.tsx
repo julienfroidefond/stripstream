@@ -3,7 +3,7 @@ import { RefreshSurface } from "@/components/common/RefreshSurface";
 import { SurfaceBoundary } from "@/components/ui/SurfaceBoundary";
 import { AppError } from "@/utils/errors";
 import { ERROR_CODES } from "@/constants/errorCodes";
-import { normalizeGridPageSize } from "@/lib/pageSize";
+import { fetchSeriesCollectionPage, parseSeriesCollectionQuery } from "@/lib/collections/query";
 import { loadSurface } from "@/lib/surfaces/load-surface";
 
 interface PageProps {
@@ -18,52 +18,26 @@ interface PageProps {
   }>;
 }
 
-const DEFAULT_PAGE_SIZE = 30;
-
 export default async function LibraryPage({ params, searchParams }: PageProps) {
-  const [{ libraryId }, { unread, page, size, search, sort, missing }] = await Promise.all([
-    params,
-    searchParams,
-  ]);
-
-  const currentPage = page ? parseInt(page) : 1;
+  const [{ libraryId }, queryParams] = await Promise.all([params, searchParams]);
 
   const surface = await loadSurface({
     name: "library",
     fallbackCode: ERROR_CODES.SERIES.FETCH_ERROR,
     load: async ({ provider, preferences }) => {
-      const isCompact = preferences.displayMode?.compact ?? false;
-
-      // Utiliser le paramètre d'URL s'il existe, sinon utiliser la préférence utilisateur
-      const unreadOnly = unread !== undefined ? unread === "true" : preferences.showOnlyUnread;
-      const effectivePageSize = normalizeGridPageSize(
-        size ? parseInt(size) : preferences.displayMode?.itemsPerPage || DEFAULT_PAGE_SIZE,
-        isCompact
-      );
-      const effectiveSort = sort ?? preferences.defaultSortOrder ?? "title";
-      const effectiveMissing =
-        missing !== undefined
-          ? missing === "true"
-          : preferences.showMissingBooks === false
-            ? false
-            : undefined;
-
       const canSortByRating = provider.capabilities.ratings !== null;
-      // Si l'utilisateur a sauvegardé "community_score" puis basculé sur Komga
-      // (qui ne supporte pas ce tri), on retombe sur le tri par titre.
-      const safeSort =
-        !canSortByRating && effectiveSort === "community_score" ? "title" : effectiveSort;
+
+      const query = parseSeriesCollectionQuery(queryParams, {
+        itemsPerPage: preferences.displayMode.itemsPerPage,
+        compact: preferences.displayMode.compact,
+        unreadOnly: preferences.showOnlyUnread,
+        defaultSortOrder: preferences.defaultSortOrder,
+        showMissingBooks: preferences.showMissingBooks,
+        canSortByRating,
+      });
 
       const [seriesPage, library] = await Promise.all([
-        provider.getSeries(
-          libraryId,
-          String(currentPage),
-          effectivePageSize,
-          unreadOnly,
-          search,
-          safeSort,
-          effectiveMissing === true
-        ),
+        fetchSeriesCollectionPage(provider, libraryId, query),
         provider.getLibraryById(libraryId),
       ]);
 
@@ -73,10 +47,7 @@ export default async function LibraryPage({ params, searchParams }: PageProps) {
         library,
         seriesPage,
         preferences,
-        unreadOnly,
-        effectivePageSize,
-        safeSort,
-        hasMissing: effectiveMissing === true,
+        query,
         canSortByRating,
       };
     },
@@ -90,13 +61,14 @@ export default async function LibraryPage({ params, searchParams }: PageProps) {
           <LibraryContent
             library={data.library}
             series={data.seriesPage}
-            currentPage={currentPage}
+            currentPage={data.query.page}
             preferences={data.preferences}
-            unreadOnly={data.unreadOnly}
-            pageSize={data.effectivePageSize}
-            sort={data.safeSort}
-            hasMissing={data.hasMissing}
+            unreadOnly={data.query.unreadOnly}
+            pageSize={data.query.pageSize}
+            sort={data.query.sort}
+            hasMissing={data.query.missing}
             canSortByRating={data.canSortByRating}
+            search={data.query.search}
           />
         </RefreshSurface>
       )}

@@ -11,6 +11,7 @@ import {
   type ReadSeriesFilter,
 } from "@/lib/services/read-series.service";
 import { loadSurface } from "@/lib/surfaces/load-surface";
+import { parsePage } from "@/lib/collections/query";
 import { SurfaceBoundary } from "@/components/ui/SurfaceBoundary";
 import frMessages from "@/i18n/messages/fr/common.json";
 import enMessages from "@/i18n/messages/en/common.json";
@@ -36,11 +37,6 @@ interface RatingsPageProps {
 
 function parseFilter(value: string | undefined): ReadSeriesFilter {
   return value === "unrated" || value === "rated" ? value : "all";
-}
-
-function parsePage(value: string | undefined): number {
-  const parsed = Number.parseInt(value ?? "", 10);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
 }
 
 export default async function RatingsPage({ searchParams }: RatingsPageProps) {
