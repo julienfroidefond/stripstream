@@ -24,6 +24,12 @@ import type {
 import type { HomePrimaryData } from "@/types/home";
 import { createStripstreamClient } from "./stripstream.client";
 import type { StripstreamClient } from "./stripstream.client";
+import {
+  findSeriesById,
+  resolveSeriesId,
+  resolveSeriesIdByName,
+  resolveSeriesIdFromBookId,
+} from "./series-identity";
 import { StripstreamAdapter } from "./stripstream.adapter";
 import { selectApprovedMetadataLink } from "./metadata-links";
 import { scanStateFromIndexJobStatus } from "../scan-status";
@@ -37,7 +43,6 @@ import type {
   StripstreamReadingProgressResponse,
   StripstreamSearchResponse,
   StripstreamSeriesMetadata,
-  StripstreamSeriesLookup,
   StripstreamMetadataLink,
   StripstreamMissingBooksDto,
   StripstreamRelatedSeriesItem,
@@ -48,8 +53,6 @@ import type {
   StripstreamIndexJob,
 } from "@/types/stripstream";
 import { HOME_CACHE_TAG, LIBRARY_SERIES_CACHE_TAG, SERIES_BOOKS_CACHE_TAG, SERIES_RATING_CACHE_TAG, SERIES_SHELF_CACHE_TAG, RATINGS_LIST_CACHE_TAG, STATS_CACHE_TAG, FAVORITES_CACHE_TAG, cacheTags } from "@/constants/cacheConstants";
-import { ERROR_CODES } from "@/constants/errorCodes";
-import { AppError } from "@/utils/errors";
 
 const CACHE_TTL_LONG = 300;
 const CACHE_TTL_MED = 120;
@@ -178,7 +181,7 @@ export class StripstreamProvider implements IMediaProvider {
    * callers with a name-only book use `resolveBookSeries`.
    */
   async getSeriesById(seriesId: string): Promise<NormalizedSeries | null> {
-    const series = await this.fetchSeriesById(seriesId);
+    const series = await findSeriesById(this.client, seriesId);
     if (series) {
       return this.enrichSeriesWithMetadata(
         StripstreamAdapter.toNormalizedSeries(series),
@@ -186,52 +189,16 @@ export class StripstreamProvider implements IMediaProvider {
       );
     }
 
-    return this.getSeriesByFirstBookId(seriesId);
-  }
+    const resolvedId = await resolveSeriesIdFromBookId(this.client, seriesId);
+    if (!resolvedId) return null;
 
-  private async getSeriesByFirstBookId(
-    bookId: string
-  ): Promise<NormalizedSeries | null> {
-    try {
-      const book = await this.client.fetch<StripstreamBookDetails>(`books/${bookId}`, undefined, {
-        revalidate: CACHE_TTL_MED,
-      });
-      if (!book.series) return null;
+    const resolved = await findSeriesById(this.client, resolvedId);
+    if (!resolved) return null;
 
-      // Resolve series name → series_id via by-name endpoint
-      const lookup = await this.client.fetch<StripstreamSeriesLookup>(
-        `libraries/${book.library_id}/series/by-name/${encodeURIComponent(book.series)}`,
-        undefined,
-        { revalidate: CACHE_TTL_MED }
-      );
-      const resolved = await this.fetchSeriesById(lookup.id);
-      if (!resolved) return null;
-      return this.enrichSeriesWithMetadata(
-        StripstreamAdapter.toNormalizedSeries(resolved),
-        resolved.series_id
-      );
-    } catch (error) {
-      // Même contrat que `fetchSeriesById` : absence confirmée uniquement.
-      if (error instanceof AppError && error.code === ERROR_CODES.STRIPSTREAM.NOT_FOUND) {
-        return null;
-      }
-      throw error;
-    }
-  }
-
-  private async fetchSeriesById(seriesId: string): Promise<StripstreamSeriesItem | null> {
-    try {
-      return await this.client.fetch<StripstreamSeriesItem>(
-        `series/${seriesId}/details`,
-        undefined,
-        { revalidate: CACHE_TTL_MED }
-      );
-    } catch (error) {
-      if (error instanceof AppError && error.code === ERROR_CODES.STRIPSTREAM.NOT_FOUND) {
-        return null;
-      }
-      throw error;
-    }
+    return this.enrichSeriesWithMetadata(
+      StripstreamAdapter.toNormalizedSeries(resolved),
+      resolved.series_id
+    );
   }
 
   private async enrichSeriesWithMetadata(
@@ -288,35 +255,13 @@ export class StripstreamProvider implements IMediaProvider {
     }
   }
 
-  private async resolveSeriesId(seriesIdOrBookId: string): Promise<string | null> {
-    // Try as series_id directly
-    const series = await this.fetchSeriesById(seriesIdOrBookId);
-    if (series) return series.series_id;
-
-    // Fallback: try as first_book_id — resolve to series_id via by-name
-    try {
-      const book = await this.client.fetch<StripstreamBookDetails>(`books/${seriesIdOrBookId}`, undefined, {
-        revalidate: CACHE_TTL_MED,
-      });
-      if (!book.series) return null;
-      const lookup = await this.client.fetch<StripstreamSeriesLookup>(
-        `libraries/${book.library_id}/series/by-name/${encodeURIComponent(book.series)}`,
-        undefined,
-        { revalidate: CACHE_TTL_MED }
-      );
-      return lookup.id;
-    } catch {
-      return null;
-    }
-  }
-
   async getBooks(filter: BookListFilter): Promise<NormalizedBooksPage> {
     const limit = filter.limit ?? 24;
     const params: Record<string, string | undefined> = { limit: String(limit) };
 
     if (filter.seriesId) {
       // `seriesId` is a series UUID; the books API expects a series id.
-      const seriesId = await this.resolveSeriesId(filter.seriesId);
+      const seriesId = await resolveSeriesId(this.client, filter.seriesId);
       params.series = seriesId ?? filter.seriesId;
     } else if (filter.libraryId) {
       params.library_id = filter.libraryId;
@@ -363,16 +308,17 @@ export class StripstreamProvider implements IMediaProvider {
       if (!book.series || book.volume == null) return null;
 
       // Resolve series name to series_id for the books API
-      const lookup = await this.client.fetch<StripstreamSeriesLookup>(
-        `libraries/${book.library_id}/series/by-name/${encodeURIComponent(book.series)}`,
-        undefined,
-        { revalidate: CACHE_TTL_MED }
+      const seriesId = await resolveSeriesIdByName(
+        this.client,
+        book.library_id,
+        book.series
       );
+      if (!seriesId) return null;
 
       // Charge une page bornée (50) triée par volume pour repérer le tome suivant :
       // pas besoin de charger toute la série.
       const response = await this.client.fetch<StripstreamBooksPage>("books", {
-        series: lookup.id,
+        series: seriesId,
         limit: "50",
         sort: "volume",
       }, { revalidate: CACHE_TTL_SHORT });
@@ -633,18 +579,13 @@ export class StripstreamProvider implements IMediaProvider {
     const seriesResults: NormalizedSearchResult[] = [];
 
     const resolveHit = async (s: (typeof hits)[number]): Promise<string> => {
-      let id = s.first_book_id;
       try {
-        const lookup = await this.client.fetch<StripstreamSeriesLookup>(
-          `libraries/${s.library_id}/series/by-name/${encodeURIComponent(s.name)}`,
-          undefined,
-          { revalidate: CACHE_TTL_MED }
-        );
-        id = lookup.id;
+        // La recherche est best-effort : un échec de résolution retombe sur
+        // `first_book_id`, jamais sur une page en erreur.
+        return (await resolveSeriesIdByName(this.client, s.library_id, s.name)) ?? s.first_book_id;
       } catch {
-        // fallback to first_book_id
+        return s.first_book_id;
       }
-      return id;
     };
 
     const seenIds = new Set<string>();
