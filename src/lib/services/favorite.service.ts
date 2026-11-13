@@ -195,14 +195,16 @@ export class FavoriteService {
     return null;
   }
 
+  /**
+   * Lectures : « aucun store » (pas de connexion utilisable) dégrade en
+   * `false`/`[]`, mais une panne du store remonte. Rendre `false` ou `[]` sur
+   * une panne affichait une étoile éteinte et un flux favoris « chargé mais
+   * vide » ; c'est l'appelant qui décide (registre de l'accueil : état
+   * `failed` ; page série : terminal d'erreur de la surface).
+   */
   static async isFavorite(context: FavoriteContext, seriesId: string): Promise<boolean> {
-    try {
-      const store = await FavoriteService.resolveStore(context);
-      return store ? await store.isFavorite(seriesId) : false;
-    } catch (error) {
-      logReadFailure(error, { seriesId }, "Favorite status check failed");
-      return false;
-    }
+    const store = await FavoriteService.resolveStore(context);
+    return store ? store.isFavorite(seriesId) : false;
   }
 
   static async addToFavorites(context: FavoriteContext, seriesId: string): Promise<void> {
@@ -228,22 +230,12 @@ export class FavoriteService {
   }
 
   static async getAllFavoriteIds(context: FavoriteContext): Promise<string[]> {
-    try {
-      const store = await FavoriteService.resolveStore(context);
-      return store ? await store.listIds() : [];
-    } catch (error) {
-      logReadFailure(error, {}, "Favorite ids fetch failed");
-      return [];
-    }
+    const store = await FavoriteService.resolveStore(context);
+    return store ? store.listIds() : [];
   }
 
   static async listFavorites(context: FavoriteContext): Promise<NormalizedSeries[]> {
-    try {
-      const store = await FavoriteService.resolveStore(context);
-      return store ? await store.list() : [];
-    } catch (error) {
-      logReadFailure(error, {}, "Favorites fetch failed");
-      return [];
-    }
+    const store = await FavoriteService.resolveStore(context);
+    return store ? store.list() : [];
   }
 }
