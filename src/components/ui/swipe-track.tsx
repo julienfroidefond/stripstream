@@ -11,12 +11,15 @@ import {
 } from "react";
 import { cn } from "@/lib/utils";
 import { gsap } from "@/lib/gsap";
-
-const SWIPE_THRESHOLD_RATIO = 0.12;
-const SWIPE_THRESHOLD_MIN = 40;
-const VELOCITY_THRESHOLD = 0.35;
-/** Projection de l'élan du doigt en pixels, pour décider d'un changement. */
-const VELOCITY_PROJECTION_MS = 120;
+import {
+  SETTLE_DURATION,
+  beginDrag,
+  moveDrag,
+  releaseDrag,
+  shouldSuppressClick,
+  snapDuration,
+  type DragState,
+} from "@/lib/carousel/gesture";
 
 interface SwipeTrackProps {
   /** Clé de la diapositive centrale ; son changement recentre la piste. */
@@ -34,19 +37,6 @@ interface SwipeTrackProps {
   className?: string;
 }
 
-interface DragState {
-  pointerId: number;
-  startX: number;
-  startY: number;
-  baseX: number;
-  currentX: number;
-  lastX: number;
-  lastTime: number;
-  velocity: number;
-  active: boolean;
-  horizontal: boolean;
-}
-
 /**
  * Piste de carrousel tactile.
  *
@@ -55,6 +45,10 @@ interface DragState {
  * résistance ni rotation 3D, puis un tween court termine le geste ou ramène la
  * piste au centre. Les voisines restent `inert` pour ne pas doubler les liens
  * et boutons dans l'ordre de tabulation.
+ *
+ * Le seuil, le verrouillage d'axe, l'inertie et la décision de relâchement
+ * vivent dans `src/lib/carousel/gesture.ts` ; ce composant ne fait que relier
+ * les événements pointeur à ces transitions et appliquer le tween GSAP.
  */
 export function SwipeTrack({
   activeKey,
@@ -151,16 +145,14 @@ export function SwipeTrack({
 
   const resetDrag = useCallback(() => {
     dragRef.current = null;
-    animateTo(-widthRef.current, 0.3);
+    animateTo(-widthRef.current, SETTLE_DURATION);
   }, [animateTo]);
 
   const finishSwipe = useCallback(
     (direction: 1 | -1, offset: number, currentX: number) => {
       const width = widthRef.current;
       const targetX = -width + direction * -width;
-      const distance = Math.abs(targetX - currentX);
-      const duration = Math.min(0.42, Math.max(0.22, distance / 2200));
-      animateTo(targetX, duration, () => {
+      animateTo(targetX, snapDuration(Math.abs(targetX - currentX)), () => {
         onSwipeRef.current?.(direction, offset);
       });
     },
@@ -168,90 +160,71 @@ export function SwipeTrack({
   );
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (!swipeEnabled || reduce || dragRef.current) return;
+    if (dragRef.current) return;
     if (event.pointerType === "mouse" && event.button !== 0) return;
     const track = trackRef.current;
     if (!track) return;
+
+    const baseX = Number(gsap.getProperty(track, "x")) || -widthRef.current;
+    const drag = beginDrag({
+      enabled: swipeEnabled && !reduce,
+      pointerId: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      baseX,
+      time: performance.now(),
+    });
+    if (!drag) return;
 
     // Un appui pendant le retour élastique reprend la piste là où elle est :
     // le doigt ne repart jamais d'une position fantôme.
     tweenRef.current?.kill();
     tweenRef.current = null;
-    const baseX = Number(gsap.getProperty(track, "x")) || -widthRef.current;
 
     onInteractionStartRef.current?.();
-    dragRef.current = {
-      pointerId: event.pointerId,
-      startX: event.clientX,
-      startY: event.clientY,
-      baseX,
-      currentX: baseX,
-      lastX: event.clientX,
-      lastTime: performance.now(),
-      velocity: 0,
-      active: true,
-      horizontal: false,
-    };
+    dragRef.current = drag;
     suppressClick.current = false;
   };
 
   const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
     const drag = dragRef.current;
-    if (!drag?.active) return;
+    if (!drag) return;
 
-    const deltaX = event.clientX - drag.startX;
-    const deltaY = event.clientY - drag.startY;
+    const result = moveDrag(drag, {
+      x: event.clientX,
+      y: event.clientY,
+      time: performance.now(),
+    });
+    dragRef.current = result.state;
 
-    if (!drag.horizontal) {
-      if (Math.abs(deltaX) < 6 && Math.abs(deltaY) < 6) return;
-      if (Math.abs(deltaY) > Math.abs(deltaX)) {
-        drag.active = false;
-        return;
-      }
-      drag.horizontal = true;
+    if (result.capture) {
       // Capture uniquement après confirmation du geste horizontal : un tap
       // sur la cover ou le CTA garde sa cible et son clic d'origine.
       rootRef.current?.setPointerCapture(event.pointerId);
     }
 
-    const now = performance.now();
-    const elapsed = now - drag.lastTime;
-    if (elapsed > 0) {
-      const instant = (event.clientX - drag.lastX) / elapsed;
-      drag.velocity = drag.velocity * 0.7 + instant * 0.3;
-      drag.lastX = event.clientX;
-      drag.lastTime = now;
-    }
-
-    drag.currentX = drag.baseX + deltaX;
-    suppressClick.current = Math.abs(deltaX) > 6;
-    xSetter.current?.(drag.currentX);
+    suppressClick.current = shouldSuppressClick(result.offsetX);
+    xSetter.current?.(result.state.baseX + result.offsetX);
   };
 
   const handlePointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
     const drag = dragRef.current;
     dragRef.current = null;
-    if (!drag?.active || !drag.horizontal) return;
+    if (!drag) return;
 
     if (rootRef.current?.hasPointerCapture(event.pointerId)) {
       rootRef.current.releasePointerCapture(event.pointerId);
     }
 
-    const width = widthRef.current;
-    const offset = drag.currentX - drag.baseX;
-    // Un doigt qui marque une pause avant de relâcher ne doit pas conserver
-    // l'élan de son dernier mouvement.
-    const sinceLastMove = performance.now() - drag.lastTime;
-    const velocity = sinceLastMove > 80 ? 0 : drag.velocity;
-    const projected = offset + velocity * VELOCITY_PROJECTION_MS;
-    const threshold = Math.max(SWIPE_THRESHOLD_MIN, width * SWIPE_THRESHOLD_RATIO);
-    const shouldAdvance =
-      Math.abs(projected) > threshold || Math.abs(velocity) > VELOCITY_THRESHOLD;
+    const release = releaseDrag(drag, {
+      time: performance.now(),
+      width: widthRef.current,
+    });
 
-    if (shouldAdvance) {
-      finishSwipe(projected < 0 ? 1 : -1, offset, drag.currentX);
+    if (release.advance) {
+      finishSwipe(release.direction, release.offset, drag.baseX + release.offset);
     } else {
-      animateTo(-width, 0.3);
+      animateTo(-widthRef.current, SETTLE_DURATION);
     }
 
     window.setTimeout(() => {
@@ -283,11 +256,11 @@ export function SwipeTrack({
         resetDrag();
       }}
       onPointerLeave={() => {
-        if (dragRef.current && !dragRef.current.horizontal) dragRef.current = null;
+        if (dragRef.current && dragRef.current.axis !== "horizontal") dragRef.current = null;
       }}
       onLostPointerCapture={(event) => {
         if (event.target !== event.currentTarget) return;
-        if (dragRef.current?.horizontal) resetDrag();
+        if (dragRef.current?.axis === "horizontal") resetDrag();
       }}
       onDragStart={(event) => event.preventDefault()}
       onClickCapture={handleClickCapture}

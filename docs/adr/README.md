@@ -20,5 +20,6 @@ Decisions that shaped the current architecture and would be expensive or surpris
 | [0014](./0014-error-catalog-completeness.md) | Error codes, technical messages and localized copy cannot drift apart. |
 | [0015](./0015-preferences-descriptor.md) | User preferences are described once and derived everywhere. |
 | [0016](./0016-collection-query-contract.md) | Collection pages parse their query through one contract. |
+| [0017](./0017-carousel-gesture-machine.md) | Carousel gestures and index transitions are pure policies. |
 
 New records use the next number and the same shape: a short title, one paragraph of context/decision/why, and optional `Considered options` / `Consequences` sections.

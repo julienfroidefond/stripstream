@@ -21,6 +21,7 @@ import {
 } from "@/components/motion";
 import { ProjectionBackdrop } from "@/components/ui/projection-backdrop";
 import { SwipeTrack } from "@/components/ui/swipe-track";
+import { resolveGoTo, resolveSlidesChange, wrapIndex } from "@/lib/carousel/index-machine";
 
 /**
  * Vrai pour la diapositive affichée tant que l'entrée en scène du carrousel
@@ -107,7 +108,7 @@ export function SpotlightCarousel({
     return () => observer.disconnect();
   }, [reduce]);
 
-  const safeIndex = total > 0 ? ((index % total) + total) % total : 0;
+  const safeIndex = wrapIndex(index, total);
   const slide = slides[safeIndex];
   const hasMany = total > 1;
   const revealed = Boolean(reduce) || inView;
@@ -177,33 +178,27 @@ export function SpotlightCarousel({
   );
 
   const goTo = (target: number) => {
-    if (total === 0) return;
-    const next = ((target % total) + total) % total;
-    if (next === safeIndex) return;
+    const next = resolveGoTo(safeIndex, target, total);
+    if (!next.changed) return;
     settleIntro();
     setStaged(false);
     if (reduce) {
       setBackdropFrom(null);
-      setIndex(next);
+      setIndex(next.index);
       return;
     }
     showBackdropFrom(slide);
-    setIndex(next);
+    setIndex(next.index);
   };
 
   useEffect(() => {
-    if (total > previousTotal.current) {
+    const change = resolveSlidesChange(index, previousTotal.current, total);
+    if (change.moved) {
       const from = currentSlideRef.current;
       settleIntro();
       setStaged(false);
       if (!reduce && from) showBackdropFrom(from);
-      setIndex(previousTotal.current);
-    } else if (total > 0 && index >= total) {
-      const from = currentSlideRef.current;
-      settleIntro();
-      setStaged(false);
-      if (!reduce && from) showBackdropFrom(from);
-      setIndex(Math.max(0, total - 1));
+      setIndex(change.index);
     }
     previousTotal.current = total;
   }, [index, reduce, settleIntro, showBackdropFrom, total]);
