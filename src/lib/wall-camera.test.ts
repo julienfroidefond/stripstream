@@ -1,9 +1,16 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  MAX_WALL_ZOOM,
+  MIN_WALL_ZOOM,
   WALL_FOCUS_DURATION,
   WALL_CAMERA_SYNC_DISTANCE,
+  WALL_WHEEL_LINE,
+  WALL_WHEEL_ZOOM,
+  clampWallZoom,
   fitWallCamera,
+  wallViewRect,
+  wallWheelIntent,
   initialWallCamera,
   initialWallScale,
   resizeWallCamera,
@@ -212,5 +219,67 @@ describe("camera timing", () => {
   it("keeps the focus flight short enough to feel immediate", () => {
     expect(WALL_FOCUS_DURATION).toBeGreaterThan(0.5);
     expect(WALL_FOCUS_DURATION).toBeLessThan(1);
+  });
+});
+
+describe("clampWallZoom", () => {
+  it("pins the issue's zoom contract", () => {
+    expect(MIN_WALL_ZOOM).toBe(0.28);
+    expect(MAX_WALL_ZOOM).toBe(2.4);
+  });
+
+  it("clamps to the wall bounds", () => {
+    expect(clampWallZoom(0.1, MIN_WALL_ZOOM)).toBe(MIN_WALL_ZOOM);
+    expect(clampWallZoom(10, MIN_WALL_ZOOM)).toBe(MAX_WALL_ZOOM);
+  });
+
+  it("respects a higher dynamic floor", () => {
+    expect(clampWallZoom(0.4, 0.6)).toBe(0.6);
+  });
+
+  it("keeps values already inside the bounds", () => {
+    expect(clampWallZoom(1.2, MIN_WALL_ZOOM)).toBe(1.2);
+  });
+});
+
+describe("wallWheelIntent", () => {
+  it("zooms multiplicatively with ctrl/meta, in for a negative delta", () => {
+    const intent = wallWheelIntent({
+      deltaX: 0,
+      deltaY: -100,
+      deltaMode: 0,
+      zoom: true,
+    });
+    expect(intent).toEqual({
+      kind: "zoom",
+      factor: Math.exp(100 * WALL_WHEEL_ZOOM),
+    });
+    expect(intent.kind === "zoom" && intent.factor).toBeGreaterThan(1);
+  });
+
+  it("pans opposite to the wheel delta, in pixels", () => {
+    expect(
+      wallWheelIntent({ deltaX: 10, deltaY: 20, deltaMode: 0, zoom: false })
+    ).toEqual({ kind: "pan", dx: -10, dy: -20 });
+  });
+
+  it("converts line-based deltas to pixels", () => {
+    expect(
+      wallWheelIntent({ deltaX: 1, deltaY: -2, deltaMode: 1, zoom: false })
+    ).toEqual({ kind: "pan", dx: -WALL_WHEEL_LINE, dy: 2 * WALL_WHEEL_LINE });
+  });
+});
+
+describe("wallViewRect", () => {
+  it("projects the stage onto the wall", () => {
+    expect(
+      wallViewRect({ x: -200, y: 100, scale: 2 }, { width: 1000, height: 700 })
+    ).toEqual({ left: 100, top: -50, right: 600, bottom: 300 });
+  });
+
+  it("guards against a degenerate scale", () => {
+    expect(
+      wallViewRect({ x: -10, y: -20, scale: 0 }, { width: 100, height: 50 })
+    ).toEqual({ left: 10, top: 20, right: 110, bottom: 70 });
   });
 });
