@@ -219,8 +219,8 @@ export async function serveMedia(
   policy: MediaPolicy,
   dependencies: MediaRouteDependencies
 ): Promise<Response> {
-  const user = await dependencies.getCurrentUser();
-  if (!user) {
+  const userId = await dependencies.getCurrentUserId();
+  if (userId === null) {
     return jsonError({
       status: 401,
       code: ERROR_CODES.AUTH.UNAUTHENTICATED,
@@ -230,7 +230,7 @@ export async function serveMedia(
 
   try {
     const transport = dependencies.getTransport(provider);
-    const upstream = await transport.fetch(ref, { headers: request.headers });
+    const upstream = await transport.fetch(ref, { headers: request.headers, userId });
     return buildMediaResponse(upstream, policy.response);
   } catch (error) {
     return buildErrorResponse(provider, policy.errors, error);

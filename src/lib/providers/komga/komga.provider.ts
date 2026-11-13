@@ -253,7 +253,11 @@ export class KomgaProvider implements IMediaProvider {
 
   async getNextBook(bookId: string): Promise<NormalizedBook | null> {
     try {
-      const book = await this.fetch<KomgaBook>(`books/${bookId}/next`);
+      const book = await this.fetch<KomgaBook>(
+        `books/${bookId}/next`,
+        undefined,
+        cacheProfile.nextBook()
+      );
       return KomgaAdapter.toNormalizedBook(book);
     } catch (error) {
       if (

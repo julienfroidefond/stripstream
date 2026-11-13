@@ -1,4 +1,3 @@
-import { requireUserId } from "@/lib/auth-utils";
 import { AppError } from "@/utils/errors";
 import type { ProviderType } from "@/lib/providers/types";
 import { getActiveConnection } from "./active";
@@ -62,17 +61,15 @@ export async function getStoredConnection<P extends ProviderType>(
 }
 
 /**
- * Variante liée à la session, réservée aux transports média : la route média
- * est un point d'entrée (elle a déjà vérifié la session) et le transport n'a
- * pas d'identité à recevoir. Comme `getProvider`, ce module fabrique la
- * connexion de la requête courante ; il est l'un des rares lecteurs légitimes
- * de la session (ADR 0029). Le reste du module prend un `userId` explicite.
- * L'absence de connexion lève le code « config manquante » de la définition.
+ * Connexion du provider pour un utilisateur déjà authentifié, réservée aux
+ * transports média : la route média résout la session et transmet `userId`
+ * (ADR 0029). L'absence de connexion lève le code « config manquante » de la
+ * définition.
  */
 export async function requireConnectionForProvider<P extends ProviderType>(
-  provider: P
+  provider: P,
+  userId: number
 ): Promise<ConnectionOf<P>> {
-  const userId = await requireUserId();
   const connection = await resolveConnectionForProvider(provider, userId);
   if (!connection) {
     throw new AppError(getProviderDefinition(provider).missingConfigCode);

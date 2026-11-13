@@ -9,7 +9,6 @@ vi.mock("@/lib/connections", () => ({
   requireConnectionForProvider: requireConnectionMock,
 }));
 
-vi.mock("@/lib/auth-utils", () => ({ requireUserId: vi.fn(async () => 1) }));
 
 vi.mock("@/lib/services/preferences.service", () => ({
   PreferencesService: { getPreferences: getPreferencesMock },
@@ -24,8 +23,10 @@ const KOMGA = {
   authHeader: "secret",
 };
 
+const USER_ID = 42;
+
 function context(headers: Record<string, string> = {}) {
-  return { headers: new Headers(headers) };
+  return { headers: new Headers(headers), userId: USER_ID };
 }
 
 function lastFetchCall() {
@@ -133,6 +134,9 @@ describe("komgaMediaTransport", () => {
     expect(lastFetchCall().url).toBe(
       "http://komga.test/api/v1/books/book-1/thumbnail"
     );
+    // L'identité vient de la route, pas de la session.
+    expect(getPreferencesMock).toHaveBeenCalledWith(USER_ID);
+    expect(requireConnectionMock).toHaveBeenCalledWith("komga", USER_ID);
   });
 
   it("resolves the first book before serving a series cover", async () => {

@@ -15,10 +15,10 @@ function request(path = "/api/media/test") {
 
 function dependencies(
   transport: MediaTransport,
-  user: { id: string } | null = { id: "1" }
+  userId: number | null = 1
 ): MediaRouteDependencies {
   return {
-    getCurrentUser: async () => user,
+    getCurrentUserId: async () => userId,
     getTransport: () => transport,
   };
 }
@@ -302,6 +302,23 @@ describe("serveMedia", () => {
     );
 
     expect(response.status).toBe(404);
+  });
+
+  it("hands the authenticated user to the transport", async () => {
+    const fetch = vi.fn(async () => new Response("cover", { status: 200 }));
+
+    await serveMedia(
+      request(),
+      "komga",
+      { kind: "book-cover", bookId: "book-1" },
+      mediaPolicy("komga", "book-cover"),
+      dependencies({ fetch }, 42)
+    );
+
+    expect(fetch).toHaveBeenCalledWith(
+      { kind: "book-cover", bookId: "book-1" },
+      expect.objectContaining({ userId: 42 })
+    );
   });
 
   it("rejects an unauthenticated request before touching the transport", async () => {

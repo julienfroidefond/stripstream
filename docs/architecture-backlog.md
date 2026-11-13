@@ -11,8 +11,6 @@ Opened by the architecture audit of 2026-11-13 (state of `main` at `a2e9fd1`). C
 | # | Chantier | Evidence | ADR |
 | --- | --- | --- | --- |
 | K | **Registration is throttled per client, not only per email.** `AuthServerService.registerUser` keeps a per-email budget, so rotating addresses is not slowed and nothing is limited per IP. | `auth-server.service.ts`, ADR 0023 | — |
-| L | **Media transports receive the caller identity.** `komga.transport.ts` (cover preference) and `requireConnectionForProvider` still read the session; thread `userId` through the media transport context. | ADR 0029 *Consequences* | — |
-| M | **Cache profile inconsistencies.** Komga's `getNextBook` is uncached while Stripstream's uses `nextBook()` (30 s); `stats()` declares no TTL. Decide one profile each. | ADR 0028 *Consequences* | — |
 
 ## Picking the next one
 
@@ -22,17 +20,19 @@ Order by the number of call sites a wrong change would silently break, not by fi
 
 | PR | Change | ADR |
 | --- | --- | --- |
-| `feat/localize-admin-account` | Admin and account screens read every label from `admin.*` / `account.*` in both locales; dates follow the active language. | — |
-| `refactor/provider-registry` | A provider registry owns what differs between connection types. | [0030](./adr/0030-provider-registry-for-connections.md) |
-| `refactor/services-receive-identity` | Services receive the caller's identity instead of reading the session. | [0029](./adr/0029-services-receive-the-caller-identity.md) |
-| `refactor/cache-profiles` | Cache profiles are produced in one place. | [0028](./adr/0028-one-cache-profile-producer.md) |
-| `refactor/media-by-kind` | Media is addressed and cached by kind. | [0027](./adr/0027-media-addressed-and-cached-by-kind.md) |
-| `refactor/home-feed-policy` | The home feed policy is declared by the registry. | [0026](./adr/0026-home-feed-policy-in-registry.md) |
-| `refactor/wall-camera-intentions` | The wall camera speaks in intentions, the pointer machine is pure. | [0025](./adr/0025-wall-camera-speaks-in-intentions.md) |
-| `refactor/read-progress-mutations` | Read progress has one client mutation seam. | [0024](./adr/0024-read-progress-mutation-seam.md) |
-| `refactor/actions-through-runner` | Every server action runs through the runner, admin authorization included. | [0023](./adr/0023-every-action-through-the-runner.md) |
-| `refactor/reader-side-actions` | Reader side actions and the prefetch plan are pure policies. | [0022](./adr/0022-reader-side-actions-policy.md) |
-| `refactor/pagination-contract` | Paginated provider lists share one page-number contract. | [0021](./adr/0021-one-pagination-contract.md) |
+| #173 | Admin and account screens read every label from `admin.*` / `account.*` in both locales; dates follow the active language. | — |
+| #172 | Komga's next book is cached like Stripstream's; reading stats declare a TTL. | [0028 amendment](./adr/0028-one-cache-profile-producer.md) |
+| #172 | Media transports receive the caller identity from the route. | [0029 amendment](./adr/0029-services-receive-the-caller-identity.md) |
+| #171 | A provider registry owns what differs between connection types. | [0030](./adr/0030-provider-registry-for-connections.md) |
+| #171 | Services receive the caller's identity instead of reading the session. | [0029](./adr/0029-services-receive-the-caller-identity.md) |
+| #171 | Cache profiles are produced in one place. | [0028](./adr/0028-one-cache-profile-producer.md) |
+| #171 | Media is addressed and cached by kind. | [0027](./adr/0027-media-addressed-and-cached-by-kind.md) |
+| #171 | The home feed policy is declared by the registry. | [0026](./adr/0026-home-feed-policy-in-registry.md) |
+| #171 | The wall camera speaks in intentions, the pointer machine is pure. | [0025](./adr/0025-wall-camera-speaks-in-intentions.md) |
+| #171 | Read progress has one client mutation seam. | [0024](./adr/0024-read-progress-mutation-seam.md) |
+| #171 | Every server action runs through the runner, admin authorization included. | [0023](./adr/0023-every-action-through-the-runner.md) |
+| #171 | Reader side actions and the prefetch plan are pure policies. | [0022](./adr/0022-reader-side-actions-policy.md) |
+| #171 | Paginated provider lists share one page-number contract. | [0021](./adr/0021-one-pagination-contract.md) |
 | #170 | Dead schema columns are dropped, not documented. | [0020](./adr/0020-drop-dead-schema-columns.md) |
 | #169 | A required capability owns its data and is handed to the loader. | [0019](./adr/0019-capability-owns-its-data.md) |
 | #167 | Rate-limit counters live in a shared SQLite store behind one seam. | [0018](./adr/0018-durable-rate-limit-store.md) |

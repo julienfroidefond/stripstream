@@ -65,7 +65,7 @@ export const stripstreamMediaTransport: MediaTransport = {
       throw new AppError(ERROR_CODES.IMAGE.FETCH_ERROR, { status: 404 });
     }
 
-    const config = await requireConnectionForProvider("stripstream");
+    const config = await requireConnectionForProvider("stripstream", context.userId);
     const transport = new ProviderTransport(
       createStripstreamTransportPolicy(config.url, config.token)
     );
