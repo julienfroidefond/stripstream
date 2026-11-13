@@ -15,6 +15,8 @@ import {
   SETTLE_DURATION,
   beginDrag,
   moveDrag,
+  ownsDrag,
+  planPress,
   releaseDrag,
   shouldSuppressClick,
   snapDuration,
@@ -68,6 +70,10 @@ export function SwipeTrack({
   const tweenRef = useRef<gsap.core.Tween | null>(null);
   const dragRef = useRef<DragState | null>(null);
   const suppressClick = useRef(false);
+  /** Le tween en cours termine un balayage dont `onSwipe` n'est pas parti. */
+  const pendingSwipeRef = useRef(false);
+  /** Le changement de clé vient d'un balayage validé par un nouvel appui. */
+  const keepDragOnKeyChange = useRef(false);
   const onSwipeRef = useRef(onSwipe);
   const onInteractionStartRef = useRef(onInteractionStart);
 
@@ -101,7 +107,11 @@ export function SwipeTrack({
     // relâchement : on le coupe pour ne pas appliquer un second changement.
     tweenRef.current?.kill();
     tweenRef.current = null;
-    dragRef.current = null;
+    pendingSwipeRef.current = false;
+    // Un appui qui a validé le balayage précédent garde son geste : la piste
+    // est déjà recentrée sous le doigt.
+    if (keepDragOnKeyChange.current) keepDragOnKeyChange.current = false;
+    else dragRef.current = null;
     centerTrack();
   }, [activeKey, centerTrack]);
 
@@ -152,7 +162,9 @@ export function SwipeTrack({
     (direction: 1 | -1, offset: number, currentX: number) => {
       const width = widthRef.current;
       const targetX = -width + direction * -width;
+      pendingSwipeRef.current = true;
       animateTo(targetX, snapDuration(Math.abs(targetX - currentX)), () => {
+        pendingSwipeRef.current = false;
         onSwipeRef.current?.(direction, offset);
       });
     },
@@ -165,21 +177,34 @@ export function SwipeTrack({
     const track = trackRef.current;
     if (!track) return;
 
-    const baseX = Number(gsap.getProperty(track, "x")) || -widthRef.current;
+    const press = planPress({
+      trackX: Number(gsap.getProperty(track, "x")),
+      width: widthRef.current,
+      pendingSwipe: pendingSwipeRef.current && tweenRef.current !== null,
+    });
     const drag = beginDrag({
       enabled: swipeEnabled && !reduce,
       pointerId: event.pointerId,
       x: event.clientX,
       y: event.clientY,
-      baseX,
+      baseX: press.baseX,
       time: performance.now(),
     });
     if (!drag) return;
 
+    if (press.commitSwipe) {
+      // Un second balayage pendant la fin du premier : on termine le tween
+      // (son `onComplete` applique le changement) puis la piste repart du
+      // centre, là où la nouvelle diapositive sera posée au rendu.
+      keepDragOnKeyChange.current = true;
+      tweenRef.current?.progress(1);
+      xSetter.current?.(press.baseX);
+    }
     // Un appui pendant le retour élastique reprend la piste là où elle est :
     // le doigt ne repart jamais d'une position fantôme.
     tweenRef.current?.kill();
     tweenRef.current = null;
+    pendingSwipeRef.current = false;
 
     onInteractionStartRef.current?.();
     dragRef.current = drag;
@@ -188,7 +213,8 @@ export function SwipeTrack({
 
   const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
     const drag = dragRef.current;
-    if (!drag) return;
+    // Un second doigt ne pilote pas le geste du premier.
+    if (!ownsDrag(drag, event.pointerId)) return;
 
     const result = moveDrag(drag, {
       x: event.clientX,
@@ -209,8 +235,9 @@ export function SwipeTrack({
 
   const handlePointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
     const drag = dragRef.current;
+    if (!ownsDrag(drag, event.pointerId)) return;
     dragRef.current = null;
-    if (!drag) return;
+    keepDragOnKeyChange.current = false;
 
     if (rootRef.current?.hasPointerCapture(event.pointerId)) {
       rootRef.current.releasePointerCapture(event.pointerId);
