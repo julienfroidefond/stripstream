@@ -42,6 +42,21 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
       listStripstreamConfigs(),
     ]);
 
+    // Chaque branche dégrade indépendamment : on journalise celles qui
+    // échouent au lieu de les remplacer silencieusement par une valeur vide.
+    for (const [source, result] of [
+      ["libraries", librariesResult],
+      ["komgaConfigs", komgaResult],
+      ["stripstreamConfigs", stripstreamResult],
+    ] as const) {
+      if (result.status === "rejected") {
+        logger.warn(
+          { err: result.reason, source },
+          `Préférences : chargement partiel, ${source} indisponible`
+        );
+      }
+    }
+
     if (librariesResult.status === "fulfilled") libraries = librariesResult.value;
     if (komgaResult.status === "fulfilled") komgaConfigs = komgaResult.value;
     if (stripstreamResult.status === "fulfilled") stripstreamConfigs = stripstreamResult.value;

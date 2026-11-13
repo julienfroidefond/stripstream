@@ -21,6 +21,19 @@ const GRID = {
 
 type GridVariant = keyof typeof GRID;
 
+/**
+ * Clés stables des emplacements de squelette.
+ *
+ * La liste est statique, mais une clé dérivée de l'index ne dit rien de
+ * l'emplacement : on matérialise une identité par position, réutilisée par
+ * toutes les grilles (`slice(0, count)`), pour que React réconcilie les
+ * emplacements au lieu de les remonter.
+ */
+const PLACEHOLDER_KEYS = Array.from(
+  { length: 40 },
+  (_, index) => `skeleton-${index}`
+);
+
 function Cover({ className }: { className?: string }) {
   return <Skeleton className={className ?? "aspect-2/3 w-full rounded-xl"} />;
 }
@@ -42,8 +55,8 @@ function CoverGrid({ count = 20, variant = "series" }: { count?: number; variant
   if (variant === "lists") {
     return (
       <div className={GRID.lists}>
-        {Array.from({ length: count }).map((_, index) => (
-          <div key={index} className="flex flex-col gap-2">
+        {PLACEHOLDER_KEYS.slice(0, count).map((key) => (
+          <div key={key} className="flex flex-col gap-2">
             <Cover />
             <div className="space-y-0.5 px-0.5">
               <Skeleton className="h-5 w-4/5 rounded" />
@@ -59,8 +72,8 @@ function CoverGrid({ count = 20, variant = "series" }: { count?: number; variant
   if (variant === "inProgress") {
     return (
       <div className={GRID.inProgress}>
-        {Array.from({ length: count }).map((_, index) => (
-          <Cover key={index} />
+        {PLACEHOLDER_KEYS.slice(0, count).map((key) => (
+          <Cover key={key} />
         ))}
       </div>
     );
@@ -68,8 +81,8 @@ function CoverGrid({ count = 20, variant = "series" }: { count?: number; variant
 
   return (
     <div className={GRID[variant]}>
-      {Array.from({ length: count }).map((_, index) => (
-        <div key={index} className="flex flex-col gap-2">
+      {PLACEHOLDER_KEYS.slice(0, count).map((key) => (
+        <div key={key} className="flex flex-col gap-2">
           <Cover
             className={
               variant === "books" ? "aspect-2/3 w-full rounded-lg" : undefined
@@ -131,9 +144,9 @@ function CollectionToolbarSkeleton({
     <div className="flex flex-col gap-3 rounded-2xl bg-surface-1 p-3 sm:flex-row sm:flex-wrap sm:items-center">
       <Skeleton className="h-10 w-full rounded-md sm:w-auto sm:min-w-56 sm:flex-1" />
       <div className="flex flex-wrap items-center gap-1.5">
-        {Array.from({ length: filters }).map((_, index) => (
+        {PLACEHOLDER_KEYS.slice(0, filters).map((key, index) => (
           <Skeleton
-            key={index}
+            key={key}
             className={cn(
               "h-9 rounded-md",
               CHIP_WIDTHS[index % CHIP_WIDTHS.length]
@@ -323,8 +336,8 @@ export function RatingsSkeleton() {
       <CollectionToolbarSkeleton filters={3} />
 
       <div className={GRID.lists}>
-        {Array.from({ length: 18 }).map((_, index) => (
-          <div key={index} className="flex flex-col gap-2">
+        {PLACEHOLDER_KEYS.slice(0, 18).map((key) => (
+          <div key={key} className="flex flex-col gap-2">
             <Cover />
             <div className="space-y-0.5 px-0.5">
               <Skeleton className="h-5 w-4/5 rounded" />
@@ -361,8 +374,8 @@ export function AdminSkeleton() {
           <Skeleton className="h-10 w-28" />
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <Skeleton key={index} className="h-28 rounded-xl" />
+          {PLACEHOLDER_KEYS.slice(0, 4).map((key) => (
+            <Skeleton key={key} className="h-28 rounded-xl" />
           ))}
         </div>
         <Skeleton className="h-96 rounded-xl" />
