@@ -1,13 +1,15 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import type { AdminUserData } from "@/lib/services/admin.service";
+import type { AdminStatsData, AdminUserData } from "@/lib/services/admin.service";
 import { StatsCards } from "./StatsCards";
 import { UsersTable } from "./UsersTable";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { getAdminDashboardData, type AdminStatsData } from "@/app/actions/admin";
+import { getAdminDashboardData } from "@/app/actions/admin";
+import { useTranslate } from "@/hooks/useTranslate";
+import { ERROR_CODES } from "@/constants/errorCodes";
 
 interface AdminContentProps {
   initialUsers: AdminUserData[];
@@ -19,6 +21,7 @@ export function AdminContent({ initialUsers, initialStats }: AdminContentProps) 
   const [stats, setStats] = useState(initialStats);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { toast } = useToast();
+  const { t } = useTranslate();
 
   useEffect(() => {
     setUsers(initialUsers);
@@ -33,27 +36,32 @@ export function AdminContent({ initialUsers, initialStats }: AdminContentProps) 
     try {
       const result = await getAdminDashboardData();
 
-      if (!result.success || !result.users || !result.stats) {
-        throw new Error("Erreur lors du rafraîchissement");
+      if (!result.success) {
+        toast({
+          variant: "destructive",
+          title: t("common.error"),
+          description: t(`errors.${result.code}`),
+        });
+        return;
       }
 
       setUsers(result.users);
       setStats(result.stats);
 
       toast({
-        title: "Données rafraîchies",
-        description: "Les données ont été mises à jour",
+        title: t("admin.refresh.success.title"),
+        description: t("admin.refresh.success.description"),
       });
     } catch {
       toast({
         variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de rafraîchir les données",
+        title: t("common.error"),
+        description: t(`errors.${ERROR_CODES.ADMIN.FETCH_USERS_ERROR}`),
       });
     } finally {
       setIsRefreshing(false);
     }
-  }, [toast]);
+  }, [toast, t]);
 
   return (
     <div className="container mx-auto px-4 py-8">

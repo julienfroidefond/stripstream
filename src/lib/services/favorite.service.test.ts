@@ -12,18 +12,14 @@ vi.mock("@/lib/prisma", () => ({
 }));
 
 vi.mock("@/lib/connections", () => ({ getActiveConnection: vi.fn() }));
-vi.mock("@/lib/providers/provider.factory", () => ({ getProvider: vi.fn() }));
-vi.mock("@/lib/auth-utils", () => ({ getCurrentUser: vi.fn() }));
 vi.mock("@/lib/logger", () => ({
   default: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
 
 import prisma from "@/lib/prisma";
 import { getActiveConnection } from "@/lib/connections";
-import { getProvider } from "@/lib/providers/provider.factory";
-import { getCurrentUser } from "@/lib/auth-utils";
 import logger from "@/lib/logger";
-import { FavoriteService } from "./favorite.service";
+import { FavoriteService, type FavoriteContext } from "./favorite.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 import {
@@ -55,16 +51,17 @@ function fakeProvider(
   } as unknown as IMediaProvider;
 }
 
+/**
+ * L'identité est injectée : le service ne lit pas la session, aucun mock
+ * d'`auth-utils` ni de la fabrique de provider n'est nécessaire.
+ */
+function as(provider: IMediaProvider | null, userId = 1): FavoriteContext {
+  return { userId, provider };
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.mocked(getCurrentUser).mockResolvedValue({
-    id: "1",
-    email: "reader@example.com",
-    roles: [],
-    authenticated: true,
-  });
   vi.mocked(getActiveConnection).mockResolvedValue({ provider: "komga", configId: 7 });
-  vi.mocked(getProvider).mockResolvedValue(fakeProvider());
   db.findMany.mockResolvedValue([]);
   db.findFirst.mockResolvedValue(null);
   db.create.mockResolvedValue({});
@@ -74,16 +71,14 @@ beforeEach(() => {
 describe("FavoriteService.listFavorites — Komga", () => {
   it("keeps the favorite when the provider read fails transiently", async () => {
     db.findMany.mockResolvedValue([{ seriesId: "a" }, { seriesId: "b" }]);
-    vi.mocked(getProvider).mockResolvedValue(
-      fakeProvider({
-        getSeriesById: vi.fn(async (id: string) => {
-          if (id === "b") throw new AppError(ERROR_CODES.KOMGA.SERVER_ERROR);
-          return series(id);
-        }),
-      })
-    );
+    const provider = fakeProvider({
+      getSeriesById: vi.fn(async (id: string) => {
+        if (id === "b") throw new AppError(ERROR_CODES.KOMGA.SERVER_ERROR);
+        return series(id);
+      }),
+    });
 
-    const favorites = await FavoriteService.listFavorites();
+    const favorites = await FavoriteService.listFavorites(as(provider));
 
     expect(favorites.map((item) => item.id)).toEqual(["a"]);
     expect(db.deleteMany).not.toHaveBeenCalled();
@@ -92,13 +87,11 @@ describe("FavoriteService.listFavorites — Komga", () => {
 
   it("prunes only a series the provider confirms absent", async () => {
     db.findMany.mockResolvedValue([{ seriesId: "a" }, { seriesId: "b" }]);
-    vi.mocked(getProvider).mockResolvedValue(
-      fakeProvider({
-        getSeriesById: vi.fn(async (id: string) => (id === "b" ? null : series(id))),
-      })
-    );
+    const provider = fakeProvider({
+      getSeriesById: vi.fn(async (id: string) => (id === "b" ? null : series(id))),
+    });
 
-    const favorites = await FavoriteService.listFavorites();
+    const favorites = await FavoriteService.listFavorites(as(provider));
 
     expect(favorites.map((item) => item.id)).toEqual(["a"]);
     expect(db.deleteMany).toHaveBeenCalledTimes(1);
@@ -109,15 +102,13 @@ describe("FavoriteService.listFavorites — Komga", () => {
 
   it("logs a connection failure as a warning, not an error", async () => {
     db.findMany.mockResolvedValue([{ seriesId: "a" }]);
-    vi.mocked(getProvider).mockResolvedValue(
-      fakeProvider({
-        getSeriesById: vi.fn(async () => {
-          throw Object.assign(new Error("fetch failed"), { code: "ECONNREFUSED" });
-        }),
-      })
-    );
+    const provider = fakeProvider({
+      getSeriesById: vi.fn(async () => {
+        throw Object.assign(new Error("fetch failed"), { code: "ECONNREFUSED" });
+      }),
+    });
 
-    await FavoriteService.listFavorites();
+    await FavoriteService.listFavorites(as(provider));
 
     expect(logger.warn).toHaveBeenCalled();
     expect(logger.error).not.toHaveBeenCalled();
@@ -127,9 +118,8 @@ describe("FavoriteService.listFavorites — Komga", () => {
 describe("FavoriteService — store selection", () => {
   it("writes Komga favorites to SQLite, scoped to the active config", async () => {
     const provider = fakeProvider();
-    vi.mocked(getProvider).mockResolvedValue(provider);
 
-    await FavoriteService.addToFavorites("x");
+    await FavoriteService.addToFavorites(as(provider), "x");
 
     expect(db.create).toHaveBeenCalledWith({
       data: { userId: 1, seriesId: "x", provider: "komga", komgaConfigId: 7 },
@@ -154,9 +144,8 @@ describe("FavoriteService — store selection", () => {
       provider: "stripstream",
       configId: 9,
     });
-    vi.mocked(getProvider).mockResolvedValue(provider);
 
-    await FavoriteService.addToFavorites("x");
+    await FavoriteService.addToFavorites(as(provider), "x");
 
     expect(addToFavorites).toHaveBeenCalledWith("x");
     expect(db.create).not.toHaveBeenCalled();
@@ -165,7 +154,7 @@ describe("FavoriteService — store selection", () => {
   it("scopes the favorite lookup to the active config", async () => {
     db.findFirst.mockResolvedValue(null);
 
-    await expect(FavoriteService.isFavorite("x")).resolves.toBe(false);
+    await expect(FavoriteService.isFavorite(as(fakeProvider()), "x")).resolves.toBe(false);
 
     expect(db.findFirst).toHaveBeenCalledWith({
       where: { userId: 1, komgaConfigId: 7, seriesId: "x" },
@@ -180,21 +169,53 @@ describe("FavoriteService — no usable connection", () => {
       provider: "stripstream",
       configId: null,
     });
-    vi.mocked(getProvider).mockResolvedValue(null);
   });
 
   it("degrades reads instead of throwing", async () => {
-    await expect(FavoriteService.isFavorite("x")).resolves.toBe(false);
-    await expect(FavoriteService.listFavorites()).resolves.toEqual([]);
-    await expect(FavoriteService.getAllFavoriteIds()).resolves.toEqual([]);
+    await expect(FavoriteService.isFavorite(as(null), "x")).resolves.toBe(false);
+    await expect(FavoriteService.listFavorites(as(null))).resolves.toEqual([]);
+    await expect(FavoriteService.getAllFavoriteIds(as(null))).resolves.toEqual([]);
   });
 
   it("fails writes explicitly", async () => {
-    await expect(FavoriteService.addToFavorites("x")).rejects.toMatchObject({
+    await expect(FavoriteService.addToFavorites(as(null), "x")).rejects.toMatchObject({
       code: ERROR_CODES.FAVORITE.ADD_ERROR,
     });
-    await expect(FavoriteService.removeFromFavorites("x")).rejects.toMatchObject({
+    await expect(FavoriteService.removeFromFavorites(as(null), "x")).rejects.toMatchObject({
       code: ERROR_CODES.FAVORITE.DELETE_ERROR,
     });
+  });
+});
+
+describe("FavoriteService — injected identity", () => {
+  it("scopes the Komga store to the userId it receives", async () => {
+    db.findMany.mockResolvedValue([{ seriesId: "a" }]);
+
+    await FavoriteService.getAllFavoriteIds(as(fakeProvider(), 42));
+
+    expect(getActiveConnection).toHaveBeenCalledWith(42);
+    expect(db.findMany).toHaveBeenCalledWith({
+      where: { userId: 42, komgaConfigId: 7 },
+      select: { seriesId: true },
+    });
+  });
+
+  it("uses the provider it is handed instead of resolving one", async () => {
+    const getFavorites = vi.fn(async () => [series("s")]);
+    const provider = fakeProvider(
+      {},
+      {
+        favorites: {
+          getFavorites,
+          isFavorite: vi.fn(async () => true),
+          addToFavorites: vi.fn(async () => undefined),
+          removeFromFavorites: vi.fn(async () => undefined),
+        },
+      }
+    );
+
+    await expect(FavoriteService.listFavorites(as(provider))).resolves.toEqual([series("s")]);
+    expect(getFavorites).toHaveBeenCalledTimes(1);
+    expect(db.findMany).not.toHaveBeenCalled();
   });
 });

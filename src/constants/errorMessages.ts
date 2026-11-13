@@ -128,6 +128,7 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   [ERROR_CODES.ADMIN.CANNOT_DELETE_SELF]: "You cannot delete your own account",
   [ERROR_CODES.ADMIN.RESET_PASSWORD_ERROR]: "Error resetting password",
   [ERROR_CODES.ADMIN.CANNOT_RESET_OWN_PASSWORD]: "You cannot reset your own password here",
+  [ERROR_CODES.ADMIN.INVALID_ROLES]: "Roles must be a non-empty list of known roles",
 
   // Config
   [ERROR_CODES.CONFIG.INVALID_URL]:

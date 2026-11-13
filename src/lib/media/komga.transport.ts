@@ -1,5 +1,6 @@
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { requireConnectionForProvider, type KomgaConnection } from "@/lib/connections";
+import { requireUserId } from "@/lib/auth-utils";
 import { createKomgaTransportPolicy } from "@/lib/providers/komga/komga.transport-policy";
 import { ProviderTransport } from "@/lib/providers/provider-transport";
 import { imageRequestLimiter } from "@/lib/services/image-request-limiter";
@@ -74,7 +75,7 @@ async function fetchBookCover(
   context: MediaTransportContext
 ): Promise<Response> {
   try {
-    const preferences = await PreferencesService.getPreferences();
+    const preferences = await PreferencesService.getPreferences(await requireUserId());
     const path = preferences.showThumbnails
       ? `books/${bookId}/thumbnail`
       : `books/${bookId}/pages/0?zero_based=true`;
@@ -95,7 +96,7 @@ async function fetchSeriesCover(
   context: MediaTransportContext
 ): Promise<Response> {
   try {
-    const preferences = await PreferencesService.getPreferences();
+    const preferences = await PreferencesService.getPreferences(await requireUserId());
     if (preferences.showThumbnails) {
       return await streamImage(
         transport,

@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
+import { useTranslate } from "@/hooks/useTranslate";
+import { ERROR_CODES } from "@/constants/errorCodes";
 import type { AdminUserData } from "@/lib/services/admin.service";
 import { updateUserRoles } from "@/app/actions/admin";
 
@@ -32,6 +34,14 @@ export function EditUserDialog({ user, open, onOpenChange, onSuccess }: EditUser
   const [selectedRoles, setSelectedRoles] = useState<string[]>(user.roles);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { t } = useTranslate();
+
+  const showError = (code: string) =>
+    toast({
+      variant: "destructive",
+      title: t("common.error"),
+      description: t(`errors.${code}`),
+    });
 
   const handleRoleToggle = (role: string) => {
     setSelectedRoles((prev) =>
@@ -41,11 +51,7 @@ export function EditUserDialog({ user, open, onOpenChange, onSuccess }: EditUser
 
   const handleSubmit = async () => {
     if (selectedRoles.length === 0) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "L'utilisateur doit avoir au moins un rôle",
-      });
+      showError(ERROR_CODES.ADMIN.INVALID_ROLES);
       return;
     }
 
@@ -55,21 +61,18 @@ export function EditUserDialog({ user, open, onOpenChange, onSuccess }: EditUser
       const result = await updateUserRoles(user.id, selectedRoles);
 
       if (!result.success) {
-        throw new Error(result.message);
+        showError(result.code);
+        return;
       }
 
       toast({
-        title: "Succès",
-        description: "Les rôles ont été mis à jour",
+        title: t("common.success"),
+        description: t("admin.editUser.success"),
       });
 
       onSuccess();
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: error instanceof Error ? error.message : "Une erreur est survenue",
-      });
+    } catch {
+      showError(ERROR_CODES.ADMIN.UPDATE_USER_ERROR);
     } finally {
       setIsLoading(false);
     }

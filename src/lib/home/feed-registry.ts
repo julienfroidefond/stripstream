@@ -36,7 +36,14 @@ const feeds = {
   },
   favorites: {
     pageRule: "slice",
-    load: () => FavoriteService.listFavorites(),
+    // Le registre ne reçoit que le provider : il résout l'identité ici en
+    // attendant que ses appelants lui passent le `userId` (ADR 0029). Sans
+    // session, la rangée reste vide comme avant.
+    load: async (provider) => {
+      const { getCurrentUserId } = await import("@/lib/auth-utils");
+      const userId = await getCurrentUserId();
+      return userId === null ? [] : FavoriteService.listFavorites({ userId, provider });
+    },
   },
   "reading-lists": {
     pageRule: "slice",

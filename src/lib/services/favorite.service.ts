@@ -1,10 +1,8 @@
 import prisma from "@/lib/prisma";
-import { getCurrentUser } from "../auth-utils";
 import { getActiveConnection } from "@/lib/connections";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
 import { isConnectionError } from "../../utils/http-error";
-import { getProvider } from "@/lib/providers/provider.factory";
 import type {
   FavoritesCapability,
   IMediaProvider,
@@ -13,12 +11,15 @@ import type { NormalizedSeries } from "@/lib/providers/types";
 import type { Prisma } from "@/generated/prisma/client";
 import logger from "@/lib/logger";
 
-type ProviderType = "komga" | "stripstream";
-
-interface ActiveContext {
+/**
+ * Identité et provider de l'appelant. Le service ne lit ni la session ni la
+ * fabrique de provider (ADR 0029) : la page reçoit les deux de la gateway de
+ * surface, l'action du runner. `provider: null` signifie « aucune connexion
+ * utilisable » et dégrade comme avant.
+ */
+export interface FavoriteContext {
   userId: number;
-  provider: ProviderType;
-  configId: number | null;
+  provider: IMediaProvider | null;
 }
 
 /**
@@ -160,43 +161,31 @@ function createBackendStore(favorites: FavoritesCapability): FavoriteStore {
 }
 
 export class FavoriteService {
-  private static async requireContext(): Promise<ActiveContext> {
-    const user = await getCurrentUser();
-    if (!user) {
-      throw new AppError(ERROR_CODES.AUTH.UNAUTHENTICATED);
-    }
-    const userId = parseInt(user.id, 10);
-    const connection = await getActiveConnection(userId);
-    return {
-      userId,
-      provider: connection.provider,
-      configId: connection.configId,
-    };
-  }
-
   /**
-   * Une seule résolution de connexion pour toutes les opérations. `null`
+   * Une seule résolution de store pour toutes les opérations. `null`
    * signifie « aucune configuration utilisable », pas une panne : les lectures
    * dégradent, les écritures échouent explicitement.
    */
-  private static async resolveStore(ctx: ActiveContext): Promise<FavoriteStore | null> {
-    const provider = await getProvider();
+  private static async resolveStore({
+    userId,
+    provider,
+  }: FavoriteContext): Promise<FavoriteStore | null> {
     const favorites = provider?.capabilities.favorites ?? null;
     if (favorites) return createBackendStore(favorites);
 
     // Komga ne déclare pas de favoris backend : ils restent dans la table
-    // locale, scoped à la config. Un autre provider sans capacité n'a pas de
-    // repli local.
-    if (ctx.provider === "komga" && ctx.configId !== null) {
-      return createKomgaStore(ctx.userId, ctx.configId, provider);
+    // locale, scoped à la config active. Un autre provider sans capacité n'a
+    // pas de repli local.
+    const connection = await getActiveConnection(userId);
+    if (connection.provider === "komga" && connection.configId !== null) {
+      return createKomgaStore(userId, connection.configId, provider);
     }
     return null;
   }
 
-  static async isFavorite(seriesId: string): Promise<boolean> {
+  static async isFavorite(context: FavoriteContext, seriesId: string): Promise<boolean> {
     try {
-      const ctx = await FavoriteService.requireContext();
-      const store = await FavoriteService.resolveStore(ctx);
+      const store = await FavoriteService.resolveStore(context);
       return store ? await store.isFavorite(seriesId) : false;
     } catch (error) {
       logReadFailure(error, { seriesId }, "Favorite status check failed");
@@ -204,10 +193,9 @@ export class FavoriteService {
     }
   }
 
-  static async addToFavorites(seriesId: string): Promise<void> {
+  static async addToFavorites(context: FavoriteContext, seriesId: string): Promise<void> {
     try {
-      const ctx = await FavoriteService.requireContext();
-      const store = await FavoriteService.resolveStore(ctx);
+      const store = await FavoriteService.resolveStore(context);
       if (!store) throw new AppError(ERROR_CODES.FAVORITE.ADD_ERROR);
       await store.add(seriesId);
     } catch (error) {
@@ -216,10 +204,9 @@ export class FavoriteService {
     }
   }
 
-  static async removeFromFavorites(seriesId: string): Promise<void> {
+  static async removeFromFavorites(context: FavoriteContext, seriesId: string): Promise<void> {
     try {
-      const ctx = await FavoriteService.requireContext();
-      const store = await FavoriteService.resolveStore(ctx);
+      const store = await FavoriteService.resolveStore(context);
       if (!store) throw new AppError(ERROR_CODES.FAVORITE.DELETE_ERROR);
       await store.remove(seriesId);
     } catch (error) {
@@ -228,10 +215,9 @@ export class FavoriteService {
     }
   }
 
-  static async getAllFavoriteIds(): Promise<string[]> {
+  static async getAllFavoriteIds(context: FavoriteContext): Promise<string[]> {
     try {
-      const ctx = await FavoriteService.requireContext();
-      const store = await FavoriteService.resolveStore(ctx);
+      const store = await FavoriteService.resolveStore(context);
       return store ? await store.listIds() : [];
     } catch (error) {
       logReadFailure(error, {}, "Favorite ids fetch failed");
@@ -239,10 +225,9 @@ export class FavoriteService {
     }
   }
 
-  static async listFavorites(): Promise<NormalizedSeries[]> {
+  static async listFavorites(context: FavoriteContext): Promise<NormalizedSeries[]> {
     try {
-      const ctx = await FavoriteService.requireContext();
-      const store = await FavoriteService.resolveStore(ctx);
+      const store = await FavoriteService.resolveStore(context);
       return store ? await store.list() : [];
     } catch (error) {
       logReadFailure(error, {}, "Favorites fetch failed");

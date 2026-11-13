@@ -18,7 +18,7 @@ export default async function SeriesPage({ params, searchParams }: PageProps) {
   const surface = await loadSurface({
     name: "series",
     fallbackCode: ERROR_CODES.BOOK.PAGES_FETCH_ERROR,
-    load: async ({ provider, preferences }) => {
+    load: async ({ userId, provider, preferences }) => {
       const query = parseCollectionQuery(queryParams, {
         itemsPerPage: preferences.displayMode.itemsPerPage,
         compact: preferences.displayMode.compact,
@@ -32,7 +32,7 @@ export default async function SeriesPage({ params, searchParams }: PageProps) {
       const [booksPage, series, isFavorite, missing, relatedSeries, rating] = await Promise.all([
         provider.getBooks(bookCollectionFilter(seriesId, query)),
         provider.getSeriesById(seriesId),
-        FavoriteService.isFavorite(seriesId),
+        FavoriteService.isFavorite({ userId, provider }, seriesId),
         missingBooks ? missingBooks.getMissingBooks(seriesId) : Promise.resolve([]),
         discovery ? discovery.getRelatedSeries(seriesId).catch(() => []) : Promise.resolve([]),
         ratings ? ratings.getSeriesRating(seriesId).catch(() => null) : Promise.resolve(null),

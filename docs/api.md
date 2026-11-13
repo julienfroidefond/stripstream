@@ -10,7 +10,7 @@ Stripstream expose deux surfaces côté serveur, et rien d'autre :
 - Toutes les routes d'API hors famille d'authentification traversent le middleware `src/proxy.ts` et exigent une session NextAuth valide. Une requête non authentifiée reçoit une réponse `401` JSON.
 - Seule la famille d'authentification NextAuth est publique (exclue du matcher du middleware).
 - Les dix routes média (Komga et Stripstream) sont de fines déclarations sur `createMediaRoute` (`src/lib/media/media-route.ts`) : l'adaptateur vérifie la session, choisit le transport du provider, applique la politique de cache et d'en-têtes, relaie les `304` et mappe les erreurs. Les transports résolvent la connexion via `requireConnectionForProvider` (`@/lib/connections`), qui applique la config active du provider, puis sa première config, et le fallback aux variables d'environnement uniquement pour Stripstream. Le module déchiffre les credentials ; les routes ne lisent jamais les colonnes `authHeader`/`token` directement.
-- Les Server Actions vérifient l'utilisateur via `getCurrentUser()` ou `requireUserId()`. Les actions de test de connexion sont en plus limitées par `checkConnectionTestRateLimit` (`src/lib/connections/probe.ts`, 5 tentatives par 30 secondes et par utilisateur et par provider).
+- Les Server Actions vérifient l'utilisateur par les gates du runner (`requireUser`, `requireRole`, `rateLimit`), qui transmettent `userId` aux services ; les services ne lisent pas la session (ADR 0029). Les actions de test de connexion sont en plus limitées par `checkConnectionTestRateLimit` (`src/lib/connections/probe.ts`, 5 tentatives par 30 secondes et par utilisateur et par provider).
 
 ## 🌐 Route Handlers
 
@@ -100,22 +100,24 @@ Stripstream expose deux surfaces côté serveur, et rien d'autre :
 
 ## ⚡ Server Actions
 
-Tous les fichiers de `src/app/actions/` commencent par `"use server"`. Les actions sont appelées directement par les composants clients et renvoient en général un objet `{ success, message }` (ou des données). Sauf mention contraire, elles exigent une session utilisateur valide.
+Tous les fichiers de `src/app/actions/` commencent par `"use server"`. Les actions sont appelées directement par les composants clients et, sauf exception documentée, passent par le runner (`runAction` / `runProviderAction`, `src/lib/actions/action-runner.ts`) : elles renvoient un `ActionResult` — `{ success: true, code: "OK", message, ...données }` ou `{ success: false, code: ErrorCode, message }`. Le client traduit `errors.${code}` ; `message` reste un libellé technique. Sauf mention contraire, elles exigent une session utilisateur valide.
 
 ### src/app/actions/admin.ts
+
+Toutes ces actions déclarent `requireRole: "admin"` : sans session elles échouent en `AUTH_UNAUTHENTICATED`, sans `ROLE_ADMIN` en `AUTH_FORBIDDEN`, avant toute écriture.
 
 | Action | Rôle |
 | --- | --- |
 | `getAdminDashboardData` | Charge la liste des utilisateurs et les statistiques du tableau de bord admin. |
-| `updateUserRoles` | Met à jour les rôles d'un utilisateur (au moins un rôle requis). |
-| `deleteUser` | Supprime un utilisateur. |
-| `resetUserPassword` | Réinitialise le mot de passe d'un utilisateur (force minimale vérifiée : 8 caractères, une majuscule, un chiffre). |
+| `updateUserRoles` | Met à jour les rôles d'un utilisateur : liste non vide de rôles parmi `ROLE_USER` / `ROLE_ADMIN`, sinon `ADMIN_INVALID_ROLES`. |
+| `deleteUser` | Supprime un utilisateur (`ADMIN_CANNOT_DELETE_SELF` pour son propre compte). |
+| `resetUserPassword` | Réinitialise le mot de passe d'un utilisateur (force minimale vérifiée : 8 caractères, une majuscule, un chiffre, sinon `AUTH_PASSWORD_NOT_STRONG` ; `ADMIN_CANNOT_RESET_OWN_PASSWORD` pour soi-même). Limitée à 10 / 15 min par administrateur (`AUTH_RATE_LIMITED`). |
 
 ### src/app/actions/auth.ts
 
 | Action | Rôle |
 | --- | --- |
-| `registerUser` | Inscrit un nouvel utilisateur (email + mot de passe). |
+| `registerUser` | Inscrit un nouvel utilisateur (email + mot de passe). Action anonyme ; la force du mot de passe et le budget par email (5 / min) sont vérifiés par `AuthServerService.registerUser`. |
 
 ### src/app/actions/books.ts
 
@@ -160,7 +162,7 @@ Tous les fichiers de `src/app/actions/` commencent par `"use server"`. Les actio
 
 | Action | Rôle |
 | --- | --- |
-| `changePassword` | Change le mot de passe de l'utilisateur (vérifie l'ancien mot de passe et la force du nouveau). |
+| `changePassword` | Change le mot de passe de l'utilisateur (vérifie l'ancien mot de passe et la force du nouveau). Limitée à 5 tentatives / 15 min par utilisateur (`AUTH_RATE_LIMITED`), car chaque appel compare l'ancien mot de passe avec bcrypt. |
 
 ### src/app/actions/preferences.ts
 
