@@ -139,6 +139,8 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   [ERROR_CODES.CONFIG.TEST_ERROR]: "Error testing configuration",
   [ERROR_CODES.CONFIG.DELETE_ERROR]: "Error deleting configuration",
   [ERROR_CODES.CONFIG.ACTIVATE_ERROR]: "Error activating configuration",
+  [ERROR_CODES.CONFIG.INVALID_INPUT]: "Invalid connection input: missing or malformed fields",
+  [ERROR_CODES.CONFIG.DUPLICATE_NAME]: "A connection with this name already exists",
   [ERROR_CODES.CONFIG.TTL_SAVE_ERROR]: "Error saving TTL configuration",
   [ERROR_CODES.CONFIG.TTL_FETCH_ERROR]: "Error fetching TTL configuration",
 

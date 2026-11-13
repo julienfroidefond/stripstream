@@ -1,3 +1,4 @@
+import type { ErrorCode } from "@/constants/errorCodes";
 import type {
   NormalizedLibrary,
   NormalizedSeries,
@@ -65,7 +66,11 @@ export interface MediaProviderCore {
   getReadingStats(): Promise<NormalizedReadingStats>;
 
   // ── Connection ───────────────────────────────────────────────────────────
-  testConnection(): Promise<{ ok: boolean; error?: string; libraryCount?: number }>;
+  /**
+   * Sonde la connexion. Un échec porte le code du catalogue de l'erreur
+   * provider (`KOMGA_UNAUTHORIZED`, `STRIPSTREAM_NOT_FOUND`…) quand il existe.
+   */
+  testConnection(): Promise<{ ok: boolean; error?: string; code?: ErrorCode; libraryCount?: number }>;
 
   // ── URL builder (returns a local proxy URL) ───────────────────────────────
   getBookThumbnailUrl(bookId: string): string;

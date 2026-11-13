@@ -12,7 +12,12 @@ const { loggerMock } = vi.hoisted(() => ({
 
 vi.mock("@/lib/logger", () => ({ default: loggerMock }));
 
-import { StripstreamClient } from "./stripstream.client";
+import { ProviderTransport } from "../provider-transport";
+import { createStripstreamTransportPolicy } from "./stripstream.transport-policy";
+
+function stripstreamTransport(url: string, token: string): ProviderTransport {
+  return new ProviderTransport(createStripstreamTransportPolicy(url, token));
+}
 
 function jsonResponse(body: unknown, init: ResponseInit = {}) {
   return new Response(JSON.stringify(body), {
@@ -41,9 +46,9 @@ afterEach(() => {
   loggerMock.error.mockReset();
 });
 
-describe("StripstreamClient.buildUrl", () => {
+describe("Stripstream transport buildUrl", () => {
   it("normalizes the base URL and omits undefined params", () => {
-    const client = new StripstreamClient("http://stream.local///", "token");
+    const client = stripstreamTransport("http://stream.local///", "token");
 
     expect(
       client.buildUrl("books", {
@@ -55,14 +60,14 @@ describe("StripstreamClient.buildUrl", () => {
   });
 });
 
-describe("StripstreamClient.fetch", () => {
+describe("Stripstream transport request", () => {
   it("sends auth headers and forwards cache tags", async () => {
     const fetchMock = vi.fn(async () => jsonResponse({ items: [] }));
     vi.stubGlobal("fetch", fetchMock);
-    const client = new StripstreamClient("http://stream.local", "secret");
+    const client = stripstreamTransport("http://stream.local", "secret");
 
     await expect(
-      client.fetch("books", { limit: "10" }, { method: "GET", tags: ["books", "list"] })
+      client.request("books", { limit: "10" }, { method: "GET", tags: ["books", "list"] })
     ).resolves.toEqual({ items: [] });
 
     const { url, init } = lastFetchCall();
@@ -78,9 +83,9 @@ describe("StripstreamClient.fetch", () => {
   it("adds a JSON content type for writes and forwards revalidation", async () => {
     const fetchMock = vi.fn(async () => jsonResponse({ ok: true }));
     vi.stubGlobal("fetch", fetchMock);
-    const client = new StripstreamClient("http://stream.local", "secret");
+    const client = stripstreamTransport("http://stream.local", "secret");
 
-    await client.fetch("ratings/book-1", undefined, {
+    await client.request("ratings/book-1", undefined, {
       method: "PUT",
       body: JSON.stringify({ rating: 5 }),
       revalidate: 60,
@@ -94,9 +99,9 @@ describe("StripstreamClient.fetch", () => {
   it("returns null for a 204 without a body", async () => {
     const fetchMock = vi.fn(async () => new Response(null, { status: 204 }));
     vi.stubGlobal("fetch", fetchMock);
-    const client = new StripstreamClient("http://stream.local", "secret");
+    const client = stripstreamTransport("http://stream.local", "secret");
 
-    await expect(client.fetch("ratings/book-1")).resolves.toBeNull();
+    await expect(client.request("ratings/book-1")).resolves.toBeNull();
   });
 
   it("maps provider HTTP failures to the matching error code", async () => {
@@ -108,9 +113,9 @@ describe("StripstreamClient.fetch", () => {
         })
     );
     vi.stubGlobal("fetch", fetchMock);
-    const client = new StripstreamClient("http://stream.local", "secret");
+    const client = stripstreamTransport("http://stream.local", "secret");
 
-    await expect(client.fetch("books")).rejects.toMatchObject({
+    await expect(client.request("books")).rejects.toMatchObject({
       name: "AppError",
       code: ERROR_CODES.STRIPSTREAM.UNAUTHORIZED,
       params: { status: 401, statusText: "Unauthorized" },
@@ -124,9 +129,9 @@ describe("StripstreamClient.fetch", () => {
       .mockRejectedValueOnce(Object.assign(new Error("socket closed"), { code: "ECONNRESET" }))
       .mockResolvedValueOnce(jsonResponse({ ok: true }));
     vi.stubGlobal("fetch", fetchMock);
-    const client = new StripstreamClient("http://stream.local", "secret");
+    const client = stripstreamTransport("http://stream.local", "secret");
 
-    const request = client.fetch("health");
+    const request = client.request("health");
     await vi.advanceTimersByTimeAsync(500);
 
     await expect(request).resolves.toEqual({ ok: true });
@@ -142,9 +147,9 @@ describe("StripstreamClient.fetch", () => {
       throw Object.assign(new Error("connection refused"), { code: "ECONNREFUSED" });
     });
     vi.stubGlobal("fetch", fetchMock);
-    const client = new StripstreamClient("http://stream.local", "secret");
+    const client = stripstreamTransport("http://stream.local", "secret");
 
-    await expect(client.fetch("books")).rejects.toMatchObject({
+    await expect(client.request("books")).rejects.toMatchObject({
       name: "AppError",
       code: ERROR_CODES.STRIPSTREAM.CONNECTION_ERROR,
     });

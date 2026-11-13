@@ -277,7 +277,11 @@
       "test": "Tester",
       "testing": "Test...",
       "cancel": "Annuler",
-      "confirmDelete": "Supprimer la connexion \"{{name}}\" ?"
+      "confirmDelete": "Supprimer la connexion \"{{name}}\" ?",
+      "created": "Connexion créée",
+      "updated": "Connexion mise à jour",
+      "deleted": "Connexion supprimée",
+      "testSuccess": "Connexion réussie. Bibliothèques trouvées : {{count}}"
     }
   },
   "refresh": {
@@ -777,7 +781,9 @@
     "CLIENT_NETWORK_ERROR": "Erreur réseau",
     "CLIENT_REQUEST_FAILED": "La requête a échoué",
     "GENERIC_ERROR": "Une erreur est survenue",
-    "WALL_FETCH_ERROR": "Impossible de rassembler les œuvres du mur. Vérifiez votre connexion puis réessayez."
+    "WALL_FETCH_ERROR": "Impossible de rassembler les œuvres du mur. Vérifiez votre connexion puis réessayez.",
+    "CONFIG_INVALID_INPUT": "Champs de connexion manquants ou invalides",
+    "CONFIG_DUPLICATE_NAME": "Ce nom est déjà utilisé pour une autre connexion"
   },
   "reader": {
     "controls": {

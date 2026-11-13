@@ -23,8 +23,7 @@ vi.mock("./active", () => ({ getActiveConnection: getActiveConnectionMock }));
 vi.mock("@/lib/auth-utils", () => ({ requireUserId: requireUserIdMock }));
 
 import {
-  connectionFromKomgaCredentials,
-  connectionFromStripstreamToken,
+  connectionFromDraft,
   getStoredConnection,
   requireConnectionForProvider,
   resolveActiveConnection,
@@ -200,7 +199,12 @@ describe("requireConnectionForProvider", () => {
 
 describe("ad-hoc connections", () => {
   it("normalizes the Komga URL and builds the Basic auth value", () => {
-    expect(connectionFromKomgaCredentials(" http://komga.local/// ", "alice", "secret")).toEqual({
+    expect(connectionFromDraft({
+        provider: "komga",
+        url: " http://komga.local/// ",
+        username: "alice",
+        password: "secret",
+      })).toEqual({
       provider: "komga",
       configId: null,
       url: "http://komga.local",
@@ -209,7 +213,11 @@ describe("ad-hoc connections", () => {
   });
 
   it("normalizes the Stripstream URL and trims the token", () => {
-    expect(connectionFromStripstreamToken(" http://stream.local/ ", "  token  ")).toEqual({
+    expect(connectionFromDraft({
+        provider: "stripstream",
+        url: " http://stream.local/ ",
+        token: "  token  ",
+      })).toEqual({
       provider: "stripstream",
       configId: null,
       url: "http://stream.local",

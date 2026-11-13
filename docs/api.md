@@ -10,7 +10,7 @@ Stripstream expose deux surfaces côté serveur, et rien d'autre :
 - Toutes les routes d'API hors famille d'authentification traversent le middleware `src/proxy.ts` et exigent une session NextAuth valide. Une requête non authentifiée reçoit une réponse `401` JSON.
 - Seule la famille d'authentification NextAuth est publique (exclue du matcher du middleware).
 - Les huit routes média (Komga et Stripstream) sont des déclarations d'une ligne `createMediaRoute(provider, kind)` (`src/lib/media/media-route.ts`) : l'adaptateur vérifie la session, choisit le transport du provider, applique la politique de cache et d'en-têtes, relaie les `304` et mappe les erreurs. Les transports résolvent la connexion via `requireConnectionForProvider` (`@/lib/connections`), qui applique la config active du provider, puis sa première config, et le fallback aux variables d'environnement uniquement pour Stripstream. Le module déchiffre les credentials ; les routes ne lisent jamais les colonnes `authHeader`/`token` directement.
-- Les Server Actions vérifient l'utilisateur par les gates du runner (`requireUser`, `requireRole`, `rateLimit`), qui transmettent `userId` aux services ; les services ne lisent pas la session (ADR 0029). Les actions de test de connexion sont en plus limitées par `checkConnectionTestRateLimit` (`src/lib/connections/probe.ts`, 5 tentatives par 30 secondes et par utilisateur et par provider).
+- Les Server Actions vérifient l'utilisateur par les gates du runner (`requireUser`, `requireRole`, `rateLimit`), qui transmettent `userId` aux services ; les services ne lisent pas la session (ADR 0029). L'action `testConnection` est en plus limitée par le `rateLimit` du runner, sur la clé `connectionTestRateLimitKey` (`src/lib/connections/probe.ts`, 5 tentatives par 30 secondes et par utilisateur et par provider).
 
 ## 🌐 Route Handlers
 
@@ -80,16 +80,17 @@ Toutes ces actions déclarent `requireRole: "admin"` : sans session elles échou
 | --- | --- |
 | `getBookData` | Charge les données du lecteur pour un livre via `getProvider()` et `getReaderData()`. |
 
-### src/app/actions/config.ts
+### src/app/actions/connections.ts
+
+Actions de connexion génériques (ADR 0030) : une action par opération, discriminée par `provider`. Les champs propres à un provider (`username`/`password` Komga, `token` Stripstream) et leur validation viennent de son descripteur (`src/lib/connections/descriptors.ts`) ; table, secret, provider et transport viennent de sa définition (`src/lib/connections/registry.ts`). Toutes passent par `runAction` avec `requireUser`, renvoient un `ActionResult` et échouent avec un code du catalogue (`CONFIG_INVALID_INPUT`, `CONFIG_NOT_FOUND`, `CONFIG_DUPLICATE_NAME`, `CONFIG_*_ERROR`…) ; le client traduit `errors.${code}`.
 
 | Action | Rôle |
 | --- | --- |
-| `testKomgaConnection` | Teste des identifiants Komga fournis à la volée via `testConnection()` et la factory. Limitée par `checkConnectionTestRateLimit` (5 / 30 s). |
-| `listKomgaConfigs` | Liste les configurations Komga de l'utilisateur avec l'état actif. |
-| `saveKomgaConfig` | Crée ou met à jour une configuration Komga. Mot de passe requis à la création, conservé s'il est vide en mise à jour ; la première configuration devient active. |
-| `deleteKomgaConfig` | Supprime une configuration Komga de l'utilisateur. |
-| `testKomgaConfigById` | Teste une configuration Komga existante avec les credentials stockés (`testStoredConnection`). Limitée par `checkConnectionTestRateLimit` (5 / 30 s). |
-| `setActiveKomgaConfig` | Active une configuration Komga et invalide les caches provider (`home`, listes de bibliothèques, livres, favoris). |
+| `listConnections()` | Configs de l'utilisateur, une liste par provider (`{ lists: ConnectionLists }`), avec l'état actif du navigateur. Un échec renvoie `CONFIG_FETCH_ERROR` au lieu d'une liste vide. |
+| `saveConnection(input: ConnectionInput)` | Crée (sans `id`) ou met à jour (avec `id`) une config. Secrets requis à la création, conservés s'ils sont vides en mise à jour. Renvoie `{ id, created }`. |
+| `deleteConnection({ provider, id })` | Supprime une config de l'utilisateur. |
+| `activateConnection({ provider, id })` | Sélectionne une config pour ce navigateur (cookies) et invalide les caches provider. Le client recharge ensuite toute la page (`useActivateConnection`). Renvoie `{ name }`. |
+| `testConnection({ stored } \| { draft })` | Teste une config enregistrée (credentials stockés, `testStoredConnection`) ou des credentials saisis (connexion ad hoc construite par la définition). Limitée par le runner (`rateLimit`, 5 / 30 s par utilisateur et par provider, `AUTH_RATE_LIMITED`). Un échec porte le code de l'erreur provider (`KOMGA_UNAUTHORIZED`…) ou `CONFIG_TEST_ERROR`. Renvoie `{ libraryCount }`. |
 
 ### src/app/actions/favorites.ts
 
@@ -153,15 +154,4 @@ Toutes ces actions déclarent `requireRole: "admin"` : sans session elles échou
 | --- | --- |
 | `revalidateForRefresh` | Invalide caches et chemins selon le `scope` (`home`, `library`, `series`, `book`) avant un `router.refresh()` côté client. |
 
-### src/app/actions/stripstream-config.ts
-
-| Action | Rôle |
-| --- | --- |
-| `testStripstreamConnection` | Teste une URL et un token Stripstream fournis à la volée via `testConnection()` et la factory. Limitée par `checkConnectionTestRateLimit` (5 / 30 s). |
-| `listStripstreamConfigs` | Liste les configurations Stripstream de l'utilisateur avec l'état actif. |
-| `saveStripstreamConfig` | Crée ou met à jour une configuration Stripstream. Token requis à la création, conservé s'il est vide en mise à jour ; la première configuration devient active. |
-| `deleteStripstreamConfig` | Supprime une configuration Stripstream de l'utilisateur. |
-| `testStripstreamConfigById` | Teste une configuration Stripstream existante avec le token stocké (`testStoredConnection`). Limitée par `checkConnectionTestRateLimit` (5 / 30 s). |
-| `setActiveStripstreamConfig` | Active une configuration Stripstream et invalide les caches provider. |
-
-> **Chiffrement au repos** : l'`authHeader` Komga et le `token` Stripstream sont stockés sous enveloppe AES-256-GCM (`src/lib/credentials.ts`, clé `CREDENTIALS_ENCRYPTION_KEY`). Les actions `save*Config` passent par `src/lib/connections/manage.ts`, qui chiffre à l'écriture (mot de passe/token vide en mise à jour : la valeur chiffrée existante est conservée) ; `src/lib/connections/resolve.ts` déchiffre à la lecture avant de construire un provider ou une sonde. Les lignes legacy en clair restent lisibles ; `pnpm encrypt-credentials` les migre de façon idempotente (`ENV.md`).
+> **Chiffrement au repos** : l'`authHeader` Komga et le `token` Stripstream sont stockés sous enveloppe AES-256-GCM (`src/lib/credentials.ts`, clé `CREDENTIALS_ENCRYPTION_KEY`). L'action `saveConnection` passe par `src/lib/connections/manage.ts`, où la définition du provider chiffre à l'écriture (mot de passe/token vide en mise à jour : la valeur chiffrée existante est conservée) ; `src/lib/connections/resolve.ts` déchiffre à la lecture avant de construire un provider ou une sonde. Les lignes legacy en clair restent lisibles ; `pnpm encrypt-credentials` les migre de façon idempotente (`ENV.md`).

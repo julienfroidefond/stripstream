@@ -4,18 +4,24 @@
  * Les appelants ne choisissent pas entre plusieurs résolveurs : ils demandent
  * une connexion active ou une connexion propre à un provider, et le module
  * applique la même règle de fallback, déchiffre les credentials et invalide les
- * caches après mutation.
+ * caches après mutation. Ce qui varie par provider vit dans le registre
+ * (`registry.ts`, ADR 0030).
  */
 export type {
+  ConnectionDraft,
+  ConnectionInput,
   ConnectionLists,
+  ConnectionOf,
   ConnectionProvider,
+  ConnectionRef,
   ConnectionSummaryBase,
+  ConnectionSummaryOf,
   ConnectionTestRateLimit,
   ConnectionTestResult,
+  ConnectionTestTarget,
   KomgaConnection,
   KomgaConnectionSummary,
   ResolvedConnection,
-  SaveConnectionInput,
   StripstreamConnection,
   StripstreamConnectionSummary,
 } from "./types";
@@ -24,8 +30,7 @@ export { getActiveConnection, setActiveConnection } from "./active";
 export type { ActiveConnection } from "./active";
 
 export {
-  connectionFromKomgaCredentials,
-  connectionFromStripstreamToken,
+  connectionFromDraft,
   getStoredConnection,
   requireConnectionForProvider,
   resolveActiveConnection,
@@ -46,3 +51,11 @@ export {
   testConnection,
   testStoredConnection,
 } from "./probe";
+
+export {
+  PROVIDER_DEFINITIONS,
+  definitionFor,
+  getProviderDefinition,
+  providerDefinitions,
+} from "./registry";
+export type { ConnectionStore, ProviderDefinition, StoredConnectionRow } from "./registry";

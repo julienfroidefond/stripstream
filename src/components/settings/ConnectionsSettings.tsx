@@ -3,6 +3,7 @@
 import { useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslate } from "@/hooks/useTranslate";
+import { useActivateConnection } from "@/hooks/useActivateConnection";
 import { useToast } from "@/components/ui/use-toast";
 import { CheckCircle, Loader2, Network, Pencil, PlugZap, Plus, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -15,223 +16,198 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { ConnectionTypeBadge } from "@/components/connections/ConnectionTypeBadge";
 import { cn } from "@/lib/utils";
 import logger from "@/lib/logger";
 import {
-  deleteKomgaConfig,
-  saveKomgaConfig,
-  setActiveKomgaConfig,
-  testKomgaConfigById,
-  testKomgaConnection,
-  type KomgaConfigSummary,
-} from "@/app/actions/config";
+  deleteConnection,
+  saveConnection,
+  testConnection,
+} from "@/app/actions/connections";
+import type { ActionResult } from "@/lib/actions/action-runner";
 import {
-  deleteStripstreamConfig,
-  saveStripstreamConfig,
-  setActiveStripstreamConfig,
-  testStripstreamConfigById,
-  testStripstreamConnection,
-  type StripstreamConfigSummary,
-} from "@/app/actions/stripstream-config";
-
-export type ConnectionType = "komga" | "stripstream";
-
-interface UnifiedConnection {
-  id: number;
-  type: ConnectionType;
-  name: string;
-  url: string;
-  username?: string;
-  isActive: boolean;
-}
+  CONNECTION_PROVIDERS,
+  connectionDescriptor,
+  validateConnectionDraft,
+  validateConnectionInput,
+} from "@/lib/connections/descriptors";
+import {
+  connectionSlug,
+  findActiveConnection,
+  toUnifiedConnections,
+  type UnifiedConnection,
+} from "@/lib/connections/client";
+import type { ConnectionLists } from "@/lib/connections/types";
+import type { ErrorCode } from "@/constants/errorCodes";
+import type { ProviderType } from "@/lib/providers/types";
 
 interface ConnectionsSettingsProps {
-  komgaConfigs: KomgaConfigSummary[];
-  stripstreamConfigs: StripstreamConfigSummary[];
+  lists: ConnectionLists;
+  /** Code d'erreur si la liste n'a pas pu être chargée. */
+  errorCode?: ErrorCode;
   /** Ouvre le formulaire d'ajout au montage, type pré-sélectionné (deep-link `?new=`). */
-  autoStartType?: ConnectionType;
+  autoStartType?: ProviderType;
 }
 
+/**
+ * État du formulaire, commun à tous les providers : les champs propres au
+ * provider (identifiant, mot de passe, token…) sont indexés par le nom que leur
+ * donne le descripteur.
+ */
 interface FormState {
   id?: number;
-  type: ConnectionType;
+  provider: ProviderType;
   name: string;
   url: string;
-  username: string;
-  password: string;
-  token: string;
+  fields: Record<string, string>;
 }
 
-const emptyForm: FormState = {
-  type: "komga",
-  name: "",
-  url: "",
-  username: "",
-  password: "",
-  token: "",
-};
+function emptyForm(provider: ProviderType = CONNECTION_PROVIDERS[0]): FormState {
+  return { provider, name: "", url: "", fields: {} };
+}
 
-export function ConnectionsSettings({
-  komgaConfigs,
-  stripstreamConfigs,
-  autoStartType,
-}: ConnectionsSettingsProps) {
+function formValues(form: FormState) {
+  return { ...form.fields, provider: form.provider, id: form.id, name: form.name, url: form.url };
+}
+
+export function ConnectionsSettings({ lists, errorCode, autoStartType }: ConnectionsSettingsProps) {
   const { t } = useTranslate();
   const { toast } = useToast();
   const router = useRouter();
+  const { activate, pendingKey } = useActivateConnection();
   // Deep-link `?new=` : le formulaire est ouvert dès le montage, type déjà choisi.
   const [editing, setEditing] = useState<FormState | null>(() =>
-    autoStartType ? { ...emptyForm, type: autoStartType } : null
+    autoStartType ? emptyForm(autoStartType) : null
   );
   const [isTesting, setIsTesting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [busyKey, setBusyKey] = useState<string | null>(null);
 
-  const connections = useMemo<UnifiedConnection[]>(
-    () => [
-      ...komgaConfigs.map((c) => ({
-        id: c.id,
-        type: "komga" as const,
-        name: c.name,
-        url: c.url,
-        username: c.username,
-        isActive: c.isActive,
-      })),
-      ...stripstreamConfigs.map((c) => ({
-        id: c.id,
-        type: "stripstream" as const,
-        name: c.name,
-        url: c.url,
-        isActive: c.isActive,
-      })),
-    ],
-    [komgaConfigs, stripstreamConfigs]
+  const connections = useMemo(() => toUnifiedConnections(lists), [lists]);
+  const activeKey = findActiveConnection(connections)?.key;
+  const descriptor = editing ? connectionDescriptor(editing.provider) : null;
+  const draft = editing ? validateConnectionDraft(formValues(editing)) : null;
+
+  const notify = useCallback(
+    (result: ActionResult, successDescription: string) => {
+      toast(
+        result.success
+          ? { title: t("settings.connections.title"), description: successDescription }
+          : {
+              variant: "destructive",
+              title: t("settings.connections.title"),
+              description: t(`errors.${result.code}`),
+            }
+      );
+    },
+    [toast, t]
   );
 
-  const activeKey = connections.find((c) => c.isActive)
-    ? `${connections.find((c) => c.isActive)!.type}-${connections.find((c) => c.isActive)!.id}`
-    : undefined;
-
-  const startCreate = () => setEditing({ ...emptyForm });
+  const startCreate = () => setEditing(emptyForm());
   const startEdit = (conn: UnifiedConnection) =>
     setEditing({
       id: conn.id,
-      type: conn.type,
+      provider: conn.provider,
       name: conn.name,
       url: conn.url,
-      username: conn.username ?? "",
-      password: "",
-      token: "",
+      fields: { ...conn.fields },
     });
   const cancelEdit = () => setEditing(null);
 
-  const keyOf = (c: UnifiedConnection) => `${c.type}-${c.id}`;
-
   const handleTest = useCallback(async () => {
-    if (!editing) return;
+    if (!draft?.ok) return;
     setIsTesting(true);
     try {
-      const result =
-        editing.type === "komga"
-          ? await testKomgaConnection(editing.url.trim(), editing.username, editing.password)
-          : await testStripstreamConnection(editing.url.trim(), editing.token);
-      toast({
-        variant: result.success ? "default" : "destructive",
-        title: t("settings.connections.title"),
-        description: result.message,
-      });
+      const result = await testConnection({ draft: draft.value });
+      notify(
+        result,
+        result.success
+          ? t("settings.connections.testSuccess", { count: result.libraryCount })
+          : ""
+      );
     } catch (error) {
       logger.error({ err: error }, "Connection test error:");
     } finally {
       setIsTesting(false);
     }
-  }, [editing, toast, t]);
+  }, [draft, notify, t]);
 
-  const handleSave = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!editing) return;
-    setIsSaving(true);
-    try {
-      const result =
-        editing.type === "komga"
-          ? await saveKomgaConfig({
-              id: editing.id,
-              name: editing.name,
-              url: editing.url.trim(),
-              username: editing.username,
-              password: editing.password || undefined,
-            })
-          : await saveStripstreamConfig({
-              id: editing.id,
-              name: editing.name,
-              url: editing.url.trim(),
-              token: editing.token || undefined,
-            });
-      if (!result.success) {
-        toast({ variant: "destructive", title: t("common.error"), description: result.message });
-      } else {
-        toast({ title: t("settings.connections.title"), description: result.message });
-        setEditing(null);
-        router.refresh();
+  const handleSave = useCallback(
+    async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      if (!editing) return;
+      const input = validateConnectionInput(formValues(editing));
+      if (!input.ok) {
+        toast({ variant: "destructive", title: t("common.error"), description: t(`errors.${input.code}`) });
+        return;
       }
-    } finally {
-      setIsSaving(false);
-    }
-  }, [editing, toast, t, router]);
+      setIsSaving(true);
+      try {
+        const result = await saveConnection(input.value);
+        if (!result.success) {
+          toast({
+            variant: "destructive",
+            title: t("common.error"),
+            description: t(`errors.${result.code}`),
+          });
+        } else {
+          toast({
+            title: t("settings.connections.title"),
+            description: t(
+              result.created ? "settings.connections.created" : "settings.connections.updated"
+            ),
+          });
+          setEditing(null);
+          router.refresh();
+        }
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [editing, toast, t, router]
+  );
 
-  const handleDelete = useCallback(async (conn: UnifiedConnection) => {
-    if (!confirm(t("settings.connections.confirmDelete", { name: conn.name }))) return;
-    setBusyKey(keyOf(conn));
-    try {
-      const result =
-        conn.type === "komga"
-          ? await deleteKomgaConfig(conn.id)
-          : await deleteStripstreamConfig(conn.id);
-      toast({
-        variant: result.success ? "default" : "destructive",
-        title: t("settings.connections.title"),
-        description: result.message,
-      });
-      if (result.success) router.refresh();
-    } finally {
-      setBusyKey(null);
-    }
-  }, [t, router, toast]);
+  const handleDelete = useCallback(
+    async (conn: UnifiedConnection) => {
+      if (!confirm(t("settings.connections.confirmDelete", { name: conn.name }))) return;
+      setBusyKey(conn.key);
+      try {
+        const result = await deleteConnection({ provider: conn.provider, id: conn.id });
+        notify(result, t("settings.connections.deleted"));
+        if (result.success) router.refresh();
+      } finally {
+        setBusyKey(null);
+      }
+    },
+    [t, router, notify]
+  );
 
-  const handleTestExisting = useCallback(async (conn: UnifiedConnection) => {
-    setBusyKey(keyOf(conn));
-    try {
-      const result =
-        conn.type === "komga"
-          ? await testKomgaConfigById(conn.id)
-          : await testStripstreamConfigById(conn.id);
-      toast({
-        variant: result.success ? "default" : "destructive",
-        title: t("settings.connections.title"),
-        description: result.message,
-      });
-    } finally {
-      setBusyKey(null);
-    }
-  }, [t, toast]);
+  const handleTestExisting = useCallback(
+    async (conn: UnifiedConnection) => {
+      setBusyKey(conn.key);
+      try {
+        const result = await testConnection({ stored: { provider: conn.provider, id: conn.id } });
+        notify(
+          result,
+          result.success
+            ? t("settings.connections.testSuccess", { count: result.libraryCount })
+            : ""
+        );
+      } finally {
+        setBusyKey(null);
+      }
+    },
+    [t, notify]
+  );
 
-  const handleActivate = useCallback(async (conn: UnifiedConnection) => {
-    setBusyKey(keyOf(conn));
-    try {
-      const result =
-        conn.type === "komga"
-          ? await setActiveKomgaConfig(conn.id)
-          : await setActiveStripstreamConfig(conn.id);
-      toast({
-        variant: result.success ? "default" : "destructive",
-        title: t("settings.connections.title"),
-        description: result.message,
-      });
-      if (result.success) router.refresh();
-    } finally {
-      setBusyKey(null);
-    }
-  }, [t, router, toast]);
+  const handleActivate = useCallback(
+    async (conn: UnifiedConnection) => {
+      // Succès : le hook recharge toute la page (même politique que la sidebar).
+      const result = await activate(conn);
+      if (!result.success) notify(result, "");
+    },
+    [activate, notify]
+  );
 
   return (
     <Card>
@@ -243,7 +219,13 @@ export function ConnectionsSettings({
         <CardDescription>{t("settings.connections.description")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {connections.length === 0 && (
+        {errorCode && (
+          <p role="alert" className="text-sm text-destructive">
+            {t(`errors.${errorCode}`)}
+          </p>
+        )}
+
+        {!errorCode && connections.length === 0 && (
           <p className="text-sm text-muted-foreground">{t("settings.connections.empty")}</p>
         )}
 
@@ -251,7 +233,7 @@ export function ConnectionsSettings({
           <RadioGroup
             value={activeKey}
             onValueChange={(value) => {
-              const conn = connections.find((c) => keyOf(c) === value);
+              const conn = connections.find((c) => c.key === value);
               if (conn && !conn.isActive) handleActivate(conn);
             }}
             className="space-y-2"
@@ -259,12 +241,12 @@ export function ConnectionsSettings({
           >
             <ul>
               {connections.map((conn) => {
-                const k = keyOf(conn);
-                const isBusy = busyKey === k;
+                const k = conn.key;
+                const isBusy = busyKey === k || pendingKey === k;
                 return (
                   <li
                     key={k}
-                    data-testid={`connection-${conn.type}-${conn.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
+                    data-testid={`connection-${conn.provider}-${connectionSlug(conn.name)}`}
                     className={cn(
                       "rounded-lg border p-3 transition-colors",
                       conn.isActive ? "border-primary bg-primary/5" : "border-border"
@@ -274,7 +256,7 @@ export function ConnectionsSettings({
                       <RadioGroupItem
                         value={k}
                         id={`conn-radio-${k}`}
-                        disabled={isBusy}
+                        disabled={isBusy || pendingKey !== null}
                         className="mt-1 shrink-0"
                         aria-label={t("settings.connections.activate")}
                       />
@@ -284,7 +266,7 @@ export function ConnectionsSettings({
                       >
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-medium truncate">{conn.name}</span>
-                          <TypeBadge type={conn.type} />
+                          <ConnectionTypeBadge provider={conn.provider} />
                           {conn.isActive && (
                             <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-xs text-primary">
                               <CheckCircle className="h-3 w-3" />
@@ -293,9 +275,11 @@ export function ConnectionsSettings({
                           )}
                         </div>
                         <p className="text-xs text-muted-foreground truncate">{conn.url}</p>
-                        {conn.username && (
-                          <p className="text-xs text-muted-foreground truncate">{conn.username}</p>
-                        )}
+                        {Object.entries(conn.fields).map(([field, value]) => (
+                          <p key={field} className="text-xs text-muted-foreground truncate">
+                            {value}
+                          </p>
+                        ))}
                       </label>
                       <div className="flex shrink-0 items-center gap-1">
                         <button
@@ -361,131 +345,103 @@ export function ConnectionsSettings({
           alors le pointerdown extérieur au clic suivant, si bien que ce clic
           ouvrait puis refermait aussitôt le formulaire.
         */}
-        {editing !== null && (
+        {editing !== null && descriptor !== null && (
           <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
             <DialogHeader>
               <DialogTitle>
-                {editing?.id
+                {editing.id
                   ? t("settings.connections.editTitle")
                   : t("settings.connections.addTitle")}
               </DialogTitle>
               <DialogDescription>
-                {editing?.id
+                {editing.id
                   ? t("settings.connections.editDescription")
                   : t("settings.connections.addDescription")}
               </DialogDescription>
             </DialogHeader>
 
-            {editing && (
-              <form onSubmit={handleSave} id="connection-form" className="space-y-3">
-                {!editing.id && (
-                  <div className="space-y-1.5">
-                    <span className="text-sm font-medium">{t("settings.connections.type")}</span>
-                    <div className="grid grid-cols-2 gap-2">
-                      <TypeButton
-                        label="Komga"
-                        description="Basic Auth"
-                        selected={editing.type === "komga"}
-                        onClick={() => setEditing({ ...editing, type: "komga" })}
-                      />
-                      <TypeButton
-                        label="Stripstream Librarian"
-                        description="Bearer Token"
-                        selected={editing.type === "stripstream"}
-                        onClick={() => setEditing({ ...editing, type: "stripstream" })}
-                      />
-                    </div>
+            <form onSubmit={handleSave} id="connection-form" className="space-y-3">
+              {!editing.id && (
+                <div className="space-y-1.5">
+                  <span className="text-sm font-medium">{t("settings.connections.type")}</span>
+                  <div className="grid grid-cols-2 gap-2">
+                    {CONNECTION_PROVIDERS.map((provider) => {
+                      const option = connectionDescriptor(provider);
+                      return (
+                        <TypeButton
+                          key={provider}
+                          label={option.title}
+                          description={option.authLabel}
+                          selected={editing.provider === provider}
+                          onClick={() => setEditing({ ...editing, provider })}
+                        />
+                      );
+                    })}
                   </div>
-                )}
+                </div>
+              )}
 
-                {editing.id && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="text-muted-foreground">
-                      {t("settings.connections.type")} :
-                    </span>
-                    <TypeBadge type={editing.type} />
-                  </div>
-                )}
+              {editing.id && (
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-muted-foreground">
+                    {t("settings.connections.type")} :
+                  </span>
+                  <ConnectionTypeBadge provider={editing.provider} />
+                </div>
+              )}
 
-                <FieldRow label={t("settings.connections.name")} htmlFor="conn-name">
-                  <input
-                    id="conn-name"
-                    type="text"
-                    required
-                    value={editing.name}
-                    onChange={(e) => setEditing({ ...editing, name: e.target.value })}
-                    className={inputClass}
-                    placeholder={
-                      editing.type === "komga"
-                        ? t("settings.connections.komgaNamePlaceholder")
-                        : t("settings.connections.stripstreamNamePlaceholder")
-                    }
-                  />
-                </FieldRow>
+              <FieldRow label={t("settings.connections.name")} htmlFor="conn-name">
+                <input
+                  id="conn-name"
+                  type="text"
+                  required
+                  value={editing.name}
+                  onChange={(e) => setEditing({ ...editing, name: e.target.value })}
+                  className={inputClass}
+                  placeholder={t(descriptor.namePlaceholderKey)}
+                />
+              </FieldRow>
 
-                <FieldRow label={t("settings.connections.serverUrl")} htmlFor="conn-url">
-                  <input
-                    id="conn-url"
-                    type="url"
-                    required
-                    value={editing.url}
-                    onChange={(e) => setEditing({ ...editing, url: e.target.value })}
-                    className={inputClass}
-                    placeholder={
-                      editing.type === "komga"
-                        ? "https://komga.example.com"
-                        : "https://librarian.example.com"
-                    }
-                  />
-                </FieldRow>
+              <FieldRow label={t("settings.connections.serverUrl")} htmlFor="conn-url">
+                <input
+                  id="conn-url"
+                  type="url"
+                  required
+                  value={editing.url}
+                  onChange={(e) => setEditing({ ...editing, url: e.target.value })}
+                  className={inputClass}
+                  placeholder={descriptor.urlPlaceholder}
+                />
+              </FieldRow>
 
-                {editing.type === "komga" ? (
-                  <>
-                    <FieldRow label={t("settings.connections.username")} htmlFor="conn-username">
-                      <input
-                        id="conn-username"
-                        type="text"
-                        required
-                        value={editing.username}
-                        onChange={(e) => setEditing({ ...editing, username: e.target.value })}
-                        className={inputClass}
-                      />
-                    </FieldRow>
-                    <FieldRow
-                      label={t("settings.connections.password")}
-                      htmlFor="conn-password"
-                      hint={editing.id ? t("settings.connections.editHint") : undefined}
-                    >
-                      <input
-                        id="conn-password"
-                        type="password"
-                        required={!editing.id}
-                        value={editing.password}
-                        onChange={(e) => setEditing({ ...editing, password: e.target.value })}
-                        className={inputClass}
-                        placeholder={editing.id ? "••••••••" : ""}
-                      />
-                    </FieldRow>
-                  </>
-                ) : (
+              {descriptor.fields.map((field) => {
+                // En édition, un secret vide conserve la valeur enregistrée.
+                const keepsStoredValue = Boolean(editing.id) && field.required === "on-create";
+                return (
                   <FieldRow
-                    label={t("settings.connections.token")}
-                    htmlFor="conn-token"
-                    hint={editing.id ? t("settings.connections.editHint") : undefined}
+                    key={field.name}
+                    label={t(field.labelKey)}
+                    htmlFor={`conn-${field.name}`}
+                    hint={keepsStoredValue ? t("settings.connections.editHint") : undefined}
                   >
                     <input
-                      id="conn-token"
-                      type="password"
-                      required={!editing.id}
-                      value={editing.token}
-                      onChange={(e) => setEditing({ ...editing, token: e.target.value })}
+                      id={`conn-${field.name}`}
+                      type={field.inputType}
+                      required={!keepsStoredValue}
+                      value={editing.fields[field.name] ?? ""}
+                      onChange={(e) =>
+                        setEditing({
+                          ...editing,
+                          fields: { ...editing.fields, [field.name]: e.target.value },
+                        })
+                      }
                       className={inputClass}
-                      placeholder={editing.id ? "••••••••" : "stl_xxxx_xxxxxxxx"}
+                      placeholder={keepsStoredValue ? "••••••••" : (field.placeholder ?? "")}
                     />
                   </FieldRow>
-                )}
-              </form>
-            )}
+                );
+              })}
+            </form>
 
             <DialogFooter className="gap-2 sm:flex-row sm:justify-end">
               <button type="button" onClick={cancelEdit} className={btnSecondary}>
@@ -494,14 +450,7 @@ export function ConnectionsSettings({
               <button
                 type="button"
                 onClick={handleTest}
-                disabled={
-                  !editing ||
-                  isTesting ||
-                  !editing.url ||
-                  (editing.type === "komga"
-                    ? !editing.username || !editing.password
-                    : !editing.token)
-                }
+                disabled={isTesting || !draft?.ok}
                 className={btnSecondary}
               >
                 {isTesting ? (
@@ -534,19 +483,6 @@ export function ConnectionsSettings({
         )}
       </Dialog>
     </Card>
-  );
-}
-
-function TypeBadge({ type }: { type: ConnectionType }) {
-  const label = type === "komga" ? "Komga" : "Stripstream";
-  const className =
-    type === "komga"
-      ? "bg-blue-500/15 text-blue-700 dark:text-blue-300"
-      : "bg-primary/15 text-primary";
-  return (
-    <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-xs", className)}>
-      {label}
-    </span>
   );
 }
 

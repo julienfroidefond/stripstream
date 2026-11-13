@@ -46,7 +46,7 @@ Le Librarian expose **deux surfaces** :
 Stripstream consomme uniquement la **Client API avec un token de scope `read`**
 (lecture, progression de lecture, favoris et notations personnelles du token).
 L'authentification se fait par en-tête `Authorization: Bearer stl_{prefix}_{secret}`
-(`src/lib/providers/stripstream/stripstream.client.ts:50-56`). Les tokens suivent
+(`src/lib/providers/stripstream/stripstream.transport-policy.ts`). Les tokens suivent
 le format `stl_{prefix}_{secret}` et sont hachés (Argon2) côté Librarian.
 
 Le **scan de bibliothèque** (`POST /libraries/{id}/scan`) et son suivi

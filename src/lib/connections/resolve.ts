@@ -1,114 +1,27 @@
-import prisma from "@/lib/prisma";
 import { requireUserId } from "@/lib/auth-utils";
-import { ERROR_CODES } from "@/constants/errorCodes";
-import { buildKomgaAuthHeader, decryptSecret } from "@/lib/credentials";
 import { AppError } from "@/utils/errors";
-import { normalizeServerUrl } from "@/utils/server-url";
-import { getActiveConnection } from "./active";
-import type {
-  KomgaConnection,
-  ResolvedConnection,
-  StripstreamConnection,
-} from "./types";
 import type { ProviderType } from "@/lib/providers/types";
-
-interface StoredKomgaConfig {
-  id: number;
-  url: string;
-  authHeader: string;
-}
-
-interface StoredStripstreamConfig {
-  id: number;
-  url: string;
-  token: string;
-}
-
-const KOMGA_SELECT = { id: true, url: true, authHeader: true } as const;
-const STRIPSTREAM_SELECT = { id: true, url: true, token: true } as const;
+import { getActiveConnection } from "./active";
+import { definitionFor, getProviderDefinition } from "./registry";
+import type { ConnectionDraft, ConnectionOf, ResolvedConnection } from "./types";
 
 /**
  * Règle de fallback unique : la config demandée si elle appartient au user,
- * sinon la première config de ce provider. Stripstream ajoute en dernier
- * recours les variables d'environnement ; Komga n'a pas d'équivalent.
+ * sinon la première config de ce provider, puis la connexion d'environnement
+ * que la définition déclare (Stripstream : `STRIPSTREAM_URL`/`STRIPSTREAM_TOKEN`,
+ * Komga : aucune).
  */
-async function findKomgaConfig(
+async function resolveForProvider<P extends ProviderType>(
+  provider: P,
   userId: number,
   preferredId: number | null
-): Promise<StoredKomgaConfig | null> {
-  if (preferredId !== null) {
-    const active = await prisma.komgaConfig.findFirst({
-      where: { id: preferredId, userId },
-      select: KOMGA_SELECT,
-    });
-    if (active) return active;
-  }
+): Promise<ConnectionOf<P> | null> {
+  const definition = getProviderDefinition(provider);
+  const row =
+    (preferredId !== null ? await definition.store.findOwned(userId, preferredId) : null) ??
+    (await definition.store.findFirst(userId));
 
-  return prisma.komgaConfig.findFirst({
-    where: { userId },
-    orderBy: { createdAt: "asc" },
-    select: KOMGA_SELECT,
-  });
-}
-
-async function findStripstreamConfig(
-  userId: number,
-  preferredId: number | null
-): Promise<StoredStripstreamConfig | null> {
-  if (preferredId !== null) {
-    const active = await prisma.stripstreamConfig.findFirst({
-      where: { id: preferredId, userId },
-      select: STRIPSTREAM_SELECT,
-    });
-    if (active) return active;
-  }
-
-  return prisma.stripstreamConfig.findFirst({
-    where: { userId },
-    orderBy: { createdAt: "asc" },
-    select: STRIPSTREAM_SELECT,
-  });
-}
-
-function toKomgaConnection(config: StoredKomgaConfig): KomgaConnection {
-  return {
-    provider: "komga",
-    configId: config.id,
-    url: config.url,
-    authHeader: decryptSecret(config.authHeader),
-  };
-}
-
-function toStripstreamConnection(config: StoredStripstreamConfig): StripstreamConnection {
-  return {
-    provider: "stripstream",
-    configId: config.id,
-    url: config.url,
-    token: decryptSecret(config.token),
-    source: "db",
-  };
-}
-
-async function resolveForProvider(
-  provider: ProviderType,
-  userId: number,
-  preferredId: number | null
-): Promise<ResolvedConnection | null> {
-  if (provider === "komga") {
-    const config = await findKomgaConfig(userId, preferredId);
-    return config ? toKomgaConnection(config) : null;
-  }
-
-  const config = await findStripstreamConfig(userId, preferredId);
-  if (config) return toStripstreamConnection(config);
-
-  const url = process.env.STRIPSTREAM_URL?.trim();
-  const token = process.env.STRIPSTREAM_TOKEN?.trim();
-  if (url && token) {
-    return { provider: "stripstream", configId: null, url, token, source: "env" };
-  }
-
-  return null;
+  return row ? definition.toConnection(row) : definition.environmentConnection();
 }
 
 /** Connexion sélectionnée par le navigateur, avec la même règle de fallback. */
@@ -121,18 +34,10 @@ export async function resolveActiveConnection(userId: number): Promise<ResolvedC
  * Connexion d'un provider précis. Si la sélection active porte sur un autre
  * provider, on retombe sur la première config de celui demandé.
  */
-export function resolveConnectionForProvider(
-  provider: "komga",
+export async function resolveConnectionForProvider<P extends ProviderType>(
+  provider: P,
   userId: number
-): Promise<KomgaConnection | null>;
-export function resolveConnectionForProvider(
-  provider: "stripstream",
-  userId: number
-): Promise<StripstreamConnection | null>;
-export async function resolveConnectionForProvider(
-  provider: ProviderType,
-  userId: number
-): Promise<ResolvedConnection | null> {
+): Promise<ConnectionOf<P> | null> {
   const active = await getActiveConnection(userId);
   return resolveForProvider(
     provider,
@@ -146,34 +51,14 @@ export async function resolveConnectionForProvider(
  * Sert aux actions « tester cette config » : on ne veut pas tester une autre
  * connexion à la place de celle demandée.
  */
-export function getStoredConnection(
-  provider: "komga",
+export async function getStoredConnection<P extends ProviderType>(
+  provider: P,
   id: number,
   userId: number
-): Promise<KomgaConnection | null>;
-export function getStoredConnection(
-  provider: "stripstream",
-  id: number,
-  userId: number
-): Promise<StripstreamConnection | null>;
-export async function getStoredConnection(
-  provider: ProviderType,
-  id: number,
-  userId: number
-): Promise<ResolvedConnection | null> {
-  if (provider === "komga") {
-    const config = await prisma.komgaConfig.findFirst({
-      where: { id, userId },
-      select: KOMGA_SELECT,
-    });
-    return config ? toKomgaConnection(config) : null;
-  }
-
-  const config = await prisma.stripstreamConfig.findFirst({
-    where: { id, userId },
-    select: STRIPSTREAM_SELECT,
-  });
-  return config ? toStripstreamConnection(config) : null;
+): Promise<ConnectionOf<P> | null> {
+  const definition = getProviderDefinition(provider);
+  const row = await definition.store.findOwned(userId, id);
+  return row ? definition.toConnection(row) : null;
 }
 
 /**
@@ -182,55 +67,20 @@ export async function getStoredConnection(
  * pas d'identité à recevoir. Comme `getProvider`, ce module fabrique la
  * connexion de la requête courante ; il est l'un des rares lecteurs légitimes
  * de la session (ADR 0029). Le reste du module prend un `userId` explicite.
- * Elle conserve le contrat d'erreur historique des routes image/livre Komga.
+ * L'absence de connexion lève le code « config manquante » de la définition.
  */
-export function requireConnectionForProvider(provider: "komga"): Promise<KomgaConnection>;
-export function requireConnectionForProvider(
-  provider: "stripstream"
-): Promise<StripstreamConnection>;
-export async function requireConnectionForProvider(
-  provider: ProviderType
-): Promise<ResolvedConnection> {
+export async function requireConnectionForProvider<P extends ProviderType>(
+  provider: P
+): Promise<ConnectionOf<P>> {
   const userId = await requireUserId();
-  const active = await getActiveConnection(userId);
-  const connection = await resolveForProvider(
-    provider,
-    userId,
-    active.provider === provider ? active.configId : null
-  );
-
+  const connection = await resolveConnectionForProvider(provider, userId);
   if (!connection) {
-    throw new AppError(
-      provider === "komga" ? ERROR_CODES.KOMGA.MISSING_CONFIG : ERROR_CODES.STRIPSTREAM.MISSING_CONFIG
-    );
+    throw new AppError(getProviderDefinition(provider).missingConfigCode);
   }
   return connection;
 }
 
 /** Connexion ad hoc pour tester des credentials pas encore enregistrés. */
-export function connectionFromKomgaCredentials(
-  serverUrl: string,
-  username: string,
-  password: string
-): KomgaConnection {
-  return {
-    provider: "komga",
-    configId: null,
-    url: normalizeServerUrl(serverUrl),
-    authHeader: buildKomgaAuthHeader(username, password),
-  };
-}
-
-/** Connexion ad hoc pour tester un token pas encore enregistré. */
-export function connectionFromStripstreamToken(
-  serverUrl: string,
-  token: string
-): StripstreamConnection {
-  return {
-    provider: "stripstream",
-    configId: null,
-    url: normalizeServerUrl(serverUrl),
-    token: token.trim(),
-    source: "provided",
-  };
+export function connectionFromDraft(draft: ConnectionDraft): ResolvedConnection {
+  return definitionFor(draft).draftConnection(draft);
 }

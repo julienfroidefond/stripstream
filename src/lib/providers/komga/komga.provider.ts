@@ -1,3 +1,4 @@
+import type { ErrorCode } from "@/constants/errorCodes";
 import {
   createProviderCapabilities,
   type IMediaProvider,
@@ -462,12 +463,21 @@ export class KomgaProvider implements IMediaProvider {
     return response.totalElements;
   }
 
-  async testConnection(): Promise<{ ok: boolean; error?: string; libraryCount?: number }> {
+  async testConnection(): Promise<{
+    ok: boolean;
+    error?: string;
+    code?: ErrorCode;
+    libraryCount?: number;
+  }> {
     try {
       const libraries = await this.fetch<KomgaLibrary[]>("libraries");
       return { ok: true, libraryCount: libraries.length };
     } catch (error) {
-      return { ok: false, error: error instanceof Error ? error.message : "Connexion échouée" };
+      return {
+        ok: false,
+        error: error instanceof Error ? error.message : "Connection failed",
+        code: error instanceof AppError ? error.code : undefined,
+      };
     }
   }
 
