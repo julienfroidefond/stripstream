@@ -159,7 +159,7 @@ Tags and per-id tag builders live in `src/constants/cacheConstants.ts`. Read pro
 | `recommendations()` / `relatedSeries(id)` | 120 s | `series-recommendations` / `series-related:${id}` | discovery |
 | `stats()` | none declared | `reading-stats` | reading statistics counters |
 
-Known caveats, kept as-is by ADR 0028: Komga's `getNextBook` is uncached while Stripstream's uses `nextBook()`, and `ProviderTransport.request` forwards only `tags` when a profile has both `tags` and `revalidate`, so the TTL of a tagged read is not applied by the transport today.
+`ProviderTransport.request` forwards a profile's TTL and tags together (`next: { revalidate, tags }`, same options to `unstable_cache` for cached POSTs): the tag gives targeted invalidation after a local mutation, the TTL bounds staleness for changes made directly on the backend. Known caveat, kept as-is by ADR 0028: Komga's `getNextBook` is uncached while Stripstream's uses `nextBook()`.
 
 ### Invalidation
 

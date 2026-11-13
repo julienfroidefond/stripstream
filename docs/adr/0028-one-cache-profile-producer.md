@@ -18,10 +18,11 @@ ADR 0007 made tags a vocabulary and invalidation a recipe, but the read side sta
 
 ## Consequences
 
-- TTLs and tag sets per read are unchanged; `cacheProfiles.test.ts` pins every profile and `cache-profile.contract.test.ts` proves that both providers hand over the same profile for `getBooks`, `getSeries`, `getLibraries`, `getReadProgress`, `getBook`, `search`, the home feeds and the reading stats.
+- TTLs and tag sets per read are unchanged; `cacheProfiles.test.ts` pins every profile and `cache-profile.contract.test.ts` proves that both providers hand over the same profile for `getBooks`, `getSeries`, `getLibraries`, `getReadProgress`, `getBook`, `search`, the home feeds and the reading stats. TTLs and tags are now both applied by the transport (see below).
 - A new read picks or adds a profile; a new tag goes into `cacheTags` first, then into the profile that produces it and the recipe that expires it.
 - `cacheTags` gained `allSeriesRatings` and `allSeriesShelves`, the global tags the rating and shelf reads already produced.
 - `src/app/actions/` has no direct `revalidatePath`/`updateTag` call left; every action invalidates through a recipe.
-- Inherited inconsistencies are kept, not fixed here: Komga's `getNextBook` has no profile (uncached) while Stripstream's uses `nextBook()` (30 s); the stats profile declares no TTL; and `ProviderTransport.request` forwards only `tags` when a profile carries both `tags` and `revalidate`, so the TTL of a tagged read is currently not applied by the transport. Changing any of these alters cache behaviour and deserves its own decision.
+- Inherited inconsistencies are kept, not fixed here: Komga's `getNextBook` has no profile (uncached) while Stripstream's uses `nextBook()` (30 s); the stats profile declares no TTL. Changing either alters cache behaviour and deserves its own decision.
+- `ProviderTransport.request` used to forward only `tags` when a profile carried both `tags` and `revalidate`, so a tagged read stayed cached until a local mutation expired its tag and never saw changes made directly on the backend. The transport now forwards both (`next: { revalidate, tags }`, and the same object to `unstable_cache` for POST reads): the profile's TTL is the freshness bound and the tag the targeted invalidation. Tagged reads therefore refresh at most every `CACHE_TTL` seconds where they previously did not.
 
 Refs: ADR 0007.
