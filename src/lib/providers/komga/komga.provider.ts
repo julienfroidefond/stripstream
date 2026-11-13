@@ -18,6 +18,7 @@ import type {
 } from "../types";
 import type { HomePrimaryData } from "@/types/home";
 import { KomgaAdapter } from "./komga.adapter";
+import { mediaUrl } from "@/lib/media/media-url";
 import { createKomgaTransportPolicy } from "./komga.transport-policy";
 import {
   ProviderTransport,
@@ -226,7 +227,7 @@ export class KomgaProvider implements IMediaProvider {
           id: s.id,
           title: s.metadata?.title ?? s.name,
           href: `/series/${s.id}`,
-          coverUrl: `/api/komga/images/series/${s.id}/thumbnail`,
+          coverUrl: mediaUrl("komga", { kind: "series-cover", seriesId: s.id }),
           type: "series" as const,
           bookCount: s.booksCount,
         })),
@@ -237,7 +238,7 @@ export class KomgaProvider implements IMediaProvider {
           title: b.metadata?.title ?? b.name,
           seriesTitle: b.seriesTitle,
           href: `/books/${b.id}`,
-          coverUrl: `/api/komga/images/books/${b.id}/thumbnail`,
+          coverUrl: mediaUrl("komga", { kind: "book-cover", bookId: b.id }),
           type: "book" as const,
         })),
     ];
@@ -471,6 +472,6 @@ export class KomgaProvider implements IMediaProvider {
   }
 
   getBookThumbnailUrl(bookId: string): string {
-    return `/api/komga/images/books/${bookId}/thumbnail`;
+    return mediaUrl("komga", { kind: "book-cover", bookId });
   }
 }

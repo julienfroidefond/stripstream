@@ -9,7 +9,7 @@ Stripstream expose deux surfaces côté serveur, et rien d'autre :
 
 - Toutes les routes d'API hors famille d'authentification traversent le middleware `src/proxy.ts` et exigent une session NextAuth valide. Une requête non authentifiée reçoit une réponse `401` JSON.
 - Seule la famille d'authentification NextAuth est publique (exclue du matcher du middleware).
-- Les dix routes média (Komga et Stripstream) sont de fines déclarations sur `createMediaRoute` (`src/lib/media/media-route.ts`) : l'adaptateur vérifie la session, choisit le transport du provider, applique la politique de cache et d'en-têtes, relaie les `304` et mappe les erreurs. Les transports résolvent la connexion via `requireConnectionForProvider` (`@/lib/connections`), qui applique la config active du provider, puis sa première config, et le fallback aux variables d'environnement uniquement pour Stripstream. Le module déchiffre les credentials ; les routes ne lisent jamais les colonnes `authHeader`/`token` directement.
+- Les huit routes média (Komga et Stripstream) sont des déclarations d'une ligne `createMediaRoute(provider, kind)` (`src/lib/media/media-route.ts`) : l'adaptateur vérifie la session, choisit le transport du provider, applique la politique de cache et d'en-têtes, relaie les `304` et mappe les erreurs. Les transports résolvent la connexion via `requireConnectionForProvider` (`@/lib/connections`), qui applique la config active du provider, puis sa première config, et le fallback aux variables d'environnement uniquement pour Stripstream. Le module déchiffre les credentials ; les routes ne lisent jamais les colonnes `authHeader`/`token` directement.
 - Les Server Actions vérifient l'utilisateur par les gates du runner (`requireUser`, `requireRole`, `rateLimit`), qui transmettent `userId` aux services ; les services ne lisent pas la session (ADR 0029). Les actions de test de connexion sont en plus limitées par `checkConnectionTestRateLimit` (`src/lib/connections/probe.ts`, 5 tentatives par 30 secondes et par utilisateur et par provider).
 
 ## 🌐 Route Handlers
@@ -24,75 +24,30 @@ Stripstream expose deux surfaces côté serveur, et rien d'autre :
 - **Description** : même handler NextAuth v5 ; porte les soumissions de connexion/déconnexion et les callbacks.
 - **Authentification** : publique.
 
-### GET /api/komga/books/[bookId]/file
+### Routes média
 
-- **Description** : téléchargement du fichier source d'un livre Komga (`/api/v1/books/{id}/file`), relayé en streaming par le transport média Komga via `ProviderTransport.response()`. Le `Content-Type` et le `Content-Disposition` amont sont recopiés ; `Content-Length` est volontairement omis (Safari est strict sur un `Content-Length` posé au-dessus d'une réponse chunked). `404` si le fichier est absent, `401`/`403` si Komga refuse l'accès.
-- **Authentification** : session NextAuth requise ; configuration Komga active.
-- **Cache** : `Cache-Control: private, no-store`.
+Les huit routes média sont dérivées d'une seule table (`src/lib/media/media-url.ts`, ADR 0027) : `MEDIA_ROUTE_PATTERNS` donne la forme de route d'un `MediaRef.kind`, préfixée par `/api/<provider>/`, et `SERVED_MEDIA_KINDS` liste les kinds servis par chaque provider. Chaque `route.ts` se réduit à `createMediaRoute(provider, kind)` ; adapters et providers construisent leurs URL avec `mediaUrl(provider, ref)` (ou `bookPageUrlTemplate` pour les gabarits `{page}`), et `media-url.test.ts` vérifie qu'un fichier existe pour chaque couple servi, qu'aucun autre n'existe et que chaque URL redonne la même référence.
 
-### GET /api/komga/books/[bookId]/pages/[pageNumber]
+La politique de réponse est choisie par kind (`MEDIA_POLICIES`, `src/lib/media/policies.ts`), identique pour les deux providers sauf l'écart documenté des couvertures Komga :
 
-- **Description** : flux binaire d'une page de livre servie par la `KomgaConfig` active. `pageNumber` est 1-based côté client et converti en 0-based pour Komga. Les requêtes concurrentes vers la même page sont dédupliquées par `requestDeduplicationService` ; le transport relaie `If-None-Match` / `If-Modified-Since` et renvoie `304` sans corps quand Komga valide le cache.
-- **Authentification** : session NextAuth requise ; utilise la configuration Komga active de l'utilisateur.
-- **Cache** : `Cache-Control: public, max-age=31536000`, défini par `MEDIA_POLICIES.komgaReaderPage`.
+| Kind | Route (sous `/api/<provider>/`) | Providers | `Cache-Control` | Erreurs |
+| --- | --- | --- | --- | --- |
+| `book-file` | `books/[bookId]/file` | Komga, Stripstream | `private, no-store` | JSON, status mappé (`401`/`403`/`404`), repli `KOMGA_HTTP_ERROR` / `STRIPSTREAM_HTTP_ERROR` |
+| `book-page` | `images/books/[bookId]/pages/[pageNumber]` | Komga, Stripstream | `private, max-age=2592000, immutable` | JSON, `404` « Image not found », sinon `500` `IMAGE_FETCH_ERROR` |
+| `book-page-thumbnail` | `images/books/[bookId]/pages/[pageNumber]/thumbnail` | Komga | `private, max-age=2592000, immutable` | idem |
+| `book-cover` | `images/books/[bookId]/thumbnail` | Komga, Stripstream | Stripstream : `private, max-age=2592000, immutable` ; Komga : `private, no-cache` | idem |
+| `series-cover` | `images/series/[seriesId]/thumbnail` | Komga | `private, no-cache` | idem |
 
-### GET /api/komga/images/books/[bookId]/pages/[pageNumber]
-
-- **Description** : proxy de streaming de la page d'un livre Komga. Réponse `404` explicite quand Komga ne trouve pas l'image, `304` quand le validateur conditionnel correspond. Cette route et la route lecteur partagent le même transport média (déduplication et validateurs).
-- **Authentification** : session NextAuth requise ; configuration Komga active.
-- **Cache** : `public, max-age=2592000, immutable` (30 jours), défini par `MEDIA_POLICIES.komgaImage`.
-
-### GET /api/komga/images/books/[bookId]/pages/[pageNumber]/thumbnail
-
-- **Description** : miniature d'une page de livre Komga. `400` si `pageNumber` est invalide, `404` si Komga ne trouve pas la miniature.
-- **Authentification** : session NextAuth requise ; configuration Komga active.
-- **Cache** : `public, max-age=2592000, immutable` (30 jours).
-
-### GET /api/komga/images/books/[bookId]/thumbnail
-
-- **Description** : couverture d'un livre Komga. Le transport média Komga renvoie la miniature du livre ou la première page selon la préférence `showThumbnails`.
-- **Authentification** : session NextAuth requise ; configuration Komga active.
-- **Cache** : `public, max-age=2592000, immutable` (30 jours).
-
-### GET /api/komga/images/series/[seriesId]/first-page
-
-- **Description** : couverture d'une série Komga en streaming. Le transport média Komga sert la première page du premier livre (résolu via `ProviderTransport.request()`), ou la miniature de la série quand la préférence `showThumbnails` est active.
-- **Authentification** : session NextAuth requise ; configuration Komga active.
-- **Cache** : `public, max-age=2592000, immutable` (30 jours).
-
-### GET /api/komga/images/series/[seriesId]/thumbnail
-
-- **Description** : miniature d'une série Komga. `404` si Komga ne trouve pas l'image.
-- **Authentification** : session NextAuth requise ; configuration Komga active.
-- **Cache** : `public, max-age=2592000, immutable` (30 jours).
+- **Authentification** : session NextAuth requise ; le cœur (`media-route-core.ts`) renvoie `401` JSON avant tout appel au transport. Les transports résolvent la connexion active du provider.
+- **Pages** : `pageNumber` est 1-based côté client (`400` s'il n'est pas un entier positif ou nul) ; seul le transport Komga le convertit en 0-based. La query string d'une page est conservée dans la référence et transmise telle quelle au backend Stripstream (format, largeur…) ; elle fait partie de l'URL, donc de la clé de cache.
+- **Validateurs** : `If-None-Match` / `If-Modified-Since` sont relayés à l'amont, une réponse `304` est renvoyée sans corps ni `Content-Type` implicite. Les pages Komga et les couvertures Stripstream identiques en vol sont dédupliquées par connexion résolue et empreinte du validateur.
+- **Couvertures Komga** : le transport sert la miniature Komga ou la première page selon la préférence utilisateur `showThumbnails`, lue à chaque requête (premier livre de la série résolu via `ProviderTransport.request()` pour `series-cover`). Les octets d'une même URL dépendent donc de la préférence : la réponse est `private, no-cache` et se revalide par ETag (304 tant que la source ne change pas), au lieu d'être figée trente jours.
+- **Fichiers** : `Content-Type` et `Content-Disposition` amont recopiés ; `Content-Length` volontairement omis (Safari est strict sur un `Content-Length` posé au-dessus d'une réponse chunked).
+- **Toutes les réponses sont `private`** : la même URL est résolue contre la connexion désignée par le cookie de session, un cache partagé ne doit jamais la servir à un autre utilisateur.
 
 ### GET /api/provider/search
 
-- **Description** : recherche via le provider actif (`getProvider()` → `provider.search(query, limit)`). Query `q` (minimum 2 caractères), `limit` optionnel (défaut 6, borné entre 1 et 10). Renvoie un tableau de résultats normalisés, ou `[]` si `q` est trop court ou si aucun provider n'est configuré.
-- **Authentification** : session NextAuth requise.
-- **Cache** : `Cache-Control: no-store`.
-
-### GET /api/stripstream/books/[bookId]/file
-
-- **Description** : téléchargement du fichier source d'un tome Stripstream (`books/{id}/file` côté Librarian), relayé en streaming par le transport média Stripstream via `ProviderTransport.response()`. Le `Content-Type` et le `Content-Disposition` (nom de fichier réel, RFC 6266) amont sont recopiés ; `Content-Length` est volontairement omis (Safari). `404` si le fichier est introuvable.
-- **Authentification** : session NextAuth requise **et** contrôle explicite `getCurrentUser()` (`401` sinon) ; config Stripstream résolue pour l'utilisateur.
-- **Cache** : `Cache-Control: private, no-store`.
-
-### GET /api/stripstream/images/books/[bookId]/pages/[pageNumber]
-
-- **Description** : proxy de streaming de la page d'un livre servie par le transport média Stripstream. La query string reçue est transmise telle quelle au backend ; les validateurs conditionnels sont relayés et une réponse `304` est renvoyée sans corps.
-- **Authentification** : session NextAuth requise **et** contrôle explicite `getCurrentUser()` (`401` sinon) ; config Stripstream résolue pour l'utilisateur.
-- **Cache** : `public, max-age=86400` (1 jour), défini par `MEDIA_POLICIES.stripstreamPage`.
-
-### GET /api/stripstream/images/books/[bookId]/thumbnail
-
-- **Description** : miniature d'un livre Stripstream. Les appels concurrents sont dédupliqués par une clé dérivée de l'identifiant de configuration résolu et de l'empreinte du validateur conditionnel (`sha256`). Réponse `404` vide en cas d'échec de récupération, `304` quand le cache est validé.
-- **Authentification** : session NextAuth requise **et** contrôle explicite `getCurrentUser()` (`401` sinon).
-- **Cache** : `public, max-age=2592000, immutable` (30 jours), défini par `MEDIA_POLICIES.stripstreamThumbnail`.
-
-### GET /api/stripstream/search
-
-- **Description** : recherche via le provider actif, même contrat que `/api/provider/search` (`q` minimum 2 caractères, `limit` défaut 6 / max 10). Différence : lève une erreur de configuration manquante (`500`) si aucun provider n'est actif, au lieu de renvoyer `[]`.
+- **Description** : recherche via le provider actif (`getProvider()` → `provider.search(query, limit)`). Query `q` (minimum 2 caractères), `limit` optionnel (défaut 6, borné entre 1 et 10). Renvoie un tableau de résultats normalisés, ou `[]` si `q` est trop court ou si aucun provider n'est configuré. C'est la seule route de recherche : l'ancien clone `/api/stripstream/search` a été supprimé.
 - **Authentification** : session NextAuth requise.
 - **Cache** : `Cache-Control: no-store`.
 
