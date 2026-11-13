@@ -101,7 +101,7 @@ export function loadHomeFeeds(
   context: HomeFeedContext
 ): HomeFeeds {
   const rowState = <F extends HomeFeed>(feed: F) =>
-    settleSection(feed, context, () => loadHomeFeedPage(provider, feed, 0));
+    settleSection(feed, context, () => loadHomeFeedPage(provider, feed, 0, context));
 
   const rows = Object.fromEntries(
     HOME_FEEDS.map((feed) => [feed, rowState(feed)])
@@ -118,7 +118,7 @@ export function loadHomeFeeds(
   const feeds: HomeFeedStates = {
     ...rows,
     "continue-reading": settleSection("continue-reading", context, () =>
-      loadContinueReadingPage(provider, 0, { knownSeries })
+      loadContinueReadingPage(provider, 0, context, { knownSeries })
     ),
   };
 
@@ -160,8 +160,8 @@ export async function loadNextHomeFeedPage<S extends HomeSection>(
 
   const page =
     section === "continue-reading"
-      ? await loadContinueReadingPage(provider, offset)
-      : await loadHomeFeedPage(provider, section as HomeFeed, offset);
+      ? await loadContinueReadingPage(provider, offset, context)
+      : await loadHomeFeedPage(provider, section as HomeFeed, offset, context);
 
   return page as HomeSectionPage<S>;
 }

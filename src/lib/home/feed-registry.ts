@@ -8,6 +8,7 @@ import {
   type HomeFeed,
   type HomeFeedItems,
   type HomeFeedPolicy,
+  type HomeFeedViewer,
 } from "./feed-page";
 
 /**
@@ -21,13 +22,13 @@ import {
 interface ProbeFeed<T> {
   policy: HomeFeedPolicy;
   pageRule: "probe";
-  load: (provider: IMediaProvider, limit: number) => Promise<readonly T[]>;
+  load: (provider: IMediaProvider, viewer: HomeFeedViewer, limit: number) => Promise<readonly T[]>;
 }
 
 interface SliceFeed<T> {
   policy: HomeFeedPolicy;
   pageRule: "slice";
-  load: (provider: IMediaProvider) => Promise<readonly T[]>;
+  load: (provider: IMediaProvider, viewer: HomeFeedViewer) => Promise<readonly T[]>;
 }
 
 type FeedDefinition<T> = ProbeFeed<T> | SliceFeed<T>;
@@ -52,21 +53,15 @@ const feeds = {
   ongoing: {
     policy: PERSONAL_FEED_POLICY,
     pageRule: "probe",
-    load: (provider, limit) => provider.getHomeOngoingSeries(limit),
+    load: (provider, _viewer, limit) => provider.getHomeOngoingSeries(limit),
   },
   favorites: {
     // Les favoris restent visibles en anonyme et ne prouvent pas que le
     // provider répond : ils ne comptent pas dans la règle « tout a échoué ».
     policy: { ...CATALOG_FEED_POLICY, countsTowardOutage: false },
     pageRule: "slice",
-    // Le registre ne reçoit que le provider : il résout l'identité ici en
-    // attendant que ses appelants lui passent le `userId` (ADR 0029). Sans
-    // session, la rangée reste vide comme avant.
-    load: async (provider) => {
-      const { getCurrentUserId } = await import("@/lib/auth-utils");
-      const userId = await getCurrentUserId();
-      return userId === null ? [] : FavoriteService.listFavorites({ userId, provider });
-    },
+    // L'identité vient de l'appelant (gateway ou runner, ADR 0029).
+    load: (provider, { userId }) => FavoriteService.listFavorites({ userId, provider }),
   },
   "reading-lists": {
     policy: CATALOG_FEED_POLICY,
@@ -78,12 +73,12 @@ const feeds = {
   "latest-series": {
     policy: CATALOG_FEED_POLICY,
     pageRule: "probe",
-    load: (provider, limit) => provider.getHomeLatestSeries(limit),
+    load: (provider, _viewer, limit) => provider.getHomeLatestSeries(limit),
   },
   "recently-read": {
     policy: CATALOG_FEED_POLICY,
     pageRule: "probe",
-    load: (provider, limit) => provider.getHomeRecentlyRead(limit),
+    load: (provider, _viewer, limit) => provider.getHomeRecentlyRead(limit),
   },
   recommendations: {
     // Chargées par le client après le premier rendu : hors règle d'échec.
@@ -93,7 +88,7 @@ const feeds = {
       countsTowardOutage: false,
     },
     pageRule: "probe",
-    load: (provider, limit) => provider.capabilities.discovery
+    load: (provider, _viewer, limit) => provider.capabilities.discovery
       ? provider.capabilities.discovery.getRecommendations(limit)
       : Promise.resolve([]),
   },
@@ -119,13 +114,14 @@ export async function loadHomeFeedPage<F extends HomeFeed>(
   provider: IMediaProvider,
   feed: F,
   offset: number,
+  viewer: HomeFeedViewer,
   pageSize = HOME_FEED_PAGE_SIZE
 ): Promise<FeedPage<HomeFeedItems[F]>> {
   const definition = feeds[feed] as unknown as FeedDefinition<HomeFeedItems[F]>;
   const items =
     definition.pageRule === "probe"
-      ? await definition.load(provider, probeLimit(offset, pageSize))
-      : await definition.load(provider);
+      ? await definition.load(provider, viewer, probeLimit(offset, pageSize))
+      : await definition.load(provider, viewer);
 
   return paginateFeed(items, offset, pageSize);
 }

@@ -93,8 +93,13 @@ export interface HomeFeedPolicy {
 }
 
 /** Contexte du lecteur, seul paramètre de la politique. */
-export interface HomeFeedContext {
+export interface HomeFeedContext extends HomeFeedViewer {
   isAnonymous: boolean;
+}
+
+/** Identité de l'appelant, résolue par la gateway ou le runner (ADR 0029). */
+export interface HomeFeedViewer {
+  userId: number;
 }
 
 /** Une section est masquée quand le mode anonyme la cache. */

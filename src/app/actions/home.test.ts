@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/providers/provider.factory", () => ({ getProvider: vi.fn() }));
-vi.mock("@/lib/auth-utils", () => ({ requireUserId: vi.fn() }));
+vi.mock("@/lib/auth-utils", () => ({ requireUserId: vi.fn(async () => 7) }));
 vi.mock("@/lib/services/preferences.service", () => ({
   PreferencesService: { getPreferences: vi.fn() },
 }));
@@ -10,6 +10,7 @@ vi.mock("@/lib/home/home-feeds", () => ({ loadNextHomeFeedPage: vi.fn() }));
 
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { getProvider } from "@/lib/providers/provider.factory";
+import { requireUserId } from "@/lib/auth-utils";
 import { PreferencesService } from "@/lib/services/preferences.service";
 import { loadNextHomeFeedPage } from "@/lib/home/home-feeds";
 import type { IMediaProvider } from "@/lib/providers/provider.interface";
@@ -20,6 +21,7 @@ const provider = { id: "provider" } as unknown as IMediaProvider;
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.mocked(requireUserId).mockResolvedValue(7);
   vi.mocked(PreferencesService.getPreferences).mockResolvedValue({
     anonymousMode: false,
   } as UserPreferences);
@@ -57,7 +59,9 @@ describe("loadHomeFeed", () => {
     });
     expect(loadNextHomeFeedPage).toHaveBeenCalledWith(provider, "favorites", 8, {
       isAnonymous: true,
+      userId: 7,
     });
+    expect(PreferencesService.getPreferences).toHaveBeenCalledWith(7);
   });
 
   it("maps a provider failure to an ActionResult instead of throwing", async () => {
@@ -85,7 +89,7 @@ describe("loadContinueReading", () => {
       provider,
       "continue-reading",
       8,
-      { isAnonymous: false }
+      { isAnonymous: false, userId: 7 }
     );
   });
 });

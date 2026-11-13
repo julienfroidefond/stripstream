@@ -39,8 +39,8 @@ async function HomeStreamingContent() {
     name: "home",
     fallbackCode: ERROR_CODES.HOME.FETCH_ERROR,
     missingProvider: "unavailable",
-    load: async ({ provider, isAnonymous }) =>
-      loadHomeFeeds(provider, { isAnonymous }),
+    load: async ({ provider, isAnonymous, userId }) =>
+      loadHomeFeeds(provider, { isAnonymous, userId }),
   });
 
   return (

@@ -16,7 +16,8 @@ export type { ContinueReadingPage } from "@/lib/home/continue-reading-feed";
 /**
  * Délègue « Voir plus » à la politique de l'accueil.
  *
- * Le runner résout le provider et traduit les erreurs en `ActionResult` ;
+ * Le runner résout la session et le provider et traduit les erreurs en
+ * `ActionResult` (les services ne lisent pas la session, ADR 0029) ;
  * `loadNextHomeFeedPage` applique le masquage anonyme et la règle de page.
  */
 function loadSectionPage<S extends HomeSection>(
@@ -28,10 +29,12 @@ function loadSectionPage<S extends HomeSection>(
     name,
     fallbackCode: ERROR_CODES.HOME.FETCH_ERROR,
     logContext: { feed: section, offset },
-    execute: async ({ provider }) => {
-      const preferences = await PreferencesService.getPreferences();
+    requireUser: true,
+    execute: async ({ provider, userId }) => {
+      const preferences = await PreferencesService.getPreferences(userId);
       const page = await loadNextHomeFeedPage(provider, section, offset, {
         isAnonymous: preferences.anonymousMode,
+        userId,
       });
       return { message: "OK", items: page.items, hasMore: page.hasMore };
     },
