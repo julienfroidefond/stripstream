@@ -1,3 +1,4 @@
+import { AccountHeader } from "@/components/account/AccountHeader";
 import { UserProfileCard } from "@/components/account/UserProfileCard";
 import { ChangePasswordForm } from "@/components/account/ChangePasswordForm";
 import { ReadingStatsCard } from "@/components/account/ReadingStatsCard";
@@ -33,12 +34,7 @@ export default async function AccountPage() {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="mx-auto max-w-4xl space-y-8">
-          <div>
-            <h1 className="text-3xl font-bold">Mon compte</h1>
-            <p className="text-muted-foreground mt-2">
-              Gérez vos informations personnelles et votre sécurité
-            </p>
-          </div>
+          <AccountHeader />
 
           <StaggerGroup className="grid gap-6 md:grid-cols-2" effect="settle" stagger={0.08}>
             <StaggerItem className="h-full">

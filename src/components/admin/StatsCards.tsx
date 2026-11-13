@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Shield, Settings, Bookmark } from "lucide-react";
 import { CountUp, StaggerGroup, StaggerItem } from "@/components/motion";
+import { useTranslate } from "@/hooks/useTranslate";
 
 interface StatsCardsProps {
   stats: {
@@ -14,30 +15,35 @@ interface StatsCardsProps {
 }
 
 export function StatsCards({ stats }: StatsCardsProps) {
+  const { t } = useTranslate();
   const cards = [
     {
-      title: "Utilisateurs totaux",
+      key: "totalUsers",
+      title: t("admin.stats.totalUsers"),
       value: stats.totalUsers,
       icon: Users,
-      description: "Comptes enregistrés",
+      description: t("admin.stats.totalUsersDescription"),
     },
     {
-      title: "Administrateurs",
+      key: "admins",
+      title: t("admin.stats.admins"),
       value: stats.totalAdmins,
       icon: Shield,
-      description: "Avec privilèges admin",
+      description: t("admin.stats.adminsDescription"),
     },
     {
-      title: "Config Komga",
+      key: "komga",
+      title: t("admin.stats.komga"),
       value: stats.usersWithKomga,
       icon: Bookmark,
-      description: "Utilisateurs configurés",
+      description: t("admin.stats.komgaDescription"),
     },
     {
-      title: "Préférences",
+      key: "preferences",
+      title: t("admin.stats.preferences"),
       value: stats.usersWithPreferences,
       icon: Settings,
-      description: "Préférences personnalisées",
+      description: t("admin.stats.preferencesDescription"),
     },
   ];
 
@@ -50,7 +56,7 @@ export function StatsCards({ stats }: StatsCardsProps) {
       {cards.map((card) => {
         const Icon = card.icon;
         return (
-          <StaggerItem key={card.title} className="h-full">
+          <StaggerItem key={card.key} className="h-full">
             <Card className="h-full">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">{card.title}</CardTitle>

@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Mail, Calendar, Shield, Heart } from "lucide-react";
 import type { UserProfile } from "@/lib/services/user.service";
+import { useTranslate } from "@/hooks/useTranslate";
 
 interface UserProfileCardProps {
   profile: UserProfile & {
@@ -12,17 +13,18 @@ interface UserProfileCardProps {
 }
 
 export function UserProfileCard({ profile }: UserProfileCardProps) {
+  const { t, currentLanguage } = useTranslate();
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Informations du compte</CardTitle>
-        <CardDescription>Vos informations personnelles</CardDescription>
+        <CardTitle>{t("account.profile.title")}</CardTitle>
+        <CardDescription>{t("account.profile.description")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center gap-3">
           <Mail className="h-5 w-5 text-muted-foreground" />
           <div>
-            <p className="text-sm font-medium">Email</p>
+            <p className="text-sm font-medium">{t("account.profile.email")}</p>
             <p className="text-sm text-muted-foreground">{profile.email}</p>
           </div>
         </div>
@@ -30,11 +32,11 @@ export function UserProfileCard({ profile }: UserProfileCardProps) {
         <div className="flex items-center gap-3">
           <Shield className="h-5 w-5 text-muted-foreground" />
           <div>
-            <p className="text-sm font-medium">Rôles</p>
+            <p className="text-sm font-medium">{t("account.profile.roles")}</p>
             <div className="flex gap-2 mt-1">
               {profile.roles.map((role) => (
                 <Badge key={role} variant="secondary">
-                  {role.replace("ROLE_", "")}
+                  {t(`admin.roles.${role}`)}
                 </Badge>
               ))}
             </div>
@@ -44,9 +46,9 @@ export function UserProfileCard({ profile }: UserProfileCardProps) {
         <div className="flex items-center gap-3">
           <Calendar className="h-5 w-5 text-muted-foreground" />
           <div>
-            <p className="text-sm font-medium">Membre depuis</p>
+            <p className="text-sm font-medium">{t("account.profile.memberSince")}</p>
             <p className="text-sm text-muted-foreground">
-              {new Date(profile.createdAt).toLocaleDateString("fr-FR", {
+              {new Date(profile.createdAt).toLocaleDateString(currentLanguage, {
                 year: "numeric",
                 month: "long",
                 day: "numeric",
@@ -58,16 +60,18 @@ export function UserProfileCard({ profile }: UserProfileCardProps) {
         <div className="flex items-center gap-3">
           <Heart className="h-5 w-5 text-muted-foreground" />
           <div>
-            <p className="text-sm font-medium">Favoris</p>
+            <p className="text-sm font-medium">{t("account.profile.favorites")}</p>
             <p className="text-sm text-muted-foreground">
-              {profile.stats.favoritesCount} séries favorites
+              {t("account.profile.favoritesCount", { count: profile.stats.favoritesCount })}
             </p>
           </div>
         </div>
 
         <div className="pt-4">
           <p className="text-xs text-muted-foreground">
-            Dernière mise à jour: {new Date(profile.updatedAt).toLocaleDateString("fr-FR")}
+            {t("account.profile.lastUpdate", {
+              date: new Date(profile.updatedAt).toLocaleDateString(currentLanguage),
+            })}
           </p>
         </div>
       </CardContent>
