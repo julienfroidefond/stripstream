@@ -2,7 +2,7 @@ import { getProvider } from "@/lib/providers/provider.factory";
 import type { IMediaProvider } from "@/lib/providers/provider.interface";
 import { requireUserId } from "@/lib/auth-utils";
 import { PreferencesService } from "@/lib/services/preferences.service";
-import { checkRateLimit } from "@/utils/rate-limit";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { ERROR_CODES, type ErrorCode } from "@/constants/errorCodes";
 import { AppError, getErrorMessage } from "@/utils/errors";
 import logger from "@/lib/logger";
@@ -136,7 +136,7 @@ async function executeAction<T extends object>(
     }
 
     if (options.rateLimit) {
-      const rateLimit = checkRateLimit(
+      const rateLimit = await checkRateLimit(
         options.rateLimit.key({ userId: userId as number }),
         options.rateLimit
       );

@@ -40,30 +40,30 @@ beforeEach(() => {
 });
 
 describe("checkConnectionTestRateLimit", () => {
-  it("allows five attempts per provider and user, then blocks the sixth", () => {
+  it("allows five attempts per provider and user, then blocks the sixth", async () => {
     const userId = 900000 + Math.floor(Math.random() * 1000);
 
     for (let attempt = 0; attempt < 5; attempt += 1) {
-      expect(checkConnectionTestRateLimit("komga", userId)).toMatchObject({
+      expect(await checkConnectionTestRateLimit("komga", userId)).toMatchObject({
         allowed: true,
       });
     }
 
-    expect(checkConnectionTestRateLimit("komga", userId)).toMatchObject({
+    expect(await checkConnectionTestRateLimit("komga", userId)).toMatchObject({
       allowed: false,
       retryAfterSeconds: expect.any(Number),
     });
   });
 
-  it("keeps separate budgets for each provider", () => {
+  it("keeps separate budgets for each provider", async () => {
     const userId = 910000 + Math.floor(Math.random() * 1000);
 
     for (let attempt = 0; attempt < 5; attempt += 1) {
-      checkConnectionTestRateLimit("komga", userId);
+      await checkConnectionTestRateLimit("komga", userId);
     }
 
-    expect(checkConnectionTestRateLimit("komga", userId).allowed).toBe(false);
-    expect(checkConnectionTestRateLimit("stripstream", userId).allowed).toBe(true);
+    expect((await checkConnectionTestRateLimit("komga", userId)).allowed).toBe(false);
+    expect((await checkConnectionTestRateLimit("stripstream", userId)).allowed).toBe(true);
   });
 });
 

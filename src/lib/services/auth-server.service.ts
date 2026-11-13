@@ -2,7 +2,7 @@ import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
-import { checkRateLimit } from "../../utils/rate-limit";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export interface UserData {
   id: string;
@@ -24,7 +24,7 @@ export class AuthServerService {
       throw new AppError(ERROR_CODES.AUTH.PASSWORD_NOT_STRONG);
     }
 
-    const rl = checkRateLimit(`register:${email.toLowerCase()}`, {
+    const rl = await checkRateLimit(`register:${email.toLowerCase()}`, {
       limit: this.REGISTER_LIMIT,
       windowMs: this.REGISTER_WINDOW_MS,
     });
@@ -88,7 +88,7 @@ export class AuthServerService {
     const isLocalE2EAccount =
       process.env.NODE_ENV !== "production" && email.toLowerCase().endsWith("@test.local");
     if (!isLocalE2EAccount) {
-      const rl = checkRateLimit(`login:${email.toLowerCase()}`, {
+      const rl = await checkRateLimit(`login:${email.toLowerCase()}`, {
         limit: this.LOGIN_LIMIT,
         windowMs: this.LOGIN_WINDOW_MS,
       });
