@@ -709,6 +709,7 @@
     "ADMIN_CANNOT_DELETE_SELF": "You cannot delete your own account",
     "ADMIN_RESET_PASSWORD_ERROR": "Error resetting password",
     "ADMIN_CANNOT_RESET_OWN_PASSWORD": "You cannot reset your own password here",
+    "ADMIN_INVALID_ROLES": "Pick at least one valid role",
     "KOMGA_MISSING_CONFIG": "Komga configuration missing",
     "KOMGA_MISSING_CREDENTIALS": "Komga credentials missing",
     "KOMGA_CONNECTION_ERROR": "Error connecting to Komga server",
@@ -884,6 +885,30 @@
   },
   "common": {
     "retry": "Retry",
-    "error": "Error"
+    "error": "Error",
+    "success": "Success"
+  },
+  "admin": {
+    "refresh": {
+      "success": {
+        "title": "Data refreshed",
+        "description": "The data has been updated"
+      }
+    },
+    "editUser": {
+      "success": "Roles updated"
+    },
+    "deleteUser": {
+      "success": "The user has been deleted"
+    },
+    "resetPassword": {
+      "success": "The password has been reset",
+      "missingFields": "Please fill in every field"
+    }
+  },
+  "account": {
+    "changePassword": {
+      "success": "Your password has been changed"
+    }
   }
 }

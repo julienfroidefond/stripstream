@@ -104,13 +104,19 @@ describe("requireAdmin", () => {
     authMock.mockResolvedValue(null);
     const { requireAdmin } = await loadAuthUtils();
 
-    await expect(requireAdmin()).rejects.toThrow("Unauthenticated");
+    await expect(requireAdmin()).rejects.toMatchObject({
+      name: "AppError",
+      code: ERROR_CODES.AUTH.UNAUTHENTICATED,
+    });
   });
 
   it("rejects authenticated users without ROLE_ADMIN", async () => {
     authMock.mockResolvedValue({ user: user({ roles: ["ROLE_USER"] }) });
     const { requireAdmin } = await loadAuthUtils();
 
-    await expect(requireAdmin()).rejects.toThrow("Forbidden: Admin access required");
+    await expect(requireAdmin()).rejects.toMatchObject({
+      name: "AppError",
+      code: ERROR_CODES.AUTH.FORBIDDEN,
+    });
   });
 });

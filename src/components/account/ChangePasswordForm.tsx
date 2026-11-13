@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Lock } from "lucide-react";
 import { changePassword } from "@/app/actions/password";
+import { useTranslate } from "@/hooks/useTranslate";
+import { ERROR_CODES } from "@/constants/errorCodes";
 
 interface ChangePasswordFormProps {
   username?: string;
@@ -19,25 +21,25 @@ export function ChangePasswordForm({ username }: ChangePasswordFormProps) {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { t } = useTranslate();
+
+  const showError = (code: string) =>
+    toast({
+      variant: "destructive",
+      title: t("common.error"),
+      description: t(`errors.${code}`),
+    });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (newPassword !== confirmPassword) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Les mots de passe ne correspondent pas",
-      });
+      showError(ERROR_CODES.AUTH.PASSWORD_MISMATCH);
       return;
     }
 
     if (newPassword.length < 8) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Le mot de passe doit contenir au moins 8 caractères",
-      });
+      showError(ERROR_CODES.AUTH.PASSWORD_NOT_STRONG);
       return;
     }
 
@@ -47,24 +49,21 @@ export function ChangePasswordForm({ username }: ChangePasswordFormProps) {
       const result = await changePassword(currentPassword, newPassword);
 
       if (!result.success) {
-        throw new Error(result.message);
+        showError(result.code);
+        return;
       }
 
       toast({
-        title: "Succès",
-        description: "Votre mot de passe a été modifié avec succès",
+        title: t("common.success"),
+        description: t("account.changePassword.success"),
       });
 
       // Reset form
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: error instanceof Error ? error.message : "Une erreur est survenue",
-      });
+    } catch {
+      showError(ERROR_CODES.AUTH.PASSWORD_CHANGE_ERROR);
     } finally {
       setIsLoading(false);
     }

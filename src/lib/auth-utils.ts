@@ -28,18 +28,26 @@ export async function requireUserId(): Promise<number> {
 
 export async function isAdmin(): Promise<boolean> {
   const user = await getCurrentUser();
-  return user?.roles.includes("ROLE_ADMIN") ?? false;
+  return user?.roles.includes(ADMIN_ROLE) ?? false;
 }
 
+/** Rôle porté par les administrateurs. */
+export const ADMIN_ROLE = "ROLE_ADMIN";
+
+/**
+ * Utilisateur courant s'il est administrateur. Lève `AUTH_UNAUTHENTICATED`
+ * sans session et `AUTH_FORBIDDEN` sans `ROLE_ADMIN` : le runner d'actions et
+ * les pages les reçoivent comme n'importe quelle `AppError`.
+ */
 export async function requireAdmin(): Promise<UserData> {
   const user = await getCurrentUser();
 
   if (!user) {
-    throw new Error("Unauthenticated");
+    throw new AppError(ERROR_CODES.AUTH.UNAUTHENTICATED);
   }
 
-  if (!user.roles.includes("ROLE_ADMIN")) {
-    throw new Error("Forbidden: Admin access required");
+  if (!user.roles.includes(ADMIN_ROLE)) {
+    throw new AppError(ERROR_CODES.AUTH.FORBIDDEN);
   }
 
   return user;

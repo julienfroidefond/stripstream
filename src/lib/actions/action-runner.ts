@@ -1,6 +1,6 @@
 import { getProvider } from "@/lib/providers/provider.factory";
 import type { IMediaProvider } from "@/lib/providers/provider.interface";
-import { requireUserId } from "@/lib/auth-utils";
+import { requireAdmin, requireUserId } from "@/lib/auth-utils";
 import { PreferencesService } from "@/lib/services/preferences.service";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { ERROR_CODES, type ErrorCode } from "@/constants/errorCodes";
@@ -53,6 +53,9 @@ export interface ProviderActionContext extends ActionContextBase {
   provider: IMediaProvider;
 }
 
+/** Rôle exigé avant d'exécuter l'action (`admin` : session portant `ROLE_ADMIN`). */
+export type ActionRole = "admin";
+
 export interface ActionRateLimit {
   key: (context: { userId: number }) => string;
   limit: number;
@@ -72,6 +75,12 @@ interface SharedActionOptions<T extends object> {
   logContext?: Record<string, unknown>;
   /** Exige une session avant d'exécuter l'action. */
   requireUser?: boolean;
+  /**
+   * Exige un rôle avant d'exécuter l'action (implique `requireUser`).
+   * Échoue en `AUTH_UNAUTHENTICATED` sans session, `AUTH_FORBIDDEN` sans le rôle,
+   * avant le rate-limit, la garde et toute résolution de provider.
+   */
+  requireRole?: ActionRole;
   /** Budget partagé, appliqué après l'authentification et avant le provider. */
   rateLimit?: ActionRateLimit;
   /** Validation ou garde propre à l'action, avant toute résolution de provider. */
@@ -131,7 +140,10 @@ async function executeAction<T extends object>(
   let preferences: UserPreferences | null = null;
 
   try {
-    if (options.requireUser || options.rateLimit) {
+    if (options.requireRole === "admin") {
+      const admin = await requireAdmin();
+      userId = parseInt(admin.id, 10);
+    } else if (options.requireUser || options.rateLimit) {
       userId = await requireUserId();
     }
 

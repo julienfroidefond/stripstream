@@ -1,74 +1,73 @@
 "use server";
 
-import { AdminService } from "@/lib/services/admin.service";
-import type { AdminUserData } from "@/lib/services/admin.service";
-import { AppError } from "@/utils/errors";
+import {
+  AdminService,
+  ASSIGNABLE_ROLES,
+  type AdminStatsData,
+  type AdminUserData,
+} from "@/lib/services/admin.service";
 import { AuthServerService } from "@/lib/services/auth-server.service";
+import { ERROR_CODES } from "@/constants/errorCodes";
+import { ActionError, runAction, type ActionResult } from "@/lib/actions/action-runner";
 
-export interface AdminStatsData {
-  totalUsers: number;
-  totalAdmins: number;
-  usersWithKomga: number;
-  usersWithPreferences: number;
-}
+/** Réinitialisations de mot de passe par administrateur et par fenêtre. */
+const RESET_PASSWORD_RATE_LIMIT = { limit: 10, windowMs: 15 * 60_000 };
 
-export async function getAdminDashboardData(): Promise<{
-  success: boolean;
-  users?: AdminUserData[];
-  stats?: AdminStatsData;
-  message?: string;
-}> {
-  try {
-    const [users, stats] = await Promise.all([AdminService.getAllUsers(), AdminService.getUserStats()]);
+const isAssignableRole = (role: string): boolean =>
+  (ASSIGNABLE_ROLES as readonly string[]).includes(role);
 
-    return { success: true, users, stats };
-  } catch (error) {
-    if (error instanceof AppError) {
-      return { success: false, message: error.message };
-    }
-
-    return { success: false, message: "Erreur lors de la récupération des données admin" };
-  }
+export async function getAdminDashboardData(): Promise<
+  ActionResult<{ users: AdminUserData[]; stats: AdminStatsData }>
+> {
+  return runAction({
+    name: "getAdminDashboardData",
+    fallbackCode: ERROR_CODES.ADMIN.FETCH_USERS_ERROR,
+    requireRole: "admin",
+    execute: async () => {
+      const [users, stats] = await Promise.all([
+        AdminService.getAllUsers(),
+        AdminService.getUserStats(),
+      ]);
+      return { message: "Données admin récupérées", users, stats };
+    },
+  });
 }
 
 /**
  * Met à jour les rôles d'un utilisateur
  */
-export async function updateUserRoles(
-  userId: string,
-  roles: string[]
-): Promise<{ success: boolean; message: string }> {
-  try {
-    if (roles.length === 0) {
-      return { success: false, message: "L'utilisateur doit avoir au moins un rôle" };
-    }
-
-    await AdminService.updateUserRoles(userId, roles);
-
-    return { success: true, message: "Rôles mis à jour" };
-  } catch (error) {
-    if (error instanceof AppError) {
-      return { success: false, message: error.message };
-    }
-    return { success: false, message: "Erreur lors de la mise à jour des rôles" };
-  }
+export async function updateUserRoles(userId: string, roles: string[]): Promise<ActionResult> {
+  return runAction({
+    name: "updateUserRoles",
+    fallbackCode: ERROR_CODES.ADMIN.UPDATE_USER_ERROR,
+    logContext: { userId, roles },
+    requireRole: "admin",
+    guard: () => {
+      if (roles.length === 0 || !roles.every(isAssignableRole)) {
+        throw new ActionError(ERROR_CODES.ADMIN.INVALID_ROLES);
+      }
+    },
+    execute: async () => {
+      await AdminService.updateUserRoles(userId, roles);
+      return { message: "Rôles mis à jour" };
+    },
+  });
 }
 
 /**
  * Supprime un utilisateur
  */
-export async function deleteUser(
-  userId: string
-): Promise<{ success: boolean; message: string }> {
-  try {
-    await AdminService.deleteUser(userId);
-    return { success: true, message: "Utilisateur supprimé" };
-  } catch (error) {
-    if (error instanceof AppError) {
-      return { success: false, message: error.message };
-    }
-    return { success: false, message: "Erreur lors de la suppression" };
-  }
+export async function deleteUser(userId: string): Promise<ActionResult> {
+  return runAction({
+    name: "deleteUser",
+    fallbackCode: ERROR_CODES.ADMIN.DELETE_USER_ERROR,
+    logContext: { userId },
+    requireRole: "admin",
+    execute: async ({ userId: actorId }) => {
+      await AdminService.deleteUser(actorId as number, userId);
+      return { message: "Utilisateur supprimé" };
+    },
+  });
 }
 
 /**
@@ -77,22 +76,24 @@ export async function deleteUser(
 export async function resetUserPassword(
   userId: string,
   newPassword: string
-): Promise<{ success: boolean; message: string }> {
-  try {
-    if (!AuthServerService.isPasswordStrong(newPassword)) {
-      return {
-        success: false,
-        message: "Le mot de passe doit contenir au moins 8 caractères, une majuscule et un chiffre",
-      };
-    }
-
-    await AdminService.resetUserPassword(userId, newPassword);
-
-    return { success: true, message: "Mot de passe réinitialisé" };
-  } catch (error) {
-    if (error instanceof AppError) {
-      return { success: false, message: error.message };
-    }
-    return { success: false, message: "Erreur lors de la réinitialisation du mot de passe" };
-  }
+): Promise<ActionResult> {
+  return runAction({
+    name: "resetUserPassword",
+    fallbackCode: ERROR_CODES.ADMIN.RESET_PASSWORD_ERROR,
+    logContext: { userId },
+    requireRole: "admin",
+    rateLimit: {
+      key: ({ userId: actorId }) => `admin-reset-password:${actorId}`,
+      ...RESET_PASSWORD_RATE_LIMIT,
+    },
+    guard: () => {
+      if (!AuthServerService.isPasswordStrong(newPassword)) {
+        throw new ActionError(ERROR_CODES.AUTH.PASSWORD_NOT_STRONG);
+      }
+    },
+    execute: async ({ userId: actorId }) => {
+      await AdminService.resetUserPassword(actorId as number, userId, newPassword);
+      return { message: "Mot de passe réinitialisé" };
+    },
+  });
 }

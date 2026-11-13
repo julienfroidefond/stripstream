@@ -5,7 +5,7 @@ import { getAuthSession } from "@/lib/middleware-auth";
 const publicRoutes = ["/login", "/register", "/images"];
 
 // Routes d'API qui ne nécessitent pas d'authentification
-const publicApiRoutes = ["/api/auth/register", "/api/komga/test"];
+const publicApiRoutes = ["/api/auth/register"];
 
 // Langues supportées
 const locales = ["fr", "en"];

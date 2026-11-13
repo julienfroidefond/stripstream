@@ -12,6 +12,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/components/ui/use-toast";
+import { useTranslate } from "@/hooks/useTranslate";
+import { ERROR_CODES } from "@/constants/errorCodes";
 import type { AdminUserData } from "@/lib/services/admin.service";
 import { deleteUser } from "@/app/actions/admin";
 
@@ -25,6 +27,14 @@ interface DeleteUserDialogProps {
 export function DeleteUserDialog({ user, open, onOpenChange, onSuccess }: DeleteUserDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { t } = useTranslate();
+
+  const showError = (code: string) =>
+    toast({
+      variant: "destructive",
+      title: t("common.error"),
+      description: t(`errors.${code}`),
+    });
 
   const handleDelete = async () => {
     setIsLoading(true);
@@ -33,21 +43,19 @@ export function DeleteUserDialog({ user, open, onOpenChange, onSuccess }: Delete
       const result = await deleteUser(user.id);
 
       if (!result.success) {
-        throw new Error(result.message);
+        showError(result.code);
+        setIsLoading(false);
+        return;
       }
 
       toast({
-        title: "Succès",
-        description: "L'utilisateur a été supprimé",
+        title: t("common.success"),
+        description: t("admin.deleteUser.success"),
       });
 
       onSuccess();
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: error instanceof Error ? error.message : "Une erreur est survenue",
-      });
+    } catch {
+      showError(ERROR_CODES.ADMIN.DELETE_USER_ERROR);
       setIsLoading(false);
     }
   };
