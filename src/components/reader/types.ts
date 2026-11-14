@@ -18,6 +18,8 @@ export interface BookReaderProps {
   onBackToSeries?: () => void;
   onRefresh?: () => Promise<void>;
   nextBook?: NormalizedBook | null;
+  /** The next-book lookup failed: `nextBook === null` does not mean "end of series". */
+  nextBookUnknown?: boolean;
   seriesRating?: NormalizedSeriesRating | null;
 }
 

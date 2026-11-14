@@ -1,11 +1,13 @@
 /**
- * The app speaks 1-based page numbers; Komga's `zero_based=true` API expects
- * 0-based ones. Keep the conversion in one place for pages and thumbnails.
+ * The app speaks 1-based page numbers, and so does Komga by default: both
+ * `pages/{n}` and `pages/{n}/thumbnail` are 1-based. Only the page endpoint
+ * accepts `zero_based=true`, which is why the two used to drift apart; keep
+ * both paths here, without conversion.
  */
 export function komgaPagePath(bookId: string, pageNumber: number): string {
-  return `books/${bookId}/pages/${pageNumber - 1}?zero_based=true`;
+  return `books/${bookId}/pages/${pageNumber}`;
 }
 
 export function komgaPageThumbnailPath(bookId: string, pageNumber: number): string {
-  return `books/${bookId}/pages/${pageNumber - 1}/thumbnail?zero_based=true`;
+  return `books/${bookId}/pages/${pageNumber}/thumbnail`;
 }

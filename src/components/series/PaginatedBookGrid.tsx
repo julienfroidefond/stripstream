@@ -29,6 +29,8 @@ interface PaginatedBookGridProps {
   initialCompact: boolean;
   initialViewMode: "grid" | "list";
   missingBooks?: NormalizedMissingBook[];
+  /** Montre le bouton « masquer les manquants » : vrai pour toute la série. */
+  hasMissingBooks?: boolean;
 }
 
 export function PaginatedBookGrid({
@@ -42,6 +44,7 @@ export function PaginatedBookGrid({
   initialCompact,
   initialViewMode,
   missingBooks = NO_MISSING_BOOKS,
+  hasMissingBooks = missingBooks.length > 0,
 }: PaginatedBookGridProps) {
   const router = useRouter();
   const { preferences } = usePreferences();
@@ -145,7 +148,7 @@ export function PaginatedBookGrid({
           <ViewModeButton viewMode={viewMode} onToggle={handleViewModeToggle} />
           <CompactModeButton isCompact={isCompact} onToggle={handleCompactModeToggle} />
           <UnreadFilterButton showOnlyUnread={showOnlyUnread} onToggle={handleUnreadFilter} />
-          {missingBooks.length > 0 && (
+          {hasMissingBooks && (
             <MissingFilterButton active={hideMissingBooks} onToggle={handleHideMissingToggle} />
           )}
         </>

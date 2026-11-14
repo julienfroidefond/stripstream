@@ -163,3 +163,20 @@ describe("getReaderData — series resolution", () => {
     expect(data.readerInfo?.seriesTitle).toBe("Series 1");
   });
 });
+
+describe("getReaderData — next book", () => {
+  it("tells a finished series apart from a failed next-book lookup", async () => {
+    const finished = makeProvider();
+    await expect(getReaderData(finished, "book-1")).resolves.toMatchObject({
+      nextBook: null,
+      nextBookUnknown: false,
+    });
+
+    const failing = makeProvider();
+    vi.mocked(failing.getNextBook).mockRejectedValueOnce(new Error("provider down"));
+    await expect(getReaderData(failing, "book-1")).resolves.toMatchObject({
+      nextBook: null,
+      nextBookUnknown: true,
+    });
+  });
+});

@@ -25,6 +25,8 @@ import {
   resolveBook as resolveBookOverride,
   resolveSeries as resolveSeriesOverride,
   seriesProgressSignature,
+  dropSettled,
+  settleOverride,
   withOverride,
   type ReadOverrides,
 } from "./read-progress-overrides";
@@ -38,6 +40,11 @@ export interface ReadProgressMutations {
   markBook: (book: NormalizedBook, read: boolean) => Promise<boolean>;
   /** Marque tous les livres d'une série. Résout `true` si tout a été enregistré. */
   markSeries: (series: NormalizedSeries, read: boolean) => Promise<boolean>;
+  /**
+   * Oublie le marquage enregistré d'un livre : appelé par le lecteur, autre
+   * écrivain de sa progression, pour qu'un override ne se rallume pas après.
+   */
+  forgetBook: (bookId: string) => void;
   /** Valeur visée par le marquage en vol de ce livre, `null` au repos. */
   pendingBook: (bookId: string) => boolean | null;
   /** Valeur visée par le marquage en vol de cette série, `null` au repos. */
@@ -107,6 +114,12 @@ export function ReadProgressMutationsProvider({ children }: { children: ReactNod
     [seriesOverrides]
   );
 
+  const forgetBook = useCallback((bookId: string) => {
+    setBookOverrides((current) =>
+      current.get(bookId)?.settled ? withOverride(current, bookId, null) : current
+    );
+  }, []);
+
   const pendingBook = useCallback(
     (bookId: string) => bookPending.get(bookId) ?? null,
     [bookPending]
@@ -123,7 +136,11 @@ export function ReadProgressMutationsProvider({ children }: { children: ReactNod
 
       const prefix = bookToastKey(read);
       setBookOverrides((current) =>
-        withOverride(current, book.id, { read, observed: bookProgressSignature(book) })
+        withOverride(current, book.id, {
+          read,
+          observed: bookProgressSignature(book),
+          seriesId: book.seriesId ?? null,
+        })
       );
       markBookPending(book.id, read);
 
@@ -137,6 +154,7 @@ export function ReadProgressMutationsProvider({ children }: { children: ReactNod
           title: t(`${prefix}.success.title`),
           description: t(`${prefix}.success.description`),
         });
+        setBookOverrides((current) => settleOverride(current, book.id));
         router.refresh();
         return true;
       } catch (error) {
@@ -173,6 +191,15 @@ export function ReadProgressMutationsProvider({ children }: { children: ReactNod
         // Les caches serveur sont invalidés même en cas d'échec partiel : on
         // rafraîchit dès que l'action a répondu, pour refléter ce qui a été
         // enregistré, puis le rollback retire l'override optimiste.
+        if (result.success) {
+          setSeriesOverrides((current) => settleOverride(current, series.id));
+          // Les marquages unitaires déjà enregistrés sur les tomes de la série
+          // sont dépassés : sans ce retrait, l'un d'eux se rallumerait dès que
+          // le serveur reviendrait à l'état qu'il avait observé.
+          setBookOverrides((current) =>
+            dropSettled(current, (override) => override.seriesId === series.id)
+          );
+        }
         router.refresh();
         if (!result.success) throw new Error(result.message);
 
@@ -200,8 +227,16 @@ export function ReadProgressMutationsProvider({ children }: { children: ReactNod
   );
 
   const value = useMemo<ReadProgressMutations>(
-    () => ({ resolveBook, resolveSeries, markBook, markSeries, pendingBook, pendingSeries }),
-    [resolveBook, resolveSeries, markBook, markSeries, pendingBook, pendingSeries]
+    () => ({
+      resolveBook,
+      resolveSeries,
+      markBook,
+      markSeries,
+      forgetBook,
+      pendingBook,
+      pendingSeries,
+    }),
+    [resolveBook, resolveSeries, markBook, markSeries, forgetBook, pendingBook, pendingSeries]
   );
 
   return (

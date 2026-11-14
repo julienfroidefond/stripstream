@@ -8,6 +8,7 @@ import { shake } from "@/lib/motion/celebrate";
 import { useGsapEffect } from "@/lib/motion/gsap";
 import { useTranslate } from "@/hooks/useTranslate";
 import { safeRedirectPath } from "@/lib/auth/safe-redirect";
+import { signInErrorCode } from "@/lib/auth/sign-in-codes";
 import type { AppErrorType } from "@/types/global";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -51,7 +52,7 @@ export function LoginForm({ from }: LoginFormProps) {
 
       if (!result || result.error || !result.ok) {
         setError({
-          code: "AUTH_INVALID_CREDENTIALS",
+          code: signInErrorCode(result?.code),
           name: "Login failed",
           message: "Email ou mot de passe incorrect",
         });

@@ -1,6 +1,12 @@
+import { lookup } from "node:dns/promises";
 import { describe, expect, it, vi } from "vitest";
 import { ERROR_CODES } from "@/constants/errorCodes";
-import { assertServerUrlResolvesSafely } from "./server-url-dns";
+import {
+  assertProviderTargetIsSafe,
+  assertServerUrlResolvesSafely,
+  resetVerifiedProviderTargets,
+  UnresolvedProviderHostError,
+} from "./server-url-dns";
 
 const resolvingTo = (...addresses: string[]) => vi.fn(async () => addresses);
 
@@ -38,5 +44,66 @@ describe("assertServerUrlResolvesSafely", () => {
     await expect(
       assertServerUrlResolvesSafely("http://unknown.invalid", resolve)
     ).resolves.toBeUndefined();
+  });
+});
+
+describe("assertProviderTargetIsSafe", () => {
+  it("re-resolves a saved host before each request, catching a later rebinding", async () => {
+    resetVerifiedProviderTargets();
+    const resolve = vi
+      .fn()
+      .mockResolvedValueOnce(["93.184.216.34"])
+      .mockResolvedValueOnce(["169.254.169.254"]);
+
+    await assertProviderTargetIsSafe("https://media.example/api/v1/books", resolve, 0);
+    // Dans la fenêtre de 60 s : pas de nouvelle résolution.
+    await assertProviderTargetIsSafe("https://media.example/api/v1/series", resolve, 30_000);
+    expect(resolve).toHaveBeenCalledTimes(1);
+
+    // Au-delà : le nom re-pointé vers le service de métadonnées est refusé.
+    await expect(
+      assertProviderTargetIsSafe("https://media.example/api/v1/books", resolve, 61_000)
+    ).rejects.toMatchObject({ code: ERROR_CODES.CONFIG.INVALID_URL });
+  });
+
+  it("never caches a failed resolution as safe", async () => {
+    resetVerifiedProviderTargets();
+    const resolve = vi
+      .fn()
+      .mockRejectedValueOnce(Object.assign(new Error("SERVFAIL"), { code: "ESERVFAIL" }))
+      .mockResolvedValueOnce(["169.254.169.254"]);
+
+    await expect(
+      assertProviderTargetIsSafe("https://media.example/x", resolve, 0)
+    ).rejects.toBeInstanceOf(UnresolvedProviderHostError);
+    // Juste après, le nom re-pointé vers une adresse interne est revérifié.
+    await expect(
+      assertProviderTargetIsSafe("https://media.example/x", resolve, 1)
+    ).rejects.toMatchObject({ code: ERROR_CODES.CONFIG.INVALID_URL });
+  });
+
+  it("shares one DNS lookup between concurrent requests to the same host", async () => {
+    resetVerifiedProviderTargets();
+    let finish!: (records: { address: string; family: number }[]) => void;
+    vi.mocked(lookup).mockImplementationOnce(
+      (() => new Promise((resolveLookup) => (finish = resolveLookup))) as never
+    );
+    const callsBefore = vi.mocked(lookup).mock.calls.length;
+
+    const checks = Array.from({ length: 5 }, () =>
+      assertProviderTargetIsSafe("https://shared.example/page")
+    );
+    finish([{ address: "93.184.216.34", family: 4 }]);
+    await Promise.all(checks);
+
+    expect(vi.mocked(lookup).mock.calls.length - callsBefore).toBe(1);
+  });
+
+  it("keeps the resolver's error code so transport retries still apply", async () => {
+    resetVerifiedProviderTargets();
+    const resolve = vi.fn().mockRejectedValue(Object.assign(new Error("again"), { code: "EAI_AGAIN" }));
+    await expect(
+      assertProviderTargetIsSafe("https://flaky.example/x", resolve, 0)
+    ).rejects.toMatchObject({ code: "EAI_AGAIN" });
   });
 });

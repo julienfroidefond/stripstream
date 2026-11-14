@@ -77,7 +77,7 @@ Toutes ces actions déclarent `requireRole: "admin"` : sans session elles échou
 
 | Action | Rôle |
 | --- | --- |
-| `registerUser` | Inscrit un nouvel utilisateur (email + mot de passe). Fermée sauf `REGISTRATION_ENABLED=true` (`AUTH_REGISTRATION_DISABLED`, ADR 0032). Action anonyme ; la force du mot de passe, le budget par IP (10 / h, premier élément de `X-Forwarded-For`) et par email (5 / min) sont vérifiés par `AuthServerService.registerUser`. |
+| `registerUser` | Inscrit un nouvel utilisateur (email + mot de passe). Fermée sauf `REGISTRATION_ENABLED=true` (`AUTH_REGISTRATION_DISABLED`, ADR 0032). Action anonyme ; la force du mot de passe, le budget par IP (10 / h, IP client de `X-Forwarded-For` selon `TRUSTED_PROXY_HOPS`) et par email (5 / min) sont vérifiés par `AuthServerService.registerUser`. |
 
 ### src/app/actions/books.ts
 

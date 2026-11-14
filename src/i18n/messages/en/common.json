@@ -165,7 +165,11 @@
       "preferences": "Preferences"
     },
     "admin": "Administration",
-    "logout": "Sign out"
+    "logout": "Sign out",
+    "logoutError": {
+      "title": "Error",
+      "description": "Something went wrong while signing out"
+    }
   },
   "settings": {
     "title": "Preferences",
@@ -201,10 +205,19 @@
       "image": {
         "label": "Image URL",
         "description": "Enter an image URL (HTTPS recommended)",
-        "save": "Save"
+        "save": "Save",
+        "invalid": "Please enter a valid URL"
       },
       "libraries": {
         "label": "Libraries"
+      },
+      "opacity": {
+        "label": "Content opacity",
+        "description": "Controls how transparent the content is over the background"
+      },
+      "blur": {
+        "label": "Background blur",
+        "description": "Applies a blur effect to the background"
       }
     },
     "advanced": {
@@ -279,7 +292,7 @@
       "username": "Username",
       "password": "Password",
       "token": "API token",
-      "editHint": "leave empty to keep current",
+      "editHint": "leave empty to keep current (re-enter it if the URL or username changes)",
       "active": "Active",
       "activate": "Activate",
       "edit": "Edit",
@@ -807,6 +820,7 @@
     "GENERIC_ERROR": "An error occurred",
     "WALL_FETCH_ERROR": "Could not gather the works for the wall. Check your connection and try again.",
     "CONFIG_INVALID_INPUT": "Missing or invalid connection fields",
+    "CONFIG_SECRET_REQUIRED": "The server or username changed: enter the password or token again",
     "CONFIG_DUPLICATE_NAME": "This name is already used by another connection"
   },
   "reader": {
@@ -875,7 +889,11 @@
     "endOfSeries": "End of series",
     "endOfSeriesMessage": "You have finished all the books in this series!",
     "endOfSeriesRate": "Want to rate this series?",
-    "backToSeries": "Back to series"
+    "backToSeries": "Back to series",
+    "endOfBook": "End of book",
+    "endOfBookUnknownNext": "We couldn't check whether a next book exists right now.",
+    "stayOnBook": "Stay on this book",
+    "closing": "Closing the reader..."
   },
   "header": {
     "toggleSidebar": "Toggle sidebar",

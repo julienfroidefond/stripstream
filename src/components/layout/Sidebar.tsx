@@ -59,8 +59,8 @@ export function Sidebar({
     } catch (error) {
       logger.error({ err: error }, "Erreur lors de la déconnexion:");
       toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la déconnexion",
+        title: t("sidebar.logoutError.title"),
+        description: t("sidebar.logoutError.description"),
         variant: "destructive",
       });
     }

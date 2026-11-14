@@ -34,6 +34,8 @@ export const BookReader = memo(function BookReader(props: BookReaderProps) {
       <EndOfSeriesModal
         show={s.showEndMessage}
         onBackToSeries={s.onBackToSeries}
+        onDismiss={s.onDismissEndMessage}
+        nextBookUnknown={props.nextBookUnknown ?? false}
         seriesId={props.book.seriesId ?? null}
         seriesRating={props.seriesRating ?? null}
       />

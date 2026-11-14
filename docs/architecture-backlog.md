@@ -16,7 +16,7 @@ Order by the number of call sites a wrong change would silently break, not by fi
 
 | PR | Change | ADR |
 | --- | --- | --- |
-| — | K: sign-in and sign-up are throttled per client IP (first `X-Forwarded-For` element, behind the proxy); the per-email sign-in budget only counts failed passwords and is checked without being consumed. | [0032](./adr/0032-closed-by-default-auth-and-per-user-connections.md) |
+| — | K: sign-in and sign-up are throttled per client IP (`X-Forwarded-For` entry chosen by `TRUSTED_PROXY_HOPS`, behind the proxy); the per-email sign-in budget only counts failed passwords and is checked without being consumed. | [0032](./adr/0032-closed-by-default-auth-and-per-user-connections.md) |
 | — | Sign-up closed by default, no environment connection, sessions revalidated against the database. | [0032](./adr/0032-closed-by-default-auth-and-per-user-connections.md) |
 | #173 | Admin and account screens read every label from `admin.*` / `account.*` in both locales; dates follow the active language. | — |
 | #172 | Komga's next book is cached like Stripstream's; reading stats declare a TTL. | [0028 amendment](./adr/0028-one-cache-profile-producer.md) |

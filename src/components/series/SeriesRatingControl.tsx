@@ -5,7 +5,6 @@ import { RatingStars } from "./RatingStars";
 import { useToast } from "@/components/ui/use-toast";
 import { useTranslate } from "@/hooks/useTranslate";
 import { setSeriesRating, deleteSeriesRating } from "@/app/actions/ratings";
-import { getErrorMessage } from "@/utils/errors";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import logger from "@/lib/logger";
 import type { NormalizedProviderRating } from "@/lib/providers/types";
@@ -57,7 +56,7 @@ export function SeriesRatingControl({
       logger.error({ err: error, seriesId }, "Erreur notation série");
       toast({
         title: t("series.header.rating.error"),
-        description: getErrorMessage(ERROR_CODES.SERIES.RATING_ERROR),
+        description: t(`errors.${ERROR_CODES.SERIES.RATING_ERROR}`),
         variant: "destructive",
       });
     } finally {
@@ -79,7 +78,7 @@ export function SeriesRatingControl({
       logger.error({ err: error, seriesId }, "Erreur suppression note série");
       toast({
         title: t("series.header.rating.error"),
-        description: getErrorMessage(ERROR_CODES.SERIES.RATING_ERROR),
+        description: t(`errors.${ERROR_CODES.SERIES.RATING_ERROR}`),
         variant: "destructive",
       });
     } finally {

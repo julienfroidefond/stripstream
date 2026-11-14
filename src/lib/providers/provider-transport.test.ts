@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ERROR_CODES } from "@/constants/errorCodes";
+import { AppError } from "@/utils/errors";
 
 const { loggerMock, unstableCacheMock } = vi.hoisted(() => ({
   loggerMock: {
@@ -85,6 +86,71 @@ describe("ProviderTransport", () => {
         skip: undefined,
       })
     ).toBe("http://provider.test/api/books?limit=10&tag=a&tag=b");
+  });
+
+  it("refuses a path that would leave the API prefix", () => {
+    const transport = new ProviderTransport(testPolicy());
+    for (const path of [
+      "books/../../admin",
+      "books/%2e%2E/x",
+      "books/.%2e/x",
+      "books/x?/file",
+      "books/x#frag",
+      "books/..\\x",
+    ]) {
+      expect(() => transport.buildUrl(path), path).toThrow();
+    }
+    expect(transport.buildUrl("books/a.b-c_d/pages/1")).toBe(
+      "http://provider.test/api/books/a.b-c_d/pages/1"
+    );
+  });
+
+  it("checks the target before any fetch and maps an unresolved host like a failed fetch", async () => {
+    const fetchMock = vi.fn(async () => jsonResponse({}));
+    vi.stubGlobal("fetch", fetchMock);
+    const blocked = new ProviderTransport(
+      testPolicy({
+        assertTarget: async () => {
+          throw new AppError(ERROR_CODES.CONFIG.INVALID_URL);
+        },
+      })
+    );
+    const unresolved = new ProviderTransport(
+      testPolicy({
+        assertTarget: async () => {
+          throw Object.assign(new Error("no such host"), { code: "ENOTFOUND" });
+        },
+      })
+    );
+
+    await expect(blocked.request("books")).rejects.toMatchObject({
+      code: ERROR_CODES.CONFIG.INVALID_URL,
+    });
+    await expect(unresolved.request("books")).rejects.toMatchObject({
+      code: ERROR_CODES.KOMGA.CONNECTION_ERROR,
+    });
+    // Les flux média gardent leur propre code d'erreur.
+    await expect(
+      unresolved.response("books/1/file", undefined, { errorCode: ERROR_CODES.IMAGE.FETCH_ERROR })
+    ).rejects.toMatchObject({ code: ERROR_CODES.IMAGE.FETCH_ERROR });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("retries a transient DNS failure of the target check like a failed fetch", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => jsonResponse({ ok: true })));
+    const assertTarget = vi
+      .fn()
+      .mockRejectedValueOnce(Object.assign(new Error("again"), { code: "EAI_AGAIN" }))
+      .mockResolvedValue(undefined);
+    const transport = new ProviderTransport(
+      testPolicy({
+        assertTarget,
+        retry: { shouldRetry: (error) => (error as { code?: string }).code === "EAI_AGAIN" },
+      })
+    );
+
+    await expect(transport.request("books")).resolves.toEqual({ ok: true });
+    expect(assertTarget).toHaveBeenCalledTimes(2);
   });
 
   it("sends the policy headers and forwards cache and body options", async () => {

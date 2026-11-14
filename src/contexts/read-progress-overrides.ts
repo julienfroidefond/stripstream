@@ -11,7 +11,12 @@ import type {
  * au moment du clic. L'override s'applique tant que le serveur renvoie encore
  * cet état ; dès que le `router.refresh()` livre une valeur différente, le
  * serveur reprend la main sans que la surface ait à nettoyer quoi que ce soit.
- * Un échec retire l'override (rollback).
+ * Un échec retire l'override (rollback). Un succès le marque `settled` : il
+ * reste appliqué tant que le serveur (cache en retard compris) renvoie l'état
+ * observé. Comme il se rallumerait si une *autre* écriture ramenait le serveur
+ * à cet état, chaque autre écrivain de la progression l'efface explicitement :
+ * le marquage de toute la série (`dropSettled` sur ses tomes) et le lecteur à
+ * l'ouverture du livre (`forgetBook`).
  */
 
 export interface ReadOverride {
@@ -19,6 +24,10 @@ export interface ReadOverride {
   read: boolean;
   /** Signature de l'état serveur au moment du marquage. */
   observed: string;
+  /** Le serveur a enregistré le marquage ; l'override n'attend plus que le rafraîchissement. */
+  settled?: boolean;
+  /** Série du livre marqué : un marquage de toute la série efface l'override. */
+  seriesId?: string | null;
 }
 
 export type ReadOverrides = ReadonlyMap<string, ReadOverride>;
@@ -92,4 +101,29 @@ export function withOverride(
   if (value) next.set(id, value);
   else next.delete(id);
   return next;
+}
+
+/** Copie de `overrides` où l'override de `id` est marqué enregistré. */
+export function settleOverride(overrides: ReadOverrides, id: string): ReadOverrides {
+  const override = overrides.get(id);
+  if (!override || override.settled) return overrides;
+  return withOverride(overrides, id, { ...override, settled: true });
+}
+
+/**
+ * Copie de `overrides` sans les overrides enregistrés qui vérifient
+ * `predicate`. Les marquages encore en vol sont gardés. Même instance quand il
+ * n'y a rien à retirer (pas de re-rendu).
+ */
+export function dropSettled(
+  overrides: ReadOverrides,
+  predicate: (override: ReadOverride) => boolean
+): ReadOverrides {
+  let next: Map<string, ReadOverride> | null = null;
+  for (const [id, override] of overrides) {
+    if (!override.settled || !predicate(override)) continue;
+    next ??= new Map(overrides);
+    next.delete(id);
+  }
+  return next ?? overrides;
 }

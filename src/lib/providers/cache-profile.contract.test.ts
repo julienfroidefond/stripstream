@@ -191,6 +191,19 @@ describe("cache profiles — Komga and Stripstream hand over the same profile", 
     expect(stripstreamProfiles).toEqual(Array(4).fill(cacheProfile.home()));
   });
 
+  it("getSeriesById expires with the series' read progress", async () => {
+    const expected = cacheProfile.seriesDetail("s1");
+
+    await komga().getSeriesById("s1").catch(() => null);
+    const komgaProfiles = profilesFor((path) => path === "series/s1");
+    requests = [];
+    await stripstream().getSeriesById("s1").catch(() => null);
+    const stripstreamProfiles = profilesFor((path) => path === "series/s1/details");
+
+    expect(komgaProfiles).toEqual([expected]);
+    expect(stripstreamProfiles).toEqual([expected]);
+  });
+
   it("getNextBook", async () => {
     await komga().getNextBook("b1");
     const komgaProfiles = profilesFor((path) => path === "books/b1/next");

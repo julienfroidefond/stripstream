@@ -28,6 +28,12 @@ export interface StoredConnectionRow {
   id: number;
   url: string;
   secret: string;
+  /**
+   * Identité à laquelle le secret est lié (username Komga), `null` quand le
+   * secret se suffit (token Stripstream). Sert à refuser de réutiliser un
+   * secret enregistré pour une autre identité.
+   */
+  principal: string | null;
 }
 
 /** Accès Prisma d'un provider : seul endroit qui nomme sa table et ses colonnes. */
@@ -65,26 +71,57 @@ export interface ProviderDefinition<P extends ProviderType = ProviderType> {
   draftConnection(draft: ConnectionDraftOf<P>): ConnectionOf<P>;
   /**
    * Secret chiffré à enregistrer pour une saisie validée. Sans nouveau secret,
-   * renvoie `existingSecret` (mise à jour) ; `null` si aucun n'est disponible.
+   * réutilise celui de `existing` (mise à jour) seulement s'il reste lié à la
+   * même URL et à la même identité ; sinon `null`. Un secret ne doit jamais
+   * partir vers un hôte ou un compte pour lequel il n'a pas été saisi.
    */
-  encodeSecret(input: ConnectionInputOf<P>, existingSecret: string | null): string | null;
+  encodeSecret(input: ConnectionInputOf<P>, existing: StoredConnectionRow | null): string | null;
   /** Fabrique le provider métier (import paresseux de son implémentation). */
   createProvider(connection: ConnectionOf<P>): Promise<IMediaProvider>;
   /** Charge le transport média du provider (import paresseux, évite les cycles). */
   loadMediaTransport(): Promise<MediaTransport>;
 }
 
-const KOMGA_SELECT = { id: true, url: true, authHeader: true } as const;
+const KOMGA_SELECT = { id: true, url: true, username: true, authHeader: true } as const;
 const STRIPSTREAM_SELECT = { id: true, url: true, token: true } as const;
 const LABEL_SELECT = { id: true, name: true } as const;
 const FIRST = { createdAt: "asc" } as const;
 
-function komgaRow(row: { id: number; url: string; authHeader: string } | null) {
-  return row ? { id: row.id, url: row.url, secret: row.authHeader } : null;
+function komgaRow(
+  row: { id: number; url: string; username: string; authHeader: string } | null
+): StoredConnectionRow | null {
+  return row
+    ? { id: row.id, url: row.url, secret: row.authHeader, principal: row.username }
+    : null;
 }
 
-function stripstreamRow(row: { id: number; url: string; token: string } | null) {
-  return row ? { id: row.id, url: row.url, secret: row.token } : null;
+function stripstreamRow(
+  row: { id: number; url: string; token: string } | null
+): StoredConnectionRow | null {
+  return row ? { id: row.id, url: row.url, secret: row.token, principal: null } : null;
+}
+
+/**
+ * URL stockée comparable à une saisie normalisée. Les lignes antérieures à la
+ * normalisation (`http://Komga.lan/`) sont ramenées à la même forme ; une URL
+ * illisible ne correspond à rien.
+ */
+function comparableStoredUrl(url: string): string | null {
+  try {
+    return normalizeServerUrl(url);
+  } catch {
+    return null;
+  }
+}
+
+/** Le secret enregistré ne suit la saisie que si l'hôte et l'identité n'ont pas changé. */
+function reusableSecret(
+  existing: StoredConnectionRow | null,
+  url: string,
+  principal: string | null
+): string | null {
+  if (!existing || existing.principal !== principal) return null;
+  return comparableStoredUrl(existing.url) === url ? existing.secret : null;
 }
 
 const komgaDefinition: ProviderDefinition<"komga"> = {
@@ -153,12 +190,13 @@ const komgaDefinition: ProviderDefinition<"komga"> = {
       authHeader: buildKomgaAuthHeader(draft.username, draft.password ?? ""),
     };
   },
-  encodeSecret(input, existingSecret) {
-    // Le secret Komga est la valeur Basic complète : un changement d'identifiant
-    // sans nouveau mot de passe conserve l'ancienne valeur (comportement historique).
+  encodeSecret(input, existing) {
+    // Le secret Komga est la valeur Basic complète `username:password` : changer
+    // d'identifiant ou de serveur sans ressaisir le mot de passe enverrait
+    // l'ancien compte (ou l'ancien mot de passe vers un autre hôte).
     return input.password
       ? encryptSecret(buildKomgaAuthHeader(input.username, input.password))
-      : existingSecret;
+      : reusableSecret(existing, input.url, input.username);
   },
   async createProvider(connection) {
     const { KomgaProvider } = await import("@/lib/providers/komga/komga.provider");
@@ -234,9 +272,9 @@ const stripstreamDefinition: ProviderDefinition<"stripstream"> = {
       source: "provided",
     };
   },
-  encodeSecret(input, existingSecret) {
+  encodeSecret(input, existing) {
     const token = input.token?.trim();
-    return token ? encryptSecret(token) : existingSecret;
+    return token ? encryptSecret(token) : reusableSecret(existing, input.url, null);
   },
   async createProvider(connection) {
     const { StripstreamProvider } = await import(

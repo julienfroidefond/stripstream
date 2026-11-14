@@ -1,6 +1,6 @@
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { requireConnectionForProvider } from "@/lib/connections";
-import { ProviderTransport } from "@/lib/providers/provider-transport";
+import { ProviderTransport, type ProviderQueryParams } from "@/lib/providers/provider-transport";
 import { createStripstreamTransportPolicy } from "@/lib/providers/stripstream/stripstream.transport-policy";
 import { imageRequestLimiter } from "@/lib/media/image-request-limiter";
 import { requestDeduplicationService } from "@/lib/media/request-deduplication";
@@ -17,6 +17,16 @@ import {
   validatorFingerprint,
 } from "./media-fetch";
 import type { MediaRef, MediaTransport, MediaTransportContext } from "./types";
+
+/** La query brute d'une page (format, largeur…) passe en paramètres, jamais dans le chemin. */
+function pageQueryParams(query: string | undefined): ProviderQueryParams | undefined {
+  if (!query) return undefined;
+  const params: Record<string, string[]> = {};
+  for (const [key, value] of new URLSearchParams(query)) {
+    (params[key] ??= []).push(value);
+  }
+  return params;
+}
 
 async function fetchThumbnail(
   transport: ProviderTransport,
@@ -78,10 +88,9 @@ export const stripstreamMediaTransport: MediaTransport = {
           timeoutMs: FILE_TIMEOUT_MS,
         });
       case "book-page": {
-        const query = ref.query ? `?${ref.query}` : "";
         return transport.response(
-          `books/${ref.bookId}/pages/${ref.pageNumber}${query}`,
-          undefined,
+          `books/${ref.bookId}/pages/${ref.pageNumber}`,
+          pageQueryParams(ref.query),
           {
             accept: STRIPSTREAM_IMAGE_ACCEPT,
             conditionalHeaders: context.headers,

@@ -50,6 +50,11 @@ export interface ProviderTransportPolicy {
   cacheKey?(url: string, body: BodyInit | null): string[];
   debugRequest?(): boolean;
   debugCache?(): boolean;
+  /**
+   * Vérifie, avant chaque requête, que l'hôte résout toujours vers une adresse
+   * autorisée (DNS rebinding). Lève une `AppError` qui remonte telle quelle.
+   */
+  assertTarget?(url: string): Promise<void>;
 }
 
 interface ProviderFetchInit extends RequestInit {
@@ -60,6 +65,18 @@ export function errorCodeOf(error: unknown): string | undefined {
   if (!error || typeof error !== "object") return undefined;
   const candidate = error as { code?: string; cause?: { code?: string } };
   return candidate.code ?? candidate.cause?.code;
+}
+
+const DOT_SEGMENT = /^(?:\.|%2e){1,2}$/i;
+
+/**
+ * Un chemin provider est une suite de segments littéraux : pas de query ni de
+ * fragment (ils passent par `params`), pas d'antislash, pas de segment `.`/`..`
+ * (y compris encodé), que le parseur WHATWG résoudrait.
+ */
+export function isSafeProviderPath(path: string): boolean {
+  if (/[?#\\]/.test(path)) return false;
+  return path.split("/").every((segment) => !DOT_SEGMENT.test(segment));
 }
 
 export function matchesErrorCode(
@@ -82,6 +99,12 @@ export class ProviderTransport {
     const origin = this.policy.origin.replace(/\/+$/, "");
     const prefix = (this.policy.pathPrefix ?? "").replace(/^\/+|\/+$/g, "");
     const cleanPath = path.replace(/^\/+/, "");
+    if (!isSafeProviderPath(cleanPath)) {
+      // Un id venu d'une route ou d'une action est déjà décodé par Next :
+      // `..%2F` y devient `../`, que `new URL()` résoudrait hors du préfixe
+      // API. On refuse plutôt que d'envoyer les identifiants ailleurs.
+      throw new AppError(this.policy.httpCodes.NOT_FOUND, { status: 404 });
+    }
     const url = new URL(`${origin}${prefix ? `/${prefix}` : ""}/${cleanPath}`);
 
     for (const [key, value] of Object.entries(params ?? {})) {
@@ -193,6 +216,9 @@ export class ProviderTransport {
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
+      // Garde d'adresse dans le `try` : un hôte non résolu suit le même mapping
+      // d'erreur (`errorCode` compris) qu'un `fetch` qui aurait échoué.
+      await this.policy.assertTarget?.(url);
       // codeql[js/request-forgery]
       const response = await fetch(url, {
         headers,
@@ -325,7 +351,11 @@ export class ProviderTransport {
     fetchOptions: ProviderFetchInit,
     signal: AbortSignal
   ): Promise<Response> {
-    const doFetch = () => {
+    const doFetch = async () => {
+      // Adresse résolue revérifiée à chaque tentative (DNS rebinding) : un
+      // échec de résolution porte le code réseau d'origine, donc la politique
+      // de retry et le mapping d'erreurs le traitent comme un `fetch` raté.
+      await this.policy.assertTarget?.(url);
       // URL validée par `normalizeServerUrl` dans la politique : la cible est
       // le serveur configuré par l'utilisateur, auto-hébergé par nature.
       // codeql[js/request-forgery]

@@ -14,6 +14,8 @@ interface SeriesContentProps {
   pageSize: number;
   initialIsFavorite: boolean;
   missingBooks: NormalizedMissingBook[];
+  /** La série a des tomes manquants, même si cette page n'en montre aucun. */
+  hasMissingBooks: boolean;
   relatedSeries?: NormalizedSeries[];
   canRate?: boolean;
   initialRating?: number | null;
@@ -31,6 +33,7 @@ export function SeriesContent({
   pageSize,
   initialIsFavorite,
   missingBooks,
+  hasMissingBooks,
   relatedSeries = [],
   canRate = false,
   initialRating = null,
@@ -61,6 +64,7 @@ export function SeriesContent({
           initialCompact={preferences.displayMode.compact}
           initialViewMode={preferences.displayMode.booksViewMode || "grid"}
           missingBooks={missingBooks}
+          hasMissingBooks={hasMissingBooks}
         />
         {relatedSeries.length > 0 && (
           <div className="mt-10 pb-4">

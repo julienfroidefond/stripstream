@@ -117,11 +117,50 @@ describe("ReadProgressMutationsContext", () => {
     });
 
     expect(result.current.pendingBook(book.id)).toBeNull();
-    expect(result.current.resolveBook(book).readProgress?.completed).toBe(true);
     expect(mocks.toast).toHaveBeenCalledWith(
       expect.objectContaining({ title: "books.actions.markAsRead.success.title" })
     );
     expect(mocks.refresh).toHaveBeenCalledTimes(1);
+    // Cache serveur encore en retard : le marquage enregistré reste affiché.
+    expect(result.current.resolveBook(book).readProgress?.completed).toBe(true);
+  });
+
+  it("forgets a recorded override when the reader opens the book", async () => {
+    const readBook: NormalizedBook = {
+      ...book,
+      readProgress: { page: 48, completed: true, lastReadAt: null },
+    };
+    mocks.deleteReadProgress.mockResolvedValueOnce({ success: true });
+    const { result } = renderMutations();
+
+    await act(async () => {
+      await result.current.markBook(readBook, false);
+    });
+    expect(result.current.resolveBook(readBook).readProgress).toBeNull();
+
+    // Le lecteur, autre écrivain de la progression, relit le tome jusqu'au bout.
+    act(() => result.current.forgetBook(readBook.id));
+    expect(result.current.resolveBook(readBook).readProgress?.completed).toBe(true);
+  });
+
+  it("drops the recorded book overrides of a series marked as a whole", async () => {
+    const readBook: NormalizedBook = {
+      ...book,
+      readProgress: { page: 48, completed: true, lastReadAt: null },
+    };
+    mocks.deleteReadProgress.mockResolvedValueOnce({ success: true });
+    mocks.updateSeriesReadStatus.mockResolvedValueOnce({ success: true, updated: 10 });
+    const { result } = renderMutations();
+
+    await act(async () => {
+      await result.current.markBook(readBook, false);
+    });
+    await act(async () => {
+      await result.current.markSeries({ ...series, id: readBook.seriesId! }, true);
+    });
+
+    // « Tout marquer lu » ramène le tome à `done:48` : l'ancien « non lu » ne revient pas.
+    expect(result.current.resolveBook(readBook).readProgress?.completed).toBe(true);
   });
 
   it("rolls a book back and does not refresh when the action fails", async () => {

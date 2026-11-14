@@ -26,26 +26,113 @@ const resolveWithDns: ResolveAddresses = async (hostname) => {
   return records.map((record) => record.address);
 };
 
+function hostnameOf(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^\[|\]$/g, "");
+  } catch {
+    throw new AppError(ERROR_CODES.CONFIG.INVALID_URL);
+  }
+}
+
+function assertAddressesAllowed(addresses: string[]): void {
+  if (addresses.some((address) => isBlockedHostname(address))) {
+    throw new AppError(ERROR_CODES.CONFIG.INVALID_URL);
+  }
+}
+
 /** @throws {AppError} `CONFIG_INVALID_URL` si le nom résout vers une adresse interdite. */
 export async function assertServerUrlResolvesSafely(
   url: string,
   resolve: ResolveAddresses = resolveWithDns
 ): Promise<void> {
-  let hostname: string;
-  try {
-    hostname = new URL(url).hostname.replace(/^\[|\]$/g, "");
-  } catch {
-    throw new AppError(ERROR_CODES.CONFIG.INVALID_URL);
-  }
+  const hostname = hostnameOf(url);
 
   let addresses: string[];
   try {
     addresses = await resolve(hostname);
   } catch {
+    // À l'enregistrement, un nom pas encore résolu reste accepté : la garde
+    // par requête (`assertProviderTargetIsSafe`) refuse d'y envoyer quoi que
+    // ce soit tant qu'il ne résout pas vers une adresse autorisée.
     return;
   }
 
-  if (addresses.some((address) => isBlockedHostname(address))) {
-    throw new AppError(ERROR_CODES.CONFIG.INVALID_URL);
+  assertAddressesAllowed(addresses);
+}
+
+/** Durée pendant laquelle un nom déjà vérifié n'est pas re-résolu (ms). */
+const SAFE_TARGET_TTL_MS = 60_000;
+const verifiedTargets = new Map<string, number>();
+const pendingChecks = new Map<string, Promise<void>>();
+
+/**
+ * Erreur réseau levée quand l'hôte d'une requête provider ne se résout pas.
+ * Elle garde le code de la résolution (`EAI_AGAIN`, `ENOTFOUND`…) pour que la
+ * politique de retry du transport la traite comme un `fetch` raté.
+ */
+export class UnresolvedProviderHostError extends Error {
+  readonly code: string;
+
+  constructor(hostname: string, cause: unknown) {
+    super(`Provider host ${hostname} did not resolve`, { cause });
+    this.name = "UnresolvedProviderHostError";
+    const code = (cause as { code?: unknown } | null)?.code;
+    this.code = typeof code === "string" ? code : "ENOTFOUND";
   }
+}
+
+/**
+ * Garde de chaque requête provider (pas seulement de l'enregistrement) : un
+ * nom validé à la sauvegarde peut ensuite être re-pointé vers une adresse
+ * interne (DNS rebinding). On re-résout au plus toutes les 60 s par nom.
+ *
+ * - Seule une résolution réussie et autorisée est mise en cache ; un échec de
+ *   résolution refuse la requête (sinon un SERVFAIL ouvrirait 60 s sans garde).
+ * - Les requêtes concurrentes d'un même nom partagent une seule résolution
+ *   (résolveur DNS par défaut seulement : un résolveur injecté fait la sienne).
+ *
+ * Limite assumée : `fetch` refait sa propre résolution juste après ; un DNS
+ * hostile qui alterne ses réponses à la milliseconde garde une fenêtre. La
+ * fermer demanderait un dispatcher undici à résolution épinglée, compatible
+ * avec la version d'undici embarquée par Node.
+ *
+ * @throws {AppError} `CONFIG_INVALID_URL` pour une adresse interdite.
+ * @throws {UnresolvedProviderHostError} si le nom ne se résout pas.
+ */
+export async function assertProviderTargetIsSafe(
+  url: string,
+  resolve: ResolveAddresses = resolveWithDns,
+  now: number = Date.now()
+): Promise<void> {
+  const hostname = hostnameOf(url);
+  const verifiedUntil = verifiedTargets.get(hostname);
+  if (verifiedUntil !== undefined && verifiedUntil > now) return;
+
+  const shared = resolve === resolveWithDns;
+  const inFlight = shared ? pendingChecks.get(hostname) : undefined;
+  if (inFlight) return inFlight;
+
+  const check = (async () => {
+    let addresses: string[];
+    try {
+      addresses = await resolve(hostname);
+    } catch (error) {
+      throw new UnresolvedProviderHostError(hostname, error);
+    }
+    assertAddressesAllowed(addresses);
+    verifiedTargets.set(hostname, now + SAFE_TARGET_TTL_MS);
+  })();
+  if (!shared) return check;
+  pendingChecks.set(hostname, check);
+  try {
+    await check;
+  } finally {
+    pendingChecks.delete(hostname);
+  }
+}
+
+/** Tests uniquement : oublie les noms déjà vérifiés. */
+export function resetVerifiedProviderTargets(): void {
+  verifiedTargets.clear();
+  pendingChecks.clear();
 }

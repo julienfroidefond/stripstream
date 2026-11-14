@@ -70,6 +70,7 @@ import {
   listConnections,
   saveConnection,
 } from "./manage";
+import { ERROR_CODES } from "@/constants/errorCodes";
 import { decryptSecret } from "@/lib/connections/credentials";
 
 beforeEach(() => {
@@ -113,7 +114,12 @@ describe("saveConnection", () => {
   });
 
   it("keeps the existing Komga auth header when no new password is provided", async () => {
-    komgaFindFirst.mockResolvedValue({ authHeader: "existing-encrypted" });
+    komgaFindFirst.mockResolvedValue({
+      id: 5,
+      url: "http://komga.local",
+      username: "alice",
+      authHeader: "existing-encrypted",
+    });
 
     await saveConnection(
       {
@@ -202,7 +208,11 @@ describe("saveConnection", () => {
   });
 
   it("keeps the existing Stripstream token when the update field is blank", async () => {
-    stripstreamFindFirst.mockResolvedValue({ token: "existing-token" });
+    stripstreamFindFirst.mockResolvedValue({
+      id: 6,
+      url: "http://stream.local",
+      token: "existing-token",
+    });
 
     await saveConnection(
       {
@@ -223,6 +233,39 @@ describe("saveConnection", () => {
         token: "existing-token",
       },
     });
+  });
+
+  it("requires the secret again when the server URL changes", async () => {
+    stripstreamFindFirst.mockResolvedValue({
+      id: 6,
+      url: "http://stream.local",
+      token: "existing-token",
+    });
+
+    await expect(
+      saveConnection(
+        { provider: "stripstream", id: 6, name: "Stream", url: "http://evil.example", token: "" },
+        7
+      )
+    ).rejects.toMatchObject({ code: ERROR_CODES.CONFIG.SECRET_REQUIRED });
+    expect(stripstreamUpdate).not.toHaveBeenCalled();
+  });
+
+  it("requires the Komga password again when the username changes", async () => {
+    komgaFindFirst.mockResolvedValue({
+      id: 5,
+      url: "http://komga.local",
+      username: "alice",
+      authHeader: "existing-encrypted",
+    });
+
+    await expect(
+      saveConnection(
+        { provider: "komga", id: 5, name: "Komga", url: "http://komga.local", username: "bob" },
+        7
+      )
+    ).rejects.toMatchObject({ code: ERROR_CODES.CONFIG.SECRET_REQUIRED });
+    expect(komgaUpdate).not.toHaveBeenCalled();
   });
 });
 

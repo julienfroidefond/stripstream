@@ -5,19 +5,22 @@ interface UseTouchNavigationProps {
   onPreviousPage: () => void;
   onNextPage: () => void;
   isRTL: boolean;
+  /** Un dialogue ou la modale de fin couvre le lecteur : aucun swipe ne tourne la page. */
+  disabled?: boolean;
 }
 
 export function useTouchNavigation({
   onPreviousPage,
   onNextPage,
   isRTL,
+  disabled = false,
 }: UseTouchNavigationProps) {
   // Garder les props/callbacks dans une ref pour que les handlers
   // restent stables et que les listeners ne soient attachés qu'une fois.
-  const propsRef = useRef({ onPreviousPage, onNextPage, isRTL });
+  const propsRef = useRef({ onPreviousPage, onNextPage, isRTL, disabled });
   useEffect(() => {
-    propsRef.current = { onPreviousPage, onNextPage, isRTL };
-  }, [onPreviousPage, onNextPage, isRTL]);
+    propsRef.current = { onPreviousPage, onNextPage, isRTL, disabled };
+  }, [onPreviousPage, onNextPage, isRTL, disabled]);
 
   useEffect(() => {
     let touchStartX: number | null = null;
@@ -66,7 +69,8 @@ export function useTouchNavigation({
       const side = sideForSwipe(deltaX, deltaY);
       if (!side) return;
 
-      const { onPreviousPage, onNextPage, isRTL } = propsRef.current;
+      const { onPreviousPage, onNextPage, isRTL, disabled } = propsRef.current;
+      if (disabled) return;
       if (actionForSide(side, isRTL ? "rtl" : "ltr") === "previous") onPreviousPage();
       else onNextPage();
     };

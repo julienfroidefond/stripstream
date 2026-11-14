@@ -167,7 +167,11 @@ export class KomgaProvider implements IMediaProvider {
 
   async getSeriesById(seriesId: string): Promise<NormalizedSeries | null> {
     try {
-      const series = await this.fetch<KomgaSeries>(`series/${seriesId}`, undefined, cacheProfile.series());
+      const series = await this.fetch<KomgaSeries>(
+        `series/${seriesId}`,
+        undefined,
+        cacheProfile.seriesDetail(seriesId)
+      );
       return KomgaAdapter.toNormalizedSeries(series);
     } catch (error) {
       // L'interface promet `null` pour une série absente. Seul le 404 est une
@@ -260,13 +264,12 @@ export class KomgaProvider implements IMediaProvider {
       );
       return KomgaAdapter.toNormalizedBook(book);
     } catch (error) {
-      if (
-        error instanceof AppError &&
-        (error as AppError & { params?: { status?: number } }).params?.status === 404
-      ) {
+      // 404 = dernier tome. Toute autre erreur remonte : le lecteur ne doit
+      // pas annoncer « fin de la série » parce que Komga était injoignable.
+      if (error instanceof AppError && error.code === ERROR_CODES.KOMGA.NOT_FOUND) {
         return null;
       }
-      return null;
+      throw error;
     }
   }
 

@@ -3,10 +3,12 @@ import { describe, expect, it } from "vitest";
 import type { NormalizedBook, NormalizedSeries } from "@/lib/providers/types";
 import {
   bookProgressSignature,
+  dropSettled,
   optimisticBookProgress,
   resolveBook,
   resolveSeries,
   seriesProgressSignature,
+  settleOverride,
   withOverride,
   type ReadOverrides,
 } from "./read-progress-overrides";
@@ -34,6 +36,10 @@ const series: NormalizedSeries = {
 };
 
 const empty: ReadOverrides = new Map();
+
+function makeBookWith(readProgress: NormalizedBook["readProgress"]): NormalizedBook {
+  return { ...book, readProgress };
+}
 
 describe("optimisticBookProgress", () => {
   it("completes the book on its last page and keeps the last read date", () => {
@@ -120,5 +126,33 @@ describe("withOverride", () => {
     expect(empty.size).toBe(0);
     expect(added.get("a")).toEqual({ read: true, observed: "none" });
     expect(removed.has("a")).toBe(false);
+  });
+});
+
+describe("settled overrides", () => {
+  const readBook = makeBookWith({ page: 48, completed: true, lastReadAt: null });
+  const unreadBook = makeBookWith(null);
+
+  it("keeps a recorded override while a stale server still shows the observed state", () => {
+    const overrides = settleOverride(
+      withOverride(new Map(), readBook.id, { read: false, observed: "done:48" }),
+      readBook.id
+    );
+
+    expect(resolveBook(overrides, readBook).readProgress).toBeNull();
+    expect(resolveBook(overrides, unreadBook)).toBe(unreadBook);
+  });
+
+  it("drops only the recorded overrides matching the predicate", () => {
+    const overrides: ReadOverrides = new Map([
+      ["a", { read: true, observed: "none", settled: true, seriesId: "s1" }],
+      ["b", { read: true, observed: "none", seriesId: "s1" }],
+      ["c", { read: true, observed: "none", settled: true, seriesId: "s2" }],
+    ]);
+
+    const dropped = dropSettled(overrides, (override) => override.seriesId === "s1");
+
+    expect([...dropped.keys()]).toEqual(["b", "c"]);
+    expect(dropSettled(overrides, () => false)).toBe(overrides);
   });
 });

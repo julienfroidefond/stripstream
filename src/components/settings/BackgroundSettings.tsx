@@ -81,7 +81,7 @@ export function BackgroundSettings({ initialLibraries }: BackgroundSettingsProps
       toast({
         variant: "destructive",
         title: t("settings.error.title"),
-        description: "Veuillez entrer une URL valide",
+        description: t("settings.background.image.invalid"),
       });
       return;
     }
@@ -271,25 +271,25 @@ export function BackgroundSettings({ initialLibraries }: BackgroundSettingsProps
             preferences.background.type === "komga-random") && (
             <>
               <SliderControl
-                label="Opacité du contenu"
-                value={preferences.background.opacity || 10}
+                label={t("settings.background.opacity.label")}
+                value={preferences.background.opacity ?? 10}
                 min={0}
                 max={100}
                 step={5}
                 unit="%"
-                description="Contrôle la transparence du contenu par rapport au background"
+                description={t("settings.background.opacity.description")}
                 onChange={handleOpacityChange}
                 onCommit={flushContinuous}
               />
 
               <SliderControl
-                label="Flou du background"
-                value={preferences.background.blur || 0}
+                label={t("settings.background.blur.label")}
+                value={preferences.background.blur ?? 0}
                 min={0}
                 max={20}
                 step={1}
                 unit="px"
-                description="Applique un effet de flou au background"
+                description={t("settings.background.blur.description")}
                 onChange={handleBlurChange}
                 onCommit={flushContinuous}
               />

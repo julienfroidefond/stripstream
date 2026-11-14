@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { ERROR_CODES } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
 import { checkRateLimit, peekRateLimit, type RateLimitOptions } from "@/lib/rate-limit";
+import { KeyedLock } from "@/lib/rate-limit/keyed-lock";
 
 export interface UserData {
   id: string;
@@ -47,6 +48,8 @@ async function consume(key: string, options: RateLimitOptions): Promise<void> {
   const result = await checkRateLimit(key, options);
   if (!result.allowed) throw new AppError(ERROR_CODES.AUTH.RATE_LIMITED);
 }
+
+const loginAttempts = new KeyedLock();
 
 export class AuthServerService {
   private static readonly SALT_ROUNDS = 10;
@@ -122,6 +125,18 @@ export class AuthServerService {
     email: string,
     password: string,
     clientIp: string | null = null
+  ): Promise<LoginUserData> {
+    // Une tentative à la fois par email : le « peek, bcrypt, puis compter
+    // l'échec » ci-dessous n'est sûr que si la tentative suivante attend.
+    return loginAttempts.run(email.toLowerCase(), () =>
+      AuthServerService.attemptLogin(email, password, clientIp)
+    );
+  }
+
+  private static async attemptLogin(
+    email: string,
+    password: string,
+    clientIp: string | null
   ): Promise<LoginUserData> {
     const normalizedEmail = email.toLowerCase();
     const failureKey = authRateLimitKeys.loginFailures(normalizedEmail);

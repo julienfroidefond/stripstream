@@ -1,6 +1,7 @@
 import { ERROR_CODES } from "@/constants/errorCodes";
 import logger from "@/lib/logger";
 import { normalizeServerUrl } from "@/lib/connections/server-url";
+import { assertProviderTargetIsSafe } from "@/lib/connections/server-url-dns";
 
 import {
   errorCodeOf,
@@ -34,6 +35,7 @@ export function createKomgaTransportPolicy(
       SERVER_ERROR: ERROR_CODES.KOMGA.SERVER_ERROR,
       HTTP_ERROR: ERROR_CODES.KOMGA.HTTP_ERROR,
     },
+    assertTarget: (target) => assertProviderTargetIsSafe(target),
     timeoutMs: TIMEOUT_MS,
     fallbackErrorCode: ERROR_CODES.KOMGA.CONNECTION_ERROR,
     retry: {

@@ -158,4 +158,21 @@ describe("useTouchNavigation", () => {
 
     expect(onPreviousPage).not.toHaveBeenCalled();
   });
+
+  it("ignores swipes while a dialog covers the reader", () => {
+    const onPreviousPage = vi.fn();
+    const onNextPage = vi.fn();
+    const { rerender } = renderHook(
+      ({ disabled }) =>
+        useTouchNavigation({ onPreviousPage, onNextPage, isRTL: false, disabled }),
+      { initialProps: { disabled: true } }
+    );
+
+    swipe({ fromX: 180, toX: 100 });
+    expect(onNextPage).not.toHaveBeenCalled();
+
+    rerender({ disabled: false });
+    swipe({ fromX: 180, toX: 100 });
+    expect(onNextPage).toHaveBeenCalledTimes(1);
+  });
 });
