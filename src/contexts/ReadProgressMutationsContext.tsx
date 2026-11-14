@@ -7,7 +7,6 @@ import {
   useMemo,
   useRef,
   useState,
-  useTransition,
   type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
@@ -23,13 +22,15 @@ import logger from "@/lib/logger";
 import type { NormalizedBook, NormalizedSeries } from "@/lib/providers/types";
 import {
   bookProgressSignature,
-  dropSettled,
   resolveBook as resolveBookOverride,
   resolveSeries as resolveSeriesOverride,
   seriesProgressSignature,
   settleOverride,
+  takeRetired,
   withOverride,
+  withoutIds,
   type ReadOverrides,
+  type RetiredOverrides,
 } from "./read-progress-overrides";
 
 export interface ReadProgressMutations {
@@ -89,22 +90,11 @@ export function ReadProgressMutationsProvider({ children }: { children: ReactNod
   const seriesPendingRef = useRef<PendingMap>(new Map());
   const [bookPending, setBookPending] = useState<PendingMap>(() => new Map());
   const [seriesPending, setSeriesPending] = useState<PendingMap>(() => new Map());
-  const [isRefreshing, startRefresh] = useTransition();
-
-  // Le refresh lancé dans une transition reste « en cours » jusqu'à ce que le
-  // nouvel arbre serveur soit affiché : à sa fin, les overrides réglés n'ont
-  // plus de raison d'être, le serveur fait foi. Ajusté pendant le rendu (pas
-  // d'effet) pour que le nouvel arbre et le retrait arrivent ensemble.
-  const [wasRefreshing, setWasRefreshing] = useState(false);
-  if (wasRefreshing !== isRefreshing) {
-    setWasRefreshing(isRefreshing);
-    if (!isRefreshing) {
-      setBookOverrides(dropSettled);
-      setSeriesOverrides(dropSettled);
-    }
-  }
-
-  const refresh = useCallback(() => startRefresh(() => router.refresh()), [router]);
+  // Overrides réglés que le serveur a dépassés (voir `read-progress-overrides`).
+  // Une ref, pas un état : la résolution l'alimente pendant le rendu, et un
+  // id retiré le reste jusqu'au prochain marquage de ce même id.
+  const retiredBooksRef = useRef<RetiredOverrides>(new Set());
+  const retiredSeriesRef = useRef<RetiredOverrides>(new Set());
 
   const markBookPending = useCallback((bookId: string, value: boolean | null) => {
     bookPendingRef.current = withPending(bookPendingRef.current, bookId, value);
@@ -117,12 +107,13 @@ export function ReadProgressMutationsProvider({ children }: { children: ReactNod
   }, []);
 
   const resolveBook = useCallback(
-    (book: NormalizedBook) => resolveBookOverride(bookOverrides, book),
+    (book: NormalizedBook) => resolveBookOverride(bookOverrides, book, retiredBooksRef.current),
     [bookOverrides]
   );
 
   const resolveSeries = useCallback(
-    (series: NormalizedSeries) => resolveSeriesOverride(seriesOverrides, series),
+    (series: NormalizedSeries) =>
+      resolveSeriesOverride(seriesOverrides, series, retiredSeriesRef.current),
     [seriesOverrides]
   );
 
@@ -141,8 +132,12 @@ export function ReadProgressMutationsProvider({ children }: { children: ReactNod
       if (bookPendingRef.current.has(book.id)) return false;
 
       const prefix = bookToastKey(read);
+      const retired = takeRetired(retiredBooksRef.current);
       setBookOverrides((current) =>
-        withOverride(current, book.id, { read, observed: bookProgressSignature(book) })
+        withOverride(withoutIds(current, retired), book.id, {
+          read,
+          observed: bookProgressSignature(book),
+        })
       );
       markBookPending(book.id, read);
 
@@ -157,7 +152,7 @@ export function ReadProgressMutationsProvider({ children }: { children: ReactNod
           description: t(`${prefix}.success.description`),
         });
         setBookOverrides((current) => settleOverride(current, book.id));
-        refresh();
+        router.refresh();
         return true;
       } catch (error) {
         setBookOverrides((current) => withOverride(current, book.id, null));
@@ -172,7 +167,7 @@ export function ReadProgressMutationsProvider({ children }: { children: ReactNod
         markBookPending(book.id, null);
       }
     },
-    [markBookPending, refresh, t, toast]
+    [markBookPending, router, t, toast]
   );
 
   const markSeries = useCallback(
@@ -180,8 +175,9 @@ export function ReadProgressMutationsProvider({ children }: { children: ReactNod
       if (seriesPendingRef.current.has(series.id)) return false;
 
       const prefix = seriesToastKey(read);
+      const retired = takeRetired(retiredSeriesRef.current);
       setSeriesOverrides((current) =>
-        withOverride(current, series.id, {
+        withOverride(withoutIds(current, retired), series.id, {
           read,
           observed: seriesProgressSignature(series),
         })
@@ -196,7 +192,7 @@ export function ReadProgressMutationsProvider({ children }: { children: ReactNod
         if (result.success) {
           setSeriesOverrides((current) => settleOverride(current, series.id));
         }
-        refresh();
+        router.refresh();
         if (!result.success) throw new Error(result.message);
 
         toast({
@@ -219,7 +215,7 @@ export function ReadProgressMutationsProvider({ children }: { children: ReactNod
         markSeriesPending(series.id, null);
       }
     },
-    [markSeriesPending, refresh, t, toast]
+    [markSeriesPending, router, t, toast]
   );
 
   const value = useMemo<ReadProgressMutations>(

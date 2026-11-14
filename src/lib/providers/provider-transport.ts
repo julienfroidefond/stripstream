@@ -117,6 +117,22 @@ export class ProviderTransport {
     return url.toString();
   }
 
+  /**
+   * Garde d'adresse de la politique. Une adresse interdite remonte telle quelle
+   * (`AppError`) ; un hôte qui ne se résout pas devient l'erreur de connexion
+   * du provider, comme un `fetch` qui aurait échoué.
+   */
+  private async assertTarget(url: string): Promise<void> {
+    if (!this.policy.assertTarget) return;
+    try {
+      await this.policy.assertTarget(url);
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      logger.warn({ err: error, url }, `${this.policy.label} target check failed`);
+      throw new AppError(this.policy.fallbackErrorCode, {}, error);
+    }
+  }
+
   buildHeaders(options: { json?: boolean; accept?: string } = {}): Headers {
     const headers = new Headers(this.policy.headers);
     if (options.accept) headers.set("Accept", options.accept);
@@ -131,7 +147,7 @@ export class ProviderTransport {
   ): Promise<T> {
     const { revalidate, tags, ...requestInit } = options;
     const url = this.buildUrl(path, params);
-    await this.policy.assertTarget?.(url);
+    await this.assertTarget(url);
     const headers = this.buildHeaders({ json: Boolean(requestInit.body) });
     const isDebug = this.policy.debugRequest?.() ?? false;
     const isCacheDebug = this.policy.debugCache?.() ?? false;
@@ -201,7 +217,7 @@ export class ProviderTransport {
     options: ProviderResponseOptions = {}
   ): Promise<Response> {
     const url = this.buildUrl(path, params);
-    await this.policy.assertTarget?.(url);
+    await this.assertTarget(url);
     const headers = this.buildHeaders({ accept: options.accept });
     if (options.conditionalHeaders) {
       const validators = new Headers(options.conditionalHeaders);

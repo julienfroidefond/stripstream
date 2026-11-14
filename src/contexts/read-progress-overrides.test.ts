@@ -3,13 +3,14 @@ import { describe, expect, it } from "vitest";
 import type { NormalizedBook, NormalizedSeries } from "@/lib/providers/types";
 import {
   bookProgressSignature,
-  dropSettled,
   optimisticBookProgress,
   resolveBook,
   resolveSeries,
   seriesProgressSignature,
   settleOverride,
+  takeRetired,
   withOverride,
+  withoutIds,
   type ReadOverrides,
 } from "./read-progress-overrides";
 
@@ -36,6 +37,10 @@ const series: NormalizedSeries = {
 };
 
 const empty: ReadOverrides = new Map();
+
+function makeBookWith(readProgress: NormalizedBook["readProgress"]): NormalizedBook {
+  return { ...book, readProgress };
+}
 
 describe("optimisticBookProgress", () => {
   it("completes the book on its last page and keeps the last read date", () => {
@@ -126,22 +131,51 @@ describe("withOverride", () => {
 });
 
 describe("settled overrides", () => {
-  it("drops only the overrides the server has recorded", () => {
-    const pending = { read: true, observed: "none" };
-    let overrides: ReadonlyMap<string, typeof pending & { settled?: boolean }> = new Map([
-      ["a", pending],
-      ["b", pending],
-    ]);
+  const readBook = makeBookWith({ page: 48, completed: true, lastReadAt: null });
+  const unreadBook = makeBookWith(null);
 
-    overrides = settleOverride(overrides, "a");
-    const dropped = dropSettled(overrides);
+  it("keeps a recorded override while a stale server still shows the observed state", () => {
+    const overrides = settleOverride(
+      withOverride(new Map(), readBook.id, { read: false, observed: "done:48" }),
+      readBook.id
+    );
+    const retired = new Set<string>();
 
-    expect([...dropped.keys()]).toEqual(["b"]);
+    expect(resolveBook(overrides, readBook, retired).readProgress).toBeNull();
+    expect(retired.size).toBe(0);
   });
 
-  it("keeps the same instance when nothing is settled", () => {
-    const overrides = new Map([["a", { read: false, observed: "done:3" }]]);
-    expect(dropSettled(overrides)).toBe(overrides);
-    expect(settleOverride(overrides, "missing")).toBe(overrides);
+  it("retires a recorded override once the server moved past it, so it never revives", () => {
+    const overrides = settleOverride(
+      withOverride(new Map(), readBook.id, { read: false, observed: "done:48" }),
+      readBook.id
+    );
+    const retired = new Set<string>();
+
+    // Le refresh livre l'état enregistré (non lu)…
+    expect(resolveBook(overrides, unreadBook, retired)).toBe(unreadBook);
+    // …puis le tome est relu jusqu'au bout : le serveur renvoie `done:48`.
+    expect(resolveBook(overrides, readBook, retired)).toBe(readBook);
+  });
+
+  it("does not retire an override still in flight", () => {
+    const overrides = withOverride(new Map(), readBook.id, { read: false, observed: "done:48" });
+    const retired = new Set<string>();
+
+    resolveBook(overrides, unreadBook, retired);
+    expect(retired.size).toBe(0);
+  });
+
+  it("empties the retired set and drops those ids from the table", () => {
+    const retired = new Set(["a"]);
+    const overrides: ReadOverrides = new Map([
+      ["a", { read: true, observed: "none", settled: true }],
+      ["b", { read: true, observed: "none" }],
+    ]);
+
+    const ids = takeRetired(retired);
+    expect(retired.size).toBe(0);
+    expect([...withoutIds(overrides, ids).keys()]).toEqual(["b"]);
+    expect(withoutIds(overrides, [])).toBe(overrides);
   });
 });

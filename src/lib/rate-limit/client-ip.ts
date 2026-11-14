@@ -9,8 +9,10 @@
  *
  * `TRUSTED_PROXY_HOPS=N` (N ≥ 1) déclare N proxys de confiance devant l'app :
  * l'adresse retenue est le N-ième élément en partant de la droite, celle
- * qu'a écrite le proxy de confiance le plus éloigné. Sans la variable, on
- * garde le premier élément (proxy qui réécrit), comportement historique.
+ * qu'a écrite le proxy de confiance le plus éloigné. `X-Real-IP` n'est alors
+ * jamais lu : rien ne garantit qu'un proxy de confiance l'a écrit, et un
+ * client pourrait le changer à chaque requête. Sans la variable, on garde le
+ * premier élément (proxy qui réécrit), puis `X-Real-IP`, comme avant.
  * Sans adresse exploitable, on renvoie `null` et le budget par IP est ignoré
  * plutôt que de mettre tous les clients dans un même seau.
  */
@@ -47,6 +49,6 @@ export function clientIpFromHeaders(
 ): string | null {
   if (!headers) return null;
   const forwarded = forwardedClient(headers.get("x-forwarded-for"), hops);
-  const candidate = forwarded || headers.get("x-real-ip")?.trim();
+  const candidate = hops === null ? forwarded || headers.get("x-real-ip")?.trim() : forwarded;
   return candidate && IP_PATTERN.test(candidate) ? candidate.toLowerCase() : null;
 }

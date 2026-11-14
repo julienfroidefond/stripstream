@@ -1,3 +1,4 @@
+import { isSpecialBook } from "@/lib/books/volume-type";
 import type { NormalizedBook, NormalizedMissingBook } from "@/lib/providers/types";
 
 export interface MissingBooksPageWindow {
@@ -6,16 +7,20 @@ export interface MissingBooksPageWindow {
   /** Les manquants n'ont rien à faire dans une vue « non lus ». */
   unreadOnly: boolean;
   /**
-   * Plus grand numéro de tome de la page précédente (son dernier tome), `null`
-   * sur la première page ou si le provider n'en donne pas.
+   * Tomes de la page précédente (même requête, page − 1), `null` sur la
+   * première page ou si le provider n'a pas pu les servir.
    */
-  previousPageLastVolume: number | null;
+  previousPageBooks: NormalizedBook[] | null;
 }
 
-function maxVolume(books: NormalizedBook[]): number | null {
+/**
+ * Plus grand numéro des tomes *réguliers numérotés* : les hors-séries (section
+ * à part, numérotation propre) et les tomes sans numéro ne bornent rien.
+ */
+export function maxRegularVolume(books: readonly NormalizedBook[]): number | null {
   let max: number | null = null;
   for (const book of books) {
-    if (book.volume == null) continue;
+    if (book.volume == null || isSpecialBook(book)) continue;
     if (max === null || book.volume > max) max = book.volume;
   }
   return max;
@@ -25,25 +30,27 @@ function maxVolume(books: NormalizedBook[]): number | null {
  * Tomes manquants à intercaler sur *cette* page de la grille.
  *
  * Le provider renvoie les manquants de toute la série ; une page n'affiche que
- * ceux qui tombent après le dernier tome de la page précédente et jusqu'à son
- * propre dernier tome (sans borne haute sur la dernière page). Un trou entre
- * deux pages s'affiche ainsi au début de la page suivante, une seule fois.
+ * ceux qui tombent après le dernier tome régulier de la page précédente et
+ * jusqu'à son propre dernier tome régulier (sans borne haute sur la dernière
+ * page). Un trou entre deux pages s'affiche au début de la page suivante, une
+ * seule fois. Faute de borne basse hors première page, mieux vaut omettre que
+ * dupliquer.
  */
 export function missingBooksForPage(
   missing: NormalizedMissingBook[],
-  pageBooks: NormalizedBook[],
+  pageBooks: readonly NormalizedBook[],
   window: MissingBooksPageWindow
 ): NormalizedMissingBook[] {
   if (missing.length === 0 || window.unreadOnly) return [];
 
   const isFirstPage = window.page <= 1;
   const isLastPage = window.page >= window.totalPages;
-  const lower = isFirstPage ? null : window.previousPageLastVolume;
-  const upper = isLastPage ? null : maxVolume(pageBooks);
-
-  // Hors première page, sans borne basse connue on ne peut pas savoir si le
-  // manquant a déjà été montré : mieux vaut l'omettre que le dupliquer.
+  const lower = isFirstPage ? null : maxRegularVolume(window.previousPageBooks ?? []);
   if (!isFirstPage && lower === null) return [];
+
+  const upper = isLastPage ? null : maxRegularVolume(pageBooks);
+  // Page intermédiaire sans tome régulier numéroté : aucune borne haute fiable.
+  if (!isLastPage && upper === null) return [];
 
   return missing.filter(
     (item) =>

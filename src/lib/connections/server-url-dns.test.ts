@@ -4,6 +4,7 @@ import {
   assertProviderTargetIsSafe,
   assertServerUrlResolvesSafely,
   resetVerifiedProviderTargets,
+  UnresolvedProviderHostError,
 } from "./server-url-dns";
 
 const resolvingTo = (...addresses: string[]) => vi.fn(async () => addresses);
@@ -62,5 +63,37 @@ describe("assertProviderTargetIsSafe", () => {
     await expect(
       assertProviderTargetIsSafe("https://media.example/api/v1/books", resolve, 61_000)
     ).rejects.toMatchObject({ code: ERROR_CODES.CONFIG.INVALID_URL });
+  });
+
+  it("never caches a failed resolution as safe", async () => {
+    resetVerifiedProviderTargets();
+    const resolve = vi
+      .fn()
+      .mockRejectedValueOnce(Object.assign(new Error("SERVFAIL"), { code: "ESERVFAIL" }))
+      .mockResolvedValueOnce(["169.254.169.254"]);
+
+    await expect(
+      assertProviderTargetIsSafe("https://media.example/x", resolve, 0)
+    ).rejects.toBeInstanceOf(UnresolvedProviderHostError);
+    // Juste après, le nom re-pointé vers une adresse interne est revérifié.
+    await expect(
+      assertProviderTargetIsSafe("https://media.example/x", resolve, 1)
+    ).rejects.toMatchObject({ code: ERROR_CODES.CONFIG.INVALID_URL });
+  });
+
+  it("shares one lookup between concurrent requests to the same host", async () => {
+    resetVerifiedProviderTargets();
+    let finish!: (addresses: string[]) => void;
+    const resolve = vi.fn(
+      () => new Promise<string[]>((resolveLookup) => (finish = resolveLookup))
+    );
+
+    const checks = Array.from({ length: 5 }, () =>
+      assertProviderTargetIsSafe("https://media.example/page", resolve, 0)
+    );
+    finish(["93.184.216.34"]);
+    await Promise.all(checks);
+
+    expect(resolve).toHaveBeenCalledTimes(1);
   });
 });

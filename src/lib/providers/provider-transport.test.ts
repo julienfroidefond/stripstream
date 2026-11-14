@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ERROR_CODES } from "@/constants/errorCodes";
+import { AppError } from "@/utils/errors";
 
 const { loggerMock, unstableCacheMock } = vi.hoisted(() => ({
   loggerMock: {
@@ -102,6 +103,33 @@ describe("ProviderTransport", () => {
     expect(transport.buildUrl("books/a.b-c_d/pages/1")).toBe(
       "http://provider.test/api/books/a.b-c_d/pages/1"
     );
+  });
+
+  it("checks the target before any fetch and maps an unresolved host to a connection error", async () => {
+    const fetchMock = vi.fn(async () => jsonResponse({}));
+    vi.stubGlobal("fetch", fetchMock);
+    const blocked = new ProviderTransport(
+      testPolicy({
+        assertTarget: async () => {
+          throw new AppError(ERROR_CODES.CONFIG.INVALID_URL);
+        },
+      })
+    );
+    const unresolved = new ProviderTransport(
+      testPolicy({
+        assertTarget: async () => {
+          throw Object.assign(new Error("no such host"), { code: "ENOTFOUND" });
+        },
+      })
+    );
+
+    await expect(blocked.request("books")).rejects.toMatchObject({
+      code: ERROR_CODES.CONFIG.INVALID_URL,
+    });
+    await expect(unresolved.response("books/1/file")).rejects.toMatchObject({
+      code: ERROR_CODES.KOMGA.CONNECTION_ERROR,
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("sends the policy headers and forwards cache and body options", async () => {

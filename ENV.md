@@ -94,7 +94,8 @@ défaut `X-Real-IP`).
   choisir ce premier élément, et le budget par IP devient contournable.
 - **Avec `TRUSTED_PROXY_HOPS=N`** : N-ième élément en partant de la droite,
   c'est-à-dire l'adresse écrite par le proxy de confiance le plus éloigné.
-  Une chaîne plus courte que N n'est pas crue (repli sur `X-Real-IP`).
+  Une chaîne plus courte que N n'est pas crue, et `X-Real-IP` n'est pas lu :
+  le budget par IP est alors ignoré pour cette requête.
 
 Sans proxy, l'en-tête est fourni par le client : le budget par IP est
 contournable et le budget des échecs par compte reste la protection de fond.

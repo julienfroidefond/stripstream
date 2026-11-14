@@ -111,6 +111,12 @@ describe("provider registry", () => {
       expect(definition.encodeSecret(withoutSecret, null)).toBeNull();
     });
 
+    it("still reuses the secret of a row saved before URLs were normalized", () => {
+      const withoutSecret = { ...sample.input, password: undefined, token: undefined };
+      const legacy = { ...storedRowFor(sample.input), url: `${sample.input.url.toUpperCase()}/` };
+      expect(definition.encodeSecret(withoutSecret, legacy)).toBe("stored");
+    });
+
     it("never reuses the stored secret for another server URL", () => {
       const withoutSecret = {
         ...sample.input,

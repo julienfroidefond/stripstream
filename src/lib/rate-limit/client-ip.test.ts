@@ -26,9 +26,10 @@ describe("clientIpFromHeaders", () => {
     expect(clientIpFromHeaders(chained, 2)).toBe("203.0.113.7");
   });
 
-  it("trusts no forwarded entry when the chain is shorter than declared", () => {
+  it("trusts no address when the chain is shorter than declared, not even X-Real-IP", () => {
     const headers = new Headers({ "x-forwarded-for": "203.0.113.7", "x-real-ip": "198.51.100.9" });
-    expect(clientIpFromHeaders(headers, 2)).toBe("198.51.100.9");
+    expect(clientIpFromHeaders(headers, 2)).toBeNull();
+    expect(clientIpFromHeaders(new Headers({ "x-real-ip": "198.51.100.9" }), 1)).toBeNull();
   });
 
   it("reads TRUSTED_PROXY_HOPS as a positive integer only", () => {

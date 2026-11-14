@@ -4,7 +4,9 @@ import type { NormalizedBook, NormalizedMissingBook } from "@/lib/providers/type
 import { missingBooksForPage } from "./missing-books-page";
 
 const books = (...volumes: number[]) =>
-  volumes.map((volume) => ({ id: `b${volume}`, volume }) as NormalizedBook);
+  volumes.map((volume) => ({ id: `b${volume}`, volume, volumeType: "regular" }) as NormalizedBook);
+const special = (volume: number | null) =>
+  ({ id: `hs${volume}`, volume, volumeType: "hs" }) as NormalizedBook;
 const missing = (...volumes: number[]): NormalizedMissingBook[] =>
   volumes.map((volumeNumber) => ({ title: `T${volumeNumber}`, volumeNumber, coverUrl: null }));
 
@@ -18,19 +20,19 @@ describe("missingBooksForPage", () => {
       page: 1,
       totalPages: 3,
       unreadOnly: false,
-      previousPageLastVolume: null,
+      previousPageBooks: null,
     });
     const page2 = missingBooksForPage(all, books(32, 44, 46, 60), {
       page: 2,
       totalPages: 3,
       unreadOnly: false,
-      previousPageLastVolume: 30,
+      previousPageBooks: books(1, 3, 30),
     });
     const page3 = missingBooksForPage(all, books(61, 62), {
       page: 3,
       totalPages: 3,
       unreadOnly: false,
-      previousPageLastVolume: 60,
+      previousPageBooks: books(32, 44, 46, 60),
     });
 
     expect(volumesOf(page1)).toEqual([2]);
@@ -44,7 +46,7 @@ describe("missingBooksForPage", () => {
         page: 1,
         totalPages: 1,
         unreadOnly: true,
-        previousPageLastVolume: null,
+        previousPageBooks: null,
       })
     ).toEqual([]);
   });
@@ -56,7 +58,7 @@ describe("missingBooksForPage", () => {
           page: 1,
           totalPages: 1,
           unreadOnly: false,
-          previousPageLastVolume: null,
+          previousPageBooks: null,
         })
       )
     ).toEqual([2, 31, 45, 70]);
@@ -68,8 +70,19 @@ describe("missingBooksForPage", () => {
         page: 2,
         totalPages: 2,
         unreadOnly: false,
-        previousPageLastVolume: null,
+        previousPageBooks: null,
       })
     ).toEqual([]);
+  });
+
+  it("ignores hors-séries and unnumbered books when bounding a page", () => {
+    // La page précédente finit par un hors-série n°1 : la borne reste 30.
+    const page2 = missingBooksForPage(all, [...books(32, 44, 46, 60), special(99)], {
+      page: 2,
+      totalPages: 3,
+      unreadOnly: false,
+      previousPageBooks: [...books(1, 3, 30), special(1), { id: "x", volume: null } as NormalizedBook],
+    });
+    expect(volumesOf(page2)).toEqual([31, 45]);
   });
 });

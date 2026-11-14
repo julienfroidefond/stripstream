@@ -121,8 +121,8 @@ describe("ReadProgressMutationsContext", () => {
       expect.objectContaining({ title: "books.actions.markAsRead.success.title" })
     );
     expect(mocks.refresh).toHaveBeenCalledTimes(1);
-    // Le refresh est livré : l'override réglé est retiré, le serveur fait foi.
-    expect(result.current.resolveBook(book)).toBe(book);
+    // Cache serveur encore en retard : le marquage enregistré reste affiché.
+    expect(result.current.resolveBook(book).readProgress?.completed).toBe(true);
   });
 
   it("does not revive a recorded override when the server later returns to the observed state", async () => {
@@ -137,7 +137,9 @@ describe("ReadProgressMutationsContext", () => {
       await result.current.markBook(readBook, false);
     });
 
-    // Relu jusqu'au bout dans le lecteur : le serveur renvoie de nouveau `done:48`.
+    // Le refresh livre l'état enregistré, puis le tome est relu jusqu'au bout :
+    // le serveur renvoie de nouveau `done:48`, l'override ne se rallume pas.
+    expect(result.current.resolveBook({ ...readBook, readProgress: null }).readProgress).toBeNull();
     expect(result.current.resolveBook(readBook).readProgress?.completed).toBe(true);
   });
 

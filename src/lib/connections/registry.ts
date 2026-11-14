@@ -101,14 +101,27 @@ function stripstreamRow(
   return row ? { id: row.id, url: row.url, secret: row.token, principal: null } : null;
 }
 
+/**
+ * URL stockée comparable à une saisie normalisée. Les lignes antérieures à la
+ * normalisation (`http://Komga.lan/`) sont ramenées à la même forme ; une URL
+ * illisible ne correspond à rien.
+ */
+function comparableStoredUrl(url: string): string | null {
+  try {
+    return normalizeServerUrl(url);
+  } catch {
+    return null;
+  }
+}
+
 /** Le secret enregistré ne suit la saisie que si l'hôte et l'identité n'ont pas changé. */
 function reusableSecret(
   existing: StoredConnectionRow | null,
   url: string,
   principal: string | null
 ): string | null {
-  if (!existing) return null;
-  return existing.url === url && existing.principal === principal ? existing.secret : null;
+  if (!existing || existing.principal !== principal) return null;
+  return comparableStoredUrl(existing.url) === url ? existing.secret : null;
 }
 
 const komgaDefinition: ProviderDefinition<"komga"> = {
