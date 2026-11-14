@@ -50,6 +50,11 @@ export interface ProviderTransportPolicy {
   cacheKey?(url: string, body: BodyInit | null): string[];
   debugRequest?(): boolean;
   debugCache?(): boolean;
+  /**
+   * Vérifie, avant chaque requête, que l'hôte résout toujours vers une adresse
+   * autorisée (DNS rebinding). Lève une `AppError` qui remonte telle quelle.
+   */
+  assertTarget?(url: string): Promise<void>;
 }
 
 interface ProviderFetchInit extends RequestInit {
@@ -60,6 +65,18 @@ export function errorCodeOf(error: unknown): string | undefined {
   if (!error || typeof error !== "object") return undefined;
   const candidate = error as { code?: string; cause?: { code?: string } };
   return candidate.code ?? candidate.cause?.code;
+}
+
+const DOT_SEGMENT = /^(?:\.|%2e){1,2}$/i;
+
+/**
+ * Un chemin provider est une suite de segments littéraux : pas de query ni de
+ * fragment (ils passent par `params`), pas d'antislash, pas de segment `.`/`..`
+ * (y compris encodé), que le parseur WHATWG résoudrait.
+ */
+export function isSafeProviderPath(path: string): boolean {
+  if (/[?#\\]/.test(path)) return false;
+  return path.split("/").every((segment) => !DOT_SEGMENT.test(segment));
 }
 
 export function matchesErrorCode(
@@ -82,6 +99,12 @@ export class ProviderTransport {
     const origin = this.policy.origin.replace(/\/+$/, "");
     const prefix = (this.policy.pathPrefix ?? "").replace(/^\/+|\/+$/g, "");
     const cleanPath = path.replace(/^\/+/, "");
+    if (!isSafeProviderPath(cleanPath)) {
+      // Un id venu d'une route ou d'une action est déjà décodé par Next :
+      // `..%2F` y devient `../`, que `new URL()` résoudrait hors du préfixe
+      // API. On refuse plutôt que d'envoyer les identifiants ailleurs.
+      throw new AppError(this.policy.httpCodes.NOT_FOUND, { status: 404 });
+    }
     const url = new URL(`${origin}${prefix ? `/${prefix}` : ""}/${cleanPath}`);
 
     for (const [key, value] of Object.entries(params ?? {})) {
@@ -108,6 +131,7 @@ export class ProviderTransport {
   ): Promise<T> {
     const { revalidate, tags, ...requestInit } = options;
     const url = this.buildUrl(path, params);
+    await this.policy.assertTarget?.(url);
     const headers = this.buildHeaders({ json: Boolean(requestInit.body) });
     const isDebug = this.policy.debugRequest?.() ?? false;
     const isCacheDebug = this.policy.debugCache?.() ?? false;
@@ -177,6 +201,7 @@ export class ProviderTransport {
     options: ProviderResponseOptions = {}
   ): Promise<Response> {
     const url = this.buildUrl(path, params);
+    await this.policy.assertTarget?.(url);
     const headers = this.buildHeaders({ accept: options.accept });
     if (options.conditionalHeaders) {
       const validators = new Headers(options.conditionalHeaders);

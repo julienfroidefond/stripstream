@@ -40,7 +40,9 @@ export async function listConnections(userId: number): Promise<ConnectionLists> 
  *
  * - Sans `id` : création. Une config absente de cookie reste utilisable via le
  *   fallback « première config » de `resolve`.
- * - Avec `id` : mise à jour. Un secret vide conserve la valeur existante.
+ * - Avec `id` : mise à jour. Un secret vide conserve la valeur existante tant
+ *   que l'URL (et pour Komga l'identifiant) ne change pas ; sinon le secret
+ *   doit être ressaisi (`CONFIG_SECRET_REQUIRED`).
  *
  * La saisie est validée et normalisée par le descripteur du provider
  * (`CONFIG_INVALID_INPUT`), puis l'URL par `normalizeServerUrl` et son
@@ -61,8 +63,8 @@ export async function saveConnection(
     const existing = await definition.store.findOwned(userId, normalized.id);
     if (!existing) return null;
 
-    const secret = definition.encodeSecret(normalized, existing.secret);
-    if (!secret) throw new AppError(ERROR_CODES.CONFIG.INVALID_INPUT);
+    const secret = definition.encodeSecret(normalized, existing);
+    if (!secret) throw new AppError(ERROR_CODES.CONFIG.SECRET_REQUIRED);
     await definition.store.update(normalized.id, normalized, secret);
     invalidateConnectionChange();
     return { id: normalized.id };

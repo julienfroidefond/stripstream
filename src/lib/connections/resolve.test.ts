@@ -35,13 +35,13 @@ import { AppError } from "@/utils/errors";
 
 const KOMGA_ACTIVE_QUERY = {
   where: { id: 42, userId: 7 },
-  select: { id: true, url: true, authHeader: true },
+  select: { id: true, url: true, username: true, authHeader: true },
 };
 
 const KOMGA_FALLBACK_QUERY = {
   where: { userId: 7 },
   orderBy: { createdAt: "asc" as const },
-  select: { id: true, url: true, authHeader: true },
+  select: { id: true, url: true, username: true, authHeader: true },
 };
 
 const STRIPSTREAM_ACTIVE_QUERY = {

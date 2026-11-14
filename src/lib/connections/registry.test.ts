@@ -35,6 +35,16 @@ const SAMPLES: { [P in ProviderType]: { input: ConnectionInput; draft: Connectio
   },
 };
 
+/** Ligne enregistrée qui correspond exactement à la saisie (même URL, même identité). */
+function storedRowFor(input: ConnectionInput) {
+  return {
+    id: 1,
+    url: input.url,
+    secret: "stored",
+    principal: input.provider === "komga" ? input.username : null,
+  };
+}
+
 beforeEach(() => {
   vi.stubEnv("CREDENTIALS_ENCRYPTION_KEY", Buffer.alloc(32, 3).toString("base64"));
 });
@@ -83,7 +93,12 @@ describe("provider registry", () => {
       const secret = definition.encodeSecret(sample.input, null);
       expect(secret).toEqual(expect.any(String));
 
-      const connection = definition.toConnection({ id: 7, url: "http://x", secret: secret! });
+      const connection = definition.toConnection({
+        id: 7,
+        url: "http://x",
+        secret: secret!,
+        principal: null,
+      });
       expect(connection).toMatchObject({ provider, configId: 7, url: "http://x" });
       // Le secret stocké n'est jamais la valeur déchiffrée.
       expect(Object.values(connection)).not.toContain(secret);
@@ -91,8 +106,19 @@ describe("provider registry", () => {
 
     it("keeps the stored secret when an update carries none, and fails a creation without one", () => {
       const withoutSecret = { ...sample.input, password: undefined, token: undefined };
-      expect(definition.encodeSecret(withoutSecret, "stored")).toBe("stored");
+      const stored = storedRowFor(sample.input);
+      expect(definition.encodeSecret(withoutSecret, stored)).toBe("stored");
       expect(definition.encodeSecret(withoutSecret, null)).toBeNull();
+    });
+
+    it("never reuses the stored secret for another server URL", () => {
+      const withoutSecret = {
+        ...sample.input,
+        url: "https://elsewhere.example",
+        password: undefined,
+        token: undefined,
+      };
+      expect(definition.encodeSecret(withoutSecret, storedRowFor(sample.input))).toBeNull();
     });
 
     it("builds an ad hoc connection from a draft with a normalized URL", () => {
@@ -121,5 +147,12 @@ describe("provider registry", () => {
     for (const provider of ["komga", "stripstream"] as const) {
       expect("environmentConnection" in getProviderDefinition(provider)).toBe(false);
     }
+  });
+
+  it("never reuses a Komga secret for another username", () => {
+    const definition = getProviderDefinition("komga");
+    const input = { ...(SAMPLES.komga.input as ConnectionInput & { provider: "komga" }), password: undefined };
+    const stored = { ...storedRowFor(input), principal: "bob" };
+    expect(definition.encodeSecret(input, stored)).toBeNull();
   });
 });

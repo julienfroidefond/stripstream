@@ -165,7 +165,11 @@
       "preferences": "Préférences"
     },
     "admin": "Administration",
-    "logout": "Se déconnecter"
+    "logout": "Se déconnecter",
+    "logoutError": {
+      "title": "Erreur",
+      "description": "Une erreur est survenue lors de la déconnexion"
+    }
   },
   "settings": {
     "title": "Préférences",
@@ -201,10 +205,19 @@
       "image": {
         "label": "URL de l'image",
         "description": "Entrez l'URL d'une image (HTTPS recommandé)",
-        "save": "Enregistrer"
+        "save": "Enregistrer",
+        "invalid": "Veuillez entrer une URL valide"
       },
       "libraries": {
         "label": "Bibliothèques"
+      },
+      "opacity": {
+        "label": "Opacité du contenu",
+        "description": "Contrôle la transparence du contenu par rapport au background"
+      },
+      "blur": {
+        "label": "Flou du background",
+        "description": "Applique un effet de flou au background"
       }
     },
     "advanced": {
@@ -279,7 +292,7 @@
       "username": "Identifiant",
       "password": "Mot de passe",
       "token": "Token API",
-      "editHint": "laisser vide pour conserver l'actuel",
+      "editHint": "laisser vide pour conserver l'actuel (à ressaisir si l'URL ou l'identifiant change)",
       "active": "Active",
       "activate": "Activer",
       "edit": "Modifier",
@@ -807,6 +820,7 @@
     "GENERIC_ERROR": "Une erreur est survenue",
     "WALL_FETCH_ERROR": "Impossible de rassembler les œuvres du mur. Vérifiez votre connexion puis réessayez.",
     "CONFIG_INVALID_INPUT": "Champs de connexion manquants ou invalides",
+    "CONFIG_SECRET_REQUIRED": "Le serveur ou l'identifiant a changé : saisissez de nouveau le mot de passe ou le jeton",
     "CONFIG_DUPLICATE_NAME": "Ce nom est déjà utilisé pour une autre connexion"
   },
   "reader": {
@@ -875,7 +889,11 @@
     "endOfSeries": "Fin de la série",
     "endOfSeriesMessage": "Vous avez terminé tous les tomes de cette série !",
     "endOfSeriesRate": "Envie de noter cette série ?",
-    "backToSeries": "Retourner à la série"
+    "backToSeries": "Retourner à la série",
+    "endOfBook": "Fin du tome",
+    "endOfBookUnknownNext": "Impossible de vérifier s'il existe un tome suivant pour le moment.",
+    "stayOnBook": "Rester sur ce tome",
+    "closing": "Fermeture du lecteur..."
   },
   "header": {
     "toggleSidebar": "Afficher/masquer le menu latéral",

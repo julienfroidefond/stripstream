@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useTranslate } from "@/hooks/useTranslate";
 import { usePresence } from "@/components/motion";
 import { useAnonymous } from "@/contexts/AnonymousContext";
@@ -11,6 +11,13 @@ interface EndOfSeriesModalProps {
   show: boolean;
   /** Leaves the reader for the book's series. */
   onBackToSeries: () => void;
+  /** Closes the card and stays on the last page (Escape, backdrop, button). */
+  onDismiss: () => void;
+  /**
+   * The next-book lookup failed: we do not know that the series is over, so
+   * the card says "end of book" instead of announcing the end of the series.
+   */
+  nextBookUnknown?: boolean;
   /** Série notée à la fin de la lecture, si le provider la supporte. */
   seriesId?: string | null;
   seriesRating?: NormalizedSeriesRating | null;
@@ -19,6 +26,8 @@ interface EndOfSeriesModalProps {
 export function EndOfSeriesModal({
   show,
   onBackToSeries,
+  onDismiss,
+  nextBookUnknown = false,
   seriesId,
   seriesRating,
 }: EndOfSeriesModalProps) {
@@ -29,6 +38,19 @@ export function EndOfSeriesModal({
   const cardRef = useRef<HTMLDivElement>(null);
 
   const canRate = !isAnonymous && Boolean(seriesId) && seriesRating != null;
+
+  // Pas un dialogue Radix : on gère `Échap` nous-mêmes, sinon la carte
+  // bloque le lecteur (le clavier du lecteur est suspendu tant qu'elle est là).
+  useEffect(() => {
+    if (!show) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      onDismiss();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [show, onDismiss]);
 
   // Le rideau tombe sur la lecture, puis le carton de fin se lève vers le
   // spectateur, comme les scènes de l'accueil.
@@ -65,12 +87,19 @@ export function EndOfSeriesModal({
       aria-modal="true"
       aria-labelledby="end-of-series-title"
       className="absolute inset-0 flex items-center justify-center bg-background/80 z-50"
+      onClick={(event) => {
+        // Le clic ne doit pas basculer les contrôles du lecteur derrière.
+        event.stopPropagation();
+        if (event.target === event.currentTarget) onDismiss();
+      }}
     >
       <div ref={cardRef} className="bg-surface-2 rounded-lg p-6 max-w-md text-center">
         <h3 id="end-of-series-title" className="text-lg font-semibold mb-2">
-          {t("reader.endOfSeries")}
+          {t(nextBookUnknown ? "reader.endOfBook" : "reader.endOfSeries")}
         </h3>
-        <p className="text-muted-foreground mb-4">{t("reader.endOfSeriesMessage")}</p>
+        <p className="text-muted-foreground mb-4">
+          {t(nextBookUnknown ? "reader.endOfBookUnknownNext" : "reader.endOfSeriesMessage")}
+        </p>
         {canRate && seriesId && (
           <div className="mb-5">
             <div className="mb-4 h-px bg-border" />
@@ -85,12 +114,20 @@ export function EndOfSeriesModal({
             </div>
           </div>
         )}
-        <button
-          onClick={onBackToSeries}
-          className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-        >
-          {t("reader.backToSeries")}
-        </button>
+        <div className="flex flex-wrap justify-center gap-2">
+          <button
+            onClick={onDismiss}
+            className="px-4 py-2 rounded-md border border-border hover:bg-muted transition-colors"
+          >
+            {t("reader.stayOnBook")}
+          </button>
+          <button
+            onClick={onBackToSeries}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+          >
+            {t("reader.backToSeries")}
+          </button>
+        </div>
       </div>
     </div>
   );

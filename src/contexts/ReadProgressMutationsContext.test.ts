@@ -117,11 +117,28 @@ describe("ReadProgressMutationsContext", () => {
     });
 
     expect(result.current.pendingBook(book.id)).toBeNull();
-    expect(result.current.resolveBook(book).readProgress?.completed).toBe(true);
     expect(mocks.toast).toHaveBeenCalledWith(
       expect.objectContaining({ title: "books.actions.markAsRead.success.title" })
     );
     expect(mocks.refresh).toHaveBeenCalledTimes(1);
+    // Le refresh est livré : l'override réglé est retiré, le serveur fait foi.
+    expect(result.current.resolveBook(book)).toBe(book);
+  });
+
+  it("does not revive a recorded override when the server later returns to the observed state", async () => {
+    const readBook: NormalizedBook = {
+      ...book,
+      readProgress: { page: 48, completed: true, lastReadAt: null },
+    };
+    mocks.deleteReadProgress.mockResolvedValueOnce({ success: true });
+    const { result } = renderMutations();
+
+    await act(async () => {
+      await result.current.markBook(readBook, false);
+    });
+
+    // Relu jusqu'au bout dans le lecteur : le serveur renvoie de nouveau `done:48`.
+    expect(result.current.resolveBook(readBook).readProgress?.completed).toBe(true);
   });
 
   it("rolls a book back and does not refresh when the action fails", async () => {

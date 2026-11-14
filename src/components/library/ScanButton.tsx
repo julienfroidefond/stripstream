@@ -88,10 +88,13 @@ export function ScanButton({ libraryId, className }: ScanButtonProps) {
         }
 
         router.refresh();
+        if (status.error) logger.warn({ scanError: status.error }, "Library scan failed");
         toast({
           variant: "destructive",
           title: t("library.scan.error.title"),
-          description: status.error || t("library.scan.error.description"),
+          // `status.error` est le message brut du Librarian (anglais, technique) :
+          // il reste dans les logs, l'utilisateur lit le texte traduit.
+          description: t("library.scan.error.description"),
         });
         return;
       }

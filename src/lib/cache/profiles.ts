@@ -89,6 +89,16 @@ export const cacheProfile = {
    */
   series: (): CachedProfile => ({ revalidate: CACHE_TTL.medium }),
 
+  /**
+   * Fiche d'une série affichée (en-tête : nombre de tomes lus). Elle porte de
+   * la progression de lecture, donc expire avec les tomes de la série
+   * (`invalidateReadProgress`), au lieu d'attendre son TTL.
+   */
+  seriesDetail: (seriesId: string): CachedProfile => ({
+    revalidate: CACHE_TTL.medium,
+    tags: [cacheTags.allSeriesBooks, cacheTags.seriesBooks(seriesId)],
+  }),
+
   /** Flux de l'accueil (reprendre, en cours, nouveautés, récents). */
   home: (): CachedProfile => ({ revalidate: CACHE_TTL.medium, tags: [cacheTags.home] }),
 

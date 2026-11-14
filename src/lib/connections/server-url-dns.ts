@@ -49,3 +49,39 @@ export async function assertServerUrlResolvesSafely(
     throw new AppError(ERROR_CODES.CONFIG.INVALID_URL);
   }
 }
+
+/** Durée pendant laquelle un nom déjà vérifié n'est pas re-résolu (ms). */
+const SAFE_TARGET_TTL_MS = 60_000;
+const verifiedTargets = new Map<string, number>();
+
+/**
+ * Garde de chaque requête provider (pas seulement de l'enregistrement) : un
+ * nom validé à la sauvegarde peut ensuite être re-pointé vers une adresse
+ * interne (DNS rebinding). On re-résout donc au plus toutes les 60 s par nom.
+ *
+ * Limite assumée : `fetch` refait sa propre résolution juste après ; un DNS
+ * hostile qui alterne les réponses à la milliseconde garde une fenêtre. La
+ * fermer demanderait un dispatcher undici à résolution épinglée.
+ */
+export async function assertProviderTargetIsSafe(
+  url: string,
+  resolve: ResolveAddresses = resolveWithDns,
+  now: number = Date.now()
+): Promise<void> {
+  let hostname: string;
+  try {
+    hostname = new URL(url).hostname;
+  } catch {
+    throw new AppError(ERROR_CODES.CONFIG.INVALID_URL);
+  }
+  const verifiedUntil = verifiedTargets.get(hostname);
+  if (verifiedUntil !== undefined && verifiedUntil > now) return;
+
+  await assertServerUrlResolvesSafely(url, resolve);
+  verifiedTargets.set(hostname, now + SAFE_TARGET_TTL_MS);
+}
+
+/** Tests uniquement : oublie les noms déjà vérifiés. */
+export function resetVerifiedProviderTargets(): void {
+  verifiedTargets.clear();
+}

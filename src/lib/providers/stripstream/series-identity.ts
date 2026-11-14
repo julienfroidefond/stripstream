@@ -39,7 +39,7 @@ export async function findSeriesById(
     return await transport.request<StripstreamSeriesItem>(
       `series/${seriesId}/details`,
       undefined,
-      cacheProfile.series()
+      cacheProfile.seriesDetail(seriesId)
     );
   } catch (error) {
     return rethrowUnlessNotFound(error);

@@ -6,6 +6,25 @@ import { AppError } from "@/utils/errors";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { fetchBookCollectionPage, parseCollectionQuery } from "@/lib/collections/query";
 import { loadSurface } from "@/lib/surfaces/load-surface";
+import { missingBooksForPage } from "@/lib/series/missing-books-page";
+import type { IMediaProvider } from "@/lib/providers/provider.interface";
+import type { CollectionQuery } from "@/lib/collections/query";
+
+/**
+ * Dernier tome de la page précédente : la borne basse des manquants de cette
+ * page. Un seul tome lu, et seulement quand il y a des manquants à placer.
+ */
+async function previousPageLastVolume(
+  provider: IMediaProvider,
+  seriesId: string,
+  query: CollectionQuery
+): Promise<number | null> {
+  if (query.page <= 1) return null;
+  const boundary = await provider
+    .getBooks({ seriesId, page: (query.page - 1) * query.pageSize, limit: 1 })
+    .catch(() => null);
+  return boundary?.items[0]?.volume ?? null;
+}
 
 interface PageProps {
   params: Promise<{ seriesId: string }>;
@@ -40,13 +59,23 @@ export default async function SeriesPage({ params, searchParams }: PageProps) {
 
       if (!series) throw new AppError(ERROR_CODES.SERIES.FETCH_ERROR);
 
+      const pageMissing =
+        missing.length > 0 && !query.unreadOnly
+          ? missingBooksForPage(missing, booksPage.items, {
+              page: query.page,
+              totalPages: booksPage.totalPages,
+              unreadOnly: query.unreadOnly,
+              previousPageLastVolume: await previousPageLastVolume(provider, seriesId, query),
+            })
+          : [];
+
       return {
         series,
         booksPage,
         preferences,
         query,
         isFavorite,
-        missingBooks: missing,
+        missingBooks: pageMissing,
         relatedSeries,
         canRate,
         rating,

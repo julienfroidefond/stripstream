@@ -3,10 +3,12 @@ import { describe, expect, it } from "vitest";
 import type { NormalizedBook, NormalizedSeries } from "@/lib/providers/types";
 import {
   bookProgressSignature,
+  dropSettled,
   optimisticBookProgress,
   resolveBook,
   resolveSeries,
   seriesProgressSignature,
+  settleOverride,
   withOverride,
   type ReadOverrides,
 } from "./read-progress-overrides";
@@ -120,5 +122,26 @@ describe("withOverride", () => {
     expect(empty.size).toBe(0);
     expect(added.get("a")).toEqual({ read: true, observed: "none" });
     expect(removed.has("a")).toBe(false);
+  });
+});
+
+describe("settled overrides", () => {
+  it("drops only the overrides the server has recorded", () => {
+    const pending = { read: true, observed: "none" };
+    let overrides: ReadonlyMap<string, typeof pending & { settled?: boolean }> = new Map([
+      ["a", pending],
+      ["b", pending],
+    ]);
+
+    overrides = settleOverride(overrides, "a");
+    const dropped = dropSettled(overrides);
+
+    expect([...dropped.keys()]).toEqual(["b"]);
+  });
+
+  it("keeps the same instance when nothing is settled", () => {
+    const overrides = new Map([["a", { read: false, observed: "done:3" }]]);
+    expect(dropSettled(overrides)).toBe(overrides);
+    expect(settleOverride(overrides, "missing")).toBe(overrides);
   });
 });

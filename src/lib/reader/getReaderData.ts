@@ -8,6 +8,11 @@ export interface ReaderData {
   book: NormalizedBook;
   pages: number[];
   nextBook: NormalizedBook | null;
+  /**
+   * La recherche du tome suivant a échoué : `nextBook === null` ne prouve pas
+   * que la série est finie, le lecteur ne doit pas l'annoncer.
+   */
+  nextBookUnknown: boolean;
   readerInfo: ReaderInfo | null;
   /** Note de la série affichée en fin de lecture, ou null si non supportée/disponible. */
   seriesRating: NormalizedSeriesRating | null;
@@ -103,10 +108,12 @@ export async function getReaderData(
   bookId: string
 ): Promise<ReaderData> {
   // getNextBook ne dépend que de bookId : on le lance en parallèle de getBook.
+  let nextBookUnknown = false;
   const [book, nextBook] = await Promise.all([
     provider.getBook(bookId),
     provider.getNextBook(bookId).catch((error) => {
       logger.warn({ err: error, bookId }, "Failed to fetch next book, continuing without it");
+      nextBookUnknown = true;
       return null;
     }),
   ]);
@@ -121,6 +128,7 @@ export async function getReaderData(
     book,
     pages,
     nextBook,
+    nextBookUnknown,
     readerInfo,
     seriesRating,
   };

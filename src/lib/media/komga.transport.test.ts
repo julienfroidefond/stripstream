@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { ERROR_CODES } from "@/constants/errorCodes";
+
 const { requireConnectionMock, getPreferencesMock } = vi.hoisted(() => ({
   requireConnectionMock: vi.fn(),
   getPreferencesMock: vi.fn(),
@@ -51,7 +53,7 @@ afterEach(() => {
 });
 
 describe("komgaMediaTransport", () => {
-  it("maps a 1-based page to Komga's zero-based API and relays validators", async () => {
+  it("sends the 1-based page as-is to Komga and relays validators", async () => {
     const fetchMock = vi.fn(
       async () =>
         new Response(null, {
@@ -73,12 +75,41 @@ describe("komgaMediaTransport", () => {
     expect(response.headers.get("etag")).toBe('"v1"');
     const { url, init } = lastFetchCall();
     expect(url).toBe(
-      "http://komga.test/api/v1/books/book-1/pages/2?zero_based=true"
+      "http://komga.test/api/v1/books/book-1/pages/3"
     );
     const headers = new Headers(init.headers);
     expect(headers.get("authorization")).toBe("Basic secret");
     expect(headers.get("if-none-match")).toBe('"v1"');
     expect(headers.get("cookie")).toBeNull();
+  });
+
+  it("asks Komga for the same 1-based page thumbnail (no zero_based there)", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response("thumb", { status: 200 }))
+    );
+
+    await komgaMediaTransport.fetch(
+      { kind: "book-page-thumbnail", bookId: "book-1", pageNumber: 1 },
+      context()
+    );
+
+    expect(lastFetchCall().url).toBe(
+      "http://komga.test/api/v1/books/book-1/pages/1/thumbnail"
+    );
+  });
+
+  it("never lets a decoded id climb out of the API prefix", async () => {
+    const fetchMock = vi.fn(async () => new Response("x", { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      komgaMediaTransport.fetch(
+        { kind: "book-file", bookId: "../../../actuator?" },
+        context()
+      )
+    ).rejects.toMatchObject({ code: ERROR_CODES.KOMGA.NOT_FOUND });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("coalesces identical pages only for the same connection", async () => {
@@ -123,7 +154,7 @@ describe("komgaMediaTransport", () => {
       context()
     );
     expect(lastFetchCall().url).toBe(
-      "http://komga.test/api/v1/books/book-1/pages/0?zero_based=true"
+      "http://komga.test/api/v1/books/book-1/pages/1"
     );
 
     getPreferencesMock.mockResolvedValue({ showThumbnails: true });
@@ -160,7 +191,7 @@ describe("komgaMediaTransport", () => {
       "http://komga.test/api/v1/series/series-1/books?page=0&size=1"
     );
     expect(fetchMock.mock.calls[1][0]).toBe(
-      "http://komga.test/api/v1/books/book-1/pages/0?zero_based=true"
+      "http://komga.test/api/v1/books/book-1/pages/1"
     );
   });
 

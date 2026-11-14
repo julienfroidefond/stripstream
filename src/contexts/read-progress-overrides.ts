@@ -11,7 +11,10 @@ import type {
  * au moment du clic. L'override s'applique tant que le serveur renvoie encore
  * cet état ; dès que le `router.refresh()` livre une valeur différente, le
  * serveur reprend la main sans que la surface ait à nettoyer quoi que ce soit.
- * Un échec retire l'override (rollback).
+ * Un échec retire l'override (rollback). Un succès le marque `settled`, et le
+ * fournisseur retire les overrides réglés une fois le `router.refresh()`
+ * terminé : sinon un override périmé se rallumerait le jour où le serveur
+ * revient à l'état observé (relire le tome jusqu'au bout, « tout marquer lu »).
  */
 
 export interface ReadOverride {
@@ -19,6 +22,8 @@ export interface ReadOverride {
   read: boolean;
   /** Signature de l'état serveur au moment du marquage. */
   observed: string;
+  /** Le serveur a enregistré le marquage ; l'override n'attend plus que le rafraîchissement. */
+  settled?: boolean;
 }
 
 export type ReadOverrides = ReadonlyMap<string, ReadOverride>;
@@ -92,4 +97,25 @@ export function withOverride(
   if (value) next.set(id, value);
   else next.delete(id);
   return next;
+}
+
+/** Copie de `overrides` où l'override de `id` est marqué enregistré. */
+export function settleOverride(overrides: ReadOverrides, id: string): ReadOverrides {
+  const override = overrides.get(id);
+  if (!override || override.settled) return overrides;
+  return withOverride(overrides, id, { ...override, settled: true });
+}
+
+/**
+ * Retire les overrides enregistrés, une fois le rafraîchissement serveur livré.
+ * Renvoie la même instance quand il n'y a rien à retirer (pas de re-rendu).
+ */
+export function dropSettled(overrides: ReadOverrides): ReadOverrides {
+  let next: Map<string, ReadOverride> | null = null;
+  for (const [id, override] of overrides) {
+    if (!override.settled) continue;
+    next ??= new Map(overrides);
+    next.delete(id);
+  }
+  return next ?? overrides;
 }

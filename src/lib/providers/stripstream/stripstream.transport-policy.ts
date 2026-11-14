@@ -1,6 +1,7 @@
 import { ERROR_CODES } from "@/constants/errorCodes";
 import logger from "@/lib/logger";
 import { normalizeServerUrl } from "@/lib/connections/server-url";
+import { assertProviderTargetIsSafe } from "@/lib/connections/server-url-dns";
 
 import {
   matchesErrorCode,
@@ -37,6 +38,7 @@ export function createStripstreamTransportPolicy(
       Accept: "application/json",
     },
     httpCodes: STRIPSTREAM_HTTP_CODES,
+    assertTarget: (target) => assertProviderTargetIsSafe(target),
     timeoutMs: TIMEOUT_MS,
     fallbackErrorCode: ERROR_CODES.STRIPSTREAM.CONNECTION_ERROR,
     retry: {

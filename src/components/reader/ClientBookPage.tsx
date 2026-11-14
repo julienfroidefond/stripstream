@@ -92,6 +92,7 @@ export function ClientBookPage({ bookId, initialData, initialError }: ClientBook
       book={data.book}
       pages={data.pages}
       nextBook={data.nextBook}
+      nextBookUnknown={data.nextBookUnknown}
       readerInfo={data.readerInfo}
       seriesRating={data.seriesRating}
       onRefresh={handleRefresh}

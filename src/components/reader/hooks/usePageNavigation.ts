@@ -134,11 +134,16 @@ export function usePageNavigation({
     nextBook?.id,
   ]);
 
+  // La modale de fin doit pouvoir se refermer (Échap, fond, bouton) : on
+  // reste alors sur la dernière page au lieu d'être bloqué hors du livre.
+  const dismissEndMessage = useCallback(() => setShowEndMessage(false), []);
+
   return {
     currentPage,
     setCurrentPage,
     showEndMessage,
     setShowEndMessage,
+    dismissEndMessage,
     startBump,
     navigateToPage,
     handlePreviousPage,

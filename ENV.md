@@ -79,12 +79,26 @@ utilisateur sans connexion n'emprunte plus jamais le token de l'instance.
 
 ### Reverse proxy et rate limiting
 
-Les budgets de connexion et d'inscription par IP lisent le premier élément de
-`X-Forwarded-For` (à défaut `X-Real-IP`). L'hypothèse est un déploiement
-derrière un reverse proxy qui réécrit cet en-tête ; sans proxy, l'en-tête est
-fourni par le client et le budget par IP devient contournable (le budget des
-échecs par compte reste actif). Sans adresse exploitable, le budget par IP est
-ignoré.
+Les budgets de connexion et d'inscription par IP lisent `X-Forwarded-For` (à
+défaut `X-Real-IP`).
+
+```env
+# Nombre de reverse proxys de confiance devant l'app (1 = un nginx/Traefik/Caddy).
+# TRUSTED_PROXY_HOPS=1
+```
+
+- **Sans `TRUSTED_PROXY_HOPS`** : premier élément de l'en-tête. Correct seulement
+  si le proxy *réécrit* `X-Forwarded-For` (`proxy_set_header X-Forwarded-For
+  $remote_addr;`). Un proxy qui *ajoute* l'adresse vue (nginx
+  `$proxy_add_x_forwarded_for`, Traefik, Caddy par défaut) laisse le client
+  choisir ce premier élément, et le budget par IP devient contournable.
+- **Avec `TRUSTED_PROXY_HOPS=N`** : N-ième élément en partant de la droite,
+  c'est-à-dire l'adresse écrite par le proxy de confiance le plus éloigné.
+  Une chaîne plus courte que N n'est pas crue (repli sur `X-Real-IP`).
+
+Sans proxy, l'en-tête est fourni par le client : le budget par IP est
+contournable et le budget des échecs par compte reste la protection de fond.
+Sans adresse exploitable, le budget par IP est ignoré.
 
 ## Docker / Compose uniquement
 

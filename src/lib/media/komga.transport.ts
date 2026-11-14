@@ -77,7 +77,7 @@ async function fetchBookCover(
     const preferences = await PreferencesService.getPreferences(context.userId);
     const path = preferences.showThumbnails
       ? `books/${bookId}/thumbnail`
-      : `books/${bookId}/pages/0?zero_based=true`;
+      : komgaPagePath(bookId, 1);
     return await streamImage(
       transport,
       path,
@@ -115,7 +115,7 @@ async function fetchSeriesCover(
 
     return await streamImage(
       transport,
-      `books/${firstBookId}/pages/0?zero_based=true`,
+      komgaPagePath(firstBookId, 1),
       context,
       THUMBNAIL_TIMEOUT_MS
     );

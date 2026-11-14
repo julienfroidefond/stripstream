@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import { ERROR_CODES } from "@/constants/errorCodes";
-import { assertServerUrlResolvesSafely } from "./server-url-dns";
+import {
+  assertProviderTargetIsSafe,
+  assertServerUrlResolvesSafely,
+  resetVerifiedProviderTargets,
+} from "./server-url-dns";
 
 const resolvingTo = (...addresses: string[]) => vi.fn(async () => addresses);
 
@@ -38,5 +42,25 @@ describe("assertServerUrlResolvesSafely", () => {
     await expect(
       assertServerUrlResolvesSafely("http://unknown.invalid", resolve)
     ).resolves.toBeUndefined();
+  });
+});
+
+describe("assertProviderTargetIsSafe", () => {
+  it("re-resolves a saved host before each request, catching a later rebinding", async () => {
+    resetVerifiedProviderTargets();
+    const resolve = vi
+      .fn()
+      .mockResolvedValueOnce(["93.184.216.34"])
+      .mockResolvedValueOnce(["169.254.169.254"]);
+
+    await assertProviderTargetIsSafe("https://media.example/api/v1/books", resolve, 0);
+    // Dans la fenêtre de 60 s : pas de nouvelle résolution.
+    await assertProviderTargetIsSafe("https://media.example/api/v1/series", resolve, 30_000);
+    expect(resolve).toHaveBeenCalledTimes(1);
+
+    // Au-delà : le nom re-pointé vers le service de métadonnées est refusé.
+    await expect(
+      assertProviderTargetIsSafe("https://media.example/api/v1/books", resolve, 61_000)
+    ).rejects.toMatchObject({ code: ERROR_CODES.CONFIG.INVALID_URL });
   });
 });

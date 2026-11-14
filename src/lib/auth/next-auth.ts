@@ -1,10 +1,22 @@
-import NextAuth from "next-auth";
+import NextAuth, { CredentialsSignin } from "next-auth";
+import { ERROR_CODES } from "@/constants/errorCodes";
+import { SIGN_IN_CODES } from "@/lib/auth/sign-in-codes";
+import { AppError } from "@/utils/errors";
 import Credentials from "next-auth/providers/credentials";
 import prisma from "@/lib/prisma";
 import { AuthServerService } from "@/lib/services/auth-server.service";
 import { clientIpFromHeaders } from "@/lib/rate-limit/client-ip";
 import { revalidateSessionToken, rolesFromToken } from "@/lib/auth/session-token";
 import logger from "@/lib/logger";
+
+/**
+ * Un blocage par rate-limit refuse aussi le bon mot de passe : le dire au lieu
+ * de répondre « identifiants invalides », sinon l'utilisateur (ou l'admin)
+ * bloqué ne comprend pas pourquoi son mot de passe correct échoue.
+ */
+class RateLimitedSignin extends CredentialsSignin {
+  code = SIGN_IN_CODES.rateLimited;
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
@@ -34,6 +46,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             sessionVersion: userData.sessionVersion,
           };
         } catch (error) {
+          if (error instanceof AppError && error.code === ERROR_CODES.AUTH.RATE_LIMITED) {
+            logger.warn("Sign-in throttled");
+            throw new RateLimitedSignin();
+          }
           logger.error({ err: error }, "Auth error");
           return null;
         }

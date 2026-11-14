@@ -87,6 +87,23 @@ describe("ProviderTransport", () => {
     ).toBe("http://provider.test/api/books?limit=10&tag=a&tag=b");
   });
 
+  it("refuses a path that would leave the API prefix", () => {
+    const transport = new ProviderTransport(testPolicy());
+    for (const path of [
+      "books/../../admin",
+      "books/%2e%2E/x",
+      "books/.%2e/x",
+      "books/x?/file",
+      "books/x#frag",
+      "books/..\\x",
+    ]) {
+      expect(() => transport.buildUrl(path), path).toThrow();
+    }
+    expect(transport.buildUrl("books/a.b-c_d/pages/1")).toBe(
+      "http://provider.test/api/books/a.b-c_d/pages/1"
+    );
+  });
+
   it("sends the policy headers and forwards cache and body options", async () => {
     const fetchMock = vi.fn(async () => jsonResponse({ ok: true }));
     vi.stubGlobal("fetch", fetchMock);

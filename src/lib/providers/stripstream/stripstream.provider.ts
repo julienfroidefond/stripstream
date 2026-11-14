@@ -273,44 +273,42 @@ export class StripstreamProvider implements IMediaProvider {
   }
 
   async getNextBook(bookId: string): Promise<NormalizedBook | null> {
-    try {
-      const book = await this.transport.request<StripstreamBookDetails>(`books/${bookId}`, undefined, cacheProfile.nextBook());
-      if (!book.series || book.volume == null) return null;
+    // Pas de try/catch : une panne doit remonter jusqu'à `getReaderData`, qui
+    // la distingue d'un vrai « pas de tome suivant » (`null`).
+    const book = await this.transport.request<StripstreamBookDetails>(`books/${bookId}`, undefined, cacheProfile.nextBook());
+    if (!book.series || book.volume == null) return null;
 
-      // Resolve series name to series_id for the books API
-      const seriesId = await resolveSeriesIdByName(
-        this.transport,
-        book.library_id,
-        book.series
-      );
-      if (!seriesId) return null;
+    // Resolve series name to series_id for the books API
+    const seriesId = await resolveSeriesIdByName(
+      this.transport,
+      book.library_id,
+      book.series
+    );
+    if (!seriesId) return null;
 
-      // Le Librarian n'expose ni `books/{id}/next` ni filtre « volume > n » :
-      // on parcourt la série par pages de 200 (son maximum ; tri par volume
-      // par défaut côté backend) pour trouver le tome suivant au-delà de la
-      // première page. Le garde-fou borne le parcours à 10 000 tomes.
-      const items = await iteratePages(
-        async (page) => {
-          const response = await this.transport.request<StripstreamBooksPage>(
-            "books",
-            { series: seriesId, limit: String(NEXT_BOOK_PAGE_SIZE), page: String(page) },
-            cacheProfile.nextBook()
-          );
-          return StripstreamAdapter.toPage(response, (item) => item, page, NEXT_BOOK_PAGE_SIZE);
-        },
-        { max: NEXT_BOOK_MAX_PAGES, concurrency: 2 }
-      );
+    // Le Librarian n'expose ni `books/{id}/next` ni filtre « volume > n » :
+    // on parcourt la série par pages de 200 (son maximum ; tri par volume
+    // par défaut côté backend) pour trouver le tome suivant au-delà de la
+    // première page. Le garde-fou borne le parcours à 10 000 tomes.
+    const items = await iteratePages(
+      async (page) => {
+        const response = await this.transport.request<StripstreamBooksPage>(
+          "books",
+          { series: seriesId, limit: String(NEXT_BOOK_PAGE_SIZE), page: String(page) },
+          cacheProfile.nextBook()
+        );
+        return StripstreamAdapter.toPage(response, (item) => item, page, NEXT_BOOK_PAGE_SIZE);
+      },
+      { max: NEXT_BOOK_MAX_PAGES, concurrency: 2 }
+    );
 
-      const sorted = items
-        .filter((b) => b.volume != null)
-        .sort((a, b) => (a.volume ?? 0) - (b.volume ?? 0));
+    const sorted = items
+      .filter((b) => b.volume != null)
+      .sort((a, b) => (a.volume ?? 0) - (b.volume ?? 0));
 
-      const idx = sorted.findIndex((b) => b.id === bookId);
-      if (idx === -1 || idx === sorted.length - 1) return null;
-      return StripstreamAdapter.toNormalizedBook(sorted[idx + 1]);
-    } catch {
-      return null;
-    }
+    const idx = sorted.findIndex((b) => b.id === bookId);
+    if (idx === -1 || idx === sorted.length - 1) return null;
+    return StripstreamAdapter.toNormalizedBook(sorted[idx + 1]);
   }
 
   async getHomeContinueReadingData(limit = 20): Promise<Pick<HomePrimaryData, "ongoingBooks" | "onDeck">> {

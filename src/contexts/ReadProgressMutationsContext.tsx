@@ -7,6 +7,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useTransition,
   type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
@@ -22,9 +23,11 @@ import logger from "@/lib/logger";
 import type { NormalizedBook, NormalizedSeries } from "@/lib/providers/types";
 import {
   bookProgressSignature,
+  dropSettled,
   resolveBook as resolveBookOverride,
   resolveSeries as resolveSeriesOverride,
   seriesProgressSignature,
+  settleOverride,
   withOverride,
   type ReadOverrides,
 } from "./read-progress-overrides";
@@ -86,6 +89,22 @@ export function ReadProgressMutationsProvider({ children }: { children: ReactNod
   const seriesPendingRef = useRef<PendingMap>(new Map());
   const [bookPending, setBookPending] = useState<PendingMap>(() => new Map());
   const [seriesPending, setSeriesPending] = useState<PendingMap>(() => new Map());
+  const [isRefreshing, startRefresh] = useTransition();
+
+  // Le refresh lancé dans une transition reste « en cours » jusqu'à ce que le
+  // nouvel arbre serveur soit affiché : à sa fin, les overrides réglés n'ont
+  // plus de raison d'être, le serveur fait foi. Ajusté pendant le rendu (pas
+  // d'effet) pour que le nouvel arbre et le retrait arrivent ensemble.
+  const [wasRefreshing, setWasRefreshing] = useState(false);
+  if (wasRefreshing !== isRefreshing) {
+    setWasRefreshing(isRefreshing);
+    if (!isRefreshing) {
+      setBookOverrides(dropSettled);
+      setSeriesOverrides(dropSettled);
+    }
+  }
+
+  const refresh = useCallback(() => startRefresh(() => router.refresh()), [router]);
 
   const markBookPending = useCallback((bookId: string, value: boolean | null) => {
     bookPendingRef.current = withPending(bookPendingRef.current, bookId, value);
@@ -137,7 +156,8 @@ export function ReadProgressMutationsProvider({ children }: { children: ReactNod
           title: t(`${prefix}.success.title`),
           description: t(`${prefix}.success.description`),
         });
-        router.refresh();
+        setBookOverrides((current) => settleOverride(current, book.id));
+        refresh();
         return true;
       } catch (error) {
         setBookOverrides((current) => withOverride(current, book.id, null));
@@ -152,7 +172,7 @@ export function ReadProgressMutationsProvider({ children }: { children: ReactNod
         markBookPending(book.id, null);
       }
     },
-    [markBookPending, router, t, toast]
+    [markBookPending, refresh, t, toast]
   );
 
   const markSeries = useCallback(
@@ -173,7 +193,10 @@ export function ReadProgressMutationsProvider({ children }: { children: ReactNod
         // Les caches serveur sont invalidés même en cas d'échec partiel : on
         // rafraîchit dès que l'action a répondu, pour refléter ce qui a été
         // enregistré, puis le rollback retire l'override optimiste.
-        router.refresh();
+        if (result.success) {
+          setSeriesOverrides((current) => settleOverride(current, series.id));
+        }
+        refresh();
         if (!result.success) throw new Error(result.message);
 
         toast({
@@ -196,7 +219,7 @@ export function ReadProgressMutationsProvider({ children }: { children: ReactNod
         markSeriesPending(series.id, null);
       }
     },
-    [markSeriesPending, router, t, toast]
+    [markSeriesPending, refresh, t, toast]
   );
 
   const value = useMemo<ReadProgressMutations>(

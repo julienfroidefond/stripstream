@@ -55,7 +55,15 @@ export function useReaderState({ book, pages, onClose, onBackToSeries, nextBook 
     [nextBook, nextBookPageUrlBuilder]
   );
 
-  const { currentPage, showEndMessage, startBump, navigateToPage, handlePreviousPage, handleNextPage } =
+  const {
+    currentPage,
+    showEndMessage,
+    dismissEndMessage,
+    startBump,
+    navigateToPage,
+    handlePreviousPage,
+    handleNextPage,
+  } =
     usePageNavigation({
       book,
       pages,
@@ -77,6 +85,7 @@ export function useReaderState({ book, pages, onClose, onBackToSeries, nextBook 
     onPreviousPage: handlePreviousPage,
     onNextPage: handleNextPage,
     isRTL,
+    disabled: showInfo || showShortcuts || showEndMessage,
   });
 
   // Activer le pinch-zoom dans le reader + reset au changement d'orientation iOS
@@ -231,6 +240,7 @@ export function useReaderState({ book, pages, onClose, onBackToSeries, nextBook 
     onPageChange: navigateToPage,
     onClose: handleCloseReader,
     onBackToSeries: handleBackToSeries,
+    onDismissEndMessage: dismissEndMessage,
     onToggleControls,
     onToggleThumbnails,
     onToggleInfo,
