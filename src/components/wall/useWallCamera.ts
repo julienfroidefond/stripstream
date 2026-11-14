@@ -13,7 +13,7 @@ import {
   useCameraStyle,
   useMotionNumber,
   useMotionNumberEvent,
-} from "@/lib/motion-value";
+} from "@/lib/motion/motion-value";
 import {
   MAX_WALL_ZOOM,
   MIN_WALL_ZOOM,
@@ -31,19 +31,19 @@ import {
   type WallViewRect,
   type WallViewport,
   type WallWheelInput,
-} from "@/lib/wall-camera";
+} from "@/lib/wall/camera";
 import {
   pinchWallCamera,
   startWallPinch,
   type WallPinchStart,
   type WallPoint,
-} from "@/lib/wall-gesture";
-import { WALL_PATCH_HEIGHT, WALL_PATCH_WIDTH } from "@/lib/wall-layout";
+} from "@/lib/wall/gesture";
+import { WALL_PATCH_HEIGHT, WALL_PATCH_WIDTH } from "@/lib/wall/layout";
 import {
   capMomentum,
   decayMomentum,
   isMomentumDying,
-} from "@/lib/wall-momentum";
+} from "@/lib/wall/momentum";
 import type { WallRect } from "@/types/wall";
 
 const PAN_IDLE = 150;

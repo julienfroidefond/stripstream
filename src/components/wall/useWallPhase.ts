@@ -7,7 +7,7 @@ import {
   phaseForPlaque,
   plaqueRevealDelay,
   type WallPhase,
-} from "@/lib/wall-phase";
+} from "@/lib/wall/phase";
 
 import type { WallPlaqueAnchor } from "./WallPlaque";
 

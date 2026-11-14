@@ -10,7 +10,7 @@ import {
   cacheTags,
   SERIES_RECOMMENDATIONS_CACHE_TAG,
   SERIES_RELATED_CACHE_TAG,
-} from "@/constants/cacheConstants";
+} from "@/lib/cache/tags";
 import {
   invalidateConnectionChange,
   invalidateFavorites,

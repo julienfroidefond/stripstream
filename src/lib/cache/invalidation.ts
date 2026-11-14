@@ -1,5 +1,5 @@
 import { revalidatePath, updateTag } from "next/cache";
-import { cacheTags } from "@/constants/cacheConstants";
+import { cacheTags } from "@/lib/cache/tags";
 
 /**
  * Recettes d'invalidation : une mutation déclare *ce qu'elle a changé*, pas la

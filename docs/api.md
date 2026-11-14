@@ -16,7 +16,7 @@ Stripstream expose deux surfaces côté serveur, et rien d'autre :
 
 ### GET /api/auth/[...nextauth]
 
-- **Description** : handler NextAuth v5 (`handlers` exporté depuis `src/lib/auth.ts`) ; le fichier route réexporte `export const { GET, POST } = handlers`. Gère les flux d'authentification : connexion par identifiants, session JWT, CSRF et callbacks.
+- **Description** : handler NextAuth v5 (`handlers` exporté depuis `src/lib/auth/next-auth.ts`) ; le fichier route réexporte `export const { GET, POST } = handlers`. Gère les flux d'authentification : connexion par identifiants, session JWT, CSRF et callbacks.
 - **Authentification** : publique — c'est le point d'entrée du login, exclu du matcher du middleware.
 
 ### POST /api/auth/[...nextauth]
@@ -159,4 +159,4 @@ Actions de connexion génériques (ADR 0030) : une action par opération, discri
 | --- | --- |
 | `revalidateForRefresh` | Invalide caches et chemins selon le `scope` (`home`, `library`, `series`, `book`) avant un `router.refresh()` côté client. Passe par le runner : session requise, budget `refresh:<userId>` (30 / min), scope et identifiant validés (`REFRESH_INVALID_TARGET`) ; renvoie un `ActionResult`. |
 
-> **Chiffrement au repos** : l'`authHeader` Komga et le `token` Stripstream sont stockés sous enveloppe AES-256-GCM (`src/lib/credentials.ts`, clé `CREDENTIALS_ENCRYPTION_KEY`). L'action `saveConnection` passe par `src/lib/connections/manage.ts`, où la définition du provider chiffre à l'écriture (mot de passe/token vide en mise à jour : la valeur chiffrée existante est conservée) ; `src/lib/connections/resolve.ts` déchiffre à la lecture avant de construire un provider ou une sonde. Les lignes legacy en clair restent lisibles ; `pnpm encrypt-credentials` les migre de façon idempotente (`ENV.md`).
+> **Chiffrement au repos** : l'`authHeader` Komga et le `token` Stripstream sont stockés sous enveloppe AES-256-GCM (`src/lib/connections/credentials.ts`, clé `CREDENTIALS_ENCRYPTION_KEY`). L'action `saveConnection` passe par `src/lib/connections/manage.ts`, où la définition du provider chiffre à l'écriture (mot de passe/token vide en mise à jour : la valeur chiffrée existante est conservée) ; `src/lib/connections/resolve.ts` déchiffre à la lecture avant de construire un provider ou une sonde. Les lignes legacy en clair restent lisibles ; `pnpm encrypt-credentials` les migre de façon idempotente (`ENV.md`).

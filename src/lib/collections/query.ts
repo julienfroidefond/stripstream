@@ -1,4 +1,4 @@
-import { normalizeGridPageSize } from "@/lib/pageSize";
+import { normalizeGridPageSize } from "@/lib/collections/page-size";
 import type { IMediaProvider, BookListFilter } from "@/lib/providers/provider.interface";
 import type { Page } from "@/lib/providers/pagination";
 import type { NormalizedSeriesPage } from "@/lib/providers/types";

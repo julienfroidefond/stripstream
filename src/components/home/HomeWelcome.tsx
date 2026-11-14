@@ -16,7 +16,7 @@ import {
   TITLE_SPLIT,
   usePointerGlow,
 } from "@/components/motion";
-import { gsap, prefersReducedMotion, SplitText, useGsapEffect } from "@/lib/gsap";
+import { gsap, prefersReducedMotion, SplitText, useGsapEffect } from "@/lib/motion/gsap";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { useTranslate } from "@/hooks/useTranslate";
 

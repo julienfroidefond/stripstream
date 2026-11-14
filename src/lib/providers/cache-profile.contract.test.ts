@@ -20,7 +20,7 @@ vi.mock("next/cache", () => ({
   },
 }));
 
-import { cacheProfile, type CacheProfile } from "@/constants/cacheProfiles";
+import { cacheProfile, type CacheProfile } from "@/lib/cache/profiles";
 
 import { KomgaProvider } from "./komga/komga.provider";
 import { ProviderTransport, type ProviderRequestOptions } from "./provider-transport";

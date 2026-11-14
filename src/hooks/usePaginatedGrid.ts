@@ -4,7 +4,7 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition, type RefObject } from "react";
 import { useGridFlip, useGridFlipPlayback } from "@/components/motion";
 import { usePreferences } from "@/contexts/PreferencesContext";
-import { normalizeGridPageSize } from "@/lib/pageSize";
+import { normalizeGridPageSize } from "@/lib/collections/page-size";
 import { normalizeSortOrder, preferenceForMissingFilter } from "@/lib/collections/query";
 import type { SortOrder, UserPreferences } from "@/types/preferences";
 

@@ -4,7 +4,7 @@ import type { IMediaProvider } from "@/lib/providers/provider.interface";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 import logger from "@/lib/logger";
-import { orderForWall } from "@/lib/wall-layout";
+import { orderForWall } from "@/lib/wall/layout";
 
 /**
  * Le Wall — collecte des œuvres.

@@ -15,7 +15,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
 import { useCallback, useRef, Suspense } from "react";
-import { gsap, prefersReducedMotion, useGsapEffect } from "@/lib/gsap";
+import { gsap, prefersReducedMotion, useGsapEffect } from "@/lib/motion/gsap";
 import { useToast } from "@/components/ui/use-toast";
 import { useTranslate } from "@/hooks/useTranslate";
 import { NavButton } from "@/components/ui/nav-button";

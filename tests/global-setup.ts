@@ -1,6 +1,6 @@
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 import { PrismaClient } from '../src/generated/prisma/client';
-import { encryptSecret } from '../src/lib/credentials';
+import { encryptSecret } from '../src/lib/connections/credentials';
 import bcrypt from 'bcryptjs';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';

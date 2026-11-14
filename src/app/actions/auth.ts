@@ -4,8 +4,8 @@ import { headers } from "next/headers";
 import { AuthServerService } from "@/lib/services/auth-server.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { runAction, ActionError, type ActionResult } from "@/lib/actions/action-runner";
-import { isRegistrationEnabled } from "@/lib/registration";
-import { clientIpFromHeaders } from "@/lib/client-ip";
+import { isRegistrationEnabled } from "@/lib/auth/registration";
+import { clientIpFromHeaders } from "@/lib/rate-limit/client-ip";
 
 /**
  * Inscrit un nouvel utilisateur. Fermée par défaut : sans

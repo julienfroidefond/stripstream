@@ -2,9 +2,9 @@ import { ERROR_CODES } from "@/constants/errorCodes";
 import { requireConnectionForProvider, type KomgaConnection } from "@/lib/connections";
 import { createKomgaTransportPolicy } from "@/lib/providers/komga/komga.transport-policy";
 import { ProviderTransport } from "@/lib/providers/provider-transport";
-import { imageRequestLimiter } from "@/lib/services/image-request-limiter";
+import { imageRequestLimiter } from "@/lib/media/image-request-limiter";
 import { PreferencesService } from "@/lib/services/preferences.service";
-import { requestDeduplicationService } from "@/lib/services/request-deduplication.service";
+import { requestDeduplicationService } from "@/lib/media/request-deduplication";
 import { AppError } from "@/utils/errors";
 
 import { komgaPagePath, komgaPageThumbnailPath } from "./komga-paths";

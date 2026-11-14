@@ -6,7 +6,7 @@ import { BookCoverScene } from "@/components/ui/book-cover-scene";
 import { SeriesCover } from "@/components/ui/series-cover";
 import { useTranslate } from "@/hooks/useTranslate";
 import { cn } from "@/lib/utils";
-import { getSeriesReadingState } from "@/lib/series-reading-status";
+import { getSeriesReadingState } from "@/lib/series/reading-status";
 import { isPaused, type InProgressItem } from "@/lib/services/in-progress.service";
 import { InProgressFavoriteButton } from "./InProgressFavoriteButton";
 import { InProgressShelfButton } from "./InProgressShelfButton";

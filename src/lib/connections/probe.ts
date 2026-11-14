@@ -1,7 +1,7 @@
 import { checkRateLimit } from "@/lib/rate-limit";
 import { createProvider } from "@/lib/providers/provider.factory";
 import type { ProviderType } from "@/lib/providers/types";
-import { assertServerUrlResolvesSafely } from "@/utils/server-url-dns";
+import { assertServerUrlResolvesSafely } from "@/lib/connections/server-url-dns";
 import { getStoredConnection } from "./resolve";
 import type {
   ConnectionTestRateLimit,

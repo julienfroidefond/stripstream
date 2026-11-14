@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Download, X } from "lucide-react";
 import logger from "@/lib/logger";
-import { buildStorageKey } from "@/lib/storage";
+import { buildStorageKey } from "@/lib/browser/storage";
 import { useUserScope } from "@/contexts/UserScopeContext";
 import { useTranslate } from "@/hooks/useTranslate";
 

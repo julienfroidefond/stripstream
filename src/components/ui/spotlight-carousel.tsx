@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { cn } from "@/lib/utils";
-import { gsap, prefersReducedMotion, SplitText, useGsapEffect } from "@/lib/gsap";
+import { gsap, prefersReducedMotion, SplitText, useGsapEffect } from "@/lib/motion/gsap";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import {
   landCover,

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 
-vi.mock("@/lib/auth-utils", () => ({
+vi.mock("@/lib/auth/session", () => ({
   ADMIN_ROLE: "ROLE_ADMIN",
   requireUserId: vi.fn(),
   requireAdmin: vi.fn(),
@@ -16,7 +16,7 @@ vi.mock("@/lib/logger", () => ({
   default: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
 
-const { requireAdmin } = await import("@/lib/auth-utils");
+const { requireAdmin } = await import("@/lib/auth/session");
 const { AdminService } = await import("@/lib/services/admin.service");
 const { deleteUser, resetUserPassword, updateUserRoles } = await import("./admin");
 

@@ -1,5 +1,5 @@
 import { cache } from "react";
-import { getCurrentUser } from "@/lib/auth-utils";
+import { getCurrentUser } from "@/lib/auth/session";
 import { createProviderFor } from "@/lib/connections/registry";
 import { resolveActiveConnection } from "@/lib/connections/resolve";
 import type { ResolvedConnection } from "@/lib/connections/types";

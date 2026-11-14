@@ -2,8 +2,8 @@ import { ERROR_CODES } from "@/constants/errorCodes";
 import { requireConnectionForProvider } from "@/lib/connections";
 import { ProviderTransport } from "@/lib/providers/provider-transport";
 import { createStripstreamTransportPolicy } from "@/lib/providers/stripstream/stripstream.transport-policy";
-import { imageRequestLimiter } from "@/lib/services/image-request-limiter";
-import { requestDeduplicationService } from "@/lib/services/request-deduplication.service";
+import { imageRequestLimiter } from "@/lib/media/image-request-limiter";
+import { requestDeduplicationService } from "@/lib/media/request-deduplication";
 import { AppError } from "@/utils/errors";
 
 import {

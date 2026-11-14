@@ -7,7 +7,7 @@ const { requireUserId, invalidateForRefresh } = vi.hoisted(() => ({
   invalidateForRefresh: vi.fn(),
 }));
 
-vi.mock("@/lib/auth-utils", () => ({ requireUserId, requireAdmin: vi.fn() }));
+vi.mock("@/lib/auth/session", () => ({ requireUserId, requireAdmin: vi.fn() }));
 vi.mock("@/lib/cache/invalidation", () => ({ invalidateForRefresh }));
 vi.mock("@/lib/prisma", () => ({ default: {} }));
 vi.mock("@/lib/providers/provider.factory", () => ({ getProvider: vi.fn() }));

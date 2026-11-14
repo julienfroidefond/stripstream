@@ -1,6 +1,6 @@
 "use client";
 
-import { Flip, gsap, prefersReducedMotion, ScrollTrigger, SplitText, useGsapEffect } from "@/lib/gsap";
+import { Flip, gsap, prefersReducedMotion, ScrollTrigger, SplitText, useGsapEffect } from "@/lib/motion/gsap";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import {
   createContext,

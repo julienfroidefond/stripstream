@@ -19,30 +19,30 @@ import {
 import { preload } from "react-dom";
 
 import { usePresence } from "@/components/motion";
-import { gsap } from "@/lib/gsap";
+import { gsap } from "@/lib/motion/gsap";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { useTranslate } from "@/hooks/useTranslate";
 import { useUserScope } from "@/contexts/UserScopeContext";
 import { cn } from "@/lib/utils";
-import { WALL_FOCUS_DURATION } from "@/lib/wall-camera";
+import { WALL_FOCUS_DURATION } from "@/lib/wall/camera";
 import {
   WALL_ENTRANCE_MS,
   WALL_RANDOM_FLASH_MS,
   pickRandomWallTile,
   wallDimRect,
-} from "@/lib/wall-composition";
-import { wallPreloadUrls } from "@/lib/wall-cover";
-import { planWallFocus } from "@/lib/wall-focus";
-import { isWallUiTarget } from "@/lib/wall-gesture";
+} from "@/lib/wall/composition";
+import { wallPreloadUrls } from "@/lib/wall/cover";
+import { planWallFocus } from "@/lib/wall/focus";
+import { isWallUiTarget } from "@/lib/wall/gesture";
 import {
   buildWallLayout,
   hashId,
   visibleWallTiles,
-} from "@/lib/wall-layout";
+} from "@/lib/wall/layout";
 import {
   resolveWallShortcut,
   wallShortcutPreventsDefault,
-} from "@/lib/wall-shortcuts";
+} from "@/lib/wall/shortcuts";
 import type { WallItem, WallRenderTile } from "@/types/wall";
 import { WallFrame } from "./WallFrame";
 import { WallPlaque, type WallPlaquePlacement } from "./WallPlaque";

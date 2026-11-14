@@ -3,7 +3,7 @@ import {
   WALL_PATCH_HEIGHT,
   WALL_PATCH_WIDTH,
   buildWallLayout,
-} from "@/lib/wall-layout";
+} from "@/lib/wall/layout";
 
 const percentOf = (value: number, total: number) =>
   `${((value / total) * 100).toFixed(4)}%`;

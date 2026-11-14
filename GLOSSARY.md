@@ -185,7 +185,7 @@ The Wall's interaction state: `idle` (tilt and hover allowed), `pan` (a
 pointer gesture is active), `focus` (the camera is flying to a cover),
 `plaque` (the anchored panel is open) or `sheet` (the mobile bottom sheet is
 open). Owner: `useWallPhase` (`src/components/wall/useWallPhase.ts`) with the
-pure transition table in `src/lib/wall-phase.ts`; `WallTile` receives
+pure transition table in `src/lib/wall/phase.ts`; `WallTile` receives
 `tiltAllowed` instead of inspecting stage attributes.
 
 ## Wall filter session
@@ -194,5 +194,5 @@ The client-side owner of the Wall's library and read-state filters: restored
 selection, write gate, visible items, composition seed, panel close when the
 wall empties and the one-shot entrance skip. Owner: `useWallFilters`
 (`src/components/wall/useWallFilters.ts`); pure parsing and filtering stay in
-`src/lib/wall-filter.ts`, and a fake `WallFilterStorage` drives hydration-order
+`src/lib/wall/filter.ts`, and a fake `WallFilterStorage` drives hydration-order
 tests.

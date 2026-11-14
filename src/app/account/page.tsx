@@ -6,7 +6,7 @@ import { UserService } from "@/lib/services/user.service";
 import { getReadingStats } from "@/lib/services/reading-stats.service";
 import { redirect } from "next/navigation";
 import logger from "@/lib/logger";
-import { getCurrentUserId } from "@/lib/auth-utils";
+import { getCurrentUserId } from "@/lib/auth/session";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";

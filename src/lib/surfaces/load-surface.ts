@@ -2,7 +2,7 @@ import { redirect, unstable_rethrow } from "next/navigation";
 import { getProvider } from "@/lib/providers/provider.factory";
 import type { ProviderCapabilityKey } from "@/lib/providers/provider.interface";
 import { PreferencesService } from "@/lib/services/preferences.service";
-import { getCurrentUserId } from "@/lib/auth-utils";
+import { getCurrentUserId } from "@/lib/auth/session";
 import {
   loadSurfaceWithDependencies,
   type LoadSurfaceOptions,

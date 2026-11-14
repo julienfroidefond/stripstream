@@ -1,6 +1,6 @@
 import { getProvider } from "@/lib/providers/provider.factory";
 import type { IMediaProvider } from "@/lib/providers/provider.interface";
-import { requireAdmin, requireUserId } from "@/lib/auth-utils";
+import { requireAdmin, requireUserId } from "@/lib/auth/session";
 import { PreferencesService } from "@/lib/services/preferences.service";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { ERROR_CODES, type ErrorCode } from "@/constants/errorCodes";

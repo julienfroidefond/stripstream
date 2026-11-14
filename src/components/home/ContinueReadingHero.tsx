@@ -37,7 +37,7 @@ import {
   ScrollTrigger,
   SplitText,
   useGsapEffect,
-} from "@/lib/gsap";
+} from "@/lib/motion/gsap";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { resolveHeroSummary } from "./heroSummary";
 

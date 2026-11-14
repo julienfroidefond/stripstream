@@ -9,7 +9,7 @@
  * gardent un sens logique — « suivant » reste la page suivante.
  */
 
-import { isActivableTarget, isEditableTarget } from "@/lib/keyboard-targets";
+import { isActivableTarget, isEditableTarget } from "@/lib/browser/keyboard-targets";
 import { actionForSide, sideForArrowKey } from "@/lib/reader/side-actions";
 
 export type ReaderShortcutAction =

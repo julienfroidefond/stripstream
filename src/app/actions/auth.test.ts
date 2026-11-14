@@ -6,7 +6,7 @@ const { headersMock } = vi.hoisted(() => ({ headersMock: vi.fn() }));
 vi.mock("next/headers", () => ({ headers: headersMock }));
 vi.mock("@/lib/prisma", () => ({ default: {} }));
 vi.mock("@/lib/providers/provider.factory", () => ({ getProvider: vi.fn() }));
-vi.mock("@/lib/auth-utils", () => ({ requireUserId: vi.fn(), requireAdmin: vi.fn() }));
+vi.mock("@/lib/auth/session", () => ({ requireUserId: vi.fn(), requireAdmin: vi.fn() }));
 vi.mock("@/lib/services/preferences.service", () => ({
   PreferencesService: { getPreferences: vi.fn() },
 }));

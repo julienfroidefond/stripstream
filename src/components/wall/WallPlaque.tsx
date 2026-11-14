@@ -6,9 +6,9 @@ import { ArrowUpRight, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { usePresence } from "@/components/motion";
-import { SplitText } from "@/lib/gsap";
+import { SplitText } from "@/lib/motion/gsap";
 import { useTranslate } from "@/hooks/useTranslate";
-import { getSeriesReadingState } from "@/lib/series-reading-status";
+import { getSeriesReadingState } from "@/lib/series/reading-status";
 import type { WallItem, WallPlaqueAnchor } from "@/types/wall";
 import { cn } from "@/lib/utils";
 

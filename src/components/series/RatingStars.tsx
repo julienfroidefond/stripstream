@@ -1,8 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { burst } from "@/lib/celebrate";
-import { gsap, prefersReducedMotion } from "@/lib/gsap";
+import { burst } from "@/lib/motion/celebrate";
+import { gsap, prefersReducedMotion } from "@/lib/motion/gsap";
 import { useTranslate } from "@/hooks/useTranslate";
 import { nextRatingForKey } from "./rating-keys";
 

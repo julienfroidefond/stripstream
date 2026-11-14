@@ -3,8 +3,8 @@
 import { useRef } from "react";
 import { RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { pop } from "@/lib/celebrate";
-import { useGsapEffect } from "@/lib/gsap";
+import { pop } from "@/lib/motion/celebrate";
+import { useGsapEffect } from "@/lib/motion/gsap";
 
 interface PullToRefreshIndicatorProps {
   isPulling: boolean;

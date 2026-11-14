@@ -56,7 +56,7 @@ import type {
   StripstreamSeriesRatingsResponse,
   StripstreamIndexJob,
 } from "@/types/stripstream";
-import { cacheProfile } from "@/constants/cacheProfiles";
+import { cacheProfile } from "@/lib/cache/profiles";
 
 /** Taille de page maximale acceptée par `GET /books` du Librarian. */
 const NEXT_BOOK_PAGE_SIZE = 200;

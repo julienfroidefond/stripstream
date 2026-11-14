@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 
-vi.mock("@/lib/auth-utils", () => ({
+vi.mock("@/lib/auth/session", () => ({
   requireUserId: vi.fn(),
   requireAdmin: vi.fn(),
 }));
@@ -27,7 +27,7 @@ vi.mock("@/lib/connections", async (importOriginal) => ({
   testStoredConnection: vi.fn(),
 }));
 
-const { requireUserId } = await import("@/lib/auth-utils");
+const { requireUserId } = await import("@/lib/auth/session");
 const lib = await import("@/lib/connections");
 const actions = await import("./connections");
 

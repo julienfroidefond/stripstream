@@ -12,7 +12,7 @@ vi.mock("@/lib/providers/provider.factory", () => ({
   createProvider: createProviderMock,
 }));
 
-vi.mock("@/utils/server-url-dns", () => ({
+vi.mock("@/lib/connections/server-url-dns", () => ({
   assertServerUrlResolvesSafely: assertResolvesSafelyMock,
 }));
 

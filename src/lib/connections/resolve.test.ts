@@ -20,7 +20,7 @@ vi.mock("@/lib/prisma", () => ({
 }));
 
 vi.mock("./active", () => ({ getActiveConnection: getActiveConnectionMock }));
-vi.mock("@/lib/auth-utils", () => ({ requireUserId: requireUserIdMock }));
+vi.mock("@/lib/auth/session", () => ({ requireUserId: requireUserIdMock }));
 
 import {
   connectionFromDraft,
@@ -29,7 +29,7 @@ import {
   resolveActiveConnection,
   resolveConnectionForProvider,
 } from "./resolve";
-import { encryptSecret } from "@/lib/credentials";
+import { encryptSecret } from "@/lib/connections/credentials";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
 

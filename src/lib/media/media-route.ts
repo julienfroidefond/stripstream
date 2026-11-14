@@ -1,4 +1,4 @@
-import { getCurrentUserId } from "@/lib/auth-utils";
+import { getCurrentUserId } from "@/lib/auth/session";
 import { getMediaTransport } from "@/lib/media/media-transport";
 import type { ProviderType } from "@/lib/providers/types";
 

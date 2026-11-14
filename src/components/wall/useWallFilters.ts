@@ -2,13 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { buildStorageKey } from "@/lib/storage";
+import { buildStorageKey } from "@/lib/browser/storage";
 import {
   filterWallItems,
   isWallItemComplete,
   parseStoredHideRead,
   parseStoredWallLibraries,
-} from "@/lib/wall-filter";
+} from "@/lib/wall/filter";
 import type { WallItem } from "@/types/wall";
 
 export interface WallFilterLibrary {

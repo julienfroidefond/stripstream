@@ -1,5 +1,5 @@
 import { NextResponse, NextRequest } from "next/server";
-import { getAuthSession } from "@/lib/middleware-auth";
+import { getAuthSession } from "@/lib/auth/middleware";
 
 // Routes qui ne nécessitent pas d'authentification
 const publicRoutes = ["/login", "/register", "/images"];

@@ -1,6 +1,6 @@
 import { AdminService } from "@/lib/services/admin.service";
 import { redirect } from "next/navigation";
-import { isAdmin } from "@/lib/auth-utils";
+import { isAdmin } from "@/lib/auth/session";
 import { AdminContent } from "@/components/admin/AdminContent";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { ERROR_CODES } from "@/constants/errorCodes";

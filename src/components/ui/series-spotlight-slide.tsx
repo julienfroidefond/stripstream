@@ -23,7 +23,7 @@ import { CountUp, Magnetic, ProgressFill } from "@/components/motion";
 import { useAnonymous } from "@/contexts/AnonymousContext";
 import { useCoverInteraction } from "@/hooks/useCoverInteraction";
 import { useTranslate } from "@/hooks/useTranslate";
-import { getSeriesReadingState } from "@/lib/series-reading-status";
+import { getSeriesReadingState } from "@/lib/series/reading-status";
 import type { NormalizedSeries } from "@/lib/providers/types";
 
 const SERIES_STATUS: Record<

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/providers/provider.factory", () => ({ getProvider: vi.fn() }));
-vi.mock("@/lib/auth-utils", () => ({ requireUserId: vi.fn(async () => 7) }));
+vi.mock("@/lib/auth/session", () => ({ requireUserId: vi.fn(async () => 7) }));
 vi.mock("@/lib/services/preferences.service", () => ({
   PreferencesService: { getPreferences: vi.fn() },
 }));
@@ -10,7 +10,7 @@ vi.mock("@/lib/home/home-feeds", () => ({ loadNextHomeFeedPage: vi.fn() }));
 
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { getProvider } from "@/lib/providers/provider.factory";
-import { requireUserId } from "@/lib/auth-utils";
+import { requireUserId } from "@/lib/auth/session";
 import { PreferencesService } from "@/lib/services/preferences.service";
 import { loadNextHomeFeedPage } from "@/lib/home/home-feeds";
 import type { IMediaProvider } from "@/lib/providers/provider.interface";

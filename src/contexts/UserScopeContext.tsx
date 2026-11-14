@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useMemo } from "react";
-import { normalizeStorageScope } from "@/lib/storage";
+import { normalizeStorageScope } from "@/lib/browser/storage";
 
 const UserScopeContext = createContext<string | undefined>(undefined);
 

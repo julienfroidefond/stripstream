@@ -3,7 +3,7 @@
 import { IntentLink } from "@/components/common/IntentLink";
 import { useCallback, useEffect, useRef } from "react";
 import type { FocusEvent, PointerEvent as ReactPointerEvent, ReactNode } from "react";
-import { gsap, prefersReducedMotion, useGsapEffect } from "@/lib/gsap";
+import { gsap, prefersReducedMotion, useGsapEffect } from "@/lib/motion/gsap";
 import { cn } from "@/lib/utils";
 
 interface BookCoverSceneProps {

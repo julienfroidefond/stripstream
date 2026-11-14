@@ -19,7 +19,7 @@ vi.mock("@/lib/prisma", () => ({
     preferences: { count: preferencesCount },
   },
 }));
-vi.mock("@/lib/auth-utils", () => ({ ADMIN_ROLE: "ROLE_ADMIN" }));
+vi.mock("@/lib/auth/session", () => ({ ADMIN_ROLE: "ROLE_ADMIN" }));
 
 import { AdminService } from "./admin.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
