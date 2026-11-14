@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { isSpecialBook, mergeMissingBooks, splitBooksByVolumeType } from "./bookGrouping";
+import { isSpecialBook } from "@/lib/books/volume-type";
+import { mergeMissingBooks, splitBooksByVolumeType } from "./bookGrouping";
 import type { NormalizedBook, NormalizedMissingBook } from "@/lib/providers/types";
 
 function makeBook(id: string, volumeType: string | null): NormalizedBook {

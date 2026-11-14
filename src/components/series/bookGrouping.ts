@@ -1,8 +1,6 @@
 import { isSpecialBook } from "@/lib/books/volume-type";
 import type { NormalizedBook, NormalizedMissingBook } from "@/lib/providers/types";
 
-export { isSpecialBook };
-
 /**
  * Splits a series' books into the regular volumes and the side content shown
  * in its own section beneath them.

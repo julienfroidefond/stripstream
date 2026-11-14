@@ -1,3 +1,4 @@
+import { lookup } from "node:dns/promises";
 import { describe, expect, it, vi } from "vitest";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import {
@@ -81,19 +82,28 @@ describe("assertProviderTargetIsSafe", () => {
     ).rejects.toMatchObject({ code: ERROR_CODES.CONFIG.INVALID_URL });
   });
 
-  it("shares one lookup between concurrent requests to the same host", async () => {
+  it("shares one DNS lookup between concurrent requests to the same host", async () => {
     resetVerifiedProviderTargets();
-    let finish!: (addresses: string[]) => void;
-    const resolve = vi.fn(
-      () => new Promise<string[]>((resolveLookup) => (finish = resolveLookup))
+    let finish!: (records: { address: string; family: number }[]) => void;
+    vi.mocked(lookup).mockImplementationOnce(
+      (() => new Promise((resolveLookup) => (finish = resolveLookup))) as never
     );
+    const callsBefore = vi.mocked(lookup).mock.calls.length;
 
     const checks = Array.from({ length: 5 }, () =>
-      assertProviderTargetIsSafe("https://media.example/page", resolve, 0)
+      assertProviderTargetIsSafe("https://shared.example/page")
     );
-    finish(["93.184.216.34"]);
+    finish([{ address: "93.184.216.34", family: 4 }]);
     await Promise.all(checks);
 
-    expect(resolve).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(lookup).mock.calls.length - callsBefore).toBe(1);
+  });
+
+  it("keeps the resolver's error code so transport retries still apply", async () => {
+    resetVerifiedProviderTargets();
+    const resolve = vi.fn().mockRejectedValue(Object.assign(new Error("again"), { code: "EAI_AGAIN" }));
+    await expect(
+      assertProviderTargetIsSafe("https://flaky.example/x", resolve, 0)
+    ).rejects.toMatchObject({ code: "EAI_AGAIN" });
   });
 });

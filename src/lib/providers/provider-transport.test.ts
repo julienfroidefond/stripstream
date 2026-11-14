@@ -105,7 +105,7 @@ describe("ProviderTransport", () => {
     );
   });
 
-  it("checks the target before any fetch and maps an unresolved host to a connection error", async () => {
+  it("checks the target before any fetch and maps an unresolved host like a failed fetch", async () => {
     const fetchMock = vi.fn(async () => jsonResponse({}));
     vi.stubGlobal("fetch", fetchMock);
     const blocked = new ProviderTransport(
@@ -126,10 +126,31 @@ describe("ProviderTransport", () => {
     await expect(blocked.request("books")).rejects.toMatchObject({
       code: ERROR_CODES.CONFIG.INVALID_URL,
     });
-    await expect(unresolved.response("books/1/file")).rejects.toMatchObject({
+    await expect(unresolved.request("books")).rejects.toMatchObject({
       code: ERROR_CODES.KOMGA.CONNECTION_ERROR,
     });
+    // Les flux média gardent leur propre code d'erreur.
+    await expect(
+      unresolved.response("books/1/file", undefined, { errorCode: ERROR_CODES.IMAGE.FETCH_ERROR })
+    ).rejects.toMatchObject({ code: ERROR_CODES.IMAGE.FETCH_ERROR });
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("retries a transient DNS failure of the target check like a failed fetch", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => jsonResponse({ ok: true })));
+    const assertTarget = vi
+      .fn()
+      .mockRejectedValueOnce(Object.assign(new Error("again"), { code: "EAI_AGAIN" }))
+      .mockResolvedValue(undefined);
+    const transport = new ProviderTransport(
+      testPolicy({
+        assertTarget,
+        retry: { shouldRetry: (error) => (error as { code?: string }).code === "EAI_AGAIN" },
+      })
+    );
+
+    await expect(transport.request("books")).resolves.toEqual({ ok: true });
+    expect(assertTarget).toHaveBeenCalledTimes(2);
   });
 
   it("sends the policy headers and forwards cache and body options", async () => {

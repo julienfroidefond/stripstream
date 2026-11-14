@@ -13,9 +13,10 @@ import type {
  * serveur reprend la main sans que la surface ait à nettoyer quoi que ce soit.
  * Un échec retire l'override (rollback). Un succès le marque `settled` : il
  * reste appliqué tant que le serveur (cache en retard compris) renvoie l'état
- * observé, puis il est *retiré* dès que le serveur a montré un autre état.
- * Sans ce retrait, l'override se rallumerait le jour où le serveur revient à
- * l'état observé (relire le tome jusqu'au bout, « tout marquer lu »).
+ * observé. Comme il se rallumerait si une *autre* écriture ramenait le serveur
+ * à cet état, chaque autre écrivain de la progression l'efface explicitement :
+ * le marquage de toute la série (`dropSettled` sur ses tomes) et le lecteur à
+ * l'ouverture du livre (`forgetBook`).
  */
 
 export interface ReadOverride {
@@ -25,16 +26,11 @@ export interface ReadOverride {
   observed: string;
   /** Le serveur a enregistré le marquage ; l'override n'attend plus que le rafraîchissement. */
   settled?: boolean;
+  /** Série du livre marqué : un marquage de toute la série efface l'override. */
+  seriesId?: string | null;
 }
 
 export type ReadOverrides = ReadonlyMap<string, ReadOverride>;
-
-/**
- * Ids dont l'override réglé a été dépassé par le serveur. Ensemble mutable
- * tenu par le fournisseur : il ne fait que grandir entre deux marquages d'un
- * même id (un nouveau marquage l'en retire), d'où une lecture idempotente.
- */
-export type RetiredOverrides = Set<string>;
 
 /** Identité de l'état de lecture serveur d'un livre. */
 export function bookProgressSignature(book: NormalizedBook): string {
@@ -63,28 +59,20 @@ export function optimisticBookProgress(
 
 function activeOverride(
   overrides: ReadOverrides,
-  retired: RetiredOverrides,
   id: string,
   signature: string
 ): ReadOverride | null {
   const override = overrides.get(id);
-  if (!override || retired.has(id)) return null;
-  if (override.observed !== signature) {
-    // Le serveur a rattrapé (ou dépassé) un marquage enregistré : il fait foi
-    // définitivement pour cet override.
-    if (override.settled) retired.add(id);
-    return null;
-  }
+  if (!override || override.observed !== signature) return null;
   return override;
 }
 
 /** Le livre tel qu'il doit être affiché, override optimiste compris. */
 export function resolveBook(
   overrides: ReadOverrides,
-  book: NormalizedBook,
-  retired: RetiredOverrides = new Set()
+  book: NormalizedBook
 ): NormalizedBook {
-  const override = activeOverride(overrides, retired, book.id, bookProgressSignature(book));
+  const override = activeOverride(overrides, book.id, bookProgressSignature(book));
   if (!override) return book;
   return { ...book, readProgress: optimisticBookProgress(book, override.read) };
 }
@@ -92,12 +80,10 @@ export function resolveBook(
 /** La série telle qu'elle doit être affichée, override optimiste compris. */
 export function resolveSeries(
   overrides: ReadOverrides,
-  series: NormalizedSeries,
-  retired: RetiredOverrides = new Set()
+  series: NormalizedSeries
 ): NormalizedSeries {
   const override = activeOverride(
     overrides,
-    retired,
     series.id,
     seriesProgressSignature(series)
   );
@@ -125,20 +111,19 @@ export function settleOverride(overrides: ReadOverrides, id: string): ReadOverri
 }
 
 /**
- * Vide `retired` et renvoie les ids qu'il contenait. Le fournisseur l'appelle
- * au marquage suivant, *hors* d'un updater d'état (qui peut être rejoué),
- * puis retire ces ids de la table avec `withoutIds`.
+ * Copie de `overrides` sans les overrides enregistrés qui vérifient
+ * `predicate`. Les marquages encore en vol sont gardés. Même instance quand il
+ * n'y a rien à retirer (pas de re-rendu).
  */
-export function takeRetired(retired: RetiredOverrides): string[] {
-  const ids = [...retired];
-  retired.clear();
-  return ids;
-}
-
-/** Copie de `overrides` sans `ids` ; même instance si aucun n'y figure. */
-export function withoutIds(overrides: ReadOverrides, ids: readonly string[]): ReadOverrides {
-  if (!ids.some((id) => overrides.has(id))) return overrides;
-  const next = new Map(overrides);
-  for (const id of ids) next.delete(id);
-  return next;
+export function dropSettled(
+  overrides: ReadOverrides,
+  predicate: (override: ReadOverride) => boolean
+): ReadOverrides {
+  let next: Map<string, ReadOverride> | null = null;
+  for (const [id, override] of overrides) {
+    if (!override.settled || !predicate(override)) continue;
+    next ??= new Map(overrides);
+    next.delete(id);
+  }
+  return next ?? overrides;
 }

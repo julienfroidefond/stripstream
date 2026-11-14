@@ -10,27 +10,7 @@ import {
   parseCollectionQuery,
 } from "@/lib/collections/query";
 import { loadSurface } from "@/lib/surfaces/load-surface";
-import { missingBooksForPage } from "@/lib/series/missing-books-page";
-import type { CollectionQuery } from "@/lib/collections/query";
-import type { IMediaProvider } from "@/lib/providers/provider.interface";
-import type { NormalizedBook } from "@/lib/providers/types";
-
-/**
- * Tomes de la page précédente, avec la même requête que la grille : la borne
- * basse des manquants de cette page, et le plus souvent un hit de cache (la
- * page que l'utilisateur vient de quitter). `null` sur la première page.
- */
-async function previousPageBooks(
-  provider: IMediaProvider,
-  seriesId: string,
-  query: CollectionQuery
-): Promise<NormalizedBook[] | null> {
-  if (query.page <= 1) return null;
-  const previous = await provider
-    .getBooks(bookCollectionFilter(seriesId, { ...query, page: query.page - 1 }))
-    .catch(() => null);
-  return previous?.items ?? null;
-}
+import { lowerBoundBeforePage, missingBooksForPage } from "@/lib/series/missing-books-page";
 
 interface PageProps {
   params: Promise<{ seriesId: string }>;
@@ -54,43 +34,41 @@ export default async function SeriesPage({ params, searchParams }: PageProps) {
       const canRate = ratings !== null;
       const canShelve = shelf !== null;
 
-      // Les manquants ne s'affichent pas dans la vue « non lus » : on ne les
-      // charge pas, ni la page précédente qui sert à les placer.
-      const wantsMissing = missingBooks !== null && !requestedQuery.unreadOnly;
-
-      const [
-        { query, booksPage },
-        series,
-        isFavorite,
-        missing,
-        requestedPreviousBooks,
-        relatedSeries,
-        rating,
-      ] = await Promise.all([
-        fetchBookCollectionPage(provider, seriesId, requestedQuery),
-        provider.getSeriesById(seriesId),
-        FavoriteService.isFavorite({ userId, provider }, seriesId),
-        wantsMissing ? missingBooks.getMissingBooks(seriesId) : Promise.resolve([]),
-        wantsMissing ? previousPageBooks(provider, seriesId, requestedQuery) : Promise.resolve(null),
-        discovery ? discovery.getRelatedSeries(seriesId).catch(() => []) : Promise.resolve([]),
-        ratings ? ratings.getSeriesRating(seriesId).catch(() => null) : Promise.resolve(null),
-      ]);
+      const [{ query, booksPage }, series, isFavorite, missing, relatedSeries, rating] =
+        await Promise.all([
+          fetchBookCollectionPage(provider, seriesId, requestedQuery),
+          provider.getSeriesById(seriesId),
+          FavoriteService.isFavorite({ userId, provider }, seriesId),
+          // Chargés même en vue « non lus » : le bouton « masquer les
+          // manquants » dépend de la série, pas du filtre.
+          missingBooks ? missingBooks.getMissingBooks(seriesId) : Promise.resolve([]),
+          discovery ? discovery.getRelatedSeries(seriesId).catch(() => []) : Promise.resolve([]),
+          ratings ? ratings.getSeriesRating(seriesId).catch(() => null) : Promise.resolve(null),
+        ]);
 
       if (!series) throw new AppError(ERROR_CODES.SERIES.FETCH_ERROR);
 
-      // Page demandée hors bornes : la grille a été recalée, la page précédente
-      // chargée en parallèle n'est plus la bonne (cas rare, une requête de plus).
-      const previousBooks =
-        missing.length > 0 && query.page !== requestedQuery.page
-          ? await previousPageBooks(provider, seriesId, query)
-          : requestedPreviousBooks;
+      // Placer les manquants demande la borne de la page précédente : lue
+      // seulement s'il y a des manquants à montrer (même requête que la
+      // grille, donc le plus souvent déjà en cache).
+      const placesMissing = missing.length > 0 && !query.unreadOnly;
+      const lowerBound = placesMissing
+        ? await lowerBoundBeforePage(query.page, async (page) => {
+            const previous = await provider
+              .getBooks(bookCollectionFilter(seriesId, { ...query, page }))
+              .catch(() => null);
+            return previous?.items ?? null;
+          })
+        : null;
 
-      const pageMissing = missingBooksForPage(missing, booksPage.items, {
-        page: query.page,
-        totalPages: booksPage.totalPages,
-        unreadOnly: query.unreadOnly,
-        previousPageBooks: previousBooks,
-      });
+      const pageMissing = placesMissing
+        ? missingBooksForPage(missing, booksPage.items, {
+            page: query.page,
+            totalPages: booksPage.totalPages,
+            unreadOnly: query.unreadOnly,
+            lowerBound,
+          })
+        : [];
 
       return {
         series,

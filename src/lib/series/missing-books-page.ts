@@ -7,10 +7,11 @@ export interface MissingBooksPageWindow {
   /** Les manquants n'ont rien à faire dans une vue « non lus ». */
   unreadOnly: boolean;
   /**
-   * Tomes de la page précédente (même requête, page − 1), `null` sur la
-   * première page ou si le provider n'a pas pu les servir.
+   * Plus grand tome régulier numéroté *avant* cette page : `-Infinity` s'il
+   * n'y en a aucun (rien n'a encore été placé), `null` s'il est inconnu (le
+   * provider n'a pas répondu). Voir `lowerBoundBeforePage`.
    */
-  previousPageBooks: NormalizedBook[] | null;
+  lowerBound: number | null;
 }
 
 /**
@@ -29,12 +30,12 @@ export function maxRegularVolume(books: readonly NormalizedBook[]): number | nul
 /**
  * Tomes manquants à intercaler sur *cette* page de la grille.
  *
- * Le provider renvoie les manquants de toute la série ; une page n'affiche que
- * ceux qui tombent après le dernier tome régulier de la page précédente et
- * jusqu'à son propre dernier tome régulier (sans borne haute sur la dernière
- * page). Un trou entre deux pages s'affiche au début de la page suivante, une
- * seule fois. Faute de borne basse hors première page, mieux vaut omettre que
- * dupliquer.
+ * Une page montre les manquants `v` tels que `lowerBound < v <= upper`, où
+ * `upper` est son plus grand tome régulier numéroté (sans borne sur la
+ * dernière page). Les intervalles des pages successives se suivent sans se
+ * chevaucher : chaque manquant apparaît sur une page et une seule, un trou
+ * entre deux pages au début de la suivante. Une page sans tome régulier
+ * numéroté a un intervalle vide ; ses trous passent à la page suivante.
  */
 export function missingBooksForPage(
   missing: NormalizedMissingBook[],
@@ -42,19 +43,36 @@ export function missingBooksForPage(
   window: MissingBooksPageWindow
 ): NormalizedMissingBook[] {
   if (missing.length === 0 || window.unreadOnly) return [];
+  // Borne basse inconnue : mieux vaut omettre que dupliquer.
+  if (window.lowerBound === null) return [];
 
-  const isFirstPage = window.page <= 1;
   const isLastPage = window.page >= window.totalPages;
-  const lower = isFirstPage ? null : maxRegularVolume(window.previousPageBooks ?? []);
-  if (!isFirstPage && lower === null) return [];
+  const upper = isLastPage ? Number.POSITIVE_INFINITY : maxRegularVolume(pageBooks);
+  if (upper === null) return [];
 
-  const upper = isLastPage ? null : maxRegularVolume(pageBooks);
-  // Page intermédiaire sans tome régulier numéroté : aucune borne haute fiable.
-  if (!isLastPage && upper === null) return [];
+  const lower = window.lowerBound;
+  return missing.filter((item) => item.volumeNumber > lower && item.volumeNumber <= upper);
+}
 
-  return missing.filter(
-    (item) =>
-      (lower === null || item.volumeNumber > lower) &&
-      (upper === null || item.volumeNumber <= upper)
-  );
+/** Pages remontées au plus pour trouver la borne basse (hors-séries en série). */
+const MAX_LOWER_BOUND_PAGES = 5;
+
+/**
+ * Plus grand tome régulier numéroté avant la page `page`, en remontant les
+ * pages précédentes (`fetchPage`, même requête que la grille) jusqu'à en
+ * trouver un. `-Infinity` sur la première page ou si aucune page précédente
+ * n'en a ; `null` si une page n'a pas pu être lue ou si la limite est atteinte.
+ */
+export async function lowerBoundBeforePage(
+  page: number,
+  fetchPage: (page: number) => Promise<readonly NormalizedBook[] | null>
+): Promise<number | null> {
+  const stop = Math.max(1, page - MAX_LOWER_BOUND_PAGES);
+  for (let previous = page - 1; previous >= stop; previous -= 1) {
+    const books = await fetchPage(previous);
+    if (!books) return null;
+    const max = maxRegularVolume(books);
+    if (max !== null) return max;
+  }
+  return stop === 1 ? Number.NEGATIVE_INFINITY : null;
 }

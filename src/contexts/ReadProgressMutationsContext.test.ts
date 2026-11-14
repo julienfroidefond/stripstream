@@ -125,7 +125,7 @@ describe("ReadProgressMutationsContext", () => {
     expect(result.current.resolveBook(book).readProgress?.completed).toBe(true);
   });
 
-  it("does not revive a recorded override when the server later returns to the observed state", async () => {
+  it("forgets a recorded override when the reader opens the book", async () => {
     const readBook: NormalizedBook = {
       ...book,
       readProgress: { page: 48, completed: true, lastReadAt: null },
@@ -136,10 +136,30 @@ describe("ReadProgressMutationsContext", () => {
     await act(async () => {
       await result.current.markBook(readBook, false);
     });
+    expect(result.current.resolveBook(readBook).readProgress).toBeNull();
 
-    // Le refresh livre l'état enregistré, puis le tome est relu jusqu'au bout :
-    // le serveur renvoie de nouveau `done:48`, l'override ne se rallume pas.
-    expect(result.current.resolveBook({ ...readBook, readProgress: null }).readProgress).toBeNull();
+    // Le lecteur, autre écrivain de la progression, relit le tome jusqu'au bout.
+    act(() => result.current.forgetBook(readBook.id));
+    expect(result.current.resolveBook(readBook).readProgress?.completed).toBe(true);
+  });
+
+  it("drops the recorded book overrides of a series marked as a whole", async () => {
+    const readBook: NormalizedBook = {
+      ...book,
+      readProgress: { page: 48, completed: true, lastReadAt: null },
+    };
+    mocks.deleteReadProgress.mockResolvedValueOnce({ success: true });
+    mocks.updateSeriesReadStatus.mockResolvedValueOnce({ success: true, updated: 10 });
+    const { result } = renderMutations();
+
+    await act(async () => {
+      await result.current.markBook(readBook, false);
+    });
+    await act(async () => {
+      await result.current.markSeries({ ...series, id: readBook.seriesId! }, true);
+    });
+
+    // « Tout marquer lu » ramène le tome à `done:48` : l'ancien « non lu » ne revient pas.
     expect(result.current.resolveBook(readBook).readProgress?.completed).toBe(true);
   });
 

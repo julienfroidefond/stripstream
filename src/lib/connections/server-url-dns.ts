@@ -65,13 +65,19 @@ const SAFE_TARGET_TTL_MS = 60_000;
 const verifiedTargets = new Map<string, number>();
 const pendingChecks = new Map<string, Promise<void>>();
 
-/** Erreur réseau levée quand l'hôte d'une requête provider ne se résout pas. */
+/**
+ * Erreur réseau levée quand l'hôte d'une requête provider ne se résout pas.
+ * Elle garde le code de la résolution (`EAI_AGAIN`, `ENOTFOUND`…) pour que la
+ * politique de retry du transport la traite comme un `fetch` raté.
+ */
 export class UnresolvedProviderHostError extends Error {
-  readonly code = "ENOTFOUND";
+  readonly code: string;
 
-  constructor(hostname: string, options?: { cause?: unknown }) {
-    super(`Provider host ${hostname} did not resolve`, options);
+  constructor(hostname: string, cause: unknown) {
+    super(`Provider host ${hostname} did not resolve`, { cause });
     this.name = "UnresolvedProviderHostError";
+    const code = (cause as { code?: unknown } | null)?.code;
+    this.code = typeof code === "string" ? code : "ENOTFOUND";
   }
 }
 
@@ -82,7 +88,8 @@ export class UnresolvedProviderHostError extends Error {
  *
  * - Seule une résolution réussie et autorisée est mise en cache ; un échec de
  *   résolution refuse la requête (sinon un SERVFAIL ouvrirait 60 s sans garde).
- * - Les requêtes concurrentes d'un même nom partagent une seule résolution.
+ * - Les requêtes concurrentes d'un même nom partagent une seule résolution
+ *   (résolveur DNS par défaut seulement : un résolveur injecté fait la sienne).
  *
  * Limite assumée : `fetch` refait sa propre résolution juste après ; un DNS
  * hostile qui alterne ses réponses à la milliseconde garde une fenêtre. La
@@ -101,7 +108,8 @@ export async function assertProviderTargetIsSafe(
   const verifiedUntil = verifiedTargets.get(hostname);
   if (verifiedUntil !== undefined && verifiedUntil > now) return;
 
-  const inFlight = pendingChecks.get(hostname);
+  const shared = resolve === resolveWithDns;
+  const inFlight = shared ? pendingChecks.get(hostname) : undefined;
   if (inFlight) return inFlight;
 
   const check = (async () => {
@@ -109,11 +117,12 @@ export async function assertProviderTargetIsSafe(
     try {
       addresses = await resolve(hostname);
     } catch (error) {
-      throw new UnresolvedProviderHostError(hostname, { cause: error });
+      throw new UnresolvedProviderHostError(hostname, error);
     }
     assertAddressesAllowed(addresses);
     verifiedTargets.set(hostname, now + SAFE_TARGET_TTL_MS);
   })();
+  if (!shared) return check;
   pendingChecks.set(hostname, check);
   try {
     await check;

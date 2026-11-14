@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { Loader2 } from "lucide-react";
 import type { NormalizedBook, NormalizedSeriesRating } from "@/lib/providers/types";
@@ -18,6 +18,7 @@ const BookReader = dynamic(() => import("./BookReader").then((m) => m.BookReader
 });
 import type { ReaderInfo } from "./types";
 import { useTranslate } from "@/hooks/useTranslate";
+import { useReadProgressMutations } from "@/contexts/ReadProgressMutationsContext";
 
 interface ClientBookWrapperProps {
   book: NormalizedBook;
@@ -40,6 +41,12 @@ export function ClientBookWrapper({
 }: ClientBookWrapperProps) {
   const router = useRouter();
   const { t } = useTranslate();
+  const { forgetBook } = useReadProgressMutations();
+  // Le lecteur écrit lui-même la progression de ce livre : un marquage lu/non
+  // lu fait depuis une carte ne doit pas se rallumer au retour.
+  useEffect(() => {
+    forgetBook(book.id);
+  }, [book.id, forgetBook]);
   const [isClosing, setIsClosing] = useState(false);
 
   const exitReader = (intent: ReaderCloseIntent) => {

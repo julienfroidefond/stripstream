@@ -3,14 +3,13 @@ import { describe, expect, it } from "vitest";
 import type { NormalizedBook, NormalizedSeries } from "@/lib/providers/types";
 import {
   bookProgressSignature,
+  dropSettled,
   optimisticBookProgress,
   resolveBook,
   resolveSeries,
   seriesProgressSignature,
   settleOverride,
-  takeRetired,
   withOverride,
-  withoutIds,
   type ReadOverrides,
 } from "./read-progress-overrides";
 
@@ -139,43 +138,21 @@ describe("settled overrides", () => {
       withOverride(new Map(), readBook.id, { read: false, observed: "done:48" }),
       readBook.id
     );
-    const retired = new Set<string>();
 
-    expect(resolveBook(overrides, readBook, retired).readProgress).toBeNull();
-    expect(retired.size).toBe(0);
+    expect(resolveBook(overrides, readBook).readProgress).toBeNull();
+    expect(resolveBook(overrides, unreadBook)).toBe(unreadBook);
   });
 
-  it("retires a recorded override once the server moved past it, so it never revives", () => {
-    const overrides = settleOverride(
-      withOverride(new Map(), readBook.id, { read: false, observed: "done:48" }),
-      readBook.id
-    );
-    const retired = new Set<string>();
-
-    // Le refresh livre l'état enregistré (non lu)…
-    expect(resolveBook(overrides, unreadBook, retired)).toBe(unreadBook);
-    // …puis le tome est relu jusqu'au bout : le serveur renvoie `done:48`.
-    expect(resolveBook(overrides, readBook, retired)).toBe(readBook);
-  });
-
-  it("does not retire an override still in flight", () => {
-    const overrides = withOverride(new Map(), readBook.id, { read: false, observed: "done:48" });
-    const retired = new Set<string>();
-
-    resolveBook(overrides, unreadBook, retired);
-    expect(retired.size).toBe(0);
-  });
-
-  it("empties the retired set and drops those ids from the table", () => {
-    const retired = new Set(["a"]);
+  it("drops only the recorded overrides matching the predicate", () => {
     const overrides: ReadOverrides = new Map([
-      ["a", { read: true, observed: "none", settled: true }],
-      ["b", { read: true, observed: "none" }],
+      ["a", { read: true, observed: "none", settled: true, seriesId: "s1" }],
+      ["b", { read: true, observed: "none", seriesId: "s1" }],
+      ["c", { read: true, observed: "none", settled: true, seriesId: "s2" }],
     ]);
 
-    const ids = takeRetired(retired);
-    expect(retired.size).toBe(0);
-    expect([...withoutIds(overrides, ids).keys()]).toEqual(["b"]);
-    expect(withoutIds(overrides, [])).toBe(overrides);
+    const dropped = dropSettled(overrides, (override) => override.seriesId === "s1");
+
+    expect([...dropped.keys()]).toEqual(["b", "c"]);
+    expect(dropSettled(overrides, () => false)).toBe(overrides);
   });
 });
