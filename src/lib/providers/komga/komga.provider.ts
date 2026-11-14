@@ -28,13 +28,13 @@ import {
 } from "../provider-transport";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { AppError } from "@/utils/errors";
-import { normalizeServerUrl } from "@/utils/server-url";
+import { normalizeServerUrl } from "@/lib/connections/server-url";
 import { normalizePageNumber } from "../pagination";
 
 import type { KomgaBook, KomgaSeries, KomgaLibrary } from "@/types/komga";
 import type { LibraryResponse } from "@/types/library";
 import type { AuthConfig } from "@/types/auth";
-import { cacheProfile } from "@/constants/cacheProfiles";
+import { cacheProfile } from "@/lib/cache/profiles";
 import { unstable_cache } from "next/cache";
 import logger from "@/lib/logger";
 

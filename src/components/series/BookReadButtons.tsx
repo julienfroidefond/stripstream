@@ -5,7 +5,7 @@ import { BookCheck, BookX, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useTranslate } from "@/hooks/useTranslate";
-import { burst } from "@/lib/celebrate";
+import { burst } from "@/lib/motion/celebrate";
 import { cn } from "@/lib/utils";
 
 interface BookReadButtonProps {

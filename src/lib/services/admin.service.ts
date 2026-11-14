@@ -1,6 +1,6 @@
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-import { ADMIN_ROLE } from "../auth-utils";
+import { ADMIN_ROLE } from "../auth/session";
 import { ERROR_CODES, type ErrorCode } from "../../constants/errorCodes";
 import { AppError } from "../../utils/errors";
 

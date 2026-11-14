@@ -2,7 +2,7 @@
 
 import { useCallback, useSyncExternalStore } from "react";
 import { useUserScope } from "@/contexts/UserScopeContext";
-import { buildStorageKey } from "@/lib/storage";
+import { buildStorageKey } from "@/lib/browser/storage";
 
 /**
  * Deux façons de parcourir une rangée de l'accueil :

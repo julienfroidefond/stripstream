@@ -121,7 +121,7 @@ si elle est perdue ou remplacée, il faut ressaisir les mots de passe / tokens
 dans les réglages (les valeurs existantes deviennent indéchiffrables).
 
 Sans clé, rien n'est écrit : le script avertit et sort en `0`, l'application
-tournant de toute façon en mode dégradé (voir `src/lib/credentials.ts`). Ajouter
+tournant de toute façon en mode dégradé (voir `src/lib/connections/credentials.ts`). Ajouter
 `--strict` le rend bloquant (sortie `1`) pour les pipelines qui veulent la
 garantie :
 

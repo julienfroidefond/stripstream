@@ -60,7 +60,7 @@ vi.mock("@/lib/cache/invalidation", () => ({
 
 // Pas de DNS réel en test unitaire : la vérification de l'adresse résolue a
 // ses propres tests (`server-url-dns.test.ts`).
-vi.mock("@/utils/server-url-dns", () => ({
+vi.mock("@/lib/connections/server-url-dns", () => ({
   assertServerUrlResolvesSafely: vi.fn(async () => undefined),
 }));
 
@@ -70,7 +70,7 @@ import {
   listConnections,
   saveConnection,
 } from "./manage";
-import { decryptSecret } from "@/lib/credentials";
+import { decryptSecret } from "@/lib/connections/credentials";
 
 beforeEach(() => {
   vi.clearAllMocks();

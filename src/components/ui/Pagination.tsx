@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { gsap, prefersReducedMotion, useGsapEffect } from "@/lib/gsap";
+import { gsap, prefersReducedMotion, useGsapEffect } from "@/lib/motion/gsap";
 import { useTranslate } from "@/hooks/useTranslate";
 
 interface PaginationProps {

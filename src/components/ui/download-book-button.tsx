@@ -5,9 +5,9 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "./button";
 import { useToast } from "./use-toast";
-import { canShareFiles, fetchSharedFile, isIosStandalone } from "@/lib/download";
+import { canShareFiles, fetchSharedFile, isIosStandalone } from "@/lib/browser/download";
 import { cn } from "@/lib/utils";
-import { drop } from "@/lib/celebrate";
+import { drop } from "@/lib/motion/celebrate";
 import logger from "@/lib/logger";
 
 interface DownloadBookButtonProps {

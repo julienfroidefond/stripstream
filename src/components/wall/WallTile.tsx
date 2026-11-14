@@ -4,7 +4,7 @@ import { memo, useCallback, useEffect, useRef } from "react";
 import Link from "next/link";
 
 import { SeriesCover } from "@/components/ui/series-cover";
-import { wallItemToSeries } from "@/lib/wall-cover";
+import { wallItemToSeries } from "@/lib/wall/cover";
 import type { WallItem, WallRenderTile } from "@/types/wall";
 import { cn } from "@/lib/utils";
 

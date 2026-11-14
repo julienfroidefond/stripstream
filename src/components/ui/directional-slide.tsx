@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { cn } from "@/lib/utils";
-import { gsap, prefersReducedMotion, useGsapEffect } from "@/lib/gsap";
+import { gsap, prefersReducedMotion, useGsapEffect } from "@/lib/motion/gsap";
 
 const SWIPE_THRESHOLD = 60;
 const SWIPE_RESISTANCE = 0.55;

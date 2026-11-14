@@ -2,7 +2,7 @@ import { listConnections } from "@/app/actions/connections";
 import { ProviderSwitcher } from "@/components/layout/ProviderSwitcher";
 
 export async function SidebarConnections() {
-  const user = await import("@/lib/auth-utils")
+  const user = await import("@/lib/auth/session")
     .then((m) => m.getCurrentUser())
     .catch(() => null);
   if (!user) return null;

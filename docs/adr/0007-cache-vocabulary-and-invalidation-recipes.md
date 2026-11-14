@@ -5,7 +5,7 @@ date: 2026-11-12
 
 # Cache tags are a vocabulary, invalidation is a recipe
 
-Tag strings and invalidation lists were copied into actions and providers, which produced dead tags and over-invalidation. `cacheTags` (`src/constants/cacheConstants.ts`) now builds every per-id tag, and `src/lib/cache/invalidation.ts` owns one recipe per kind of change ("what changed → which tags and paths"). Mutations call a recipe; they do not assemble tag lists. Prefer the per-id tag over the global scope, and use `updateTag` (the codebase has no `revalidateTag` call site).
+Tag strings and invalidation lists were copied into actions and providers, which produced dead tags and over-invalidation. `cacheTags` (`src/lib/cache/tags.ts`) now builds every per-id tag, and `src/lib/cache/invalidation.ts` owns one recipe per kind of change ("what changed → which tags and paths"). Mutations call a recipe; they do not assemble tag lists. Prefer the per-id tag over the global scope, and use `updateTag` (the codebase has no `revalidateTag` call site).
 
 ## Considered options
 

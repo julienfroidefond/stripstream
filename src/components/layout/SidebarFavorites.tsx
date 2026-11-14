@@ -3,7 +3,7 @@ import { getProvider } from "@/lib/providers/provider.factory";
 import { SidebarFavoritesView } from "./SidebarFavoritesView";
 
 export async function SidebarFavorites() {
-  const userId = await import("@/lib/auth-utils")
+  const userId = await import("@/lib/auth/session")
     .then((m) => m.getCurrentUserId())
     .catch(() => null);
   if (userId === null) return null;

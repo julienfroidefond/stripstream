@@ -18,7 +18,7 @@ import {
   ADMIN_BOOTSTRAP_MIN_PASSWORD_LENGTH,
   ADMIN_BOOTSTRAP_REFUSED_EXIT_CODE,
   planAdminBootstrap,
-} from "../src/lib/admin-bootstrap";
+} from "../src/lib/auth/admin-bootstrap";
 
 const adapter = new PrismaBetterSqlite3({
   url: process.env.DATABASE_URL ?? "file:./prisma/data/stripstream.db",

@@ -1,5 +1,5 @@
 import type { Prisma } from "@/generated/prisma/client";
-import { normalizeDisplayMode } from "@/lib/display-preferences";
+import { normalizeDisplayMode } from "@/lib/preferences/display";
 import {
   defaultPreferences,
   type BackgroundPreferences,

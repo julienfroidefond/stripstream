@@ -5,7 +5,7 @@ import {
   getSeriesReadingState,
   type SeriesReadingState,
   type SeriesReadingStatus,
-} from "@/lib/series-reading-status";
+} from "@/lib/series/reading-status";
 import type { NormalizedSeries } from "@/lib/providers/types";
 
 type Translate = (

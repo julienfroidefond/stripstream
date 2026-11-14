@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { useRef, type ReactNode } from "react";
-import { gsap, prefersReducedMotion, useGsapEffect } from "@/lib/gsap";
+import { gsap, prefersReducedMotion, useGsapEffect } from "@/lib/motion/gsap";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
 /**

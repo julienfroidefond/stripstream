@@ -76,7 +76,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // Le layout est un point d'entrée : il lit la session, puis passe l'identité
   // au service de préférences (ADR 0029). Sans session (pages publiques), on
   // ne lit aucune préférence et le client reçoit les valeurs par défaut.
-  const currentUser = await import("@/lib/auth-utils")
+  const currentUser = await import("@/lib/auth/session")
     .then((m) => m.getCurrentUser())
     .catch(() => null);
   const userIsAdmin = currentUser?.roles.includes("ROLE_ADMIN") ?? false;

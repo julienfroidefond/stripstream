@@ -7,7 +7,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { getGridPageSizeOptions, normalizeGridPageSize } from "@/lib/pageSize";
+import { getGridPageSizeOptions, normalizeGridPageSize } from "@/lib/collections/page-size";
 
 interface PageSizeSelectProps {
   pageSize: number;

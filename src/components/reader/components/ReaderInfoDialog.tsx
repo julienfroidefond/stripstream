@@ -9,7 +9,7 @@ import type { ReaderInfo } from "../types";
 import { useTranslation } from "react-i18next";
 import { useCallback, useRef, useState } from "react";
 import { CountUp } from "@/components/motion";
-import { gsap, prefersReducedMotion, SplitText, useGsapEffect } from "@/lib/gsap";
+import { gsap, prefersReducedMotion, SplitText, useGsapEffect } from "@/lib/motion/gsap";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
 /** Les barres attendent que leur bloc soit posé pour se remplir sous les yeux. */

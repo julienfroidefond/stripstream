@@ -2,14 +2,14 @@
 
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 
-import { isWallUiTarget } from "@/lib/wall-gesture";
+import { isWallUiTarget } from "@/lib/wall/gesture";
 import {
   createWallPointerState,
   isWallClickGuarded,
   stepWallPointer,
   type WallPointerEffect,
   type WallPointerEvent,
-} from "@/lib/wall-pointer-machine";
+} from "@/lib/wall/pointer-machine";
 
 import type { WallCameraController } from "./useWallCamera";
 

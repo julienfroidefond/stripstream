@@ -3,7 +3,7 @@
 import * as React from "react";
 import { type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { gsap, prefersReducedMotion, useGsapEffect } from "@/lib/gsap";
+import { gsap, prefersReducedMotion, useGsapEffect } from "@/lib/motion/gsap";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
 export interface NavButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {

@@ -1,4 +1,4 @@
-import { cacheProfile } from "@/constants/cacheProfiles";
+import { cacheProfile } from "@/lib/cache/profiles";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import type {
   StripstreamBookDetails,

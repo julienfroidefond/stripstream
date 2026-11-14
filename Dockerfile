@@ -78,15 +78,16 @@ COPY --from=builder /app/src/generated ./src/generated
 # the container with `./node_modules/.bin/tsx scripts/encrypt-credentials.ts`
 # (the runner image has no pnpm). The standalone output only ships compiled JS,
 # so these sources must be copied explicitly. Keep this list in sync with the
-# script's import closure: adding an import to src/lib/credentials.ts means
+# script's import closure: adding an import to src/lib/connections/credentials.ts means
 # adding the module here too.
-COPY --from=builder /app/src/lib/credentials.ts /app/src/lib/credentials-migration.ts /app/src/lib/logger.ts ./src/lib/
+COPY --from=builder /app/src/lib/logger.ts ./src/lib/
+COPY --from=builder /app/src/lib/connections/credentials.ts /app/src/lib/connections/credentials-migration.ts ./src/lib/connections/
 COPY --from=builder /app/src/utils/errors.ts ./src/utils/
 COPY --from=builder /app/src/constants/errorCodes.ts /app/src/constants/errorMessages.ts ./src/constants/
 
 # Dependency-free decision module imported by scripts/init-db.ts, run on every
 # boot by docker-entrypoint.sh (admin bootstrap, no default password).
-COPY --from=builder /app/src/lib/admin-bootstrap.ts ./src/lib/
+COPY --from=builder /app/src/lib/auth/admin-bootstrap.ts ./src/lib/auth/
 
 # Copy entrypoint script
 COPY docker-entrypoint.sh ./

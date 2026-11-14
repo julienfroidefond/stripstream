@@ -8,7 +8,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useTranslate } from "@/hooks/useTranslate";
 import type { NormalizedSearchResult } from "@/lib/providers/types";
 import { usePresence } from "@/components/motion";
-import { gsap, prefersReducedMotion, useGsapEffect } from "@/lib/gsap";
+import { gsap, prefersReducedMotion, useGsapEffect } from "@/lib/motion/gsap";
 
 const MIN_QUERY_LENGTH = 2;
 

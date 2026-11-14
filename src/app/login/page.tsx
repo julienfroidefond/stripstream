@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { isRegistrationEnabled } from "@/lib/registration";
+import { isRegistrationEnabled } from "@/lib/auth/registration";
 import { LoginContent } from "./LoginContent";
 
 interface PageProps {

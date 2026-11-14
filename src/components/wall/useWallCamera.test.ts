@@ -7,7 +7,7 @@ import {
   MAX_WALL_ZOOM,
   initialWallCamera,
   type WallViewport,
-} from "@/lib/wall-camera";
+} from "@/lib/wall/camera";
 
 import { useWallCamera, type WallCameraController } from "./useWallCamera";
 

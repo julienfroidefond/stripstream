@@ -4,7 +4,7 @@ import { ProgressBar } from "./progress-bar";
 import { BookX, CircleDot, CircleCheck, CirclePause, CircleX, type LucideIcon } from "lucide-react";
 import type { SeriesCoverProps } from "./cover-utils";
 import { useCoverLoaded } from "@/hooks/useCoverLoaded";
-import { getSeriesReadingState } from "@/lib/series-reading-status";
+import { getSeriesReadingState } from "@/lib/series/reading-status";
 import { cn } from "@/lib/utils";
 
 

@@ -8,7 +8,7 @@ import { RefreshButton } from "@/components/common/RefreshButton";
 import { useTranslate } from "@/hooks/useTranslate";
 import { SeriesCover } from "@/components/ui/series-cover";
 import { getSeriesReadingStatusLabel } from "@/components/ui/series-reading-status";
-import { getSeriesReadingState } from "@/lib/series-reading-status";
+import { getSeriesReadingState } from "@/lib/series/reading-status";
 import { BookCoverScene } from "@/components/ui/book-cover-scene";
 import { CoverEdge } from "@/components/ui/cover-card";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -31,7 +31,7 @@ import { SeriesRatingControl } from "./SeriesRatingControl";
 import type { NormalizedProviderRating } from "@/lib/providers/types";
 import { ProjectionBackdrop } from "@/components/ui/projection-backdrop";
 import { useBannerScene } from "@/components/motion";
-import { burst, nudge, pop } from "@/lib/celebrate";
+import { burst, nudge, pop } from "@/lib/motion/celebrate";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
 interface SeriesHeaderProps {

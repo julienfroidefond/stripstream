@@ -14,7 +14,7 @@ vi.mock("@/lib/providers/provider.factory", () => ({
   getProvider: vi.fn(),
 }));
 
-vi.mock("@/lib/auth-utils", () => ({
+vi.mock("@/lib/auth/session", () => ({
   requireUserId: vi.fn(),
   requireAdmin: vi.fn(),
 }));
@@ -34,7 +34,7 @@ vi.mock("@/lib/logger", () => ({
 
 const { getProvider } = await import("@/lib/providers/provider.factory");
 const { PreferencesService } = await import("@/lib/services/preferences.service");
-const { requireAdmin, requireUserId } = await import("@/lib/auth-utils");
+const { requireAdmin, requireUserId } = await import("@/lib/auth/session");
 
 const provider = {} as IMediaProvider;
 const preferences = {

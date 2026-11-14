@@ -1,6 +1,6 @@
 import { ERROR_CODES } from "@/constants/errorCodes";
 import logger from "@/lib/logger";
-import { normalizeServerUrl } from "@/utils/server-url";
+import { normalizeServerUrl } from "@/lib/connections/server-url";
 
 import {
   errorCodeOf,

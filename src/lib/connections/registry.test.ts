@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/prisma", () => ({ default: {} }));
-vi.mock("@/lib/auth-utils", () => ({ requireUserId: vi.fn(), getCurrentUser: vi.fn() }));
+vi.mock("@/lib/auth/session", () => ({ requireUserId: vi.fn(), getCurrentUser: vi.fn() }));
 vi.mock("@/lib/logger", () => ({
   default: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));

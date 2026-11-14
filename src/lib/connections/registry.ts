@@ -1,10 +1,10 @@
 import prisma from "@/lib/prisma";
 import { ERROR_CODES, type ErrorCode } from "@/constants/errorCodes";
-import { buildKomgaAuthHeader, decryptSecret, encryptSecret } from "@/lib/credentials";
+import { buildKomgaAuthHeader, decryptSecret, encryptSecret } from "@/lib/connections/credentials";
 import type { MediaTransport } from "@/lib/media/types";
 import type { IMediaProvider } from "@/lib/providers/provider.interface";
 import type { ProviderType } from "@/lib/providers/types";
-import { normalizeServerUrl } from "@/utils/server-url";
+import { normalizeServerUrl } from "@/lib/connections/server-url";
 import { CONNECTION_DESCRIPTORS, type ConnectionDescriptor } from "./descriptors";
 import type {
   ConnectionDraftOf,

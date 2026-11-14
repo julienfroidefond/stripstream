@@ -4,7 +4,7 @@ import { StrictMode, createElement } from "react";
 import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { buildStorageKey } from "@/lib/storage";
+import { buildStorageKey } from "@/lib/browser/storage";
 import type { WallItem } from "@/types/wall";
 
 import {

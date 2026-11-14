@@ -92,7 +92,7 @@ vi.mock("@/components/ui/use-toast", () => ({
   useToast: () => ({ toast: vi.fn() }),
 }));
 
-vi.mock("@/lib/celebrate", () => ({ burst: vi.fn() }));
+vi.mock("@/lib/motion/celebrate", () => ({ burst: vi.fn() }));
 
 vi.mock("@/lib/logger", () => ({ default: { error: vi.fn() } }));
 

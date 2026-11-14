@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { cn } from "@/lib/utils";
-import { gsap } from "@/lib/gsap";
+import { gsap } from "@/lib/motion/gsap";
 import {
   SETTLE_DURATION,
   beginDrag,
