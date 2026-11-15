@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode, RefObject } from "react";
+import { useCallback, useEffect, useRef, type ReactNode, type RefObject } from "react";
 
 import { Pagination } from "@/components/ui/Pagination";
 import { useTranslate } from "@/hooks/useTranslate";
@@ -62,6 +62,27 @@ export function CollectionShell({
   className,
 }: CollectionShellProps) {
   const { t } = useTranslate();
+  const shouldScrollToGrid = useRef(false);
+  const handlePageChange = useCallback(
+    async (page: number) => {
+      shouldScrollToGrid.current = page !== currentPage;
+      try {
+        await onPageChange(page);
+      } catch (error) {
+        shouldScrollToGrid.current = false;
+        throw error;
+      }
+    },
+    [currentPage, onPageChange]
+  );
+
+  useEffect(() => {
+    if (!shouldScrollToGrid.current) return;
+
+    shouldScrollToGrid.current = false;
+    gridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [currentPage, gridRef]);
+
   const startIndex = totalElements === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const endIndex = Math.min(currentPage * pageSize, totalElements);
   const showingText =
@@ -135,7 +156,7 @@ export function CollectionShell({
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
-          onPageChange={onPageChange}
+          onPageChange={handlePageChange}
           className="order-1 sm:order-2"
         />
       </div>
