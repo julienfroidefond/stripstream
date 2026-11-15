@@ -19,6 +19,13 @@ vi.mock("@/contexts/PreferencesContext", () => ({
 
 import { useDoublePageMode } from "./useDoublePageMode";
 
+function setScreenSize(width: number, height: number) {
+  Object.defineProperty(window, "screen", {
+    value: { width, height },
+    configurable: true,
+  });
+}
+
 function setInnerHeight(value: number) {
   Object.defineProperty(window, "innerHeight", {
     value,
@@ -32,7 +39,7 @@ describe("useDoublePageMode", () => {
     hoisted.isLandscape.value = null;
     hoisted.updatePreferencesMock.mockReset();
     hoisted.updatePreferencesMock.mockResolvedValue(true);
-    setInnerHeight(800);
+    setScreenSize(1024, 768);
   });
 
   it("starts from the saved preference", () => {
@@ -61,6 +68,7 @@ describe("useDoublePageMode", () => {
     hoisted.isLandscape.value = true;
     rerender();
     expect(result.current.isDoublePage).toBe(true);
+    expect(result.current.shouldShowDoublePage(8, 24)).toBe(true);
 
     hoisted.isLandscape.value = false;
     rerender();
@@ -75,8 +83,16 @@ describe("useDoublePageMode", () => {
       expect(result.current.shouldShowDoublePage(2, 10)).toBe(true);
     });
 
-    it("returns false on a mobile-sized viewport", () => {
-      setInnerHeight(500);
+    it("returns true on a tablet when browser chrome shortens the landscape viewport", () => {
+      setScreenSize(1194, 834);
+      setInnerHeight(600);
+      const { result } = renderHook(() => useDoublePageMode(true));
+
+      expect(result.current.shouldShowDoublePage(2, 10)).toBe(true);
+    });
+
+    it("returns false on a mobile-sized screen", () => {
+      setScreenSize(852, 393);
       const { result } = renderHook(() => useDoublePageMode(true));
 
       expect(result.current.shouldShowDoublePage(2, 10)).toBe(false);

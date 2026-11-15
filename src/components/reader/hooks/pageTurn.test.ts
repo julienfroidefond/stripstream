@@ -4,15 +4,24 @@ import { easeTurn, freeEdgeOffset, leafAngles, planTurn, type ReaderSnapshot } f
 
 const rect = (left: number) => ({ left, top: 0, width: 100, height: 150 });
 
-const single = (page: number, url: string | null = `p${page}`): ReaderSnapshot => ({
+const single = (
+  page: number,
+  url: string | null = `p${page}`,
+  isDoublePageMode = false
+): ReaderSnapshot => ({
   currentPage: page,
+  isDoublePageMode,
   slots: [{ url, rect: url ? rect(50) : null }],
 });
 
 const spread = (page: number, isRTL = false): ReaderSnapshot => {
   const first = { url: `p${page}`, rect: rect(isRTL ? 100 : 0) };
   const second = { url: `p${page + 1}`, rect: rect(isRTL ? 0 : 100) };
-  return { currentPage: page, slots: isRTL ? [second, first] : [first, second] };
+  return {
+    currentPage: page,
+    isDoublePageMode: true,
+    slots: isRTL ? [second, first] : [first, second],
+  };
 };
 
 describe("planTurn", () => {
@@ -48,8 +57,12 @@ describe("planTurn", () => {
   });
 
   it("uses a blank back when leaving or entering a single page", () => {
-    expect(planTurn(single(1), spread(2), false)?.backUrl).toBeNull();
-    expect(planTurn(spread(2), single(4), false)?.backUrl).toBeNull();
+    expect(planTurn(single(1, "p1", true), spread(2), false)?.backUrl).toBeNull();
+    expect(planTurn(spread(8), single(10, "p10", true), false)?.backUrl).toBeNull();
+  });
+
+  it("does not animate a layout change from a spread to one page", () => {
+    expect(planTurn(spread(8), single(9), false)).toBeNull();
   });
 
   it("skips jumps and pages that are not on screen yet", () => {

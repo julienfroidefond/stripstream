@@ -25,6 +25,8 @@ export interface PageSlot {
 /** Ce que le lecteur montre à un instant donné, places dans l'ordre visuel (gauche → droite). */
 export interface ReaderSnapshot {
   currentPage: number;
+  /** User/auto mode, distinct from a cover or final page shown alone. */
+  isDoublePageMode: boolean;
   slots: PageSlot[];
 }
 
@@ -59,7 +61,13 @@ function isVisible(slot: PageSlot): slot is { url: string; rect: PageRect } {
  */
 export function planTurn(prev: ReaderSnapshot, next: ReaderSnapshot, isRTL: boolean): TurnPlan | null {
   const delta = next.currentPage - prev.currentPage;
-  if (delta === 0 || Math.abs(delta) > MAX_TURN_DELTA) return null;
+  if (
+    delta === 0 ||
+    Math.abs(delta) > MAX_TURN_DELTA ||
+    prev.isDoublePageMode !== next.isDoublePageMode
+  ) {
+    return null;
+  }
 
   const visible = prev.slots.filter(isVisible);
   if (visible.length === 0) return null;
