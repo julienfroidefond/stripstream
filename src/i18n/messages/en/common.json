@@ -60,7 +60,8 @@
       "start": "Start",
       "tomeLabel": "Volume {{number}}",
       "page": "Page {{current}} / {{total}}",
-      "seriesProgress": "Series progress"
+      "seriesProgress": "Series progress",
+      "seriesProgressShort": "Series"
     },
     "welcome": {
       "badge": "Your library, on the big screen",

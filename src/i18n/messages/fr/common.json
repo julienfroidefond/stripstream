@@ -60,7 +60,8 @@
       "start": "Commencer",
       "tomeLabel": "Tome {{number}}",
       "page": "Page {{current}} / {{total}}",
-      "seriesProgress": "Progression de la série"
+      "seriesProgress": "Progression de la série",
+      "seriesProgressShort": "Série"
     },
     "welcome": {
       "badge": "Votre médiathèque, sur grand écran",

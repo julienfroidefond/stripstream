@@ -10,7 +10,6 @@ import { ArrowRight, BookOpen } from "lucide-react";
 import type { NormalizedBook } from "@/lib/providers/types";
 import type { ResumeEntry } from "@/lib/resume/resume-state";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { BookCoverScene } from "@/components/ui/book-cover-scene";
 import { LoadMoreLabel } from "@/components/ui/load-more-label";
 import { useCoverLoaded } from "@/hooks/useCoverLoaded";
@@ -259,41 +258,56 @@ function HeroSlide({
           </p>
         )}
 
-        {hasProgress && (
+        {(hasProgress || seriesProgressPercent !== null) && (
           <div
-            className="mx-auto w-full max-w-md space-y-2 sm:mx-0"
+            className="mx-auto w-full max-w-md sm:mx-0"
             {...stagedItem}
           >
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-foreground/15">
-              <ProgressFill percent={percent} />
+            {hasProgress && (
+              <div className="mb-2 h-1.5 w-full overflow-hidden rounded-full bg-foreground/15">
+                <ProgressFill percent={percent} />
+              </div>
+            )}
+            <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-muted-foreground sm:justify-start">
+              {hasProgress && (
+                <>
+                  <span className="font-semibold text-foreground tabular-nums">
+                    <CountUp value={percent} suffix="%" />
+                  </span>
+                  <span className="tabular-nums">
+                    {t("home.hero.page", { current: currentPage, total: totalPages })}
+                  </span>
+                </>
+              )}
+              {seriesProgressPercent !== null && (
+                <span
+                  className="tabular-nums"
+                  title={t("home.hero.seriesProgress")}
+                >
+                  {t("home.hero.seriesProgressShort")}
+                </span>
+              )}
+              {seriesProgressPercent !== null && (
+                <span
+                  role="progressbar"
+                  aria-label={`${t("home.hero.seriesProgress")} ${seriesProgressPercent}%`}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={seriesProgressPercent}
+                  className="h-1 w-16 overflow-hidden rounded-full bg-foreground/15"
+                >
+                  <span
+                    className="block h-full rounded-full bg-[hsl(var(--chart-2))]"
+                    style={{ width: `${seriesProgressPercent}%` }}
+                  />
+                </span>
+              )}
+              {seriesProgressPercent !== null && (
+                <span className="font-semibold text-foreground tabular-nums">
+                  {seriesProgressPercent}%
+                </span>
+              )}
             </div>
-            <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground sm:justify-start">
-              <span className="font-semibold text-foreground tabular-nums">
-                <CountUp value={percent} suffix="%" />
-              </span>
-              <span className="tabular-nums">
-                {t("home.hero.page", { current: currentPage, total: totalPages })}
-              </span>
-            </div>
-          </div>
-        )}
-
-        {seriesProgressPercent !== null && (
-          <div
-            className="mx-auto w-full max-w-md space-y-1.5 sm:mx-0"
-            {...stagedItem}
-          >
-            <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
-              <span>{t("home.hero.seriesProgress")}</span>
-              <span className="font-semibold tabular-nums text-foreground">
-                {seriesProgressPercent}%
-              </span>
-            </div>
-            <Progress
-              aria-label={t("home.hero.seriesProgress")}
-              value={seriesProgressPercent}
-              className="h-1.5 bg-foreground/15"
-            />
           </div>
         )}
 
