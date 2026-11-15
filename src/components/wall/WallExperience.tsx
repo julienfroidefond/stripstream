@@ -284,7 +284,9 @@ export function WallExperience({ items }: WallExperienceProps) {
     resetHover();
     closePlaque();
     clearFlash();
-    if (!consumeEntranceSkip()) replayEntrance();
+    const restoringSelection = consumeEntranceSkip();
+    if (!restoringSelection) replayEntrance();
+    return restoringSelection;
   }, [
     clearFlash,
     closePlaque,

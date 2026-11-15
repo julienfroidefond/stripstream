@@ -57,7 +57,7 @@ interface UseWallCameraOptions {
   /** Le geste/zoom commence : la plaque et la vue d'ensemble se referment. */
   onInteractionStart: () => void;
   /** Nouveau filtre après l'initialisation : la composition réarme son entrée. */
-  onSelectionChange: () => void;
+  onSelectionChange: () => boolean | void;
 }
 
 /**
@@ -77,6 +77,13 @@ export interface WallWheelGesture extends WallWheelInput {
 }
 
 type WallBox = { x: number; y: number; width: number; height: number };
+
+function randomWallTileCenter(layout: WallLayout): WallPoint {
+  const tile = layout.tiles[Math.floor(Math.random() * layout.tiles.length)];
+  return tile
+    ? { x: tile.x + tile.width / 2, y: tile.y + tile.height / 2 }
+    : { x: WALL_PATCH_WIDTH / 2, y: WALL_PATCH_HEIGHT / 2 };
+}
 
 /**
  * La caméra parle en intentions : aucun appelant n'écrit les valeurs de
@@ -494,11 +501,7 @@ export function useWallCamera({
     }
     initializedRef.current = true;
 
-    const tile =
-      layout.tiles[Math.floor(Math.random() * layout.tiles.length)];
-    const center = tile
-      ? { x: tile.x + tile.width / 2, y: tile.y + tile.height / 2 }
-      : { x: WALL_PATCH_WIDTH / 2, y: WALL_PATCH_HEIGHT / 2 };
+    const center = randomWallTileCenter(layout);
     const next = initialWallCamera(viewport, minScale, center);
     scale.set(next.scale);
     x.set(next.x);
@@ -508,7 +511,7 @@ export function useWallCamera({
     else canvasOpacity.animateTo(1, { duration: 0.7 });
   }, [
     canvasOpacity,
-    layout.tiles,
+    layout,
     minScale,
     reduce,
     scale,
@@ -524,12 +527,35 @@ export function useWallCamera({
     if (lastSelectionRef.current === selectionKey) return;
     lastSelectionRef.current = selectionKey;
     setOverview(false);
-    callbacksRef.current.onSelectionChange();
+    const restoringSelection =
+      callbacksRef.current.onSelectionChange() === true;
 
     if (!viewport.width || !viewport.height) return;
+    if (restoringSelection) {
+      const next = initialWallCamera(
+        viewport,
+        minScale,
+        randomWallTileCenter(layout)
+      );
+      scale.set(next.scale);
+      x.set(next.x);
+      y.set(next.y);
+      syncCamera(true);
+      return;
+    }
     const next = initialWallCamera(viewport, minScale);
     animateView(next.scale, next.x, next.y, 0.8);
-  }, [animateView, minScale, selectionKey, viewport]);
+  }, [
+    animateView,
+    layout,
+    minScale,
+    scale,
+    selectionKey,
+    syncCamera,
+    viewport,
+    x,
+    y,
+  ]);
 
   // Un cadre qui change de taille garde le zoom légal.
   useEffect(() => {
