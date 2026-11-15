@@ -90,7 +90,7 @@ export function InProgressCard({
         overlay={
           resumeHref &&
           resumeLabel && (
-            <div className="pointer-events-none absolute inset-x-2 bottom-2 z-10 flex justify-center">
+            <div className="pointer-events-none absolute inset-x-2 bottom-6 z-10 flex justify-center">
               <IntentLink
                 href={resumeHref}
                 data-testid={`in-progress-resume-${series.id}`}
