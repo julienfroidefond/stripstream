@@ -64,6 +64,42 @@ async function fetchThumbnail(
   return rebuildMediaResponse(payload);
 }
 
+async function fetchPage(
+  transport: ProviderTransport,
+  configId: number | null,
+  url: string,
+  ref: Extract<MediaRef, { kind: "book-page" }>,
+  context: MediaTransportContext
+): Promise<Response> {
+  const key = [
+    "stripstream-book-page",
+    String(configId ?? url),
+    ref.bookId,
+    ref.pageNumber,
+    ref.query ?? "",
+    validatorFingerprint(context.headers),
+  ].join(":");
+
+  const payload = await requestDeduplicationService.deduplicate(key, () =>
+    imageRequestLimiter.run(async () => {
+      const response = await transport.response(
+        `books/${ref.bookId}/pages/${ref.pageNumber}`,
+        pageQueryParams(ref.query),
+        {
+          accept: STRIPSTREAM_IMAGE_ACCEPT,
+          conditionalHeaders: context.headers,
+          timeoutMs: PAGE_TIMEOUT_MS,
+          allowNotModified: true,
+          errorCode: ERROR_CODES.IMAGE.FETCH_ERROR,
+        }
+      );
+      return bufferMediaResponse(response);
+    })
+  );
+
+  return rebuildMediaResponse(payload);
+}
+
 /**
  * Transport Stripstream. Une seule connexion et un seul `ProviderTransport`
  * par requête, comme côté Komga ; seuls le chemin et l'Accept changent. Les
@@ -88,17 +124,7 @@ export const stripstreamMediaTransport: MediaTransport = {
           timeoutMs: FILE_TIMEOUT_MS,
         });
       case "book-page": {
-        return transport.response(
-          `books/${ref.bookId}/pages/${ref.pageNumber}`,
-          pageQueryParams(ref.query),
-          {
-            accept: STRIPSTREAM_IMAGE_ACCEPT,
-            conditionalHeaders: context.headers,
-            timeoutMs: PAGE_TIMEOUT_MS,
-            allowNotModified: true,
-            errorCode: ERROR_CODES.IMAGE.FETCH_ERROR,
-          }
-        );
+        return fetchPage(transport, config.configId, config.url, ref, context);
       }
       case "book-cover":
         return fetchThumbnail(
