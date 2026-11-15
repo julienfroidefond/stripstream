@@ -36,6 +36,7 @@ export interface ThumbnailProps {
 export interface NavigationBarProps {
   currentPage: number;
   pages: number[];
+  isRTL: boolean;
   onPageChange: (page: number) => void;
   showControls: boolean;
   showThumbnails: boolean;

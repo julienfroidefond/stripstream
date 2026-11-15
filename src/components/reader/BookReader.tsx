@@ -80,6 +80,7 @@ export const BookReader = memo(function BookReader(props: BookReaderProps) {
       <NavigationBar
         currentPage={s.currentPage}
         pages={s.pages}
+        isRTL={s.isRTL}
         onPageChange={s.onPageChange}
         showControls={s.showControls}
         showThumbnails={s.showThumbnails}

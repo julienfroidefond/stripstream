@@ -7,6 +7,7 @@ import { usePresence } from "@/components/motion";
 export const NavigationBar = ({
   currentPage,
   pages,
+  isRTL,
   onPageChange,
   showControls,
   showThumbnails,
@@ -68,16 +69,18 @@ export const NavigationBar = ({
         });
       });
     }
-  }, [showThumbnails, currentPage, isTooSmall]);
+  }, [showThumbnails, currentPage, isRTL, isTooSmall]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => e.stopPropagation(), []);
   const handleTouchMove = useCallback((e: React.TouchEvent) => e.stopPropagation(), []);
   const handleTouchEnd = useCallback((e: React.TouchEvent) => e.stopPropagation(), []);
 
   const thumbnails = useMemo(
-    () =>
-      pages.map((_, index) => {
-        const pageNumber = index + 1;
+    () => {
+      const pageNumbers = Array.from({ length: pages.length }, (_, index) => index + 1);
+      if (isRTL) pageNumbers.reverse();
+
+      return pageNumbers.map((pageNumber) => {
         const isVisible = visibleThumbnails.includes(pageNumber);
         return (
           <Thumbnail
@@ -91,9 +94,11 @@ export const NavigationBar = ({
             isVisible={isVisible}
           />
         );
-      }),
+      });
+    },
     [
       pages,
+      isRTL,
       currentPage,
       onPageChange,
       getThumbnailUrl,
