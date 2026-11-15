@@ -3,6 +3,7 @@
 import { ThemeProvider } from "next-themes";
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Header } from "@/components/layout/Header";
+import { RefreshSurface } from "@/components/common/RefreshSurface";
 import { Sidebar } from "@/components/layout/Sidebar";
 import dynamic from "next/dynamic";
 import { InstallPWA } from "../ui/InstallPWA";
@@ -160,6 +161,36 @@ export default function ClientLayout({
   const hasCustomBackground = Object.keys(backgroundStyle).length > 0;
   const contentOpacity =
     (preferences.background.opacity ?? defaultPreferences.background.opacity ?? 10) / 100;
+  const showHomeRefresh = pathname === "/";
+  const header = !isPublicRoute ? (
+    <Header
+      onToggleSidebar={handleToggleSidebar}
+      onRefreshBackground={fetchRandomBook}
+      showRefreshBackground={preferences.background.type === "komga-random"}
+      showHomeRefresh={showHomeRefresh}
+    />
+  ) : null;
+  const sidebar = !isPublicRoute ? (
+    <Sidebar
+      isOpen={isSidebarOpen}
+      onClose={handleCloseSidebar}
+      userIsAdmin={userIsAdmin}
+      favoritesSlot={sidebarFavorites}
+      librariesSlot={sidebarLibraries}
+      connectionsSlot={sidebarConnections}
+      favoritesSkeleton={sidebarFavoritesSkeleton}
+      librariesSkeleton={sidebarLibrariesSkeleton}
+      connectionsSkeleton={sidebarConnectionsSkeleton}
+    />
+  ) : null;
+  const sidebarOverlay = !isPublicRoute && isSidebarOpen ? (
+    <button
+      type="button"
+      aria-label={t("layout.closeNavigation")}
+      className="fixed inset-0 top-[calc(4rem+env(safe-area-inset-top,0px))] z-20 bg-black/40 transition-opacity lg:hidden"
+      onClick={handleCloseSidebar}
+    />
+  ) : null;
 
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
@@ -176,35 +207,21 @@ export default function ClientLayout({
             : undefined
         }
       >
-        {!isPublicRoute && (
-          <Header
-            onToggleSidebar={handleToggleSidebar}
-            onRefreshBackground={fetchRandomBook}
-            showRefreshBackground={preferences.background.type === "komga-random"}
-          />
+        {showHomeRefresh && !isPublicRoute ? (
+          <RefreshSurface scope="home" id="home">
+            {header}
+            {sidebar}
+            {sidebarOverlay}
+            <main>{children}</main>
+          </RefreshSurface>
+        ) : (
+          <>
+            {header}
+            {sidebar}
+            {sidebarOverlay}
+            <main>{children}</main>
+          </>
         )}
-        {!isPublicRoute && (
-          <Sidebar
-            isOpen={isSidebarOpen}
-            onClose={handleCloseSidebar}
-            userIsAdmin={userIsAdmin}
-            favoritesSlot={sidebarFavorites}
-            librariesSlot={sidebarLibraries}
-            connectionsSlot={sidebarConnections}
-            favoritesSkeleton={sidebarFavoritesSkeleton}
-            librariesSkeleton={sidebarLibrariesSkeleton}
-            connectionsSkeleton={sidebarConnectionsSkeleton}
-          />
-        )}
-        {!isPublicRoute && isSidebarOpen && (
-          <button
-            type="button"
-            aria-label={t("layout.closeNavigation")}
-            className="fixed inset-0 top-[calc(4rem+env(safe-area-inset-top,0px))] z-20 bg-black/40 transition-opacity lg:hidden"
-            onClick={handleCloseSidebar}
-          />
-        )}
-        <main className={!isPublicRoute ? "pt-safe" : ""}>{children}</main>
         <InstallPWA />
         <Toaster />
         <NetworkStatus />

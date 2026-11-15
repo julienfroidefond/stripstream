@@ -23,7 +23,6 @@ export function WallFrame({ children, className }: WallFrameProps) {
         className
       )}
       style={{
-        marginTop: "calc(-1 * env(safe-area-inset-top, 0px))",
         height: "calc(100dvh - 4rem - env(safe-area-inset-top, 0px))",
       }}
     >

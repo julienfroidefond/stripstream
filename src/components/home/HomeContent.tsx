@@ -61,24 +61,28 @@ export function HomeReadingListSkeleton({ icon }: { icon: LucideIcon }) {
 
 export function HomeHeroSkeleton() {
   return (
-    <section className="relative overflow-hidden rounded-2xl bg-surface-1 px-5 py-6 sm:px-8 sm:py-9">
-      <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:gap-9">
-        <Skeleton className="mx-auto aspect-2/3 w-[168px] shrink-0 rounded-xl sm:mx-0 sm:w-[196px]" />
-        <div className="flex flex-1 flex-col items-center gap-4 sm:items-start">
-          <Skeleton className="h-3.5 w-32" />
-          <Skeleton className="h-10 w-4/5" />
-          <Skeleton className="h-10 w-full max-w-lg" />
-          <Skeleton className="h-1.5 w-full max-w-md rounded-full" />
-          <Skeleton className="h-11 w-36 rounded-lg" />
+    <section className="relative -ml-[calc((100vw-100%)/2)] w-screen overflow-hidden rounded-none bg-surface-1">
+      <div className="container relative mx-auto px-4">
+        <div className="px-5 pt-9 pb-6 sm:px-8 sm:pt-12 sm:pb-9">
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:gap-9">
+            <Skeleton className="mx-auto aspect-2/3 w-[168px] shrink-0 rounded-xl sm:mx-0 sm:w-[196px]" />
+            <div className="flex flex-1 flex-col items-center gap-4 sm:items-start">
+              <Skeleton className="h-3.5 w-32" />
+              <Skeleton className="h-10 w-4/5" />
+              <Skeleton className="h-10 w-full max-w-lg" />
+              <Skeleton className="h-1.5 w-full max-w-md rounded-full" />
+              <Skeleton className="h-11 w-36 rounded-lg" />
+            </div>
+          </div>
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+            <div className="flex items-center justify-center gap-2">
+              {Array.from({ length: 8 }).map((_, index) => (
+                <Skeleton key={index} className="h-1.5 w-2 rounded-full first:w-8" />
+              ))}
+            </div>
+            <Skeleton className="h-9 w-[84px] rounded-lg" />
+          </div>
         </div>
-      </div>
-      <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
-        <div className="flex items-center justify-center gap-2">
-          {Array.from({ length: 8 }).map((_, index) => (
-            <Skeleton key={index} className="h-1.5 w-2 rounded-full first:w-8" />
-          ))}
-        </div>
-        <Skeleton className="h-9 w-[84px] rounded-lg" />
       </div>
     </section>
   );
