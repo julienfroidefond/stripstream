@@ -22,7 +22,6 @@ import {
   initialWallCamera,
   resizeWallCamera,
   shouldSyncWallCamera,
-  wallCameraCenteredOn,
   wallFocusCamera,
   wallViewRect,
   wallWheelIntent,
@@ -501,32 +500,12 @@ export function useWallCamera({
       ? { x: tile.x + tile.width / 2, y: tile.y + tile.height / 2 }
       : { x: WALL_PATCH_WIDTH / 2, y: WALL_PATCH_HEIGHT / 2 };
     const next = initialWallCamera(viewport, minScale, center);
-    if (reduce) {
-      scale.set(next.scale);
-      x.set(next.x);
-      y.set(next.y);
-      syncCamera(true);
-      canvasOpacity.set(1);
-    } else {
-      // Travelling d'arrivée : la caméra part plus loin du mur et avance
-      // jusqu'au cadrage, centre fixe. Comme le centre dépend linéairement de
-      // l'échelle, interpoler x, y et l'échelle sur la même courbe le garde.
-      const fromScale = next.scale * 0.72;
-      const from = wallCameraCenteredOn(
-        viewport,
-        center,
-        fromScale
-      );
-      scale.set(from.scale);
-      x.set(from.x);
-      y.set(from.y);
-      syncCamera(true);
-      const dolly = { duration: 1.3, ease: "focus" };
-      scale.animateTo(next.scale, dolly);
-      x.animateTo(next.x, dolly);
-      y.animateTo(next.y, dolly);
-      canvasOpacity.animateTo(1, { duration: 0.7 });
-    }
+    scale.set(next.scale);
+    x.set(next.x);
+    y.set(next.y);
+    syncCamera(true);
+    if (reduce) canvasOpacity.set(1);
+    else canvasOpacity.animateTo(1, { duration: 0.7 });
   }, [
     canvasOpacity,
     layout.tiles,
