@@ -158,14 +158,18 @@ export function wallWorldCenter(
   };
 }
 
-/** Cadrage d'ouverture (et de remise à zéro) : centre du motif, colonnes lisibles. */
+/** Cadrage d'ouverture (et de remise à zéro) : centre choisi, colonnes lisibles. */
 export function initialWallCamera(
   viewport: WallViewport,
-  minScale: number
+  minScale: number,
+  center: WallPoint = {
+    x: WALL_PATCH_WIDTH / 2,
+    y: WALL_PATCH_HEIGHT / 2,
+  }
 ): WallCameraState {
   return wallCameraCenteredOn(
     viewport,
-    { x: WALL_PATCH_WIDTH / 2, y: WALL_PATCH_HEIGHT / 2 },
+    center,
     initialWallScale(viewport, minScale)
   );
 }

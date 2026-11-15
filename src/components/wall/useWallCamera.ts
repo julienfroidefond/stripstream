@@ -44,13 +44,13 @@ import {
   decayMomentum,
   isMomentumDying,
 } from "@/lib/wall/momentum";
-import type { WallRect } from "@/types/wall";
+import type { WallLayout, WallRect } from "@/types/wall";
 
 const PAN_IDLE = 150;
 
 interface UseWallCameraOptions {
   stageRef: RefObject<HTMLDivElement | null>;
-  layout: { width: number; height: number };
+  layout: WallLayout;
   reduce: boolean;
   selectionKey: string;
   /** Une frame a réellement déplacé la caméra : le survol n'est plus valide. */
@@ -495,7 +495,12 @@ export function useWallCamera({
     }
     initializedRef.current = true;
 
-    const next = initialWallCamera(viewport, minScale);
+    const tile =
+      layout.tiles[Math.floor(Math.random() * layout.tiles.length)];
+    const center = tile
+      ? { x: tile.x + tile.width / 2, y: tile.y + tile.height / 2 }
+      : { x: WALL_PATCH_WIDTH / 2, y: WALL_PATCH_HEIGHT / 2 };
+    const next = initialWallCamera(viewport, minScale, center);
     if (reduce) {
       scale.set(next.scale);
       x.set(next.x);
@@ -509,7 +514,7 @@ export function useWallCamera({
       const fromScale = next.scale * 0.72;
       const from = wallCameraCenteredOn(
         viewport,
-        { x: WALL_PATCH_WIDTH / 2, y: WALL_PATCH_HEIGHT / 2 },
+        center,
         fromScale
       );
       scale.set(from.scale);
@@ -524,6 +529,7 @@ export function useWallCamera({
     }
   }, [
     canvasOpacity,
+    layout.tiles,
     minScale,
     reduce,
     scale,

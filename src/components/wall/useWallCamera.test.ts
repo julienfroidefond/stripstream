@@ -29,7 +29,7 @@ vi.hoisted(() => {
 });
 
 const VIEWPORT: WallViewport = { width: 1000, height: 700 };
-const LAYOUT = { width: 1000, height: 700 };
+const LAYOUT = { width: 1000, height: 700, tiles: [] };
 const MIN_SCALE = 0.5;
 
 class FakeResizeObserver {
