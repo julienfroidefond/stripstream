@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { useOrientation } from "./useOrientation";
 import { usePreferences } from "@/contexts/PreferencesContext";
+import { canDisplayDoublePage } from "@/lib/reader/double-page-mode";
 
 export function useDoublePageMode(initial = false) {
   const isLandscape = useOrientation();
@@ -20,11 +21,13 @@ export function useDoublePageMode(initial = false) {
 
   const shouldShowDoublePage = useCallback(
     (pageNumber: number, totalPages: number) => {
-      const isMobile = window.innerHeight < 700;
-      if (isMobile) return false;
-      if (!isDoublePage) return false;
-      if (pageNumber === 1) return false;
-      return pageNumber < totalPages;
+      return canDisplayDoublePage({
+        isDoublePage,
+        pageNumber,
+        totalPages,
+        screenWidth: window.screen.width,
+        screenHeight: window.screen.height,
+      });
     },
     [isDoublePage]
   );

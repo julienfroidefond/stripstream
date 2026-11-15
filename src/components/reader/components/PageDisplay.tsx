@@ -120,12 +120,12 @@ export function PageDisplay({
 
   const takeSnapshot = useCallback((): ReaderSnapshot => {
     const first = { url: currentBlobUrlRef.current, rect: measure(page1Ref.current) };
-    if (!showSecondPage) return { currentPage, slots: [first] };
+    if (!showSecondPage) return { currentPage, isDoublePageMode: isDoublePage, slots: [first] };
     const second = { url: nextBlobUrlRef.current, rect: measure(page2Ref.current) };
     const pair = [first, second];
     const [leftSlot, rightSlot] = spreadOrder(isRTL ? "rtl" : "ltr");
-    return { currentPage, slots: [pair[leftSlot], pair[rightSlot]] };
-  }, [currentPage, showSecondPage, isRTL]);
+    return { currentPage, isDoublePageMode: isDoublePage, slots: [pair[leftSlot], pair[rightSlot]] };
+  }, [currentPage, isDoublePage, showSecondPage, isRTL]);
 
   // Une image décodée après le rendu, ou une fenêtre redimensionnée, change
   // le cadre des pages : la mesure suit.
