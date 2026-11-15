@@ -39,9 +39,9 @@ describe("initialWallScale", () => {
       (WALL_CELL_WIDTH *
         initialWallScale({ width, height: 700 }, MIN_SCALE));
 
-    expect(columns(600)).toBeCloseTo(4.2, 6);
-    expect(columns(900)).toBeCloseTo(6.4, 6);
-    expect(columns(1200)).toBeCloseTo(8.4, 6);
+    expect(columns(600)).toBeCloseTo(6.5, 6);
+    expect(columns(900)).toBeCloseTo(10, 6);
+    expect(columns(1200)).toBeCloseTo(12.5, 6);
   });
 
   it("never goes below the legal minimum or above 1.12", () => {

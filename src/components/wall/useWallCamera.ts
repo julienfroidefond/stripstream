@@ -22,7 +22,6 @@ import {
   initialWallCamera,
   resizeWallCamera,
   shouldSyncWallCamera,
-  wallCameraCenteredOn,
   wallFocusCamera,
   wallViewRect,
   wallWheelIntent,
@@ -44,13 +43,13 @@ import {
   decayMomentum,
   isMomentumDying,
 } from "@/lib/wall/momentum";
-import type { WallRect } from "@/types/wall";
+import type { WallLayout, WallRect } from "@/types/wall";
 
 const PAN_IDLE = 150;
 
 interface UseWallCameraOptions {
   stageRef: RefObject<HTMLDivElement | null>;
-  layout: { width: number; height: number };
+  layout: WallLayout;
   reduce: boolean;
   selectionKey: string;
   /** Une frame a réellement déplacé la caméra : le survol n'est plus valide. */
@@ -58,7 +57,7 @@ interface UseWallCameraOptions {
   /** Le geste/zoom commence : la plaque et la vue d'ensemble se referment. */
   onInteractionStart: () => void;
   /** Nouveau filtre après l'initialisation : la composition réarme son entrée. */
-  onSelectionChange: () => void;
+  onSelectionChange: () => boolean | void;
 }
 
 /**
@@ -78,6 +77,13 @@ export interface WallWheelGesture extends WallWheelInput {
 }
 
 type WallBox = { x: number; y: number; width: number; height: number };
+
+function randomWallTileCenter(layout: WallLayout): WallPoint {
+  const tile = layout.tiles[Math.floor(Math.random() * layout.tiles.length)];
+  return tile
+    ? { x: tile.x + tile.width / 2, y: tile.y + tile.height / 2 }
+    : { x: WALL_PATCH_WIDTH / 2, y: WALL_PATCH_HEIGHT / 2 };
+}
 
 /**
  * La caméra parle en intentions : aucun appelant n'écrit les valeurs de
@@ -495,35 +501,17 @@ export function useWallCamera({
     }
     initializedRef.current = true;
 
-    const next = initialWallCamera(viewport, minScale);
-    if (reduce) {
-      scale.set(next.scale);
-      x.set(next.x);
-      y.set(next.y);
-      syncCamera(true);
-      canvasOpacity.set(1);
-    } else {
-      // Travelling d'arrivée : la caméra part plus loin du mur et avance
-      // jusqu'au cadrage, centre fixe. Comme le centre dépend linéairement de
-      // l'échelle, interpoler x, y et l'échelle sur la même courbe le garde.
-      const fromScale = next.scale * 0.72;
-      const from = wallCameraCenteredOn(
-        viewport,
-        { x: WALL_PATCH_WIDTH / 2, y: WALL_PATCH_HEIGHT / 2 },
-        fromScale
-      );
-      scale.set(from.scale);
-      x.set(from.x);
-      y.set(from.y);
-      syncCamera(true);
-      const dolly = { duration: 1.3, ease: "focus" };
-      scale.animateTo(next.scale, dolly);
-      x.animateTo(next.x, dolly);
-      y.animateTo(next.y, dolly);
-      canvasOpacity.animateTo(1, { duration: 0.7 });
-    }
+    const center = randomWallTileCenter(layout);
+    const next = initialWallCamera(viewport, minScale, center);
+    scale.set(next.scale);
+    x.set(next.x);
+    y.set(next.y);
+    syncCamera(true);
+    if (reduce) canvasOpacity.set(1);
+    else canvasOpacity.animateTo(1, { duration: 0.7 });
   }, [
     canvasOpacity,
+    layout,
     minScale,
     reduce,
     scale,
@@ -539,12 +527,35 @@ export function useWallCamera({
     if (lastSelectionRef.current === selectionKey) return;
     lastSelectionRef.current = selectionKey;
     setOverview(false);
-    callbacksRef.current.onSelectionChange();
+    const restoringSelection =
+      callbacksRef.current.onSelectionChange() === true;
 
     if (!viewport.width || !viewport.height) return;
+    if (restoringSelection) {
+      const next = initialWallCamera(
+        viewport,
+        minScale,
+        randomWallTileCenter(layout)
+      );
+      scale.set(next.scale);
+      x.set(next.x);
+      y.set(next.y);
+      syncCamera(true);
+      return;
+    }
     const next = initialWallCamera(viewport, minScale);
     animateView(next.scale, next.x, next.y, 0.8);
-  }, [animateView, minScale, selectionKey, viewport]);
+  }, [
+    animateView,
+    layout,
+    minScale,
+    scale,
+    selectionKey,
+    syncCamera,
+    viewport,
+    x,
+    y,
+  ]);
 
   // Un cadre qui change de taille garde le zoom légal.
   useEffect(() => {
