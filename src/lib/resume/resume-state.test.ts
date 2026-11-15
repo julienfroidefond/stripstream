@@ -146,6 +146,7 @@ describe("buildResumeEntries", () => {
         book: expect.objectContaining({ id: "b1" }),
         series: series("s1"),
         progressPercent: 40,
+        seriesProgressPercent: 33,
       },
     ]);
   });
@@ -192,6 +193,7 @@ describe("buildResumeEntries", () => {
     expect(entry.book.id).toBe("b1");
     expect(entry.series).toBeNull();
     expect(entry.progressPercent).toBeNull();
+    expect(entry.seriesProgressPercent).toBeNull();
   });
 
   it("preserves the input order", () => {

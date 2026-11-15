@@ -10,6 +10,7 @@ import { ArrowRight, BookOpen } from "lucide-react";
 import type { NormalizedBook } from "@/lib/providers/types";
 import type { ResumeEntry } from "@/lib/resume/resume-state";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { BookCoverScene } from "@/components/ui/book-cover-scene";
 import { LoadMoreLabel } from "@/components/ui/load-more-label";
 import { useCoverLoaded } from "@/hooks/useCoverLoaded";
@@ -134,7 +135,12 @@ function HeroSlide({
   const { t } = useTranslate();
   const { active, handlers } = useCoverInteraction<HTMLButtonElement>();
 
-  const { book, series: matchedSeries, progressPercent } = entry;
+  const {
+    book,
+    series: matchedSeries,
+    progressPercent,
+    seriesProgressPercent,
+  } = entry;
   const {
     ref: coverRef,
     status: coverStatus,
@@ -269,6 +275,25 @@ function HeroSlide({
                 {t("home.hero.page", { current: currentPage, total: totalPages })}
               </span>
             </div>
+          </div>
+        )}
+
+        {seriesProgressPercent !== null && (
+          <div
+            className="mx-auto w-full max-w-md space-y-1.5 sm:mx-0"
+            {...stagedItem}
+          >
+            <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+              <span>{t("home.hero.seriesProgress")}</span>
+              <span className="font-semibold tabular-nums text-foreground">
+                {seriesProgressPercent}%
+              </span>
+            </div>
+            <Progress
+              aria-label={t("home.hero.seriesProgress")}
+              value={seriesProgressPercent}
+              className="h-1.5 bg-foreground/15"
+            />
           </div>
         )}
 

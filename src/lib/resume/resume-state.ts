@@ -14,6 +14,8 @@ export interface ResumeEntry {
   series: NormalizedSeries | null;
   /** Avancement du tome, `null` sans pagination exploitable. */
   progressPercent: number | null;
+  /** Avancement de la série, `null` quand elle n'a pas pu être résolue. */
+  seriesProgressPercent: number | null;
 }
 
 /**
@@ -66,9 +68,13 @@ export function buildResumeEntries(
   seriesPool: readonly NormalizedSeries[]
 ): ResumeEntry[] {
   const index = indexSeries(seriesPool);
-  return books.map((book) => ({
-    book,
-    series: matchSeries(bookSeriesRef(book), book.libraryId, index),
-    progressPercent: getBookProgressPercent(book),
-  }));
+  return books.map((book) => {
+    const series = matchSeries(bookSeriesRef(book), book.libraryId, index);
+    return {
+      book,
+      series,
+      progressPercent: getBookProgressPercent(book),
+      seriesProgressPercent: series ? getSeriesProgressPercent(series) : null,
+    };
+  });
 }
