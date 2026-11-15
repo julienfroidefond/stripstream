@@ -1,26 +1,12 @@
 /* eslint-disable no-console */
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { NormalizedBook } from "@/lib/providers/types";
 import { updateReadProgress } from "@/app/actions/read-progress";
+import { useToast } from "@/components/ui/use-toast";
+import { ERROR_CODES } from "@/constants/errorCodes";
 import { useAnonymous } from "@/contexts/AnonymousContext";
-import {
-  ReadProgressSession,
-  type ReadProgressUpdate,
-} from "@/lib/reader/read-progress-session";
-
-async function persistReadProgress(update: ReadProgressUpdate): Promise<void> {
-  console.debug(
-    `[reader/progress] sync bookId=${update.bookId} page=${update.page}/${update.totalPages}`
-  );
-  try {
-    await updateReadProgress(update.bookId, update.page, update.completed, update.seriesId);
-  } catch (error) {
-    console.error(
-      `[reader/progress] sync error bookId=${update.bookId} page=${update.page}`,
-      error
-    );
-  }
-}
+import { useTranslate } from "@/hooks/useTranslate";
+import { ReadProgressSession } from "@/lib/reader/read-progress-session";
 
 interface UseReadProgressSessionOptions {
   book: NormalizedBook;
@@ -39,6 +25,19 @@ export function useReadProgressSession({
   initialPage,
 }: UseReadProgressSessionOptions): ReadProgressSession {
   const { isAnonymous } = useAnonymous();
+  const { toast } = useToast();
+  const { t } = useTranslate();
+  const showSaveError = useCallback(
+    (code: string) => {
+      toast({
+        variant: "destructive",
+        title: t("common.error"),
+        description: t(`errors.${code}`),
+      });
+    },
+    [t, toast]
+  );
+
   const [session] = useState(
     () =>
       new ReadProgressSession({
@@ -47,7 +46,31 @@ export function useReadProgressSession({
         totalPages,
         initialPage,
         anonymous: isAnonymous,
-        persist: persistReadProgress,
+        persist: async (update) => {
+          console.debug(
+            `[reader/progress] sync bookId=${update.bookId} page=${update.page}/${update.totalPages}`
+          );
+          try {
+            const result = await updateReadProgress(
+              update.bookId,
+              update.page,
+              update.completed,
+              update.seriesId
+            );
+            if (!result.success) {
+              console.error(
+                `[reader/progress] sync failed bookId=${update.bookId} page=${update.page} code=${result.code}`
+              );
+              showSaveError(result.code);
+            }
+          } catch (error) {
+            console.error(
+              `[reader/progress] sync error bookId=${update.bookId} page=${update.page}`,
+              error
+            );
+            showSaveError(ERROR_CODES.BOOK.PROGRESS_UPDATE_ERROR);
+          }
+        },
       })
   );
 
@@ -60,10 +83,34 @@ export function useReadProgressSession({
   }, [session, book.id, book.seriesId, totalPages]);
 
   useEffect(() => {
+    if (
+      totalPages > 0 &&
+      (book.readProgress?.page ?? 0) >= totalPages &&
+      !book.readProgress?.completed
+    ) {
+      session.track(totalPages);
+    }
+  }, [book.readProgress?.completed, book.readProgress?.page, session, totalPages]);
+
+  useEffect(() => {
     session.setAnonymous(isAnonymous);
   }, [session, isAnonymous]);
 
-  useEffect(() => () => session.flush(), [session]);
+  useEffect(() => {
+    const flush = () => session.flush();
+    const flushWhenHidden = () => {
+      if (document.visibilityState === "hidden") flush();
+    };
+
+    window.addEventListener("pagehide", flush);
+    document.addEventListener("visibilitychange", flushWhenHidden);
+
+    return () => {
+      window.removeEventListener("pagehide", flush);
+      document.removeEventListener("visibilitychange", flushWhenHidden);
+      session.flush();
+    };
+  }, [session]);
 
   return session;
 }
