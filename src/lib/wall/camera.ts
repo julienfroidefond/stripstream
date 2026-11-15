@@ -119,9 +119,8 @@ const SHEET_MIN_HEIGHT = 220;
 const SHEET_GAP = 16;
 
 /**
- * Échelle d'ouverture : on ne cherche pas à faire tenir tout le motif dans le
- * cadre (les couvertures seraient illisibles), mais à en montrer quelques
- * colonnes à taille d'affiche. La couverture reste le sujet.
+ * Échelle d'ouverture : on montre un large aperçu du motif sans chercher à
+ * faire tenir toute la plaque dans le cadre. Les couvertures restent lisibles.
  */
 export function initialWallScale(
   viewport: WallViewport,
@@ -129,7 +128,7 @@ export function initialWallScale(
 ): number {
   if (!viewport.width || !viewport.height) return 1;
   const targetColumns =
-    viewport.width < 680 ? 4.2 : viewport.width < 1100 ? 6.4 : 8.4;
+    viewport.width < 680 ? 6.5 : viewport.width < 1100 ? 10 : 12.5;
   const target = viewport.width / (WALL_CELL_WIDTH * targetColumns);
   return Math.min(1.12, Math.max(minScale, target));
 }
