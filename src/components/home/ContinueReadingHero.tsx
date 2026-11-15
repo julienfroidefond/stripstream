@@ -485,8 +485,8 @@ export function ContinueReadingHero({ initialItems, initialHasMore }: ContinueRe
         .fromTo(section, { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "out" }, 0)
         .fromTo(
           section,
-          { clipPath: "inset(16% 24% 16% 24% round 32px)" },
-          { clipPath: "inset(0% 0% 0% 0% round 16px)", duration: 1.15, ease: "power4.inOut" },
+          { clipPath: "inset(16% 24% 16% 24%)" },
+          { clipPath: "inset(0% 0% 0% 0%)", duration: 1.15, ease: "power4.inOut" },
           0
         )
         .to(backdrop, { scale: 1, duration: 2 }, 0);
@@ -613,7 +613,7 @@ export function ContinueReadingHero({ initialItems, initialHasMore }: ContinueRe
       ref={sectionRef}
       data-testid="home-continue-reading"
       data-hero-intro
-      className="group grain relative overflow-hidden rounded-2xl"
+      className="group grain relative -ml-[calc((100vw-100%)/2)] w-screen overflow-hidden rounded-none"
       aria-roledescription="carousel"
       aria-label={t("home.hero.label")}
       onPointerMove={handleHeroPointerMove}
@@ -666,91 +666,93 @@ export function ContinueReadingHero({ initialItems, initialHasMore }: ContinueRe
         }}
       />
 
-      <div
-        ref={sceneContentRef}
-        className="relative overflow-hidden px-5 py-6 sm:px-8 sm:py-9"
-      >
-        <DirectionalSlide
-          activeKey={book.id}
-          previousKey={transition?.from.book.id ?? null}
-          previous={
-            transition ? (
-              <HeroSlide
-                key={`previous-${transition.from.book.id}`}
-                entry={transition.from}
-                staged={false}
-                intro={false}
-                reduce={reduce}
-                onResume={handleResume}
-              />
-            ) : null
-          }
-          direction={transition?.direction ?? 1}
-          dragOffset={transition?.offset ?? 0}
-          reduce={reduce}
-          swipeEnabled={hasMany}
-          onSwipe={(direction, offset) =>
-            goTo(safeIndex + direction, direction, offset)
-          }
-          onSettled={() => setTransition(null)}
-          className={hasMany ? "cursor-grab active:cursor-grabbing" : undefined}
+      <div className="container relative mx-auto px-4">
+        <div
+          ref={sceneContentRef}
+          className="relative overflow-hidden px-5 pt-9 pb-6 sm:px-8 sm:pt-12 sm:pb-9"
         >
-          <HeroSlide
-            key={book.id}
-            entry={entry}
-            staged={staged}
-            intro={staged}
-            reduce={reduce}
-            onResume={handleResume}
-          />
-        </DirectionalSlide>
-
-        {(hasMany || hasMore) && (
-          <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
-            {hasMany && (
-              <div
-                role="tablist"
-                aria-label={t("home.hero.label")}
-                className="flex items-center justify-center gap-2"
-              >
-                {loadedItems.map((item, position) => (
-                  <button
-                    key={item.book.id}
-                    role="tab"
-                    aria-selected={position === safeIndex}
-                    aria-label={`${position + 1} / ${total}`}
-                    onClick={() =>
-                      goTo(position, position > safeIndex ? 1 : -1)
-                    }
-                    className={cn(
-                      "h-1.5 rounded-full transition-[width,background-color] duration-300 ease-out",
-                      position === safeIndex
-                        ? "w-8 bg-primary"
-                        : "w-2 bg-foreground/25 hover:bg-foreground/45"
-                    )}
-                  />
-                ))}
-              </div>
-            )}
-            {hasMore && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={loadMore}
-                disabled={isPending}
-                aria-busy={isPending}
-                className="disabled:opacity-100"
-              >
-                <LoadMoreLabel
-                  pending={isPending}
-                  label={t("navigation.loadMore")}
-                  loadingLabel={t("navigation.loading")}
+          <DirectionalSlide
+            activeKey={book.id}
+            previousKey={transition?.from.book.id ?? null}
+            previous={
+              transition ? (
+                <HeroSlide
+                  key={`previous-${transition.from.book.id}`}
+                  entry={transition.from}
+                  staged={false}
+                  intro={false}
+                  reduce={reduce}
+                  onResume={handleResume}
                 />
-              </Button>
-            )}
-          </div>
-        )}
+              ) : null
+            }
+            direction={transition?.direction ?? 1}
+            dragOffset={transition?.offset ?? 0}
+            reduce={reduce}
+            swipeEnabled={hasMany}
+            onSwipe={(direction, offset) =>
+              goTo(safeIndex + direction, direction, offset)
+            }
+            onSettled={() => setTransition(null)}
+            className={hasMany ? "cursor-grab active:cursor-grabbing" : undefined}
+          >
+            <HeroSlide
+              key={book.id}
+              entry={entry}
+              staged={staged}
+              intro={staged}
+              reduce={reduce}
+              onResume={handleResume}
+            />
+          </DirectionalSlide>
+
+          {(hasMany || hasMore) && (
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+              {hasMany && (
+                <div
+                  role="tablist"
+                  aria-label={t("home.hero.label")}
+                  className="flex items-center justify-center gap-2"
+                >
+                  {loadedItems.map((item, position) => (
+                    <button
+                      key={item.book.id}
+                      role="tab"
+                      aria-selected={position === safeIndex}
+                      aria-label={`${position + 1} / ${total}`}
+                      onClick={() =>
+                        goTo(position, position > safeIndex ? 1 : -1)
+                      }
+                      className={cn(
+                        "h-1.5 rounded-full transition-[width,background-color] duration-300 ease-out",
+                        position === safeIndex
+                          ? "w-8 bg-primary"
+                          : "w-2 bg-foreground/25 hover:bg-foreground/45"
+                      )}
+                    />
+                  ))}
+                </div>
+              )}
+              {hasMore && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={loadMore}
+                  disabled={isPending}
+                  aria-busy={isPending}
+                  className="disabled:opacity-100"
+                >
+                  <LoadMoreLabel
+                    pending={isPending}
+                    label={t("navigation.loadMore")}
+                    loadingLabel={t("navigation.loading")}
+                  />
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </section>
   );

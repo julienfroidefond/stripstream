@@ -5,7 +5,6 @@ import {
   HomeReadingListSkeleton,
   HomeRecommendationSkeleton,
 } from "@/components/home/HomeContent";
-import { Skeleton } from "@/components/ui/skeleton";
 
 /**
  * The root layout also reloads connection-specific navigation data. Keep the
@@ -15,10 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export default function AppLoading() {
   return (
     <main className="relative isolate overflow-hidden">
-      <div className="container relative mx-auto px-4 pb-8 pt-3">
-        <div className="mb-6 hidden justify-end md:flex">
-          <Skeleton className="h-10 w-10 rounded-full" />
-        </div>
+      <div className="container relative mx-auto px-4 pb-8">
         <div className="space-y-10 pb-2">
           <HomeHeroSkeleton />
           <HomeCarouselSkeleton icon={LibraryBig} />

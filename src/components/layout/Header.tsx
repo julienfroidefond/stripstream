@@ -1,6 +1,7 @@
 import { Menu, RefreshCw, Search, EyeOff, Eye } from "lucide-react";
 import LanguageSelector from "@/components/LanguageSelector";
 import { useTranslation } from "react-i18next";
+import { RefreshButton } from "@/components/common/RefreshButton";
 import { IconButton } from "@/components/ui/icon-button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useEffect, useState } from "react";
@@ -12,12 +13,14 @@ interface HeaderProps {
   onToggleSidebar: () => void;
   onRefreshBackground?: () => Promise<void>;
   showRefreshBackground?: boolean;
+  showHomeRefresh?: boolean;
 }
 
 export function Header({
   onToggleSidebar,
   onRefreshBackground,
   showRefreshBackground = false,
+  showHomeRefresh = false,
 }: HeaderProps) {
   const { t } = useTranslation();
   const { isAnonymous, toggleAnonymous } = useAnonymous();
@@ -83,6 +86,9 @@ export function Header({
                 className="h-9 w-9 rounded-full"
                 tooltip="Rafraîchir l'image de fond"
               />
+            )}
+            {showHomeRefresh && (
+              <RefreshButton className="ml-0 hidden h-9 w-9 rounded-full md:inline-flex" />
             )}
             <IconButton
               onClick={() => setIsMobileSearchOpen((value) => !value)}
