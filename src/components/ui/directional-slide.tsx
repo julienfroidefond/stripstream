@@ -12,6 +12,7 @@ import { gsap, prefersReducedMotion, useGsapEffect } from "@/lib/motion/gsap";
 
 const SWIPE_THRESHOLD = 60;
 const SWIPE_RESISTANCE = 0.55;
+const SWIPE_ROTATION = 0.05;
 const PERSPECTIVE = 1100;
 
 interface DirectionalSlideProps {
@@ -36,8 +37,9 @@ interface DirectionalSlideProps {
 /**
  * Scène de carrousel directionnelle en GSAP.
  *
- * Le changement de diapositive joue en profondeur : la sortante est jetée vers
- * le spectateur, l'entrante remonte du fond.
+ * Au swipe, le glissement et l'inclinaison du doigt se prolongent jusqu'à la
+ * sortie. Un changement par les pastilles joue en profondeur : la sortante
+ * est jetée vers le spectateur, l'entrante remonte du fond.
  * La diapositive entrante reste dans le flux (c'est elle qui donne sa hauteur
  * au bloc), la sortante passe en absolu et s'efface derrière. Le geste suit le
  * doigt en `pointer events` natifs : pas de plugin de drag, et le clic reste
@@ -94,10 +96,48 @@ export function DirectionalSlide({
         return;
       }
 
+      const dir: 1 | -1 = direction < 0 ? -1 : 1;
+
+      if (dragOffset !== 0) {
+        // Reprendre exactement la pose sous le doigt, sans remettre la carte
+        // à plat ni inverser sa rotation au relâchement.
+        const x = dragOffset * SWIPE_RESISTANCE;
+        const rotation = dragOffset * SWIPE_ROTATION;
+        const distance = Math.max(rootRef.current?.clientWidth ?? 0, Math.abs(x) + 160);
+        gsap.set(exit, {
+          x,
+          z: 0,
+          rotateY: rotation,
+          opacity: 1,
+          transformPerspective: PERSPECTIVE,
+          zIndex: 1,
+        });
+        gsap.set(enter, {
+          x: dir * distance,
+          z: 0,
+          rotateY: -dir * 18,
+          opacity: 0,
+          transformPerspective: PERSPECTIVE,
+          zIndex: 2,
+        });
+
+        const timeline = gsap.timeline({
+          defaults: { duration: 0.4, ease: "power2.out" },
+          onComplete: () => {
+            gsap.set(enter, { clearProps: "opacity,transform,zIndex" });
+            onSettledRef.current?.();
+          },
+        });
+        timeline
+          .to(exit, { x: -dir * distance, rotateY: rotation - dir * 18, opacity: 0 }, 0)
+          .to(enter, { x: 0, rotateY: 0, opacity: 1 }, 0);
+
+        return () => timeline.kill();
+      }
+
       // Le paquet de cartes : la sortante est jetée vers le spectateur et
       // s'efface très vite ; l'entrante ne remonte du fond qu'une fois la
       // place presque libre, pour que les deux ne se superposent pas.
-      const dir: 1 | -1 = direction < 0 ? -1 : 1;
       gsap.set(enter, {
         x: dir * 60,
         z: -360,
@@ -212,7 +252,7 @@ export function DirectionalSlide({
     suppressClick.current = Math.abs(deltaX) > 6;
     gsap.set(enterRef.current, {
       x: deltaX * SWIPE_RESISTANCE,
-      rotateY: deltaX * 0.05,
+      rotateY: deltaX * SWIPE_ROTATION,
       transformPerspective: PERSPECTIVE,
     });
   };

@@ -507,9 +507,15 @@ interface ProgressFillProps {
   percent: number;
   className?: string;
   delay?: number;
+  as?: "div" | "span";
 }
 
-export function ProgressFill({ percent, className, delay = 0.35 }: ProgressFillProps) {
+export function ProgressFill({
+  percent,
+  className,
+  delay = 0.35,
+  as: Element = "div",
+}: ProgressFillProps) {
   const reduce = usePrefersReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
 
@@ -532,7 +538,7 @@ export function ProgressFill({ percent, className, delay = 0.35 }: ProgressFillP
   );
 
   return (
-    <div
+    <Element
       ref={ref}
       className={cn("h-full w-full origin-left rounded-full bg-primary", className)}
       style={{ transform: "scaleX(0)" }}
