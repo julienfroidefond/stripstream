@@ -288,7 +288,7 @@ function HeroSlide({
                 </span>
               )}
               {seriesProgressPercent !== null && (
-                <span
+                <div
                   role="progressbar"
                   aria-label={`${t("home.hero.seriesProgress")} ${seriesProgressPercent}%`}
                   aria-valuemin={0}
@@ -296,15 +296,15 @@ function HeroSlide({
                   aria-valuenow={seriesProgressPercent}
                   className="h-1 w-16 overflow-hidden rounded-full bg-foreground/15"
                 >
-                  <span
-                    className="block h-full rounded-full bg-[hsl(var(--chart-2))]"
-                    style={{ width: `${seriesProgressPercent}%` }}
+                  <ProgressFill
+                    percent={seriesProgressPercent}
+                    className="bg-[hsl(var(--chart-2))]"
                   />
-                </span>
+                </div>
               )}
               {seriesProgressPercent !== null && (
                 <span className="font-semibold text-foreground tabular-nums">
-                  {seriesProgressPercent}%
+                  <CountUp value={seriesProgressPercent} suffix="%" />
                 </span>
               )}
             </div>
