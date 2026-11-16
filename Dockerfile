@@ -8,7 +8,7 @@ WORKDIR /app
 RUN apk add --no-cache python3 make g++
 
 # Install pnpm (corepack is no longer bundled with Node 26)
-RUN npm install -g pnpm@9.0.0
+RUN npm install -g pnpm@10.34.9
 
 # Copy package files first to leverage Docker cache
 COPY package.json pnpm-lock.yaml ./
