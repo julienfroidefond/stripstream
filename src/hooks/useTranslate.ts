@@ -49,7 +49,7 @@ export function useTranslate() {
       const translatedText = tBase(translationKey, values);
       return interpolateSingleBracePlaceholders(translatedText, values);
     }
-    return tBase(translationKey, values);
+    return tBase(translationKey);
   };
 
   return {
