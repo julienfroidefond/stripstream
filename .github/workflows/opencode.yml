@@ -91,7 +91,7 @@ jobs:
         # Pinned to a commit (release v1.19.5), never a movable ref: this action
         # runs with the job's token and the repository checked out. Bump it on
         # purpose: `gh api repos/anomalyco/opencode/releases/latest` then the tag's SHA.
-        uses: anomalyco/opencode/github@810c0eba1a7348036f8bdf61e6632d0c36c6876c # v1.19.5
+        uses: anomalyco/opencode/github@fedc6f208aa2bd54c1019227214568083f6380ad # v2.2.7
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
         with:
@@ -214,7 +214,7 @@ jobs:
         # Pinned to a commit (release v1.19.5), never a movable ref: this action
         # runs with the job's token and the repository checked out. Bump it on
         # purpose: `gh api repos/anomalyco/opencode/releases/latest` then the tag's SHA.
-        uses: anomalyco/opencode/github@810c0eba1a7348036f8bdf61e6632d0c36c6876c # v1.19.5
+        uses: anomalyco/opencode/github@fedc6f208aa2bd54c1019227214568083f6380ad # v2.2.7
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
         with:
