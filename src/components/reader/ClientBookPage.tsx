@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { ClientBookWrapper } from "./ClientBookWrapper";
+import { useReaderResumeHome } from "./hooks/useReaderResumeHome";
 import { BookSkeleton } from "@/components/skeletons/BookSkeleton";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { ERROR_CODES } from "@/constants/errorCodes";
@@ -17,6 +18,9 @@ interface ClientBookPageProps {
 }
 
 export function ClientBookPage({ bookId, initialData, initialError }: ClientBookPageProps) {
+  // Mount this first: on a long PWA resume it can keep the reader from
+  // mounting at all while the hard navigation to home starts.
+  const leavingForHome = useReaderResumeHome();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<ReaderData | null>(null);
@@ -67,7 +71,7 @@ export function ClientBookPage({ bookId, initialData, initialError }: ClientBook
     await fetchBookData();
   };
 
-  if (loading) {
+  if (leavingForHome || loading) {
     return <BookSkeleton />;
   }
 
