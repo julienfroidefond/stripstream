@@ -37,6 +37,8 @@ const securityHeaders = [
 const nextConfig = {
   distDir: process.env.NEXT_DIST_DIR || ".next",
   experimental: {
+    // Politique de rappel des mises à jour de sécurité Next.js.
+    agentUpgrade: "security",
     // Keep dynamic page segments in the client router cache for the same
     // duration as the home provider data. Revisiting the home page during a
     // session can then reuse its RSC payload instead of replaying every row.
