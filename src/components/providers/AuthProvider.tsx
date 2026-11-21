@@ -3,6 +3,7 @@
 import { SessionProvider } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { ReactNode, useEffect, useRef } from "react";
+import { replaceDocument } from "@/lib/browser/navigation";
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -46,7 +47,7 @@ function SessionResumeGuard() {
         const session = (await response.json()) as { user?: unknown } | null;
         if (!session?.user) {
           const from = `${window.location.pathname}${window.location.search}`;
-          window.location.replace(`/login?from=${encodeURIComponent(from)}`);
+          replaceDocument(`/login?from=${encodeURIComponent(from)}`);
         }
       } catch {
         // A resume while offline must keep the downloaded/offline experience

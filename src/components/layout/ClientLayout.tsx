@@ -16,6 +16,7 @@ const Toaster = dynamic(() => import("@/components/ui/toaster").then((m) => m.To
 import { NetworkStatus } from "../ui/NetworkStatus";
 import { ScrollProgress } from "@/components/motion";
 import { usePreferences } from "@/contexts/PreferencesContext";
+import { clearReaderHiddenAt, readerSessionStorage } from "@/lib/reader/resume-home";
 import { defaultPreferences } from "@/types/preferences";
 import logger from "@/lib/logger";
 import { getRandomBookFromLibraries } from "@/app/actions/library";
@@ -87,6 +88,15 @@ export default function ClientLayout({
       fetchRandomBook();
     }
   }, [backgroundType, libraryIdsString, fetchRandomBook]);
+
+  // A reader killed by iOS (or by a crash) can leave its "hidden at" marker
+  // behind. Clear it as soon as the app is outside the reader, otherwise the
+  // next book opened from home would be treated as a long resume.
+  useEffect(() => {
+    if (!pathname.startsWith("/books/")) {
+      clearReaderHiddenAt(readerSessionStorage());
+    }
+  }, [pathname]);
 
   const backgroundStyle = useMemo(() => {
     const bg = preferences.background;
