@@ -11,7 +11,9 @@ import {
   SERIES_RECOMMENDATIONS_CACHE_TAG,
   SERIES_RELATED_CACHE_TAG,
 } from "@/lib/cache/tags";
+import { defaultPreferences } from "@/types/preferences";
 import {
+  affectsServerRenderedPreferences,
   invalidateConnectionChange,
   invalidateFavorites,
   invalidateForRefresh,
@@ -24,6 +26,8 @@ import {
 
 const updatedTags = () => vi.mocked(updateTag).mock.calls.map(([tag]) => tag);
 const revalidatedPaths = () => vi.mocked(revalidatePath).mock.calls.map(([path]) => path);
+/** `usePaginatedGrid` envoie l'objet `displayMode` complet fusionné. */
+const displayModePatch = { ...defaultPreferences.displayMode, itemsPerPage: 60 };
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -117,29 +121,76 @@ describe("invalidateConnectionChange", () => {
 });
 
 describe("invalidateLibraryScan", () => {
-  it("revalidates the library routes without expiring any tag", () => {
+  it("revalidates the library route without expiring any tag", () => {
     invalidateLibraryScan("lib1");
 
     expect(updateTag).not.toHaveBeenCalled();
-    expect(revalidatedPaths()).toEqual(["/libraries/lib1", "/libraries"]);
+    expect(revalidatedPaths()).toEqual(["/libraries/lib1"]);
+  });
+});
+
+describe("affectsServerRenderedPreferences", () => {
+  it("revalidates when no patch is available", () => {
+    expect(affectsServerRenderedPreferences()).toBe(true);
+  });
+
+  it("revalidates the settings read by the per-id pages", () => {
+    expect(affectsServerRenderedPreferences({ displayMode: displayModePatch })).toBe(true);
+    expect(affectsServerRenderedPreferences({ showOnlyUnread: true })).toBe(true);
+    expect(affectsServerRenderedPreferences({ defaultSortOrder: "latest" })).toBe(true);
+    expect(affectsServerRenderedPreferences({ showMissingBooks: false })).toBe(true);
+  });
+
+  it("ignores the purely client-side settings", () => {
+    expect(affectsServerRenderedPreferences({ hideMissingBooks: true })).toBe(false);
+    expect(affectsServerRenderedPreferences({ showThumbnails: false })).toBe(false);
+    expect(affectsServerRenderedPreferences({ readerPageTurn: false })).toBe(false);
+    expect(
+      affectsServerRenderedPreferences({ background: { ...defaultPreferences.background, type: "gradient" } })
+    ).toBe(false);
+    expect(affectsServerRenderedPreferences({})).toBe(false);
   });
 });
 
 describe("invalidatePreferences", () => {
-  it("revalidates the routes that render preferences on the server", () => {
+  it("revalidates the per-id pages that render preferences on the server", () => {
     invalidatePreferences();
 
     expect(updateTag).not.toHaveBeenCalled();
-    expect(revalidatedPaths()).toEqual(["/", "/libraries", "/series"]);
+    expect(revalidatedPaths()).toEqual(["/libraries/[libraryId]", "/series/[seriesId]"]);
+    expect(vi.mocked(revalidatePath).mock.calls).toEqual([
+      ["/libraries/[libraryId]", "page"],
+      ["/series/[seriesId]", "page"],
+    ]);
+  });
+
+  it("revalidates when the patch carries a server-rendered setting", () => {
+    invalidatePreferences({ displayMode: displayModePatch });
+
+    expect(revalidatedPaths()).toEqual(["/libraries/[libraryId]", "/series/[seriesId]"]);
+  });
+
+  it("does not revalidate for a purely client-side setting", () => {
+    invalidatePreferences({ hideMissingBooks: true });
+
+    expect(revalidatePath).not.toHaveBeenCalled();
+    expect(updateTag).not.toHaveBeenCalled();
   });
 });
 
 describe("invalidateForRefresh", () => {
+  it("only expires the refreshed library's tag and route", () => {
+    invalidateForRefresh("library", "lib1");
+
+    expect(updatedTags()).toEqual([cacheTags.librarySeries("lib1")]);
+    expect(revalidatedPaths()).toEqual(["/libraries/lib1"]);
+  });
+
   it("targets the series' book list even when it was cached from another route", () => {
     invalidateForRefresh("series", "s1");
 
     expect(updatedTags()).toEqual([cacheTags.seriesBooks("s1")]);
-    expect(revalidatedPaths()).toEqual(["/series/s1", "/series"]);
+    expect(revalidatedPaths()).toEqual(["/series/s1"]);
   });
 
   it("has no tag to invalidate for a book: the reader reads through no-store", () => {

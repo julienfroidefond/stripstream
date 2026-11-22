@@ -25,7 +25,7 @@ export async function updatePreferences(
     // revalidation ici pourrait réinjecter pendant la transition les
     // préférences initiales de la page et faire clignoter le bouton à l'état
     // précédent.
-    invalidate: anonymousOnly ? undefined : invalidatePreferences,
+    invalidate: anonymousOnly ? undefined : () => invalidatePreferences(newPreferences),
     execute: async ({ userId }) => ({
       message: "Préférences mises à jour",
       data: await PreferencesService.updatePreferences(userId, newPreferences),
