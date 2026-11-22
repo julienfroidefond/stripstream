@@ -22,8 +22,9 @@ import logger from "@/lib/logger";
 import { getRandomBookFromLibraries } from "@/app/actions/library";
 import { useTranslate } from "@/hooks/useTranslate";
 
-// Routes qui ne nécessitent pas d'authentification
-const publicRoutes = ["/login", "/register"];
+// Routes qui ne nécessitent pas d'authentification (l'inscription est un
+// onglet de `/login`, sans route dédiée)
+const publicRoutes = ["/login"];
 
 interface ClientLayoutProps {
   children: React.ReactNode;
