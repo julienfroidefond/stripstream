@@ -3,10 +3,10 @@ import { ERROR_CODES } from "@/constants/errorCodes";
 import { SIGN_IN_CODES } from "@/lib/auth/sign-in-codes";
 import { AppError } from "@/utils/errors";
 import Credentials from "next-auth/providers/credentials";
-import prisma from "@/lib/prisma";
 import { AuthServerService } from "@/lib/services/auth-server.service";
 import { clientIpFromHeaders } from "@/lib/rate-limit/client-ip";
 import { revalidateSessionToken, rolesFromToken } from "@/lib/auth/session-token";
+import { loadSessionUser } from "@/lib/auth/session-user";
 import logger from "@/lib/logger";
 
 /**
@@ -67,12 +67,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // Les rôles et l'existence du compte sont relus à chaque lecture de
       // session : un compte supprimé, rétrogradé ou dont le mot de passe a
       // changé ne garde pas ses droits jusqu'à l'expiration du JWT (ADR 0032).
-      return revalidateSessionToken(token, (id) =>
-        prisma.user.findUnique({
-          where: { id },
-          select: { roles: true, sessionVersion: true },
-        })
-      );
+      return revalidateSessionToken(token, loadSessionUser);
     },
     async session({ session, token }) {
       if (token) {

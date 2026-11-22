@@ -57,7 +57,9 @@ export default async function proxy(request: NextRequest) {
     return createNextResponse();
   }
 
-  // Vérifier l'authentification avec NextAuth v5
+  // Vérifier l'authentification : le proxy revalide le jeton contre la base
+  // (existence du compte + `sessionVersion`, ADR 0033) en plus de la signature.
+  // Les pages et le runner d'actions restent l'autorité finale.
   const session = await getAuthSession(request);
 
   if (!session) {
