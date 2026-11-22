@@ -1,5 +1,6 @@
 import { revalidatePath, updateTag } from "next/cache";
 import { cacheTags } from "@/lib/cache/tags";
+import type { UserPreferences } from "@/types/preferences";
 
 /**
  * Recettes d'invalidation : une mutation déclare *ce qu'elle a changé*, pas la
@@ -66,18 +67,45 @@ export function invalidateConnectionChange(): void {
  */
 export function invalidateLibraryScan(libraryId: string): void {
   revalidatePath(`/libraries/${libraryId}`);
-  revalidatePath("/libraries");
+}
+
+/**
+ * Réglages de préférences réellement lus par le rendu serveur des pages
+ * per-id. Tout le reste (thème, fond, lecteur, vignettes…) ne vit que côté
+ * client.
+ */
+const SERVER_RENDERED_PREFERENCE_KEYS = [
+  "displayMode",
+  "showOnlyUnread",
+  "defaultSortOrder",
+  "showMissingBooks",
+] as const satisfies ReadonlyArray<keyof UserPreferences>;
+
+/**
+ * Indique si une écriture de préférences peut modifier le rendu serveur d'une
+ * page per-id. `usePaginatedGrid` enregistre aussi des réglages purement
+ * client (fond, lecteur, vignettes…) : sans ce filtre, chaque bascule
+ * jetterait toutes les pages de bibliothèque et de série. Un appel sans patch
+ * ne permet pas de savoir ce qui a changé : on revalide par prudence.
+ */
+export function affectsServerRenderedPreferences(patch?: Partial<UserPreferences>): boolean {
+  if (!patch) return true;
+  return SERVER_RENDERED_PREFERENCE_KEYS.some((key) => key in patch);
 }
 
 /**
  * Préférences utilisateur (taille de page, filtres, affichage…). Elles ne
- * changent aucune lecture provider, donc aucun tag : seules les routes qui
- * les appliquent au rendu serveur sont revalidées.
+ * changent aucune lecture provider, donc aucun tag. Les pages `/libraries` et
+ * `/series` n'existent pas : ce sont les pages per-id qui rendent les
+ * préférences, et c'est leur payload RSC gardé 120 s par le Router Cache
+ * client (`staleTimes.dynamic`) qu'on purge ici. Les réglages purement client
+ * ne revalident aucune route.
  */
-export function invalidatePreferences(): void {
-  revalidatePath("/");
-  revalidatePath("/libraries");
-  revalidatePath("/series");
+export function invalidatePreferences(patch?: Partial<UserPreferences>): void {
+  if (!affectsServerRenderedPreferences(patch)) return;
+
+  revalidatePath("/libraries/[libraryId]", "page");
+  revalidatePath("/series/[seriesId]", "page");
 }
 
 export type RefreshScope = "home" | "library" | "series" | "book";
@@ -94,16 +122,17 @@ export function invalidateForRefresh(scope: RefreshScope, id: string): void {
       revalidatePath("/");
       break;
     case "library":
-      updateTag(cacheTags.allLibrarySeries);
+      // Le profil `librarySeries` porte à la fois le tag global et le tag
+      // per-id : invalider le seul per-id rafraîchit cette bibliothèque sans
+      // expulser la grille de toutes les autres.
+      updateTag(cacheTags.librarySeries(id));
       revalidatePath(`/libraries/${id}`);
-      revalidatePath("/libraries");
       break;
     case "series":
       // Le livre peut avoir été mis en cache depuis une autre route (soft tags) :
       // on cible explicitement la liste des tomes en plus de la route.
       updateTag(cacheTags.seriesBooks(id));
       revalidatePath(`/series/${id}`);
-      revalidatePath("/series");
       break;
     case "book":
       revalidatePath(`/books/${id}`);
