@@ -1,5 +1,5 @@
-/* eslint-disable no-console */
 import { useCallback, useEffect, useState } from "react";
+import logger from "@/lib/logger";
 import type { NormalizedBook } from "@/lib/providers/types";
 import { updateReadProgress } from "@/app/actions/read-progress";
 import { useToast } from "@/components/ui/use-toast";
@@ -47,9 +47,6 @@ export function useReadProgressSession({
         initialPage,
         anonymous: isAnonymous,
         persist: async (update) => {
-          console.debug(
-            `[reader/progress] sync bookId=${update.bookId} page=${update.page}/${update.totalPages}`
-          );
           try {
             const result = await updateReadProgress(
               update.bookId,
@@ -58,15 +55,16 @@ export function useReadProgressSession({
               update.seriesId
             );
             if (!result.success) {
-              console.error(
-                `[reader/progress] sync failed bookId=${update.bookId} page=${update.page} code=${result.code}`
+              logger.error(
+                { bookId: update.bookId, page: update.page, code: result.code },
+                "reader/progress: sync failed"
               );
               showSaveError(result.code);
             }
           } catch (error) {
-            console.error(
-              `[reader/progress] sync error bookId=${update.bookId} page=${update.page}`,
-              error
+            logger.error(
+              { bookId: update.bookId, page: update.page, err: error },
+              "reader/progress: sync error"
             );
             showSaveError(ERROR_CODES.BOOK.PROGRESS_UPDATE_ERROR);
           }

@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
@@ -112,11 +111,10 @@ export function useReaderState({ book, pages, onClose, onBackToSeries, nextBook 
 
   const handleCloseReader = useCallback(
     (page: number) => {
-      console.debug(`[reader/state] close bookId=${book.id} page=${page}`);
       cancelAllPrefetches();
       onClose?.(page);
     },
-    [book.id, cancelAllPrefetches, onClose]
+    [cancelAllPrefetches, onClose]
   );
 
   const handleBackToSeries = useCallback(() => {
