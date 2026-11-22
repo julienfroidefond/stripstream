@@ -18,11 +18,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
   );
 }
 
-const publicRoutes = ["/login", "/register"];
+const publicRoutes = ["/login"];
 
 /**
  * iPadOS can restore a suspended standalone PWA from its in-memory snapshot.
- * No navigation reaches the middleware in that case, so an expired session
+ * No navigation reaches the proxy in that case, so an expired session
  * would otherwise leave the old authenticated shell visible until the next
  * click. Revalidate as soon as the app becomes visible again.
  */
@@ -50,8 +50,8 @@ function SessionResumeGuard() {
           replaceDocument(`/login?from=${encodeURIComponent(from)}`);
         }
       } catch {
-        // A resume while offline must keep the downloaded/offline experience
-        // available. Authentication will be checked again on the next resume.
+        // Un réveil sans réseau laisse la surface telle quelle : l'auth sera
+        // revérifiée au prochain retour au premier plan.
       } finally {
         checkInProgress.current = false;
       }

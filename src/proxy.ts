@@ -1,13 +1,19 @@
 import { NextResponse, NextRequest } from "next/server";
 import { getAuthSession } from "@/lib/auth/middleware";
 
-// Routes qui ne nécessitent pas d'authentification
-const publicRoutes = ["/login", "/register", "/images"];
+// Routes qui ne nécessitent pas d'authentification, comparées par égalité
+// stricte sur `pathname`. L'inscription n'a pas de route dédiée : c'est un
+// onglet de `/login`. Les fichiers statiques (`/images/...`, `/_next/...`,
+// `/fonts/...`) sont déjà exclus par le `matcher` et par les préfixes testés
+// plus bas.
+const publicRoutes = ["/login"];
 
 // Routes d'API qui ne nécessitent pas d'authentification. Chemins exacts :
 // `/api/health` est la sonde du conteneur, `/api/healthz` ou
-// `/api/health/x` restent protégés.
-const publicApiRoutes = ["/api/auth/register", "/api/health"];
+// `/api/health/x` restent protégés. Les routes NextAuth (`/api/auth/*`) sont
+// publiques via le préfixe testé plus bas ; il n'existe pas de route
+// d'inscription dédiée.
+const publicApiRoutes = ["/api/health"];
 
 // Langues supportées
 const locales = ["fr", "en"];
