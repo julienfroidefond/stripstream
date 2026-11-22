@@ -71,16 +71,17 @@ export function invalidateLibraryScan(libraryId: string): void {
 }
 
 /**
- * Sous-clés de `displayMode` lues par le rendu serveur des pages per-id :
- * `/libraries/[libraryId]` et `/series/[seriesId]` lisent `itemsPerPage` et
- * `compact`. `viewMode`/`booksViewMode` ne pilotent que la grille côté client.
+ * Réglages que le rendu serveur des pages per-id lit réellement :
+ * `/libraries/[libraryId]` et `/series/[seriesId]` rendent `itemsPerPage`,
+ * `compact`, `showOnlyUnread`, `defaultSortOrder` et `showMissingBooks`, et
+ * passent le mode d'affichage initial de chaque grille (`viewMode`,
+ * `booksViewMode`) au composant client. Toute écriture de `displayMode` influe
+ * donc sur le payload RSC, même si la grille applique ensuite le changement
+ * côté client : sans revalidation, revenir sur la page dans les 120 s de
+ * `staleTimes.dynamic` réafficherait l'ancien mode.
  */
-const SERVER_RENDERED_DISPLAY_KEYS = ["itemsPerPage", "compact"] as const satisfies ReadonlyArray<
-  keyof UserPreferences["displayMode"]
->;
-
-/** Réglages scalaires lus par le rendu serveur des pages per-id. */
 const SERVER_RENDERED_PREFERENCE_KEYS = [
+  "displayMode",
   "showOnlyUnread",
   "defaultSortOrder",
   "showMissingBooks",
@@ -89,8 +90,8 @@ const SERVER_RENDERED_PREFERENCE_KEYS = [
 /**
  * Indique si une écriture de préférences peut modifier le rendu serveur d'une
  * page per-id. `usePaginatedGrid` enregistre aussi des réglages purement
- * client (mode grille/liste, fond, lecteur, vignettes…) : sans ce filtre,
- * chaque bascule jetterait le Router Cache de toutes les pages de
+ * client (fond, lecteur, vignettes, masquage local des tomes manquants) : sans
+ * ce filtre, chaque bascule jetterait le Router Cache de toutes les pages de
  * bibliothèque et de série.
  *
  * Exception intentionnelle — `anonymousMode` : il change bien le rendu serveur
@@ -105,15 +106,6 @@ const SERVER_RENDERED_PREFERENCE_KEYS = [
  */
 export function affectsServerRenderedPreferences(patch?: PreferencesPatch): boolean {
   if (!patch) return true;
-
-  const displayMode = patch.displayMode;
-  if (
-    displayMode &&
-    SERVER_RENDERED_DISPLAY_KEYS.some((key) => displayMode[key] !== undefined)
-  ) {
-    return true;
-  }
-
   return SERVER_RENDERED_PREFERENCE_KEYS.some((key) => patch[key] !== undefined);
 }
 

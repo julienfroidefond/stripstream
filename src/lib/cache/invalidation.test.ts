@@ -137,6 +137,8 @@ describe("affectsServerRenderedPreferences", () => {
   it("revalidates the settings read by the per-id pages", () => {
     expect(affectsServerRenderedPreferences({ displayMode: displayModePatch })).toBe(true);
     expect(affectsServerRenderedPreferences({ displayMode: { compact: true } })).toBe(true);
+    expect(affectsServerRenderedPreferences({ displayMode: { viewMode: "list" } })).toBe(true);
+    expect(affectsServerRenderedPreferences({ displayMode: { booksViewMode: "list" } })).toBe(true);
     expect(affectsServerRenderedPreferences({ showOnlyUnread: true })).toBe(true);
     expect(affectsServerRenderedPreferences({ defaultSortOrder: "latest" })).toBe(true);
     expect(affectsServerRenderedPreferences({ showMissingBooks: false })).toBe(true);
@@ -145,8 +147,6 @@ describe("affectsServerRenderedPreferences", () => {
   it("ignores the purely client-side settings", () => {
     expect(affectsServerRenderedPreferences({ hideMissingBooks: true })).toBe(false);
     expect(affectsServerRenderedPreferences({ showThumbnails: false })).toBe(false);
-    expect(affectsServerRenderedPreferences({ displayMode: { viewMode: "list" } })).toBe(false);
-    expect(affectsServerRenderedPreferences({ displayMode: { booksViewMode: "list" } })).toBe(false);
     expect(affectsServerRenderedPreferences({ readerPageTurn: false })).toBe(false);
     expect(
       affectsServerRenderedPreferences({ background: { ...defaultPreferences.background, type: "gradient" } })
@@ -175,7 +175,7 @@ describe("invalidatePreferences", () => {
 
   it("does not revalidate for a purely client-side setting", () => {
     invalidatePreferences({ hideMissingBooks: true });
-    invalidatePreferences({ displayMode: { viewMode: "list" } });
+    invalidatePreferences({ showThumbnails: false });
 
     expect(revalidatePath).not.toHaveBeenCalled();
     expect(updateTag).not.toHaveBeenCalled();

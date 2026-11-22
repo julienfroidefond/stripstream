@@ -209,9 +209,9 @@ export function usePaginatedGrid({
 
   const persistDisplayMode = useCallback(
     async (patch: Partial<UserPreferences["displayMode"]>) => {
-      // Seule la clé modifiée part au serveur : le writer fusionne
-      // `displayMode`, et l'invalidation peut ainsi ignorer une bascule
-      // grille/liste (purement client) tout en revalidant une taille de page.
+      // Seule la clé modifiée part au serveur : le writer et le service
+      // fusionnent `displayMode`, donc une écriture concurrente sur une autre
+      // sous-clé (taille de page, mode de l'autre grille) n'est pas écrasée.
       await persistPreferences({ displayMode: patch });
     },
     [persistPreferences]

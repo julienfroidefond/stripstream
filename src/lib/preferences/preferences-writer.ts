@@ -10,11 +10,10 @@ import { defaultPreferences, type UserPreferences } from "@/types/preferences";
  */
 
 /**
- * Patch d'écriture des préférences. `displayMode` reste partiel : le writer
- * fusionne les clés fournies dans l'objet courant (`mergePreferences`), ce qui
- * permet d'envoyer seulement le réglage qui a changé — l'invalidation peut
- * alors distinguer une taille de page d'une bascule grille/liste
- * (`affectsServerRenderedPreferences`).
+ * Patch d'écriture des préférences. `displayMode` reste partiel : le writer et
+ * le service fusionnent les clés fournies dans l'objet courant
+ * (`mergePreferences`), ce qui permet de n'envoyer que le réglage modifié sans
+ * écraser les autres — y compris quand deux onglets écrivent en parallèle.
  */
 export type PreferencesPatch = Omit<Partial<UserPreferences>, "displayMode"> & {
   displayMode?: Partial<UserPreferences["displayMode"]>;
