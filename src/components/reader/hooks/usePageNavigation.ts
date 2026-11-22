@@ -1,6 +1,6 @@
-/* eslint-disable no-console */
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import logger from "@/lib/logger";
 import type { NormalizedBook } from "@/lib/providers/types";
 import {
   planPageJump,
@@ -34,7 +34,6 @@ export function usePageNavigation({
   const [cursorPage, setCurrentPage] = useState(() => {
     const saved = isAnonymous ? 0 : (book.readProgress?.page ?? 0);
     const initial = resolveInitialPage(saved, pages.length, isAnonymous);
-    console.debug(`[reader/nav] init bookId=${book.id} savedPage=${saved} startPage=${initial} total=${pages.length}`);
     return initial;
   });
   const [showEndMessage, setShowEndMessage] = useState(false);
@@ -59,11 +58,10 @@ export function usePageNavigation({
   const currentPage = spreadStartFor(cursorPage, { isDoublePage, shouldShowDoublePage });
 
   const applyPageMove = useCallback(
-    (move: PageMove, fromPage: number) => {
+    (move: PageMove) => {
       const spread = { isDoublePage, shouldShowDoublePage };
       switch (move.kind) {
         case "page":
-          console.debug(`[reader/nav] navigate ${fromPage} → ${move.page} bookId=${book.id}`);
           setCurrentPage(move.page);
           // A spread that shows the last page records the book as finished.
           readProgress.track(progressPageFor(move.page, totalPages, spread));
@@ -72,34 +70,33 @@ export function usePageNavigation({
           setStartBump((count) => count + 1);
           break;
         case "next-book":
-          console.debug(`[reader/nav] end of book → next bookId=${move.bookId}`);
           // The final spread may have been reached without a tracked move
           // (opened on it, double page switched on): complete the book first.
           if (totalPages > 0) readProgress.track(totalPages);
           router.replace(`/books/${move.bookId}`);
           break;
         case "end":
-          console.debug(`[reader/nav] end of book, no next → end message`);
           if (totalPages > 0) readProgress.track(totalPages);
           setShowEndMessage(true);
           break;
       }
     },
-    [book.id, isDoublePage, readProgress, router, shouldShowDoublePage, totalPages]
+    [isDoublePage, readProgress, router, shouldShowDoublePage, totalPages]
   );
 
   const navigateToPage = useCallback(
     (page: number) => {
       const jump = planPageJump(page, pages.length, { isDoublePage, shouldShowDoublePage });
       if (jump.kind === "out-of-bounds") {
-        console.warn(
-          `[reader/nav] navigate out of bounds page=${jump.page} total=${pages.length}`
+        logger.warn(
+          { page: jump.page, total: pages.length },
+          "reader/nav: navigate out of bounds"
         );
         return;
       }
-      applyPageMove(jump, currentPage);
+      applyPageMove(jump);
     },
-    [applyPageMove, currentPage, isDoublePage, pages.length, shouldShowDoublePage]
+    [applyPageMove, isDoublePage, pages.length, shouldShowDoublePage]
   );
 
   const handlePreviousPage = useCallback(() => {
@@ -109,8 +106,7 @@ export function usePageNavigation({
         totalPages: pages.length,
         isDoublePage,
         shouldShowDoublePage,
-      }),
-      currentPage
+      })
     );
   }, [applyPageMove, currentPage, isDoublePage, pages.length, shouldShowDoublePage]);
 
@@ -122,8 +118,7 @@ export function usePageNavigation({
         isDoublePage,
         shouldShowDoublePage,
         nextBookId: nextBook?.id ?? null,
-      }),
-      currentPage
+      })
     );
   }, [
     applyPageMove,

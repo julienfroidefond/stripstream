@@ -108,5 +108,3 @@ export interface ConnectionTestRateLimit {
   allowed: boolean;
   retryAfterSeconds: number;
 }
-
-export type ConnectionProvider = ProviderType;

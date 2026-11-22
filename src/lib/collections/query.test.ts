@@ -33,15 +33,21 @@ describe("parsePage", () => {
     expect(parsePage("")).toBe(1);
   });
 
-  it("keeps a positive integer", () => {
+  it("keeps a positive decimal integer", () => {
     expect(parsePage("3")).toBe(3);
-    expect(parsePage("3.9")).toBe(3);
   });
 
-  it("rejects zero, negatives and non-numeric values", () => {
+  it("rejects zero, negatives and partially numeric values", () => {
     expect(parsePage("0")).toBe(1);
     expect(parsePage("-2")).toBe(1);
+    expect(parsePage("2abc")).toBe(1);
+    expect(parsePage("1.9")).toBe(1);
+    expect(parsePage("0x10")).toBe(1);
     expect(parsePage("abc")).toBe(1);
+  });
+
+  it("refuses surrounding whitespace instead of trimming it", () => {
+    expect(parsePage(" 4 ")).toBe(1);
   });
 });
 
@@ -80,11 +86,26 @@ describe("parseCollectionQuery", () => {
     ).toBe(48);
   });
 
-  it("falls back to the first option for an unparsable size", () => {
-    expect(parseCollectionQuery({ size: "abc" }, defaults).pageSize).toBe(30);
+  it("falls back to the preferred size for an unparsable size", () => {
+    expect(parseCollectionQuery({ size: "2abc" }, defaults).pageSize).toBe(60);
+    expect(parseCollectionQuery({ size: "0" }, defaults).pageSize).toBe(60);
+    expect(parseCollectionQuery({ size: "-2" }, defaults).pageSize).toBe(60);
+    expect(parseCollectionQuery({ size: "1.9" }, defaults).pageSize).toBe(60);
+    expect(parseCollectionQuery({ size: " 4 " }, defaults).pageSize).toBe(60);
+    expect(parseCollectionQuery({ size: "abc" }, defaults).pageSize).toBe(60);
     expect(
-      parseCollectionQuery({ size: "abc" }, { ...defaults, compact: true }).pageSize
-    ).toBe(24);
+      parseCollectionQuery({ size: "2abc" }, { ...defaults, compact: true }).pageSize
+    ).toBe(48);
+  });
+
+  it("keeps the module default when the preference is unset", () => {
+    expect(
+      parseCollectionQuery({ size: "2abc" }, { ...defaults, itemsPerPage: 0 }).pageSize
+    ).toBe(30);
+  });
+
+  it("keeps a valid size", () => {
+    expect(parseCollectionQuery({ size: "90" }, defaults).pageSize).toBe(90);
   });
 
   it("follows the unread preference only when the param is absent", () => {

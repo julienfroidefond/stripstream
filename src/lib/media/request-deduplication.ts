@@ -45,14 +45,17 @@ class RequestDeduplicationService {
     // Stocker la promesse en cours
     this.pendingRequests.set(key, promise);
 
-    // Timeout de sécurité pour éviter les fuites mémoire
-    setTimeout(() => {
+    // Timeout de sécurité pour éviter les fuites mémoire. `unref` rend le timer
+    // non bloquant : il ne retient pas la boucle d'événements 60 s par requête
+    // dans les scripts et les tests.
+    const timer = setTimeout(() => {
       // Ne pas supprimer une requête plus récente qui aurait remplacé cette
       // entrée après l'expiration de la précédente.
       if (this.pendingRequests.get(key) === promise) {
         this.pendingRequests.delete(key);
       }
     }, ttl);
+    timer.unref?.();
 
     return promise;
   }
