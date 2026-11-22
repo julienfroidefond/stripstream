@@ -6,6 +6,7 @@ import { useGridFlip, useGridFlipPlayback } from "@/components/motion";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { normalizeGridPageSize } from "@/lib/collections/page-size";
 import { normalizeSortOrder, preferenceForMissingFilter } from "@/lib/collections/query";
+import type { PreferencesPatch } from "@/lib/preferences/preferences-writer";
 import type { SortOrder, UserPreferences } from "@/types/preferences";
 
 export type GridViewMode = "grid" | "list";
@@ -97,7 +98,7 @@ export function usePaginatedGrid({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { preferences, updatePreferences } = usePreferences();
+  const { updatePreferences } = usePreferences();
 
   const [showOnlyUnread, setShowOnlyUnread] = useState(initialShowOnlyUnread);
   const [isCompact, setIsCompact] = useState(initialCompact);
@@ -198,7 +199,7 @@ export function usePaginatedGrid({
   );
 
   const persistPreferences = useCallback(
-    async (next: Partial<UserPreferences>) => {
+    async (next: PreferencesPatch) => {
       // Le writer applique le rollback ; une préférence non enregistrée ne doit
       // pas bloquer la navigation ni l'état local de la grille.
       await updatePreferences(next);
@@ -208,11 +209,12 @@ export function usePaginatedGrid({
 
   const persistDisplayMode = useCallback(
     async (patch: Partial<UserPreferences["displayMode"]>) => {
-      await persistPreferences({
-        displayMode: { ...preferences.displayMode, ...patch },
-      });
+      // Seule la clé modifiée part au serveur : le writer fusionne
+      // `displayMode`, et l'invalidation peut ainsi ignorer une bascule
+      // grille/liste (purement client) tout en revalidant une taille de page.
+      await persistPreferences({ displayMode: patch });
     },
-    [persistPreferences, preferences.displayMode]
+    [persistPreferences]
   );
 
   // Applique le filtre unread par défaut au premier chargement.
@@ -321,17 +323,9 @@ export function usePaginatedGrid({
       await persistDisplayMode({
         compact: nextCompactMode,
         itemsPerPage: nextSize,
-        ...viewModePatch(viewModePreference, viewMode),
       });
     },
-    [
-      captureLayout,
-      effectivePageSize,
-      persistDisplayMode,
-      updateUrlParams,
-      viewMode,
-      viewModePreference,
-    ]
+    [captureLayout, effectivePageSize, persistDisplayMode, updateUrlParams]
   );
 
   const handleViewModeToggle = useCallback(

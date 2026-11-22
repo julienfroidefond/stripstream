@@ -100,14 +100,14 @@ describe("usePaginatedGrid", () => {
 
     expect(mocks.capture).toHaveBeenCalledTimes(1);
     expect(mocks.updatePreferences).toHaveBeenCalledWith({
-      displayMode: { ...mocks.preferences.displayMode, itemsPerPage: 60 },
+      displayMode: { itemsPerPage: 60 },
     });
     expect(mocks.push).toHaveBeenCalledWith("/libraries/lib-a?page=1&size=60", {
       scroll: false,
     });
   });
 
-  it("normalizes the page size when enabling compact and targets the grid's view mode key", async () => {
+  it("normalizes the page size when enabling compact", async () => {
     const { result } = renderGrid({
       initialViewMode: "list",
       viewModePreference: "booksViewMode",
@@ -120,12 +120,7 @@ describe("usePaginatedGrid", () => {
     expect(result.current.isCompact).toBe(true);
     expect(result.current.effectivePageSize).toBe(24);
     expect(mocks.updatePreferences).toHaveBeenCalledWith({
-      displayMode: {
-        compact: true,
-        itemsPerPage: 24,
-        viewMode: "grid",
-        booksViewMode: "list",
-      },
+      displayMode: { compact: true, itemsPerPage: 24 },
     });
     expect(mocks.push).toHaveBeenCalledWith("/libraries/lib-a?page=1&size=24", {
       scroll: false,
@@ -156,6 +151,9 @@ describe("usePaginatedGrid", () => {
     });
 
     expect(result.current.viewMode).toBe("list");
+    expect(mocks.updatePreferences).toHaveBeenCalledWith({
+      displayMode: { viewMode: "list" },
+    });
   });
 
   it("hides missing-book placeholders locally without touching the URL", async () => {

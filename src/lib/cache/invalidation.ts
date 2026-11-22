@@ -1,5 +1,6 @@
 import { revalidatePath, updateTag } from "next/cache";
 import { cacheTags } from "@/lib/cache/tags";
+import type { PreferencesPatch } from "@/lib/preferences/preferences-writer";
 import type { UserPreferences } from "@/types/preferences";
 
 /**
@@ -70,12 +71,16 @@ export function invalidateLibraryScan(libraryId: string): void {
 }
 
 /**
- * Réglages de préférences réellement lus par le rendu serveur des pages
- * per-id. Tout le reste (thème, fond, lecteur, vignettes…) ne vit que côté
- * client.
+ * Sous-clés de `displayMode` lues par le rendu serveur des pages per-id :
+ * `/libraries/[libraryId]` et `/series/[seriesId]` lisent `itemsPerPage` et
+ * `compact`. `viewMode`/`booksViewMode` ne pilotent que la grille côté client.
  */
+const SERVER_RENDERED_DISPLAY_KEYS = ["itemsPerPage", "compact"] as const satisfies ReadonlyArray<
+  keyof UserPreferences["displayMode"]
+>;
+
+/** Réglages scalaires lus par le rendu serveur des pages per-id. */
 const SERVER_RENDERED_PREFERENCE_KEYS = [
-  "displayMode",
   "showOnlyUnread",
   "defaultSortOrder",
   "showMissingBooks",
@@ -84,24 +89,44 @@ const SERVER_RENDERED_PREFERENCE_KEYS = [
 /**
  * Indique si une écriture de préférences peut modifier le rendu serveur d'une
  * page per-id. `usePaginatedGrid` enregistre aussi des réglages purement
- * client (fond, lecteur, vignettes…) : sans ce filtre, chaque bascule
- * jetterait toutes les pages de bibliothèque et de série. Un appel sans patch
- * ne permet pas de savoir ce qui a changé : on revalide par prudence.
+ * client (mode grille/liste, fond, lecteur, vignettes…) : sans ce filtre,
+ * chaque bascule jetterait le Router Cache de toutes les pages de
+ * bibliothèque et de série.
+ *
+ * Exception intentionnelle — `anonymousMode` : il change bien le rendu serveur
+ * (`/` et `/in-progress`), mais il est piloté par le contexte client, qui
+ * rafraîchit la route courante une fois l'écriture confirmée
+ * (`AnonymousContext.toggleAnonymous`). Le revalider pendant la transition
+ * réinjecterait l'ancien état et ferait clignoter le bouton ; les routes déjà
+ * visitées peuvent donc rester périmées jusqu'à `staleTimes.dynamic` (120 s).
+ *
+ * Un appel sans patch ne permet pas de savoir ce qui a changé : on revalide
+ * par prudence.
  */
-export function affectsServerRenderedPreferences(patch?: Partial<UserPreferences>): boolean {
+export function affectsServerRenderedPreferences(patch?: PreferencesPatch): boolean {
   if (!patch) return true;
-  return SERVER_RENDERED_PREFERENCE_KEYS.some((key) => key in patch);
+
+  const displayMode = patch.displayMode;
+  if (
+    displayMode &&
+    SERVER_RENDERED_DISPLAY_KEYS.some((key) => displayMode[key] !== undefined)
+  ) {
+    return true;
+  }
+
+  return SERVER_RENDERED_PREFERENCE_KEYS.some((key) => patch[key] !== undefined);
 }
 
 /**
  * Préférences utilisateur (taille de page, filtres, affichage…). Elles ne
  * changent aucune lecture provider, donc aucun tag. Les pages `/libraries` et
  * `/series` n'existent pas : ce sont les pages per-id qui rendent les
- * préférences, et c'est leur payload RSC gardé 120 s par le Router Cache
- * client (`staleTimes.dynamic`) qu'on purge ici. Les réglages purement client
- * ne revalident aucune route.
+ * préférences. Depuis une Server Action, `revalidatePath` invalide le Router
+ * Cache client de l'appelant ; la portée `"page"` est celle qu'exige un
+ * segment dynamique (utile aussi si la recette est appelée depuis un Route
+ * Handler). Les réglages purement client ne revalident aucune route.
  */
-export function invalidatePreferences(patch?: Partial<UserPreferences>): void {
+export function invalidatePreferences(patch?: PreferencesPatch): void {
   if (!affectsServerRenderedPreferences(patch)) return;
 
   revalidatePath("/libraries/[libraryId]", "page");

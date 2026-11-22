@@ -26,8 +26,8 @@ import {
 
 const updatedTags = () => vi.mocked(updateTag).mock.calls.map(([tag]) => tag);
 const revalidatedPaths = () => vi.mocked(revalidatePath).mock.calls.map(([path]) => path);
-/** `usePaginatedGrid` envoie l'objet `displayMode` complet fusionné. */
-const displayModePatch = { ...defaultPreferences.displayMode, itemsPerPage: 60 };
+/** `usePaginatedGrid` n'envoie que la sous-clé de `displayMode` qui a changé. */
+const displayModePatch = { itemsPerPage: 60 };
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -136,6 +136,7 @@ describe("affectsServerRenderedPreferences", () => {
 
   it("revalidates the settings read by the per-id pages", () => {
     expect(affectsServerRenderedPreferences({ displayMode: displayModePatch })).toBe(true);
+    expect(affectsServerRenderedPreferences({ displayMode: { compact: true } })).toBe(true);
     expect(affectsServerRenderedPreferences({ showOnlyUnread: true })).toBe(true);
     expect(affectsServerRenderedPreferences({ defaultSortOrder: "latest" })).toBe(true);
     expect(affectsServerRenderedPreferences({ showMissingBooks: false })).toBe(true);
@@ -144,6 +145,8 @@ describe("affectsServerRenderedPreferences", () => {
   it("ignores the purely client-side settings", () => {
     expect(affectsServerRenderedPreferences({ hideMissingBooks: true })).toBe(false);
     expect(affectsServerRenderedPreferences({ showThumbnails: false })).toBe(false);
+    expect(affectsServerRenderedPreferences({ displayMode: { viewMode: "list" } })).toBe(false);
+    expect(affectsServerRenderedPreferences({ displayMode: { booksViewMode: "list" } })).toBe(false);
     expect(affectsServerRenderedPreferences({ readerPageTurn: false })).toBe(false);
     expect(
       affectsServerRenderedPreferences({ background: { ...defaultPreferences.background, type: "gradient" } })
@@ -172,6 +175,7 @@ describe("invalidatePreferences", () => {
 
   it("does not revalidate for a purely client-side setting", () => {
     invalidatePreferences({ hideMissingBooks: true });
+    invalidatePreferences({ displayMode: { viewMode: "list" } });
 
     expect(revalidatePath).not.toHaveBeenCalled();
     expect(updateTag).not.toHaveBeenCalled();

@@ -95,6 +95,50 @@ describe("PreferencesService.updatePreferences", () => {
     expect(create).toMatchObject(defaultPreferences);
   });
 
+  it("merges a partial displayMode into the stored row instead of resetting it", async () => {
+    findUnique.mockResolvedValue(
+      row({
+        displayMode: {
+          compact: false,
+          itemsPerPage: 60,
+          viewMode: "grid",
+          booksViewMode: "grid",
+        },
+      })
+    );
+    upsert.mockResolvedValue(row());
+
+    await PreferencesService.updatePreferences(42, { displayMode: { viewMode: "list" } });
+
+    expect(upsert.mock.calls[0][0].update.displayMode).toEqual({
+      compact: false,
+      itemsPerPage: 60,
+      viewMode: "list",
+      booksViewMode: "grid",
+    });
+  });
+
+  it("creates a complete displayMode from the defaults when the row is missing", async () => {
+    findUnique.mockResolvedValue(null);
+    upsert.mockResolvedValue(row());
+
+    await PreferencesService.updatePreferences(42, { displayMode: { viewMode: "list" } });
+
+    expect(upsert.mock.calls[0][0].update.displayMode).toEqual({
+      ...defaultPreferences.displayMode,
+      viewMode: "list",
+    });
+  });
+
+  it("does not rewrite the displayMode column when the patch does not touch it", async () => {
+    findUnique.mockResolvedValue(row());
+    upsert.mockResolvedValue(row({ showOnlyUnread: true }));
+
+    await PreferencesService.updatePreferences(42, { showOnlyUnread: true });
+
+    expect(upsert.mock.calls[0][0].update).not.toHaveProperty("displayMode");
+  });
+
   it("returns the row as read back from the database", async () => {
     upsert.mockResolvedValue(
       row({ readingDirection: "rtl", background: { type: "image" } as PreferencesRow["background"] })

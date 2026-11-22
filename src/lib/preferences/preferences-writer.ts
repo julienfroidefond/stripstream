@@ -9,7 +9,16 @@ import { defaultPreferences, type UserPreferences } from "@/types/preferences";
  * feedback par lot.
  */
 
-export type PreferencesPatch = Partial<UserPreferences>;
+/**
+ * Patch d'écriture des préférences. `displayMode` reste partiel : le writer
+ * fusionne les clés fournies dans l'objet courant (`mergePreferences`), ce qui
+ * permet d'envoyer seulement le réglage qui a changé — l'invalidation peut
+ * alors distinguer une taille de page d'une bascule grille/liste
+ * (`affectsServerRenderedPreferences`).
+ */
+export type PreferencesPatch = Omit<Partial<UserPreferences>, "displayMode"> & {
+  displayMode?: Partial<UserPreferences["displayMode"]>;
+};
 
 /**
  * `silent` : aucun toast (l'appelant gère l'erreur, comme le mode anonyme).
@@ -66,23 +75,17 @@ export function mergePreferences(
   patch: PreferencesPatch
 ): UserPreferences {
   const definedPatch = definedEntries(patch);
-  const merged = { ...base, ...definedPatch };
 
-  if (patch.displayMode) {
-    merged.displayMode = {
-      ...base.displayMode,
-      ...definedEntries(patch.displayMode),
-    };
-  }
-
-  if (patch.background) {
-    merged.background = {
-      ...base.background,
-      ...definedEntries(patch.background),
-    } as UserPreferences["background"];
-  }
-
-  return merged;
+  return {
+    ...base,
+    ...definedPatch,
+    displayMode: patch.displayMode
+      ? { ...base.displayMode, ...definedEntries(patch.displayMode) }
+      : base.displayMode,
+    background: patch.background
+      ? { ...base.background, ...definedEntries(patch.background) }
+      : base.background,
+  };
 }
 
 /** Fusionne deux patches successifs, y compris `displayMode` et `background`. */

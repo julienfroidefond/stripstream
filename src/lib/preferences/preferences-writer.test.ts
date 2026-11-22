@@ -69,7 +69,7 @@ describe("PreferencesWriter", () => {
     expect(writer.getSnapshot().readingDirection).toBe(initial.readingDirection);
     expect(persist).toHaveBeenCalledWith(patch);
 
-    pending.resolve({ ...initial, ...patch });
+    pending.resolve(mergePreferences(initial, patch));
     await expect(write).resolves.toBe(true);
     expect(writer.getSnapshot().showThumbnails).toBe(false);
   });

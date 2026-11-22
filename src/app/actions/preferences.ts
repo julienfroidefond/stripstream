@@ -4,13 +4,14 @@ import { invalidatePreferences } from "@/lib/cache/invalidation";
 import { PreferencesService } from "@/lib/services/preferences.service";
 import { ERROR_CODES } from "@/constants/errorCodes";
 import { runAction, type ActionResult } from "@/lib/actions/action-runner";
+import type { PreferencesPatch } from "@/lib/preferences/preferences-writer";
 import type { UserPreferences } from "@/types/preferences";
 
 /**
  * Met à jour les préférences utilisateur.
  */
 export async function updatePreferences(
-  newPreferences: Partial<UserPreferences>
+  newPreferences: PreferencesPatch
 ): Promise<ActionResult<{ data: UserPreferences }>> {
   const anonymousOnly =
     Object.keys(newPreferences).length === 1 && newPreferences.anonymousMode !== undefined;
