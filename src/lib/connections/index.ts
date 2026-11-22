@@ -11,31 +11,16 @@ export type {
   ConnectionDraft,
   ConnectionInput,
   ConnectionLists,
-  ConnectionOf,
-  ConnectionProvider,
   ConnectionRef,
-  ConnectionSummaryBase,
-  ConnectionSummaryOf,
-  ConnectionTestRateLimit,
   ConnectionTestResult,
   ConnectionTestTarget,
   KomgaConnection,
-  KomgaConnectionSummary,
   ResolvedConnection,
-  StripstreamConnection,
-  StripstreamConnectionSummary,
 } from "./types";
 
-export { getActiveConnection, setActiveConnection } from "./active";
-export type { ActiveConnection } from "./active";
+export { getActiveConnection } from "./active";
 
-export {
-  connectionFromDraft,
-  getStoredConnection,
-  requireConnectionForProvider,
-  resolveActiveConnection,
-  resolveConnectionForProvider,
-} from "./resolve";
+export { connectionFromDraft, requireConnectionForProvider } from "./resolve";
 
 export {
   activateConnection,
@@ -46,16 +31,7 @@ export {
 
 export {
   CONNECTION_TEST_RATE_LIMIT,
-  checkConnectionTestRateLimit,
   connectionTestRateLimitKey,
   testConnection,
   testStoredConnection,
 } from "./probe";
-
-export {
-  PROVIDER_DEFINITIONS,
-  definitionFor,
-  getProviderDefinition,
-  providerDefinitions,
-} from "./registry";
-export type { ConnectionStore, ProviderDefinition, StoredConnectionRow } from "./registry";

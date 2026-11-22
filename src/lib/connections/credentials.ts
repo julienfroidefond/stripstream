@@ -141,9 +141,9 @@ export function decryptSecret(value: string): string {
  * Construit l'en-tête Basic Komga (`base64("user:password")`) destiné au fil
  * HTTP. Le chiffrement au repos est appliqué séparément par `encryptSecret`.
  *
- * `password` est volontairement permissif (`KomgaConfigData.password` est
- * optionnel) : la conversion reprend la sémantique historique du template
- * `${username}:${password}`.
+ * `password` est volontairement permissif (le mot de passe est optionnel dans
+ * les credentials Komga) : la conversion reprend la sémantique historique du
+ * template `${username}:${password}`.
  */
 export function buildKomgaAuthHeader(
   username: string,

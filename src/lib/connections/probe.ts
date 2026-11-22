@@ -1,41 +1,17 @@
-import { checkRateLimit } from "@/lib/rate-limit";
 import { createProvider } from "@/lib/providers/provider.factory";
 import type { ProviderType } from "@/lib/providers/types";
 import { assertServerUrlResolvesSafely } from "@/lib/connections/server-url-dns";
 import { getStoredConnection } from "./resolve";
-import type {
-  ConnectionTestRateLimit,
-  ConnectionTestResult,
-  ResolvedConnection,
-} from "./types";
+import type { ConnectionTestResult, ResolvedConnection } from "./types";
 
 export const CONNECTION_TEST_RATE_LIMIT = {
   limit: 5,
   windowMs: 30_000,
 } as const;
 
-/** Clé du budget de test d'un provider pour un user (actions et probe la partagent). */
+/** Clé du budget de test d'un provider pour un user (consommée par le runner). */
 export function connectionTestRateLimitKey(provider: ProviderType, userId: number): string {
   return `test-${provider}:${userId}`;
-}
-
-/**
- * Un budget par provider : la clé inclut le provider pour que tester Komga ne
- * consomme pas les essais Stripstream (et inversement).
- */
-export async function checkConnectionTestRateLimit(
-  provider: ProviderType,
-  userId: number
-): Promise<ConnectionTestRateLimit> {
-  const result = await checkRateLimit(connectionTestRateLimitKey(provider, userId), {
-    limit: CONNECTION_TEST_RATE_LIMIT.limit,
-    windowMs: CONNECTION_TEST_RATE_LIMIT.windowMs,
-  });
-
-  return {
-    allowed: result.allowed,
-    retryAfterSeconds: Math.ceil(result.resetMs / 1000),
-  };
 }
 
 /**

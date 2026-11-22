@@ -1,5 +1,5 @@
-/* eslint-disable no-console */
 import { useState, useCallback, useEffect, useRef } from "react";
+import logger from "@/lib/logger";
 import { BlobUrlRegistry, type ImageKey } from "./blobUrlRegistry";
 import { computeEvictionKeys } from "./imageEviction";
 import { abortTrackedFetches } from "./abortTrackedFetches";
@@ -31,9 +31,9 @@ const EVICTION_AHEAD = 20;
 function releaseTrackedFetches(controllers: Iterable<AbortController>): void {
   const failures = abortTrackedFetches(controllers);
   if (failures.length > 0) {
-    console.warn(
-      `[reader/image] ${failures.length} abort(s) threw during cleanup`,
-      failures
+    logger.warn(
+      { count: failures.length, failures },
+      "reader/image: abort(s) threw during cleanup"
     );
   }
 }
@@ -112,8 +112,6 @@ export function useImageLoader({
   }, []);
 
   const cancelAllPrefetches = useCallback(() => {
-    const count = abortControllersRef.current.size;
-    console.debug(`[reader/image] cancelAllPrefetches: aborting ${count} in-flight fetches`);
     releaseTrackedFetches(abortControllersRef.current.values());
     abortControllersRef.current.clear();
     pendingFetchesRef.current.clear();
@@ -133,8 +131,6 @@ export function useImageLoader({
     );
 
     if (keysToEvict.length === 0) return;
-
-    console.debug(`[reader/image] evict: ${keysToEvict.length} pages (window ${currentPage - EVICTION_BEHIND}–${currentPage + EVICTION_AHEAD}), keys:`, keysToEvict);
 
     keysToEvict.forEach((key) => blobUrls.delete(key));
 
@@ -185,7 +181,10 @@ export function useImageLoader({
         signal: controller.signal,
       });
       if (!response.ok) {
-        console.warn(`[reader/image] HTTP error key=${String(key)} status=${response.status} url=${url}`);
+        logger.warn(
+          { key, status: response.status, url },
+          "reader/image: HTTP error"
+        );
         throw new Error(`HTTP ${response.status}`);
       }
 
@@ -196,7 +195,6 @@ export function useImageLoader({
         const img = new Image();
         img.onload = () => {
           if (!isMountedRef.current || controller.signal.aborted) {
-            console.debug(`[reader/image] aborted after decode key=${String(key)} mounted=${isMountedRef.current}`);
             URL.revokeObjectURL(blobUrl);
             reject(new Error("Aborted"));
             return;
@@ -216,7 +214,7 @@ export function useImageLoader({
           resolve();
         };
         img.onerror = () => {
-          console.warn(`[reader/image] decode error key=${String(key)}`);
+          logger.warn({ key }, "reader/image: decode error");
           URL.revokeObjectURL(blobUrl);
           reject(new Error("Image decode error"));
         };
@@ -250,16 +248,23 @@ export function useImageLoader({
 
         for (let attempt = 0; attempt < maxAttempts; attempt++) {
           if (!isMountedRef.current || controller.signal.aborted) {
-            console.debug(`[reader/image] aborted before attempt ${attempt} key=${String(key)}`);
             return;
           }
 
           if (attempt > 0) {
-            console.warn(`[reader/image] retry ${attempt}/${maxAttempts - 1} key=${String(key)} backoff=${RETRY_BACKOFFS_MS[attempt - 1]}ms err=${String(lastError)}`);
+            logger.warn(
+              {
+                key,
+                attempt,
+                maxAttempts: maxAttempts - 1,
+                backoffMs: RETRY_BACKOFFS_MS[attempt - 1],
+                err: lastError,
+              },
+              "reader/image: retry"
+            );
             try {
               await sleep(RETRY_BACKOFFS_MS[attempt - 1], controller.signal);
             } catch {
-              console.debug(`[reader/image] sleep aborted during retry key=${String(key)}`);
               return;
             }
           }
@@ -270,14 +275,16 @@ export function useImageLoader({
           } catch (err) {
             lastError = err;
             if (controller.signal.aborted) {
-              console.debug(`[reader/image] fetch aborted attempt=${attempt} key=${String(key)}`);
               return;
             }
           }
         }
 
         if (isMountedRef.current && !controller.signal.aborted) {
-          console.error(`[reader/image] FAILED after ${maxAttempts} attempts key=${String(key)} url=${url} err=${String(lastError)}`);
+          logger.error(
+            { key, attempts: maxAttempts, url, err: lastError },
+            "reader/image: failed after retries"
+          );
           setImageErrors((prev) => ({ ...prev, [key]: true }));
         }
       })().finally(() => {
@@ -337,9 +344,8 @@ export function useImageLoader({
       statusOf,
     });
 
-    console.debug(`[reader/image] page=${currentPage} visible=[${plan.visible.join(",")}] ahead=[${plan.ahead.join(",")}] next=${plan.nextBook.length}`);
     Promise.all(plan.visible.map((page) => prefetchImage(page))).catch((err) => {
-      console.warn(`[reader/image] prefetch failed page=${currentPage}`, err);
+      logger.warn({ page: currentPage, err }, "reader/image: prefetch failed");
     });
 
     if (plan.ahead.length > 0) {
@@ -376,7 +382,6 @@ export function useImageLoader({
   // l'unmount est présent ici, donc révoqué.
   useEffect(() => {
     return () => {
-      console.debug(`[reader/image] unmount: revoking ${blobUrls.size} blob URLs`);
       blobUrls.clear();
     };
   }, [blobUrls]);

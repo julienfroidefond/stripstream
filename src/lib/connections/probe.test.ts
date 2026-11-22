@@ -20,11 +20,7 @@ vi.mock("./resolve", () => ({
   getStoredConnection: getStoredConnectionMock,
 }));
 
-import {
-  checkConnectionTestRateLimit,
-  testConnection,
-  testStoredConnection,
-} from "./probe";
+import { testConnection, testStoredConnection } from "./probe";
 import type { KomgaConnection, StripstreamConnection } from "./types";
 
 const KOMGA_CONNECTION: KomgaConnection = {
@@ -44,34 +40,6 @@ const STRIPSTREAM_CONNECTION: StripstreamConnection = {
 
 beforeEach(() => {
   vi.clearAllMocks();
-});
-
-describe("checkConnectionTestRateLimit", () => {
-  it("allows five attempts per provider and user, then blocks the sixth", async () => {
-    const userId = 900000 + Math.floor(Math.random() * 1000);
-
-    for (let attempt = 0; attempt < 5; attempt += 1) {
-      expect(await checkConnectionTestRateLimit("komga", userId)).toMatchObject({
-        allowed: true,
-      });
-    }
-
-    expect(await checkConnectionTestRateLimit("komga", userId)).toMatchObject({
-      allowed: false,
-      retryAfterSeconds: expect.any(Number),
-    });
-  });
-
-  it("keeps separate budgets for each provider", async () => {
-    const userId = 910000 + Math.floor(Math.random() * 1000);
-
-    for (let attempt = 0; attempt < 5; attempt += 1) {
-      await checkConnectionTestRateLimit("komga", userId);
-    }
-
-    expect((await checkConnectionTestRateLimit("komga", userId)).allowed).toBe(false);
-    expect((await checkConnectionTestRateLimit("stripstream", userId)).allowed).toBe(true);
-  });
 });
 
 describe("testConnection", () => {

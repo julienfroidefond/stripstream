@@ -61,10 +61,21 @@ export interface SeriesCollectionQuery extends CollectionQuery {
   missing: boolean;
 }
 
+/**
+ * Entier décimal strictement positif, sinon `null`.
+ *
+ * Contrairement à `Number.parseInt`, on refuse tout ce qui n'est pas une suite
+ * de chiffres : `"2abc"`, `"1.9"`, `"0x10"` et `" 4 "` ne valent pas une page.
+ */
+function parsePositiveInteger(value: string | undefined): number | null {
+  if (value === undefined || !/^\d+$/.test(value)) return null;
+  const parsed = Number.parseInt(value, 10);
+  return parsed > 0 ? parsed : null;
+}
+
 /** Page valide : entier strictement positif, sinon 1. */
 export function parsePage(value: string | undefined): number {
-  const parsed = Number.parseInt(value ?? "", 10);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+  return parsePositiveInteger(value) ?? 1;
 }
 
 /**
@@ -105,9 +116,8 @@ function parsePageSize(
   value: string | undefined,
   defaults: CollectionQueryDefaults
 ): number {
-  const requested = value
-    ? Number.parseInt(value, 10)
-    : defaults.itemsPerPage || DEFAULT_COLLECTION_PAGE_SIZE;
+  const fallback = defaults.itemsPerPage || DEFAULT_COLLECTION_PAGE_SIZE;
+  const requested = parsePositiveInteger(value) ?? fallback;
 
   return normalizeGridPageSize(requested, defaults.compact);
 }

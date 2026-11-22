@@ -7,8 +7,8 @@ Stripstream expose deux surfaces côté serveur, et rien d'autre :
 
 ## 🔐 Authentification
 
-- Toutes les routes d'API hors famille d'authentification traversent le middleware `src/proxy.ts` et exigent une session NextAuth valide. Une requête non authentifiée reçoit une réponse `401` JSON.
-- Seules la famille d'authentification NextAuth (exclue du matcher du middleware) et la sonde `GET /api/health` (exemptée par le proxy sur ce chemin exact) sont publiques.
+- Toutes les routes d'API hors famille d'authentification traversent le proxy `src/proxy.ts` et exigent une session NextAuth valide ; le proxy revalide le jeton contre la base (ADR 0033). Une requête non authentifiée reçoit une réponse `401` JSON et le cookie de session périmé est supprimé.
+- Seules la famille d'authentification NextAuth (exclue du matcher du proxy) et la sonde `GET /api/health` (exemptée par le proxy sur ce chemin exact) sont publiques.
 - Les huit routes média (Komga et Stripstream) sont des déclarations d'une ligne `createMediaRoute(provider, kind)` (`src/lib/media/media-route.ts`) : l'adaptateur vérifie la session, choisit le transport du provider, applique la politique de cache et d'en-têtes, relaie les `304` et mappe les erreurs. La route résout l'utilisateur une fois et transmet `userId` au transport (`MediaTransportContext`, ADR 0029) ; les transports résolvent la connexion via `requireConnectionForProvider(provider, userId)` (`@/lib/connections`), qui applique la config active du provider, puis la première config de ce provider appartenant à l'utilisateur ; il n'y a aucun repli sur des variables d'environnement (ADR 0032). Le module déchiffre les credentials ; les routes ne lisent jamais les colonnes `authHeader`/`token` directement.
 - Les Server Actions vérifient l'utilisateur par les gates du runner (`requireUser`, `requireRole`, `rateLimit`), qui transmettent `userId` aux services ; les services ne lisent pas la session (ADR 0029). L'action `testConnection` est en plus limitée par le `rateLimit` du runner, sur la clé `connectionTestRateLimitKey` (`src/lib/connections/probe.ts`, 5 tentatives par 30 secondes et par utilisateur et par provider).
 
@@ -115,7 +115,7 @@ Actions de connexion génériques (ADR 0030) : une action par opération, discri
 
 | Action | Rôle |
 | --- | --- |
-| `scanLibrary` | Déclenche un scan d'une bibliothèque via le provider actif et revalide la page de la bibliothèque et la liste. Renvoie `{ jobId, progressSupported, forbidden? }` : `jobId` n'est renseigné que si le backend expose un suivi (Librarian admin), et `forbidden` vaut `true` sur un 403 (scan réservé aux admins côté Komga comme côté Librarian). |
+| `scanLibrary` | Déclenche un scan d'une bibliothèque via le provider actif et revalide la page de la bibliothèque. Renvoie `{ jobId, progressSupported, forbidden? }` : `jobId` n'est renseigné que si le backend expose un suivi (Librarian admin), et `forbidden` vaut `true` sur un 403 (scan réservé aux admins côté Komga comme côté Librarian). |
 | `getScanStatus` | Suit le job renvoyé par `scanLibrary` (`libraryId`, `jobId`). Renvoie `{ state: "running" \| "completed" \| "failed" \| "cancelled" \| "unavailable" }` et ne lève jamais : un backend sans suivi (Komga), un 403 (token `read`) ou une erreur réseau dégradent en `unavailable`. |
 | `getRandomBookFromLibraries` | Renvoie l'URL de miniature d'un livre tiré au hasard parmi les bibliothèques fournies. |
 
@@ -129,7 +129,7 @@ Actions de connexion génériques (ADR 0030) : une action par opération, discri
 
 | Action | Rôle |
 | --- | --- |
-| `updatePreferences` | Met à jour les préférences utilisateur et revalide `/`, `/libraries` et `/series` (sauf mise à jour du seul mode anonyme, piloté côté client). |
+| `updatePreferences` | Met à jour les préférences utilisateur et revalide les pages par identifiant qui les rendent côté serveur (`/libraries/[libraryId]`, `/series/[seriesId]`) quand le patch touche une préférence de rendu serveur ; une mise à jour du seul mode anonyme est pilotée côté client. |
 
 ### src/app/actions/ratings.ts
 

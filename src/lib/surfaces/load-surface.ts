@@ -29,9 +29,4 @@ export function loadSurface<
   return loadSurfaceWithDependencies(options, dependencies);
 }
 
-export type {
-  LoadSurfaceOptions,
-  SurfaceContext,
-  SurfaceResult,
-  SurfaceUnavailableReason,
-} from "./surface-loader";
+export type { LoadSurfaceOptions, SurfaceResult } from "./surface-loader";

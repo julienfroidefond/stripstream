@@ -103,10 +103,3 @@ export interface ConnectionTestResult {
   code?: ErrorCode;
   libraryCount?: number;
 }
-
-export interface ConnectionTestRateLimit {
-  allowed: boolean;
-  retryAfterSeconds: number;
-}
-
-export type ConnectionProvider = ProviderType;

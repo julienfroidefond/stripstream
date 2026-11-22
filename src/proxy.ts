@@ -1,13 +1,19 @@
 import { NextResponse, NextRequest } from "next/server";
 import { getAuthSession } from "@/lib/auth/middleware";
 
-// Routes qui ne nécessitent pas d'authentification
-const publicRoutes = ["/login", "/register", "/images"];
+// Routes qui ne nécessitent pas d'authentification, comparées par égalité
+// stricte sur `pathname`. L'inscription n'a pas de route dédiée : c'est un
+// onglet de `/login`. Les fichiers statiques (`/images/...`, `/_next/...`,
+// `/fonts/...`) sont déjà exclus par le `matcher` et par les préfixes testés
+// plus bas.
+const publicRoutes = ["/login"];
 
 // Routes d'API qui ne nécessitent pas d'authentification. Chemins exacts :
 // `/api/health` est la sonde du conteneur, `/api/healthz` ou
-// `/api/health/x` restent protégés.
-const publicApiRoutes = ["/api/auth/register", "/api/health"];
+// `/api/health/x` restent protégés. Les routes NextAuth (`/api/auth/*`) sont
+// publiques via le préfixe testé plus bas ; il n'existe pas de route
+// d'inscription dédiée.
+const publicApiRoutes = ["/api/health"];
 
 // Langues supportées
 const locales = ["fr", "en"];
@@ -30,10 +36,6 @@ const clearStaleSessionCookies = (request: NextRequest, response: NextResponse):
 export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const requestPath = `${pathname}${request.nextUrl.search}`;
-  const forwardedHeaders = new Headers(request.headers);
-  forwardedHeaders.set("x-request-pathname", pathname);
-  forwardedHeaders.set("x-request-path", requestPath);
-  const createNextResponse = () => NextResponse.next({ request: { headers: forwardedHeaders } });
 
   // Gestion de la langue
   let locale = request.headers.get("cookie")?.match(/NEXT_LOCALE=([^;]+)/)?.[1];
@@ -54,23 +56,31 @@ export default async function proxy(request: NextRequest) {
     pathname === "/favicon.svg" ||
     pathname === "/favicon.ico"
   ) {
-    return createNextResponse();
+    return NextResponse.next();
   }
 
-  // Vérifier l'authentification avec NextAuth v5
+  // Vérifier l'authentification : le proxy revalide le jeton contre la base
+  // (existence du compte + `sessionVersion`, ADR 0033) en plus de la signature.
+  // Les pages et le runner d'actions restent l'autorité finale.
   const session = await getAuthSession(request);
 
   if (!session) {
     if (pathname.startsWith("/api/")) {
-      return NextResponse.json(
-        {
-          error: {
-            code: "UNAUTHORIZED",
-            message: "Unauthorized access",
-            name: "Unauthorized",
+      // Même nettoyage que le chemin page : un jeton périmé (compte supprimé,
+      // `sessionVersion` changée) a une signature valide, il resterait sinon
+      // envoyé à chaque requête API et chaque appel resterait en 401.
+      return clearStaleSessionCookies(
+        request,
+        NextResponse.json(
+          {
+            error: {
+              code: "UNAUTHORIZED",
+              message: "Unauthorized access",
+              name: "Unauthorized",
+            },
           },
-        },
-        { status: 401 }
+          { status: 401 }
+        )
       );
     }
 
@@ -80,7 +90,7 @@ export default async function proxy(request: NextRequest) {
   }
 
   // Définir le cookie de langue si nécessaire
-  const response = createNextResponse();
+  const response = NextResponse.next();
   if (!request.headers.get("cookie")?.includes("NEXT_LOCALE") && locale) {
     response.cookies.set("NEXT_LOCALE", locale, {
       path: "/",
